@@ -230504,6 +230504,21 @@ public class TaCodegenServe {
         return sb.toString();
     }
 
+    static final long TAIL_F64_BITS = 0x7ff8deadbeef1234L;
+    static final int TAIL_I32 = 0x5eadbeef;
+
+    static int tailDirty(double[] arr, int from) {
+        int n = 0;
+        for (int i = from; i < arr.length; i++) if (Double.doubleToRawLongBits(arr[i]) != TAIL_F64_BITS) n++;
+        return n;
+    }
+
+    static int tailDirty(int[] arr, int from) {
+        int n = 0;
+        for (int i = from; i < arr.length; i++) if (arr[i] != TAIL_I32) n++;
+        return n;
+    }
+
     static String intArrayToJson(int[] arr, int count) {
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < count; i++) {
@@ -232300,6 +232315,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -232383,6 +232399,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -232391,6 +232408,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAc(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -232400,6 +232418,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -232453,8 +232472,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        java.util.Arrays.fill(outArr2, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -232541,6 +232563,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value) + tailDirty(outArr2, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -232551,6 +232574,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAccbands(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -232560,6 +232584,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
@@ -232606,6 +232631,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -232686,6 +232712,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -232694,6 +232721,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAcos(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -232703,6 +232731,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -232759,6 +232788,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -232848,6 +232878,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -232856,6 +232887,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAd(core, json, endIdx, inHigh, inLow, inClose, inVolume, hb);
             hb.append("}");
             return hb.toString();
@@ -232865,6 +232897,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -232913,6 +232946,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -232996,6 +233030,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -233004,6 +233039,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAdd(core, json, endIdx, inReal0, inReal1, hb);
             hb.append("}");
             return hb.toString();
@@ -233013,6 +233049,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -233071,6 +233108,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -233160,6 +233198,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -233168,6 +233207,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAdosc(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -233177,6 +233217,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -233226,6 +233267,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -233309,6 +233351,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -233317,6 +233360,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAdr(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -233326,6 +233370,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -233380,6 +233425,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -233466,6 +233512,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -233474,6 +233521,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAdx(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -233483,6 +233531,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -233536,6 +233585,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -233622,6 +233672,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -233630,6 +233681,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAdxr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -233639,6 +233691,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -233686,6 +233739,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -233766,6 +233820,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -233774,6 +233829,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAlma(core, json, endIdx, inReal, optInTimePeriod, optInSigma, optInOffset, hb);
             hb.append("}");
             return hb.toString();
@@ -233783,6 +233839,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -233833,6 +233890,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -233916,6 +233974,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -233924,6 +233983,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAo(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -233933,6 +233993,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -233982,6 +234043,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -234062,6 +234124,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -234070,6 +234133,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideApo(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, hb);
             hb.append("}");
             return hb.toString();
@@ -234079,6 +234143,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -234128,7 +234193,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -234212,6 +234279,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -234221,6 +234289,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAroon(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -234230,6 +234299,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -234280,6 +234350,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -234363,6 +234434,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -234371,6 +234443,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAroonosc(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -234380,6 +234453,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -234437,6 +234511,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -234526,6 +234601,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -234534,6 +234610,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAsi(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInLimitMove, hb);
             hb.append("}");
             return hb.toString();
@@ -234543,6 +234620,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -234587,6 +234665,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -234667,6 +234746,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -234675,6 +234755,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAsin(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -234684,6 +234765,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -234728,6 +234810,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -234808,6 +234891,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -234816,6 +234900,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAtan(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -234825,6 +234910,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -234879,6 +234965,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -234965,6 +235052,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -234973,6 +235061,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAtr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -234982,6 +235071,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -235027,6 +235117,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -235107,6 +235198,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -235115,6 +235207,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAvgdev(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -235124,6 +235217,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -235180,6 +235274,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -235269,6 +235364,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -235277,6 +235373,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideAvgprice(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -235286,6 +235383,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -235336,8 +235434,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        java.util.Arrays.fill(outArr2, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -235418,6 +235519,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value) + tailDirty(outArr2, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -235428,6 +235530,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideBbands(core, json, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, hb);
             hb.append("}");
             return hb.toString();
@@ -235437,6 +235540,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
@@ -235489,6 +235593,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -235569,6 +235674,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -235577,6 +235683,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideBbw(core, json, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, hb);
             hb.append("}");
             return hb.toString();
@@ -235586,6 +235693,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -235635,6 +235743,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -235718,6 +235827,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -235726,6 +235836,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideBeta(core, json, endIdx, inReal0, inReal1, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -235735,6 +235846,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -235791,6 +235903,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -235880,6 +235993,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -235888,6 +236002,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideBop(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -235897,6 +236012,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -235950,6 +236066,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -236036,6 +236153,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -236044,6 +236162,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCci(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -236053,6 +236172,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -236109,6 +236229,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -236198,6 +236319,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -236206,6 +236328,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdl2crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -236215,6 +236338,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -236271,6 +236395,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -236360,6 +236485,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -236368,6 +236494,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdl3blackcrows(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -236377,6 +236504,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -236433,6 +236561,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -236522,6 +236651,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -236530,6 +236660,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdl3inside(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -236539,6 +236670,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -236595,6 +236727,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -236684,6 +236817,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -236692,6 +236826,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdl3linestrike(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -236701,6 +236836,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -236757,6 +236893,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -236846,6 +236983,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -236854,6 +236992,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdl3outside(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -236863,6 +237002,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -236919,6 +237059,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -237008,6 +237149,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -237016,6 +237158,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdl3starsinsouth(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -237025,6 +237168,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -237081,6 +237225,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -237170,6 +237315,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -237178,6 +237324,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdl3whitesoldiers(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -237187,6 +237334,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -237244,6 +237392,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -237333,6 +237482,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -237341,6 +237491,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlabandonedbaby(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.append("}");
             return hb.toString();
@@ -237350,6 +237501,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -237406,6 +237558,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -237495,6 +237648,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -237503,6 +237657,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdladvanceblock(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -237512,6 +237667,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -237568,6 +237724,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -237657,6 +237814,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -237665,6 +237823,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlbelthold(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -237674,6 +237833,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -237730,6 +237890,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -237819,6 +237980,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -237827,6 +237989,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlbreakaway(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -237836,6 +237999,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -237892,6 +238056,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -237981,6 +238146,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -237989,6 +238155,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlclosingmarubozu(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -237998,6 +238165,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -238054,6 +238222,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -238143,6 +238312,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -238151,6 +238321,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlconcealbabyswall(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -238160,6 +238331,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -238216,6 +238388,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -238305,6 +238478,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -238313,6 +238487,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlcounterattack(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -238322,6 +238497,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -238379,6 +238555,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -238468,6 +238645,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -238476,6 +238654,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdldarkcloudcover(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.append("}");
             return hb.toString();
@@ -238485,6 +238664,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -238541,6 +238721,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -238630,6 +238811,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -238638,6 +238820,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdldoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -238647,6 +238830,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -238703,6 +238887,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -238792,6 +238977,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -238800,6 +238986,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdldojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -238809,6 +238996,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -238865,6 +239053,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -238954,6 +239143,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -238962,6 +239152,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdldragonflydoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -238971,6 +239162,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -239027,6 +239219,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -239116,6 +239309,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -239124,6 +239318,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlengulfing(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -239133,6 +239328,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -239190,6 +239386,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -239279,6 +239476,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -239287,6 +239485,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdleveningdojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.append("}");
             return hb.toString();
@@ -239296,6 +239495,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -239353,6 +239553,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -239442,6 +239643,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -239450,6 +239652,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdleveningstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.append("}");
             return hb.toString();
@@ -239459,6 +239662,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -239515,6 +239719,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -239604,6 +239809,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -239612,6 +239818,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlgapsidesidewhite(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -239621,6 +239828,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -239677,6 +239885,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -239766,6 +239975,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -239774,6 +239984,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlgravestonedoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -239783,6 +239994,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -239839,6 +240051,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -239928,6 +240141,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -239936,6 +240150,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlhammer(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -239945,6 +240160,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -240001,6 +240217,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -240090,6 +240307,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -240098,6 +240316,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlhangingman(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -240107,6 +240326,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -240163,6 +240383,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -240252,6 +240473,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -240260,6 +240482,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlharami(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -240269,6 +240492,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -240325,6 +240549,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -240414,6 +240639,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -240422,6 +240648,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlharamicross(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -240431,6 +240658,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -240487,6 +240715,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -240576,6 +240805,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -240584,6 +240814,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlhighwave(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -240593,6 +240824,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -240649,6 +240881,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -240738,6 +240971,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -240746,6 +240980,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlhikkake(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -240755,6 +240990,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -240811,6 +241047,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -240900,6 +241137,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -240908,6 +241146,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlhikkakemod(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -240917,6 +241156,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -240973,6 +241213,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -241062,6 +241303,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -241070,6 +241312,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlhomingpigeon(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -241079,6 +241322,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -241135,6 +241379,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -241224,6 +241469,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -241232,6 +241478,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlidentical3crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -241241,6 +241488,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -241297,6 +241545,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -241386,6 +241635,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -241394,6 +241644,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlinneck(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -241403,6 +241654,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -241459,6 +241711,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -241548,6 +241801,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -241556,6 +241810,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlinvertedhammer(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -241565,6 +241820,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -241621,6 +241877,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -241710,6 +241967,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -241718,6 +241976,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlkicking(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -241727,6 +241986,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -241783,6 +242043,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -241872,6 +242133,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -241880,6 +242142,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlkickingbylength(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -241889,6 +242152,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -241945,6 +242209,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -242034,6 +242299,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -242042,6 +242308,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlladderbottom(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -242051,6 +242318,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -242107,6 +242375,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -242196,6 +242465,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -242204,6 +242474,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdllongleggeddoji(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -242213,6 +242484,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -242269,6 +242541,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -242358,6 +242631,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -242366,6 +242640,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdllongline(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -242375,6 +242650,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -242431,6 +242707,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -242520,6 +242797,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -242528,6 +242806,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlmarubozu(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -242537,6 +242816,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -242593,6 +242873,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -242682,6 +242963,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -242690,6 +242972,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlmatchinglow(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -242699,6 +242982,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -242756,6 +243040,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -242845,6 +243130,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -242853,6 +243139,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlmathold(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.append("}");
             return hb.toString();
@@ -242862,6 +243149,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -242919,6 +243207,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -243008,6 +243297,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -243016,6 +243306,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlmorningdojistar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.append("}");
             return hb.toString();
@@ -243025,6 +243316,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -243082,6 +243374,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -243171,6 +243464,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -243179,6 +243473,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlmorningstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.append("}");
             return hb.toString();
@@ -243188,6 +243483,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -243244,6 +243540,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -243333,6 +243630,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -243341,6 +243639,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlonneck(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -243350,6 +243649,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -243406,6 +243706,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -243495,6 +243796,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -243503,6 +243805,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlpiercing(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -243512,6 +243815,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -243568,6 +243872,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -243657,6 +243962,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -243665,6 +243971,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlrickshawman(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -243674,6 +243981,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -243730,6 +244038,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -243819,6 +244128,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -243827,6 +244137,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlrisefall3methods(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -243836,6 +244147,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -243892,6 +244204,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -243981,6 +244294,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -243989,6 +244303,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlseparatinglines(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -243998,6 +244313,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -244054,6 +244370,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -244143,6 +244460,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -244151,6 +244469,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlshootingstar(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -244160,6 +244479,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -244216,6 +244536,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -244305,6 +244626,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -244313,6 +244635,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlshortline(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -244322,6 +244645,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -244378,6 +244702,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -244467,6 +244792,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -244475,6 +244801,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlspinningtop(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -244484,6 +244811,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -244540,6 +244868,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -244629,6 +244958,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -244637,6 +244967,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlstalledpattern(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -244646,6 +244977,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -244702,6 +245034,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -244791,6 +245124,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -244799,6 +245133,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlsticksandwich(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -244808,6 +245143,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -244864,6 +245200,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -244953,6 +245290,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -244961,6 +245299,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdltakuri(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -244970,6 +245309,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -245026,6 +245366,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -245115,6 +245456,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -245123,6 +245465,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdltasukigap(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -245132,6 +245475,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -245188,6 +245532,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -245277,6 +245622,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -245285,6 +245631,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlthrusting(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -245294,6 +245641,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -245350,6 +245698,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -245439,6 +245788,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -245447,6 +245797,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdltristar(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -245456,6 +245807,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -245512,6 +245864,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -245601,6 +245954,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -245609,6 +245963,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlunique3river(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -245618,6 +245973,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -245674,6 +246030,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -245763,6 +246120,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -245771,6 +246129,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlupsidegap2crows(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -245780,6 +246139,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -245836,6 +246196,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -245925,6 +246286,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -245933,6 +246295,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCdlxsidegap3methods(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -245942,6 +246305,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -245986,6 +246350,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -246066,6 +246431,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -246074,6 +246440,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCeil(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -246083,6 +246450,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -246128,6 +246496,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -246208,6 +246577,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -246216,6 +246586,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCg(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -246225,6 +246596,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -246278,6 +246650,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -246364,6 +246737,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -246372,6 +246746,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideChop(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -246381,6 +246756,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -246434,6 +246810,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -246520,6 +246897,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -246528,6 +246906,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideChoptr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -246537,6 +246916,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -246592,7 +246972,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -246679,6 +247061,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -246688,6 +247071,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCksp(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -246697,6 +247081,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -246755,6 +247140,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -246844,6 +247230,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -246852,6 +247239,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCmf(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -246861,6 +247249,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -246907,6 +247296,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -246987,6 +247377,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -246995,6 +247386,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCmo(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -247004,6 +247396,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -247049,6 +247442,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -247129,6 +247523,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -247137,6 +247532,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCmou(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -247146,6 +247542,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -247193,6 +247590,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -247273,6 +247671,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -247281,6 +247680,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCoppock(core, json, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, hb);
             hb.append("}");
             return hb.toString();
@@ -247290,6 +247690,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -247339,6 +247740,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -247422,6 +247824,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -247430,6 +247833,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCorrel(core, json, endIdx, inReal0, inReal1, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -247439,6 +247843,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -247483,6 +247888,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -247563,6 +247969,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -247571,6 +247978,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCos(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -247580,6 +247988,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -247624,6 +248033,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -247704,6 +248114,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -247712,6 +248123,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCosh(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -247721,6 +248133,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -247768,6 +248181,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -247848,6 +248262,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -247856,6 +248271,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCrsi(core, json, endIdx, inReal, optInTimePeriod, optInStreakPeriod, optInRankPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -247865,6 +248281,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -247910,6 +248327,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -247990,6 +248408,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -247998,6 +248417,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCti(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -248007,6 +248427,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -248051,6 +248472,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -248131,6 +248553,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -248139,6 +248562,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCumsum(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -248148,6 +248572,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -248198,6 +248623,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -248281,6 +248707,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -248289,6 +248716,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideCvi(core, json, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -248298,6 +248726,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -248343,6 +248772,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -248423,6 +248853,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -248431,6 +248862,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideDema(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -248440,6 +248872,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -248488,6 +248921,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -248571,6 +249005,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -248579,6 +249014,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideDiv(core, json, endIdx, inReal0, inReal1, hb);
             hb.append("}");
             return hb.toString();
@@ -248588,6 +249024,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -248637,8 +249074,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        java.util.Arrays.fill(outArr2, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -248722,6 +249162,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value) + tailDirty(outArr2, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -248732,6 +249173,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideDonchian(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -248741,6 +249183,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
@@ -248791,6 +249234,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -248871,6 +249315,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -248879,6 +249324,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideDosc(core, json, endIdx, inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -248888,6 +249334,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -248933,6 +249380,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -249013,6 +249461,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -249021,6 +249470,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideDpo(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -249030,6 +249480,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -249084,6 +249535,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -249170,6 +249622,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -249178,6 +249631,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideDx(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -249187,6 +249641,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -249236,6 +249691,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -249319,6 +249775,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -249327,6 +249784,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideEfi(core, json, endIdx, inClose, inVolume, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -249336,6 +249794,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -249382,6 +249841,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -249462,6 +249922,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -249470,6 +249931,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideEma(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -249479,6 +249941,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -249533,6 +249996,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -249619,6 +250083,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -249627,6 +250092,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideEmv(core, json, endIdx, inHigh, inLow, inVolume, optInTimePeriod, optInVolumeDivisor, hb);
             hb.append("}");
             return hb.toString();
@@ -249636,6 +250102,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -249681,6 +250148,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -249761,6 +250229,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -249769,6 +250238,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideEr(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -249778,6 +250248,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -249831,7 +250302,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -249918,6 +250391,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -249927,6 +250401,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideEri(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -249936,6 +250411,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -249981,6 +250457,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -250061,6 +250538,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -250069,6 +250547,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideExp(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -250078,6 +250557,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -250128,7 +250608,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -250212,6 +250694,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -250221,6 +250704,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideFisher(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -250230,6 +250714,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -250275,6 +250760,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -250355,6 +250841,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -250363,6 +250850,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideFloor(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -250372,6 +250860,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -250417,6 +250906,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -250497,6 +250987,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -250505,6 +250996,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideFosc(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -250514,6 +251006,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -250564,7 +251057,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         int[] outArr1 = new int[_outLen];
+        java.util.Arrays.fill(outArr1, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -250648,6 +251143,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -250657,6 +251153,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideFractal(core, json, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, hb);
             hb.append("}");
             return hb.toString();
@@ -250666,6 +251163,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outInteger1\":").append(intArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -250717,6 +251215,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -250800,6 +251299,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -250808,6 +251308,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideFrama(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -250817,6 +251318,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -250874,9 +251376,13 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        java.util.Arrays.fill(outArr2, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr3 = new double[_outLen];
+        java.util.Arrays.fill(outArr3, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -250966,6 +251472,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value) + tailDirty(outArr2, outNBElement.value) + tailDirty(outArr3, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -250977,6 +251484,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideHa(core, json, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -250986,6 +251494,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
@@ -251034,6 +251543,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -251114,6 +251624,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -251122,6 +251633,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideHma(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -251131,6 +251643,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -251176,6 +251689,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -251256,6 +251770,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -251264,6 +251779,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideHtDcperiod(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -251273,6 +251789,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -251318,6 +251835,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -251398,6 +251916,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -251406,6 +251925,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideHtDcphase(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -251415,6 +251935,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -251460,7 +251981,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -251541,6 +252064,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -251550,6 +252074,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideHtPhasor(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -251559,6 +252084,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -251605,7 +252131,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -251686,6 +252214,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -251695,6 +252224,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideHtSine(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -251704,6 +252234,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -251750,6 +252281,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -251830,6 +252362,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -251838,6 +252371,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideHtTrendline(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -251847,6 +252381,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -251892,6 +252427,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -251972,6 +252508,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -251980,6 +252517,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideHtTrendmode(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -251989,6 +252527,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -252041,6 +252580,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -252127,6 +252667,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -252135,6 +252676,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideIbs(core, json, endIdx, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -252144,6 +252686,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -252195,9 +252738,13 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        java.util.Arrays.fill(outArr2, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr3 = new double[_outLen];
+        java.util.Arrays.fill(outArr3, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -252281,6 +252828,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value) + tailDirty(outArr2, outNBElement.value) + tailDirty(outArr3, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -252292,6 +252840,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideIchimoku(core, json, endIdx, inHigh, inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -252301,6 +252850,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
@@ -252353,6 +252903,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -252436,6 +252987,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -252444,6 +252996,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideImi(core, json, endIdx, inOpen, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -252453,6 +253006,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -252499,6 +253053,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -252579,6 +253134,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -252587,6 +253143,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideKama(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -252596,6 +253153,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -252651,8 +253209,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        java.util.Arrays.fill(outArr2, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -252739,6 +253300,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value) + tailDirty(outArr2, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -252749,6 +253311,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideKc(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, hb);
             hb.append("}");
             return hb.toString();
@@ -252758,6 +253321,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
@@ -252821,8 +253385,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        java.util.Arrays.fill(outArr2, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -252909,6 +253476,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value) + tailDirty(outArr2, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -252919,6 +253487,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideKdj(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, hb);
             hb.append("}");
             return hb.toString();
@@ -252928,6 +253497,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
@@ -252983,7 +253553,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -253064,6 +253636,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -253073,6 +253646,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideKst(core, json, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -253082,6 +253656,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -253142,7 +253717,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -253223,6 +253800,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -253232,6 +253810,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideKstext(core, json, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, hb);
             hb.append("}");
             return hb.toString();
@@ -253241,6 +253820,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -253287,6 +253867,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -253367,6 +253948,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -253375,6 +253957,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideKurtosis(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -253384,6 +253967,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -253443,7 +254027,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -253533,6 +254119,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -253542,6 +254129,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideKvo(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -253551,6 +254139,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -253597,6 +254186,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -253677,6 +254267,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -253685,6 +254276,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideLinearreg(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -253694,6 +254286,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -253739,6 +254332,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -253819,6 +254413,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -253827,6 +254422,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideLinearregAngle(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -253836,6 +254432,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -253881,6 +254478,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -253961,6 +254559,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -253969,6 +254568,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideLinearregIntercept(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -253978,6 +254578,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -254023,6 +254624,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -254103,6 +254705,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -254111,6 +254714,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideLinearregSlope(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -254120,6 +254724,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -254164,6 +254769,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -254244,6 +254850,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -254252,6 +254859,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideLn(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -254261,6 +254869,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -254305,6 +254914,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -254385,6 +254995,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -254393,6 +255004,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideLog10(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -254402,6 +255014,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -254450,6 +255063,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -254530,6 +255144,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -254538,6 +255153,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMa(core, json, endIdx, inReal, optInTimePeriod, optInMAType, hb);
             hb.append("}");
             return hb.toString();
@@ -254547,6 +255163,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -254594,8 +255211,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        java.util.Arrays.fill(outArr2, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -254676,6 +255296,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value) + tailDirty(outArr2, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -254686,6 +255307,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMacd(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -254695,6 +255317,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
@@ -254753,8 +255376,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        java.util.Arrays.fill(outArr2, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -254835,6 +255461,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value) + tailDirty(outArr2, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -254845,6 +255472,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMacdext(core, json, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, hb);
             hb.append("}");
             return hb.toString();
@@ -254854,6 +255482,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
@@ -254901,8 +255530,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        java.util.Arrays.fill(outArr2, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -254983,6 +255615,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value) + tailDirty(outArr2, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -254993,6 +255626,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMacdfix(core, json, endIdx, inReal, optInSignalPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -255002,6 +255636,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
@@ -255051,7 +255686,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -255132,6 +255769,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -255141,6 +255779,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMama(core, json, endIdx, inReal, optInFastLimit, optInSlowLimit, hb);
             hb.append("}");
             return hb.toString();
@@ -255150,6 +255789,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -255203,6 +255843,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -255289,6 +255930,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -255297,6 +255939,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMarketfi(core, json, endIdx, inHigh, inLow, inVolume, hb);
             hb.append("}");
             return hb.toString();
@@ -255306,6 +255949,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -255356,6 +256000,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -255439,6 +256084,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -255447,6 +256093,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMassi(core, json, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -255456,6 +256103,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -255509,6 +256157,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -255592,6 +256241,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -255600,6 +256250,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMavp(core, json, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, hb);
             hb.append("}");
             return hb.toString();
@@ -255609,6 +256260,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -255654,6 +256306,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -255734,6 +256387,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -255742,6 +256396,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMax(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -255751,6 +256406,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -255796,6 +256452,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -255876,6 +256533,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -255884,6 +256542,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMaxindex(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -255893,6 +256552,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -255939,6 +256599,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -256019,6 +256680,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -256027,6 +256689,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMcgd(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -256036,6 +256699,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -256081,6 +256745,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -256161,6 +256826,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -256169,6 +256835,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMedian(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -256178,6 +256845,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -256226,6 +256894,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -256309,6 +256978,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -256317,6 +256987,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMedprice(core, json, endIdx, inHigh, inLow, hb);
             hb.append("}");
             return hb.toString();
@@ -256326,6 +256997,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -256383,6 +257055,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -256472,6 +257145,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -256480,6 +257154,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMfi(core, json, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -256489,6 +257164,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -256534,6 +257210,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -256614,6 +257291,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -256622,6 +257300,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMidpoint(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -256631,6 +257310,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -256680,6 +257360,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -256763,6 +257444,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -256771,6 +257453,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMidprice(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -256780,6 +257463,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -256825,6 +257509,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -256905,6 +257590,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -256913,6 +257599,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMin(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -256922,6 +257609,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -256967,6 +257655,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -257047,6 +257736,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -257055,6 +257745,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMinindex(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -257064,6 +257755,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -257109,7 +257801,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -257190,6 +257884,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -257199,6 +257894,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMinmax(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -257208,6 +257904,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -257254,7 +257951,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         int[] outArr0 = new int[_outLen];
+        java.util.Arrays.fill(outArr0, TAIL_I32);
         int[] outArr1 = new int[_outLen];
+        java.util.Arrays.fill(outArr1, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -257335,6 +258034,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -257344,6 +258044,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMinmaxindex(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -257353,6 +258054,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outInteger1\":").append(intArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -257408,6 +258110,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -257494,6 +258197,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -257502,6 +258206,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMinusDi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -257511,6 +258216,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -257561,6 +258267,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -257644,6 +258351,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -257652,6 +258360,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMinusDm(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -257661,6 +258370,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -257706,6 +258416,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -257786,6 +258497,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -257794,6 +258506,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMom(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -257803,6 +258516,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -257851,6 +258565,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -257934,6 +258649,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -257942,6 +258658,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideMult(core, json, endIdx, inReal0, inReal1, hb);
             hb.append("}");
             return hb.toString();
@@ -257951,6 +258668,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -258005,6 +258723,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -258091,6 +258810,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -258099,6 +258819,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideNatr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -258108,6 +258829,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -258156,6 +258878,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -258239,6 +258962,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -258247,6 +258971,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideNvi(core, json, endIdx, inClose, inVolume, hb);
             hb.append("}");
             return hb.toString();
@@ -258256,6 +258981,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -258304,6 +259030,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -258387,6 +259114,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -258395,6 +259123,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideObv(core, json, endIdx, inReal, inVolume, hb);
             hb.append("}");
             return hb.toString();
@@ -258404,6 +259133,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -258454,6 +259184,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -258534,6 +259265,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -258542,6 +259274,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             ridePercentb(core, json, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, hb);
             hb.append("}");
             return hb.toString();
@@ -258551,6 +259284,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -258597,6 +259331,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -258677,6 +259412,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -258685,6 +259421,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             ridePercentile(core, json, endIdx, inReal, optInTimePeriod, optInPercentile, hb);
             hb.append("}");
             return hb.toString();
@@ -258694,6 +259431,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -258739,6 +259477,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -258819,6 +259558,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -258827,6 +259567,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             ridePercentrank(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -258836,6 +259577,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -258890,6 +259632,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -258976,6 +259719,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -258984,6 +259728,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             ridePlusDi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -258993,6 +259738,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -259043,6 +259789,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -259126,6 +259873,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -259134,6 +259882,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             ridePlusDm(core, json, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -259143,6 +259892,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -259192,6 +259942,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -259272,6 +260023,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -259280,6 +260032,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             ridePpo(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, hb);
             hb.append("}");
             return hb.toString();
@@ -259289,6 +260042,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -259343,6 +260097,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -259429,6 +260184,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -259437,6 +260193,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             ridePso(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInEMAPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -259446,6 +260203,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -259494,6 +260252,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -259577,6 +260336,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -259585,6 +260345,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             ridePvi(core, json, endIdx, inClose, inVolume, hb);
             hb.append("}");
             return hb.toString();
@@ -259594,6 +260355,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -259643,6 +260405,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -259723,6 +260486,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -259731,6 +260495,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             ridePvo(core, json, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, hb);
             hb.append("}");
             return hb.toString();
@@ -259740,6 +260505,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -259788,6 +260554,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -259871,6 +260638,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -259879,6 +260647,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             ridePvt(core, json, endIdx, inClose, inVolume, hb);
             hb.append("}");
             return hb.toString();
@@ -259888,6 +260657,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -259937,6 +260707,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -260020,6 +260791,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -260028,6 +260800,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideQstick(core, json, endIdx, inOpen, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -260037,6 +260810,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -260083,6 +260857,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -260163,6 +260938,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -260171,6 +260947,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideRma(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -260180,6 +260957,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -260225,6 +261003,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -260305,6 +261084,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -260313,6 +261093,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideRoc(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -260322,6 +261103,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -260367,6 +261149,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -260447,6 +261230,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -260455,6 +261239,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideRocp(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -260464,6 +261249,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -260509,6 +261295,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -260589,6 +261376,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -260597,6 +261385,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideRocr(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -260606,6 +261395,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -260651,6 +261441,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -260731,6 +261522,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -260739,6 +261531,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideRocr100(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -260748,6 +261541,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -260806,6 +261600,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -260895,6 +261690,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -260903,6 +261699,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideRogerssatchell(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInTimePeriod, optInAnnualization, hb);
             hb.append("}");
             return hb.toString();
@@ -260912,6 +261709,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -260958,6 +261756,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -261038,6 +261837,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -261046,6 +261846,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideRsi(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -261055,6 +261856,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -261102,6 +261904,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -261182,6 +261985,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -261190,6 +261994,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideRvi(core, json, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -261199,6 +262004,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -261249,6 +262055,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -261332,6 +262139,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -261340,6 +262148,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideRvir(core, json, endIdx, inHigh, inLow, optInTimePeriod, optInStdDevPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -261349,6 +262158,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -261394,6 +262204,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -261474,6 +262285,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -261482,6 +262294,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideRvol(core, json, endIdx, inVolume, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -261491,6 +262304,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -261541,6 +262355,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -261624,6 +262439,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -261632,6 +262448,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideSar(core, json, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, hb);
             hb.append("}");
             return hb.toString();
@@ -261641,6 +262458,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -261697,6 +262515,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -261780,6 +262599,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -261788,6 +262608,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideSarext(core, json, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, hb);
             hb.append("}");
             return hb.toString();
@@ -261797,6 +262618,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -261854,6 +262676,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -261943,6 +262766,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -261951,6 +262775,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideSi(core, json, endIdx, inOpen, inHigh, inLow, inClose, optInLimitMove, hb);
             hb.append("}");
             return hb.toString();
@@ -261960,6 +262785,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -262004,6 +262830,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -262084,6 +262911,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -262092,6 +262920,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideSin(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -262101,6 +262930,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -262145,6 +262975,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -262225,6 +263056,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -262233,6 +263065,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideSinh(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -262242,6 +263075,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -262287,6 +263121,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -262367,6 +263202,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -262375,6 +263211,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideSma(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -262384,6 +263221,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -262440,7 +263278,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -262527,6 +263367,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -262536,6 +263377,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideSmi(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -262545,6 +263387,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -262590,6 +263433,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -262670,6 +263514,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -262678,6 +263523,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideSqrt(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -262687,6 +263533,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -262745,7 +263592,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         int[] outArr1 = new int[_outLen];
+        java.util.Arrays.fill(outArr1, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -262832,6 +263681,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -262841,6 +263691,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideSqzmom(core, json, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, hb);
             hb.append("}");
             return hb.toString();
@@ -262850,6 +263701,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -262899,6 +263751,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -262979,6 +263832,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -262987,6 +263841,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideStc(core, json, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -262996,6 +263851,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -263042,6 +263898,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -263122,6 +263979,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -263130,6 +263988,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideStddev(core, json, endIdx, inReal, optInTimePeriod, optInNbDev, hb);
             hb.append("}");
             return hb.toString();
@@ -263139,6 +263998,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -263200,7 +264060,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -263287,6 +264149,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -263296,6 +264159,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideStoch(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, hb);
             hb.append("}");
             return hb.toString();
@@ -263305,6 +264169,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -263363,7 +264228,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -263450,6 +264317,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -263459,6 +264327,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideStochf(core, json, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, hb);
             hb.append("}");
             return hb.toString();
@@ -263468,6 +264337,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -263519,7 +264389,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -263600,6 +264472,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -263609,6 +264482,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideStochrsi(core, json, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, hb);
             hb.append("}");
             return hb.toString();
@@ -263618,6 +264492,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -263667,6 +264542,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -263750,6 +264626,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -263758,6 +264635,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideSub(core, json, endIdx, inReal0, inReal1, hb);
             hb.append("}");
             return hb.toString();
@@ -263767,6 +264645,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -263812,6 +264691,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -263892,6 +264772,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -263900,6 +264781,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideSum(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -263909,6 +264791,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -263963,7 +264846,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         int[] outArr1 = new int[_outLen];
+        java.util.Arrays.fill(outArr1, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -264050,6 +264935,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -264059,6 +264945,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideSupertrend(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, hb);
             hb.append("}");
             return hb.toString();
@@ -264068,6 +264955,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -264115,6 +265003,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -264195,6 +265084,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -264203,6 +265093,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideSwak2php(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -264212,6 +265103,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -264259,6 +265151,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -264339,6 +265232,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -264347,6 +265241,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideSwakBp(core, json, endIdx, inReal, optInTimePeriod, optInDelta, hb);
             hb.append("}");
             return hb.toString();
@@ -264356,6 +265251,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -264402,6 +265298,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -264482,6 +265379,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -264490,6 +265388,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideSwakButter(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -264499,6 +265398,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -264545,6 +265445,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -264625,6 +265526,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -264633,6 +265535,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideSwakGauss(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -264642,6 +265545,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -264688,6 +265592,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -264768,6 +265673,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -264776,6 +265682,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideSwakHp(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -264785,6 +265692,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -264832,6 +265740,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -264912,6 +265821,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -264920,6 +265830,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideT3(core, json, endIdx, inReal, optInTimePeriod, optInVFactor, hb);
             hb.append("}");
             return hb.toString();
@@ -264929,6 +265840,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -264973,6 +265885,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -265053,6 +265966,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -265061,6 +265975,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideTan(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -265070,6 +265985,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -265114,6 +266030,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -265194,6 +266111,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -265202,6 +266120,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideTanh(core, json, endIdx, inReal, hb);
             hb.append("}");
             return hb.toString();
@@ -265211,6 +266130,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -265256,6 +266176,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -265336,6 +266257,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -265344,6 +266266,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideTema(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -265353,6 +266276,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -265405,6 +266329,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -265491,6 +266416,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -265499,6 +266425,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideTrange(core, json, endIdx, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -265508,6 +266435,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -265553,6 +266481,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -265633,6 +266562,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -265641,6 +266571,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideTrima(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -265650,6 +266581,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -265695,6 +266627,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -265775,6 +266708,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -265783,6 +266717,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideTrix(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -265792,6 +266727,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -265837,6 +266773,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -265917,6 +266854,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -265925,6 +266863,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideTsf(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -265934,6 +266873,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -265980,6 +266920,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -266060,6 +267001,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -266068,6 +267010,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideTsi(core, json, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -266077,6 +267020,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -266129,6 +267073,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -266215,6 +267160,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -266223,6 +267169,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideTypprice(core, json, endIdx, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -266232,6 +267179,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -266287,6 +267235,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -266373,6 +267322,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -266381,6 +267331,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideUltosc(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, hb);
             hb.append("}");
             return hb.toString();
@@ -266390,6 +267341,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -266436,6 +267388,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -266516,6 +267469,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -266524,6 +267478,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideVar(core, json, endIdx, inReal, optInTimePeriod, optInNbDev, hb);
             hb.append("}");
             return hb.toString();
@@ -266533,6 +267488,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -266578,6 +267534,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -266658,6 +267615,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -266666,6 +267624,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideVhf(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -266675,6 +267634,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -266722,6 +267682,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -266802,6 +267763,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -266810,6 +267772,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideVidya(core, json, endIdx, inReal, optInTimePeriod, optInCMOPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -266819,6 +267782,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -266872,7 +267836,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -266959,6 +267925,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -266968,6 +267935,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideVortex(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -266977,6 +267945,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -267034,6 +268003,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -267123,6 +268093,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -267131,6 +268102,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideVwap(core, json, endIdx, inHigh, inLow, inClose, inVolume, hb);
             hb.append("}");
             return hb.toString();
@@ -267140,6 +268112,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -267189,6 +268162,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -267272,6 +268246,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -267280,6 +268255,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideVwma(core, json, endIdx, inReal, inVolume, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -267289,6 +268265,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -267341,6 +268318,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -267427,6 +268405,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -267435,6 +268414,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideWad(core, json, endIdx, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -267444,6 +268424,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -267499,7 +268480,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -267586,6 +268569,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -267595,6 +268579,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideWavetrend(core, json, endIdx, inHigh, inLow, inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -267604,6 +268589,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
@@ -267657,6 +268643,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -267743,6 +268730,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -267751,6 +268739,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideWclprice(core, json, endIdx, inHigh, inLow, inClose, hb);
             hb.append("}");
             return hb.toString();
@@ -267760,6 +268749,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -267813,6 +268803,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -267899,6 +268890,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -267907,6 +268899,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideWillr(core, json, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -267916,6 +268909,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -267961,6 +268955,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -268041,6 +269036,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -268049,6 +269045,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideWma(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -268058,6 +269055,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
@@ -268108,8 +269106,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         int[] outArr1 = new int[_outLen];
+        java.util.Arrays.fill(outArr1, TAIL_I32);
         int[] outArr2 = new int[_outLen];
+        java.util.Arrays.fill(outArr2, TAIL_I32);
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -268193,6 +269194,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value) + tailDirty(outArr2, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -268203,6 +269205,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideZigzag(core, json, endIdx, inHigh, inLow, optInSensitivity, optInMinTrendLength, hb);
             hb.append("}");
             return hb.toString();
@@ -268212,6 +269215,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outInteger\":").append(intArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"outInteger1\":").append(intArrayToJson(outArr2, outNBElement.value));
@@ -268259,6 +269263,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.SUCCESS;
@@ -268339,6 +269344,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
             long _h = svHashInit();
             if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
@@ -268347,6 +269353,7 @@ public class TaCodegenServe {
             _h = svHashFin(_h);
             StringBuilder hb = new StringBuilder();
             hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
             rideZlema(core, json, endIdx, inReal, optInTimePeriod, hb);
             hb.append("}");
             return hb.toString();
@@ -268356,6 +269363,7 @@ public class TaCodegenServe {
         sb.append(",\"outBegIdx\":").append(outBegIdx.value);
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);

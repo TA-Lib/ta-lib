@@ -93,6 +93,21 @@ public class TaCodegenServe {
         return "\"" + string.Concat(parts) + "\"";
     }
 
+    const long TAIL_F64_BITS = 0x7ff8deadbeef1234L;
+    const int TAIL_I32 = 0x5eadbeef;
+
+    static int TailDirty(double[] arr, int from) {
+        int n = 0;
+        for (int i = from; i < arr.Length; i++) if (BitConverter.DoubleToInt64Bits(arr[i]) != TAIL_F64_BITS) n++;
+        return n;
+    }
+
+    static int TailDirty(int[] arr, int from) {
+        int n = 0;
+        for (int i = from; i < arr.Length; i++) if (arr[i] != TAIL_I32) n++;
+        return n;
+    }
+
     static string FormatIntArray(int[] arr, int count) {
         var parts = new string[count];
         for (int i = 0; i < count; i++)
@@ -81920,6 +81935,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -81985,6 +82001,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -81993,6 +82010,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAc(core, p, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -82000,6 +82018,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -82053,8 +82072,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        Array.Fill(outArr2, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -82122,6 +82144,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement) + TailDirty(outArr2, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -82132,6 +82155,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAccbands(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -82139,6 +82163,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -82185,6 +82210,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -82248,6 +82274,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -82256,6 +82283,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAcos(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -82263,6 +82291,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -82319,6 +82348,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -82388,6 +82418,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -82396,6 +82427,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAd(core, p, endIdx, inHigh, inLow, inClose, inVolume, hb);
             hb.Append("}");
             return hb.ToString();
@@ -82403,6 +82435,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -82451,6 +82484,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -82516,6 +82550,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -82524,6 +82559,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAdd(core, p, endIdx, inReal0, inReal1, hb);
             hb.Append("}");
             return hb.ToString();
@@ -82531,6 +82567,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -82589,6 +82626,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -82658,6 +82696,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -82666,6 +82705,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAdosc(core, p, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -82673,6 +82713,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -82722,6 +82763,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -82787,6 +82829,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -82795,6 +82838,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAdr(core, p, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -82802,6 +82846,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -82856,6 +82901,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -82923,6 +82969,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -82931,6 +82978,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAdx(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -82938,6 +82986,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -82991,6 +83040,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -83058,6 +83108,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -83066,6 +83117,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAdxr(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -83073,6 +83125,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -83120,6 +83173,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -83183,6 +83237,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -83191,6 +83246,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAlma(core, p, endIdx, inReal, optInTimePeriod, optInSigma, optInOffset, hb);
             hb.Append("}");
             return hb.ToString();
@@ -83198,6 +83254,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -83248,6 +83305,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -83313,6 +83371,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -83321,6 +83380,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAo(core, p, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -83328,6 +83388,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -83375,6 +83436,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -83438,6 +83500,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -83446,6 +83509,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideApo(core, p, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, hb);
             hb.Append("}");
             return hb.ToString();
@@ -83453,6 +83517,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -83502,7 +83567,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -83568,6 +83635,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -83577,6 +83645,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAroon(core, p, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -83584,6 +83653,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -83634,6 +83704,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -83699,6 +83770,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -83707,6 +83779,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAroonosc(core, p, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -83714,6 +83787,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -83771,6 +83845,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -83840,6 +83915,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -83848,6 +83924,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAsi(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInLimitMove, hb);
             hb.Append("}");
             return hb.ToString();
@@ -83855,6 +83932,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -83899,6 +83977,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -83962,6 +84041,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -83970,6 +84050,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAsin(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -83977,6 +84058,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -84021,6 +84103,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -84084,6 +84167,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -84092,6 +84176,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAtan(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -84099,6 +84184,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -84153,6 +84239,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -84220,6 +84307,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -84228,6 +84316,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAtr(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -84235,6 +84324,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -84280,6 +84370,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -84343,6 +84434,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -84351,6 +84443,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAvgdev(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -84358,6 +84451,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -84414,6 +84508,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -84483,6 +84578,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -84491,6 +84587,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideAvgprice(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -84498,6 +84595,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -84546,8 +84644,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        Array.Fill(outArr2, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -84611,6 +84712,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement) + TailDirty(outArr2, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -84621,6 +84723,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideBbands(core, p, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, hb);
             hb.Append("}");
             return hb.ToString();
@@ -84628,6 +84731,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -84678,6 +84782,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -84741,6 +84846,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -84749,6 +84855,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideBbw(core, p, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, hb);
             hb.Append("}");
             return hb.ToString();
@@ -84756,6 +84863,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -84805,6 +84913,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -84870,6 +84979,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -84878,6 +84988,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideBeta(core, p, endIdx, inReal0, inReal1, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -84885,6 +84996,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -84941,6 +85053,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -85010,6 +85123,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -85018,6 +85132,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideBop(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -85025,6 +85140,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -85078,6 +85194,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -85145,6 +85262,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -85153,6 +85271,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCci(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -85160,6 +85279,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -85216,6 +85336,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -85285,6 +85406,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -85293,6 +85415,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdl2crows(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -85300,6 +85423,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -85356,6 +85480,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -85425,6 +85550,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -85433,6 +85559,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdl3blackcrows(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -85440,6 +85567,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -85496,6 +85624,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -85565,6 +85694,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -85573,6 +85703,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdl3inside(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -85580,6 +85711,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -85636,6 +85768,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -85705,6 +85838,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -85713,6 +85847,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdl3linestrike(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -85720,6 +85855,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -85776,6 +85912,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -85845,6 +85982,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -85853,6 +85991,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdl3outside(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -85860,6 +85999,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -85916,6 +86056,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -85985,6 +86126,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -85993,6 +86135,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdl3starsinsouth(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -86000,6 +86143,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -86056,6 +86200,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -86125,6 +86270,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -86133,6 +86279,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdl3whitesoldiers(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -86140,6 +86287,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -86197,6 +86345,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -86266,6 +86415,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -86274,6 +86424,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlabandonedbaby(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.Append("}");
             return hb.ToString();
@@ -86281,6 +86432,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -86337,6 +86489,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -86406,6 +86559,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -86414,6 +86568,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdladvanceblock(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -86421,6 +86576,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -86477,6 +86633,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -86546,6 +86703,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -86554,6 +86712,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlbelthold(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -86561,6 +86720,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -86617,6 +86777,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -86686,6 +86847,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -86694,6 +86856,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlbreakaway(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -86701,6 +86864,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -86757,6 +86921,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -86826,6 +86991,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -86834,6 +87000,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlclosingmarubozu(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -86841,6 +87008,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -86897,6 +87065,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -86966,6 +87135,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -86974,6 +87144,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlconcealbabyswall(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -86981,6 +87152,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -87037,6 +87209,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -87106,6 +87279,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -87114,6 +87288,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlcounterattack(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -87121,6 +87296,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -87178,6 +87354,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -87247,6 +87424,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -87255,6 +87433,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdldarkcloudcover(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.Append("}");
             return hb.ToString();
@@ -87262,6 +87441,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -87318,6 +87498,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -87387,6 +87568,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -87395,6 +87577,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdldoji(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -87402,6 +87585,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -87458,6 +87642,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -87527,6 +87712,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -87535,6 +87721,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdldojistar(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -87542,6 +87729,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -87598,6 +87786,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -87667,6 +87856,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -87675,6 +87865,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdldragonflydoji(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -87682,6 +87873,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -87738,6 +87930,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -87807,6 +88000,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -87815,6 +88009,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlengulfing(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -87822,6 +88017,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -87879,6 +88075,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -87948,6 +88145,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -87956,6 +88154,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdleveningdojistar(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.Append("}");
             return hb.ToString();
@@ -87963,6 +88162,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -88020,6 +88220,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -88089,6 +88290,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -88097,6 +88299,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdleveningstar(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.Append("}");
             return hb.ToString();
@@ -88104,6 +88307,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -88160,6 +88364,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -88229,6 +88434,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -88237,6 +88443,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlgapsidesidewhite(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -88244,6 +88451,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -88300,6 +88508,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -88369,6 +88578,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -88377,6 +88587,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlgravestonedoji(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -88384,6 +88595,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -88440,6 +88652,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -88509,6 +88722,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -88517,6 +88731,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlhammer(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -88524,6 +88739,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -88580,6 +88796,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -88649,6 +88866,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -88657,6 +88875,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlhangingman(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -88664,6 +88883,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -88720,6 +88940,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -88789,6 +89010,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -88797,6 +89019,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlharami(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -88804,6 +89027,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -88860,6 +89084,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -88929,6 +89154,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -88937,6 +89163,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlharamicross(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -88944,6 +89171,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -89000,6 +89228,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -89069,6 +89298,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -89077,6 +89307,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlhighwave(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -89084,6 +89315,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -89140,6 +89372,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -89209,6 +89442,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -89217,6 +89451,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlhikkake(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -89224,6 +89459,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -89280,6 +89516,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -89349,6 +89586,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -89357,6 +89595,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlhikkakemod(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -89364,6 +89603,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -89420,6 +89660,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -89489,6 +89730,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -89497,6 +89739,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlhomingpigeon(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -89504,6 +89747,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -89560,6 +89804,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -89629,6 +89874,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -89637,6 +89883,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlidentical3crows(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -89644,6 +89891,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -89700,6 +89948,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -89769,6 +90018,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -89777,6 +90027,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlinneck(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -89784,6 +90035,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -89840,6 +90092,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -89909,6 +90162,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -89917,6 +90171,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlinvertedhammer(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -89924,6 +90179,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -89980,6 +90236,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -90049,6 +90306,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -90057,6 +90315,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlkicking(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -90064,6 +90323,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -90120,6 +90380,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -90189,6 +90450,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -90197,6 +90459,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlkickingbylength(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -90204,6 +90467,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -90260,6 +90524,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -90329,6 +90594,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -90337,6 +90603,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlladderbottom(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -90344,6 +90611,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -90400,6 +90668,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -90469,6 +90738,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -90477,6 +90747,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdllongleggeddoji(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -90484,6 +90755,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -90540,6 +90812,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -90609,6 +90882,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -90617,6 +90891,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdllongline(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -90624,6 +90899,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -90680,6 +90956,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -90749,6 +91026,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -90757,6 +91035,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlmarubozu(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -90764,6 +91043,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -90820,6 +91100,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -90889,6 +91170,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -90897,6 +91179,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlmatchinglow(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -90904,6 +91187,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -90961,6 +91245,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -91030,6 +91315,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -91038,6 +91324,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlmathold(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.Append("}");
             return hb.ToString();
@@ -91045,6 +91332,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -91102,6 +91390,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -91171,6 +91460,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -91179,6 +91469,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlmorningdojistar(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.Append("}");
             return hb.ToString();
@@ -91186,6 +91477,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -91243,6 +91535,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -91312,6 +91605,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -91320,6 +91614,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlmorningstar(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, hb);
             hb.Append("}");
             return hb.ToString();
@@ -91327,6 +91622,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -91383,6 +91679,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -91452,6 +91749,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -91460,6 +91758,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlonneck(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -91467,6 +91766,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -91523,6 +91823,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -91592,6 +91893,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -91600,6 +91902,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlpiercing(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -91607,6 +91910,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -91663,6 +91967,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -91732,6 +92037,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -91740,6 +92046,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlrickshawman(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -91747,6 +92054,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -91803,6 +92111,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -91872,6 +92181,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -91880,6 +92190,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlrisefall3methods(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -91887,6 +92198,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -91943,6 +92255,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -92012,6 +92325,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -92020,6 +92334,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlseparatinglines(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -92027,6 +92342,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -92083,6 +92399,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -92152,6 +92469,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -92160,6 +92478,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlshootingstar(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -92167,6 +92486,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -92223,6 +92543,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -92292,6 +92613,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -92300,6 +92622,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlshortline(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -92307,6 +92630,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -92363,6 +92687,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -92432,6 +92757,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -92440,6 +92766,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlspinningtop(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -92447,6 +92774,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -92503,6 +92831,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -92572,6 +92901,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -92580,6 +92910,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlstalledpattern(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -92587,6 +92918,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -92643,6 +92975,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -92712,6 +93045,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -92720,6 +93054,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlsticksandwich(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -92727,6 +93062,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -92783,6 +93119,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -92852,6 +93189,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -92860,6 +93198,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdltakuri(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -92867,6 +93206,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -92923,6 +93263,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -92992,6 +93333,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -93000,6 +93342,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdltasukigap(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -93007,6 +93350,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -93063,6 +93407,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -93132,6 +93477,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -93140,6 +93486,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlthrusting(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -93147,6 +93494,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -93203,6 +93551,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -93272,6 +93621,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -93280,6 +93630,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdltristar(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -93287,6 +93638,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -93343,6 +93695,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -93412,6 +93765,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -93420,6 +93774,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlunique3river(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -93427,6 +93782,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -93483,6 +93839,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -93552,6 +93909,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -93560,6 +93918,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlupsidegap2crows(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -93567,6 +93926,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -93623,6 +93983,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -93692,6 +94053,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -93700,6 +94062,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCdlxsidegap3methods(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -93707,6 +94070,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -93751,6 +94115,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -93814,6 +94179,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -93822,6 +94188,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCeil(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -93829,6 +94196,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -93874,6 +94242,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -93937,6 +94306,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -93945,6 +94315,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCg(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -93952,6 +94323,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -94005,6 +94377,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -94072,6 +94445,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -94080,6 +94454,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideChop(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -94087,6 +94462,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -94140,6 +94516,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -94207,6 +94584,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -94215,6 +94593,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideChoptr(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -94222,6 +94601,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -94277,7 +94657,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -94345,6 +94727,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -94354,6 +94737,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCksp(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -94361,6 +94745,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -94419,6 +94804,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -94488,6 +94874,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -94496,6 +94883,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCmf(core, p, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -94503,6 +94891,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -94549,6 +94938,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -94612,6 +95002,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -94620,6 +95011,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCmo(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -94627,6 +95019,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -94672,6 +95065,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -94735,6 +95129,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -94743,6 +95138,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCmou(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -94750,6 +95146,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -94797,6 +95194,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -94860,6 +95258,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -94868,6 +95267,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCoppock(core, p, endIdx, inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, hb);
             hb.Append("}");
             return hb.ToString();
@@ -94875,6 +95275,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -94924,6 +95325,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -94989,6 +95391,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -94997,6 +95400,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCorrel(core, p, endIdx, inReal0, inReal1, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -95004,6 +95408,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -95048,6 +95453,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -95111,6 +95517,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -95119,6 +95526,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCos(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -95126,6 +95534,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -95170,6 +95579,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -95233,6 +95643,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -95241,6 +95652,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCosh(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -95248,6 +95660,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -95295,6 +95708,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -95358,6 +95772,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -95366,6 +95781,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCrsi(core, p, endIdx, inReal, optInTimePeriod, optInStreakPeriod, optInRankPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -95373,6 +95789,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -95418,6 +95835,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -95481,6 +95899,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -95489,6 +95908,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCti(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -95496,6 +95916,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -95540,6 +95961,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -95603,6 +96025,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -95611,6 +96034,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCumsum(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -95618,6 +96042,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -95668,6 +96093,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -95733,6 +96159,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -95741,6 +96168,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideCvi(core, p, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -95748,6 +96176,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -95793,6 +96222,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -95856,6 +96286,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -95864,6 +96295,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideDema(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -95871,6 +96303,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -95919,6 +96352,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -95984,6 +96418,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -95992,6 +96427,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideDiv(core, p, endIdx, inReal0, inReal1, hb);
             hb.Append("}");
             return hb.ToString();
@@ -95999,6 +96435,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -96048,8 +96485,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        Array.Fill(outArr2, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -96115,6 +96555,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement) + TailDirty(outArr2, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -96125,6 +96566,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideDonchian(core, p, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -96132,6 +96574,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -96182,6 +96625,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -96245,6 +96689,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -96253,6 +96698,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideDosc(core, p, endIdx, inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -96260,6 +96706,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -96305,6 +96752,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -96368,6 +96816,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -96376,6 +96825,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideDpo(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -96383,6 +96833,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -96437,6 +96888,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -96504,6 +96956,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -96512,6 +96965,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideDx(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -96519,6 +96973,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -96568,6 +97023,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -96633,6 +97089,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -96641,6 +97098,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideEfi(core, p, endIdx, inClose, inVolume, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -96648,6 +97106,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -96694,6 +97153,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -96757,6 +97217,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -96765,6 +97226,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideEma(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -96772,6 +97234,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -96826,6 +97289,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -96893,6 +97357,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -96901,6 +97366,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideEmv(core, p, endIdx, inHigh, inLow, inVolume, optInTimePeriod, optInVolumeDivisor, hb);
             hb.Append("}");
             return hb.ToString();
@@ -96908,6 +97374,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -96953,6 +97420,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -97016,6 +97484,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -97024,6 +97493,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideEr(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -97031,6 +97501,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -97084,7 +97555,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -97152,6 +97625,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -97161,6 +97635,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideEri(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -97168,6 +97643,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -97213,6 +97689,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -97276,6 +97753,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -97284,6 +97762,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideExp(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -97291,6 +97770,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -97341,7 +97821,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -97407,6 +97889,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -97416,6 +97899,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideFisher(core, p, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -97423,6 +97907,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -97468,6 +97953,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -97531,6 +98017,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -97539,6 +98026,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideFloor(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -97546,6 +98034,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -97591,6 +98080,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -97654,6 +98144,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -97662,6 +98153,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideFosc(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -97669,6 +98161,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -97719,7 +98212,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int[] outArr1 = new int[_outLen];
+        Array.Fill(outArr1, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -97785,6 +98280,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -97794,6 +98290,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideFractal(core, p, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, hb);
             hb.Append("}");
             return hb.ToString();
@@ -97801,6 +98298,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
             sb.Append(",\"outInteger1\":"); sb.Append(FormatIntArray(outArr1, outNBElement));
@@ -97852,6 +98350,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -97917,6 +98416,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -97925,6 +98425,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideFrama(core, p, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -97932,6 +98433,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -97989,9 +98491,13 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        Array.Fill(outArr2, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr3 = new double[_outLen];
+        Array.Fill(outArr3, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -98061,6 +98567,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement) + TailDirty(outArr2, outNBElement) + TailDirty(outArr3, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -98072,6 +98579,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideHa(core, p, endIdx, inOpen, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -98079,6 +98587,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -98127,6 +98636,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -98190,6 +98700,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -98198,6 +98709,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideHma(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -98205,6 +98717,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -98250,6 +98763,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -98313,6 +98827,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -98321,6 +98836,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideHtDcperiod(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -98328,6 +98844,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -98373,6 +98890,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -98436,6 +98954,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -98444,6 +98963,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideHtDcphase(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -98451,6 +98971,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -98496,7 +99017,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -98560,6 +99083,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -98569,6 +99093,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideHtPhasor(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -98576,6 +99101,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -98622,7 +99148,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -98686,6 +99214,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -98695,6 +99224,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideHtSine(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -98702,6 +99232,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -98748,6 +99279,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -98811,6 +99343,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -98819,6 +99352,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideHtTrendline(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -98826,6 +99360,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -98871,6 +99406,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -98934,6 +99470,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -98942,6 +99479,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideHtTrendmode(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -98949,6 +99487,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -99001,6 +99540,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -99068,6 +99608,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -99076,6 +99617,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideIbs(core, p, endIdx, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -99083,6 +99625,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -99134,9 +99677,13 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        Array.Fill(outArr2, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr3 = new double[_outLen];
+        Array.Fill(outArr3, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -99202,6 +99749,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement) + TailDirty(outArr2, outNBElement) + TailDirty(outArr3, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -99213,6 +99761,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideIchimoku(core, p, endIdx, inHigh, inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -99220,6 +99769,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -99272,6 +99822,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -99337,6 +99888,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -99345,6 +99897,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideImi(core, p, endIdx, inOpen, inClose, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -99352,6 +99905,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -99398,6 +99952,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -99461,6 +100016,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -99469,6 +100025,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideKama(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -99476,6 +100033,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -99531,8 +100089,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        Array.Fill(outArr2, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -99600,6 +100161,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement) + TailDirty(outArr2, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -99610,6 +100172,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideKc(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInATRPeriod, optInNbDev, hb);
             hb.Append("}");
             return hb.ToString();
@@ -99617,6 +100180,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -99676,8 +100240,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        Array.Fill(outArr2, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -99745,6 +100312,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement) + TailDirty(outArr2, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -99755,6 +100323,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideKdj(core, p, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, hb);
             hb.Append("}");
             return hb.ToString();
@@ -99762,6 +100331,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -99817,7 +100387,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -99881,6 +100453,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -99890,6 +100463,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideKst(core, p, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -99897,6 +100471,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -99953,7 +100528,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -100017,6 +100594,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -100026,6 +100604,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideKstext(core, p, endIdx, inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, hb);
             hb.Append("}");
             return hb.ToString();
@@ -100033,6 +100612,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -100079,6 +100659,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -100142,6 +100723,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -100150,6 +100732,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideKurtosis(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -100157,6 +100740,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -100216,7 +100800,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -100286,6 +100872,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -100295,6 +100882,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideKvo(core, p, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -100302,6 +100890,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -100348,6 +100937,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -100411,6 +101001,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -100419,6 +101010,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideLinearreg(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -100426,6 +101018,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -100471,6 +101064,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -100534,6 +101128,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -100542,6 +101137,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideLinearregAngle(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -100549,6 +101145,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -100594,6 +101191,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -100657,6 +101255,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -100665,6 +101264,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideLinearregIntercept(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -100672,6 +101272,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -100717,6 +101318,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -100780,6 +101382,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -100788,6 +101391,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideLinearregSlope(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -100795,6 +101399,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -100839,6 +101444,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -100902,6 +101508,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -100910,6 +101517,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideLn(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -100917,6 +101525,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -100961,6 +101570,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -101024,6 +101634,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -101032,6 +101643,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideLog10(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -101039,6 +101651,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -101085,6 +101698,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -101148,6 +101762,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -101156,6 +101771,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMa(core, p, endIdx, inReal, optInTimePeriod, optInMAType, hb);
             hb.Append("}");
             return hb.ToString();
@@ -101163,6 +101779,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -101210,8 +101827,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        Array.Fill(outArr2, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -101275,6 +101895,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement) + TailDirty(outArr2, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -101285,6 +101906,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMacd(core, p, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -101292,6 +101914,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -101344,8 +101967,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        Array.Fill(outArr2, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -101409,6 +102035,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement) + TailDirty(outArr2, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -101419,6 +102046,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMacdext(core, p, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, hb);
             hb.Append("}");
             return hb.ToString();
@@ -101426,6 +102054,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -101473,8 +102102,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr2 = new double[_outLen];
+        Array.Fill(outArr2, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -101538,6 +102170,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement) + TailDirty(outArr2, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -101548,6 +102181,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMacdfix(core, p, endIdx, inReal, optInSignalPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -101555,6 +102189,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -101604,7 +102239,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -101668,6 +102305,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -101677,6 +102315,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMama(core, p, endIdx, inReal, optInFastLimit, optInSlowLimit, hb);
             hb.Append("}");
             return hb.ToString();
@@ -101684,6 +102323,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -101737,6 +102377,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -101804,6 +102445,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -101812,6 +102454,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMarketfi(core, p, endIdx, inHigh, inLow, inVolume, hb);
             hb.Append("}");
             return hb.ToString();
@@ -101819,6 +102462,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -101869,6 +102513,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -101934,6 +102579,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -101942,6 +102588,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMassi(core, p, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -101949,6 +102596,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -102000,6 +102648,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -102065,6 +102714,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -102073,6 +102723,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMavp(core, p, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, hb);
             hb.Append("}");
             return hb.ToString();
@@ -102080,6 +102731,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -102125,6 +102777,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -102188,6 +102841,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -102196,6 +102850,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMax(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -102203,6 +102858,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -102248,6 +102904,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -102311,6 +102968,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -102319,6 +102977,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMaxindex(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -102326,6 +102985,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -102372,6 +103032,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -102435,6 +103096,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -102443,6 +103105,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMcgd(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -102450,6 +103113,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -102495,6 +103159,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -102558,6 +103223,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -102566,6 +103232,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMedian(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -102573,6 +103240,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -102621,6 +103289,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -102686,6 +103355,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -102694,6 +103364,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMedprice(core, p, endIdx, inHigh, inLow, hb);
             hb.Append("}");
             return hb.ToString();
@@ -102701,6 +103372,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -102758,6 +103430,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -102827,6 +103500,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -102835,6 +103509,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMfi(core, p, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -102842,6 +103517,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -102887,6 +103563,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -102950,6 +103627,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -102958,6 +103636,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMidpoint(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -102965,6 +103644,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -103014,6 +103694,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -103079,6 +103760,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -103087,6 +103769,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMidprice(core, p, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -103094,6 +103777,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -103139,6 +103823,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -103202,6 +103887,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -103210,6 +103896,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMin(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -103217,6 +103904,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -103262,6 +103950,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -103325,6 +104014,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -103333,6 +104023,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMinindex(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -103340,6 +104031,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
         }
@@ -103385,7 +104077,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -103449,6 +104143,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -103458,6 +104153,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMinmax(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -103465,6 +104161,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -103511,7 +104208,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         int[] outArr0 = new int[_outLen];
+        Array.Fill(outArr0, TAIL_I32);
         int[] outArr1 = new int[_outLen];
+        Array.Fill(outArr1, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -103575,6 +104274,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -103584,6 +104284,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMinmaxindex(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -103591,6 +104292,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr0, outNBElement));
             sb.Append(",\"outInteger1\":"); sb.Append(FormatIntArray(outArr1, outNBElement));
@@ -103646,6 +104348,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -103713,6 +104416,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -103721,6 +104425,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMinusDi(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -103728,6 +104433,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -103778,6 +104484,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -103843,6 +104550,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -103851,6 +104559,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMinusDm(core, p, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -103858,6 +104567,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -103903,6 +104613,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -103966,6 +104677,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -103974,6 +104686,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMom(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -103981,6 +104694,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -104029,6 +104743,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -104094,6 +104809,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -104102,6 +104818,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideMult(core, p, endIdx, inReal0, inReal1, hb);
             hb.Append("}");
             return hb.ToString();
@@ -104109,6 +104826,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -104163,6 +104881,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -104230,6 +104949,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -104238,6 +104958,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideNatr(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -104245,6 +104966,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -104293,6 +105015,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -104358,6 +105081,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -104366,6 +105090,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideNvi(core, p, endIdx, inClose, inVolume, hb);
             hb.Append("}");
             return hb.ToString();
@@ -104373,6 +105098,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -104421,6 +105147,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -104486,6 +105213,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -104494,6 +105222,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideObv(core, p, endIdx, inReal, inVolume, hb);
             hb.Append("}");
             return hb.ToString();
@@ -104501,6 +105230,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -104549,6 +105279,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -104612,6 +105343,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -104620,6 +105352,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RidePercentb(core, p, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, hb);
             hb.Append("}");
             return hb.ToString();
@@ -104627,6 +105360,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -104673,6 +105407,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -104736,6 +105471,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -104744,6 +105480,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RidePercentile(core, p, endIdx, inReal, optInTimePeriod, optInPercentile, hb);
             hb.Append("}");
             return hb.ToString();
@@ -104751,6 +105488,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -104796,6 +105534,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -104859,6 +105598,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -104867,6 +105607,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RidePercentrank(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -104874,6 +105615,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -104928,6 +105670,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -104995,6 +105738,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -105003,6 +105747,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RidePlusDi(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -105010,6 +105755,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -105060,6 +105806,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -105125,6 +105872,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -105133,6 +105881,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RidePlusDm(core, p, endIdx, inHigh, inLow, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -105140,6 +105889,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -105187,6 +105937,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -105250,6 +106001,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -105258,6 +106010,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RidePpo(core, p, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, hb);
             hb.Append("}");
             return hb.ToString();
@@ -105265,6 +106018,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -105319,6 +106073,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -105386,6 +106141,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -105394,6 +106150,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RidePso(core, p, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInEMAPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -105401,6 +106158,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -105449,6 +106207,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -105514,6 +106273,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -105522,6 +106282,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RidePvi(core, p, endIdx, inClose, inVolume, hb);
             hb.Append("}");
             return hb.ToString();
@@ -105529,6 +106290,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -105576,6 +106338,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -105639,6 +106402,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -105647,6 +106411,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RidePvo(core, p, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, hb);
             hb.Append("}");
             return hb.ToString();
@@ -105654,6 +106419,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -105702,6 +106468,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -105767,6 +106534,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -105775,6 +106543,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RidePvt(core, p, endIdx, inClose, inVolume, hb);
             hb.Append("}");
             return hb.ToString();
@@ -105782,6 +106551,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -105831,6 +106601,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -105896,6 +106667,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -105904,6 +106676,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideQstick(core, p, endIdx, inOpen, inClose, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -105911,6 +106684,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -105957,6 +106731,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -106020,6 +106795,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -106028,6 +106804,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideRma(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -106035,6 +106812,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -106080,6 +106858,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -106143,6 +106922,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -106151,6 +106931,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideRoc(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -106158,6 +106939,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -106203,6 +106985,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -106266,6 +107049,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -106274,6 +107058,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideRocp(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -106281,6 +107066,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -106326,6 +107112,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -106389,6 +107176,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -106397,6 +107185,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideRocr(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -106404,6 +107193,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -106449,6 +107239,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -106512,6 +107303,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -106520,6 +107312,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideRocr100(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -106527,6 +107320,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -106585,6 +107379,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -106654,6 +107449,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -106662,6 +107458,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideRogerssatchell(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInTimePeriod, optInAnnualization, hb);
             hb.Append("}");
             return hb.ToString();
@@ -106669,6 +107466,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -106715,6 +107513,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -106778,6 +107577,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -106786,6 +107586,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideRsi(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -106793,6 +107594,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -106840,6 +107642,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -106903,6 +107706,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -106911,6 +107715,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideRvi(core, p, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -106918,6 +107723,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -106968,6 +107774,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -107033,6 +107840,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -107041,6 +107849,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideRvir(core, p, endIdx, inHigh, inLow, optInTimePeriod, optInStdDevPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -107048,6 +107857,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -107093,6 +107903,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -107156,6 +107967,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -107164,6 +107976,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideRvol(core, p, endIdx, inVolume, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -107171,6 +107984,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -107221,6 +108035,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -107286,6 +108101,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -107294,6 +108110,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideSar(core, p, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, hb);
             hb.Append("}");
             return hb.ToString();
@@ -107301,6 +108118,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -107357,6 +108175,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -107422,6 +108241,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -107430,6 +108250,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideSarext(core, p, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, hb);
             hb.Append("}");
             return hb.ToString();
@@ -107437,6 +108258,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -107494,6 +108316,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -107563,6 +108386,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -107571,6 +108395,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideSi(core, p, endIdx, inOpen, inHigh, inLow, inClose, optInLimitMove, hb);
             hb.Append("}");
             return hb.ToString();
@@ -107578,6 +108403,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -107622,6 +108448,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -107685,6 +108512,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -107693,6 +108521,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideSin(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -107700,6 +108529,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -107744,6 +108574,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -107807,6 +108638,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -107815,6 +108647,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideSinh(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -107822,6 +108655,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -107867,6 +108701,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -107930,6 +108765,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -107938,6 +108774,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideSma(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -107945,6 +108782,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -108001,7 +108839,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -108069,6 +108909,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -108078,6 +108919,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideSmi(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -108085,6 +108927,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -108130,6 +108973,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -108193,6 +109037,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -108201,6 +109046,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideSqrt(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -108208,6 +109054,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -108266,7 +109113,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int[] outArr1 = new int[_outLen];
+        Array.Fill(outArr1, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -108334,6 +109183,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -108343,6 +109193,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideSqzmom(core, p, endIdx, inHigh, inLow, inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, hb);
             hb.Append("}");
             return hb.ToString();
@@ -108350,6 +109201,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr1, outNBElement));
@@ -108399,6 +109251,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -108462,6 +109315,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -108470,6 +109324,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideStc(core, p, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -108477,6 +109332,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -108523,6 +109379,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -108586,6 +109443,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -108594,6 +109452,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideStddev(core, p, endIdx, inReal, optInTimePeriod, optInNbDev, hb);
             hb.Append("}");
             return hb.ToString();
@@ -108601,6 +109460,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -108658,7 +109518,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -108726,6 +109588,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -108735,6 +109598,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideStoch(core, p, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, hb);
             hb.Append("}");
             return hb.ToString();
@@ -108742,6 +109606,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -108798,7 +109663,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -108866,6 +109733,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -108875,6 +109743,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideStochf(core, p, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, hb);
             hb.Append("}");
             return hb.ToString();
@@ -108882,6 +109751,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -108931,7 +109801,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -108995,6 +109867,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -109004,6 +109877,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideStochrsi(core, p, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, hb);
             hb.Append("}");
             return hb.ToString();
@@ -109011,6 +109885,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -109060,6 +109935,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -109125,6 +110001,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -109133,6 +110010,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideSub(core, p, endIdx, inReal0, inReal1, hb);
             hb.Append("}");
             return hb.ToString();
@@ -109140,6 +110018,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -109185,6 +110064,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -109248,6 +110128,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -109256,6 +110137,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideSum(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -109263,6 +110145,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -109317,7 +110200,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int[] outArr1 = new int[_outLen];
+        Array.Fill(outArr1, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -109385,6 +110270,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -109394,6 +110280,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideSupertrend(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, hb);
             hb.Append("}");
             return hb.ToString();
@@ -109401,6 +110288,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr1, outNBElement));
@@ -109448,6 +110336,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -109511,6 +110400,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -109519,6 +110409,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideSwak2php(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -109526,6 +110417,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -109573,6 +110465,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -109636,6 +110529,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -109644,6 +110538,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideSwakBp(core, p, endIdx, inReal, optInTimePeriod, optInDelta, hb);
             hb.Append("}");
             return hb.ToString();
@@ -109651,6 +110546,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -109697,6 +110593,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -109760,6 +110657,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -109768,6 +110666,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideSwakButter(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -109775,6 +110674,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -109821,6 +110721,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -109884,6 +110785,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -109892,6 +110794,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideSwakGauss(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -109899,6 +110802,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -109945,6 +110849,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -110008,6 +110913,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -110016,6 +110922,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideSwakHp(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -110023,6 +110930,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -110070,6 +110978,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -110133,6 +111042,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -110141,6 +111051,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideT3(core, p, endIdx, inReal, optInTimePeriod, optInVFactor, hb);
             hb.Append("}");
             return hb.ToString();
@@ -110148,6 +111059,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -110192,6 +111104,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -110255,6 +111168,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -110263,6 +111177,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideTan(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -110270,6 +111185,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -110314,6 +111230,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -110377,6 +111294,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -110385,6 +111303,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideTanh(core, p, endIdx, inReal, hb);
             hb.Append("}");
             return hb.ToString();
@@ -110392,6 +111311,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -110437,6 +111357,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -110500,6 +111421,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -110508,6 +111430,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideTema(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -110515,6 +111438,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -110567,6 +111491,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -110634,6 +111559,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -110642,6 +111568,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideTrange(core, p, endIdx, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -110649,6 +111576,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -110694,6 +111622,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -110757,6 +111686,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -110765,6 +111695,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideTrima(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -110772,6 +111703,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -110817,6 +111749,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -110880,6 +111813,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -110888,6 +111822,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideTrix(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -110895,6 +111830,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -110940,6 +111876,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -111003,6 +111940,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -111011,6 +111949,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideTsf(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -111018,6 +111957,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -111064,6 +112004,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -111127,6 +112068,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -111135,6 +112077,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideTsi(core, p, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -111142,6 +112085,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -111194,6 +112138,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -111261,6 +112206,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -111269,6 +112215,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideTypprice(core, p, endIdx, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -111276,6 +112223,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -111331,6 +112279,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -111398,6 +112347,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -111406,6 +112356,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideUltosc(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, hb);
             hb.Append("}");
             return hb.ToString();
@@ -111413,6 +112364,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -111459,6 +112411,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -111522,6 +112475,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -111530,6 +112484,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideVar(core, p, endIdx, inReal, optInTimePeriod, optInNbDev, hb);
             hb.Append("}");
             return hb.ToString();
@@ -111537,6 +112492,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -111582,6 +112538,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -111645,6 +112602,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -111653,6 +112611,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideVhf(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -111660,6 +112619,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -111707,6 +112667,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -111770,6 +112731,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -111778,6 +112740,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideVidya(core, p, endIdx, inReal, optInTimePeriod, optInCMOPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -111785,6 +112748,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -111838,7 +112802,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -111906,6 +112872,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -111915,6 +112882,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideVortex(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -111922,6 +112890,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -111979,6 +112948,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -112048,6 +113018,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -112056,6 +113027,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideVwap(core, p, endIdx, inHigh, inLow, inClose, inVolume, hb);
             hb.Append("}");
             return hb.ToString();
@@ -112063,6 +113035,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -112112,6 +113085,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -112177,6 +113151,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -112185,6 +113160,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideVwma(core, p, endIdx, inReal, inVolume, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -112192,6 +113168,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -112244,6 +113221,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -112311,6 +113289,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -112319,6 +113298,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideWad(core, p, endIdx, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -112326,6 +113306,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -112381,7 +113362,9 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         double[] outArr1 = new double[_outLen];
+        Array.Fill(outArr1, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -112449,6 +113432,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -112458,6 +113442,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideWavetrend(core, p, endIdx, inHigh, inLow, inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -112465,6 +113450,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
@@ -112518,6 +113504,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -112585,6 +113572,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -112593,6 +113581,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideWclprice(core, p, endIdx, inHigh, inLow, inClose, hb);
             hb.Append("}");
             return hb.ToString();
@@ -112600,6 +113589,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -112653,6 +113643,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -112720,6 +113711,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -112728,6 +113720,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideWillr(core, p, endIdx, inHigh, inLow, inClose, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -112735,6 +113728,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -112780,6 +113774,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -112843,6 +113838,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -112851,6 +113847,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideWma(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -112858,6 +113855,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
@@ -112908,8 +113906,11 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int[] outArr1 = new int[_outLen];
+        Array.Fill(outArr1, TAIL_I32);
         int[] outArr2 = new int[_outLen];
+        Array.Fill(outArr2, TAIL_I32);
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -112975,6 +113976,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement) + TailDirty(outArr1, outNBElement) + TailDirty(outArr2, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -112985,6 +113987,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideZigzag(core, p, endIdx, inHigh, inLow, optInSensitivity, optInMinTrendLength, hb);
             hb.Append("}");
             return hb.ToString();
@@ -112992,6 +113995,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outInteger\":"); sb.Append(FormatIntArray(outArr1, outNBElement));
@@ -113039,6 +114043,7 @@ public class TaCodegenServe {
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
         double[] outArr0 = new double[_outLen];
+        Array.Fill(outArr0, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));
         int outBegIdx = 0, outNBElement = 0;
         RetCode rc = RetCode.Success;
         long _t0 = 0;
@@ -113102,6 +114107,7 @@ public class TaCodegenServe {
             }
             usedFloat = 1;
         }
+        string tailField = rc == RetCode.Success ? ",\"out_tail_dirty\":" + (TailDirty(outArr0, outNBElement)) : "";
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
             ulong _h = SvHashInit();
             if (rc == RetCode.Success && outNBElement > 0) {
@@ -113110,6 +114116,7 @@ public class TaCodegenServe {
             _h = SvHashFin(_h);
             var hb = new System.Text.StringBuilder();
             hb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"");
+            hb.Append(tailField);
             RideZlema(core, p, endIdx, inReal, optInTimePeriod, hb);
             hb.Append("}");
             return hb.ToString();
@@ -113117,6 +114124,7 @@ public class TaCodegenServe {
         var sb = new System.Text.StringBuilder();
         sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
         sb.Append($",\"out_len\":{_outLen}");
+        sb.Append(tailField);
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }

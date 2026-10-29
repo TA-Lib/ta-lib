@@ -220,6 +220,13 @@ int main( int argc, char **argv )
       printf( "  ride-along: %ld verdict(s), %ld rejection leg(s) compared\n",
               codegen_ride_verdicts_ever(), codegen_ride_rejects_ever() );
 
+   if( codegen_tail_dirty_ever() > 0 && rideRet == TA_TEST_PASS )
+   {
+      printf( "\nFAILED: %ld call(s) wrote output past the outNBElement they "
+              "reported.\n", codegen_tail_dirty_ever() );
+      rideRet = TA_CODEGEN_OUTPUT_MISMATCH;
+   }
+
    /* Exit 0 or 1, never the ErrorNumber: the status keeps only its low 8 bits,
     * and `make check` reads 77 as SKIP and 99 as ERROR. */
    if( rideRet != TA_TEST_PASS )

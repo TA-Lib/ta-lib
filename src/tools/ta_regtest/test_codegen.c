@@ -303,6 +303,10 @@ static void record_retcode( int langIndex, int code )
  * intention: set the pad to 0, or break the server's parsing of it, and the
  * floor stays green over calls that are all exactly sized. */
 static long g_slackCalls[NUM_LANGUAGES];
+/* Padded calls whose spare slots the server reported checking (`out_tail_dirty`).
+ * C is exempt: its server writes into fixed statics, and the in-process range
+ * test already fences every C output with canaries. */
+static long g_tailChecked[NUM_LANGUAGES];
 /* How much larger. Small on purpose — a big pad is the state this replaced, and
  * would not distinguish "the bound is a minimum" from "the bound is unchecked". */
 #define OUT_SLACK_PAD 7
@@ -2606,6 +2610,7 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * - range test: is the C function coherent across sub-ranges?
      */
     build_json_request(&params, 0, params.nbBars - 1);
+    long tailReports = codegen_tail_reports_ever();
     ErrorNumber codegenErr = codegen_pipe_call(params.cp, params.requestBuf,
                                                params.responseBuf, JSON_BUF_SIZE);
     if( codegenErr != TA_TEST_PASS )
@@ -2646,6 +2651,9 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         int outLen = json_get_int(params.responseBuf, "out_len");
         if( outLen > params.lastNbElement )
             g_slackCalls[ctx->langIndex]++;
+        if( outLen > params.lastNbElement
+            && codegen_tail_reports_ever() > tailReports )
+            g_tailChecked[ctx->langIndex]++;
     }
 
     /* Whether the backend supported this function at the default period (non-error
@@ -10328,6 +10336,16 @@ ErrorNumber test_codegen(const TA_History *history,
                            "out_pad request field stopped being honoured, or the "
                            "harness is asserting the bound is an equality, which "
                            "it is not\n",
+                           ALL_LANGUAGES[li].display);
+                    return TA_CODEGEN_OUTPUT_MISMATCH;
+                }
+                if( g_codegenCompared[li] > 0 && g_slackCalls[li] > 0
+                    && g_tailChecked[li] == 0
+                    && strcmp(ALL_LANGUAGES[li].name, "c") != 0 )
+                {
+                    printf("\nCODEGEN FAILED: %s never once reported checking "
+                           "the output slots past outNBElement (out_tail_dirty) "
+                           "on a padded call\n",
                            ALL_LANGUAGES[li].display);
                     return TA_CODEGEN_OUTPUT_MISMATCH;
                 }
