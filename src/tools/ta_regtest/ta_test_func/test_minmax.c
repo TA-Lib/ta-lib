@@ -1139,7 +1139,7 @@ static ErrorNumber testCompareToReference( const TA_Real *input, int nbElement )
                /* Two implementations of one function: compared at a tolerance,
                 * not bit-for-bit.
                 */
-               errNb = checkSameContentApprox( gBuffer[0].out0, gBuffer[1].out0 );
+               errNb = checkSameOutputApprox( gBuffer[0].out0, gBuffer[1].out0 );
                if( errNb != TA_TEST_PASS )
                   return errNb;
 

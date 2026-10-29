@@ -724,11 +724,11 @@ static ErrorNumber do_test( const TA_History *history,
       /* Two implementations of one function: compared at a tolerance,
        * not bit-for-bit.
        */
-      errNb = checkSameContentApprox( gBuffer[1].out0, gBuffer[0].out0 );
+      errNb = checkSameOutputApprox( gBuffer[1].out0, gBuffer[0].out0 );
       if( errNb != TA_TEST_PASS )
          return errNb;
 
-      errNb = checkSameContentApprox( gBuffer[1].out1, gBuffer[0].out1 );
+      errNb = checkSameOutputApprox( gBuffer[1].out1, gBuffer[0].out1 );
       if( errNb != TA_TEST_PASS )
          return errNb;
    }
