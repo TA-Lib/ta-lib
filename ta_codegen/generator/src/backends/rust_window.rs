@@ -134,7 +134,7 @@ pub(crate) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, 
         return None;
     }
 
-    let branches = pass.iter().any(|s| matches!(s, Statement::If { .. }));
+    let branches = variant_branches(&pass, &facts);
     let an = Analysis { steps: &steps, facts: &facts, names, branches };
     let occs = an.occurrences(&pass);
     let (windows, reverse, assign, checked) = an.windows(&occs, &form.counter)?;
@@ -148,6 +148,20 @@ pub(crate) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, 
         cond_step: form.cond_step,
         may_pass_unguarded: form.may_pass_unguarded,
         checked,
+    })
+}
+
+fn variant_branches(pass: &[Statement], facts: &Facts) -> bool {
+    pass.iter().any(|statement| match statement {
+        Statement::If { condition, then_body, else_body, .. } => {
+            let mut accesses_array = false;
+            each_access(statement, &mut |_, _, _| accesses_array = true);
+            !invariant(condition, facts)
+                || accesses_array
+                || variant_branches(then_body, facts)
+                || variant_branches(else_body, facts)
+        }
+        _ => false,
     })
 }
 
@@ -669,7 +683,7 @@ impl Analysis<'_> {
         if own.keys().all(free) {
             return None;
         }
-        // A branching body is windowed only for reads some passes skip: for
+        // A body with varying branches is windowed only for reads some passes skip: for
         // every-pass reads alone, LLVM re-forms the branch once their checks go,
         // which measured slower.
         if self.branches && !checked {
@@ -1013,6 +1027,39 @@ mod tests {
         assert_eq!(accesses(&p), ["in[_w0[_wk]]", "in[_w1[_wk]]", "out[_w2[_wk]]"]);
         // The updates stay: each variable still holds C's value.
         assert_eq!(p.body.len(), body.len());
+    }
+
+    #[test]
+    fn an_invariant_scalar_branch_keeps_the_every_pass_windows() {
+        let body = [
+            set(v("x"), at("in", v("i"))),
+            branch(bin(v("p"), BinOp::Eq, int(1)), vec![set(v("y"), v("x"))], vec![set(v("y"), plus(v("x"), v("y")))]),
+            set(at("out", v("k")), v("y")),
+            inc("i"), inc("k"),
+        ];
+        let cond = bin(v("i"), BinOp::Less, v("e"));
+        let p = run(&cond, &body).expect("invariant scalar branch");
+        assert!(!p.checked);
+        assert_eq!(accesses(&p), ["in[_w0[_wk]]", "out[_w1[_wk]]"]);
+        assert_eq!(p.body.len(), body.len());
+
+        let mut changed = body.to_vec();
+        changed.push(inc("p"));
+        assert!(run(&cond, &changed).is_none());
+        let mut escaped = body.to_vec();
+        escaped.push(Statement::Expr(Expr::FuncCall("f".into(), vec![Expr::AddressOf(Box::new(v("p")))])));
+        assert!(run(&cond, &escaped).is_none());
+    }
+
+    #[test]
+    fn an_invariant_outer_branch_does_not_hide_a_varying_inner_one() {
+        let body = [
+            set(v("x"), at("in", v("i"))),
+            branch(v("p"), vec![branch(v("x"), vec![set(v("y"), v("x"))], vec![])], vec![]),
+            set(at("out", v("k")), v("y")),
+            inc("i"), inc("k"),
+        ];
+        assert!(run(&bin(v("i"), BinOp::Less, v("e")), &body).is_none());
     }
 
     #[test]

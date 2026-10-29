@@ -328,20 +328,28 @@ impl Core {
         outMACDSignal[0] = prevSignal;
         outMACDHist[0] = macdValue - prevSignal;
         outIdx = 1;
-        while today <= endIdx {
-            tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
-            prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
-            macdValue = prevFast - prevSlow;
-            if optInSignalPeriod == 1 {
-                prevSignal = macdValue;
-            } else {
-                prevSignal = (signalBeta as f64).mul_add(prevSignal, signalK * macdValue);
+        if today <= endIdx {
+            let _wn: usize = endIdx - today + 1;
+            let _w0 = &inReal[today..][.._wn];
+            let _w1 = &mut outMACD[outIdx..][.._wn];
+            let _w2 = &mut outMACDHist[outIdx..][.._wn];
+            let _w3 = &mut outMACDSignal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                tempReal = _w0[_wk];
+                today += 1;
+                prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
+                prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+                macdValue = prevFast - prevSlow;
+                if optInSignalPeriod == 1 {
+                    prevSignal = macdValue;
+                } else {
+                    prevSignal = (signalBeta as f64).mul_add(prevSignal, signalK * macdValue);
+                }
+                _w1[_wk] = macdValue;
+                _w3[_wk] = prevSignal;
+                _w2[_wk] = macdValue - prevSignal;
+                outIdx += 1;
             }
-            outMACD[outIdx] = macdValue;
-            outMACDSignal[outIdx] = prevSignal;
-            outMACDHist[outIdx] = macdValue - prevSignal;
-            outIdx += 1;
         }
         // All done! Indicate the output limits and return success.
         (*outBegIdx) = startIdx;
