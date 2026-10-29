@@ -99,6 +99,22 @@ TA_RetCode mavp(int startIdx, int endIdx,
    }
    outputSize = endIdx - firstOut + 1;
 
+   if( optInMinPeriod == optInMaxPeriod && outReal != inReal )
+   {
+      retCode = ma( startIdx, endIdx, inReal,
+         optInMinPeriod, optInMAType,
+         &localBegIdx, &localNbElement, outReal );
+      if( retCode != TA_SUCCESS )
+      {
+         *outBegIdx = 0;
+         *outNBElement = 0;
+         return retCode;
+      }
+      *outBegIdx = startIdx;
+      *outNBElement = outputSize;
+      return TA_SUCCESS;
+   }
+
    int *localPeriodArray = malloc((outputSize) * sizeof(int));
    if( localPeriodArray == NULL )
    {
