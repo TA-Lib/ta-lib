@@ -2720,6 +2720,22 @@ fn rust_block_scans_run_as_counted_windows() {
     }
 }
 
+#[test]
+fn rust_macd_output_loops_run_as_counted_windows() {
+    for name in ["macd", "macdfix"] {
+        let (func, enums) = load_indicator(name);
+        let rust = backends::rust_lang::generate(&func, &enums, make_registry(), make_helpers());
+        let batch = rust.split("/**** Streaming API *****/").next().unwrap();
+        let loops = windowed_loop_bodies(batch);
+        let output_loop = loops.iter().find(|body| body.contains("prevSignal = ") && body.contains("outIdx += 1;"))
+            .expect("MACD's output loop must use counted slices");
+        for array in ["inReal", "outMACD", "outMACDSignal", "outMACDHist"] {
+            assert!(!output_loop.contains(&format!("{array}[")), "{name}: {output_loop}");
+        }
+        assert!(output_loop.contains(".mul_add("), "{name}: {output_loop}");
+    }
+}
+
 /// A candlestick's main loop that reads through a trailing index runs over
 /// windows (#442): the reads of its pattern test sit in `&&` chains and helper
 /// arms, so the windows are cut with `get`, while what the pattern's arms read
