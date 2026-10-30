@@ -1666,10 +1666,10 @@ mod tests {
         let vars: Vec<&str> = d.mode_b.rings().iter().map(|r| r.var.as_str()).collect();
         let got: BTreeMap<&str, Option<i64>> =
             vars.iter().copied().zip(ring_lag_lower_bounds(&hma, &input, &vars)).collect();
-        // Full: P - 1 at P = 4, both indices moving through the warm-up.
-        assert_eq!(got["trailingIdxFull"], Some(3));
-        // Half: P/2 - 1 at P = 4, after a `for` that advances only it.
-        assert_eq!(got["trailingIdxHalf"], Some(1));
+        // Full: P at P = 4, both indices moving through the warm-up.
+        assert_eq!(got["trailingIdxFull"], Some(4));
+        // Half: P/2 at P = 4.
+        assert_eq!(got["trailingIdxHalf"], Some(2));
     }
 
     /// A ROC-shaped body with its own trailing ring; `lag` is spliced into the
