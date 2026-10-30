@@ -146941,6 +146941,8 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
+     *  YV       Yvictor (@Yvictor)
+     *  CC       Claude Code (AI assistant)
      *
      * Change history:
      *
@@ -146956,6 +146958,7 @@ class Core {
      *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
      *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
      *  100226 MF,CC  #497. An inverted window is refused with the range untouched.
+     *  103026 YV,CC  Equal bounds skip the period clamp scan (PR #563).
      */
 
        /**
@@ -147125,15 +147128,6 @@ class Core {
              return RetCode.SUCCESS ;
           }
           outputSize = endIdx - firstOut + 1;
-          if( optInMinPeriod == optInMaxPeriod && outReal != inReal ) {
-             OutRange _xr0 = ma(startIdx, endIdx, inReal, optInMinPeriod, optInMAType, outReal);
-             localBegIdx.value = _xr0.begIdx();
-             localNbElement.value = _xr0.count();
-             retCode = RetCode.SUCCESS;
-             outBegIdx.value = startIdx;
-             outNBElement.value = outputSize;
-             return RetCode.SUCCESS ;
-          }
           localPeriodArray = new int[(int)(outputSize * 1)];
           /* In-place defence (issue #130): each ma() pass below re-reads inReal over
            * the full range, so with outReal==inReal the results are staged in a
@@ -147166,33 +147160,40 @@ class Core {
            */
           minPeriodReal = optInMinPeriod;
           maxPeriodReal = optInMaxPeriod;
-          for( i = 0; i < outputSize; i += 1 ) {
-             /* Clamp in the real domain, then narrow -- the order matters in the C
-              * backend, and only there. C leaves an out-of-range narrowing undefined
-              * and x86 lands EVERY such value on INT_MIN, so clamping afterwards pulls
-              * a huge POSITIVE period down to the minimum. Java, C# and Rust saturate
-              * to their maximum instead, so they were already right and this form
-              * simply keeps them so.
-              * `!(x >= min)` rather than `x < min`: both plain comparisons are false
-              * for NaN, so only the inverted spelling catches it.
-              */
-             tempPeriod = inPeriods[startIdx + i];
-             if( !(tempPeriod >= minPeriodReal) ) {
-                tempInt = optInMinPeriod;
-             } else if( tempPeriod > maxPeriodReal ) {
-                tempInt = optInMaxPeriod;
-             } else {
-                tempInt = (int)tempPeriod;
-             }
-             if( tempInt < 1 ) {
-                tempInt = 1;
-             }
-             localPeriodArray[i] = tempInt;
-             if( tempInt < minUsed ) {
-                minUsed = tempInt;
-             }
-             if( tempInt > maxUsed ) {
-                maxUsed = tempInt;
+          /* Equal bounds clamp every period to the same value, so the period array
+           * is left unwritten: only the multi-period path may read it.
+           */
+          if( optInMinPeriod == optInMaxPeriod ) {
+             maxUsed = minUsed;
+          } else {
+             for( i = 0; i < outputSize; i += 1 ) {
+                /* Clamp in the real domain, then narrow -- the order matters in the C
+                 * backend, and only there. C leaves an out-of-range narrowing undefined
+                 * and x86 lands EVERY such value on INT_MIN, so clamping afterwards pulls
+                 * a huge POSITIVE period down to the minimum. Java, C# and Rust saturate
+                 * to their maximum instead, so they were already right and this form
+                 * simply keeps them so.
+                 * `!(x >= min)` rather than `x < min`: both plain comparisons are false
+                 * for NaN, so only the inverted spelling catches it.
+                 */
+                tempPeriod = inPeriods[startIdx + i];
+                if( !(tempPeriod >= minPeriodReal) ) {
+                   tempInt = optInMinPeriod;
+                } else if( tempPeriod > maxPeriodReal ) {
+                   tempInt = optInMaxPeriod;
+                } else {
+                   tempInt = (int)tempPeriod;
+                }
+                if( tempInt < 1 ) {
+                   tempInt = 1;
+                }
+                localPeriodArray[i] = tempInt;
+                if( tempInt < minUsed ) {
+                   minUsed = tempInt;
+                }
+                if( tempInt > maxUsed ) {
+                   maxUsed = tempInt;
+                }
              }
           }
           /* Bound the bucket table before sizing it.
@@ -147221,9 +147222,9 @@ class Core {
              /* Single distinct period: one MA pass, written straight into the
               * destination buffer. Nothing to group or copy.
               */
-             OutRange _xr1 = ma(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
-             localBegIdx.value = _xr1.begIdx();
-             localNbElement.value = _xr1.count();
+             OutRange _xr0 = ma(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
+             localBegIdx.value = _xr0.begIdx();
+             localNbElement.value = _xr0.count();
              retCode = RetCode.SUCCESS;
           } else {
              localOutputArray = new double[(int)(outputSize * 1)];
@@ -147272,9 +147273,9 @@ class Core {
                    firstOccurrence = sortedIdx[bucketStart];
                    lastOccurrence = sortedIdx[bucketEnd - 1];
                    /* Calculation of the MA required. */
-                   OutRange _xr2 = ma(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
-                   localBegIdx.value = _xr2.begIdx();
-                   localNbElement.value = _xr2.count();
+                   OutRange _xr1 = ma(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
+                   localBegIdx.value = _xr1.begIdx();
+                   localNbElement.value = _xr1.count();
                    retCode = RetCode.SUCCESS;
                    if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart ) {
                       /* The period's outputs form one contiguous run: block copy. */
@@ -147374,15 +147375,6 @@ class Core {
              return RetCode.SUCCESS ;
           }
           outputSize = endIdx - firstOut + 1;
-          if( optInMinPeriod == optInMaxPeriod && true ) {
-             OutRange _xr0 = ma(startIdx, endIdx, inReal, optInMinPeriod, optInMAType, outReal);
-             localBegIdx.value = _xr0.begIdx();
-             localNbElement.value = _xr0.count();
-             retCode = RetCode.SUCCESS;
-             outBegIdx.value = startIdx;
-             outNBElement.value = outputSize;
-             return RetCode.SUCCESS ;
-          }
           localPeriodArray = new int[(int)(outputSize * 1)];
           finalIsAllocated = 0;
           if( false ) {
@@ -147398,33 +147390,37 @@ class Core {
           maxUsed = 1;
           minPeriodReal = optInMinPeriod;
           maxPeriodReal = optInMaxPeriod;
-          for( i = 0; i < outputSize; i += 1 ) {
-             tempPeriod = (double)inPeriods[startIdx + i];
-             if( !(tempPeriod >= minPeriodReal) ) {
-                tempInt = optInMinPeriod;
-             } else if( tempPeriod > maxPeriodReal ) {
-                tempInt = optInMaxPeriod;
-             } else {
-                tempInt = (int)tempPeriod;
-             }
-             if( tempInt < 1 ) {
-                tempInt = 1;
-             }
-             localPeriodArray[i] = tempInt;
-             if( tempInt < minUsed ) {
-                minUsed = tempInt;
-             }
-             if( tempInt > maxUsed ) {
-                maxUsed = tempInt;
+          if( optInMinPeriod == optInMaxPeriod ) {
+             maxUsed = minUsed;
+          } else {
+             for( i = 0; i < outputSize; i += 1 ) {
+                tempPeriod = (double)inPeriods[startIdx + i];
+                if( !(tempPeriod >= minPeriodReal) ) {
+                   tempInt = optInMinPeriod;
+                } else if( tempPeriod > maxPeriodReal ) {
+                   tempInt = optInMaxPeriod;
+                } else {
+                   tempInt = (int)tempPeriod;
+                }
+                if( tempInt < 1 ) {
+                   tempInt = 1;
+                }
+                localPeriodArray[i] = tempInt;
+                if( tempInt < minUsed ) {
+                   minUsed = tempInt;
+                }
+                if( tempInt > maxUsed ) {
+                   maxUsed = tempInt;
+                }
              }
           }
           if( maxUsed < minUsed || maxUsed - minUsed > 100000 ) {
              return RetCode.BAD_PARAM ;
           }
           if( minUsed == maxUsed ) {
-             OutRange _xr1 = ma(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
-             localBegIdx.value = _xr1.begIdx();
-             localNbElement.value = _xr1.count();
+             OutRange _xr0 = ma(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
+             localBegIdx.value = _xr0.begIdx();
+             localNbElement.value = _xr0.count();
              retCode = RetCode.SUCCESS;
           } else {
              localOutputArray = new double[(int)(outputSize * 1)];
@@ -147451,9 +147447,9 @@ class Core {
                 if( bucketEnd > bucketStart ) {
                    firstOccurrence = sortedIdx[bucketStart];
                    lastOccurrence = sortedIdx[bucketEnd - 1];
-                   OutRange _xr2 = ma(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
-                   localBegIdx.value = _xr2.begIdx();
-                   localNbElement.value = _xr2.count();
+                   OutRange _xr1 = ma(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
+                   localBegIdx.value = _xr1.begIdx();
+                   localNbElement.value = _xr1.count();
                    retCode = RetCode.SUCCESS;
                    if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart ) {
                       System.arraycopy(localOutputArray, firstOccurrence, localFinalArray, firstOccurrence, (bucketEnd - bucketStart) * 1);
@@ -230452,7 +230448,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "d91e7ec4680ba2e1";
+    static final String SPLICED_GENCODE_DIGEST = "93b933372b5a0e69";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

@@ -47,6 +47,8 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  MF       Mario Fortier
+    *  YV       Yvictor (@Yvictor)
+    *  CC       Claude Code (AI assistant)
     *
     * Change history:
     *
@@ -62,6 +64,7 @@ public partial class Core
     *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
     *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
     *  100226 MF,CC  #497. An inverted window is refused with the range untouched.
+    *  103026 YV,CC  Equal bounds skip the period clamp scan (PR #563).
     */
    /// <summary>
    /// Number of leading input bars <c>Mavp</c> consumes before it can produce
@@ -242,15 +245,6 @@ public partial class Core
          return RetCode.Success ;
       }
       outputSize = endIdx - firstOut + 1;
-      if( optInMinPeriod == optInMaxPeriod && outReal != inReal ) {
-         OutRange _xr0 = Ma(startIdx, endIdx, inReal, optInMinPeriod, optInMAType, outReal);
-         localBegIdx = _xr0.BegIdx;
-         localNbElement = _xr0.Count;
-         retCode = RetCode.Success;
-         outBegIdx = startIdx;
-         outNBElement = outputSize;
-         return RetCode.Success ;
-      }
       _rent_localPeriodArray = System.Buffers.ArrayPool<int>.Shared.Rent((int)(outputSize * 1));
       localPeriodArray = _rent_localPeriodArray.AsSpan(0, (int)(outputSize * 1));
       /* In-place defence (issue #130): each ma() pass below re-reads inReal over
@@ -285,33 +279,40 @@ public partial class Core
        */
       minPeriodReal = optInMinPeriod;
       maxPeriodReal = optInMaxPeriod;
-      for( i = 0; i < outputSize; i += 1 ) {
-         /* Clamp in the real domain, then narrow -- the order matters in the C
-          * backend, and only there. C leaves an out-of-range narrowing undefined
-          * and x86 lands EVERY such value on INT_MIN, so clamping afterwards pulls
-          * a huge POSITIVE period down to the minimum. Java, C# and Rust saturate
-          * to their maximum instead, so they were already right and this form
-          * simply keeps them so.
-          * `!(x >= min)` rather than `x < min`: both plain comparisons are false
-          * for NaN, so only the inverted spelling catches it.
-          */
-         tempPeriod = inPeriods[startIdx + i];
-         if( !(tempPeriod >= minPeriodReal) ) {
-            tempInt = optInMinPeriod;
-         } else if( tempPeriod > maxPeriodReal ) {
-            tempInt = optInMaxPeriod;
-         } else {
-            tempInt = (int)tempPeriod;
-         }
-         if( tempInt < 1 ) {
-            tempInt = 1;
-         }
-         localPeriodArray[i] = tempInt;
-         if( tempInt < minUsed ) {
-            minUsed = tempInt;
-         }
-         if( tempInt > maxUsed ) {
-            maxUsed = tempInt;
+      /* Equal bounds clamp every period to the same value, so the period array
+       * is left unwritten: only the multi-period path may read it.
+       */
+      if( optInMinPeriod == optInMaxPeriod ) {
+         maxUsed = minUsed;
+      } else {
+         for( i = 0; i < outputSize; i += 1 ) {
+            /* Clamp in the real domain, then narrow -- the order matters in the C
+             * backend, and only there. C leaves an out-of-range narrowing undefined
+             * and x86 lands EVERY such value on INT_MIN, so clamping afterwards pulls
+             * a huge POSITIVE period down to the minimum. Java, C# and Rust saturate
+             * to their maximum instead, so they were already right and this form
+             * simply keeps them so.
+             * `!(x >= min)` rather than `x < min`: both plain comparisons are false
+             * for NaN, so only the inverted spelling catches it.
+             */
+            tempPeriod = inPeriods[startIdx + i];
+            if( !(tempPeriod >= minPeriodReal) ) {
+               tempInt = optInMinPeriod;
+            } else if( tempPeriod > maxPeriodReal ) {
+               tempInt = optInMaxPeriod;
+            } else {
+               tempInt = (int)tempPeriod;
+            }
+            if( tempInt < 1 ) {
+               tempInt = 1;
+            }
+            localPeriodArray[i] = tempInt;
+            if( tempInt < minUsed ) {
+               minUsed = tempInt;
+            }
+            if( tempInt > maxUsed ) {
+               maxUsed = tempInt;
+            }
          }
       }
       /* Bound the bucket table before sizing it.
@@ -344,9 +345,9 @@ public partial class Core
          /* Single distinct period: one MA pass, written straight into the
           * destination buffer. Nothing to group or copy.
           */
-         OutRange _xr1 = Ma(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
-         localBegIdx = _xr1.BegIdx;
-         localNbElement = _xr1.Count;
+         OutRange _xr0 = Ma(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
+         localBegIdx = _xr0.BegIdx;
+         localNbElement = _xr0.Count;
          retCode = RetCode.Success;
       } else {
          _rent_localOutputArray = System.Buffers.ArrayPool<double>.Shared.Rent((int)(outputSize * 1));
@@ -398,9 +399,9 @@ public partial class Core
                firstOccurrence = sortedIdx[bucketStart];
                lastOccurrence = sortedIdx[bucketEnd - 1];
                /* Calculation of the MA required. */
-               OutRange _xr2 = Ma(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
-               localBegIdx = _xr2.BegIdx;
-               localNbElement = _xr2.Count;
+               OutRange _xr1 = Ma(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
+               localBegIdx = _xr1.BegIdx;
+               localNbElement = _xr1.Count;
                retCode = RetCode.Success;
                if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart ) {
                   /* The period's outputs form one contiguous run: block copy. */
@@ -519,15 +520,6 @@ public partial class Core
          return RetCode.Success ;
       }
       outputSize = endIdx - firstOut + 1;
-      if( optInMinPeriod == optInMaxPeriod ) {
-         OutRange _xr0 = Ma(startIdx, endIdx, inReal, optInMinPeriod, optInMAType, outReal);
-         localBegIdx = _xr0.BegIdx;
-         localNbElement = _xr0.Count;
-         retCode = RetCode.Success;
-         outBegIdx = startIdx;
-         outNBElement = outputSize;
-         return RetCode.Success ;
-      }
       _rent_localPeriodArray = System.Buffers.ArrayPool<int>.Shared.Rent((int)(outputSize * 1));
       localPeriodArray = _rent_localPeriodArray.AsSpan(0, (int)(outputSize * 1));
       finalIsAllocated = 0;
@@ -539,24 +531,28 @@ public partial class Core
       maxUsed = 1;
       minPeriodReal = optInMinPeriod;
       maxPeriodReal = optInMaxPeriod;
-      for( i = 0; i < outputSize; i += 1 ) {
-         tempPeriod = (double)inPeriods[startIdx + i];
-         if( !(tempPeriod >= minPeriodReal) ) {
-            tempInt = optInMinPeriod;
-         } else if( tempPeriod > maxPeriodReal ) {
-            tempInt = optInMaxPeriod;
-         } else {
-            tempInt = (int)tempPeriod;
-         }
-         if( tempInt < 1 ) {
-            tempInt = 1;
-         }
-         localPeriodArray[i] = tempInt;
-         if( tempInt < minUsed ) {
-            minUsed = tempInt;
-         }
-         if( tempInt > maxUsed ) {
-            maxUsed = tempInt;
+      if( optInMinPeriod == optInMaxPeriod ) {
+         maxUsed = minUsed;
+      } else {
+         for( i = 0; i < outputSize; i += 1 ) {
+            tempPeriod = (double)inPeriods[startIdx + i];
+            if( !(tempPeriod >= minPeriodReal) ) {
+               tempInt = optInMinPeriod;
+            } else if( tempPeriod > maxPeriodReal ) {
+               tempInt = optInMaxPeriod;
+            } else {
+               tempInt = (int)tempPeriod;
+            }
+            if( tempInt < 1 ) {
+               tempInt = 1;
+            }
+            localPeriodArray[i] = tempInt;
+            if( tempInt < minUsed ) {
+               minUsed = tempInt;
+            }
+            if( tempInt > maxUsed ) {
+               maxUsed = tempInt;
+            }
          }
       }
       if( maxUsed < minUsed || maxUsed - minUsed > 100000 ) {
@@ -567,9 +563,9 @@ public partial class Core
          return RetCode.BadParam ;
       }
       if( minUsed == maxUsed ) {
-         OutRange _xr1 = Ma(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
-         localBegIdx = _xr1.BegIdx;
-         localNbElement = _xr1.Count;
+         OutRange _xr0 = Ma(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
+         localBegIdx = _xr0.BegIdx;
+         localNbElement = _xr0.Count;
          retCode = RetCode.Success;
       } else {
          _rent_localOutputArray = System.Buffers.ArrayPool<double>.Shared.Rent((int)(outputSize * 1));
@@ -599,9 +595,9 @@ public partial class Core
             if( bucketEnd > bucketStart ) {
                firstOccurrence = sortedIdx[bucketStart];
                lastOccurrence = sortedIdx[bucketEnd - 1];
-               OutRange _xr2 = Ma(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
-               localBegIdx = _xr2.BegIdx;
-               localNbElement = _xr2.Count;
+               OutRange _xr1 = Ma(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
+               localBegIdx = _xr1.BegIdx;
+               localNbElement = _xr1.Count;
                retCode = RetCode.Success;
                if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart ) {
                   localOutputArray.Slice(firstOccurrence, (bucketEnd - bucketStart) * 1).CopyTo(localFinalArray.Slice(firstOccurrence));

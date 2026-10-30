@@ -3,6 +3,8 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  YV       Yvictor (@Yvictor)
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -18,6 +20,7 @@
  *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
  *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
  *  100226 MF,CC  #497. An inverted window is refused with the range untouched.
+ *  103026 YV,CC  Equal bounds skip the period clamp scan (PR #563).
  */
 
 int mavp_lookback(int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType)
@@ -99,22 +102,6 @@ TA_RetCode mavp(int startIdx, int endIdx,
    }
    outputSize = endIdx - firstOut + 1;
 
-   if( optInMinPeriod == optInMaxPeriod && outReal != inReal )
-   {
-      retCode = ma( startIdx, endIdx, inReal,
-         optInMinPeriod, optInMAType,
-         &localBegIdx, &localNbElement, outReal );
-      if( retCode != TA_SUCCESS )
-      {
-         *outBegIdx = 0;
-         *outNBElement = 0;
-         return retCode;
-      }
-      *outBegIdx = startIdx;
-      *outNBElement = outputSize;
-      return TA_SUCCESS;
-   }
-
    int *localPeriodArray = malloc((outputSize) * sizeof(int));
    if( localPeriodArray == NULL )
    {
@@ -163,31 +150,38 @@ TA_RetCode mavp(int startIdx, int endIdx,
     */
    minPeriodReal = optInMinPeriod;
    maxPeriodReal = optInMaxPeriod;
-   for( i=0; i < outputSize; i++ )
+   /* Equal bounds clamp every period to the same value, so the period array
+    * is left unwritten: only the multi-period path may read it. */
+   if( optInMinPeriod == optInMaxPeriod )
+      maxUsed = minUsed;
+   else
    {
-      /* Clamp in the real domain, then narrow -- the order matters in the C
-       * backend, and only there. C leaves an out-of-range narrowing undefined
-       * and x86 lands EVERY such value on INT_MIN, so clamping afterwards pulls
-       * a huge POSITIVE period down to the minimum. Java, C# and Rust saturate
-       * to their maximum instead, so they were already right and this form
-       * simply keeps them so.
-       * `!(x >= min)` rather than `x < min`: both plain comparisons are false
-       * for NaN, so only the inverted spelling catches it.
-       */
-      tempPeriod = inPeriods[startIdx+i];
-      if( !(tempPeriod >= minPeriodReal) )
-         tempInt = optInMinPeriod;
-      else if( tempPeriod > maxPeriodReal )
-         tempInt = optInMaxPeriod;
-      else
-         tempInt = (int)tempPeriod;
-      if( tempInt < 1 )
-         tempInt = 1;
-      localPeriodArray[i] = tempInt;
-      if( tempInt < minUsed )
-         minUsed = tempInt;
-      if( tempInt > maxUsed )
-         maxUsed = tempInt;
+      for( i=0; i < outputSize; i++ )
+      {
+         /* Clamp in the real domain, then narrow -- the order matters in the C
+          * backend, and only there. C leaves an out-of-range narrowing undefined
+          * and x86 lands EVERY such value on INT_MIN, so clamping afterwards pulls
+          * a huge POSITIVE period down to the minimum. Java, C# and Rust saturate
+          * to their maximum instead, so they were already right and this form
+          * simply keeps them so.
+          * `!(x >= min)` rather than `x < min`: both plain comparisons are false
+          * for NaN, so only the inverted spelling catches it.
+          */
+         tempPeriod = inPeriods[startIdx+i];
+         if( !(tempPeriod >= minPeriodReal) )
+            tempInt = optInMinPeriod;
+         else if( tempPeriod > maxPeriodReal )
+            tempInt = optInMaxPeriod;
+         else
+            tempInt = (int)tempPeriod;
+         if( tempInt < 1 )
+            tempInt = 1;
+         localPeriodArray[i] = tempInt;
+         if( tempInt < minUsed )
+            minUsed = tempInt;
+         if( tempInt > maxUsed )
+            maxUsed = tempInt;
+      }
    }
 
    /* Bound the bucket table before sizing it.

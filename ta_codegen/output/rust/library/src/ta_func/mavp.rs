@@ -45,6 +45,8 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  YV       Yvictor (@Yvictor)
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
@@ -60,6 +62,7 @@
  *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
  *  092526 MF,CC  #442. Allocate the multi-period buffers on that path only.
  *  100226 MF,CC  #497. An inverted window is refused with the range untouched.
+ *  103026 YV,CC  Equal bounds skip the period clamp scan (PR #563).
  */
 
 // Import types from parent module
@@ -239,15 +242,6 @@ impl Core {
             return RetCode::Success;
         }
         outputSize = endIdx - firstOut + 1;
-        if optInMinPeriod == optInMaxPeriod && outReal.as_ptr() != inReal.as_ptr() {
-            let _xr0 = match self.ma(startIdx, endIdx, inReal, optInMinPeriod, optInMAType, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-            localBegIdx = _xr0.beg_idx;
-            localNbElement = _xr0.count;
-            retCode = RetCode::Success;
-            (*outBegIdx) = startIdx;
-            (*outNBElement) = outputSize;
-            return RetCode::Success;
-        }
         localPeriodArray = vec![0_i32; (outputSize * 1) as usize];
         // In-place defence (issue #130): each ma() pass below re-reads inReal over
         // the full range, so with outReal==inReal the results are staged in a
@@ -277,36 +271,42 @@ impl Core {
         // compiler, only the first of the two is hoisted.
         minPeriodReal = ((optInMinPeriod) as f64);
         maxPeriodReal = ((optInMaxPeriod) as f64);
-        // for( i = 0; i < outputSize; i += 1 )
-        i = 0;
-        while i < outputSize {
-            // Clamp in the real domain, then narrow -- the order matters in the C
-            // backend, and only there. C leaves an out-of-range narrowing undefined
-            // and x86 lands EVERY such value on INT_MIN, so clamping afterwards pulls
-            // a huge POSITIVE period down to the minimum. Java, C# and Rust saturate
-            // to their maximum instead, so they were already right and this form
-            // simply keeps them so.
-            // `!(x >= min)` rather than `x < min`: both plain comparisons are false
-            // for NaN, so only the inverted spelling catches it.
-            tempPeriod = inPeriods[startIdx + i];
-            if !(tempPeriod >= minPeriodReal) {
-                tempInt = optInMinPeriod;
-            } else if tempPeriod > maxPeriodReal {
-                tempInt = optInMaxPeriod;
-            } else {
-                tempInt = (tempPeriod) as i32;
+        // Equal bounds clamp every period to the same value, so the period array
+        // is left unwritten: only the multi-period path may read it.
+        if optInMinPeriod == optInMaxPeriod {
+            maxUsed = minUsed;
+        } else {
+            // for( i = 0; i < outputSize; i += 1 )
+            i = 0;
+            while i < outputSize {
+                // Clamp in the real domain, then narrow -- the order matters in the C
+                // backend, and only there. C leaves an out-of-range narrowing undefined
+                // and x86 lands EVERY such value on INT_MIN, so clamping afterwards pulls
+                // a huge POSITIVE period down to the minimum. Java, C# and Rust saturate
+                // to their maximum instead, so they were already right and this form
+                // simply keeps them so.
+                // `!(x >= min)` rather than `x < min`: both plain comparisons are false
+                // for NaN, so only the inverted spelling catches it.
+                tempPeriod = inPeriods[startIdx + i];
+                if !(tempPeriod >= minPeriodReal) {
+                    tempInt = optInMinPeriod;
+                } else if tempPeriod > maxPeriodReal {
+                    tempInt = optInMaxPeriod;
+                } else {
+                    tempInt = (tempPeriod) as i32;
+                }
+                if tempInt < 1 {
+                    tempInt = 1;
+                }
+                localPeriodArray[i] = (tempInt) as i32;
+                if tempInt < ((minUsed) as i32) {
+                    minUsed = (tempInt) as usize;
+                }
+                if tempInt > ((maxUsed) as i32) {
+                    maxUsed = (tempInt) as usize;
+                }
+                i += 1;
             }
-            if tempInt < 1 {
-                tempInt = 1;
-            }
-            localPeriodArray[i] = (tempInt) as i32;
-            if tempInt < ((minUsed) as i32) {
-                minUsed = (tempInt) as usize;
-            }
-            if tempInt > ((maxUsed) as i32) {
-                maxUsed = (tempInt) as usize;
-            }
-            i += 1;
         }
         // Bound the bucket table before sizing it.
         //
@@ -332,9 +332,9 @@ impl Core {
         if minUsed == maxUsed {
             // Single distinct period: one MA pass, written straight into the
             // destination buffer. Nothing to group or copy.
-            let _xr1 = match self.ma(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-            localBegIdx = _xr1.beg_idx;
-            localNbElement = _xr1.count;
+            let _xr0 = match self.ma(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+            localBegIdx = _xr0.beg_idx;
+            localNbElement = _xr0.count;
             retCode = RetCode::Success;
         } else {
             localOutputArray = vec![0.0_f64; (outputSize * 1) as usize];
@@ -404,9 +404,9 @@ impl Core {
                     firstOccurrence = (sortedIdx[bucketStart]) as usize;
                     lastOccurrence = (sortedIdx[bucketEnd - 1]) as usize;
                     // Calculation of the MA required.
-                    let _xr2 = match self.ma(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localOutputArray[..]) { Ok(_r) => _r, Err(_e) => return _e };
-                    localBegIdx = _xr2.beg_idx;
-                    localNbElement = _xr2.count;
+                    let _xr1 = match self.ma(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localOutputArray[..]) { Ok(_r) => _r, Err(_e) => return _e };
+                    localBegIdx = _xr1.beg_idx;
+                    localNbElement = _xr1.count;
                     retCode = RetCode::Success;
                     if lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart {
                         // The period's outputs form one contiguous run: block copy.
