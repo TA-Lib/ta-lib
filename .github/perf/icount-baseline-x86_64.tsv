@@ -6,8 +6,8 @@
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	3352721188672f4daf7ff1b0b1fa0eaba755a196
-#generated	2026-10-27T18:04:39Z
+#commit	b0a97ddb1fa26fc8ed8b58832442db9319c40296
+#generated	2026-10-30T11:07:02Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -608,11 +608,11 @@ HA	open	0	440175
 HA	openfill	0	580240
 HA	peek	0	83981
 HA	update	0	104461
-HMA	batch	0	1066884
-HMA	open	0	1107705
-HMA	openfill	0	1107973
-HMA	peek	0	77837
-HMA	update	0	194396
+HMA	batch	0	977328
+HMA	open	0	1018803
+HMA	openfill	0	1019093
+HMA	peek	0	71696
+HMA	update	0	181322
 HT_DCPERIOD	batch	0	4023254
 HT_DCPERIOD	open	0	4003838
 HT_DCPERIOD	openfill	0	4123664
@@ -1004,7 +1004,7 @@ SQRT	openfill	0	60131
 SQRT	peek	0	30733
 SQRT	update	0	40973
 SQZMOM	batch	0	3425579
-SQZMOM	open	0	4276764
+SQZMOM	open	0	4276688
 SQZMOM	openfill	0	4275136
 SQZMOM	peek	0	669714
 SQZMOM	update	0	710686
@@ -1109,8 +1109,8 @@ TRIX	openfill	0	359201
 TRIX	peek	0	48141
 TRIX	update	0	60430
 TSF	batch	0	606134
-TSF	open	0	427149
-TSF	openfill	0	626768
+TSF	open	0	427031
+TSF	openfill	0	626677
 TSF	peek	0	68621
 TSF	update	0	100868
 TSI	batch	0	420100
@@ -1124,8 +1124,8 @@ TYPPRICE	openfill	0	100149
 TYPPRICE	peek	0	45069
 TYPPRICE	update	0	54285
 ULTOSC	batch	0	1580640
-ULTOSC	open	0	1640480
-ULTOSC	openfill	0	1581267
+ULTOSC	open	0	1640362
+ULTOSC	openfill	0	1581149
 ULTOSC	peek	0	107534
 ULTOSC	update	0	177057
 VAR	batch	0	692193
