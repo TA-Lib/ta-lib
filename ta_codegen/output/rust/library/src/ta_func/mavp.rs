@@ -239,6 +239,15 @@ impl Core {
             return RetCode::Success;
         }
         outputSize = endIdx - firstOut + 1;
+        if optInMinPeriod == optInMaxPeriod && outReal.as_ptr() != inReal.as_ptr() {
+            let _xr0 = match self.ma(startIdx, endIdx, inReal, optInMinPeriod, optInMAType, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+            localBegIdx = _xr0.beg_idx;
+            localNbElement = _xr0.count;
+            retCode = RetCode::Success;
+            (*outBegIdx) = startIdx;
+            (*outNBElement) = outputSize;
+            return RetCode::Success;
+        }
         localPeriodArray = vec![0_i32; (outputSize * 1) as usize];
         // In-place defence (issue #130): each ma() pass below re-reads inReal over
         // the full range, so with outReal==inReal the results are staged in a
@@ -323,9 +332,9 @@ impl Core {
         if minUsed == maxUsed {
             // Single distinct period: one MA pass, written straight into the
             // destination buffer. Nothing to group or copy.
-            let _xr0 = match self.ma(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, outReal) { Ok(_r) => _r, Err(_e) => return _e };
-            localBegIdx = _xr0.beg_idx;
-            localNbElement = _xr0.count;
+            let _xr1 = match self.ma(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, outReal) { Ok(_r) => _r, Err(_e) => return _e };
+            localBegIdx = _xr1.beg_idx;
+            localNbElement = _xr1.count;
             retCode = RetCode::Success;
         } else {
             localOutputArray = vec![0.0_f64; (outputSize * 1) as usize];
@@ -395,9 +404,9 @@ impl Core {
                     firstOccurrence = (sortedIdx[bucketStart]) as usize;
                     lastOccurrence = (sortedIdx[bucketEnd - 1]) as usize;
                     // Calculation of the MA required.
-                    let _xr1 = match self.ma(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localOutputArray[..]) { Ok(_r) => _r, Err(_e) => return _e };
-                    localBegIdx = _xr1.beg_idx;
-                    localNbElement = _xr1.count;
+                    let _xr2 = match self.ma(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localOutputArray[..]) { Ok(_r) => _r, Err(_e) => return _e };
+                    localBegIdx = _xr2.beg_idx;
+                    localNbElement = _xr2.count;
                     retCode = RetCode::Success;
                     if lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart {
                         // The period's outputs form one contiguous run: block copy.

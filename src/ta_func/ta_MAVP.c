@@ -206,6 +206,19 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
       return TA_SUCCESS;
    }
    outputSize = endIdx - firstOut + 1;
+   if( optInMinPeriod == optInMaxPeriod && outReal != inReal )
+   {
+      retCode = TA_MA(startIdx,endIdx,inReal,optInMinPeriod,optInMAType,&localBegIdx,&localNbElement,outReal);
+      if( retCode != TA_SUCCESS )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return retCode;
+      }
+      *outBegIdx= startIdx;
+      *outNBElement= outputSize;
+      return TA_SUCCESS;
+   }
    localPeriodArray = malloc(outputSize * sizeof(int));
    if( localPeriodArray == NULL )
    {
@@ -543,6 +556,19 @@ TA_RetCode TA_S_MAVP( int    startIdx,
       return TA_SUCCESS;
    }
    outputSize = endIdx - firstOut + 1;
+   if( optInMinPeriod == optInMaxPeriod && 1 )
+   {
+      retCode = TA_S_MA(startIdx,endIdx,inReal,optInMinPeriod,optInMAType,&localBegIdx,&localNbElement,outReal);
+      if( retCode != TA_SUCCESS )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return retCode;
+      }
+      *outBegIdx= startIdx;
+      *outNBElement= outputSize;
+      return TA_SUCCESS;
+   }
    localPeriodArray = malloc(outputSize * sizeof(int));
    if( localPeriodArray == NULL )
    {

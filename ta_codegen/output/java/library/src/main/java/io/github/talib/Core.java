@@ -147487,6 +147487,15 @@ public final class Core {
          return RetCode.SUCCESS ;
       }
       outputSize = endIdx - firstOut + 1;
+      if( optInMinPeriod == optInMaxPeriod && outReal != inReal ) {
+         OutRange _xr0 = ma(startIdx, endIdx, inReal, optInMinPeriod, optInMAType, outReal);
+         localBegIdx.value = _xr0.begIdx();
+         localNbElement.value = _xr0.count();
+         retCode = RetCode.SUCCESS;
+         outBegIdx.value = startIdx;
+         outNBElement.value = outputSize;
+         return RetCode.SUCCESS ;
+      }
       localPeriodArray = new int[(int)(outputSize * 1)];
       /* In-place defence (issue #130): each ma() pass below re-reads inReal over
        * the full range, so with outReal==inReal the results are staged in a
@@ -147574,9 +147583,9 @@ public final class Core {
          /* Single distinct period: one MA pass, written straight into the
           * destination buffer. Nothing to group or copy.
           */
-         OutRange _xr0 = ma(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
-         localBegIdx.value = _xr0.begIdx();
-         localNbElement.value = _xr0.count();
+         OutRange _xr1 = ma(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
+         localBegIdx.value = _xr1.begIdx();
+         localNbElement.value = _xr1.count();
          retCode = RetCode.SUCCESS;
       } else {
          localOutputArray = new double[(int)(outputSize * 1)];
@@ -147625,9 +147634,9 @@ public final class Core {
                firstOccurrence = sortedIdx[bucketStart];
                lastOccurrence = sortedIdx[bucketEnd - 1];
                /* Calculation of the MA required. */
-               OutRange _xr1 = ma(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
-               localBegIdx.value = _xr1.begIdx();
-               localNbElement.value = _xr1.count();
+               OutRange _xr2 = ma(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
+               localBegIdx.value = _xr2.begIdx();
+               localNbElement.value = _xr2.count();
                retCode = RetCode.SUCCESS;
                if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart ) {
                   /* The period's outputs form one contiguous run: block copy. */
@@ -147727,6 +147736,15 @@ public final class Core {
          return RetCode.SUCCESS ;
       }
       outputSize = endIdx - firstOut + 1;
+      if( optInMinPeriod == optInMaxPeriod && true ) {
+         OutRange _xr0 = ma(startIdx, endIdx, inReal, optInMinPeriod, optInMAType, outReal);
+         localBegIdx.value = _xr0.begIdx();
+         localNbElement.value = _xr0.count();
+         retCode = RetCode.SUCCESS;
+         outBegIdx.value = startIdx;
+         outNBElement.value = outputSize;
+         return RetCode.SUCCESS ;
+      }
       localPeriodArray = new int[(int)(outputSize * 1)];
       finalIsAllocated = 0;
       if( false ) {
@@ -147766,9 +147784,9 @@ public final class Core {
          return RetCode.BAD_PARAM ;
       }
       if( minUsed == maxUsed ) {
-         OutRange _xr0 = ma(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
-         localBegIdx.value = _xr0.begIdx();
-         localNbElement.value = _xr0.count();
+         OutRange _xr1 = ma(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
+         localBegIdx.value = _xr1.begIdx();
+         localNbElement.value = _xr1.count();
          retCode = RetCode.SUCCESS;
       } else {
          localOutputArray = new double[(int)(outputSize * 1)];
@@ -147795,9 +147813,9 @@ public final class Core {
             if( bucketEnd > bucketStart ) {
                firstOccurrence = sortedIdx[bucketStart];
                lastOccurrence = sortedIdx[bucketEnd - 1];
-               OutRange _xr1 = ma(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
-               localBegIdx.value = _xr1.begIdx();
-               localNbElement.value = _xr1.count();
+               OutRange _xr2 = ma(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
+               localBegIdx.value = _xr2.begIdx();
+               localNbElement.value = _xr2.count();
                retCode = RetCode.SUCCESS;
                if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart ) {
                   System.arraycopy(localOutputArray, firstOccurrence, localFinalArray, firstOccurrence, (bucketEnd - bucketStart) * 1);
