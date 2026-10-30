@@ -1,7 +1,10 @@
 
 # ta_regrest is used for testing and should
-# not be installed.
+# not be installed. noinst, not check_PROGRAMS: packagers run the binary that
+# a plain `make` leaves behind.
 noinst_PROGRAMS = ta_regtest
+# The libtool wrapper, so `make check` tests the library in this build tree.
+TESTS = ta_regtest
 
 ta_regtest_SOURCES = ta_regtest.c \
 	test_data.c \

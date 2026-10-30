@@ -2,12 +2,12 @@ import os
 import subprocess
 import sys
 
-from install_tests.python import build_wrapper_and_verify
+from install_tests.consumer import consumer_windows
 
 # MSI end-user simulation (Windows): silent-install the release-candidate
-# MSI, verify the installed layout, build ta-lib-python from source against
-# the INSTALLED location (the real end-user path), then silent-uninstall and
-# verify removal. Any problem => sys.exit(1).
+# MSI, verify the installed layout, build a C program against the INSTALLED
+# location, then silent-uninstall and verify removal. Any problem =>
+# sys.exit(1).
 #
 # CPACK_PACKAGE_INSTALL_DIRECTORY is "TA-Lib" (CMakeLists.txt), so the
 # payload lands under <Program Files>\TA-Lib.
@@ -42,7 +42,7 @@ def _find_install_dir():
     return None
 
 
-def test_msi_windows(msi_file_path: str, temp_dir: str, version: str):
+def test_msi_windows(root_dir: str, msi_file_path: str, temp_dir: str, version: str):
     print(f"Testing MSI install/uninstall on Windows")
     # msiexec rejects mixed path separators (error 1619) — normalize.
     msi_file_path = os.path.normpath(os.path.abspath(msi_file_path))
@@ -62,8 +62,8 @@ def test_msi_windows(msi_file_path: str, temp_dir: str, version: str):
         sys.exit(1)
     print(f"  installed at: {install_dir}")
 
-    # Verify the installed layout: headers under include\ta-lib (the 0.6.1
-    # convention, required by ta-lib-python source builds), libs and DLL.
+    # Verify the installed layout: headers under include\ta-lib (the
+    # documented <ta-lib/ta_libc.h> spelling), libs and DLL.
     expected = [
         os.path.join(install_dir, "include", "ta-lib", "ta_libc.h"),
         os.path.join(install_dir, "include", "ta-lib", "ta_func.h"),
@@ -80,17 +80,10 @@ def test_msi_windows(msi_file_path: str, temp_dir: str, version: str):
             print(f"  missing: {p}")
         sys.exit(1)
 
-    # The real end-user path: build the python wrapper against the MSI
-    # install. ta-lib-python's default search paths include
-    # "<Program Files>\TA-Lib\{include,lib}", but pass them explicitly so
-    # the test does not depend on which Program Files variant was used.
-    msi_venv_dir = os.path.join(temp_dir, "msi_python")
-    os.makedirs(msi_venv_dir, exist_ok=True)
-    build_wrapper_and_verify(
-        msi_venv_dir, version,
-        include_path=os.path.join(install_dir, "include"),
-        library_path=os.path.join(install_dir, "lib"),
-    )
+    consumer_windows(root_dir, temp_dir, version, "msi",
+                     include_dir=os.path.join(install_dir, "include"),
+                     lib_dir=os.path.join(install_dir, "lib"),
+                     bin_dir=os.path.join(install_dir, "bin"))
 
     _msiexec(["/x", msi_file_path], "msiexec uninstall", uninstall_log)
 
@@ -101,5 +94,5 @@ def test_msi_windows(msi_file_path: str, temp_dir: str, version: str):
             print(f"  leftover: {p}")
         sys.exit(1)
 
-    print("OK: MSI install, layout, python wrapper build, and uninstall all verified")
+    print("OK: MSI install, layout, C consumer build, and uninstall all verified")
     return

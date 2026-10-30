@@ -531,7 +531,7 @@ fn c_stream_keeps_a_local_read_only_by_a_circbuf_size() {
 
     // Read only through CIRCBUF_INIT's size — the case a naive walker misses.
     assert!(
-        stream_c.contains("int ringSize;") && stream_c.contains("ringSize = sqrtPeriod - 1;"),
+        stream_c.contains("int ringSize;") && stream_c.contains("ringSize = sqrtPeriod;"),
         "`ringSize` is read only by CIRCBUF_INIT's size expression, so a use-analysis \
          that does not descend into Statement::CircBuf will drop it and emit C that \
          references an undeclared variable: {stream_c}"

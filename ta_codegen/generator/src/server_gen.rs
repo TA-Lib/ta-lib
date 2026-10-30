@@ -1773,6 +1773,19 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        return sb.toString();\n");
     s.push_str("    }\n\n");
 
+    s.push_str("    static final long TAIL_F64_BITS = 0x7ff8deadbeef1234L;\n");
+    s.push_str("    static final int TAIL_I32 = 0x5eadbeef;\n\n");
+    s.push_str("    static int tailDirty(double[] arr, int from) {\n");
+    s.push_str("        int n = 0;\n");
+    s.push_str("        for (int i = from; i < arr.length; i++) if (Double.doubleToRawLongBits(arr[i]) != TAIL_F64_BITS) n++;\n");
+    s.push_str("        return n;\n");
+    s.push_str("    }\n\n");
+    s.push_str("    static int tailDirty(int[] arr, int from) {\n");
+    s.push_str("        int n = 0;\n");
+    s.push_str("        for (int i = from; i < arr.length; i++) if (arr[i] != TAIL_I32) n++;\n");
+    s.push_str("        return n;\n");
+    s.push_str("    }\n\n");
+
     s.push_str("    static String intArrayToJson(int[] arr, int count) {\n");
     s.push_str("        StringBuilder sb = new StringBuilder(\"[\");\n");
     s.push_str("        for (int i = 0; i < count; i++) {\n");
@@ -2116,11 +2129,11 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             let arr_name = format!("outArr{k}");
             if out.param_type == ParamType::Integer {
                 s.push_str(&format!(
-                    "        int[] {arr_name} = new int[_outLen];\n"
+                    "        int[] {arr_name} = new int[_outLen];\n        java.util.Arrays.fill({arr_name}, TAIL_I32);\n"
                 ));
             } else {
                 s.push_str(&format!(
-                    "        double[] {arr_name} = new double[_outLen];\n"
+                    "        double[] {arr_name} = new double[_outLen];\n        java.util.Arrays.fill({arr_name}, Double.longBitsToDouble(TAIL_F64_BITS));\n"
                 ));
             }
         }
@@ -2321,6 +2334,13 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("            }\n");
         s.push_str("            usedFloat = 1;\n");
         s.push_str("        }\n");
+        {
+            let terms: Vec<String> = (0..outputs.len()).map(|k| format!("tailDirty(outArr{k}, outNBElement.value)")).collect();
+            s.push_str(&format!(
+                "        String tailField = rc == RetCode.SUCCESS ? \",\\\"out_tail_dirty\\\":\" + ({}) : \"\";\n",
+                terms.join(" + ")
+            ));
+        }
 
         // want_hash mode (server_verify / issue #115): digest of the GUARDED
         // output (like-for-like with the in-process C golden's TA_CallFunc),
@@ -2343,6 +2363,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("            _h = svHashFin(_h);\n");
         s.push_str("            StringBuilder hb = new StringBuilder();\n");
         s.push_str("            hb.append(\"{\\\"retCode\\\":\").append(rc.toInt()).append(\",\\\"outBegIdx\\\":\").append(outBegIdx.value).append(\",\\\"outNBElement\\\":\").append(outNBElement.value).append(\",\\\"out_hash\\\":\\\"\").append(String.format(\"%016x\", _h)).append(\"\\\"\");\n");
+        s.push_str("            hb.append(tailField);\n");
         if func.streaming {
             let mut ride_args = String::new();
             for name in &input_names {
@@ -2376,6 +2397,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // "slack is legal" floor would be testing the harness's own intent, and
         // an out_pad the server silently ignored would read as coverage.
         s.push_str("        sb.append(\",\\\"out_len\\\":\").append(_outLen);\n");
+        s.push_str("        sb.append(tailField);\n");
         for (k, out) in outputs.iter().enumerate() {
             let arr_name = format!("outArr{k}");
             let key = output_json_key(outputs, k);
@@ -2763,6 +2785,19 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("            parts[i] = BitConverter.DoubleToInt64Bits(arr[i]).ToString(\"x16\");\n");
     s.push_str("        return \"\\\"\" + string.Concat(parts) + \"\\\"\";\n");
     s.push_str("    }\n\n");
+    s.push_str("    const long TAIL_F64_BITS = 0x7ff8deadbeef1234L;\n");
+    s.push_str("    const int TAIL_I32 = 0x5eadbeef;\n\n");
+    s.push_str("    static int TailDirty(double[] arr, int from) {\n");
+    s.push_str("        int n = 0;\n");
+    s.push_str("        for (int i = from; i < arr.Length; i++) if (BitConverter.DoubleToInt64Bits(arr[i]) != TAIL_F64_BITS) n++;\n");
+    s.push_str("        return n;\n");
+    s.push_str("    }\n\n");
+    s.push_str("    static int TailDirty(int[] arr, int from) {\n");
+    s.push_str("        int n = 0;\n");
+    s.push_str("        for (int i = from; i < arr.Length; i++) if (arr[i] != TAIL_I32) n++;\n");
+    s.push_str("        return n;\n");
+    s.push_str("    }\n\n");
+
     s.push_str("    static string FormatIntArray(int[] arr, int count) {\n");
     s.push_str("        var parts = new string[count];\n");
     s.push_str("        for (int i = 0; i < count; i++)\n");
@@ -3168,9 +3203,9 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         }
         for (k, out) in outputs.iter().enumerate() {
             if out.param_type == ParamType::Integer {
-                s.push_str(&format!("        int[] outArr{k} = new int[_outLen];\n"));
+                s.push_str(&format!("        int[] outArr{k} = new int[_outLen];\n        Array.Fill(outArr{k}, TAIL_I32);\n"));
             } else {
-                s.push_str(&format!("        double[] outArr{k} = new double[_outLen];\n"));
+                s.push_str(&format!("        double[] outArr{k} = new double[_outLen];\n        Array.Fill(outArr{k}, BitConverter.Int64BitsToDouble(TAIL_F64_BITS));\n"));
             }
         }
         s.push_str("        int outBegIdx = 0, outNBElement = 0;\n");
@@ -3321,6 +3356,13 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             s.push_str("            usedFloat = 1;\n");
             s.push_str("        }\n");
         }
+        {
+            let terms: Vec<String> = (0..outputs.len()).map(|k| format!("TailDirty(outArr{k}, outNBElement)")).collect();
+            s.push_str(&format!(
+                "        string tailField = rc == RetCode.Success ? \",\\\"out_tail_dirty\\\":\" + ({}) : \"\";\n",
+                terms.join(" + ")
+            ));
+        }
 
         // want_hash mode (server_verify / issue #115): digest of the GUARDED
         // output, returned before the value response is built.
@@ -3342,6 +3384,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         s.push_str("            _h = SvHashFin(_h);\n");
         s.push_str("            var hb = new System.Text.StringBuilder();\n");
         s.push_str("            hb.Append($\"{{\\\"retCode\\\":{(int)rc},\\\"outBegIdx\\\":{outBegIdx},\\\"outNBElement\\\":{outNBElement},\\\"out_hash\\\":\\\"{_h:x16}\\\"\");\n");
+        s.push_str("            hb.Append(tailField);\n");
         if func.streaming {
             let mut ride_args = String::new();
             for name in &input_names {
@@ -3366,6 +3409,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         s.push_str("        var sb = new System.Text.StringBuilder();\n");
         s.push_str("        sb.Append($\"{{\\\"retCode\\\":{(int)rc},\\\"outBegIdx\\\":{outBegIdx},\\\"outNBElement\\\":{outNBElement}\");\n");
         s.push_str("        sb.Append($\",\\\"out_len\\\":{_outLen}\");\n");
+        s.push_str("        sb.Append(tailField);\n");
         s.push_str("        if (GetInt(p, \"no_output\", 0) == 0) {\n");
         for (k, out) in outputs.iter().enumerate() {
             let key = output_json_key(outputs, k);
@@ -3614,6 +3658,15 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    }\n");
     s.push_str("    s.push('\"');\n");
     s.push_str("    s\n");
+    s.push_str("}\n\n");
+
+    s.push_str("const TAIL_F64_BITS: u64 = 0x7ff8_dead_beef_1234;\n");
+    s.push_str("const TAIL_I32: i32 = 0x5ead_beef;\n\n");
+    s.push_str("fn tail_dirty_f64(data: &[f64], from: usize) -> usize {\n");
+    s.push_str("    data[from..].iter().filter(|v| v.to_bits() != TAIL_F64_BITS).count()\n");
+    s.push_str("}\n\n");
+    s.push_str("fn tail_dirty_i32(data: &[i32], from: usize) -> usize {\n");
+    s.push_str("    data[from..].iter().filter(|&&v| v != TAIL_I32).count()\n");
     s.push_str("}\n\n");
 
     // Helper: serialize an i32 slice as a JSON array.
@@ -3986,12 +4039,12 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         for out in outputs {
             if out.param_type == ParamType::Integer {
                 s.push_str(&format!(
-                    "            let mut outIntBuf{int_idx}: Vec<i32> = vec![0i32; out_size];\n"
+                    "            let mut outIntBuf{int_idx}: Vec<i32> = vec![TAIL_I32; out_size];\n"
                 ));
                 int_idx += 1;
             } else {
                 s.push_str(&format!(
-                    "            let mut outBuf{real_idx}: Vec<f64> = vec![0.0f64; out_size];\n"
+                    "            let mut outBuf{real_idx}: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];\n"
                 ));
                 real_idx += 1;
             }
@@ -4066,6 +4119,23 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("            }\n"); // end enum-conversion guard
         }
         s.push_str("            let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;\n");
+        {
+            let mut terms = Vec::new();
+            let (mut r2, mut i2) = (0usize, 0usize);
+            for out in &func.outputs {
+                if out.param_type == ParamType::Integer {
+                    terms.push(format!("tail_dirty_i32(&outIntBuf{i2}, outNBElement)"));
+                    i2 += 1;
+                } else {
+                    terms.push(format!("tail_dirty_f64(&outBuf{r2}, outNBElement)"));
+                    r2 += 1;
+                }
+            }
+            s.push_str(&format!(
+                "            let tail_field = if matches!(rc, RetCode::Success) {{ format!(\",\\\"out_tail_dirty\\\":{{}}\", {}) }} else {{ String::new() }};\n",
+                terms.join(" + ")
+            ));
+        }
 
         // [fuzz] out_hash mode (--xlang-hash, issue #113): after the GUARDED call —
         // the public API the C golden's TA_CallFunc also runs — return a
@@ -4096,6 +4166,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("                }\n");
         s.push_str("                _oh = fuzz_hash_fin(_oh);\n");
         s.push_str("                let mut hresp = format!(\"{{\\\"retCode\\\":{},\\\"outBegIdx\\\":{},\\\"outNBElement\\\":{},\\\"out_hash\\\":\\\"{:016x}\\\"\", retcode_to_int(rc), outBegIdx, outNBElement, _oh);\n");
+        s.push_str("                hresp.push_str(&tail_field);\n");
         if func.streaming {
             let mut ride_args = String::new();
             for name in &input_names {
@@ -4149,6 +4220,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // for — and a non-finite f64 would have serialized as `null`, which is
         // neither the value nor something the driver's parser can count.
         s.push_str("            let mut resp = format!(\"{{\\\"retCode\\\":{},\\\"outBegIdx\\\":{},\\\"outNBElement\\\":{},\\\"out_len\\\":{},\\\"lookback\\\":{},\\\"timing_ns\\\":{}\", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);\n");
+        s.push_str("            resp.push_str(&tail_field);\n");
 
         // Add output arrays to response
         real_idx = 0;

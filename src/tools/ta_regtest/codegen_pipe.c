@@ -31,6 +31,11 @@ long codegen_ride_rejects(void)         { return g_rideRejects; }
 int  codegen_ride_mismatches_ever(void) { return g_rideMismatchesEver; }
 long codegen_ride_verdicts_ever(void)   { return g_rideVerdictsEver; }
 long codegen_ride_rejects_ever(void)    { return g_rideRejectsEver; }
+
+static long g_tailDirtyEver;
+static long g_tailReportsEver;
+long codegen_tail_dirty_ever(void)   { return g_tailDirtyEver; }
+long codegen_tail_reports_ever(void) { return g_tailReportsEver; }
 void codegen_ride_reset(void)
 {
     int i;
@@ -270,6 +275,22 @@ static void ride_scan(const char *request, const char *response)
     }
 }
 
+static void tail_scan(const char *request, const char *response)
+{
+    int dirty = ride_int_field(response, "\"out_tail_dirty\":");
+    if( dirty < 0 ) return;
+    g_tailReportsEver++;
+    if( dirty == 0 ) return;
+    if( g_tailDirtyEver++ < 10 )
+    {
+        const char *m = strstr(request, "\"method\":\"");
+        int n = 0;
+        if( m ) { m += 10; while( m[n] && m[n] != '"' && n < 48 ) n++; }
+        printf("  TAIL WRITE [%.*s]: %d output slot(s) at or past outNBElement "
+               "changed by a successful call\n", n, m ? m : "?", dirty);
+    }
+}
+
 ErrorNumber codegen_pipe_call(CodegenPipe *cp,
                               const char *request,
                               char *response,
@@ -334,6 +355,7 @@ ErrorNumber codegen_pipe_call(CodegenPipe *cp,
                 }
                 response[idx] = '\0';
                 ride_scan(request, response);
+                tail_scan(request, response);
                 return TA_TEST_PASS;
             }
         }

@@ -668,21 +668,17 @@ static TA_RetCode kvoRangeTestFunction( TA_Integer startIdx, TA_Integer endIdx,
 {
    TA_History *h = (TA_History *)opaqueData;
    TA_RetCode rc;
-   static TA_Real buf1[KVO_NB_BAR], buf2[KVO_NB_BAR];
-   int i;
+   static TA_Real other[KVO_NB_BAR];
 
    (void)outputBufferInt;
    *isOutputInteger = 0;
 
    *lookback = TA_KVO_Lookback( 34, 55, 13 );
    rc = TA_KVO( startIdx, endIdx, h->high, h->low, h->close, h->volume,
-                34, 55, 13, outBegIdx, outNbElement, buf1, buf2 );
-   if( rc != TA_SUCCESS ) return rc;
-
-   for( i = 0; i < (int)(*outNbElement); i++ )
-      outputBuffer[i] = outputNb == 0 ? buf1[i] : buf2[i];
-
-   return TA_SUCCESS;
+                34, 55, 13, outBegIdx, outNbElement,
+                outputNb == 0 ? outputBuffer : other,
+                outputNb == 0 ? other : outputBuffer );
+   return rc;
 }
 
 /* (7) Range sweep. KVO converges: the cumulative range two starts carry

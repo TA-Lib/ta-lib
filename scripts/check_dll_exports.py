@@ -54,7 +54,7 @@ def main() -> int:
     # Shared ONLY: the probe must resolve through the import library rather than
     # quietly succeed by pulling objects out of ta-lib-static.lib.
     run(["cmake", "-S", ".", "-B", "build-dll",
-         "-DBUILD_SHARED_LIBS=ON", "-DBUILD_STATIC_LIBS=OFF", "-DBUILD_DEV_TOOLS=OFF"])
+         "-DBUILD_SHARED_LIBS=ON", "-DBUILD_STATIC_LIBS=OFF", "-DBUILD_TESTING=OFF"])
     run(["cmake", "--build", "build-dll", "--config", "Release"])
 
     implib = one("build-dll/**/ta-lib.lib", "import library")

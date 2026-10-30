@@ -1645,16 +1645,14 @@ static ErrorNumber test_hma_tulip_vector( void )
    return TA_TEST_PASS;
 }
 
-/* (4) IN-PLACE ALIASING: outReal == inReal must hold (#130). In the composed
- * form safety comes from the final WMA reading only the scratch buffer; in a
- * fused rolling-sum form it comes from the write cursor trailing every read
- * by the lookback clamp. That margin is exactly ZERO at sqrt(n) == 1 (n = 2
- * and 3): the output store lands on the same slot as the same iteration's
- * trailing read, so ordering (read trailing BEFORE store) is load-bearing --
- * pin those periods alongside the default. */
+/* (4) IN-PLACE ALIASING: outReal == inReal must hold (#130). Safety comes
+ * from the write cursor trailing every read by the lookback clamp. That margin is exactly ZERO at sqrt(n) == 1 (n = 2
+ * and 3) and at sqrt(n) == 2 (n = 4..8): the output store lands on the same
+ * slot as the same iteration's trailing read, so ordering (read trailing
+ * BEFORE store) is load-bearing -- pin n = 2, 3 and 4 alongside the default. */
 static ErrorNumber test_hma_inplace( const TA_History *history )
 {
-   static const int ipGrid[] = { 2, 3, 20 };
+   static const int ipGrid[] = { 2, 3, 4, 20 };
    unsigned int g;
    int i, nbBars;
    TA_RetCode rc;
@@ -1904,16 +1902,17 @@ static ErrorNumber test_hma_param_reject( const TA_History *history )
 
 /* (8) LARGE PERIODS -- the scratch-allocation regimes (#139).
  *
- * The fused implementation's scratch is the de-lag ring of sqrt(n)-1 slots
+ * The fused implementation's scratch is the de-lag ring of sqrt(n) slots
  * (CIRCBUF): STACK while that fits the 50-slot prolog, i.e. every
- * n <= 2703, and TA_Malloc from n = 2704 (sqrt = 52, ring = 51) up --
+ * n <= 2600, and TA_Malloc from n = 2601 (sqrt = 51, ring = 51) up --
  * verified against the macro's `Size > capacity` test, NOT assumed from
- * sqrt(n) alone (an off-by-one here once made this leg silently stack-only).
+ * sqrt(n) alone. Nothing here observes which regime ran: move this pair
+ * whenever hma.c's ring size changes.
  * Pin BOTH sides of the true boundary with the same bitwise WMA-composition
  * differential used at small periods, plus an in-place run per period.
  *
  * Synthetic deterministic series: 2860 bars of a trending sine, enough for
- * n=2704 (lookback 2754) to emit 106 outputs. */
+ * n=2601 (lookback 2650) to emit 210 outputs. */
 #define HMA_LP_BARS 2860
 static ErrorNumber test_hma_large_period( void )
 {
@@ -1924,9 +1923,9 @@ static ErrorNumber test_hma_large_period( void )
    static TA_Real lpDiff[HMA_LP_BARS];
    static TA_Real lpSmooth[HMA_LP_BARS];
    static TA_Real lpWork[HMA_LP_BARS];
-   /* 2703: sqrt = 51, ring = 50 -- the LAST stack-CIRCBUF period;
-    * 2704: sqrt = 52, ring = 51 -- the FIRST TA_Malloc period. */
-   static const int lpGrid[] = { 2703, 2704 };
+   /* 2600: sqrt = 50, ring = 50 -- the LAST stack-CIRCBUF period;
+    * 2601: sqrt = 51, ring = 51 -- the FIRST TA_Malloc period. */
+   static const int lpGrid[] = { 2600, 2601 };
    unsigned int g;
    int i, halfPeriod, sqrtPeriod, wmaStart;
    TA_RetCode rc, rcF, rcH, rcS;

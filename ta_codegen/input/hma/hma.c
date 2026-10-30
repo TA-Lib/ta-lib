@@ -3,6 +3,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  YV       Yvictor (@Yvictor)
  *  CC       Claude Code (AI assistant)
  *
  *
@@ -14,6 +15,9 @@
  *  072326 MF,CC  Fused single-pass rewrite: rolling sums + sqrt(n)-sized
  *                CIRCBUF, no whole-range temporaries (issue #139).
  *  080926 MF,CC  Allow period of 1. Just copy input into output.
+ *  102926 YV,CC  Weights in double (PR #565).
+ *  102926 MF,CC  Steady loop: fewer live values, sqrt(n)-slot ring,
+ *                unlikely re-anchors (PR #565).
  *
  */
 
@@ -34,22 +38,25 @@ TA_RetCode hma(int startIdx, int endIdx,
 {
    int lookbackTotal, lookbackSqrt;
    int halfPeriod, sqrtPeriod, ringSize;
-   int wmaStartIdx, today, outIdx, i, w;
+   int wmaStartIdx, today, outIdx, i;
    double dividerFull, dividerHalf, dividerSqrt;
    int trailingIdxFull, trailingIdxHalf;
    double periodSubFull, periodSumFull, trailingFull;
-   double periodSubHalf, periodSumHalf, trailingHalf;
-   double periodSubSqrt, periodSumSqrt, trailingSqrt;
+   double periodSubHalf, periodSumHalf, trailingHalf, subHalf;
+   double periodSubSqrt, periodSumSqrt;
    double tempReal, fullOut, halfOut, diffReal;
-   int jFull, jHalf, q, rw, ringWalk, lookbackFull, lookbackHalf;
+   int jFull, jHalf, q, ringWalk, lookbackFull, lookbackHalf;
    int barsSinceReseedFull, barsSinceReseedHalf, barsSinceReseedSqrt;
    double tempReal2;
+   /* Keep the weights double: they stay exact (never above the period), and
+    * an integer weight slows the Rust loop. */
+   double w, rw;
 
    /* The de-lagged series needs only its last sqrt(n) values, so the whole
     * computation runs in one pass over a single window into the input:
     * three interleaved WMA rolling sums plus this small ring. The ring has
-    * sqrt(n)-1 slots: on the stack while that fits the 50-slot prolog
-    * (optInTimePeriod <= 2703), TA_Malloc from optInTimePeriod = 2704 up.
+    * sqrt(n) slots: on the stack while that fits the 50-slot prolog
+    * (optInTimePeriod <= 2600), TA_Malloc from optInTimePeriod = 2601 up.
     */
    CIRCBUF_PROLOG(dRing,double,50);
 
@@ -62,9 +69,9 @@ TA_RetCode hma(int startIdx, int endIdx,
     * line. See hma.md and issue #139.
     *
     * Each of the three WMAs keeps TA_WMA's exact accumulation order
-    * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
+    * (periodSub/periodSum, trailing subtract), so this fused pass is
     * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
-    * differential in test_composite.c holds it to that, memcmp-exact.
+    * differential in test_composite1.c holds it to that, memcmp-exact.
     */
 
    /* No smoothing at period of 1: the output is a copy of the input
@@ -119,7 +126,7 @@ TA_RetCode hma(int startIdx, int endIdx,
    periodSumFull = 0.0;
    trailingIdxFull = wmaStartIdx - lookbackFull;
    i = trailingIdxFull;
-   w = 1;
+   w = 1.0;
    while( i < wmaStartIdx )
    {
       tempReal = inReal[i];
@@ -157,7 +164,7 @@ TA_RetCode hma(int startIdx, int endIdx,
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = today - lookbackFull; jFull <= today; jFull++ )
             {
                tempReal2 = inReal[jFull];
@@ -187,7 +194,7 @@ TA_RetCode hma(int startIdx, int endIdx,
       periodSumHalf = 0.0;
       trailingIdxHalf = wmaStartIdx - lookbackHalf;
       i = trailingIdxHalf;
-      w = 1;
+      w = 1.0;
       while( i < wmaStartIdx )
       {
          tempReal = inReal[i];
@@ -199,21 +206,22 @@ TA_RetCode hma(int startIdx, int endIdx,
       barsSinceReseedHalf = 8 * halfPeriod;
       trailingHalf = 0.0;
 
-      /* The de-lagged value computed at bar t is consumed as the outer WMA's
-       * trailing value sqrtPeriod-1 bars later, so a single-cursor ring of
-       * sqrtPeriod-1 slots is enough: read the expiring value, overwrite the
-       * slot with the current one, advance.
+      /* The de-lagged value computed at bar t leaves the outer WMA's window
+       * sqrtPeriod bars later, so a single-cursor ring of sqrtPeriod slots
+       * still holds it when it leaves: subtract the slot, overwrite it with
+       * the current value, advance. The slot the warm-up does not fill is the
+       * first bar's departing value, which is zero.
        */
-      ringSize = sqrtPeriod - 1;
+      ringSize = sqrtPeriod;
       CIRCBUF_INIT(dRing,double,ringSize);
+      dRing[ringSize-1] = 0.0;
 
       /* Warm-up: the sqrtPeriod-1 de-lagged values before the first output
        * prime the outer WMA (weights 1..sqrtPeriod-1) and fill the ring.
        */
       periodSubSqrt = 0.0;
       periodSumSqrt = 0.0;
-      trailingSqrt = 0.0;
-      w = 1;
+      w = 1.0;
       for( today = wmaStartIdx; today < startIdx; today++ )
       {
          tempReal = inReal[today];
@@ -226,7 +234,7 @@ TA_RetCode hma(int startIdx, int endIdx,
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = today - lookbackFull; jFull <= today; jFull++ )
             {
                tempReal2 = inReal[jFull];
@@ -249,7 +257,7 @@ TA_RetCode hma(int startIdx, int endIdx,
             barsSinceReseedHalf = 8 * halfPeriod;
             periodSubHalf = 0.0;
             periodSumHalf = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jHalf = today - lookbackHalf; jHalf <= today; jHalf++ )
             {
                tempReal2 = inReal[jHalf];
@@ -271,24 +279,34 @@ TA_RetCode hma(int startIdx, int endIdx,
          CIRCBUF_NEXT(dRing);
       }
       barsSinceReseedSqrt = 8 * sqrtPeriod;
+      /* Read each departing bar when it is subtracted: a value carried across
+       * bars costs a register, and Java at 16 XMM registers then spills a
+       * running sum every bar. Keep the steady loop's half-period sum apart
+       * from the warm-up's: shared, arm64 C# copies it between two registers
+       * every bar. */
+      trailingIdxFull--;
+      trailingIdxHalf--;
+      subHalf = periodSubHalf;
 
-      /* Steady state: one pass, three rolling WMAs. Writes trail every read by
-       * at least sqrtPeriod-1 slots (the lookback clamp), so outReal == inReal
-       * stays safe.
+      /* Steady state: one pass, three rolling WMAs. Each bar's trailing read
+       * sits sqrtPeriod-2 or more slots ahead of its store, zero at periods
+       * 4..8, so keep that read before the store for outReal == inReal.
        */
       for( today = startIdx; today <= endIdx; today++ )
       {
          tempReal = inReal[today];
+         tempReal2 = inReal[trailingIdxFull];
+         trailingIdxFull++;
          periodSubFull += tempReal;
-         periodSubFull -= trailingFull;
+         periodSubFull -= tempReal2;
          periodSumFull += tempReal*optInTimePeriod;
          barsSinceReseedFull--;
-         if( barsSinceReseedFull <= 0 )
+         if( TA_UNLIKELY(barsSinceReseedFull <= 0) )
          {
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
             periodSumFull = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jFull = today - lookbackFull; jFull <= today; jFull++ )
             {
                tempReal2 = inReal[jFull];
@@ -297,67 +315,64 @@ TA_RetCode hma(int startIdx, int endIdx,
                rw++;
             }
          }
-         trailingFull = inReal[trailingIdxFull];
-         trailingIdxFull++;
          fullOut = periodSumFull/dividerFull;
          periodSumFull -= periodSubFull;
 
-         periodSubHalf += tempReal;
-         periodSubHalf -= trailingHalf;
+         tempReal2 = inReal[trailingIdxHalf];
+         trailingIdxHalf++;
+         subHalf += tempReal;
+         subHalf -= tempReal2;
          periodSumHalf += tempReal*halfPeriod;
          barsSinceReseedHalf--;
-         if( barsSinceReseedHalf <= 0 )
+         if( TA_UNLIKELY(barsSinceReseedHalf <= 0) )
          {
             barsSinceReseedHalf = 8 * halfPeriod;
-            periodSubHalf = 0.0;
+            subHalf = 0.0;
             periodSumHalf = 0.0;
-            rw = 1;
+            rw = 1.0;
             for( jHalf = today - lookbackHalf; jHalf <= today; jHalf++ )
             {
                tempReal2 = inReal[jHalf];
-               periodSubHalf += tempReal2;
+               subHalf += tempReal2;
                periodSumHalf += tempReal2*rw;
                rw++;
             }
          }
-         trailingHalf = inReal[trailingIdxHalf];
-         trailingIdxHalf++;
          halfOut = periodSumHalf/dividerHalf;
-         periodSumHalf -= periodSubHalf;
+         periodSumHalf -= subHalf;
 
          diffReal = 2.0*halfOut - fullOut;
          periodSubSqrt += diffReal;
-         periodSubSqrt -= trailingSqrt;
+         periodSubSqrt -= dRing[dRing_Idx];
          periodSumSqrt += diffReal*sqrtPeriod;
 
          /* The outer WMA consumes a DERIVED series that is never
-          * materialised, so its rescan walks the de-lag ring: dRing_Idx is
-          * the oldest slot (the one about to expire) and diffReal is the
-          * newest value, which together are the whole window. Oldest first,
-          * weight counting up from 1 -- the priming order above.
+          * materialised, so its rescan walks the de-lag ring: the slots after
+          * dRing_Idx (which holds the departing value) and diffReal are the
+          * whole window. Oldest first, weight counting up from 1 -- the
+          * priming order above.
           */
          barsSinceReseedSqrt--;
-         if( barsSinceReseedSqrt <= 0 )
+         if( TA_UNLIKELY(barsSinceReseedSqrt <= 0) )
          {
             barsSinceReseedSqrt = 8 * sqrtPeriod;
             periodSubSqrt = 0.0;
             periodSumSqrt = 0.0;
-            rw = 1;
+            rw = 1.0;
             ringWalk = dRing_Idx;
-            for( q = 0; q < ringSize; q++ )
+            for( q = 1; q < ringSize; q++ )
             {
+               ringWalk++;
+               if( ringWalk >= ringSize ) ringWalk = 0;
                tempReal2 = dRing[ringWalk];
                periodSubSqrt += tempReal2;
                periodSumSqrt += tempReal2*rw;
                rw++;
-               ringWalk++;
-               if( ringWalk >= ringSize ) ringWalk = 0;
             }
             periodSubSqrt += diffReal;
             periodSumSqrt += diffReal*sqrtPeriod;
          }
 
-         trailingSqrt = dRing[dRing_Idx];
          dRing[dRing_Idx] = diffReal;
          CIRCBUF_NEXT(dRing);
          outReal[outIdx++] = periodSumSqrt/dividerSqrt;

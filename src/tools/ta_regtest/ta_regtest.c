@@ -212,14 +212,29 @@ int main( int argc, char **argv )
       printf( "\nFAILED: %d ride-along divergence(s) -- batch and the streaming "
               "tiers disagreed on the caller's own data.\n",
               codegen_ride_mismatches_ever() );
-      return TA_CODEGEN_RIDE_MISMATCH;
+      rideRet = TA_CODEGEN_RIDE_MISMATCH;
    }
    /* --codegen prints its own per-language census; this is the reach of every
     * OTHER pass, which had no number at all. */
-   if( !doCodegenTest && codegen_ride_verdicts_ever() > 0 )
+   else if( !doCodegenTest && codegen_ride_verdicts_ever() > 0 )
       printf( "  ride-along: %ld verdict(s), %ld rejection leg(s) compared\n",
               codegen_ride_verdicts_ever(), codegen_ride_rejects_ever() );
-   return rideRet;
+
+   if( codegen_tail_dirty_ever() > 0 && rideRet == TA_TEST_PASS )
+   {
+      printf( "\nFAILED: %ld call(s) wrote output past the outNBElement they "
+              "reported.\n", codegen_tail_dirty_ever() );
+      rideRet = TA_CODEGEN_OUTPUT_MISMATCH;
+   }
+
+   /* Exit 0 or 1, never the ErrorNumber: the status keeps only its low 8 bits,
+    * and `make check` reads 77 as SKIP and 99 as ERROR. */
+   if( rideRet != TA_TEST_PASS )
+   {
+      printf( "\nta_regtest failed: ErrorNumber %d\n", (int)rideRet );
+      return 1;
+   }
+   return 0;
 }
 
 static ErrorNumber regtest_main( int argc, char **argv )
@@ -1096,7 +1111,7 @@ static void printUsage(void)
       printf( "       Seed the range sweeps, replaying a previous run. Each run\n" );
       printf( "       otherwise picks its own seed and prints it.\n" );
       printf( "\n" );
-      printf( "   On success, the exit code is 0.\n" );
-      printf( "   On failure, the exit code is a number that can be\n" );
-      printf( "   found in c/src/tools/ta_regtest/ta_error_number.h\n" );
+      printf( "   On success, the exit code is 0. On failure it is 1, and the\n" );
+      printf( "   last line names the ErrorNumber, found in\n" );
+      printf( "   src/tools/ta_regtest/ta_error_number.h\n" );
 }

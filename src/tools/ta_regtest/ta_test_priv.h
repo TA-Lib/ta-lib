@@ -127,7 +127,8 @@ ErrorNumber checkDataSame( const TA_Real *data,
                            unsigned int nbElement );
 
 /* Two runs of the SAME call (separate output buffer vs in-place): bit-identical.
- * Elements holding a reserved buffer pattern are skipped.
+ * Slots holding a reserved pattern in buffer1 are skipped: buffer2 is a .in
+ * buffer, which keeps input values past the output.
  *
  * Return TA_TEST_PASS if no difference are found.
  */
@@ -138,6 +139,11 @@ ErrorNumber checkSameContent( TA_Real *buffer1,
  * the contract is a tolerance, not bit-identity. */
 ErrorNumber checkSameContentApprox( TA_Real *buffer1,
                                     TA_Real *buffer2 );
+
+/* Both arguments are outputs of calls on buffers cleared alike: a slot left at
+ * its pattern in one must hold it in the other. */
+ErrorNumber checkSameOutput( TA_Real *buffer1, TA_Real *buffer2 );
+ErrorNumber checkSameOutputApprox( TA_Real *buffer1, TA_Real *buffer2 );
 
 ErrorNumber checkExpectedValue( const TA_Real *data,
                                 TA_RetCode retCode, TA_RetCode expectedRetCode,

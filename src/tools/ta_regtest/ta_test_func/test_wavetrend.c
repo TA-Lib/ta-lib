@@ -867,21 +867,17 @@ static TA_RetCode wtRangeTestFunction( TA_Integer startIdx, TA_Integer endIdx,
 {
    TA_History *h = (TA_History *)opaqueData;
    TA_RetCode rc;
-   static TA_Real buf1[WT_NB_BAR], buf2[WT_NB_BAR];
-   int i;
+   static TA_Real other[WT_NB_BAR];
 
    (void)outputBufferInt;
    *isOutputInteger = 0;
 
    *lookback = TA_WAVETREND_Lookback( 10, 21, 4 );
    rc = TA_WAVETREND( startIdx, endIdx, h->high, h->low, h->close,
-                      10, 21, 4, outBegIdx, outNbElement, buf1, buf2 );
-   if( rc != TA_SUCCESS ) return rc;
-
-   for( i = 0; i < (int)(*outNbElement); i++ )
-      outputBuffer[i] = outputNb == 0 ? buf1[i] : buf2[i];
-
-   return TA_SUCCESS;
+                      10, 21, 4, outBegIdx, outNbElement,
+                      outputNb == 0 ? outputBuffer : other,
+                      outputNb == 0 ? other : outputBuffer );
+   return rc;
 }
 
 /* (6) Range sweep. Three exponential stages, all carrying the one id. */
