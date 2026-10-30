@@ -47,6 +47,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  YV       Yvictor (@Yvictor)
  *  CC       Claude Code (AI assistant)
  *
  *
@@ -58,6 +59,9 @@
  *  072326 MF,CC  Fused single-pass rewrite: rolling sums + sqrt(n)-sized
  *                CIRCBUF, no whole-range temporaries (issue #139).
  *  080926 MF,CC  Allow period of 1. Just copy input into output.
+ *  102926 YV,CC  Weights in double (PR #565).
+ *  102926 MF,CC  Steady loop: fewer live values, sqrt(n)-slot ring,
+ *                unlikely re-anchors (PR #565).
  */
 
 TA_LIB_API int TA_HMA_Lookback( int optInTimePeriod )
@@ -108,9 +112,9 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
    double periodSubHalf;
    double periodSumHalf;
    double trailingHalf;
+   double subHalf;
    double periodSubSqrt;
    double periodSumSqrt;
-   double trailingSqrt;
    double tempReal;
    double fullOut;
    double halfOut;
@@ -148,15 +152,14 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
-   /* Weights are exact integers no larger than the period (100000). Keeping
-    * them in double avoids repeated integer conversions in the reseed loops
-    * without changing any product or accumulation order.
+   /* Keep the weights double: they stay exact (never above the period), and
+    * an integer weight slows the Rust loop.
     */
    /* The de-lagged series needs only its last sqrt(n) values, so the whole
     * computation runs in one pass over a single window into the input:
     * three interleaved WMA rolling sums plus this small ring. The ring has
-    * sqrt(n)-1 slots: on the stack while that fits the 50-slot prolog
-    * (optInTimePeriod <= 2703), TA_Malloc from optInTimePeriod = 2704 up.
+    * sqrt(n) slots: on the stack while that fits the 50-slot prolog
+    * (optInTimePeriod <= 2600), TA_Malloc from optInTimePeriod = 2601 up.
     */
    /* Hull Moving Average (Alan Hull, 2005):
     *
@@ -167,9 +170,9 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
     * line. See hma.md and issue #139.
     *
     * Each of the three WMAs keeps TA_WMA's exact accumulation order
-    * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
+    * (periodSub/periodSum, trailing subtract), so this fused pass is
     * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
-    * differential in test_composite.c holds it to that, memcmp-exact.
+    * differential in test_composite1.c holds it to that, memcmp-exact.
     */
    /* No smoothing at period of 1: the output is a copy of the input
     * (same convention as TA_MA for every MAType). Explicit because the
@@ -296,12 +299,13 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
       }
       barsSinceReseedHalf = 8 * halfPeriod;
       trailingHalf = 0.0;
-      /* The de-lagged value computed at bar t is consumed as the outer WMA's
-       * trailing value sqrtPeriod-1 bars later, so a single-cursor ring of
-       * sqrtPeriod-1 slots is enough: read the expiring value, overwrite the
-       * slot with the current one, advance.
+      /* The de-lagged value computed at bar t leaves the outer WMA's window
+       * sqrtPeriod bars later, so a single-cursor ring of sqrtPeriod slots
+       * still holds it when it leaves: subtract the slot, overwrite it with
+       * the current value, advance. The slot the warm-up does not fill is the
+       * first bar's departing value, which is zero.
        */
-      ringSize = sqrtPeriod - 1;
+      ringSize = sqrtPeriod;
       if( ringSize < 1 ) return TA_INTERNAL_ERROR(319);
       if( (int)ringSize > (int)(sizeof(local_dRing)/sizeof(double)) )
       {
@@ -317,12 +321,12 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
       }
       maxIdx_dRing = (ringSize-1);
       dRing_Idx = 0;
+      dRing[ringSize - 1] = 0.0;
       /* Warm-up: the sqrtPeriod-1 de-lagged values before the first output
        * prime the outer WMA (weights 1..sqrtPeriod-1) and fill the ring.
        */
       periodSubSqrt = 0.0;
       periodSumSqrt = 0.0;
-      trailingSqrt = 0.0;
       w = 1.0;
       for( today = wmaStartIdx; today < startIdx; today += 1 )
       {
@@ -380,18 +384,29 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
          if( dRing_Idx > maxIdx_dRing ) dRing_Idx = 0;
       }
       barsSinceReseedSqrt = 8 * sqrtPeriod;
-      /* Steady state: one pass, three rolling WMAs. Writes trail every read by
-       * at least sqrtPeriod-1 slots (the lookback clamp), so outReal == inReal
-       * stays safe.
+      /* Read each departing bar when it is subtracted: a value carried across
+       * bars costs a register, and Java at 16 XMM registers then spills a
+       * running sum every bar. Keep the steady loop's half-period sum apart
+       * from the warm-up's: shared, arm64 C# copies it between two registers
+       * every bar.
+       */
+      trailingIdxFull -= 1;
+      trailingIdxHalf -= 1;
+      subHalf = periodSubHalf;
+      /* Steady state: one pass, three rolling WMAs. Each bar's trailing read
+       * sits sqrtPeriod-2 or more slots ahead of its store, zero at periods
+       * 4..8, so keep that read before the store for outReal == inReal.
        */
       for( today = startIdx; today <= endIdx; today += 1 )
       {
          tempReal = inReal[today];
+         tempReal2 = inReal[trailingIdxFull];
+         trailingIdxFull += 1;
          periodSubFull += tempReal;
-         periodSubFull -= trailingFull;
+         periodSubFull -= tempReal2;
          periodSumFull += tempReal * optInTimePeriod;
          barsSinceReseedFull -= 1;
-         if( barsSinceReseedFull <= 0 )
+         if( TA_UNLIKELY(barsSinceReseedFull <= 0) )
          {
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
@@ -405,66 +420,63 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
                rw += 1;
             }
          }
-         trailingFull = inReal[trailingIdxFull];
-         trailingIdxFull += 1;
          fullOut = periodSumFull / dividerFull;
          periodSumFull -= periodSubFull;
-         periodSubHalf += tempReal;
-         periodSubHalf -= trailingHalf;
+         tempReal2 = inReal[trailingIdxHalf];
+         trailingIdxHalf += 1;
+         subHalf += tempReal;
+         subHalf -= tempReal2;
          periodSumHalf += tempReal * halfPeriod;
          barsSinceReseedHalf -= 1;
-         if( barsSinceReseedHalf <= 0 )
+         if( TA_UNLIKELY(barsSinceReseedHalf <= 0) )
          {
             barsSinceReseedHalf = 8 * halfPeriod;
-            periodSubHalf = 0.0;
+            subHalf = 0.0;
             periodSumHalf = 0.0;
             rw = 1.0;
             for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 )
             {
                tempReal2 = inReal[jHalf];
-               periodSubHalf += tempReal2;
+               subHalf += tempReal2;
                periodSumHalf += tempReal2 * rw;
                rw += 1;
             }
          }
-         trailingHalf = inReal[trailingIdxHalf];
-         trailingIdxHalf += 1;
          halfOut = periodSumHalf / dividerHalf;
-         periodSumHalf -= periodSubHalf;
+         periodSumHalf -= subHalf;
          diffReal = 2.0 * halfOut - fullOut;
          periodSubSqrt += diffReal;
-         periodSubSqrt -= trailingSqrt;
+         periodSubSqrt -= dRing[dRing_Idx];
          periodSumSqrt += diffReal * sqrtPeriod;
          /* The outer WMA consumes a DERIVED series that is never
-          * materialised, so its rescan walks the de-lag ring: dRing_Idx is
-          * the oldest slot (the one about to expire) and diffReal is the
-          * newest value, which together are the whole window. Oldest first,
-          * weight counting up from 1 -- the priming order above.
+          * materialised, so its rescan walks the de-lag ring: the slots after
+          * dRing_Idx (which holds the departing value) and diffReal are the
+          * whole window. Oldest first, weight counting up from 1 -- the
+          * priming order above.
           */
          barsSinceReseedSqrt -= 1;
-         if( barsSinceReseedSqrt <= 0 )
+         if( TA_UNLIKELY(barsSinceReseedSqrt <= 0) )
          {
             barsSinceReseedSqrt = 8 * sqrtPeriod;
             periodSubSqrt = 0.0;
             periodSumSqrt = 0.0;
             rw = 1.0;
             ringWalk = dRing_Idx;
-            for( q = 0; q < ringSize; q += 1 )
+            for( q = 1; q < ringSize; q += 1 )
             {
-               tempReal2 = dRing[ringWalk];
-               periodSubSqrt += tempReal2;
-               periodSumSqrt += tempReal2 * rw;
-               rw += 1;
                ringWalk += 1;
                if( ringWalk >= ringSize )
                {
                   ringWalk = 0;
                }
+               tempReal2 = dRing[ringWalk];
+               periodSubSqrt += tempReal2;
+               periodSumSqrt += tempReal2 * rw;
+               rw += 1;
             }
             periodSubSqrt += diffReal;
             periodSumSqrt += diffReal * sqrtPeriod;
          }
-         trailingSqrt = dRing[dRing_Idx];
          dRing[dRing_Idx] = diffReal;
          dRing_Idx++;
          if( dRing_Idx > maxIdx_dRing ) dRing_Idx = 0;
@@ -506,9 +518,9 @@ TA_RetCode TA_S_HMA( int    startIdx,
    double periodSubHalf;
    double periodSumHalf;
    double trailingHalf;
+   double subHalf;
    double periodSubSqrt;
    double periodSumSqrt;
-   double trailingSqrt;
    double tempReal;
    double fullOut;
    double halfOut;
@@ -640,7 +652,7 @@ TA_RetCode TA_S_HMA( int    startIdx,
       }
       barsSinceReseedHalf = 8 * halfPeriod;
       trailingHalf = 0.0;
-      ringSize = sqrtPeriod - 1;
+      ringSize = sqrtPeriod;
       if( ringSize < 1 ) return TA_INTERNAL_ERROR(319);
       if( (int)ringSize > (int)(sizeof(local_dRing)/sizeof(double)) )
       {
@@ -656,9 +668,9 @@ TA_RetCode TA_S_HMA( int    startIdx,
       }
       maxIdx_dRing = (ringSize-1);
       dRing_Idx = 0;
+      dRing[ringSize - 1] = 0.0;
       periodSubSqrt = 0.0;
       periodSumSqrt = 0.0;
-      trailingSqrt = 0.0;
       w = 1.0;
       for( today = wmaStartIdx; today < startIdx; today += 1 )
       {
@@ -716,14 +728,19 @@ TA_RetCode TA_S_HMA( int    startIdx,
          if( dRing_Idx > maxIdx_dRing ) dRing_Idx = 0;
       }
       barsSinceReseedSqrt = 8 * sqrtPeriod;
+      trailingIdxFull -= 1;
+      trailingIdxHalf -= 1;
+      subHalf = periodSubHalf;
       for( today = startIdx; today <= endIdx; today += 1 )
       {
          tempReal = (double)inReal[today];
+         tempReal2 = (double)inReal[trailingIdxFull];
+         trailingIdxFull += 1;
          periodSubFull += tempReal;
-         periodSubFull -= trailingFull;
+         periodSubFull -= tempReal2;
          periodSumFull += tempReal * optInTimePeriod;
          barsSinceReseedFull -= 1;
-         if( barsSinceReseedFull <= 0 )
+         if( TA_UNLIKELY(barsSinceReseedFull <= 0) )
          {
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
@@ -737,60 +754,57 @@ TA_RetCode TA_S_HMA( int    startIdx,
                rw += 1;
             }
          }
-         trailingFull = (double)inReal[trailingIdxFull];
-         trailingIdxFull += 1;
          fullOut = periodSumFull / dividerFull;
          periodSumFull -= periodSubFull;
-         periodSubHalf += tempReal;
-         periodSubHalf -= trailingHalf;
+         tempReal2 = (double)inReal[trailingIdxHalf];
+         trailingIdxHalf += 1;
+         subHalf += tempReal;
+         subHalf -= tempReal2;
          periodSumHalf += tempReal * halfPeriod;
          barsSinceReseedHalf -= 1;
-         if( barsSinceReseedHalf <= 0 )
+         if( TA_UNLIKELY(barsSinceReseedHalf <= 0) )
          {
             barsSinceReseedHalf = 8 * halfPeriod;
-            periodSubHalf = 0.0;
+            subHalf = 0.0;
             periodSumHalf = 0.0;
             rw = 1.0;
             for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 )
             {
                tempReal2 = (double)inReal[jHalf];
-               periodSubHalf += tempReal2;
+               subHalf += tempReal2;
                periodSumHalf += tempReal2 * rw;
                rw += 1;
             }
          }
-         trailingHalf = (double)inReal[trailingIdxHalf];
-         trailingIdxHalf += 1;
          halfOut = periodSumHalf / dividerHalf;
-         periodSumHalf -= periodSubHalf;
+         periodSumHalf -= subHalf;
          diffReal = 2.0 * halfOut - fullOut;
          periodSubSqrt += diffReal;
-         periodSubSqrt -= trailingSqrt;
+         periodSubSqrt -= dRing[dRing_Idx];
          periodSumSqrt += diffReal * sqrtPeriod;
          barsSinceReseedSqrt -= 1;
-         if( barsSinceReseedSqrt <= 0 )
+         if( TA_UNLIKELY(barsSinceReseedSqrt <= 0) )
          {
             barsSinceReseedSqrt = 8 * sqrtPeriod;
             periodSubSqrt = 0.0;
             periodSumSqrt = 0.0;
             rw = 1.0;
             ringWalk = dRing_Idx;
-            for( q = 0; q < ringSize; q += 1 )
+            for( q = 1; q < ringSize; q += 1 )
             {
-               tempReal2 = dRing[ringWalk];
-               periodSubSqrt += tempReal2;
-               periodSumSqrt += tempReal2 * rw;
-               rw += 1;
                ringWalk += 1;
                if( ringWalk >= ringSize )
                {
                   ringWalk = 0;
                }
+               tempReal2 = dRing[ringWalk];
+               periodSubSqrt += tempReal2;
+               periodSumSqrt += tempReal2 * rw;
+               rw += 1;
             }
             periodSubSqrt += diffReal;
             periodSumSqrt += diffReal * sqrtPeriod;
          }
-         trailingSqrt = dRing[dRing_Idx];
          dRing[dRing_Idx] = diffReal;
          dRing_Idx++;
          if( dRing_Idx > maxIdx_dRing ) dRing_Idx = 0;
@@ -826,12 +840,10 @@ struct TA_HMA_Stream {
    double dividerHalf;
    double dividerSqrt;
    double pad_1;
-   double periodSubHalf;
    double periodSumHalf;
-   double trailingHalf;
+   double subHalf;
    double periodSubSqrt;
    double periodSumSqrt;
-   double trailingSqrt;
    int lookbackHalf;
    int barsSinceReseedHalf;
    int barsSinceReseedSqrt;
@@ -943,11 +955,12 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
       sp->win_jFull_inReal[sp->winPos_jFull] = inReal;
       sp->win_jHalf_inReal[sp->winPos_jHalf] = inReal;
       tempReal = inReal;
+      tempReal2 = sp->ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull];
       sp->periodSubFull += tempReal;
-      sp->periodSubFull -= sp->trailingFull;
+      sp->periodSubFull -= tempReal2;
       sp->periodSumFull += tempReal * sp->optInTimePeriod;
       sp->barsSinceReseedFull -= 1;
-      if( sp->barsSinceReseedFull <= 0 )
+      if( TA_UNLIKELY(sp->barsSinceReseedFull <= 0) )
       {
          sp->barsSinceReseedFull = 8 * sp->optInTimePeriod;
          sp->periodSubFull = 0.0;
@@ -961,64 +974,62 @@ static void TA_HMA_StepImpl( struct TA_HMA_Stream *sp, double inReal, double *ou
             rw += 1;
          }
       }
-      sp->trailingFull = sp->ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull];
       fullOut = sp->periodSumFull / sp->dividerFull;
       sp->periodSumFull -= sp->periodSubFull;
-      sp->periodSubHalf += tempReal;
-      sp->periodSubHalf -= sp->trailingHalf;
+      tempReal2 = sp->ring_trailingIdxHalf_inReal[sp->ringPos_trailingIdxHalf];
+      sp->subHalf += tempReal;
+      sp->subHalf -= tempReal2;
       sp->periodSumHalf += tempReal * sp->halfPeriod;
       sp->barsSinceReseedHalf -= 1;
-      if( sp->barsSinceReseedHalf <= 0 )
+      if( TA_UNLIKELY(sp->barsSinceReseedHalf <= 0) )
       {
          sp->barsSinceReseedHalf = 8 * sp->halfPeriod;
-         sp->periodSubHalf = 0.0;
+         sp->subHalf = 0.0;
          sp->periodSumHalf = 0.0;
          rw = 1.0;
          for( jHalf = sp->lookbackHalf; jHalf >= 0; jHalf -= 1 )
          {
             tempReal2 = sp->win_jHalf_inReal[(sp->winPos_jHalf + sp->winCap_jHalf - jHalf >= sp->winCap_jHalf) ? sp->winPos_jHalf + sp->winCap_jHalf - jHalf - sp->winCap_jHalf : sp->winPos_jHalf + sp->winCap_jHalf - jHalf];
-            sp->periodSubHalf += tempReal2;
+            sp->subHalf += tempReal2;
             sp->periodSumHalf += tempReal2 * rw;
             rw += 1;
          }
       }
-      sp->trailingHalf = sp->ring_trailingIdxHalf_inReal[sp->ringPos_trailingIdxHalf];
       halfOut = sp->periodSumHalf / sp->dividerHalf;
-      sp->periodSumHalf -= sp->periodSubHalf;
+      sp->periodSumHalf -= sp->subHalf;
       diffReal = 2.0 * halfOut - fullOut;
       periodSubSqrt += diffReal;
-      periodSubSqrt -= sp->trailingSqrt;
+      periodSubSqrt -= sp->cb_dRing[sp->dRing_Idx];
       periodSumSqrt += diffReal * sp->sqrtPeriod;
       /* The outer WMA consumes a DERIVED series that is never
-       * materialised, so its rescan walks the de-lag ring: dRing_Idx is
-       * the oldest slot (the one about to expire) and diffReal is the
-       * newest value, which together are the whole window. Oldest first,
-       * weight counting up from 1 -- the priming order above.
+       * materialised, so its rescan walks the de-lag ring: the slots after
+       * dRing_Idx (which holds the departing value) and diffReal are the
+       * whole window. Oldest first, weight counting up from 1 -- the
+       * priming order above.
        */
       sp->barsSinceReseedSqrt -= 1;
-      if( sp->barsSinceReseedSqrt <= 0 )
+      if( TA_UNLIKELY(sp->barsSinceReseedSqrt <= 0) )
       {
          sp->barsSinceReseedSqrt = 8 * sp->sqrtPeriod;
          periodSubSqrt = 0.0;
          periodSumSqrt = 0.0;
          rw = 1.0;
          ringWalk = sp->dRing_Idx;
-         for( q = 0; q < sp->ringSize; q += 1 )
+         for( q = 1; q < sp->ringSize; q += 1 )
          {
-            tempReal2 = sp->cb_dRing[ringWalk];
-            periodSubSqrt += tempReal2;
-            periodSumSqrt += tempReal2 * rw;
-            rw += 1;
             ringWalk += 1;
             if( ringWalk >= sp->ringSize )
             {
                ringWalk = 0;
             }
+            tempReal2 = sp->cb_dRing[ringWalk];
+            periodSubSqrt += tempReal2;
+            periodSumSqrt += tempReal2 * rw;
+            rw += 1;
          }
          periodSubSqrt += diffReal;
          periodSumSqrt += diffReal * sp->sqrtPeriod;
       }
-      sp->trailingSqrt = sp->cb_dRing[sp->dRing_Idx];
       sp->cb_dRing[sp->dRing_Idx] = diffReal;
       sp->dRing_Idx = sp->dRing_Idx + 1;
       if( sp->dRing_Idx > sp->maxIdx_dRing )
@@ -1156,17 +1167,16 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       int lookbackFull = 0;
       int barsSinceReseedFull = 0;
       double tempReal2;
-      /* Weights are exact integers no larger than the period (100000). Keeping
-       * them in double avoids repeated integer conversions in the reseed loops
-       * without changing any product or accumulation order.
+      /* Keep the weights double: they stay exact (never above the period), and
+       * an integer weight slows the Rust loop.
        */
       double w;
       double rw;
       /* The de-lagged series needs only its last sqrt(n) values, so the whole
        * computation runs in one pass over a single window into the input:
        * three interleaved WMA rolling sums plus this small ring. The ring has
-       * sqrt(n)-1 slots: on the stack while that fits the 50-slot prolog
-       * (optInTimePeriod <= 2703), TA_Malloc from optInTimePeriod = 2704 up.
+       * sqrt(n) slots: on the stack while that fits the 50-slot prolog
+       * (optInTimePeriod <= 2600), TA_Malloc from optInTimePeriod = 2601 up.
        */
       /* Hull Moving Average (Alan Hull, 2005):
        *
@@ -1177,9 +1187,9 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
        * line. See hma.md and issue #139.
        *
        * Each of the three WMAs keeps TA_WMA's exact accumulation order
-       * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
+       * (periodSub/periodSum, trailing subtract), so this fused pass is
        * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
-       * differential in test_composite.c holds it to that, memcmp-exact.
+       * differential in test_composite1.c holds it to that, memcmp-exact.
        */
       sqrtPeriod = (int)sqrt((double)optInTimePeriod);
       lookbackSqrt = TA_WMA_Lookback(sqrtPeriod);
@@ -1317,13 +1327,13 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       int trailingIdxHalf;
       double periodSubFull = 0.0;
       double periodSumFull = 0.0;
-      double trailingFull = 0.0;
-      double periodSubHalf = 0.0;
+      double trailingFull;
+      double periodSubHalf;
       double periodSumHalf = 0.0;
-      double trailingHalf = 0.0;
+      double trailingHalf;
+      double subHalf = 0.0;
       double periodSubSqrt = 0.0;
       double periodSumSqrt = 0.0;
-      double trailingSqrt = 0.0;
       double tempReal;
       double fullOut;
       double halfOut;
@@ -1338,17 +1348,16 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       int barsSinceReseedHalf = 0;
       int barsSinceReseedSqrt = 0;
       double tempReal2;
-      /* Weights are exact integers no larger than the period (100000). Keeping
-       * them in double avoids repeated integer conversions in the reseed loops
-       * without changing any product or accumulation order.
+      /* Keep the weights double: they stay exact (never above the period), and
+       * an integer weight slows the Rust loop.
        */
       double w;
       double rw;
       /* The de-lagged series needs only its last sqrt(n) values, so the whole
        * computation runs in one pass over a single window into the input:
        * three interleaved WMA rolling sums plus this small ring. The ring has
-       * sqrt(n)-1 slots: on the stack while that fits the 50-slot prolog
-       * (optInTimePeriod <= 2703), TA_Malloc from optInTimePeriod = 2704 up.
+       * sqrt(n) slots: on the stack while that fits the 50-slot prolog
+       * (optInTimePeriod <= 2600), TA_Malloc from optInTimePeriod = 2601 up.
        */
       /* Hull Moving Average (Alan Hull, 2005):
        *
@@ -1359,9 +1368,9 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
        * line. See hma.md and issue #139.
        *
        * Each of the three WMAs keeps TA_WMA's exact accumulation order
-       * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
+       * (periodSub/periodSum, trailing subtract), so this fused pass is
        * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
-       * differential in test_composite.c holds it to that, memcmp-exact.
+       * differential in test_composite1.c holds it to that, memcmp-exact.
        */
       halfPeriod = optInTimePeriod / 2;
       sqrtPeriod = (int)sqrt((double)optInTimePeriod);
@@ -1432,12 +1441,13 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       }
       barsSinceReseedHalf = 8 * halfPeriod;
       trailingHalf = 0.0;
-      /* The de-lagged value computed at bar t is consumed as the outer WMA's
-       * trailing value sqrtPeriod-1 bars later, so a single-cursor ring of
-       * sqrtPeriod-1 slots is enough: read the expiring value, overwrite the
-       * slot with the current one, advance.
+      /* The de-lagged value computed at bar t leaves the outer WMA's window
+       * sqrtPeriod bars later, so a single-cursor ring of sqrtPeriod slots
+       * still holds it when it leaves: subtract the slot, overwrite it with
+       * the current value, advance. The slot the warm-up does not fill is the
+       * first bar's departing value, which is zero.
        */
-      ringSize = sqrtPeriod - 1;
+      ringSize = sqrtPeriod;
       if( ringSize < 1 ) return TA_INTERNAL_ERROR(319);
       if( (int)ringSize > (int)(sizeof(local_dRing)/sizeof(double)) )
       {
@@ -1453,12 +1463,12 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       }
       maxIdx_dRing = (ringSize-1);
       dRing_Idx = 0;
+      dRing[ringSize - 1] = 0.0;
       /* Warm-up: the sqrtPeriod-1 de-lagged values before the first output
        * prime the outer WMA (weights 1..sqrtPeriod-1) and fill the ring.
        */
       periodSubSqrt = 0.0;
       periodSumSqrt = 0.0;
-      trailingSqrt = 0.0;
       w = 1.0;
       for( today = wmaStartIdx; today < startIdx; today += 1 )
       {
@@ -1516,18 +1526,29 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
          if( dRing_Idx > maxIdx_dRing ) dRing_Idx = 0;
       }
       barsSinceReseedSqrt = 8 * sqrtPeriod;
-      /* Steady state: one pass, three rolling WMAs. Writes trail every read by
-       * at least sqrtPeriod-1 slots (the lookback clamp), so outReal == inReal
-       * stays safe.
+      /* Read each departing bar when it is subtracted: a value carried across
+       * bars costs a register, and Java at 16 XMM registers then spills a
+       * running sum every bar. Keep the steady loop's half-period sum apart
+       * from the warm-up's: shared, arm64 C# copies it between two registers
+       * every bar.
+       */
+      trailingIdxFull -= 1;
+      trailingIdxHalf -= 1;
+      subHalf = periodSubHalf;
+      /* Steady state: one pass, three rolling WMAs. Each bar's trailing read
+       * sits sqrtPeriod-2 or more slots ahead of its store, zero at periods
+       * 4..8, so keep that read before the store for outReal == inReal.
        */
       for( today = startIdx; today <= endIdx; today += 1 )
       {
          tempReal = inReal[today];
+         tempReal2 = inReal[trailingIdxFull];
+         trailingIdxFull += 1;
          periodSubFull += tempReal;
-         periodSubFull -= trailingFull;
+         periodSubFull -= tempReal2;
          periodSumFull += tempReal * optInTimePeriod;
          barsSinceReseedFull -= 1;
-         if( barsSinceReseedFull <= 0 )
+         if( TA_UNLIKELY(barsSinceReseedFull <= 0) )
          {
             barsSinceReseedFull = 8 * optInTimePeriod;
             periodSubFull = 0.0;
@@ -1541,66 +1562,63 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
                rw += 1;
             }
          }
-         trailingFull = inReal[trailingIdxFull];
-         trailingIdxFull += 1;
          fullOut = periodSumFull / dividerFull;
          periodSumFull -= periodSubFull;
-         periodSubHalf += tempReal;
-         periodSubHalf -= trailingHalf;
+         tempReal2 = inReal[trailingIdxHalf];
+         trailingIdxHalf += 1;
+         subHalf += tempReal;
+         subHalf -= tempReal2;
          periodSumHalf += tempReal * halfPeriod;
          barsSinceReseedHalf -= 1;
-         if( barsSinceReseedHalf <= 0 )
+         if( TA_UNLIKELY(barsSinceReseedHalf <= 0) )
          {
             barsSinceReseedHalf = 8 * halfPeriod;
-            periodSubHalf = 0.0;
+            subHalf = 0.0;
             periodSumHalf = 0.0;
             rw = 1.0;
             for( jHalf = today - lookbackHalf; jHalf <= today; jHalf += 1 )
             {
                tempReal2 = inReal[jHalf];
-               periodSubHalf += tempReal2;
+               subHalf += tempReal2;
                periodSumHalf += tempReal2 * rw;
                rw += 1;
             }
          }
-         trailingHalf = inReal[trailingIdxHalf];
-         trailingIdxHalf += 1;
          halfOut = periodSumHalf / dividerHalf;
-         periodSumHalf -= periodSubHalf;
+         periodSumHalf -= subHalf;
          diffReal = 2.0 * halfOut - fullOut;
          periodSubSqrt += diffReal;
-         periodSubSqrt -= trailingSqrt;
+         periodSubSqrt -= dRing[dRing_Idx];
          periodSumSqrt += diffReal * sqrtPeriod;
          /* The outer WMA consumes a DERIVED series that is never
-          * materialised, so its rescan walks the de-lag ring: dRing_Idx is
-          * the oldest slot (the one about to expire) and diffReal is the
-          * newest value, which together are the whole window. Oldest first,
-          * weight counting up from 1 -- the priming order above.
+          * materialised, so its rescan walks the de-lag ring: the slots after
+          * dRing_Idx (which holds the departing value) and diffReal are the
+          * whole window. Oldest first, weight counting up from 1 -- the
+          * priming order above.
           */
          barsSinceReseedSqrt -= 1;
-         if( barsSinceReseedSqrt <= 0 )
+         if( TA_UNLIKELY(barsSinceReseedSqrt <= 0) )
          {
             barsSinceReseedSqrt = 8 * sqrtPeriod;
             periodSubSqrt = 0.0;
             periodSumSqrt = 0.0;
             rw = 1.0;
             ringWalk = dRing_Idx;
-            for( q = 0; q < ringSize; q += 1 )
+            for( q = 1; q < ringSize; q += 1 )
             {
-               tempReal2 = dRing[ringWalk];
-               periodSubSqrt += tempReal2;
-               periodSumSqrt += tempReal2 * rw;
-               rw += 1;
                ringWalk += 1;
                if( ringWalk >= ringSize )
                {
                   ringWalk = 0;
                }
+               tempReal2 = dRing[ringWalk];
+               periodSubSqrt += tempReal2;
+               periodSumSqrt += tempReal2 * rw;
+               rw += 1;
             }
             periodSubSqrt += diffReal;
             periodSumSqrt += diffReal * sqrtPeriod;
          }
-         trailingSqrt = dRing[dRing_Idx];
          dRing[dRing_Idx] = diffReal;
          dRing_Idx++;
          if( dRing_Idx > maxIdx_dRing ) dRing_Idx = 0;
@@ -1623,13 +1641,10 @@ static TA_RetCode TA_HMA_OpenImpl( struct TA_HMA_Stream **stream, const double i
       sp->dividerSqrt = dividerSqrt;
       sp->periodSubFull = periodSubFull;
       sp->periodSumFull = periodSumFull;
-      sp->trailingFull = trailingFull;
-      sp->periodSubHalf = periodSubHalf;
       sp->periodSumHalf = periodSumHalf;
-      sp->trailingHalf = trailingHalf;
+      sp->subHalf = subHalf;
       sp->periodSubSqrt = periodSubSqrt;
       sp->periodSumSqrt = periodSumSqrt;
-      sp->trailingSqrt = trailingSqrt;
       sp->lookbackFull = lookbackFull;
       sp->lookbackHalf = lookbackHalf;
       sp->barsSinceReseedFull = barsSinceReseedFull;
@@ -1812,12 +1827,10 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
       int barsSinceReseedSqrt;
       int dRing_Idx;
       double periodSubFull;
-      double periodSubHalf;
       double periodSumFull;
       double periodSumHalf;
       double periodSumSqrt;
-      double trailingFull;
-      double trailingHalf;
+      double subHalf;
       double *cb_dRing;
       double *ring_trailingIdxFull_inReal;
       double *ring_trailingIdxHalf_inReal;
@@ -1833,12 +1846,10 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
       barsSinceReseedSqrt = sp->barsSinceReseedSqrt;
       dRing_Idx = sp->dRing_Idx;
       periodSubFull = sp->periodSubFull;
-      periodSubHalf = sp->periodSubHalf;
       periodSumFull = sp->periodSumFull;
       periodSumHalf = sp->periodSumHalf;
       periodSumSqrt = sp->periodSumSqrt;
-      trailingFull = sp->trailingFull;
-      trailingHalf = sp->trailingHalf;
+      subHalf = sp->subHalf;
       cb_dRing = sp->cb_dRing;
       ring_trailingIdxFull_inReal = sp->ring_trailingIdxFull_inReal;
       ring_trailingIdxHalf_inReal = sp->ring_trailingIdxHalf_inReal;
@@ -1849,8 +1860,9 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
       pkSlot1 = sp->winPos_jHalf;
       pkVal1 = inReal;
       tempReal = inReal;
+      tempReal2 = ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull];
       periodSubFull += tempReal;
-      periodSubFull -= trailingFull;
+      periodSubFull -= tempReal2;
       periodSumFull += tempReal * sp->optInTimePeriod;
       barsSinceReseedFull -= 1;
       if( barsSinceReseedFull <= 0 )
@@ -1867,37 +1879,36 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
             rw += 1;
          }
       }
-      trailingFull = ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull];
       fullOut = periodSumFull / sp->dividerFull;
       periodSumFull -= periodSubFull;
-      periodSubHalf += tempReal;
-      periodSubHalf -= trailingHalf;
+      tempReal2 = ring_trailingIdxHalf_inReal[sp->ringPos_trailingIdxHalf];
+      subHalf += tempReal;
+      subHalf -= tempReal2;
       periodSumHalf += tempReal * sp->halfPeriod;
       barsSinceReseedHalf -= 1;
       if( barsSinceReseedHalf <= 0 )
       {
          barsSinceReseedHalf = 8 * sp->halfPeriod;
-         periodSubHalf = 0.0;
+         subHalf = 0.0;
          periodSumHalf = 0.0;
          rw = 1.0;
          for( jHalf = sp->lookbackHalf; jHalf >= 0; jHalf -= 1 )
          {
             tempReal2 = (((sp->winPos_jHalf + sp->winCap_jHalf - jHalf >= sp->winCap_jHalf) ? sp->winPos_jHalf + sp->winCap_jHalf - jHalf - sp->winCap_jHalf : sp->winPos_jHalf + sp->winCap_jHalf - jHalf) != pkSlot1) ? win_jHalf_inReal[(sp->winPos_jHalf + sp->winCap_jHalf - jHalf >= sp->winCap_jHalf) ? sp->winPos_jHalf + sp->winCap_jHalf - jHalf - sp->winCap_jHalf : sp->winPos_jHalf + sp->winCap_jHalf - jHalf] : pkVal1;
-            periodSubHalf += tempReal2;
+            subHalf += tempReal2;
             periodSumHalf += tempReal2 * rw;
             rw += 1;
          }
       }
-      trailingHalf = ring_trailingIdxHalf_inReal[sp->ringPos_trailingIdxHalf];
       halfOut = periodSumHalf / sp->dividerHalf;
-      periodSumHalf -= periodSubHalf;
+      periodSumHalf -= subHalf;
       diffReal = 2.0 * halfOut - fullOut;
       periodSumSqrt += diffReal * sp->sqrtPeriod;
       /* The outer WMA consumes a DERIVED series that is never
-       * materialised, so its rescan walks the de-lag ring: dRing_Idx is
-       * the oldest slot (the one about to expire) and diffReal is the
-       * newest value, which together are the whole window. Oldest first,
-       * weight counting up from 1 -- the priming order above.
+       * materialised, so its rescan walks the de-lag ring: the slots after
+       * dRing_Idx (which holds the departing value) and diffReal are the
+       * whole window. Oldest first, weight counting up from 1 -- the
+       * priming order above.
        */
       barsSinceReseedSqrt -= 1;
       if( barsSinceReseedSqrt <= 0 )
@@ -1906,16 +1917,16 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
          periodSumSqrt = 0.0;
          rw = 1.0;
          ringWalk = dRing_Idx;
-         for( q = 0; q < sp->ringSize; q += 1 )
+         for( q = 1; q < sp->ringSize; q += 1 )
          {
-            tempReal2 = cb_dRing[ringWalk];
-            periodSumSqrt += tempReal2 * rw;
-            rw += 1;
             ringWalk += 1;
             if( ringWalk >= sp->ringSize )
             {
                ringWalk = 0;
             }
+            tempReal2 = cb_dRing[ringWalk];
+            periodSumSqrt += tempReal2 * rw;
+            rw += 1;
          }
          periodSumSqrt += diffReal * sp->sqrtPeriod;
       }
@@ -1989,11 +2000,12 @@ void TA_HMA_StepTape( struct TA_HMA_Stream *sp, const double tape[], int tapeBas
       periodSubSqrt = sp->periodSubSqrt;
       periodSumSqrt = sp->periodSumSqrt;
       tempReal = inReal;
+      tempReal2 = tape[(tapeBase - sp->ringCap_trailingIdxFull) & tapeMask];
       sp->periodSubFull += tempReal;
-      sp->periodSubFull -= sp->trailingFull;
+      sp->periodSubFull -= tempReal2;
       sp->periodSumFull += tempReal * sp->optInTimePeriod;
       sp->barsSinceReseedFull -= 1;
-      if( sp->barsSinceReseedFull <= 0 )
+      if( TA_UNLIKELY(sp->barsSinceReseedFull <= 0) )
       {
          sp->barsSinceReseedFull = 8 * sp->optInTimePeriod;
          sp->periodSubFull = 0.0;
@@ -2007,64 +2019,62 @@ void TA_HMA_StepTape( struct TA_HMA_Stream *sp, const double tape[], int tapeBas
             rw += 1;
          }
       }
-      sp->trailingFull = tape[(tapeBase - sp->ringCap_trailingIdxFull) & tapeMask];
       fullOut = sp->periodSumFull / sp->dividerFull;
       sp->periodSumFull -= sp->periodSubFull;
-      sp->periodSubHalf += tempReal;
-      sp->periodSubHalf -= sp->trailingHalf;
+      tempReal2 = tape[(tapeBase - sp->ringCap_trailingIdxHalf) & tapeMask];
+      sp->subHalf += tempReal;
+      sp->subHalf -= tempReal2;
       sp->periodSumHalf += tempReal * sp->halfPeriod;
       sp->barsSinceReseedHalf -= 1;
-      if( sp->barsSinceReseedHalf <= 0 )
+      if( TA_UNLIKELY(sp->barsSinceReseedHalf <= 0) )
       {
          sp->barsSinceReseedHalf = 8 * sp->halfPeriod;
-         sp->periodSubHalf = 0.0;
+         sp->subHalf = 0.0;
          sp->periodSumHalf = 0.0;
          rw = 1.0;
          for( jHalf = sp->lookbackHalf; jHalf >= 0; jHalf -= 1 )
          {
             tempReal2 = tape[(tapeBase - jHalf) & tapeMask];
-            sp->periodSubHalf += tempReal2;
+            sp->subHalf += tempReal2;
             sp->periodSumHalf += tempReal2 * rw;
             rw += 1;
          }
       }
-      sp->trailingHalf = tape[(tapeBase - sp->ringCap_trailingIdxHalf) & tapeMask];
       halfOut = sp->periodSumHalf / sp->dividerHalf;
-      sp->periodSumHalf -= sp->periodSubHalf;
+      sp->periodSumHalf -= sp->subHalf;
       diffReal = 2.0 * halfOut - fullOut;
       periodSubSqrt += diffReal;
-      periodSubSqrt -= sp->trailingSqrt;
+      periodSubSqrt -= sp->cb_dRing[sp->dRing_Idx];
       periodSumSqrt += diffReal * sp->sqrtPeriod;
       /* The outer WMA consumes a DERIVED series that is never
-       * materialised, so its rescan walks the de-lag ring: dRing_Idx is
-       * the oldest slot (the one about to expire) and diffReal is the
-       * newest value, which together are the whole window. Oldest first,
-       * weight counting up from 1 -- the priming order above.
+       * materialised, so its rescan walks the de-lag ring: the slots after
+       * dRing_Idx (which holds the departing value) and diffReal are the
+       * whole window. Oldest first, weight counting up from 1 -- the
+       * priming order above.
        */
       sp->barsSinceReseedSqrt -= 1;
-      if( sp->barsSinceReseedSqrt <= 0 )
+      if( TA_UNLIKELY(sp->barsSinceReseedSqrt <= 0) )
       {
          sp->barsSinceReseedSqrt = 8 * sp->sqrtPeriod;
          periodSubSqrt = 0.0;
          periodSumSqrt = 0.0;
          rw = 1.0;
          ringWalk = sp->dRing_Idx;
-         for( q = 0; q < sp->ringSize; q += 1 )
+         for( q = 1; q < sp->ringSize; q += 1 )
          {
-            tempReal2 = sp->cb_dRing[ringWalk];
-            periodSubSqrt += tempReal2;
-            periodSumSqrt += tempReal2 * rw;
-            rw += 1;
             ringWalk += 1;
             if( ringWalk >= sp->ringSize )
             {
                ringWalk = 0;
             }
+            tempReal2 = sp->cb_dRing[ringWalk];
+            periodSubSqrt += tempReal2;
+            periodSumSqrt += tempReal2 * rw;
+            rw += 1;
          }
          periodSubSqrt += diffReal;
          periodSumSqrt += diffReal * sp->sqrtPeriod;
       }
-      sp->trailingSqrt = sp->cb_dRing[sp->dRing_Idx];
       sp->cb_dRing[sp->dRing_Idx] = diffReal;
       sp->dRing_Idx = sp->dRing_Idx + 1;
       if( sp->dRing_Idx > sp->maxIdx_dRing )
@@ -2144,12 +2154,10 @@ void TA_HMA_PeekTape( const struct TA_HMA_Stream *sp, const double tape[], int t
       int barsSinceReseedSqrt;
       int dRing_Idx;
       double periodSubFull;
-      double periodSubHalf;
       double periodSumFull;
       double periodSumHalf;
       double periodSumSqrt;
-      double trailingFull;
-      double trailingHalf;
+      double subHalf;
       double *cb_dRing;
       int pkSlot0 = -1;
       double pkVal0 = 0.0;
@@ -2159,18 +2167,17 @@ void TA_HMA_PeekTape( const struct TA_HMA_Stream *sp, const double tape[], int t
       barsSinceReseedSqrt = sp->barsSinceReseedSqrt;
       dRing_Idx = sp->dRing_Idx;
       periodSubFull = sp->periodSubFull;
-      periodSubHalf = sp->periodSubHalf;
       periodSumFull = sp->periodSumFull;
       periodSumHalf = sp->periodSumHalf;
       periodSumSqrt = sp->periodSumSqrt;
-      trailingFull = sp->trailingFull;
-      trailingHalf = sp->trailingHalf;
+      subHalf = sp->subHalf;
       cb_dRing = sp->cb_dRing;
       pkSlot0 = tapeBase & tapeMask;
       pkVal0 = inReal;
       tempReal = inReal;
+      tempReal2 = tape[(tapeBase - sp->ringCap_trailingIdxFull) & tapeMask];
       periodSubFull += tempReal;
-      periodSubFull -= trailingFull;
+      periodSubFull -= tempReal2;
       periodSumFull += tempReal * sp->optInTimePeriod;
       barsSinceReseedFull -= 1;
       if( barsSinceReseedFull <= 0 )
@@ -2187,37 +2194,36 @@ void TA_HMA_PeekTape( const struct TA_HMA_Stream *sp, const double tape[], int t
             rw += 1;
          }
       }
-      trailingFull = tape[(tapeBase - sp->ringCap_trailingIdxFull) & tapeMask];
       fullOut = periodSumFull / sp->dividerFull;
       periodSumFull -= periodSubFull;
-      periodSubHalf += tempReal;
-      periodSubHalf -= trailingHalf;
+      tempReal2 = tape[(tapeBase - sp->ringCap_trailingIdxHalf) & tapeMask];
+      subHalf += tempReal;
+      subHalf -= tempReal2;
       periodSumHalf += tempReal * sp->halfPeriod;
       barsSinceReseedHalf -= 1;
       if( barsSinceReseedHalf <= 0 )
       {
          barsSinceReseedHalf = 8 * sp->halfPeriod;
-         periodSubHalf = 0.0;
+         subHalf = 0.0;
          periodSumHalf = 0.0;
          rw = 1.0;
          for( jHalf = sp->lookbackHalf; jHalf >= 0; jHalf -= 1 )
          {
             tempReal2 = (((tapeBase - jHalf) & tapeMask) != pkSlot0) ? tape[(tapeBase - jHalf) & tapeMask] : pkVal0;
-            periodSubHalf += tempReal2;
+            subHalf += tempReal2;
             periodSumHalf += tempReal2 * rw;
             rw += 1;
          }
       }
-      trailingHalf = tape[(tapeBase - sp->ringCap_trailingIdxHalf) & tapeMask];
       halfOut = periodSumHalf / sp->dividerHalf;
-      periodSumHalf -= periodSubHalf;
+      periodSumHalf -= subHalf;
       diffReal = 2.0 * halfOut - fullOut;
       periodSumSqrt += diffReal * sp->sqrtPeriod;
       /* The outer WMA consumes a DERIVED series that is never
-       * materialised, so its rescan walks the de-lag ring: dRing_Idx is
-       * the oldest slot (the one about to expire) and diffReal is the
-       * newest value, which together are the whole window. Oldest first,
-       * weight counting up from 1 -- the priming order above.
+       * materialised, so its rescan walks the de-lag ring: the slots after
+       * dRing_Idx (which holds the departing value) and diffReal are the
+       * whole window. Oldest first, weight counting up from 1 -- the
+       * priming order above.
        */
       barsSinceReseedSqrt -= 1;
       if( barsSinceReseedSqrt <= 0 )
@@ -2226,16 +2232,16 @@ void TA_HMA_PeekTape( const struct TA_HMA_Stream *sp, const double tape[], int t
          periodSumSqrt = 0.0;
          rw = 1.0;
          ringWalk = dRing_Idx;
-         for( q = 0; q < sp->ringSize; q += 1 )
+         for( q = 1; q < sp->ringSize; q += 1 )
          {
-            tempReal2 = cb_dRing[ringWalk];
-            periodSumSqrt += tempReal2 * rw;
-            rw += 1;
             ringWalk += 1;
             if( ringWalk >= sp->ringSize )
             {
                ringWalk = 0;
             }
+            tempReal2 = cb_dRing[ringWalk];
+            periodSumSqrt += tempReal2 * rw;
+            rw += 1;
          }
          periodSumSqrt += diffReal * sp->sqrtPeriod;
       }
