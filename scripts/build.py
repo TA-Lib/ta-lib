@@ -122,11 +122,14 @@ def make_joins_jobserver(build_dir: str) -> bool:
     m = re.match(r'GNU Make (\d+)', out)
     return bool(m) and int(m.group(1)) >= 4
 
-def cmake_build(build_dir: str, target: str = None, jobs: int = DEFAULT_JOBS):
-    """Run cmake --build, optionally for a specific target."""
+def cmake_build(build_dir: str, target: str = None, jobs: int = DEFAULT_JOBS,
+                config: str = None):
+    """Run cmake --build, optionally for a specific target and configuration."""
     cmd = ['cmake', '--build', '.']
     if target:
         cmd.extend(['--target', target])
+    if config:
+        cmd.extend(['--config', config])
     if make_joins_jobserver(build_dir):
         JOBS.run(cmd, check=True, cwd=build_dir)
     else:
@@ -736,7 +739,7 @@ CARGO_TARGETS = {'ta_codegen', 'generate', 'format', 'format-check', 'clippy',
 SIMPLE_TARGETS = {
     'ta_regtest':      'ensure_ta_regtest_in_bin',
     'servers':         'ensure_ta_regtest_in_bin',
-    'test':            'test',
+    'test':            'ensure_ta_regtest_in_bin',
     'regtest':         'regtest',
     # stage_benchmarks, not the raw target: bin/ is where bench_icount.py looks.
     'ta_bench_icount': 'stage_benchmarks',
@@ -927,7 +930,16 @@ def main():
         # copy would overwrite the Release bin/ta_regtest with the ASan build.
         if args.sanitize and cmake_target == 'ensure_ta_regtest_in_bin':
             cmake_target = 'ta_regtest'
-        cmake_build(build_dir, target=cmake_target, jobs=args.jobs)
+        if args.target == 'test':
+            # CMake's own `test` target runs ctest without building first. A
+            # multi-config generator registers the test per configuration, so
+            # the build and ctest must name the same one.
+            cmake_build(build_dir, target=cmake_target, jobs=args.jobs,
+                        config=args.build_type)
+            subprocess.run(['ctest', '-C', args.build_type, '--output-on-failure',
+                            '--no-tests=error'], check=True, cwd=build_dir)
+        else:
+            cmake_build(build_dir, target=cmake_target, jobs=args.jobs)
     else:
         print(f"Error: Unknown target '{args.target}'. Run with 'help' to see available targets.")
         sys.exit(1)

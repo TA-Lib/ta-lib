@@ -514,7 +514,7 @@ static ErrorNumber do_test( const TA_History *history,
 
    /* The previous call should have the same output as this call.
     */
-   errNb = checkSameContent( gBuffer[0].out0, gBuffer[1].out0 );
+   errNb = checkSameOutput( gBuffer[0].out0, gBuffer[1].out0 );
    if( errNb != TA_TEST_PASS )
       return errNb;
 

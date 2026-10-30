@@ -483,11 +483,9 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
 {
    TA_RetCode retCode;
    TA_RangeTestParam *testParam;
-   TA_Integer *intBuffer;
-   int size, i;
+   int i;
 
    (void)outputNb;
-   (void)outputBufferInt;
 
    *isOutputInteger = 0;
 
@@ -524,49 +522,17 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
       *lookback = TA_HT_TRENDLINE_Lookback();
       break;
    case TA_HT_TRENDMODE_TEST:
-      /* Trendmode returns integers, but this test
-       * is comparing real, so a translation is done
-       * here.
-       */
-      #define PRE_SENTINEL  ((TA_Integer)0xABABFEDC)
-      #define POST_SENTINEL ((TA_Integer)0xEFABCDFF)
-      #define ALLOC_INT_BUFFER(varSize)  \
-      { \
-         intBuffer = TA_Malloc(sizeof(TA_Integer)*(varSize+2)); \
-         TA_TOOL_CHECK_ALLOC(intBuffer); \
-         intBuffer[0]      = PRE_SENTINEL; \
-         intBuffer[varSize+1] = POST_SENTINEL; \
-      }
-
-      size = endIdx-startIdx+1; \
-      ALLOC_INT_BUFFER(size);
+      /* The comparator reads reals: convert after the call, which writes
+       * into the sweep's own integer buffer so its bound checks see it. */
       retCode = TA_HT_TRENDMODE( startIdx,
                                  endIdx,
                                  testParam->price,
                                  outBegIdx,
                                  outNbElement,
-                                 &intBuffer[1] );
+                                 outputBufferInt );
       *lookback = TA_HT_TRENDMODE_Lookback();
-
-      #define FREE_INT_BUFFER( destBuffer, varNbElement ) \
-      { \
-         if( intBuffer[0] != PRE_SENTINEL ) \
-         { \
-            retCode = TA_INTERNAL_ERROR(138); \
-         } \
-         else if( intBuffer[size+1] != POST_SENTINEL ) \
-         { \
-            retCode = TA_INTERNAL_ERROR(139); \
-         } \
-         else \
-         { \
-            for( i=0; i < varNbElement; i++ ) \
-               destBuffer[i] = (double)intBuffer[i+1]; \
-         } \
-         TA_Free( intBuffer ); \
-      }
-
-      FREE_INT_BUFFER( outputBuffer, *outNbElement );
+      for( i=0; i < *outNbElement; i++ )
+         outputBuffer[i] = (double)outputBufferInt[i];
       break;
    case TA_SIN_TEST:
       retCode = TA_SIN( startIdx,
@@ -655,6 +621,34 @@ static ErrorNumber do_test( const TA_History *history,
                                  gBuffer[0].out0 );
       break;
    case TA_HT_TRENDMODE_TEST:
+      #define PRE_SENTINEL  ((TA_Integer)0xABABFEDC)
+      #define POST_SENTINEL ((TA_Integer)0xEFABCDFF)
+      #define ALLOC_INT_BUFFER(varSize)  \
+      { \
+         intBuffer = TA_Malloc(sizeof(TA_Integer)*(varSize+2)); \
+         TA_TOOL_CHECK_ALLOC(intBuffer); \
+         intBuffer[0]      = PRE_SENTINEL; \
+         intBuffer[varSize+1] = POST_SENTINEL; \
+      }
+
+      #define FREE_INT_BUFFER( destBuffer, varNbElement ) \
+      { \
+         if( intBuffer[0] != PRE_SENTINEL ) \
+         { \
+            retCode = TA_INTERNAL_ERROR(138); \
+         } \
+         else if( intBuffer[size+1] != POST_SENTINEL ) \
+         { \
+            retCode = TA_INTERNAL_ERROR(139); \
+         } \
+         else \
+         { \
+            for( i=0; i < varNbElement; i++ ) \
+               destBuffer[i] = (double)intBuffer[i+1]; \
+         } \
+         TA_Free( intBuffer ); \
+      }
+
       ALLOC_INT_BUFFER(size);
       retCode = TA_HT_TRENDMODE( test->startIdx,
                                  test->endIdx,

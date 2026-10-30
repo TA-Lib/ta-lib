@@ -342,12 +342,13 @@ jobs:
         shell: bash
         run: |
           mkdir -p cmake-build && cd cmake-build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_DEV_TOOLS=ON
+          cmake .. -DCMAKE_BUILD_TYPE=Release
           cmake --build . -j 3
 
+      # Through ctest, the hook a packager runs: proves the registration too.
       - name: Run C regression suite
         shell: bash
-        run: cd cmake-build/bin && ./ta_regtest
+        run: ctest --test-dir cmake-build --output-on-failure --no-tests=error
 
       # scripts/abi.py measures the export table with `nm -D` over the ELF
       # `cmake-build/libta-lib.so`, so it reads NOTHING here and says so. Mach-O is the
@@ -407,7 +408,9 @@ jobs:
           mkdir at-build && cd at-build
           ../configure
           make -j 3
-          make -j 3 distcheck
+          # distcheck runs `make check`; a lost TESTS line would pass untested.
+          make -j 3 distcheck VERBOSE=1 2>&1 | tee distcheck.log
+          grep -q '^# PASS: *1$' distcheck.log
 
       # The install name is what a Mach-O program records at link time, so it
       # carries the ABI generation here the way DT_SONAME does on ELF.
@@ -1214,11 +1217,15 @@ jobs:
           fi
 
       # First execution of the C suite on arm64 Linux + real GCC anywhere in CI.
+      # The allocation-failure check skips where the address-space limit does
+      # not hold; this runner enforces it, so a skip here is a regression.
       - name: Run the C regression suite
         shell: bash
         run: |
+          set -o pipefail
           python3 scripts/build.py ta_regtest
-          cd bin && ./ta_regtest
+          cd bin && ./ta_regtest | tee regtest.log
+          ! grep -q 'allocation failure: not tested' regtest.log
 
       # Half (1) and half (2): a release whose own build fused is built from
       # source here instead of taken from its package, and every member's
@@ -1508,7 +1515,7 @@ jobs:
         run: python3 scripts/thread_sanitize.py
 
   # Conan packaging (#86) was never exercised by CI: build the package
-  # recipe end to end (library-only; BUILD_DEV_TOOLS stays off in the
+  # recipe end to end (library-only; BUILD_TESTING stays off in the
   # recipe). Gated on the C hero job like the other non-hero jobs.
   conan:
     name: Conan package build
@@ -1582,7 +1589,7 @@ jobs:
         run: |
           set -euo pipefail
           cmake -S . -B _wrapper/c-build -DCMAKE_BUILD_TYPE=Release \
-                -DBUILD_DEV_TOOLS=OFF -DCMAKE_INSTALL_PREFIX="$PWD/_wrapper/c"
+                -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX="$PWD/_wrapper/c"
           cmake --build _wrapper/c-build -j"$(nproc)"
           cmake --install _wrapper/c-build
 

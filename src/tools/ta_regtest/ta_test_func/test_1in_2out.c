@@ -392,7 +392,7 @@ static ErrorNumber do_test( const TA_History *history,
    if( errNb != TA_TEST_PASS )
       return errNb;
 
-   errNb = checkSameContent( gBuffer[0].out1, gBuffer[1].out1 );
+   errNb = checkSameOutput( gBuffer[0].out1, gBuffer[1].out1 );
    if( errNb != TA_TEST_PASS )
       return errNb;
 
@@ -435,7 +435,7 @@ static ErrorNumber do_test( const TA_History *history,
    if( errNb != TA_TEST_PASS )
       return errNb;
 
-   errNb = checkSameContent( gBuffer[0].out0, gBuffer[1].out0 );
+   errNb = checkSameOutput( gBuffer[0].out0, gBuffer[1].out0 );
    if( errNb != TA_TEST_PASS )
       return errNb;
 

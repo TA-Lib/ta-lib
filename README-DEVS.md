@@ -114,6 +114,6 @@ you; it may take up to a day to regenerate and test **all** platforms.
 
 To re-package locally anyway: ```scripts/package.py``` builds the packages for
 your host platform, and ```scripts/test-dist.py``` verifies them from a TA-Lib
-user's perspective (notably simulating a ta-lib-python user). Avoid pushing
-generated packages, but do not worry if you do — the "nightly dev" CI overwrites
-them.
+user's perspective: each is installed, then a C program is built against it.
+Avoid pushing generated packages, but do not worry if you do — the "nightly dev"
+CI overwrites them.

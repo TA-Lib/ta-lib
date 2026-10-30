@@ -56,8 +56,6 @@ typedef enum
   TA_TEST_TFRR_OVERLAP_OR_NAN_3         = 131,
   TA_TEST_TFRR_OVERLAP_OR_NAN_4         = 132,
   TA_TEST_TFRR_OVERLAP_OR_NAN_5         = 133,
-  TA_TEST_TFRR_OVERLAP_OR_NAN_6         = 134,
-  TA_TEST_TFRR_OVERLAP_OR_NAN_7         = 135,
   TA_TEST_TFRR_OVERLAP_OR_NAN_8         = 136,
   TA_TEST_TFRR_OVERLAP_OR_NAN_9         = 137,
   TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL  = 138,
@@ -424,9 +422,7 @@ typedef enum
   TA_REGTEST_ROLLING_EXTREMUM_INPLACE = 1554,
   TA_REGTEST_ROLLING_EXTREMUM_VACUOUS = 1555,
 
-  /* Frozen v0.6.4 reference values (issue #188). Note none of these is a
-   * multiple of 256: main() returns the ErrorNumber and POSIX truncates the
-   * exit status to its low 8 bits, so 1536/1792/... would exit 0. */
+  /* Frozen v0.6.4 reference values (issue #188). */
   TA_REGTEST_LEGACY_UNKNOWN_FUNC     = 1560,
   TA_REGTEST_LEGACY_PARAM_MISMATCH   = 1561,
   TA_REGTEST_LEGACY_TOO_MANY_OUTPUTS = 1562,
@@ -615,7 +611,6 @@ typedef enum
 
   /* rB7 and rB8: a failed allocation and an internal error reach the caller. */
   TA_REGTEST_ALLOC_FAIL_NOT_REPORTED = 1724,
-  TA_REGTEST_ALLOC_FAIL_UNARMED      = 1725,
   TA_REGTEST_INTERNAL_ERROR_NOT_REPORTED = 1726,
 
   /* The zero-pick macros against the ternary they stand for. */

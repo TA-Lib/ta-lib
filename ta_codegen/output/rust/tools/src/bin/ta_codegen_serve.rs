@@ -830,6 +830,17 @@ fn json_f64_array(data: &[f64]) -> String {
     s
 }
 
+const TAIL_F64_BITS: u64 = 0x7ff8_dead_beef_1234;
+const TAIL_I32: i32 = 0x5ead_beef;
+
+fn tail_dirty_f64(data: &[f64], from: usize) -> usize {
+    data[from..].iter().filter(|v| v.to_bits() != TAIL_F64_BITS).count()
+}
+
+fn tail_dirty_i32(data: &[i32], from: usize) -> usize {
+    data[from..].iter().filter(|&&v| v != TAIL_I32).count()
+}
+
 fn json_i32_array(data: &[i32]) -> String {
     let mut s = String::with_capacity(data.len() * 4 + 2);
     s.push('[');
@@ -2344,7 +2355,7 @@ pub(super) fn rpc_ac(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             let _lb = core.ac_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -2374,6 +2385,7 @@ pub(super) fn rpc_ac(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -2381,12 +2393,14 @@ pub(super) fn rpc_ac(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ac(&core, params, endIdx, &inHigh, &inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.ac_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_ac(&core, params, endIdx, &inHigh, &inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut resp);
             resp.push('}');
@@ -2736,9 +2750,9 @@ pub(super) fn rpc_accbands(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.accbands_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf2: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf2: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -2767,6 +2781,7 @@ pub(super) fn rpc_accbands(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement) + tail_dirty_f64(&outBuf2, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -2776,12 +2791,14 @@ pub(super) fn rpc_accbands(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_accbands(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.accbands_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push_str(",\"outReal2\":"); resp.push_str(&json_f64_array(&outBuf2[..outNBElement]));
@@ -3164,7 +3181,7 @@ pub(super) fn rpc_acos(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.acos_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -3190,6 +3207,7 @@ pub(super) fn rpc_acos(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -3197,12 +3215,14 @@ pub(super) fn rpc_acos(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_acos(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.acos_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_acos(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -3550,7 +3570,7 @@ pub(super) fn rpc_ad(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             let _lb = core.ad_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -3579,6 +3599,7 @@ pub(super) fn rpc_ad(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -3586,12 +3607,14 @@ pub(super) fn rpc_ad(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ad(&core, params, endIdx, &inHigh, &inLow, &inClose, &inVolume, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.ad_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_ad(&core, params, endIdx, &inHigh, &inLow, &inClose, &inVolume, &mut resp);
             resp.push('}');
@@ -3931,7 +3954,7 @@ pub(super) fn rpc_add(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.add_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -3958,6 +3981,7 @@ pub(super) fn rpc_add(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -3965,12 +3989,14 @@ pub(super) fn rpc_add(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_add(&core, params, endIdx, &inReal0, &inReal1, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.add_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_add(&core, params, endIdx, &inReal0, &inReal1, &mut resp);
             resp.push('}');
@@ -4322,7 +4348,7 @@ pub(super) fn rpc_adosc(core: &mut Core, ref_data: &mut RefData, params: &Value)
             let _lb = core.adosc_lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -4353,6 +4379,7 @@ pub(super) fn rpc_adosc(core: &mut Core, ref_data: &mut RefData, params: &Value)
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -4360,12 +4387,14 @@ pub(super) fn rpc_adosc(core: &mut Core, ref_data: &mut RefData, params: &Value)
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_adosc(&core, params, endIdx, &inHigh, &inLow, &inClose, &inVolume, optInFastPeriod, optInSlowPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.adosc_lookback(optInFastPeriod, optInSlowPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_adosc(&core, params, endIdx, &inHigh, &inLow, &inClose, &inVolume, optInFastPeriod, optInSlowPeriod, &mut resp);
             resp.push('}');
@@ -4711,7 +4740,7 @@ pub(super) fn rpc_adr(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.adr_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -4739,6 +4768,7 @@ pub(super) fn rpc_adr(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -4746,12 +4776,14 @@ pub(super) fn rpc_adr(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_adr(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.adr_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_adr(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -5100,7 +5132,7 @@ pub(super) fn rpc_adx(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.adx_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -5129,6 +5161,7 @@ pub(super) fn rpc_adx(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -5136,12 +5169,14 @@ pub(super) fn rpc_adx(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_adx(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.adx_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_adx(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -5490,7 +5525,7 @@ pub(super) fn rpc_adxr(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.adxr_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -5519,6 +5554,7 @@ pub(super) fn rpc_adxr(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -5526,12 +5562,14 @@ pub(super) fn rpc_adxr(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_adxr(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.adxr_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_adxr(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -5868,7 +5906,7 @@ pub(super) fn rpc_alma(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.alma_lookback(optInTimePeriod, optInSigma, optInOffset).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -5897,6 +5935,7 @@ pub(super) fn rpc_alma(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -5904,12 +5943,14 @@ pub(super) fn rpc_alma(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_alma(&core, params, endIdx, &inReal, optInTimePeriod, optInSigma, optInOffset, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.alma_lookback(optInTimePeriod, optInSigma, optInOffset).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_alma(&core, params, endIdx, &inReal, optInTimePeriod, optInSigma, optInOffset, &mut resp);
             resp.push('}');
@@ -6251,7 +6292,7 @@ pub(super) fn rpc_ao(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             let _lb = core.ao_lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -6280,6 +6321,7 @@ pub(super) fn rpc_ao(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -6287,12 +6329,14 @@ pub(super) fn rpc_ao(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ao(&core, params, endIdx, &inHigh, &inLow, optInFastPeriod, optInSlowPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.ao_lookback(optInFastPeriod, optInSlowPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_ao(&core, params, endIdx, &inHigh, &inLow, optInFastPeriod, optInSlowPeriod, &mut resp);
             resp.push('}');
@@ -6630,7 +6674,7 @@ pub(super) fn rpc_apo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.apo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -6662,6 +6706,7 @@ pub(super) fn rpc_apo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -6669,12 +6714,14 @@ pub(super) fn rpc_apo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_apo(&core, params, endIdx, &inReal, optInFastPeriod, optInSlowPeriod, optInMAType, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = if _enum_bad { -1 } else { core.apo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_apo(&core, params, endIdx, &inReal, optInFastPeriod, optInSlowPeriod, optInMAType, &mut resp);
             resp.push('}');
@@ -7025,8 +7072,8 @@ pub(super) fn rpc_aroon(core: &mut Core, ref_data: &mut RefData, params: &Value)
             let _lb = core.aroon_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -7054,6 +7101,7 @@ pub(super) fn rpc_aroon(core: &mut Core, ref_data: &mut RefData, params: &Value)
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -7062,12 +7110,14 @@ pub(super) fn rpc_aroon(core: &mut Core, ref_data: &mut RefData, params: &Value)
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_aroon(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.aroon_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             ride_aroon(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, &mut resp);
@@ -7431,7 +7481,7 @@ pub(super) fn rpc_aroonosc(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.aroonosc_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -7459,6 +7509,7 @@ pub(super) fn rpc_aroonosc(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -7466,12 +7517,14 @@ pub(super) fn rpc_aroonosc(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_aroonosc(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.aroonosc_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_aroonosc(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -7824,7 +7877,7 @@ pub(super) fn rpc_asi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.asi_lookback(optInLimitMove).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -7854,6 +7907,7 @@ pub(super) fn rpc_asi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -7861,12 +7915,14 @@ pub(super) fn rpc_asi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_asi(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.asi_lookback(optInLimitMove).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_asi(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut resp);
             resp.push('}');
@@ -8201,7 +8257,7 @@ pub(super) fn rpc_asin(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.asin_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -8227,6 +8283,7 @@ pub(super) fn rpc_asin(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -8234,12 +8291,14 @@ pub(super) fn rpc_asin(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_asin(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.asin_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_asin(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -8566,7 +8625,7 @@ pub(super) fn rpc_atan(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.atan_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -8592,6 +8651,7 @@ pub(super) fn rpc_atan(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -8599,12 +8659,14 @@ pub(super) fn rpc_atan(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_atan(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.atan_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_atan(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -8949,7 +9011,7 @@ pub(super) fn rpc_atr(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.atr_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -8978,6 +9040,7 @@ pub(super) fn rpc_atr(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -8985,12 +9048,14 @@ pub(super) fn rpc_atr(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_atr(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.atr_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_atr(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -9325,7 +9390,7 @@ pub(super) fn rpc_avgdev(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.avgdev_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -9352,6 +9417,7 @@ pub(super) fn rpc_avgdev(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -9359,12 +9425,14 @@ pub(super) fn rpc_avgdev(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_avgdev(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.avgdev_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_avgdev(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -9714,7 +9782,7 @@ pub(super) fn rpc_avgprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.avgprice_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -9743,6 +9811,7 @@ pub(super) fn rpc_avgprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -9750,12 +9819,14 @@ pub(super) fn rpc_avgprice(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_avgprice(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.avgprice_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_avgprice(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -10094,9 +10165,9 @@ pub(super) fn rpc_bbands(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.bbands_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf2: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf2: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -10129,6 +10200,7 @@ pub(super) fn rpc_bbands(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement) + tail_dirty_f64(&outBuf2, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -10138,12 +10210,14 @@ pub(super) fn rpc_bbands(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_bbands(&core, params, endIdx, &inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = if _enum_bad { -1 } else { core.bbands_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push_str(",\"outReal2\":"); resp.push_str(&json_f64_array(&outBuf2[..outNBElement]));
@@ -10544,7 +10618,7 @@ pub(super) fn rpc_bbw(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.bbw_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -10577,6 +10651,7 @@ pub(super) fn rpc_bbw(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -10584,12 +10659,14 @@ pub(super) fn rpc_bbw(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_bbw(&core, params, endIdx, &inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = if _enum_bad { -1 } else { core.bbw_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_bbw(&core, params, endIdx, &inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut resp);
             resp.push('}');
@@ -10942,7 +11019,7 @@ pub(super) fn rpc_beta(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.beta_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -10970,6 +11047,7 @@ pub(super) fn rpc_beta(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -10977,12 +11055,14 @@ pub(super) fn rpc_beta(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_beta(&core, params, endIdx, &inReal0, &inReal1, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.beta_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_beta(&core, params, endIdx, &inReal0, &inReal1, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -11334,7 +11414,7 @@ pub(super) fn rpc_bop(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.bop_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -11363,6 +11443,7 @@ pub(super) fn rpc_bop(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -11370,12 +11451,14 @@ pub(super) fn rpc_bop(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_bop(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.bop_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_bop(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -11723,7 +11806,7 @@ pub(super) fn rpc_cci(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.cci_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -11752,6 +11835,7 @@ pub(super) fn rpc_cci(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -11759,12 +11843,14 @@ pub(super) fn rpc_cci(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cci(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cci_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_cci(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -12118,7 +12204,7 @@ pub(super) fn rpc_cdl2crows(core: &mut Core, ref_data: &mut RefData, params: &Va
             let _lb = core.cdl2crows_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -12147,6 +12233,7 @@ pub(super) fn rpc_cdl2crows(core: &mut Core, ref_data: &mut RefData, params: &Va
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -12154,12 +12241,14 @@ pub(super) fn rpc_cdl2crows(core: &mut Core, ref_data: &mut RefData, params: &Va
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdl2crows(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdl2crows_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdl2crows(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -12517,7 +12606,7 @@ pub(super) fn rpc_cdl3blackcrows(core: &mut Core, ref_data: &mut RefData, params
             let _lb = core.cdl3blackcrows_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -12546,6 +12635,7 @@ pub(super) fn rpc_cdl3blackcrows(core: &mut Core, ref_data: &mut RefData, params
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -12553,12 +12643,14 @@ pub(super) fn rpc_cdl3blackcrows(core: &mut Core, ref_data: &mut RefData, params
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdl3blackcrows(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdl3blackcrows_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdl3blackcrows(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -12916,7 +13008,7 @@ pub(super) fn rpc_cdl3inside(core: &mut Core, ref_data: &mut RefData, params: &V
             let _lb = core.cdl3inside_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -12945,6 +13037,7 @@ pub(super) fn rpc_cdl3inside(core: &mut Core, ref_data: &mut RefData, params: &V
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -12952,12 +13045,14 @@ pub(super) fn rpc_cdl3inside(core: &mut Core, ref_data: &mut RefData, params: &V
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdl3inside(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdl3inside_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdl3inside(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -13315,7 +13410,7 @@ pub(super) fn rpc_cdl3linestrike(core: &mut Core, ref_data: &mut RefData, params
             let _lb = core.cdl3linestrike_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -13344,6 +13439,7 @@ pub(super) fn rpc_cdl3linestrike(core: &mut Core, ref_data: &mut RefData, params
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -13351,12 +13447,14 @@ pub(super) fn rpc_cdl3linestrike(core: &mut Core, ref_data: &mut RefData, params
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdl3linestrike(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdl3linestrike_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdl3linestrike(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -13714,7 +13812,7 @@ pub(super) fn rpc_cdl3outside(core: &mut Core, ref_data: &mut RefData, params: &
             let _lb = core.cdl3outside_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -13743,6 +13841,7 @@ pub(super) fn rpc_cdl3outside(core: &mut Core, ref_data: &mut RefData, params: &
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -13750,12 +13849,14 @@ pub(super) fn rpc_cdl3outside(core: &mut Core, ref_data: &mut RefData, params: &
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdl3outside(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdl3outside_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdl3outside(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -14113,7 +14214,7 @@ pub(super) fn rpc_cdl3starsinsouth(core: &mut Core, ref_data: &mut RefData, para
             let _lb = core.cdl3starsinsouth_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -14142,6 +14243,7 @@ pub(super) fn rpc_cdl3starsinsouth(core: &mut Core, ref_data: &mut RefData, para
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -14149,12 +14251,14 @@ pub(super) fn rpc_cdl3starsinsouth(core: &mut Core, ref_data: &mut RefData, para
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdl3starsinsouth(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdl3starsinsouth_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdl3starsinsouth(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -14512,7 +14616,7 @@ pub(super) fn rpc_cdl3whitesoldiers(core: &mut Core, ref_data: &mut RefData, par
             let _lb = core.cdl3whitesoldiers_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -14541,6 +14645,7 @@ pub(super) fn rpc_cdl3whitesoldiers(core: &mut Core, ref_data: &mut RefData, par
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -14548,12 +14653,14 @@ pub(super) fn rpc_cdl3whitesoldiers(core: &mut Core, ref_data: &mut RefData, par
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdl3whitesoldiers(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdl3whitesoldiers_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdl3whitesoldiers(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -14912,7 +15019,7 @@ pub(super) fn rpc_cdlabandonedbaby(core: &mut Core, ref_data: &mut RefData, para
             let _lb = core.cdlabandonedbaby_lookback(optInPenetration).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -14942,6 +15049,7 @@ pub(super) fn rpc_cdlabandonedbaby(core: &mut Core, ref_data: &mut RefData, para
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -14949,12 +15057,14 @@ pub(super) fn rpc_cdlabandonedbaby(core: &mut Core, ref_data: &mut RefData, para
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlabandonedbaby(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlabandonedbaby_lookback(optInPenetration).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlabandonedbaby(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut resp);
             resp.push('}');
@@ -15314,7 +15424,7 @@ pub(super) fn rpc_cdladvanceblock(core: &mut Core, ref_data: &mut RefData, param
             let _lb = core.cdladvanceblock_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -15343,6 +15453,7 @@ pub(super) fn rpc_cdladvanceblock(core: &mut Core, ref_data: &mut RefData, param
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -15350,12 +15461,14 @@ pub(super) fn rpc_cdladvanceblock(core: &mut Core, ref_data: &mut RefData, param
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdladvanceblock(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdladvanceblock_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdladvanceblock(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -15713,7 +15826,7 @@ pub(super) fn rpc_cdlbelthold(core: &mut Core, ref_data: &mut RefData, params: &
             let _lb = core.cdlbelthold_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -15742,6 +15855,7 @@ pub(super) fn rpc_cdlbelthold(core: &mut Core, ref_data: &mut RefData, params: &
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -15749,12 +15863,14 @@ pub(super) fn rpc_cdlbelthold(core: &mut Core, ref_data: &mut RefData, params: &
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlbelthold(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlbelthold_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlbelthold(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -16112,7 +16228,7 @@ pub(super) fn rpc_cdlbreakaway(core: &mut Core, ref_data: &mut RefData, params: 
             let _lb = core.cdlbreakaway_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -16141,6 +16257,7 @@ pub(super) fn rpc_cdlbreakaway(core: &mut Core, ref_data: &mut RefData, params: 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -16148,12 +16265,14 @@ pub(super) fn rpc_cdlbreakaway(core: &mut Core, ref_data: &mut RefData, params: 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlbreakaway(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlbreakaway_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlbreakaway(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -16511,7 +16630,7 @@ pub(super) fn rpc_cdlclosingmarubozu(core: &mut Core, ref_data: &mut RefData, pa
             let _lb = core.cdlclosingmarubozu_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -16540,6 +16659,7 @@ pub(super) fn rpc_cdlclosingmarubozu(core: &mut Core, ref_data: &mut RefData, pa
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -16547,12 +16667,14 @@ pub(super) fn rpc_cdlclosingmarubozu(core: &mut Core, ref_data: &mut RefData, pa
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlclosingmarubozu(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlclosingmarubozu_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlclosingmarubozu(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -16910,7 +17032,7 @@ pub(super) fn rpc_cdlconcealbabyswall(core: &mut Core, ref_data: &mut RefData, p
             let _lb = core.cdlconcealbabyswall_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -16939,6 +17061,7 @@ pub(super) fn rpc_cdlconcealbabyswall(core: &mut Core, ref_data: &mut RefData, p
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -16946,12 +17069,14 @@ pub(super) fn rpc_cdlconcealbabyswall(core: &mut Core, ref_data: &mut RefData, p
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlconcealbabyswall(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlconcealbabyswall_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlconcealbabyswall(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -17309,7 +17434,7 @@ pub(super) fn rpc_cdlcounterattack(core: &mut Core, ref_data: &mut RefData, para
             let _lb = core.cdlcounterattack_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -17338,6 +17463,7 @@ pub(super) fn rpc_cdlcounterattack(core: &mut Core, ref_data: &mut RefData, para
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -17345,12 +17471,14 @@ pub(super) fn rpc_cdlcounterattack(core: &mut Core, ref_data: &mut RefData, para
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlcounterattack(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlcounterattack_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlcounterattack(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -17709,7 +17837,7 @@ pub(super) fn rpc_cdldarkcloudcover(core: &mut Core, ref_data: &mut RefData, par
             let _lb = core.cdldarkcloudcover_lookback(optInPenetration).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -17739,6 +17867,7 @@ pub(super) fn rpc_cdldarkcloudcover(core: &mut Core, ref_data: &mut RefData, par
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -17746,12 +17875,14 @@ pub(super) fn rpc_cdldarkcloudcover(core: &mut Core, ref_data: &mut RefData, par
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdldarkcloudcover(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdldarkcloudcover_lookback(optInPenetration).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdldarkcloudcover(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut resp);
             resp.push('}');
@@ -18111,7 +18242,7 @@ pub(super) fn rpc_cdldoji(core: &mut Core, ref_data: &mut RefData, params: &Valu
             let _lb = core.cdldoji_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -18140,6 +18271,7 @@ pub(super) fn rpc_cdldoji(core: &mut Core, ref_data: &mut RefData, params: &Valu
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -18147,12 +18279,14 @@ pub(super) fn rpc_cdldoji(core: &mut Core, ref_data: &mut RefData, params: &Valu
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdldoji(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdldoji_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdldoji(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -18510,7 +18644,7 @@ pub(super) fn rpc_cdldojistar(core: &mut Core, ref_data: &mut RefData, params: &
             let _lb = core.cdldojistar_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -18539,6 +18673,7 @@ pub(super) fn rpc_cdldojistar(core: &mut Core, ref_data: &mut RefData, params: &
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -18546,12 +18681,14 @@ pub(super) fn rpc_cdldojistar(core: &mut Core, ref_data: &mut RefData, params: &
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdldojistar(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdldojistar_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdldojistar(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -18909,7 +19046,7 @@ pub(super) fn rpc_cdldragonflydoji(core: &mut Core, ref_data: &mut RefData, para
             let _lb = core.cdldragonflydoji_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -18938,6 +19075,7 @@ pub(super) fn rpc_cdldragonflydoji(core: &mut Core, ref_data: &mut RefData, para
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -18945,12 +19083,14 @@ pub(super) fn rpc_cdldragonflydoji(core: &mut Core, ref_data: &mut RefData, para
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdldragonflydoji(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdldragonflydoji_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdldragonflydoji(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -19308,7 +19448,7 @@ pub(super) fn rpc_cdlengulfing(core: &mut Core, ref_data: &mut RefData, params: 
             let _lb = core.cdlengulfing_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -19337,6 +19477,7 @@ pub(super) fn rpc_cdlengulfing(core: &mut Core, ref_data: &mut RefData, params: 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -19344,12 +19485,14 @@ pub(super) fn rpc_cdlengulfing(core: &mut Core, ref_data: &mut RefData, params: 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlengulfing(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlengulfing_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlengulfing(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -19708,7 +19851,7 @@ pub(super) fn rpc_cdleveningdojistar(core: &mut Core, ref_data: &mut RefData, pa
             let _lb = core.cdleveningdojistar_lookback(optInPenetration).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -19738,6 +19881,7 @@ pub(super) fn rpc_cdleveningdojistar(core: &mut Core, ref_data: &mut RefData, pa
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -19745,12 +19889,14 @@ pub(super) fn rpc_cdleveningdojistar(core: &mut Core, ref_data: &mut RefData, pa
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdleveningdojistar(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdleveningdojistar_lookback(optInPenetration).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdleveningdojistar(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut resp);
             resp.push('}');
@@ -20111,7 +20257,7 @@ pub(super) fn rpc_cdleveningstar(core: &mut Core, ref_data: &mut RefData, params
             let _lb = core.cdleveningstar_lookback(optInPenetration).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -20141,6 +20287,7 @@ pub(super) fn rpc_cdleveningstar(core: &mut Core, ref_data: &mut RefData, params
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -20148,12 +20295,14 @@ pub(super) fn rpc_cdleveningstar(core: &mut Core, ref_data: &mut RefData, params
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdleveningstar(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdleveningstar_lookback(optInPenetration).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdleveningstar(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut resp);
             resp.push('}');
@@ -20513,7 +20662,7 @@ pub(super) fn rpc_cdlgapsidesidewhite(core: &mut Core, ref_data: &mut RefData, p
             let _lb = core.cdlgapsidesidewhite_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -20542,6 +20691,7 @@ pub(super) fn rpc_cdlgapsidesidewhite(core: &mut Core, ref_data: &mut RefData, p
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -20549,12 +20699,14 @@ pub(super) fn rpc_cdlgapsidesidewhite(core: &mut Core, ref_data: &mut RefData, p
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlgapsidesidewhite(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlgapsidesidewhite_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlgapsidesidewhite(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -20912,7 +21064,7 @@ pub(super) fn rpc_cdlgravestonedoji(core: &mut Core, ref_data: &mut RefData, par
             let _lb = core.cdlgravestonedoji_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -20941,6 +21093,7 @@ pub(super) fn rpc_cdlgravestonedoji(core: &mut Core, ref_data: &mut RefData, par
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -20948,12 +21101,14 @@ pub(super) fn rpc_cdlgravestonedoji(core: &mut Core, ref_data: &mut RefData, par
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlgravestonedoji(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlgravestonedoji_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlgravestonedoji(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -21311,7 +21466,7 @@ pub(super) fn rpc_cdlhammer(core: &mut Core, ref_data: &mut RefData, params: &Va
             let _lb = core.cdlhammer_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -21340,6 +21495,7 @@ pub(super) fn rpc_cdlhammer(core: &mut Core, ref_data: &mut RefData, params: &Va
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -21347,12 +21503,14 @@ pub(super) fn rpc_cdlhammer(core: &mut Core, ref_data: &mut RefData, params: &Va
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlhammer(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlhammer_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlhammer(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -21710,7 +21868,7 @@ pub(super) fn rpc_cdlhangingman(core: &mut Core, ref_data: &mut RefData, params:
             let _lb = core.cdlhangingman_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -21739,6 +21897,7 @@ pub(super) fn rpc_cdlhangingman(core: &mut Core, ref_data: &mut RefData, params:
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -21746,12 +21905,14 @@ pub(super) fn rpc_cdlhangingman(core: &mut Core, ref_data: &mut RefData, params:
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlhangingman(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlhangingman_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlhangingman(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -22109,7 +22270,7 @@ pub(super) fn rpc_cdlharami(core: &mut Core, ref_data: &mut RefData, params: &Va
             let _lb = core.cdlharami_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -22138,6 +22299,7 @@ pub(super) fn rpc_cdlharami(core: &mut Core, ref_data: &mut RefData, params: &Va
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -22145,12 +22307,14 @@ pub(super) fn rpc_cdlharami(core: &mut Core, ref_data: &mut RefData, params: &Va
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlharami(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlharami_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlharami(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -22508,7 +22672,7 @@ pub(super) fn rpc_cdlharamicross(core: &mut Core, ref_data: &mut RefData, params
             let _lb = core.cdlharamicross_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -22537,6 +22701,7 @@ pub(super) fn rpc_cdlharamicross(core: &mut Core, ref_data: &mut RefData, params
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -22544,12 +22709,14 @@ pub(super) fn rpc_cdlharamicross(core: &mut Core, ref_data: &mut RefData, params
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlharamicross(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlharamicross_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlharamicross(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -22907,7 +23074,7 @@ pub(super) fn rpc_cdlhighwave(core: &mut Core, ref_data: &mut RefData, params: &
             let _lb = core.cdlhighwave_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -22936,6 +23103,7 @@ pub(super) fn rpc_cdlhighwave(core: &mut Core, ref_data: &mut RefData, params: &
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -22943,12 +23111,14 @@ pub(super) fn rpc_cdlhighwave(core: &mut Core, ref_data: &mut RefData, params: &
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlhighwave(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlhighwave_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlhighwave(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -23306,7 +23476,7 @@ pub(super) fn rpc_cdlhikkake(core: &mut Core, ref_data: &mut RefData, params: &V
             let _lb = core.cdlhikkake_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -23335,6 +23505,7 @@ pub(super) fn rpc_cdlhikkake(core: &mut Core, ref_data: &mut RefData, params: &V
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -23342,12 +23513,14 @@ pub(super) fn rpc_cdlhikkake(core: &mut Core, ref_data: &mut RefData, params: &V
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlhikkake(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlhikkake_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlhikkake(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -23705,7 +23878,7 @@ pub(super) fn rpc_cdlhikkakemod(core: &mut Core, ref_data: &mut RefData, params:
             let _lb = core.cdlhikkakemod_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -23734,6 +23907,7 @@ pub(super) fn rpc_cdlhikkakemod(core: &mut Core, ref_data: &mut RefData, params:
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -23741,12 +23915,14 @@ pub(super) fn rpc_cdlhikkakemod(core: &mut Core, ref_data: &mut RefData, params:
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlhikkakemod(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlhikkakemod_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlhikkakemod(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -24104,7 +24280,7 @@ pub(super) fn rpc_cdlhomingpigeon(core: &mut Core, ref_data: &mut RefData, param
             let _lb = core.cdlhomingpigeon_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -24133,6 +24309,7 @@ pub(super) fn rpc_cdlhomingpigeon(core: &mut Core, ref_data: &mut RefData, param
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -24140,12 +24317,14 @@ pub(super) fn rpc_cdlhomingpigeon(core: &mut Core, ref_data: &mut RefData, param
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlhomingpigeon(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlhomingpigeon_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlhomingpigeon(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -24503,7 +24682,7 @@ pub(super) fn rpc_cdlidentical3crows(core: &mut Core, ref_data: &mut RefData, pa
             let _lb = core.cdlidentical3crows_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -24532,6 +24711,7 @@ pub(super) fn rpc_cdlidentical3crows(core: &mut Core, ref_data: &mut RefData, pa
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -24539,12 +24719,14 @@ pub(super) fn rpc_cdlidentical3crows(core: &mut Core, ref_data: &mut RefData, pa
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlidentical3crows(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlidentical3crows_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlidentical3crows(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -24902,7 +25084,7 @@ pub(super) fn rpc_cdlinneck(core: &mut Core, ref_data: &mut RefData, params: &Va
             let _lb = core.cdlinneck_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -24931,6 +25113,7 @@ pub(super) fn rpc_cdlinneck(core: &mut Core, ref_data: &mut RefData, params: &Va
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -24938,12 +25121,14 @@ pub(super) fn rpc_cdlinneck(core: &mut Core, ref_data: &mut RefData, params: &Va
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlinneck(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlinneck_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlinneck(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -25301,7 +25486,7 @@ pub(super) fn rpc_cdlinvertedhammer(core: &mut Core, ref_data: &mut RefData, par
             let _lb = core.cdlinvertedhammer_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -25330,6 +25515,7 @@ pub(super) fn rpc_cdlinvertedhammer(core: &mut Core, ref_data: &mut RefData, par
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -25337,12 +25523,14 @@ pub(super) fn rpc_cdlinvertedhammer(core: &mut Core, ref_data: &mut RefData, par
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlinvertedhammer(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlinvertedhammer_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlinvertedhammer(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -25700,7 +25888,7 @@ pub(super) fn rpc_cdlkicking(core: &mut Core, ref_data: &mut RefData, params: &V
             let _lb = core.cdlkicking_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -25729,6 +25917,7 @@ pub(super) fn rpc_cdlkicking(core: &mut Core, ref_data: &mut RefData, params: &V
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -25736,12 +25925,14 @@ pub(super) fn rpc_cdlkicking(core: &mut Core, ref_data: &mut RefData, params: &V
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlkicking(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlkicking_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlkicking(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -26099,7 +26290,7 @@ pub(super) fn rpc_cdlkickingbylength(core: &mut Core, ref_data: &mut RefData, pa
             let _lb = core.cdlkickingbylength_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -26128,6 +26319,7 @@ pub(super) fn rpc_cdlkickingbylength(core: &mut Core, ref_data: &mut RefData, pa
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -26135,12 +26327,14 @@ pub(super) fn rpc_cdlkickingbylength(core: &mut Core, ref_data: &mut RefData, pa
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlkickingbylength(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlkickingbylength_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlkickingbylength(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -26498,7 +26692,7 @@ pub(super) fn rpc_cdlladderbottom(core: &mut Core, ref_data: &mut RefData, param
             let _lb = core.cdlladderbottom_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -26527,6 +26721,7 @@ pub(super) fn rpc_cdlladderbottom(core: &mut Core, ref_data: &mut RefData, param
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -26534,12 +26729,14 @@ pub(super) fn rpc_cdlladderbottom(core: &mut Core, ref_data: &mut RefData, param
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlladderbottom(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlladderbottom_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlladderbottom(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -26897,7 +27094,7 @@ pub(super) fn rpc_cdllongleggeddoji(core: &mut Core, ref_data: &mut RefData, par
             let _lb = core.cdllongleggeddoji_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -26926,6 +27123,7 @@ pub(super) fn rpc_cdllongleggeddoji(core: &mut Core, ref_data: &mut RefData, par
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -26933,12 +27131,14 @@ pub(super) fn rpc_cdllongleggeddoji(core: &mut Core, ref_data: &mut RefData, par
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdllongleggeddoji(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdllongleggeddoji_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdllongleggeddoji(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -27296,7 +27496,7 @@ pub(super) fn rpc_cdllongline(core: &mut Core, ref_data: &mut RefData, params: &
             let _lb = core.cdllongline_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -27325,6 +27525,7 @@ pub(super) fn rpc_cdllongline(core: &mut Core, ref_data: &mut RefData, params: &
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -27332,12 +27533,14 @@ pub(super) fn rpc_cdllongline(core: &mut Core, ref_data: &mut RefData, params: &
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdllongline(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdllongline_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdllongline(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -27695,7 +27898,7 @@ pub(super) fn rpc_cdlmarubozu(core: &mut Core, ref_data: &mut RefData, params: &
             let _lb = core.cdlmarubozu_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -27724,6 +27927,7 @@ pub(super) fn rpc_cdlmarubozu(core: &mut Core, ref_data: &mut RefData, params: &
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -27731,12 +27935,14 @@ pub(super) fn rpc_cdlmarubozu(core: &mut Core, ref_data: &mut RefData, params: &
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlmarubozu(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlmarubozu_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlmarubozu(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -28094,7 +28300,7 @@ pub(super) fn rpc_cdlmatchinglow(core: &mut Core, ref_data: &mut RefData, params
             let _lb = core.cdlmatchinglow_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -28123,6 +28329,7 @@ pub(super) fn rpc_cdlmatchinglow(core: &mut Core, ref_data: &mut RefData, params
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -28130,12 +28337,14 @@ pub(super) fn rpc_cdlmatchinglow(core: &mut Core, ref_data: &mut RefData, params
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlmatchinglow(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlmatchinglow_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlmatchinglow(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -28494,7 +28703,7 @@ pub(super) fn rpc_cdlmathold(core: &mut Core, ref_data: &mut RefData, params: &V
             let _lb = core.cdlmathold_lookback(optInPenetration).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -28524,6 +28733,7 @@ pub(super) fn rpc_cdlmathold(core: &mut Core, ref_data: &mut RefData, params: &V
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -28531,12 +28741,14 @@ pub(super) fn rpc_cdlmathold(core: &mut Core, ref_data: &mut RefData, params: &V
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlmathold(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlmathold_lookback(optInPenetration).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlmathold(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut resp);
             resp.push('}');
@@ -28897,7 +29109,7 @@ pub(super) fn rpc_cdlmorningdojistar(core: &mut Core, ref_data: &mut RefData, pa
             let _lb = core.cdlmorningdojistar_lookback(optInPenetration).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -28927,6 +29139,7 @@ pub(super) fn rpc_cdlmorningdojistar(core: &mut Core, ref_data: &mut RefData, pa
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -28934,12 +29147,14 @@ pub(super) fn rpc_cdlmorningdojistar(core: &mut Core, ref_data: &mut RefData, pa
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlmorningdojistar(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlmorningdojistar_lookback(optInPenetration).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlmorningdojistar(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut resp);
             resp.push('}');
@@ -29300,7 +29515,7 @@ pub(super) fn rpc_cdlmorningstar(core: &mut Core, ref_data: &mut RefData, params
             let _lb = core.cdlmorningstar_lookback(optInPenetration).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -29330,6 +29545,7 @@ pub(super) fn rpc_cdlmorningstar(core: &mut Core, ref_data: &mut RefData, params
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -29337,12 +29553,14 @@ pub(super) fn rpc_cdlmorningstar(core: &mut Core, ref_data: &mut RefData, params
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlmorningstar(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlmorningstar_lookback(optInPenetration).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlmorningstar(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut resp);
             resp.push('}');
@@ -29702,7 +29920,7 @@ pub(super) fn rpc_cdlonneck(core: &mut Core, ref_data: &mut RefData, params: &Va
             let _lb = core.cdlonneck_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -29731,6 +29949,7 @@ pub(super) fn rpc_cdlonneck(core: &mut Core, ref_data: &mut RefData, params: &Va
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -29738,12 +29957,14 @@ pub(super) fn rpc_cdlonneck(core: &mut Core, ref_data: &mut RefData, params: &Va
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlonneck(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlonneck_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlonneck(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -30101,7 +30322,7 @@ pub(super) fn rpc_cdlpiercing(core: &mut Core, ref_data: &mut RefData, params: &
             let _lb = core.cdlpiercing_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -30130,6 +30351,7 @@ pub(super) fn rpc_cdlpiercing(core: &mut Core, ref_data: &mut RefData, params: &
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -30137,12 +30359,14 @@ pub(super) fn rpc_cdlpiercing(core: &mut Core, ref_data: &mut RefData, params: &
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlpiercing(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlpiercing_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlpiercing(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -30500,7 +30724,7 @@ pub(super) fn rpc_cdlrickshawman(core: &mut Core, ref_data: &mut RefData, params
             let _lb = core.cdlrickshawman_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -30529,6 +30753,7 @@ pub(super) fn rpc_cdlrickshawman(core: &mut Core, ref_data: &mut RefData, params
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -30536,12 +30761,14 @@ pub(super) fn rpc_cdlrickshawman(core: &mut Core, ref_data: &mut RefData, params
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlrickshawman(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlrickshawman_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlrickshawman(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -30899,7 +31126,7 @@ pub(super) fn rpc_cdlrisefall3methods(core: &mut Core, ref_data: &mut RefData, p
             let _lb = core.cdlrisefall3methods_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -30928,6 +31155,7 @@ pub(super) fn rpc_cdlrisefall3methods(core: &mut Core, ref_data: &mut RefData, p
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -30935,12 +31163,14 @@ pub(super) fn rpc_cdlrisefall3methods(core: &mut Core, ref_data: &mut RefData, p
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlrisefall3methods(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlrisefall3methods_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlrisefall3methods(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -31298,7 +31528,7 @@ pub(super) fn rpc_cdlseparatinglines(core: &mut Core, ref_data: &mut RefData, pa
             let _lb = core.cdlseparatinglines_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -31327,6 +31557,7 @@ pub(super) fn rpc_cdlseparatinglines(core: &mut Core, ref_data: &mut RefData, pa
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -31334,12 +31565,14 @@ pub(super) fn rpc_cdlseparatinglines(core: &mut Core, ref_data: &mut RefData, pa
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlseparatinglines(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlseparatinglines_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlseparatinglines(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -31697,7 +31930,7 @@ pub(super) fn rpc_cdlshootingstar(core: &mut Core, ref_data: &mut RefData, param
             let _lb = core.cdlshootingstar_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -31726,6 +31959,7 @@ pub(super) fn rpc_cdlshootingstar(core: &mut Core, ref_data: &mut RefData, param
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -31733,12 +31967,14 @@ pub(super) fn rpc_cdlshootingstar(core: &mut Core, ref_data: &mut RefData, param
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlshootingstar(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlshootingstar_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlshootingstar(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -32096,7 +32332,7 @@ pub(super) fn rpc_cdlshortline(core: &mut Core, ref_data: &mut RefData, params: 
             let _lb = core.cdlshortline_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -32125,6 +32361,7 @@ pub(super) fn rpc_cdlshortline(core: &mut Core, ref_data: &mut RefData, params: 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -32132,12 +32369,14 @@ pub(super) fn rpc_cdlshortline(core: &mut Core, ref_data: &mut RefData, params: 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlshortline(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlshortline_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlshortline(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -32495,7 +32734,7 @@ pub(super) fn rpc_cdlspinningtop(core: &mut Core, ref_data: &mut RefData, params
             let _lb = core.cdlspinningtop_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -32524,6 +32763,7 @@ pub(super) fn rpc_cdlspinningtop(core: &mut Core, ref_data: &mut RefData, params
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -32531,12 +32771,14 @@ pub(super) fn rpc_cdlspinningtop(core: &mut Core, ref_data: &mut RefData, params
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlspinningtop(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlspinningtop_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlspinningtop(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -32894,7 +33136,7 @@ pub(super) fn rpc_cdlstalledpattern(core: &mut Core, ref_data: &mut RefData, par
             let _lb = core.cdlstalledpattern_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -32923,6 +33165,7 @@ pub(super) fn rpc_cdlstalledpattern(core: &mut Core, ref_data: &mut RefData, par
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -32930,12 +33173,14 @@ pub(super) fn rpc_cdlstalledpattern(core: &mut Core, ref_data: &mut RefData, par
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlstalledpattern(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlstalledpattern_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlstalledpattern(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -33293,7 +33538,7 @@ pub(super) fn rpc_cdlsticksandwich(core: &mut Core, ref_data: &mut RefData, para
             let _lb = core.cdlsticksandwich_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -33322,6 +33567,7 @@ pub(super) fn rpc_cdlsticksandwich(core: &mut Core, ref_data: &mut RefData, para
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -33329,12 +33575,14 @@ pub(super) fn rpc_cdlsticksandwich(core: &mut Core, ref_data: &mut RefData, para
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlsticksandwich(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlsticksandwich_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlsticksandwich(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -33692,7 +33940,7 @@ pub(super) fn rpc_cdltakuri(core: &mut Core, ref_data: &mut RefData, params: &Va
             let _lb = core.cdltakuri_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -33721,6 +33969,7 @@ pub(super) fn rpc_cdltakuri(core: &mut Core, ref_data: &mut RefData, params: &Va
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -33728,12 +33977,14 @@ pub(super) fn rpc_cdltakuri(core: &mut Core, ref_data: &mut RefData, params: &Va
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdltakuri(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdltakuri_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdltakuri(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -34091,7 +34342,7 @@ pub(super) fn rpc_cdltasukigap(core: &mut Core, ref_data: &mut RefData, params: 
             let _lb = core.cdltasukigap_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -34120,6 +34371,7 @@ pub(super) fn rpc_cdltasukigap(core: &mut Core, ref_data: &mut RefData, params: 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -34127,12 +34379,14 @@ pub(super) fn rpc_cdltasukigap(core: &mut Core, ref_data: &mut RefData, params: 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdltasukigap(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdltasukigap_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdltasukigap(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -34490,7 +34744,7 @@ pub(super) fn rpc_cdlthrusting(core: &mut Core, ref_data: &mut RefData, params: 
             let _lb = core.cdlthrusting_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -34519,6 +34773,7 @@ pub(super) fn rpc_cdlthrusting(core: &mut Core, ref_data: &mut RefData, params: 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -34526,12 +34781,14 @@ pub(super) fn rpc_cdlthrusting(core: &mut Core, ref_data: &mut RefData, params: 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlthrusting(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlthrusting_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlthrusting(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -34889,7 +35146,7 @@ pub(super) fn rpc_cdltristar(core: &mut Core, ref_data: &mut RefData, params: &V
             let _lb = core.cdltristar_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -34918,6 +35175,7 @@ pub(super) fn rpc_cdltristar(core: &mut Core, ref_data: &mut RefData, params: &V
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -34925,12 +35183,14 @@ pub(super) fn rpc_cdltristar(core: &mut Core, ref_data: &mut RefData, params: &V
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdltristar(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdltristar_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdltristar(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -35288,7 +35548,7 @@ pub(super) fn rpc_cdlunique3river(core: &mut Core, ref_data: &mut RefData, param
             let _lb = core.cdlunique3river_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -35317,6 +35577,7 @@ pub(super) fn rpc_cdlunique3river(core: &mut Core, ref_data: &mut RefData, param
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -35324,12 +35585,14 @@ pub(super) fn rpc_cdlunique3river(core: &mut Core, ref_data: &mut RefData, param
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlunique3river(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlunique3river_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlunique3river(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -35687,7 +35950,7 @@ pub(super) fn rpc_cdlupsidegap2crows(core: &mut Core, ref_data: &mut RefData, pa
             let _lb = core.cdlupsidegap2crows_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -35716,6 +35979,7 @@ pub(super) fn rpc_cdlupsidegap2crows(core: &mut Core, ref_data: &mut RefData, pa
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -35723,12 +35987,14 @@ pub(super) fn rpc_cdlupsidegap2crows(core: &mut Core, ref_data: &mut RefData, pa
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlupsidegap2crows(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlupsidegap2crows_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlupsidegap2crows(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -36086,7 +36352,7 @@ pub(super) fn rpc_cdlxsidegap3methods(core: &mut Core, ref_data: &mut RefData, p
             let _lb = core.cdlxsidegap3methods_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -36115,6 +36381,7 @@ pub(super) fn rpc_cdlxsidegap3methods(core: &mut Core, ref_data: &mut RefData, p
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -36122,12 +36389,14 @@ pub(super) fn rpc_cdlxsidegap3methods(core: &mut Core, ref_data: &mut RefData, p
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cdlxsidegap3methods(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cdlxsidegap3methods_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_cdlxsidegap3methods(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -36464,7 +36733,7 @@ pub(super) fn rpc_ceil(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.ceil_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -36490,6 +36759,7 @@ pub(super) fn rpc_ceil(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -36497,12 +36767,14 @@ pub(super) fn rpc_ceil(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ceil(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.ceil_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_ceil(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -36830,7 +37102,7 @@ pub(super) fn rpc_cg(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             let _lb = core.cg_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -36857,6 +37129,7 @@ pub(super) fn rpc_cg(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -36864,12 +37137,14 @@ pub(super) fn rpc_cg(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cg(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cg_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_cg(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -37213,7 +37488,7 @@ pub(super) fn rpc_chop(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.chop_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -37242,6 +37517,7 @@ pub(super) fn rpc_chop(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -37249,12 +37525,14 @@ pub(super) fn rpc_chop(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_chop(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.chop_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_chop(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -37602,7 +37880,7 @@ pub(super) fn rpc_choptr(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.choptr_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -37631,6 +37909,7 @@ pub(super) fn rpc_choptr(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -37638,12 +37917,14 @@ pub(super) fn rpc_choptr(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_choptr(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.choptr_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_choptr(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -37993,8 +38274,8 @@ pub(super) fn rpc_cksp(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.cksp_lookback(optInTimePeriod, optInMultiplier, optInStopPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -38025,6 +38306,7 @@ pub(super) fn rpc_cksp(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -38033,12 +38315,14 @@ pub(super) fn rpc_cksp(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cksp(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cksp_lookback(optInTimePeriod, optInMultiplier, optInStopPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             ride_cksp(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, optInStopPeriod, &mut resp);
@@ -38423,7 +38707,7 @@ pub(super) fn rpc_cmf(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.cmf_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -38453,6 +38737,7 @@ pub(super) fn rpc_cmf(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -38460,12 +38745,14 @@ pub(super) fn rpc_cmf(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cmf(&core, params, endIdx, &inHigh, &inLow, &inClose, &inVolume, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cmf_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_cmf(&core, params, endIdx, &inHigh, &inLow, &inClose, &inVolume, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -38804,7 +39091,7 @@ pub(super) fn rpc_cmo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.cmo_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -38831,6 +39118,7 @@ pub(super) fn rpc_cmo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -38838,12 +39126,14 @@ pub(super) fn rpc_cmo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cmo(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cmo_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_cmo(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -39174,7 +39464,7 @@ pub(super) fn rpc_cmou(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.cmou_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -39201,6 +39491,7 @@ pub(super) fn rpc_cmou(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -39208,12 +39499,14 @@ pub(super) fn rpc_cmou(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cmou(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cmou_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_cmou(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -39545,7 +39838,7 @@ pub(super) fn rpc_coppock(core: &mut Core, ref_data: &mut RefData, params: &Valu
             let _lb = core.coppock_lookback(optInWMAPeriod, optInROC1Period, optInROC2Period).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -39574,6 +39867,7 @@ pub(super) fn rpc_coppock(core: &mut Core, ref_data: &mut RefData, params: &Valu
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -39581,12 +39875,14 @@ pub(super) fn rpc_coppock(core: &mut Core, ref_data: &mut RefData, params: &Valu
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_coppock(&core, params, endIdx, &inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.coppock_lookback(optInWMAPeriod, optInROC1Period, optInROC2Period).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_coppock(&core, params, endIdx, &inReal, optInWMAPeriod, optInROC1Period, optInROC2Period, &mut resp);
             resp.push('}');
@@ -39927,7 +40223,7 @@ pub(super) fn rpc_correl(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.correl_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -39955,6 +40251,7 @@ pub(super) fn rpc_correl(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -39962,12 +40259,14 @@ pub(super) fn rpc_correl(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_correl(&core, params, endIdx, &inReal0, &inReal1, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.correl_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_correl(&core, params, endIdx, &inReal0, &inReal1, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -40298,7 +40597,7 @@ pub(super) fn rpc_cos(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.cos_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -40324,6 +40623,7 @@ pub(super) fn rpc_cos(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -40331,12 +40631,14 @@ pub(super) fn rpc_cos(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cos(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cos_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_cos(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -40663,7 +40965,7 @@ pub(super) fn rpc_cosh(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.cosh_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -40689,6 +40991,7 @@ pub(super) fn rpc_cosh(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -40696,12 +40999,14 @@ pub(super) fn rpc_cosh(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cosh(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cosh_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_cosh(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -41031,7 +41336,7 @@ pub(super) fn rpc_crsi(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.crsi_lookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -41060,6 +41365,7 @@ pub(super) fn rpc_crsi(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -41067,12 +41373,14 @@ pub(super) fn rpc_crsi(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_crsi(&core, params, endIdx, &inReal, optInTimePeriod, optInStreakPeriod, optInRankPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.crsi_lookback(optInTimePeriod, optInStreakPeriod, optInRankPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_crsi(&core, params, endIdx, &inReal, optInTimePeriod, optInStreakPeriod, optInRankPeriod, &mut resp);
             resp.push('}');
@@ -41407,7 +41715,7 @@ pub(super) fn rpc_cti(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.cti_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -41434,6 +41742,7 @@ pub(super) fn rpc_cti(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -41441,12 +41750,14 @@ pub(super) fn rpc_cti(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cti(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cti_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_cti(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -41775,7 +42086,7 @@ pub(super) fn rpc_cumsum(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.cumsum_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -41801,6 +42112,7 @@ pub(super) fn rpc_cumsum(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -41808,12 +42120,14 @@ pub(super) fn rpc_cumsum(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cumsum(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cumsum_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_cumsum(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -42149,7 +42463,7 @@ pub(super) fn rpc_cvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.cvi_lookback(optInTimePeriod, optInROCPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -42178,6 +42492,7 @@ pub(super) fn rpc_cvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -42185,12 +42500,14 @@ pub(super) fn rpc_cvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_cvi(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, optInROCPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.cvi_lookback(optInTimePeriod, optInROCPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_cvi(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, optInROCPeriod, &mut resp);
             resp.push('}');
@@ -42525,7 +42842,7 @@ pub(super) fn rpc_dema(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.dema_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -42552,6 +42869,7 @@ pub(super) fn rpc_dema(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -42559,12 +42877,14 @@ pub(super) fn rpc_dema(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_dema(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.dema_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_dema(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -42901,7 +43221,7 @@ pub(super) fn rpc_div(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.div_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -42928,6 +43248,7 @@ pub(super) fn rpc_div(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -42935,12 +43256,14 @@ pub(super) fn rpc_div(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_div(&core, params, endIdx, &inReal0, &inReal1, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.div_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_div(&core, params, endIdx, &inReal0, &inReal1, &mut resp);
             resp.push('}');
@@ -43277,9 +43600,9 @@ pub(super) fn rpc_donchian(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.donchian_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf2: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf2: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -43307,6 +43630,7 @@ pub(super) fn rpc_donchian(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement) + tail_dirty_f64(&outBuf2, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -43316,12 +43640,14 @@ pub(super) fn rpc_donchian(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_donchian(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.donchian_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push_str(",\"outReal2\":"); resp.push_str(&json_f64_array(&outBuf2[..outNBElement]));
@@ -43706,7 +44032,7 @@ pub(super) fn rpc_dosc(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.dosc_lookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -43736,6 +44062,7 @@ pub(super) fn rpc_dosc(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -43743,12 +44070,14 @@ pub(super) fn rpc_dosc(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_dosc(&core, params, endIdx, &inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.dosc_lookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_dosc(&core, params, endIdx, &inReal, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, &mut resp);
             resp.push('}');
@@ -44086,7 +44415,7 @@ pub(super) fn rpc_dpo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.dpo_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -44113,6 +44442,7 @@ pub(super) fn rpc_dpo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -44120,12 +44450,14 @@ pub(super) fn rpc_dpo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_dpo(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.dpo_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_dpo(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -44472,7 +44804,7 @@ pub(super) fn rpc_dx(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             let _lb = core.dx_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -44501,6 +44833,7 @@ pub(super) fn rpc_dx(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -44508,12 +44841,14 @@ pub(super) fn rpc_dx(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_dx(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.dx_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_dx(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -44855,7 +45190,7 @@ pub(super) fn rpc_efi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.efi_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -44883,6 +45218,7 @@ pub(super) fn rpc_efi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -44890,12 +45226,14 @@ pub(super) fn rpc_efi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_efi(&core, params, endIdx, &inClose, &inVolume, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.efi_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_efi(&core, params, endIdx, &inClose, &inVolume, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -45231,7 +45569,7 @@ pub(super) fn rpc_ema(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.ema_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -45258,6 +45596,7 @@ pub(super) fn rpc_ema(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -45265,12 +45604,14 @@ pub(super) fn rpc_ema(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ema(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.ema_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_ema(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -45616,7 +45957,7 @@ pub(super) fn rpc_emv(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.emv_lookback(optInTimePeriod, optInVolumeDivisor).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -45646,6 +45987,7 @@ pub(super) fn rpc_emv(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -45653,12 +45995,14 @@ pub(super) fn rpc_emv(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_emv(&core, params, endIdx, &inHigh, &inLow, &inVolume, optInTimePeriod, optInVolumeDivisor, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.emv_lookback(optInTimePeriod, optInVolumeDivisor).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_emv(&core, params, endIdx, &inHigh, &inLow, &inVolume, optInTimePeriod, optInVolumeDivisor, &mut resp);
             resp.push('}');
@@ -45994,7 +46338,7 @@ pub(super) fn rpc_er(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             let _lb = core.er_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -46021,6 +46365,7 @@ pub(super) fn rpc_er(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -46028,12 +46373,14 @@ pub(super) fn rpc_er(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_er(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.er_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_er(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -46377,8 +46724,8 @@ pub(super) fn rpc_eri(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.eri_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -46407,6 +46754,7 @@ pub(super) fn rpc_eri(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -46415,12 +46763,14 @@ pub(super) fn rpc_eri(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_eri(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.eri_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             ride_eri(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut resp);
@@ -46779,7 +47129,7 @@ pub(super) fn rpc_exp(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.exp_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -46805,6 +47155,7 @@ pub(super) fn rpc_exp(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -46812,12 +47163,14 @@ pub(super) fn rpc_exp(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_exp(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.exp_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_exp(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -47155,8 +47508,8 @@ pub(super) fn rpc_fisher(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.fisher_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -47184,6 +47537,7 @@ pub(super) fn rpc_fisher(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -47192,12 +47546,14 @@ pub(super) fn rpc_fisher(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_fisher(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.fisher_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             ride_fisher(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, &mut resp);
@@ -47554,7 +47910,7 @@ pub(super) fn rpc_floor(core: &mut Core, ref_data: &mut RefData, params: &Value)
             let _lb = core.floor_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -47580,6 +47936,7 @@ pub(super) fn rpc_floor(core: &mut Core, ref_data: &mut RefData, params: &Value)
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -47587,12 +47944,14 @@ pub(super) fn rpc_floor(core: &mut Core, ref_data: &mut RefData, params: &Value)
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_floor(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.floor_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_floor(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -47920,7 +48279,7 @@ pub(super) fn rpc_fosc(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.fosc_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -47947,6 +48306,7 @@ pub(super) fn rpc_fosc(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -47954,12 +48314,14 @@ pub(super) fn rpc_fosc(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_fosc(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.fosc_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_fosc(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -48297,8 +48659,8 @@ pub(super) fn rpc_fractal(core: &mut Core, ref_data: &mut RefData, params: &Valu
             let _lb = core.fractal_lookback(optInLeftBars, optInRightBars).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
-            let mut outIntBuf1: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
+            let mut outIntBuf1: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -48327,6 +48689,7 @@ pub(super) fn rpc_fractal(core: &mut Core, ref_data: &mut RefData, params: &Valu
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement) + tail_dirty_i32(&outIntBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -48335,12 +48698,14 @@ pub(super) fn rpc_fractal(core: &mut Core, ref_data: &mut RefData, params: &Valu
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_fractal(&core, params, endIdx, &inHigh, &inLow, optInLeftBars, optInRightBars, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.fractal_lookback(optInLeftBars, optInRightBars).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push_str(",\"outInteger1\":"); resp.push_str(&json_i32_array(&outIntBuf1[..outNBElement]));
             ride_fractal(&core, params, endIdx, &inHigh, &inLow, optInLeftBars, optInRightBars, &mut resp);
@@ -48709,7 +49074,7 @@ pub(super) fn rpc_frama(core: &mut Core, ref_data: &mut RefData, params: &Value)
             let _lb = core.frama_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -48737,6 +49102,7 @@ pub(super) fn rpc_frama(core: &mut Core, ref_data: &mut RefData, params: &Value)
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -48744,12 +49110,14 @@ pub(super) fn rpc_frama(core: &mut Core, ref_data: &mut RefData, params: &Value)
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_frama(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.frama_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_frama(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -49105,10 +49473,10 @@ pub(super) fn rpc_ha(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             let _lb = core.ha_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf2: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf3: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf2: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf3: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -49137,6 +49505,7 @@ pub(super) fn rpc_ha(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement) + tail_dirty_f64(&outBuf2, outNBElement) + tail_dirty_f64(&outBuf3, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -49147,12 +49516,14 @@ pub(super) fn rpc_ha(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ha(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.ha_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push_str(",\"outReal2\":"); resp.push_str(&json_f64_array(&outBuf2[..outNBElement]));
@@ -49562,7 +49933,7 @@ pub(super) fn rpc_hma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.hma_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -49589,6 +49960,7 @@ pub(super) fn rpc_hma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -49596,12 +49968,14 @@ pub(super) fn rpc_hma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_hma(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.hma_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_hma(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -49933,7 +50307,7 @@ pub(super) fn rpc_ht_dcperiod(core: &mut Core, ref_data: &mut RefData, params: &
             let _lb = core.ht_dcperiod_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -49959,6 +50333,7 @@ pub(super) fn rpc_ht_dcperiod(core: &mut Core, ref_data: &mut RefData, params: &
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -49966,12 +50341,14 @@ pub(super) fn rpc_ht_dcperiod(core: &mut Core, ref_data: &mut RefData, params: &
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ht_dcperiod(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.ht_dcperiod_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_ht_dcperiod(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -50302,7 +50679,7 @@ pub(super) fn rpc_ht_dcphase(core: &mut Core, ref_data: &mut RefData, params: &V
             let _lb = core.ht_dcphase_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -50328,6 +50705,7 @@ pub(super) fn rpc_ht_dcphase(core: &mut Core, ref_data: &mut RefData, params: &V
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -50335,12 +50713,14 @@ pub(super) fn rpc_ht_dcphase(core: &mut Core, ref_data: &mut RefData, params: &V
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ht_dcphase(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.ht_dcphase_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_ht_dcphase(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -50671,8 +51051,8 @@ pub(super) fn rpc_ht_phasor(core: &mut Core, ref_data: &mut RefData, params: &Va
             let _lb = core.ht_phasor_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -50698,6 +51078,7 @@ pub(super) fn rpc_ht_phasor(core: &mut Core, ref_data: &mut RefData, params: &Va
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -50706,12 +51087,14 @@ pub(super) fn rpc_ht_phasor(core: &mut Core, ref_data: &mut RefData, params: &Va
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ht_phasor(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.ht_phasor_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             ride_ht_phasor(&core, params, endIdx, &inReal, &mut resp);
@@ -51067,8 +51450,8 @@ pub(super) fn rpc_ht_sine(core: &mut Core, ref_data: &mut RefData, params: &Valu
             let _lb = core.ht_sine_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -51094,6 +51477,7 @@ pub(super) fn rpc_ht_sine(core: &mut Core, ref_data: &mut RefData, params: &Valu
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -51102,12 +51486,14 @@ pub(super) fn rpc_ht_sine(core: &mut Core, ref_data: &mut RefData, params: &Valu
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ht_sine(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.ht_sine_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             ride_ht_sine(&core, params, endIdx, &inReal, &mut resp);
@@ -51463,7 +51849,7 @@ pub(super) fn rpc_ht_trendline(core: &mut Core, ref_data: &mut RefData, params: 
             let _lb = core.ht_trendline_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -51489,6 +51875,7 @@ pub(super) fn rpc_ht_trendline(core: &mut Core, ref_data: &mut RefData, params: 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -51496,12 +51883,14 @@ pub(super) fn rpc_ht_trendline(core: &mut Core, ref_data: &mut RefData, params: 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ht_trendline(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.ht_trendline_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_ht_trendline(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -51832,7 +52221,7 @@ pub(super) fn rpc_ht_trendmode(core: &mut Core, ref_data: &mut RefData, params: 
             let _lb = core.ht_trendmode_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -51858,6 +52247,7 @@ pub(super) fn rpc_ht_trendmode(core: &mut Core, ref_data: &mut RefData, params: 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -51865,12 +52255,14 @@ pub(super) fn rpc_ht_trendmode(core: &mut Core, ref_data: &mut RefData, params: 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ht_trendmode(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.ht_trendmode_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_ht_trendmode(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -52212,7 +52604,7 @@ pub(super) fn rpc_ibs(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.ibs_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -52240,6 +52632,7 @@ pub(super) fn rpc_ibs(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -52247,12 +52640,14 @@ pub(super) fn rpc_ibs(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ibs(&core, params, endIdx, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.ibs_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_ibs(&core, params, endIdx, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -52593,10 +52988,10 @@ pub(super) fn rpc_ichimoku(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.ichimoku_lookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf2: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf3: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf2: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf3: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -52626,6 +53021,7 @@ pub(super) fn rpc_ichimoku(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement) + tail_dirty_f64(&outBuf2, outNBElement) + tail_dirty_f64(&outBuf3, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -52636,12 +53032,14 @@ pub(super) fn rpc_ichimoku(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ichimoku(&core, params, endIdx, &inHigh, &inLow, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.ichimoku_lookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push_str(",\"outReal2\":"); resp.push_str(&json_f64_array(&outBuf2[..outNBElement]));
@@ -53059,7 +53457,7 @@ pub(super) fn rpc_imi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.imi_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -53087,6 +53485,7 @@ pub(super) fn rpc_imi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -53094,12 +53493,14 @@ pub(super) fn rpc_imi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_imi(&core, params, endIdx, &inOpen, &inClose, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.imi_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_imi(&core, params, endIdx, &inOpen, &inClose, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -53434,7 +53835,7 @@ pub(super) fn rpc_kama(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.kama_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -53461,6 +53862,7 @@ pub(super) fn rpc_kama(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -53468,12 +53870,14 @@ pub(super) fn rpc_kama(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_kama(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.kama_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_kama(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -53820,9 +54224,9 @@ pub(super) fn rpc_kc(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             let _lb = core.kc_lookback(optInTimePeriod, optInATRPeriod, optInNbDev).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf2: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf2: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -53853,6 +54257,7 @@ pub(super) fn rpc_kc(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement) + tail_dirty_f64(&outBuf2, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -53862,12 +54267,14 @@ pub(super) fn rpc_kc(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_kc(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInATRPeriod, optInNbDev, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.kc_lookback(optInTimePeriod, optInATRPeriod, optInNbDev).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push_str(",\"outReal2\":"); resp.push_str(&json_f64_array(&outBuf2[..outNBElement]));
@@ -54279,9 +54686,9 @@ pub(super) fn rpc_kdj(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.kdj_lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf2: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf2: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -54317,6 +54724,7 @@ pub(super) fn rpc_kdj(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement) + tail_dirty_f64(&outBuf2, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -54326,12 +54734,14 @@ pub(super) fn rpc_kdj(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_kdj(&core, params, endIdx, &inHigh, &inLow, &inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = if _enum_bad { -1 } else { core.kdj_lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push_str(",\"outReal2\":"); resp.push_str(&json_f64_array(&outBuf2[..outNBElement]));
@@ -54745,8 +55155,8 @@ pub(super) fn rpc_kst(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.kst_lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -54781,6 +55191,7 @@ pub(super) fn rpc_kst(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -54789,12 +55200,14 @@ pub(super) fn rpc_kst(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_kst(&core, params, endIdx, &inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.kst_lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             ride_kst(&core, params, endIdx, &inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, &mut resp);
@@ -55179,8 +55592,8 @@ pub(super) fn rpc_kstext(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.kstext_lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -55220,6 +55633,7 @@ pub(super) fn rpc_kstext(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -55228,12 +55642,14 @@ pub(super) fn rpc_kstext(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_kstext(&core, params, endIdx, &inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = if _enum_bad { -1 } else { core.kstext_lookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             ride_kstext(&core, params, endIdx, &inReal, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, &mut resp);
@@ -55622,7 +56038,7 @@ pub(super) fn rpc_kurtosis(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.kurtosis_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -55649,6 +56065,7 @@ pub(super) fn rpc_kurtosis(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -55656,12 +56073,14 @@ pub(super) fn rpc_kurtosis(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_kurtosis(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.kurtosis_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_kurtosis(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -56014,8 +56433,8 @@ pub(super) fn rpc_kvo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.kvo_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -56047,6 +56466,7 @@ pub(super) fn rpc_kvo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -56055,12 +56475,14 @@ pub(super) fn rpc_kvo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_kvo(&core, params, endIdx, &inHigh, &inLow, &inClose, &inVolume, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.kvo_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             ride_kvo(&core, params, endIdx, &inHigh, &inLow, &inClose, &inVolume, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut resp);
@@ -56426,7 +56848,7 @@ pub(super) fn rpc_linearreg(core: &mut Core, ref_data: &mut RefData, params: &Va
             let _lb = core.linearreg_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -56453,6 +56875,7 @@ pub(super) fn rpc_linearreg(core: &mut Core, ref_data: &mut RefData, params: &Va
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -56460,12 +56883,14 @@ pub(super) fn rpc_linearreg(core: &mut Core, ref_data: &mut RefData, params: &Va
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_linearreg(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.linearreg_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_linearreg(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -56795,7 +57220,7 @@ pub(super) fn rpc_linearreg_angle(core: &mut Core, ref_data: &mut RefData, param
             let _lb = core.linearreg_angle_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -56822,6 +57247,7 @@ pub(super) fn rpc_linearreg_angle(core: &mut Core, ref_data: &mut RefData, param
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -56829,12 +57255,14 @@ pub(super) fn rpc_linearreg_angle(core: &mut Core, ref_data: &mut RefData, param
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_linearreg_angle(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.linearreg_angle_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_linearreg_angle(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -57164,7 +57592,7 @@ pub(super) fn rpc_linearreg_intercept(core: &mut Core, ref_data: &mut RefData, p
             let _lb = core.linearreg_intercept_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -57191,6 +57619,7 @@ pub(super) fn rpc_linearreg_intercept(core: &mut Core, ref_data: &mut RefData, p
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -57198,12 +57627,14 @@ pub(super) fn rpc_linearreg_intercept(core: &mut Core, ref_data: &mut RefData, p
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_linearreg_intercept(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.linearreg_intercept_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_linearreg_intercept(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -57533,7 +57964,7 @@ pub(super) fn rpc_linearreg_slope(core: &mut Core, ref_data: &mut RefData, param
             let _lb = core.linearreg_slope_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -57560,6 +57991,7 @@ pub(super) fn rpc_linearreg_slope(core: &mut Core, ref_data: &mut RefData, param
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -57567,12 +57999,14 @@ pub(super) fn rpc_linearreg_slope(core: &mut Core, ref_data: &mut RefData, param
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_linearreg_slope(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.linearreg_slope_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_linearreg_slope(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -57901,7 +58335,7 @@ pub(super) fn rpc_ln(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             let _lb = core.ln_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -57927,6 +58361,7 @@ pub(super) fn rpc_ln(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -57934,12 +58369,14 @@ pub(super) fn rpc_ln(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ln(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.ln_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_ln(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -58266,7 +58703,7 @@ pub(super) fn rpc_log10(core: &mut Core, ref_data: &mut RefData, params: &Value)
             let _lb = core.log10_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -58292,6 +58729,7 @@ pub(super) fn rpc_log10(core: &mut Core, ref_data: &mut RefData, params: &Value)
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -58299,12 +58737,14 @@ pub(super) fn rpc_log10(core: &mut Core, ref_data: &mut RefData, params: &Value)
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_log10(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.log10_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_log10(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -58635,7 +59075,7 @@ pub(super) fn rpc_ma(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             let _lb = core.ma_lookback(optInTimePeriod, optInMAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -58666,6 +59106,7 @@ pub(super) fn rpc_ma(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -58673,12 +59114,14 @@ pub(super) fn rpc_ma(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ma(&core, params, endIdx, &inReal, optInTimePeriod, optInMAType, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = if _enum_bad { -1 } else { core.ma_lookback(optInTimePeriod, optInMAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_ma(&core, params, endIdx, &inReal, optInTimePeriod, optInMAType, &mut resp);
             resp.push('}');
@@ -59022,9 +59465,9 @@ pub(super) fn rpc_macd(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.macd_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf2: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf2: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -59053,6 +59496,7 @@ pub(super) fn rpc_macd(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement) + tail_dirty_f64(&outBuf2, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -59062,12 +59506,14 @@ pub(super) fn rpc_macd(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_macd(&core, params, endIdx, &inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.macd_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push_str(",\"outReal2\":"); resp.push_str(&json_f64_array(&outBuf2[..outNBElement]));
@@ -59463,9 +59909,9 @@ pub(super) fn rpc_macdext(core: &mut Core, ref_data: &mut RefData, params: &Valu
             let _lb = core.macdext_lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf2: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf2: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -59500,6 +59946,7 @@ pub(super) fn rpc_macdext(core: &mut Core, ref_data: &mut RefData, params: &Valu
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement) + tail_dirty_f64(&outBuf2, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -59509,12 +59956,14 @@ pub(super) fn rpc_macdext(core: &mut Core, ref_data: &mut RefData, params: &Valu
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_macdext(&core, params, endIdx, &inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = if _enum_bad { -1 } else { core.macdext_lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push_str(",\"outReal2\":"); resp.push_str(&json_f64_array(&outBuf2[..outNBElement]));
@@ -59922,9 +60371,9 @@ pub(super) fn rpc_macdfix(core: &mut Core, ref_data: &mut RefData, params: &Valu
             let _lb = core.macdfix_lookback(optInSignalPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf2: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf2: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -59951,6 +60400,7 @@ pub(super) fn rpc_macdfix(core: &mut Core, ref_data: &mut RefData, params: &Valu
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement) + tail_dirty_f64(&outBuf2, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -59960,12 +60410,14 @@ pub(super) fn rpc_macdfix(core: &mut Core, ref_data: &mut RefData, params: &Valu
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_macdfix(&core, params, endIdx, &inReal, optInSignalPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.macdfix_lookback(optInSignalPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             resp.push_str(",\"outReal2\":"); resp.push_str(&json_f64_array(&outBuf2[..outNBElement]));
@@ -60350,8 +60802,8 @@ pub(super) fn rpc_mama(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.mama_lookback(optInFastLimit, optInSlowLimit).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -60379,6 +60831,7 @@ pub(super) fn rpc_mama(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -60387,12 +60840,14 @@ pub(super) fn rpc_mama(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_mama(&core, params, endIdx, &inReal, optInFastLimit, optInSlowLimit, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.mama_lookback(optInFastLimit, optInSlowLimit).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             ride_mama(&core, params, endIdx, &inReal, optInFastLimit, optInSlowLimit, &mut resp);
@@ -60763,7 +61218,7 @@ pub(super) fn rpc_marketfi(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.marketfi_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -60791,6 +61246,7 @@ pub(super) fn rpc_marketfi(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -60798,12 +61254,14 @@ pub(super) fn rpc_marketfi(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_marketfi(&core, params, endIdx, &inHigh, &inLow, &inVolume, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.marketfi_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_marketfi(&core, params, endIdx, &inHigh, &inLow, &inVolume, &mut resp);
             resp.push('}');
@@ -61143,7 +61601,7 @@ pub(super) fn rpc_massi(core: &mut Core, ref_data: &mut RefData, params: &Value)
             let _lb = core.massi_lookback(optInFastPeriod, optInSlowPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -61172,6 +61630,7 @@ pub(super) fn rpc_massi(core: &mut Core, ref_data: &mut RefData, params: &Value)
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -61179,12 +61638,14 @@ pub(super) fn rpc_massi(core: &mut Core, ref_data: &mut RefData, params: &Value)
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_massi(&core, params, endIdx, &inHigh, &inLow, optInFastPeriod, optInSlowPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.massi_lookback(optInFastPeriod, optInSlowPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_massi(&core, params, endIdx, &inHigh, &inLow, optInFastPeriod, optInSlowPeriod, &mut resp);
             resp.push('}');
@@ -61530,7 +61991,7 @@ pub(super) fn rpc_mavp(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.mavp_lookback(optInMinPeriod, optInMaxPeriod, optInMAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -61563,6 +62024,7 @@ pub(super) fn rpc_mavp(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -61570,12 +62032,14 @@ pub(super) fn rpc_mavp(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_mavp(&core, params, endIdx, &inReal0, &inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = if _enum_bad { -1 } else { core.mavp_lookback(optInMinPeriod, optInMaxPeriod, optInMAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_mavp(&core, params, endIdx, &inReal0, &inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, &mut resp);
             resp.push('}');
@@ -61922,7 +62386,7 @@ pub(super) fn rpc_max(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.max_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -61949,6 +62413,7 @@ pub(super) fn rpc_max(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -61956,12 +62421,14 @@ pub(super) fn rpc_max(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_max(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.max_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_max(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -62291,7 +62758,7 @@ pub(super) fn rpc_maxindex(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.maxindex_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -62318,6 +62785,7 @@ pub(super) fn rpc_maxindex(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -62325,12 +62793,14 @@ pub(super) fn rpc_maxindex(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_maxindex(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.maxindex_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_maxindex(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -62663,7 +63133,7 @@ pub(super) fn rpc_mcgd(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.mcgd_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -62690,6 +63160,7 @@ pub(super) fn rpc_mcgd(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -62697,12 +63168,14 @@ pub(super) fn rpc_mcgd(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_mcgd(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.mcgd_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_mcgd(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -63033,7 +63506,7 @@ pub(super) fn rpc_median(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.median_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -63060,6 +63533,7 @@ pub(super) fn rpc_median(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -63067,12 +63541,14 @@ pub(super) fn rpc_median(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_median(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.median_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_median(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -63408,7 +63884,7 @@ pub(super) fn rpc_medprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.medprice_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -63435,6 +63911,7 @@ pub(super) fn rpc_medprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -63442,12 +63919,14 @@ pub(super) fn rpc_medprice(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_medprice(&core, params, endIdx, &inHigh, &inLow, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.medprice_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_medprice(&core, params, endIdx, &inHigh, &inLow, &mut resp);
             resp.push('}');
@@ -63798,7 +64277,7 @@ pub(super) fn rpc_mfi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.mfi_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -63828,6 +64307,7 @@ pub(super) fn rpc_mfi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -63835,12 +64315,14 @@ pub(super) fn rpc_mfi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_mfi(&core, params, endIdx, &inHigh, &inLow, &inClose, &inVolume, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.mfi_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_mfi(&core, params, endIdx, &inHigh, &inLow, &inClose, &inVolume, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -64176,7 +64658,7 @@ pub(super) fn rpc_midpoint(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.midpoint_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -64203,6 +64685,7 @@ pub(super) fn rpc_midpoint(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -64210,12 +64693,14 @@ pub(super) fn rpc_midpoint(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_midpoint(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.midpoint_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_midpoint(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -64552,7 +65037,7 @@ pub(super) fn rpc_midprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.midprice_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -64580,6 +65065,7 @@ pub(super) fn rpc_midprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -64587,12 +65073,14 @@ pub(super) fn rpc_midprice(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_midprice(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.midprice_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_midprice(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -64924,7 +65412,7 @@ pub(super) fn rpc_min(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.min_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -64951,6 +65439,7 @@ pub(super) fn rpc_min(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -64958,12 +65447,14 @@ pub(super) fn rpc_min(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_min(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.min_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_min(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -65293,7 +65784,7 @@ pub(super) fn rpc_minindex(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.minindex_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -65320,6 +65811,7 @@ pub(super) fn rpc_minindex(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -65327,12 +65819,14 @@ pub(super) fn rpc_minindex(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_minindex(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.minindex_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_minindex(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -65662,8 +66156,8 @@ pub(super) fn rpc_minmax(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.minmax_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -65690,6 +66184,7 @@ pub(super) fn rpc_minmax(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -65698,12 +66193,14 @@ pub(super) fn rpc_minmax(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_minmax(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.minmax_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             ride_minmax(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
@@ -66058,8 +66555,8 @@ pub(super) fn rpc_minmaxindex(core: &mut Core, ref_data: &mut RefData, params: &
             let _lb = core.minmaxindex_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
-            let mut outIntBuf1: Vec<i32> = vec![0i32; out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
+            let mut outIntBuf1: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -66086,6 +66583,7 @@ pub(super) fn rpc_minmaxindex(core: &mut Core, ref_data: &mut RefData, params: &
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_i32(&outIntBuf0, outNBElement) + tail_dirty_i32(&outIntBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -66094,12 +66592,14 @@ pub(super) fn rpc_minmaxindex(core: &mut Core, ref_data: &mut RefData, params: &
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_minmaxindex(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.minmaxindex_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push_str(",\"outInteger1\":"); resp.push_str(&json_i32_array(&outIntBuf1[..outNBElement]));
             ride_minmaxindex(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
@@ -66471,7 +66971,7 @@ pub(super) fn rpc_minus_di(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.minus_di_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -66500,6 +67000,7 @@ pub(super) fn rpc_minus_di(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -66507,12 +67008,14 @@ pub(super) fn rpc_minus_di(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_minus_di(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.minus_di_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_minus_di(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -66857,7 +67360,7 @@ pub(super) fn rpc_minus_dm(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.minus_dm_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -66885,6 +67388,7 @@ pub(super) fn rpc_minus_dm(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -66892,12 +67396,14 @@ pub(super) fn rpc_minus_dm(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_minus_dm(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.minus_dm_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_minus_dm(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -67230,7 +67736,7 @@ pub(super) fn rpc_mom(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.mom_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -67257,6 +67763,7 @@ pub(super) fn rpc_mom(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -67264,12 +67771,14 @@ pub(super) fn rpc_mom(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_mom(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.mom_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_mom(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -67605,7 +68114,7 @@ pub(super) fn rpc_mult(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.mult_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -67632,6 +68141,7 @@ pub(super) fn rpc_mult(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -67639,12 +68149,14 @@ pub(super) fn rpc_mult(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_mult(&core, params, endIdx, &inReal0, &inReal1, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.mult_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_mult(&core, params, endIdx, &inReal0, &inReal1, &mut resp);
             resp.push('}');
@@ -67991,7 +68503,7 @@ pub(super) fn rpc_natr(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.natr_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -68020,6 +68532,7 @@ pub(super) fn rpc_natr(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -68027,12 +68540,14 @@ pub(super) fn rpc_natr(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_natr(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.natr_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_natr(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -68373,7 +68888,7 @@ pub(super) fn rpc_nvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.nvi_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -68400,6 +68915,7 @@ pub(super) fn rpc_nvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -68407,12 +68923,14 @@ pub(super) fn rpc_nvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_nvi(&core, params, endIdx, &inClose, &inVolume, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.nvi_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_nvi(&core, params, endIdx, &inClose, &inVolume, &mut resp);
             resp.push('}');
@@ -68748,7 +69266,7 @@ pub(super) fn rpc_obv(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.obv_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -68775,6 +69293,7 @@ pub(super) fn rpc_obv(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -68782,12 +69301,14 @@ pub(super) fn rpc_obv(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_obv(&core, params, endIdx, &inReal, &inVolume, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.obv_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_obv(&core, params, endIdx, &inReal, &inVolume, &mut resp);
             resp.push('}');
@@ -69122,7 +69643,7 @@ pub(super) fn rpc_percentb(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.percentb_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -69155,6 +69676,7 @@ pub(super) fn rpc_percentb(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -69162,12 +69684,14 @@ pub(super) fn rpc_percentb(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_percentb(&core, params, endIdx, &inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = if _enum_bad { -1 } else { core.percentb_lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_percentb(&core, params, endIdx, &inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut resp);
             resp.push('}');
@@ -69514,7 +70038,7 @@ pub(super) fn rpc_percentile(core: &mut Core, ref_data: &mut RefData, params: &V
             let _lb = core.percentile_lookback(optInTimePeriod, optInPercentile).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -69542,6 +70066,7 @@ pub(super) fn rpc_percentile(core: &mut Core, ref_data: &mut RefData, params: &V
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -69549,12 +70074,14 @@ pub(super) fn rpc_percentile(core: &mut Core, ref_data: &mut RefData, params: &V
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_percentile(&core, params, endIdx, &inReal, optInTimePeriod, optInPercentile, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.percentile_lookback(optInTimePeriod, optInPercentile).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_percentile(&core, params, endIdx, &inReal, optInTimePeriod, optInPercentile, &mut resp);
             resp.push('}');
@@ -69886,7 +70413,7 @@ pub(super) fn rpc_percentrank(core: &mut Core, ref_data: &mut RefData, params: &
             let _lb = core.percentrank_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -69913,6 +70440,7 @@ pub(super) fn rpc_percentrank(core: &mut Core, ref_data: &mut RefData, params: &
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -69920,12 +70448,14 @@ pub(super) fn rpc_percentrank(core: &mut Core, ref_data: &mut RefData, params: &
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_percentrank(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.percentrank_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_percentrank(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -70272,7 +70802,7 @@ pub(super) fn rpc_plus_di(core: &mut Core, ref_data: &mut RefData, params: &Valu
             let _lb = core.plus_di_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -70301,6 +70831,7 @@ pub(super) fn rpc_plus_di(core: &mut Core, ref_data: &mut RefData, params: &Valu
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -70308,12 +70839,14 @@ pub(super) fn rpc_plus_di(core: &mut Core, ref_data: &mut RefData, params: &Valu
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_plus_di(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.plus_di_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_plus_di(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -70658,7 +71191,7 @@ pub(super) fn rpc_plus_dm(core: &mut Core, ref_data: &mut RefData, params: &Valu
             let _lb = core.plus_dm_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -70686,6 +71219,7 @@ pub(super) fn rpc_plus_dm(core: &mut Core, ref_data: &mut RefData, params: &Valu
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -70693,12 +71227,14 @@ pub(super) fn rpc_plus_dm(core: &mut Core, ref_data: &mut RefData, params: &Valu
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_plus_dm(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.plus_dm_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_plus_dm(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -71035,7 +71571,7 @@ pub(super) fn rpc_ppo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.ppo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -71067,6 +71603,7 @@ pub(super) fn rpc_ppo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -71074,12 +71611,14 @@ pub(super) fn rpc_ppo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ppo(&core, params, endIdx, &inReal, optInFastPeriod, optInSlowPeriod, optInMAType, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = if _enum_bad { -1 } else { core.ppo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_ppo(&core, params, endIdx, &inReal, optInFastPeriod, optInSlowPeriod, optInMAType, &mut resp);
             resp.push('}');
@@ -71438,7 +71977,7 @@ pub(super) fn rpc_pso(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.pso_lookback(optInFastK_Period, optInEMAPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -71468,6 +72007,7 @@ pub(super) fn rpc_pso(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -71475,12 +72015,14 @@ pub(super) fn rpc_pso(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_pso(&core, params, endIdx, &inHigh, &inLow, &inClose, optInFastK_Period, optInEMAPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.pso_lookback(optInFastK_Period, optInEMAPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_pso(&core, params, endIdx, &inHigh, &inLow, &inClose, optInFastK_Period, optInEMAPeriod, &mut resp);
             resp.push('}');
@@ -71823,7 +72365,7 @@ pub(super) fn rpc_pvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.pvi_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -71850,6 +72392,7 @@ pub(super) fn rpc_pvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -71857,12 +72400,14 @@ pub(super) fn rpc_pvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_pvi(&core, params, endIdx, &inClose, &inVolume, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.pvi_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_pvi(&core, params, endIdx, &inClose, &inVolume, &mut resp);
             resp.push('}');
@@ -72196,7 +72741,7 @@ pub(super) fn rpc_pvo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.pvo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -72228,6 +72773,7 @@ pub(super) fn rpc_pvo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -72235,12 +72781,14 @@ pub(super) fn rpc_pvo(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_pvo(&core, params, endIdx, &inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = if _enum_bad { -1 } else { core.pvo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_pvo(&core, params, endIdx, &inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, &mut resp);
             resp.push('}');
@@ -72590,7 +73138,7 @@ pub(super) fn rpc_pvt(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.pvt_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -72617,6 +73165,7 @@ pub(super) fn rpc_pvt(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -72624,12 +73173,14 @@ pub(super) fn rpc_pvt(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_pvt(&core, params, endIdx, &inClose, &inVolume, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.pvt_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_pvt(&core, params, endIdx, &inClose, &inVolume, &mut resp);
             resp.push('}');
@@ -72966,7 +73517,7 @@ pub(super) fn rpc_qstick(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.qstick_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -72994,6 +73545,7 @@ pub(super) fn rpc_qstick(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -73001,12 +73553,14 @@ pub(super) fn rpc_qstick(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_qstick(&core, params, endIdx, &inOpen, &inClose, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.qstick_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_qstick(&core, params, endIdx, &inOpen, &inClose, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -73341,7 +73895,7 @@ pub(super) fn rpc_rma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.rma_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -73368,6 +73922,7 @@ pub(super) fn rpc_rma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -73375,12 +73930,14 @@ pub(super) fn rpc_rma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_rma(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.rma_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_rma(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -73711,7 +74268,7 @@ pub(super) fn rpc_roc(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.roc_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -73738,6 +74295,7 @@ pub(super) fn rpc_roc(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -73745,12 +74303,14 @@ pub(super) fn rpc_roc(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_roc(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.roc_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_roc(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -74080,7 +74640,7 @@ pub(super) fn rpc_rocp(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.rocp_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -74107,6 +74667,7 @@ pub(super) fn rpc_rocp(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -74114,12 +74675,14 @@ pub(super) fn rpc_rocp(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_rocp(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.rocp_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_rocp(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -74449,7 +75012,7 @@ pub(super) fn rpc_rocr(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.rocr_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -74476,6 +75039,7 @@ pub(super) fn rpc_rocr(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -74483,12 +75047,14 @@ pub(super) fn rpc_rocr(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_rocr(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.rocr_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_rocr(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -74818,7 +75384,7 @@ pub(super) fn rpc_rocr100(core: &mut Core, ref_data: &mut RefData, params: &Valu
             let _lb = core.rocr100_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -74845,6 +75411,7 @@ pub(super) fn rpc_rocr100(core: &mut Core, ref_data: &mut RefData, params: &Valu
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -74852,12 +75419,14 @@ pub(super) fn rpc_rocr100(core: &mut Core, ref_data: &mut RefData, params: &Valu
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_rocr100(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.rocr100_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_rocr100(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -75209,7 +75778,7 @@ pub(super) fn rpc_rogerssatchell(core: &mut Core, ref_data: &mut RefData, params
             let _lb = core.rogerssatchell_lookback(optInTimePeriod, optInAnnualization).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -75240,6 +75809,7 @@ pub(super) fn rpc_rogerssatchell(core: &mut Core, ref_data: &mut RefData, params
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -75247,12 +75817,14 @@ pub(super) fn rpc_rogerssatchell(core: &mut Core, ref_data: &mut RefData, params
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_rogerssatchell(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInTimePeriod, optInAnnualization, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.rogerssatchell_lookback(optInTimePeriod, optInAnnualization).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_rogerssatchell(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInTimePeriod, optInAnnualization, &mut resp);
             resp.push('}');
@@ -75593,7 +76165,7 @@ pub(super) fn rpc_rsi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.rsi_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -75620,6 +76192,7 @@ pub(super) fn rpc_rsi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -75627,12 +76200,14 @@ pub(super) fn rpc_rsi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_rsi(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.rsi_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_rsi(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -75967,7 +76542,7 @@ pub(super) fn rpc_rvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.rvi_lookback(optInTimePeriod, optInStdDevPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -75995,6 +76570,7 @@ pub(super) fn rpc_rvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -76002,12 +76578,14 @@ pub(super) fn rpc_rvi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_rvi(&core, params, endIdx, &inReal, optInTimePeriod, optInStdDevPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.rvi_lookback(optInTimePeriod, optInStdDevPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_rvi(&core, params, endIdx, &inReal, optInTimePeriod, optInStdDevPeriod, &mut resp);
             resp.push('}');
@@ -76348,7 +76926,7 @@ pub(super) fn rpc_rvir(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.rvir_lookback(optInTimePeriod, optInStdDevPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -76377,6 +76955,7 @@ pub(super) fn rpc_rvir(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -76384,12 +76963,14 @@ pub(super) fn rpc_rvir(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_rvir(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.rvir_lookback(optInTimePeriod, optInStdDevPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_rvir(&core, params, endIdx, &inHigh, &inLow, optInTimePeriod, optInStdDevPeriod, &mut resp);
             resp.push('}');
@@ -76724,7 +77305,7 @@ pub(super) fn rpc_rvol(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.rvol_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -76751,6 +77332,7 @@ pub(super) fn rpc_rvol(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -76758,12 +77340,14 @@ pub(super) fn rpc_rvol(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_rvol(&core, params, endIdx, &inVolume, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.rvol_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_rvol(&core, params, endIdx, &inVolume, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -77101,7 +77685,7 @@ pub(super) fn rpc_sar(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.sar_lookback(optInAcceleration, optInMaximum).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -77130,6 +77714,7 @@ pub(super) fn rpc_sar(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -77137,12 +77722,14 @@ pub(super) fn rpc_sar(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_sar(&core, params, endIdx, &inHigh, &inLow, optInAcceleration, optInMaximum, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.sar_lookback(optInAcceleration, optInMaximum).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_sar(&core, params, endIdx, &inHigh, &inLow, optInAcceleration, optInMaximum, &mut resp);
             resp.push('}');
@@ -77490,7 +78077,7 @@ pub(super) fn rpc_sarext(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.sarext_lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -77525,6 +78112,7 @@ pub(super) fn rpc_sarext(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -77532,12 +78120,14 @@ pub(super) fn rpc_sarext(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_sarext(&core, params, endIdx, &inHigh, &inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.sarext_lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_sarext(&core, params, endIdx, &inHigh, &inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut resp);
             resp.push('}');
@@ -77904,7 +78494,7 @@ pub(super) fn rpc_si(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             let _lb = core.si_lookback(optInLimitMove).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -77934,6 +78524,7 @@ pub(super) fn rpc_si(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -77941,12 +78532,14 @@ pub(super) fn rpc_si(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_si(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.si_lookback(optInLimitMove).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_si(&core, params, endIdx, &inOpen, &inHigh, &inLow, &inClose, optInLimitMove, &mut resp);
             resp.push('}');
@@ -78281,7 +78874,7 @@ pub(super) fn rpc_sin(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.sin_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -78307,6 +78900,7 @@ pub(super) fn rpc_sin(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -78314,12 +78908,14 @@ pub(super) fn rpc_sin(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_sin(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.sin_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_sin(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -78646,7 +79242,7 @@ pub(super) fn rpc_sinh(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.sinh_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -78672,6 +79268,7 @@ pub(super) fn rpc_sinh(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -78679,12 +79276,14 @@ pub(super) fn rpc_sinh(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_sinh(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.sinh_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_sinh(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -79012,7 +79611,7 @@ pub(super) fn rpc_sma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.sma_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -79039,6 +79638,7 @@ pub(super) fn rpc_sma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -79046,12 +79646,14 @@ pub(super) fn rpc_sma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_sma(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.sma_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_sma(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -79398,8 +80000,8 @@ pub(super) fn rpc_smi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.smi_lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -79431,6 +80033,7 @@ pub(super) fn rpc_smi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -79439,12 +80042,14 @@ pub(super) fn rpc_smi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_smi(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.smi_lookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             ride_smi(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut resp);
@@ -79809,7 +80414,7 @@ pub(super) fn rpc_sqrt(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.sqrt_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -79835,6 +80440,7 @@ pub(super) fn rpc_sqrt(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -79842,12 +80448,14 @@ pub(super) fn rpc_sqrt(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_sqrt(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.sqrt_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_sqrt(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -80194,8 +80802,8 @@ pub(super) fn rpc_sqzmom(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.sqzmom_lookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -80229,6 +80837,7 @@ pub(super) fn rpc_sqzmom(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -80237,12 +80846,14 @@ pub(super) fn rpc_sqzmom(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_sqzmom(&core, params, endIdx, &inHigh, &inLow, &inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.sqzmom_lookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_sqzmom(&core, params, endIdx, &inHigh, &inLow, &inClose, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, &mut resp);
@@ -80616,7 +81227,7 @@ pub(super) fn rpc_stc(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.stc_lookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -80645,6 +81256,7 @@ pub(super) fn rpc_stc(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -80652,12 +81264,14 @@ pub(super) fn rpc_stc(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_stc(&core, params, endIdx, &inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.stc_lookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_stc(&core, params, endIdx, &inReal, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, &mut resp);
             resp.push('}');
@@ -80994,7 +81608,7 @@ pub(super) fn rpc_stddev(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.stddev_lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -81022,6 +81636,7 @@ pub(super) fn rpc_stddev(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -81029,12 +81644,14 @@ pub(super) fn rpc_stddev(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_stddev(&core, params, endIdx, &inReal, optInTimePeriod, optInNbDev, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.stddev_lookback(optInTimePeriod, optInNbDev).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_stddev(&core, params, endIdx, &inReal, optInTimePeriod, optInNbDev, &mut resp);
             resp.push('}');
@@ -81388,8 +82005,8 @@ pub(super) fn rpc_stoch(core: &mut Core, ref_data: &mut RefData, params: &Value)
             let _lb = core.stoch_lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -81425,6 +82042,7 @@ pub(super) fn rpc_stoch(core: &mut Core, ref_data: &mut RefData, params: &Value)
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -81433,12 +82051,14 @@ pub(super) fn rpc_stoch(core: &mut Core, ref_data: &mut RefData, params: &Value)
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_stoch(&core, params, endIdx, &inHigh, &inLow, &inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = if _enum_bad { -1 } else { core.stoch_lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             ride_stoch(&core, params, endIdx, &inHigh, &inLow, &inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut resp);
@@ -81837,8 +82457,8 @@ pub(super) fn rpc_stochf(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -81872,6 +82492,7 @@ pub(super) fn rpc_stochf(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -81880,12 +82501,14 @@ pub(super) fn rpc_stochf(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_stochf(&core, params, endIdx, &inHigh, &inLow, &inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = if _enum_bad { -1 } else { core.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             ride_stochf(&core, params, endIdx, &inHigh, &inLow, &inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut resp);
@@ -82263,8 +82886,8 @@ pub(super) fn rpc_stochrsi(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.stochrsi_lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -82297,6 +82920,7 @@ pub(super) fn rpc_stochrsi(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -82305,12 +82929,14 @@ pub(super) fn rpc_stochrsi(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_stochrsi(&core, params, endIdx, &inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = if _enum_bad { -1 } else { core.stochrsi_lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).map_or(-1, |v| v as i64) };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             ride_stochrsi(&core, params, endIdx, &inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut resp);
@@ -82688,7 +83314,7 @@ pub(super) fn rpc_sub(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.sub_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -82715,6 +83341,7 @@ pub(super) fn rpc_sub(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -82722,12 +83349,14 @@ pub(super) fn rpc_sub(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_sub(&core, params, endIdx, &inReal0, &inReal1, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.sub_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_sub(&core, params, endIdx, &inReal0, &inReal1, &mut resp);
             resp.push('}');
@@ -83057,7 +83686,7 @@ pub(super) fn rpc_sum(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.sum_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -83084,6 +83713,7 @@ pub(super) fn rpc_sum(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -83091,12 +83721,14 @@ pub(super) fn rpc_sum(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_sum(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.sum_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_sum(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -83441,8 +84073,8 @@ pub(super) fn rpc_supertrend(core: &mut Core, ref_data: &mut RefData, params: &V
             let _lb = core.supertrend_lookback(optInTimePeriod, optInMultiplier).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -83472,6 +84104,7 @@ pub(super) fn rpc_supertrend(core: &mut Core, ref_data: &mut RefData, params: &V
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_i32(&outIntBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -83480,12 +84113,14 @@ pub(super) fn rpc_supertrend(core: &mut Core, ref_data: &mut RefData, params: &V
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_supertrend(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.supertrend_lookback(optInTimePeriod, optInMultiplier).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             ride_supertrend(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut resp);
@@ -83850,7 +84485,7 @@ pub(super) fn rpc_swak_2php(core: &mut Core, ref_data: &mut RefData, params: &Va
             let _lb = core.swak_2php_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -83877,6 +84512,7 @@ pub(super) fn rpc_swak_2php(core: &mut Core, ref_data: &mut RefData, params: &Va
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -83884,12 +84520,14 @@ pub(super) fn rpc_swak_2php(core: &mut Core, ref_data: &mut RefData, params: &Va
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_swak_2php(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.swak_2php_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_swak_2php(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -84224,7 +84862,7 @@ pub(super) fn rpc_swak_bp(core: &mut Core, ref_data: &mut RefData, params: &Valu
             let _lb = core.swak_bp_lookback(optInTimePeriod, optInDelta).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -84252,6 +84890,7 @@ pub(super) fn rpc_swak_bp(core: &mut Core, ref_data: &mut RefData, params: &Valu
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -84259,12 +84898,14 @@ pub(super) fn rpc_swak_bp(core: &mut Core, ref_data: &mut RefData, params: &Valu
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_swak_bp(&core, params, endIdx, &inReal, optInTimePeriod, optInDelta, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.swak_bp_lookback(optInTimePeriod, optInDelta).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_swak_bp(&core, params, endIdx, &inReal, optInTimePeriod, optInDelta, &mut resp);
             resp.push('}');
@@ -84600,7 +85241,7 @@ pub(super) fn rpc_swak_butter(core: &mut Core, ref_data: &mut RefData, params: &
             let _lb = core.swak_butter_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -84627,6 +85268,7 @@ pub(super) fn rpc_swak_butter(core: &mut Core, ref_data: &mut RefData, params: &
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -84634,12 +85276,14 @@ pub(super) fn rpc_swak_butter(core: &mut Core, ref_data: &mut RefData, params: &
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_swak_butter(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.swak_butter_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_swak_butter(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -84973,7 +85617,7 @@ pub(super) fn rpc_swak_gauss(core: &mut Core, ref_data: &mut RefData, params: &V
             let _lb = core.swak_gauss_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -85000,6 +85644,7 @@ pub(super) fn rpc_swak_gauss(core: &mut Core, ref_data: &mut RefData, params: &V
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -85007,12 +85652,14 @@ pub(super) fn rpc_swak_gauss(core: &mut Core, ref_data: &mut RefData, params: &V
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_swak_gauss(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.swak_gauss_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_swak_gauss(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -85346,7 +85993,7 @@ pub(super) fn rpc_swak_hp(core: &mut Core, ref_data: &mut RefData, params: &Valu
             let _lb = core.swak_hp_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -85373,6 +86020,7 @@ pub(super) fn rpc_swak_hp(core: &mut Core, ref_data: &mut RefData, params: &Valu
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -85380,12 +86028,14 @@ pub(super) fn rpc_swak_hp(core: &mut Core, ref_data: &mut RefData, params: &Valu
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_swak_hp(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.swak_hp_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_swak_hp(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -85720,7 +86370,7 @@ pub(super) fn rpc_t3(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             let _lb = core.t3_lookback(optInTimePeriod, optInVFactor).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -85748,6 +86398,7 @@ pub(super) fn rpc_t3(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -85755,12 +86406,14 @@ pub(super) fn rpc_t3(core: &mut Core, ref_data: &mut RefData, params: &Value) ->
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_t3(&core, params, endIdx, &inReal, optInTimePeriod, optInVFactor, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.t3_lookback(optInTimePeriod, optInVFactor).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_t3(&core, params, endIdx, &inReal, optInTimePeriod, optInVFactor, &mut resp);
             resp.push('}');
@@ -86092,7 +86745,7 @@ pub(super) fn rpc_tan(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.tan_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -86118,6 +86771,7 @@ pub(super) fn rpc_tan(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -86125,12 +86779,14 @@ pub(super) fn rpc_tan(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_tan(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.tan_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_tan(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -86457,7 +87113,7 @@ pub(super) fn rpc_tanh(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.tanh_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -86483,6 +87139,7 @@ pub(super) fn rpc_tanh(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -86490,12 +87147,14 @@ pub(super) fn rpc_tanh(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_tanh(&core, params, endIdx, &inReal, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.tanh_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_tanh(&core, params, endIdx, &inReal, &mut resp);
             resp.push('}');
@@ -86823,7 +87482,7 @@ pub(super) fn rpc_tema(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.tema_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -86850,6 +87509,7 @@ pub(super) fn rpc_tema(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -86857,12 +87517,14 @@ pub(super) fn rpc_tema(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_tema(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.tema_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_tema(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -87206,7 +87868,7 @@ pub(super) fn rpc_trange(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.trange_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -87234,6 +87896,7 @@ pub(super) fn rpc_trange(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -87241,12 +87904,14 @@ pub(super) fn rpc_trange(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_trange(&core, params, endIdx, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.trange_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_trange(&core, params, endIdx, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -87578,7 +88243,7 @@ pub(super) fn rpc_trima(core: &mut Core, ref_data: &mut RefData, params: &Value)
             let _lb = core.trima_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -87605,6 +88270,7 @@ pub(super) fn rpc_trima(core: &mut Core, ref_data: &mut RefData, params: &Value)
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -87612,12 +88278,14 @@ pub(super) fn rpc_trima(core: &mut Core, ref_data: &mut RefData, params: &Value)
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_trima(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.trima_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_trima(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -87947,7 +88615,7 @@ pub(super) fn rpc_trix(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.trix_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -87974,6 +88642,7 @@ pub(super) fn rpc_trix(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -87981,12 +88650,14 @@ pub(super) fn rpc_trix(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_trix(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.trix_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_trix(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -88317,7 +88988,7 @@ pub(super) fn rpc_tsf(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.tsf_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -88344,6 +89015,7 @@ pub(super) fn rpc_tsf(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -88351,12 +89023,14 @@ pub(super) fn rpc_tsf(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_tsf(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.tsf_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_tsf(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -88687,7 +89361,7 @@ pub(super) fn rpc_tsi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.tsi_lookback(optInFirstPeriod, optInSecondPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -88715,6 +89389,7 @@ pub(super) fn rpc_tsi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -88722,12 +89397,14 @@ pub(super) fn rpc_tsi(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_tsi(&core, params, endIdx, &inReal, optInFirstPeriod, optInSecondPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.tsi_lookback(optInFirstPeriod, optInSecondPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_tsi(&core, params, endIdx, &inReal, optInFirstPeriod, optInSecondPeriod, &mut resp);
             resp.push('}');
@@ -89073,7 +89750,7 @@ pub(super) fn rpc_typprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.typprice_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -89101,6 +89778,7 @@ pub(super) fn rpc_typprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -89108,12 +89786,14 @@ pub(super) fn rpc_typprice(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_typprice(&core, params, endIdx, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.typprice_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_typprice(&core, params, endIdx, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -89461,7 +90141,7 @@ pub(super) fn rpc_ultosc(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.ultosc_lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -89492,6 +90172,7 @@ pub(super) fn rpc_ultosc(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -89499,12 +90180,14 @@ pub(super) fn rpc_ultosc(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_ultosc(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.ultosc_lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_ultosc(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut resp);
             resp.push('}');
@@ -89843,7 +90526,7 @@ pub(super) fn rpc_var(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.var_lookback(optInTimePeriod, optInNbDev).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -89871,6 +90554,7 @@ pub(super) fn rpc_var(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -89878,12 +90562,14 @@ pub(super) fn rpc_var(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_var(&core, params, endIdx, &inReal, optInTimePeriod, optInNbDev, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.var_lookback(optInTimePeriod, optInNbDev).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_var(&core, params, endIdx, &inReal, optInTimePeriod, optInNbDev, &mut resp);
             resp.push('}');
@@ -90215,7 +90901,7 @@ pub(super) fn rpc_vhf(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.vhf_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -90242,6 +90928,7 @@ pub(super) fn rpc_vhf(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -90249,12 +90936,14 @@ pub(super) fn rpc_vhf(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_vhf(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.vhf_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_vhf(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -90588,7 +91277,7 @@ pub(super) fn rpc_vidya(core: &mut Core, ref_data: &mut RefData, params: &Value)
             let _lb = core.vidya_lookback(optInTimePeriod, optInCMOPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -90616,6 +91305,7 @@ pub(super) fn rpc_vidya(core: &mut Core, ref_data: &mut RefData, params: &Value)
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -90623,12 +91313,14 @@ pub(super) fn rpc_vidya(core: &mut Core, ref_data: &mut RefData, params: &Value)
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_vidya(&core, params, endIdx, &inReal, optInTimePeriod, optInCMOPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.vidya_lookback(optInTimePeriod, optInCMOPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_vidya(&core, params, endIdx, &inReal, optInTimePeriod, optInCMOPeriod, &mut resp);
             resp.push('}');
@@ -90975,8 +91667,8 @@ pub(super) fn rpc_vortex(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.vortex_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -91005,6 +91697,7 @@ pub(super) fn rpc_vortex(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -91013,12 +91706,14 @@ pub(super) fn rpc_vortex(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_vortex(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.vortex_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             ride_vortex(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut resp);
@@ -91397,7 +92092,7 @@ pub(super) fn rpc_vwap(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.vwap_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -91426,6 +92121,7 @@ pub(super) fn rpc_vwap(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -91433,12 +92129,14 @@ pub(super) fn rpc_vwap(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_vwap(&core, params, endIdx, &inHigh, &inLow, &inClose, &inVolume, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.vwap_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_vwap(&core, params, endIdx, &inHigh, &inLow, &inClose, &inVolume, &mut resp);
             resp.push('}');
@@ -91779,7 +92477,7 @@ pub(super) fn rpc_vwma(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             let _lb = core.vwma_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -91807,6 +92505,7 @@ pub(super) fn rpc_vwma(core: &mut Core, ref_data: &mut RefData, params: &Value) 
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -91814,12 +92513,14 @@ pub(super) fn rpc_vwma(core: &mut Core, ref_data: &mut RefData, params: &Value) 
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_vwma(&core, params, endIdx, &inReal, &inVolume, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.vwma_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_vwma(&core, params, endIdx, &inReal, &inVolume, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -92164,7 +92865,7 @@ pub(super) fn rpc_wad(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.wad_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -92192,6 +92893,7 @@ pub(super) fn rpc_wad(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -92199,12 +92901,14 @@ pub(super) fn rpc_wad(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_wad(&core, params, endIdx, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.wad_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_wad(&core, params, endIdx, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -92552,8 +93256,8 @@ pub(super) fn rpc_wavetrend(core: &mut Core, ref_data: &mut RefData, params: &Va
             let _lb = core.wavetrend_lookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outBuf1: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -92584,6 +93288,7 @@ pub(super) fn rpc_wavetrend(core: &mut Core, ref_data: &mut RefData, params: &Va
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_f64(&outBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -92592,12 +93297,14 @@ pub(super) fn rpc_wavetrend(core: &mut Core, ref_data: &mut RefData, params: &Va
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_wavetrend(&core, params, endIdx, &inHigh, &inLow, &inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.wavetrend_lookback(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
             ride_wavetrend(&core, params, endIdx, &inHigh, &inLow, &inClose, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, &mut resp);
@@ -92974,7 +93681,7 @@ pub(super) fn rpc_wclprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             let _lb = core.wclprice_lookback().unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -93002,6 +93709,7 @@ pub(super) fn rpc_wclprice(core: &mut Core, ref_data: &mut RefData, params: &Val
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -93009,12 +93717,14 @@ pub(super) fn rpc_wclprice(core: &mut Core, ref_data: &mut RefData, params: &Val
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_wclprice(&core, params, endIdx, &inHigh, &inLow, &inClose, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.wclprice_lookback().map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_wclprice(&core, params, endIdx, &inHigh, &inLow, &inClose, &mut resp);
             resp.push('}');
@@ -93360,7 +94070,7 @@ pub(super) fn rpc_willr(core: &mut Core, ref_data: &mut RefData, params: &Value)
             let _lb = core.willr_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -93389,6 +94099,7 @@ pub(super) fn rpc_willr(core: &mut Core, ref_data: &mut RefData, params: &Value)
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -93396,12 +94107,14 @@ pub(super) fn rpc_willr(core: &mut Core, ref_data: &mut RefData, params: &Value)
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_willr(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.willr_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_willr(&core, params, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -93735,7 +94448,7 @@ pub(super) fn rpc_wma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             let _lb = core.wma_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -93762,6 +94475,7 @@ pub(super) fn rpc_wma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -93769,12 +94483,14 @@ pub(super) fn rpc_wma(core: &mut Core, ref_data: &mut RefData, params: &Value) -
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_wma(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.wma_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_wma(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');
@@ -94112,9 +94828,9 @@ pub(super) fn rpc_zigzag(core: &mut Core, ref_data: &mut RefData, params: &Value
             let _lb = core.zigzag_lookback(optInSensitivity, optInMinTrendLength).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
-            let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
-            let mut outIntBuf1: Vec<i32> = vec![0i32; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
+            let mut outIntBuf0: Vec<i32> = vec![TAIL_I32; out_size];
+            let mut outIntBuf1: Vec<i32> = vec![TAIL_I32; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -94143,6 +94859,7 @@ pub(super) fn rpc_zigzag(core: &mut Core, ref_data: &mut RefData, params: &Value
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement) + tail_dirty_i32(&outIntBuf0, outNBElement) + tail_dirty_i32(&outIntBuf1, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -94152,12 +94869,14 @@ pub(super) fn rpc_zigzag(core: &mut Core, ref_data: &mut RefData, params: &Value
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_zigzag(&core, params, endIdx, &inHigh, &inLow, optInSensitivity, optInMinTrendLength, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.zigzag_lookback(optInSensitivity, optInMinTrendLength).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outInteger\":"); resp.push_str(&json_i32_array(&outIntBuf0[..outNBElement]));
             resp.push_str(",\"outInteger1\":"); resp.push_str(&json_i32_array(&outIntBuf1[..outNBElement]));
@@ -94541,7 +95260,7 @@ pub(super) fn rpc_zlema(core: &mut Core, ref_data: &mut RefData, params: &Value)
             let _lb = core.zlema_lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
-            let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
+            let mut outBuf0: Vec<f64> = vec![f64::from_bits(TAIL_F64_BITS); out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
@@ -94568,6 +95287,7 @@ pub(super) fn rpc_zlema(core: &mut Core, ref_data: &mut RefData, params: &Value)
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
+            let tail_field = if matches!(rc, RetCode::Success) { format!(",\"out_tail_dirty\":{}", tail_dirty_f64(&outBuf0, outNBElement)) } else { String::new() };
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
                 if matches!(rc, RetCode::Success) && outNBElement > 0 {
@@ -94575,12 +95295,14 @@ pub(super) fn rpc_zlema(core: &mut Core, ref_data: &mut RefData, params: &Value)
                 }
                 _oh = fuzz_hash_fin(_oh);
                 let mut hresp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
+                hresp.push_str(&tail_field);
                 ride_zlema(&core, params, endIdx, &inReal, optInTimePeriod, &mut hresp);
                 hresp.push('}');
                 return hresp;
             }
             let lookback: i64 = core.zlema_lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
+            resp.push_str(&tail_field);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             ride_zlema(&core, params, endIdx, &inReal, optInTimePeriod, &mut resp);
             resp.push('}');

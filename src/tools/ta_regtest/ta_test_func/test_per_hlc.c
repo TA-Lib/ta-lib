@@ -177,7 +177,7 @@ static TA_Test tableTest[] =
     * there to the fixed-band TA_IS_ZERO leaves `ta_regtest --function=CCI`
     * entirely green -- measured, and the green was sabotage-proved (perturbing
     * cci.c's own 0.015 to 0.0151 turns this same invocation red at index 0,
-    * 66.666 -> 66.225166, exit 122, so the group does run CCI).
+    * 66.666 -> 66.225166, so the group does run CCI).
     *
     * No choice of test DATA closes it, for the reason test_kdj.c:211 records
     * about its small-magnitude leg: TA_IS_ZERO_SCALED is a RELATIVE dead-zone,

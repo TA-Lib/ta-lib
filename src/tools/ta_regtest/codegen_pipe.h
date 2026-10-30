@@ -68,6 +68,12 @@ int  codegen_ride_mismatches_ever(void);
 long codegen_ride_verdicts_ever(void);
 long codegen_ride_rejects_ever(void);
 
+/* `out_tail_dirty`: output slots at or past outNBElement that a successful call
+ * changed, as a managed server reports them. Never reset, like the totals above:
+ * any pass that drives the servers can find one. */
+long codegen_tail_dirty_ever(void);
+long codegen_tail_reports_ever(void);
+
 ErrorNumber codegen_pipe_call(CodegenPipe *cp,
                               const char *request,
                               char *response,

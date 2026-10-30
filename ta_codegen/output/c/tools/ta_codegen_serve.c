@@ -4250,12 +4250,10 @@ static int sv_steq_TA_HMA( const struct TA_HMA_Stream *a, const struct TA_HMA_St
    if( a->ringSize != b->ringSize ) { *w = "ringSize"; return 1; }
    if( sv_xtier_ne(a->dividerHalf, b->dividerHalf, z) ) { *w = "dividerHalf"; return 1; }
    if( sv_xtier_ne(a->dividerSqrt, b->dividerSqrt, z) ) { *w = "dividerSqrt"; return 1; }
-   if( sv_xtier_ne(a->periodSubHalf, b->periodSubHalf, z) ) { *w = "periodSubHalf"; return 1; }
    if( sv_xtier_ne(a->periodSumHalf, b->periodSumHalf, z) ) { *w = "periodSumHalf"; return 1; }
-   if( sv_xtier_ne(a->trailingHalf, b->trailingHalf, z) ) { *w = "trailingHalf"; return 1; }
+   if( sv_xtier_ne(a->subHalf, b->subHalf, z) ) { *w = "subHalf"; return 1; }
    if( sv_xtier_ne(a->periodSubSqrt, b->periodSubSqrt, z) ) { *w = "periodSubSqrt"; return 1; }
    if( sv_xtier_ne(a->periodSumSqrt, b->periodSumSqrt, z) ) { *w = "periodSumSqrt"; return 1; }
-   if( sv_xtier_ne(a->trailingSqrt, b->trailingSqrt, z) ) { *w = "trailingSqrt"; return 1; }
    if( a->lookbackHalf != b->lookbackHalf ) { *w = "lookbackHalf"; return 1; }
    if( a->barsSinceReseedHalf != b->barsSinceReseedHalf ) { *w = "barsSinceReseedHalf"; return 1; }
    if( a->barsSinceReseedSqrt != b->barsSinceReseedSqrt ) { *w = "barsSinceReseedSqrt"; return 1; }
