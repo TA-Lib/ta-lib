@@ -3,7 +3,7 @@
   "url": "https://context7.com/ta-lib/ta-lib",
   "public_key": "pk_iPYTHpNZDKyiyKGwssxVq",
   "projectTitle": "TA-Lib",
-  "description": "Technical analysis library: 200+ functions, including candlestick patterns, with batch and streaming APIs, implemented natively in C/C++, Rust, Java and C#.",
+  "description": "Technical analysis library with indicators and candlestick pattern recognition, implemented in C/C++, Rust, Java and C#, with batch and streaming APIs.",
   "folders": ["website/src"],
   "excludeFolders": ["website/src/contribute"],
   "excludeFiles": ["README-DEVS.md", "CLAUDE.md", "AGENTS.md", "CONTRIBUTING.md", "SECURITY.md"],
