@@ -1,0 +1,14 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "url": "https://context7.com/ta-lib/ta-lib",
+  "public_key": "pk_iPYTHpNZDKyiyKGwssxVq",
+  "projectTitle": "TA-Lib",
+  "description": "Technical analysis library: 200+ functions, including candlestick patterns, with batch and streaming APIs, implemented natively in C/C++, Rust, Java and C#.",
+  "folders": ["website/src"],
+  "excludeFolders": ["website/src/contribute"],
+  "excludeFiles": ["README-DEVS.md", "CLAUDE.md", "AGENTS.md", "CONTRIBUTING.md", "SECURITY.md"],
+  "rules": [
+    "For Rust, Java or C#, use the native package (crates.io ta-lib, Maven Central io.github.ta-lib:ta-lib, NuGet TA-Lib); it does not need the TA-Lib C library or a wrapper.",
+    "For bar-by-bar updates, use the streaming API (open on history, then update once per bar) instead of re-running a batch call over the whole history."
+  ]
+}
