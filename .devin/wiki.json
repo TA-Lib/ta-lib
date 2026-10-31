@@ -1,0 +1,44 @@
+{
+  "repo_notes": [
+    {
+      "content": "TA-Lib ships native implementations in C/C++, Rust (crates.io `ta-lib`), Java (Maven Central `io.github.ta-lib:ta-lib`) and C# (NuGet `TA-Lib`). The Rust, Java and C# libraries are written entirely in their own language: they use no JNI, no P/Invoke and no C library, and need nothing else installed. Python, R and other languages use wrappers around the C library, such as ta-lib-python."
+    },
+    {
+      "content": "Every function has a batch API (compute over an array, selected by startIdx/endIdx) and, since 0.8.1, a streaming API: open a stream on history, update it once per closed bar, and peek at a forming bar without changing its state. Document both forms in every language; never describe TA-Lib as array-only."
+    },
+    {
+      "content": "User documentation lives in website/src and is published at https://ta-lib.org; base user-facing pages on it rather than on inference from source code. ta_codegen/ (the generator that produces all four language implementations from one source), src/tools/ta_regtest, ta_ref/ and scripts/ are maintainer internals: cover them only under 'For Contributors'. Files named CLAUDE.md, AGENTS.md and README-DEVS.md are maintainer and agent instructions, not user documentation. The old gen_code.c generator, the JNI-based Java binding and the Managed C++ .NET wrapper no longer exist; do not describe them."
+    }
+  ],
+  "pages": [
+    {"title": "Overview", "purpose": "What TA-Lib is: 200+ technical analysis functions including candlestick patterns, native in C/C++, Rust, Java and C#, with batch and streaming APIs. Sources: README.md, website/src/README.md, website/src/about."},
+    {"title": "Choosing a Language", "parent": "Overview", "purpose": "Native packages (C/C++, Rust, Java, C#) versus wrappers (Python, R and others), and which to pick. Sources: website/src/install, website/src/wrappers."},
+    {"title": "Installation", "purpose": "How to install TA-Lib in each native language. Source: website/src/install."},
+    {"title": "C/C++ Installation", "parent": "Installation", "purpose": "Homebrew, vcpkg, Debian/RPM packages, Windows installers and building from source. Source: website/src/install/c."},
+    {"title": "Rust, Java and C# Packages", "parent": "Installation", "purpose": "Adding the crates.io, Maven Central and NuGet packages; no C library needed. Sources: website/src/api/rust, website/src/api/java, website/src/api/csharp."},
+    {"title": "Batch API", "purpose": "Computing a function over an array: startIdx/endIdx, outBegIdx/outNBElement, lookback, output buffers. Source: website/src/api."},
+    {"title": "Abstract API and Function Metadata", "parent": "Batch API", "purpose": "Discovering functions and their inputs, parameters and outputs at runtime, for UIs and generated bindings. Sources: website/src/api/abstract, website/src/spec/abstract."},
+    {"title": "Streaming API", "purpose": "Updating indicators one bar at a time: open on history, update per closed bar, peek at a forming bar, close; how results match the batch API. Sources: website/src/api/stream, website/src/spec/streaming."},
+    {"title": "Rust Streaming", "parent": "Streaming API", "purpose": "The Rust streaming API. Source: website/src/api/rust/stream."},
+    {"title": "Java Streaming", "parent": "Streaming API", "purpose": "The Java streaming API. Source: website/src/api/java/stream."},
+    {"title": "C# Streaming", "parent": "Streaming API", "purpose": "The C# streaming API. Source: website/src/api/csharp/stream."},
+    {"title": "Language Guides", "purpose": "Per-language usage guides for the native libraries."},
+    {"title": "C/C++ API", "parent": "Language Guides", "purpose": "Using TA-Lib from C and C++: initialization, calling functions, return codes. Source: website/src/api."},
+    {"title": "Rust API", "parent": "Language Guides", "purpose": "Using the Rust crate: the Core struct, Result-based errors, batch and streaming calls. Source: website/src/api/rust."},
+    {"title": "Java API", "parent": "Language Guides", "purpose": "Using the Java library: Core, exceptions, batch and streaming calls. Source: website/src/api/java."},
+    {"title": "C# API", "parent": "Language Guides", "purpose": "Using the C# library: batch and streaming calls, error handling. Source: website/src/api/csharp."},
+    {"title": "Function Reference", "purpose": "The function groups (overlap studies, momentum, volatility, volume, cycle, statistics, price and math transforms, pattern recognition) and where each function is documented. Source: website/src/functions."},
+    {"title": "Candlestick Patterns", "parent": "Function Reference", "purpose": "Candlestick pattern outputs and their meaning, and the candle settings that tune them. Sources: website/src/api/candlestick-outputs, website/src/api/candle-settings."},
+    {"title": "Behaviour and Specification", "purpose": "The precise contract every function follows. Source: website/src/spec."},
+    {"title": "Lookback and Unstable Period", "parent": "Behaviour and Specification", "purpose": "Lookback, unstable periods and auto-stabilization. Sources: website/src/spec/lookback, website/src/api/unstable-period, website/src/spec/auto-stabilization."},
+    {"title": "Errors and Return Codes", "parent": "Behaviour and Specification", "purpose": "How each language reports rejected arguments and errors. Source: website/src/spec/errors."},
+    {"title": "Inputs and Outputs", "parent": "Behaviour and Specification", "purpose": "Input and output conventions and alignment. Source: website/src/spec/inputs-outputs."},
+    {"title": "Settings and Threads", "parent": "Behaviour and Specification", "purpose": "Global settings and thread safety. Source: website/src/spec/settings-threads."},
+    {"title": "Versions and Compatibility", "parent": "Behaviour and Specification", "purpose": "Versioning and compatibility across releases. Source: website/src/spec/versions."},
+    {"title": "FAQ", "purpose": "Common questions: maintenance, live feeds, backtest and live trading with the same code, candlestick values, whether the Rust/Java/C# libraries need the C library. Source: website/src/faq."},
+    {"title": "For Contributors", "purpose": "How the project is built, generated and verified, for people changing TA-Lib. Sources: website/src/contribute, README-DEVS.md, CONTRIBUTING.md."},
+    {"title": "Code Generation", "parent": "For Contributors", "purpose": "How ta_codegen turns ta_codegen/input into the C, Rust, Java and C# implementations. Source: ta_codegen/."},
+    {"title": "Testing and Verification", "parent": "For Contributors", "purpose": "How every language is checked against the C reference (ta_regtest) and against frozen releases (ta_ref). Sources: src/tools/ta_regtest, ta_ref/."},
+    {"title": "Building from Source", "parent": "For Contributors", "purpose": "Building the C library and tools with CMake or autotools, and the scripts/build.py targets. Sources: CMakeLists.txt, README-DEVS.md."}
+  ]
+}
