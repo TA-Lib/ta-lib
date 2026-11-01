@@ -144365,6 +144365,1615 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  103126 MF,CC  Creation (#570).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#macdv} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInFastPeriod Period of the fast EMA (default 12; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSlowPeriod Period of the slow EMA and of the Average True
+        *        Range (default 26; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSignalPeriod Smoothing period of the signal line (default 9;
+        *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int macdvLookback( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+       {
+          if( optInFastPeriod == Integer.MIN_VALUE ) {
+             optInFastPeriod = 12;
+          } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+             return -1;
+          }
+          if( optInSlowPeriod == Integer.MIN_VALUE ) {
+             optInSlowPeriod = 26;
+          } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+             return -1;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 9;
+          } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
+             return -1;
+          }
+          int tempInteger;
+          int lookbackLine;
+          int lookbackATR;
+          /* Make sure slow is really slower than
+           * the fast period! if not, swap...
+           */
+          if( optInSlowPeriod < optInFastPeriod ) {
+             /* swap */
+             tempInteger = optInSlowPeriod;
+             optInSlowPeriod = optInFastPeriod;
+             optInFastPeriod = tempInteger;
+          }
+          /* The line needs the slow EMA and the Average True Range on the same bar,
+           * so its first bar is the later of their two lookbacks. Each term is
+           * exactly the lookback of the function it comes from and is never restated
+           * here, which is what makes MACDV inherit TA_FUNC_UNST_EMA and
+           * TA_FUNC_UNST_ATR from its callees.
+           */
+          lookbackLine = emaLookback(optInSlowPeriod);
+          lookbackATR = atrLookback(optInSlowPeriod);
+          if( lookbackATR > lookbackLine ) {
+             lookbackLine = lookbackATR;
+          }
+          return lookbackLine + emaLookback(optInSignalPeriod) ;
+
+       }
+       /**
+        * How many bars ahead (positive) or behind (negative) of the bar that
+        * computed it a chart draws one output of {@link Core#macdv}.
+        * <p>Every output of this function is drawn at its own bar, so the answer is
+        * 0.
+        *
+        * @param optInFastPeriod Period of the fast EMA (default 12; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSlowPeriod Period of the slow EMA and of the Average True
+        *        Range (default 26; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSignalPeriod Smoothing period of the signal line (default 9;
+        *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outputIdx Position of the output in the batch signature, from 0.
+        * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+        *        out of range or the index names no output.
+        */
+       public int macdvDisplayShift( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int outputIdx )
+       {
+          if( macdvLookback( optInFastPeriod, optInSlowPeriod, optInSignalPeriod ) < 0 ) {
+             return Integer.MIN_VALUE;
+          }
+          if( outputIdx < 0 || outputIdx >= 3 ) {
+             return Integer.MIN_VALUE;
+          }
+          return 0;
+       }
+       RetCode macdvImpl( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          int optInFastPeriod,
+                          int optInSlowPeriod,
+                          int optInSignalPeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outMACDV[],
+                          double outMACDVSignal[],
+                          double outMACDVHist[] )
+       {
+          double prevFast = 0;
+          double prevSlow = 0;
+          double prevATR = 0;
+          double prevSignal = 0;
+          double lineValue = 0;
+          double tempReal = 0;
+          double slowK = 0;
+          double fastK = 0;
+          double signalK = 0;
+          double slowBeta = 0;
+          double fastBeta = 0;
+          double signalBeta = 0;
+          double wAlpha = 0;
+          double wBeta = 0;
+          double periodTotal = 0;
+          double val2 = 0;
+          double val3 = 0;
+          double greatest = 0;
+          double tempCY = 0;
+          double tempLT = 0;
+          double tempHT = 0;
+          int i = 0;
+          int today = 0;
+          int outIdx = 0;
+          int tempInteger = 0;
+          int lookbackTotal = 0;
+          int lookbackSignal = 0;
+          int lookbackSlow = 0;
+          int lookbackFast = 0;
+          int lookbackATR = 0;
+          int lineIdx = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInFastPeriod == Integer.MIN_VALUE ) {
+             optInFastPeriod = 12;
+          } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSlowPeriod == Integer.MIN_VALUE ) {
+             optInSlowPeriod = 26;
+          } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 9;
+          } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( outMACDV == outMACDVSignal || outMACDV == outMACDVHist || outMACDVSignal == outMACDVHist ) {
+             return RetCode.BAD_PARAM ;
+          }
+          /* Make sure slow is really slower than
+           * the fast period! if not, swap...
+           */
+          if( optInSlowPeriod < optInFastPeriod ) {
+             /* swap */
+             tempInteger = optInSlowPeriod;
+             optInSlowPeriod = optInFastPeriod;
+             optInFastPeriod = tempInteger;
+          }
+          /* ema.c's k and beta for the three EMA, macd.c's spelling. */
+          slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+          slowK = 1.0 - slowBeta;
+          if( slowBeta < 0.5 ) {
+             slowBeta = 1.0 - slowK;
+          }
+          fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+          fastK = 1.0 - fastBeta;
+          if( fastBeta < 0.5 ) {
+             fastBeta = 1.0 - fastK;
+          }
+          /* A signal period of 1 disables signal-line smoothing: the signal IS the
+           * MACD-V line and the histogram is exactly zero. The recursion below, at a
+           * k of 1.0 and a beta of 0.0, does not keep the sign of a -0.0 line value;
+           * hence the explicit arm at each step.
+           */
+          signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+          signalK = 1.0 - signalBeta;
+          if( signalBeta < 0.5 ) {
+             signalBeta = 1.0 - signalK;
+          }
+          /* atr.c's Wilder coefficients: wAlpha derived FROM wBeta, never the
+           * reverse, so that the pair is the one TA_ATR runs.
+           */
+          wBeta = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
+          wAlpha = 1.0 - wBeta;
+          lookbackSignal = emaLookback(optInSignalPeriod);
+          lookbackSlow = emaLookback(optInSlowPeriod);
+          lookbackFast = emaLookback(optInFastPeriod);
+          lookbackATR = atrLookback(optInSlowPeriod);
+          lookbackTotal = macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+          /* Move up the start index if there is not
+           * enough initial data.
+           */
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          /* Everything is computed in a single lockstep pass: each bar advances the
+           * fast EMA, the slow EMA and the Average True Range, the scaled quotient
+           * is the MACD-V line, and each line value is immediately fed into the
+           * signal EMA. No temporary buffers.
+           *
+           * The arithmetic order below is the bit-exactness contract with TA_EMA,
+           * TA_MACD and TA_ATR (do not reorder or fuse operations):
+           *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
+           *  - True Range: start from high-low, then compare/replace with the two
+           *    previous-close distances, in that order; Wilder smoothing in ONE
+           *    statement.
+           *  - Each recursion is seeded with the sum of its first 'period' inputs,
+           *    accumulated from 0.0 in input order, divided by the period. The
+           *    signal EMA is seeded the same way from the first 'signal period'
+           *    line values.
+           *  - The line is the spread divided by the Average True Range, then
+           *    scaled: what a caller dividing TA_MACD by TA_ATR computes.
+           *
+           * In-place (an output == an input) is supported: outputs at [outIdx] are
+           * written only after every input at or before bar startIdx+outIdx was
+           * read, and the previous close is re-read from the input one bar back,
+           * which no output store has reached.
+           */
+          /* Each leg is seeded at its OWN lookback and warmed up to lineIdx, the
+           * first MACD-V line bar, so each is the shipped function entered at that
+           * bar and nothing here over-warms the shorter one: a caller who wants a
+           * leg converged sets that function's unstable period, exactly as when
+           * calling it directly.
+           */
+          lineIdx = startIdx - lookbackSignal;
+          /* Slow EMA. */
+          today = lineIdx - lookbackSlow;
+          tempReal = 0.0;
+          i = optInSlowPeriod;
+          while( i-- > 0 ) {
+             tempReal += inClose[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          while( today <= lineIdx ) {
+             tempReal = inClose[today++];
+             prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+          }
+          /* Fast EMA. */
+          today = lineIdx - lookbackFast;
+          tempReal = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += inClose[today++];
+          }
+          prevFast = tempReal / optInFastPeriod;
+          while( today <= lineIdx ) {
+             tempReal = inClose[today++];
+             prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+          }
+          /* Average True Range: the first True Range consumes a previous close. */
+          today = lineIdx - lookbackATR + 1;
+          periodTotal = 0.0;
+          i = optInSlowPeriod;
+          while( i-- > 0 ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             periodTotal += greatest;
+             today += 1;
+          }
+          prevATR = periodTotal / optInSlowPeriod;
+          while( today <= lineIdx ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             today += 1;
+          }
+          /* An Average True Range of exactly zero is a window with no price
+           * movement, where the line answers its neutral point, 0.0, whatever the
+           * spread's rounding residue is (#570).
+           */
+          lineValue = 0.0;
+          if( prevATR != 0.0 ) {
+             lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+          }
+          /* Seed the signal EMA with a simple average of the first 'signal period'
+           * line values, accumulated as they are produced.
+           */
+          prevSignal = 0.0;
+          prevSignal += lineValue;
+          i = optInSignalPeriod - 1;
+          while( i-- > 0 ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             tempReal = inClose[today];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+             prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+             lineValue = 0.0;
+             if( prevATR != 0.0 ) {
+                lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+             }
+             prevSignal += lineValue;
+             today += 1;
+          }
+          prevSignal = prevSignal / optInSignalPeriod;
+          /* Advance everything in lockstep through the unstable period of the
+           * signal EMA, up to the first output bar.
+           */
+          while( today <= startIdx ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             tempReal = inClose[today];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+             prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+             lineValue = 0.0;
+             if( prevATR != 0.0 ) {
+                lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+             }
+             if( optInSignalPeriod == 1 ) {
+                prevSignal = lineValue;
+             } else {
+                prevSignal = Math.fma(signalBeta, prevSignal, signalK * lineValue);
+             }
+             today += 1;
+          }
+          /* Stable zone: keep advancing in lockstep and write the three outputs. */
+          outMACDV[0] = lineValue;
+          outMACDVSignal[0] = prevSignal;
+          outMACDVHist[0] = lineValue - prevSignal;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             tempReal = inClose[today];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+             prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+             lineValue = 0.0;
+             if( prevATR != 0.0 ) {
+                lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+             }
+             if( optInSignalPeriod == 1 ) {
+                prevSignal = lineValue;
+             } else {
+                prevSignal = Math.fma(signalBeta, prevSignal, signalK * lineValue);
+             }
+             outMACDV[outIdx] = lineValue;
+             outMACDVSignal[outIdx] = prevSignal;
+             outMACDVHist[outIdx] = lineValue - prevSignal;
+             outIdx += 1;
+             today += 1;
+          }
+          /* All done! Indicate the output limits and return success. */
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode macdvImpl( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          int optInFastPeriod,
+                          int optInSlowPeriod,
+                          int optInSignalPeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outMACDV[],
+                          double outMACDVSignal[],
+                          double outMACDVHist[] )
+       {
+          double prevFast = 0;
+          double prevSlow = 0;
+          double prevATR = 0;
+          double prevSignal = 0;
+          double lineValue = 0;
+          double tempReal = 0;
+          double slowK = 0;
+          double fastK = 0;
+          double signalK = 0;
+          double slowBeta = 0;
+          double fastBeta = 0;
+          double signalBeta = 0;
+          double wAlpha = 0;
+          double wBeta = 0;
+          double periodTotal = 0;
+          double val2 = 0;
+          double val3 = 0;
+          double greatest = 0;
+          double tempCY = 0;
+          double tempLT = 0;
+          double tempHT = 0;
+          int i = 0;
+          int today = 0;
+          int outIdx = 0;
+          int tempInteger = 0;
+          int lookbackTotal = 0;
+          int lookbackSignal = 0;
+          int lookbackSlow = 0;
+          int lookbackFast = 0;
+          int lookbackATR = 0;
+          int lineIdx = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInFastPeriod == Integer.MIN_VALUE ) {
+             optInFastPeriod = 12;
+          } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSlowPeriod == Integer.MIN_VALUE ) {
+             optInSlowPeriod = 26;
+          } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 9;
+          } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( outMACDV == outMACDVSignal || outMACDV == outMACDVHist || outMACDVSignal == outMACDVHist ) {
+             return RetCode.BAD_PARAM ;
+          }
+          if( optInSlowPeriod < optInFastPeriod ) {
+             tempInteger = optInSlowPeriod;
+             optInSlowPeriod = optInFastPeriod;
+             optInFastPeriod = tempInteger;
+          }
+          slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+          slowK = 1.0 - slowBeta;
+          if( slowBeta < 0.5 ) {
+             slowBeta = 1.0 - slowK;
+          }
+          fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+          fastK = 1.0 - fastBeta;
+          if( fastBeta < 0.5 ) {
+             fastBeta = 1.0 - fastK;
+          }
+          signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+          signalK = 1.0 - signalBeta;
+          if( signalBeta < 0.5 ) {
+             signalBeta = 1.0 - signalK;
+          }
+          wBeta = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
+          wAlpha = 1.0 - wBeta;
+          lookbackSignal = emaLookback(optInSignalPeriod);
+          lookbackSlow = emaLookback(optInSlowPeriod);
+          lookbackFast = emaLookback(optInFastPeriod);
+          lookbackATR = atrLookback(optInSlowPeriod);
+          lookbackTotal = macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          lineIdx = startIdx - lookbackSignal;
+          today = lineIdx - lookbackSlow;
+          tempReal = 0.0;
+          i = optInSlowPeriod;
+          while( i-- > 0 ) {
+             tempReal += (double)inClose[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          while( today <= lineIdx ) {
+             tempReal = (double)inClose[today++];
+             prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+          }
+          today = lineIdx - lookbackFast;
+          tempReal = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += (double)inClose[today++];
+          }
+          prevFast = tempReal / optInFastPeriod;
+          while( today <= lineIdx ) {
+             tempReal = (double)inClose[today++];
+             prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+          }
+          today = lineIdx - lookbackATR + 1;
+          periodTotal = 0.0;
+          i = optInSlowPeriod;
+          while( i-- > 0 ) {
+             tempLT = (double)inLow[today];
+             tempHT = (double)inHigh[today];
+             tempCY = (double)inClose[today - 1];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             periodTotal += greatest;
+             today += 1;
+          }
+          prevATR = periodTotal / optInSlowPeriod;
+          while( today <= lineIdx ) {
+             tempLT = (double)inLow[today];
+             tempHT = (double)inHigh[today];
+             tempCY = (double)inClose[today - 1];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             today += 1;
+          }
+          lineValue = 0.0;
+          if( prevATR != 0.0 ) {
+             lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+          }
+          prevSignal = 0.0;
+          prevSignal += lineValue;
+          i = optInSignalPeriod - 1;
+          while( i-- > 0 ) {
+             tempLT = (double)inLow[today];
+             tempHT = (double)inHigh[today];
+             tempCY = (double)inClose[today - 1];
+             tempReal = (double)inClose[today];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+             prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+             lineValue = 0.0;
+             if( prevATR != 0.0 ) {
+                lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+             }
+             prevSignal += lineValue;
+             today += 1;
+          }
+          prevSignal = prevSignal / optInSignalPeriod;
+          while( today <= startIdx ) {
+             tempLT = (double)inLow[today];
+             tempHT = (double)inHigh[today];
+             tempCY = (double)inClose[today - 1];
+             tempReal = (double)inClose[today];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+             prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+             lineValue = 0.0;
+             if( prevATR != 0.0 ) {
+                lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+             }
+             if( optInSignalPeriod == 1 ) {
+                prevSignal = lineValue;
+             } else {
+                prevSignal = Math.fma(signalBeta, prevSignal, signalK * lineValue);
+             }
+             today += 1;
+          }
+          outMACDV[0] = lineValue;
+          outMACDVSignal[0] = prevSignal;
+          outMACDVHist[0] = lineValue - prevSignal;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             tempLT = (double)inLow[today];
+             tempHT = (double)inHigh[today];
+             tempCY = (double)inClose[today - 1];
+             tempReal = (double)inClose[today];
+             greatest = tempHT - tempLT;
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+             prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+             lineValue = 0.0;
+             if( prevATR != 0.0 ) {
+                lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+             }
+             if( optInSignalPeriod == 1 ) {
+                prevSignal = lineValue;
+             } else {
+                prevSignal = Math.fma(signalBeta, prevSignal, signalK * lineValue);
+             }
+             outMACDV[outIdx] = lineValue;
+             outMACDVSignal[outIdx] = prevSignal;
+             outMACDVHist[outIdx] = lineValue - prevSignal;
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * MACD-V, Alex Spiroglou's volatility-normalised MACD: the spread of a fast
+        * and a slow EMA of the close over the Average True Range, times 100. Like
+        * MACD it comes with an EMA-smoothed signal line and their histogram.
+        * Dividing by the ATR expresses momentum in units of the instrument's own
+        * volatility, so one reading means the same thing across instruments,
+        * timeframes and volatility regimes, where the raw MACD spread does not.
+        * Spiroglou reads the line in ranges: beyond 150 or -150 is an overextended
+        * move, between -50 and 50 a ranging market, and the bands in between a
+        * trend.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/macdv">ta-lib.org/functions/macdv</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The Average True Range is Wilder's, over the slow period: the publication's {@code ATR(26)} beside the 26-bar slow EMA, so one parameter sets both. An ATR of exactly zero, a window with no price movement, gives a MACD-V of 0, the line's neutral point.</li>
+        * <li>The two price EMAs and the Average True Range each warm up as when calling {@code EMA} and {@code ATR} directly, so a caller who wants the line converged sets {@code TA_FUNC_UNST_EMA} and {@code TA_FUNC_UNST_ATR}, as for those functions.</li>
+        * <li>If the slow period is set smaller than the fast period, the two are swapped so the slow EMA is always the longer one, as {@code MACD} does; the ATR period follows the slow period after the swap.</li>
+        * <li>A signal period of 1 disables signal-line smoothing: the signal equals the MACD-V line and the histogram is zero.</li>
+        * <li>The publication's MACD section writes the histogram as the signal line minus the MACD line; its reading of the histogram ("above 40" is stretched to the upside) holds only for MACD-V minus the signal, which is what is emitted here, as for {@code MACD}.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#macdvLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param optInFastPeriod Period of the fast EMA (default 12; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSlowPeriod Period of the slow EMA and of the Average True
+        *        Range (default 26; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSignalPeriod Smoothing period of the signal line (default 9;
+        *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outMACDV Fast EMA minus slow EMA, divided by the Average True
+        *        Range, times 100. Must hold at least
+        *        {@code endIdx - max(startIdx, macdvLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @param outMACDVSignal EMA of the MACD-V line. Must hold at least
+        *        {@code endIdx - max(startIdx, macdvLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @param outMACDVHist MACD-V minus signal line. Must hold at least
+        *        {@code endIdx - max(startIdx, macdvLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
+        *
+        * @see Core#macd
+        * @see Core#atr
+        * @see Core#ema
+        * @see Core#apo
+        * @see Core#ppo
+        */
+       public OutRange macdv( int startIdx,
+                              int endIdx,
+                              double inHigh[],
+                              double inLow[],
+                              double inClose[],
+                              int optInFastPeriod,
+                              int optInSlowPeriod,
+                              int optInSignalPeriod,
+                              double outMACDV[],
+                              double outMACDVSignal[],
+                              double outMACDVHist[] )
+       {
+          requireIndexRange("MACDV", startIdx, endIdx);
+          int guardStart = clampedStart("MACDV", startIdx, macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MACDV", "inHigh", inHigh, guardInLen);
+          requireLength("MACDV", "inLow", inLow, guardInLen);
+          requireLength("MACDV", "inClose", inClose, guardInLen);
+          requireLength("MACDV", "outMACDV", outMACDV, guardOutLen);
+          requireLength("MACDV", "outMACDVSignal", outMACDVSignal, guardOutLen);
+          requireLength("MACDV", "outMACDVHist", outMACDVHist, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = macdvImpl(startIdx, endIdx, inHigh, inLow, inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACDV, outMACDVSignal, outMACDVHist);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("MACDV", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * MACD-V, Alex Spiroglou's volatility-normalised MACD: the spread of a fast
+        * and a slow EMA of the close over the Average True Range, times 100. Like
+        * MACD it comes with an EMA-smoothed signal line and their histogram.
+        * Dividing by the ATR expresses momentum in units of the instrument's own
+        * volatility, so one reading means the same thing across instruments,
+        * timeframes and volatility regimes, where the raw MACD spread does not.
+        * Spiroglou reads the line in ranges: beyond 150 or -150 is an overextended
+        * move, between -50 and 50 a ranging market, and the bands in between a
+        * trend.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/macdv">ta-lib.org/functions/macdv</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The Average True Range is Wilder's, over the slow period: the publication's {@code ATR(26)} beside the 26-bar slow EMA, so one parameter sets both. An ATR of exactly zero, a window with no price movement, gives a MACD-V of 0, the line's neutral point.</li>
+        * <li>The two price EMAs and the Average True Range each warm up as when calling {@code EMA} and {@code ATR} directly, so a caller who wants the line converged sets {@code TA_FUNC_UNST_EMA} and {@code TA_FUNC_UNST_ATR}, as for those functions.</li>
+        * <li>If the slow period is set smaller than the fast period, the two are swapped so the slow EMA is always the longer one, as {@code MACD} does; the ATR period follows the slow period after the swap.</li>
+        * <li>A signal period of 1 disables signal-line smoothing: the signal equals the MACD-V line and the histogram is zero.</li>
+        * <li>The publication's MACD section writes the histogram as the signal line minus the MACD line; its reading of the histogram ("above 40" is stretched to the upside) holds only for MACD-V minus the signal, which is what is emitted here, as for {@code MACD}.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#macdvLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param optInFastPeriod Period of the fast EMA (default 12; range
+        *        2..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSlowPeriod Period of the slow EMA and of the Average True
+        *        Range (default 26; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSignalPeriod Smoothing period of the signal line (default 9;
+        *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outMACDV Fast EMA minus slow EMA, divided by the Average True
+        *        Range, times 100. Must hold at least
+        *        {@code endIdx - max(startIdx, macdvLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @param outMACDVSignal EMA of the MACD-V line. Must hold at least
+        *        {@code endIdx - max(startIdx, macdvLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @param outMACDVHist MACD-V minus signal line. Must hold at least
+        *        {@code endIdx - max(startIdx, macdvLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
+        *
+        * @see Core#macd
+        * @see Core#atr
+        * @see Core#ema
+        * @see Core#apo
+        * @see Core#ppo
+        */
+       public OutRange macdv( int startIdx,
+                              int endIdx,
+                              float inHigh[],
+                              float inLow[],
+                              float inClose[],
+                              int optInFastPeriod,
+                              int optInSlowPeriod,
+                              int optInSignalPeriod,
+                              double outMACDV[],
+                              double outMACDVSignal[],
+                              double outMACDVHist[] )
+       {
+          requireIndexRange("MACDV", startIdx, endIdx);
+          int guardStart = clampedStart("MACDV", startIdx, macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MACDV", "inHigh", inHigh, guardInLen);
+          requireLength("MACDV", "inLow", inLow, guardInLen);
+          requireLength("MACDV", "inClose", inClose, guardInLen);
+          requireLength("MACDV", "outMACDV", outMACDV, guardOutLen);
+          requireLength("MACDV", "outMACDVSignal", outMACDVSignal, guardOutLen);
+          requireLength("MACDV", "outMACDVHist", outMACDVHist, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = macdvImpl(startIdx, endIdx, inHigh, inLow, inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACDV, outMACDVSignal, outMACDVHist);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("MACDV", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live MACDV stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#macdv} over the same series.
+        * Open with {@link Core#macdvOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class MacdvStream {
+          private Core core;
+          private int optInFastPeriod;
+          private int optInSlowPeriod;
+          private int optInSignalPeriod;
+          private double prevFast;
+          private double prevSlow;
+          private double prevATR;
+          private double prevSignal;
+          private double slowK;
+          private double fastK;
+          private double signalK;
+          private double slowBeta;
+          private double fastBeta;
+          private double signalBeta;
+          private double wAlpha;
+          private double wBeta;
+          private double lag1_inClose;
+          private double cur_outMACDV;
+          private double cur_outMACDVSignal;
+          private double cur_outMACDVHist;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private MacdvStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#macdv} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value(MacdvOut)} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("MACDV advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private MacdvStream( MacdvStream other ) {
+             this.core = other.core;
+             this.optInFastPeriod = other.optInFastPeriod;
+             this.optInSlowPeriod = other.optInSlowPeriod;
+             this.optInSignalPeriod = other.optInSignalPeriod;
+             this.prevFast = other.prevFast;
+             this.prevSlow = other.prevSlow;
+             this.prevATR = other.prevATR;
+             this.prevSignal = other.prevSignal;
+             this.slowK = other.slowK;
+             this.fastK = other.fastK;
+             this.signalK = other.signalK;
+             this.slowBeta = other.slowBeta;
+             this.fastBeta = other.fastBeta;
+             this.signalBeta = other.signalBeta;
+             this.wAlpha = other.wAlpha;
+             this.wBeta = other.wBeta;
+             this.lag1_inClose = other.lag1_inClose;
+             this.cur_outMACDV = other.cur_outMACDV;
+             this.cur_outMACDVSignal = other.cur_outMACDVSignal;
+             this.cur_outMACDVHist = other.cur_outMACDVHist;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value(MacdvOut)} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public void update( double inHigh, double inLow, double inClose, MacdvOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("MACDV update", RetCode.OUT_OF_RANGE_END_INDEX);
+             requireArgument("MACDV update", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw nonFiniteBar("MACDV update", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+             core.macdvStepImpl(this, inHigh, inLow, inClose);
+             this.outRangeCount++;
+             out.macdv = this.cur_outMACDV;
+             out.macdvSignal = this.cur_outMACDVSignal;
+             out.macdvHist = this.cur_outMACDVHist;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would write — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public void peek( double inHigh, double inLow, double inClose, MacdvOut out ) {
+             requireArgument("MACDV peek", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw nonFiniteBar("MACDV peek", !Double.isFinite(inHigh) ? "inHigh" : !Double.isFinite(inLow) ? "inLow" : "inClose");
+             MacdvStream sp = this;
+             double lineValue = 0.0;
+             double tempReal = 0.0;
+             double val2 = 0.0;
+             double val3 = 0.0;
+             double greatest = 0.0;
+             double tempCY = 0.0;
+             double tempLT = 0.0;
+             double tempHT = 0.0;
+             double cur_outMACDV = 0.0;
+             double cur_outMACDVHist = 0.0;
+             double cur_outMACDVSignal = 0.0;
+             double prevATR = sp.prevATR;
+             double prevFast = sp.prevFast;
+             double prevSignal = sp.prevSignal;
+             double prevSlow = sp.prevSlow;
+             tempLT = inLow;
+             tempHT = inHigh;
+             tempCY = sp.lag1_inClose;
+             tempReal = inClose;
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(sp.wBeta, prevATR, sp.wAlpha * greatest);
+             prevFast = Math.fma(sp.fastBeta, prevFast, sp.fastK * tempReal);
+             prevSlow = Math.fma(sp.slowBeta, prevSlow, sp.slowK * tempReal);
+             lineValue = 0.0;
+             if( prevATR != 0.0 ) {
+                lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+             }
+             if( sp.optInSignalPeriod == 1 ) {
+                prevSignal = lineValue;
+             } else {
+                prevSignal = Math.fma(sp.signalBeta, prevSignal, sp.signalK * lineValue);
+             }
+             cur_outMACDV = lineValue;
+             cur_outMACDVSignal = prevSignal;
+             cur_outMACDVHist = lineValue - prevSignal;
+             out.macdv = cur_outMACDV;
+             out.macdvSignal = cur_outMACDVSignal;
+             out.macdvHist = cur_outMACDVHist;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
+           */
+          public void value( MacdvOut out ) {
+             requireArgument("MACDV value", "out", out);
+             out.macdv = this.cur_outMACDV;
+             out.macdvSignal = this.cur_outMACDVSignal;
+             out.macdvHist = this.cur_outMACDVHist;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public MacdvStream clone() {
+             return new MacdvStream(this);
+          }
+       }
+
+       /**
+        * The outputs of one MACDV bar, written by the stream into an object the
+        * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
+        *
+        * <p><b>Its contents are only valid until the next call that writes it.</b>
+        * It is a mutable buffer, not a reading: a reference kept past that call,
+        * or one put in a collection, sees the value change underneath it. Copy the
+        * fields out if the reading has to outlive the call.
+        *
+        * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+        * with value equality breaks the {@code HashMap}/{@code HashSet}
+        * invariant the moment a reused instance becomes a key. Compare the fields.
+        */
+       public static final class MacdvOut {
+          /** Fast EMA minus slow EMA, divided by the Average True Range, times 100. */
+          public double macdv;
+          /** EMA of the MACD-V line. */
+          public double macdvSignal;
+          /** MACD-V minus signal line. */
+          public double macdvHist;
+       }
+       private void macdvStepImpl( MacdvStream sp, double inHigh, double inLow, double inClose )
+       {
+          double lineValue = 0.0;
+          double tempReal = 0.0;
+          double val2 = 0.0;
+          double val3 = 0.0;
+          double greatest = 0.0;
+          double tempCY = 0.0;
+          double tempLT = 0.0;
+          double tempHT = 0.0;
+          tempLT = inLow;
+          tempHT = inHigh;
+          tempCY = sp.lag1_inClose;
+          tempReal = inClose;
+          greatest = tempHT - tempLT;
+          /* val1 */
+          val2 = Math.abs(tempCY - tempHT);
+          if( val2 > greatest ) {
+             greatest = val2;
+          }
+          val3 = Math.abs(tempCY - tempLT);
+          if( val3 > greatest ) {
+             greatest = val3;
+          }
+          sp.prevATR = Math.fma(sp.wBeta, sp.prevATR, sp.wAlpha * greatest);
+          sp.prevFast = Math.fma(sp.fastBeta, sp.prevFast, sp.fastK * tempReal);
+          sp.prevSlow = Math.fma(sp.slowBeta, sp.prevSlow, sp.slowK * tempReal);
+          lineValue = 0.0;
+          if( sp.prevATR != 0.0 ) {
+             lineValue = (sp.prevFast - sp.prevSlow) / sp.prevATR * 100.0;
+          }
+          if( sp.optInSignalPeriod == 1 ) {
+             sp.prevSignal = lineValue;
+          } else {
+             sp.prevSignal = Math.fma(sp.signalBeta, sp.prevSignal, sp.signalK * lineValue);
+          }
+          sp.cur_outMACDV = lineValue;
+          sp.cur_outMACDVSignal = sp.prevSignal;
+          sp.cur_outMACDVHist = lineValue - sp.prevSignal;
+          sp.lag1_inClose = inClose;
+       }
+       private RetCode macdvOpenImpl( MacdvStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACDV[], double outMACDVSignal[], double outMACDVHist[], int outStride )
+       {
+          double prevFast = 0;
+          double prevSlow = 0;
+          double prevATR = 0;
+          double prevSignal = 0;
+          double lineValue = 0;
+          double tempReal = 0;
+          double slowK = 0;
+          double fastK = 0;
+          double signalK = 0;
+          double slowBeta = 0;
+          double fastBeta = 0;
+          double signalBeta = 0;
+          double wAlpha = 0;
+          double wBeta = 0;
+          double periodTotal = 0;
+          double val2 = 0;
+          double val3 = 0;
+          double greatest = 0;
+          double tempCY = 0;
+          double tempLT = 0;
+          double tempHT = 0;
+          int i = 0;
+          int today = 0;
+          int outIdx = 0;
+          int tempInteger = 0;
+          int lookbackTotal = 0;
+          int lookbackSignal = 0;
+          int lookbackSlow = 0;
+          int lookbackFast = 0;
+          int lookbackATR = 0;
+          int lineIdx = 0;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInFastPeriod == Integer.MIN_VALUE ) {
+             optInFastPeriod = 12;
+          } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSlowPeriod == Integer.MIN_VALUE ) {
+             optInSlowPeriod = 26;
+          } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInSignalPeriod == Integer.MIN_VALUE ) {
+             optInSignalPeriod = 9;
+          } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          /* Make sure slow is really slower than
+           * the fast period! if not, swap...
+           */
+          if( optInSlowPeriod < optInFastPeriod ) {
+             /* swap */
+             tempInteger = optInSlowPeriod;
+             optInSlowPeriod = optInFastPeriod;
+             optInFastPeriod = tempInteger;
+          }
+          /* ema.c's k and beta for the three EMA, macd.c's spelling. */
+          slowBeta = (double)(optInSlowPeriod - 1) / (double)(optInSlowPeriod + 1);
+          slowK = 1.0 - slowBeta;
+          if( slowBeta < 0.5 ) {
+             slowBeta = 1.0 - slowK;
+          }
+          fastBeta = (double)(optInFastPeriod - 1) / (double)(optInFastPeriod + 1);
+          fastK = 1.0 - fastBeta;
+          if( fastBeta < 0.5 ) {
+             fastBeta = 1.0 - fastK;
+          }
+          /* A signal period of 1 disables signal-line smoothing: the signal IS the
+           * MACD-V line and the histogram is exactly zero. The recursion below, at a
+           * k of 1.0 and a beta of 0.0, does not keep the sign of a -0.0 line value;
+           * hence the explicit arm at each step.
+           */
+          signalBeta = (double)(optInSignalPeriod - 1) / (double)(optInSignalPeriod + 1);
+          signalK = 1.0 - signalBeta;
+          if( signalBeta < 0.5 ) {
+             signalBeta = 1.0 - signalK;
+          }
+          /* atr.c's Wilder coefficients: wAlpha derived FROM wBeta, never the
+           * reverse, so that the pair is the one TA_ATR runs.
+           */
+          wBeta = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
+          wAlpha = 1.0 - wBeta;
+          lookbackSignal = emaLookback(optInSignalPeriod);
+          lookbackSlow = emaLookback(optInSlowPeriod);
+          lookbackFast = emaLookback(optInFastPeriod);
+          lookbackATR = atrLookback(optInSlowPeriod);
+          lookbackTotal = macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+          /* Move up the start index if there is not
+           * enough initial data.
+           */
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          /* Everything is computed in a single lockstep pass: each bar advances the
+           * fast EMA, the slow EMA and the Average True Range, the scaled quotient
+           * is the MACD-V line, and each line value is immediately fed into the
+           * signal EMA. No temporary buffers.
+           *
+           * The arithmetic order below is the bit-exactness contract with TA_EMA,
+           * TA_MACD and TA_ATR (do not reorder or fuse operations):
+           *  - EMA recursion: k*x + beta*prev, with ema.c's k and beta.
+           *  - True Range: start from high-low, then compare/replace with the two
+           *    previous-close distances, in that order; Wilder smoothing in ONE
+           *    statement.
+           *  - Each recursion is seeded with the sum of its first 'period' inputs,
+           *    accumulated from 0.0 in input order, divided by the period. The
+           *    signal EMA is seeded the same way from the first 'signal period'
+           *    line values.
+           *  - The line is the spread divided by the Average True Range, then
+           *    scaled: what a caller dividing TA_MACD by TA_ATR computes.
+           *
+           * In-place (an output == an input) is supported: outputs at [outIdx] are
+           * written only after every input at or before bar startIdx+outIdx was
+           * read, and the previous close is re-read from the input one bar back,
+           * which no output store has reached.
+           */
+          /* Each leg is seeded at its OWN lookback and warmed up to lineIdx, the
+           * first MACD-V line bar, so each is the shipped function entered at that
+           * bar and nothing here over-warms the shorter one: a caller who wants a
+           * leg converged sets that function's unstable period, exactly as when
+           * calling it directly.
+           */
+          lineIdx = startIdx - lookbackSignal;
+          /* Slow EMA. */
+          today = lineIdx - lookbackSlow;
+          tempReal = 0.0;
+          i = optInSlowPeriod;
+          while( i-- > 0 ) {
+             tempReal += inClose[today++];
+          }
+          prevSlow = tempReal / optInSlowPeriod;
+          while( today <= lineIdx ) {
+             tempReal = inClose[today++];
+             prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+          }
+          /* Fast EMA. */
+          today = lineIdx - lookbackFast;
+          tempReal = 0.0;
+          i = optInFastPeriod;
+          while( i-- > 0 ) {
+             tempReal += inClose[today++];
+          }
+          prevFast = tempReal / optInFastPeriod;
+          while( today <= lineIdx ) {
+             tempReal = inClose[today++];
+             prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+          }
+          /* Average True Range: the first True Range consumes a previous close. */
+          today = lineIdx - lookbackATR + 1;
+          periodTotal = 0.0;
+          i = optInSlowPeriod;
+          while( i-- > 0 ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             periodTotal += greatest;
+             today += 1;
+          }
+          prevATR = periodTotal / optInSlowPeriod;
+          while( today <= lineIdx ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             today += 1;
+          }
+          /* An Average True Range of exactly zero is a window with no price
+           * movement, where the line answers its neutral point, 0.0, whatever the
+           * spread's rounding residue is (#570).
+           */
+          lineValue = 0.0;
+          if( prevATR != 0.0 ) {
+             lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+          }
+          /* Seed the signal EMA with a simple average of the first 'signal period'
+           * line values, accumulated as they are produced.
+           */
+          prevSignal = 0.0;
+          prevSignal += lineValue;
+          i = optInSignalPeriod - 1;
+          while( i-- > 0 ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             tempReal = inClose[today];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+             prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+             lineValue = 0.0;
+             if( prevATR != 0.0 ) {
+                lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+             }
+             prevSignal += lineValue;
+             today += 1;
+          }
+          prevSignal = prevSignal / optInSignalPeriod;
+          /* Advance everything in lockstep through the unstable period of the
+           * signal EMA, up to the first output bar.
+           */
+          while( today <= startIdx ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             tempReal = inClose[today];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+             prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+             lineValue = 0.0;
+             if( prevATR != 0.0 ) {
+                lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+             }
+             if( optInSignalPeriod == 1 ) {
+                prevSignal = lineValue;
+             } else {
+                prevSignal = Math.fma(signalBeta, prevSignal, signalK * lineValue);
+             }
+             today += 1;
+          }
+          /* Stable zone: keep advancing in lockstep and write the three outputs. */
+          outMACDV[0 * outStride] = lineValue;
+          outMACDVSignal[0 * outStride] = prevSignal;
+          outMACDVHist[0 * outStride] = lineValue - prevSignal;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             tempLT = inLow[today];
+             tempHT = inHigh[today];
+             tempCY = inClose[today - 1];
+             tempReal = inClose[today];
+             greatest = tempHT - tempLT;
+             /* val1 */
+             val2 = Math.abs(tempCY - tempHT);
+             if( val2 > greatest ) {
+                greatest = val2;
+             }
+             val3 = Math.abs(tempCY - tempLT);
+             if( val3 > greatest ) {
+                greatest = val3;
+             }
+             prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
+             prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
+             prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+             lineValue = 0.0;
+             if( prevATR != 0.0 ) {
+                lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+             }
+             if( optInSignalPeriod == 1 ) {
+                prevSignal = lineValue;
+             } else {
+                prevSignal = Math.fma(signalBeta, prevSignal, signalK * lineValue);
+             }
+             outMACDV[outIdx * outStride] = lineValue;
+             outMACDVSignal[outIdx * outStride] = prevSignal;
+             outMACDVHist[outIdx * outStride] = lineValue - prevSignal;
+             outIdx += 1;
+             today += 1;
+          }
+          /* All done! Indicate the output limits and return success. */
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          sp.optInFastPeriod = optInFastPeriod;
+          sp.optInSlowPeriod = optInSlowPeriod;
+          sp.optInSignalPeriod = optInSignalPeriod;
+          sp.prevFast = prevFast;
+          sp.prevSlow = prevSlow;
+          sp.prevATR = prevATR;
+          sp.prevSignal = prevSignal;
+          sp.slowK = slowK;
+          sp.fastK = fastK;
+          sp.signalK = signalK;
+          sp.slowBeta = slowBeta;
+          sp.fastBeta = fastBeta;
+          sp.signalBeta = signalBeta;
+          sp.wAlpha = wAlpha;
+          sp.wBeta = wBeta;
+          sp.lag1_inClose = inClose[historyLen - 1];
+          sp.cur_outMACDV = outMACDV[(outNBElement.value - 1) * outStride];
+          sp.cur_outMACDVSignal = outMACDVSignal[(outNBElement.value - 1) * outStride];
+          sp.cur_outMACDVHist = outMACDVHist[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* macdvOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       MacdvStream macdvOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACDV[], double outMACDVSignal[], double outMACDVHist[] )
+       {
+          MacdvStream sp = new MacdvStream(this);
+          RetCode retCode = macdvOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACDV, outMACDVSignal, outMACDVHist, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("MACDV openAndFill", inHigh.length, startIdx, macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+          }
+          throw streamFailure("MACDV openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind macdvOpen (composition seam). */
+       MacdvStream macdvOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+       {
+          MacdvStream sp = new MacdvStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outMACDV = new double[1];
+          double[] sink_outMACDVSignal = new double[1];
+          double[] sink_outMACDVHist = new double[1];
+          RetCode retCode = macdvOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, sink_outMACDV, sink_outMACDVSignal, sink_outMACDVHist, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("MACDV open", inHigh.length, startIdx, macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+          }
+          throw streamFailure("MACDV open", retCode);
+       }
+       /**
+        * Open a live MACDV stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#macdv} at that bar.
+        * <p>The history must hold at least {@code macdvLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+        * as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public MacdvStream macdvOpen( double inHigh[], double inLow[], double inClose[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+       {
+          requireArgument("MACDV open", "inHigh", inHigh);
+          requireHistory("MACDV open", inHigh.length);
+          requireArgument("MACDV open", "inLow", inLow);
+          requireArgument("MACDV open", "inClose", inClose);
+          requireHistoryLength("MACDV open", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("MACDV open", "inClose", inClose.length, inHigh.length);
+          return macdvOpenInternal(inHigh, inLow, inClose, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+       }
+       /**
+        * {@link Core#macdvOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#macdv} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link MacdvStream#outRange()}.
+        */
+       public MacdvStream macdvOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double outMACDV[], double outMACDVSignal[], double outMACDVHist[] )
+       {
+          requireArgument("MACDV openAndFill", "inHigh", inHigh);
+          requireHistory("MACDV openAndFill", inHigh.length);
+          requireArgument("MACDV openAndFill", "inLow", inLow);
+          requireArgument("MACDV openAndFill", "inClose", inClose);
+          int guardOutLen = openFillCount("MACDV openAndFill", inHigh.length, macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+          requireHistoryLength("MACDV openAndFill", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("MACDV openAndFill", "inClose", inClose.length, inHigh.length);
+          requireLength("MACDV openAndFill", "outMACDV", outMACDV, guardOutLen);
+          requireLength("MACDV openAndFill", "outMACDVSignal", outMACDVSignal, guardOutLen);
+          requireLength("MACDV openAndFill", "outMACDVHist", outMACDVHist, guardOutLen);
+          if( (Object)outMACDV == (Object)inHigh || (Object)outMACDV == (Object)inLow || (Object)outMACDV == (Object)inClose || (Object)outMACDVSignal == (Object)inHigh || (Object)outMACDVSignal == (Object)inLow || (Object)outMACDVSignal == (Object)inClose || (Object)outMACDVHist == (Object)inHigh || (Object)outMACDVHist == (Object)inLow || (Object)outMACDVHist == (Object)inClose || (Object)outMACDV == (Object)outMACDVSignal || (Object)outMACDV == (Object)outMACDVHist || (Object)outMACDVSignal == (Object)outMACDVHist ) {
+             throw streamFailure("MACDV openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return macdvOpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACDV, outMACDVSignal, outMACDVHist);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
      *
      *
      * Change history:
@@ -231907,7 +233516,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "223c1a36b44b6116";
+    static final String SPLICED_GENCODE_DIGEST = "2fed8956ceb47a55";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -232678,6 +234287,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing for the signal line (period length)",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outMACD",1), new AbsOut(0,"outMACDSignal",4), new AbsOut(0,"outMACDHist",16) }));
+        ABSTRACT.put("MACDV", new AbsFunc("MACDV", "Momentum Indicators", "MACD-V, Volatility Normalised Momentum", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA and of the ATR",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing for the signal line (period length)",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outMACDV",1), new AbsOut(0,"outMACDVSignal",4), new AbsOut(0,"outMACDVHist",16) }));
         ABSTRACT.put("MAMA", new AbsFunc("MAMA", "Overlap Studies", "MESA Adaptive Moving Average", 184549380,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(0,"optInFastLimit",0,"Fast Limit","Upper limit use in the adaptive algorithm",0.5, 0.01,0.99,2,0.21,0.8,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInSlowLimit",0,"Slow Limit","Lower limit use in the adaptive algorithm",0.05, 0.01,0.99,2,0.01,0.6,0.01, 0,0,0,0,0, null) },
@@ -233305,6 +234918,7 @@ public class TaCodegenServe {
         "TA_MACD",
         "TA_MACDEXT",
         "TA_MACDFIX",
+        "TA_MACDV",
         "TA_MAMA",
         "TA_MARKETFI",
         "TA_MASSI",
@@ -233549,96 +235163,97 @@ public class TaCodegenServe {
             case 145: return handle_MACD(json);
             case 146: return handle_MACDEXT(json);
             case 147: return handle_MACDFIX(json);
-            case 148: return handle_MAMA(json);
-            case 149: return handle_MARKETFI(json);
-            case 150: return handle_MASSI(json);
-            case 151: return handle_MAVP(json);
-            case 152: return handle_MAX(json);
-            case 153: return handle_MAXINDEX(json);
-            case 154: return handle_MCGD(json);
-            case 155: return handle_MEDIAN(json);
-            case 156: return handle_MEDPRICE(json);
-            case 157: return handle_MFI(json);
-            case 158: return handle_MIDPOINT(json);
-            case 159: return handle_MIDPRICE(json);
-            case 160: return handle_MIN(json);
-            case 161: return handle_MININDEX(json);
-            case 162: return handle_MINMAX(json);
-            case 163: return handle_MINMAXINDEX(json);
-            case 164: return handle_MINUS_DI(json);
-            case 165: return handle_MINUS_DM(json);
-            case 166: return handle_MOM(json);
-            case 167: return handle_MULT(json);
-            case 168: return handle_NATR(json);
-            case 169: return handle_NVI(json);
-            case 170: return handle_OBV(json);
-            case 171: return handle_PERCENTB(json);
-            case 172: return handle_PERCENTILE(json);
-            case 173: return handle_PERCENTRANK(json);
-            case 174: return handle_PLUS_DI(json);
-            case 175: return handle_PLUS_DM(json);
-            case 176: return handle_PPO(json);
-            case 177: return handle_PSO(json);
-            case 178: return handle_PVI(json);
-            case 179: return handle_PVO(json);
-            case 180: return handle_PVT(json);
-            case 181: return handle_QSTICK(json);
-            case 182: return handle_RMA(json);
-            case 183: return handle_ROC(json);
-            case 184: return handle_ROCP(json);
-            case 185: return handle_ROCR(json);
-            case 186: return handle_ROCR100(json);
-            case 187: return handle_ROGERSSATCHELL(json);
-            case 188: return handle_RSI(json);
-            case 189: return handle_RVI(json);
-            case 190: return handle_RVIR(json);
-            case 191: return handle_RVOL(json);
-            case 192: return handle_SAR(json);
-            case 193: return handle_SAREXT(json);
-            case 194: return handle_SI(json);
-            case 195: return handle_SIN(json);
-            case 196: return handle_SINH(json);
-            case 197: return handle_SMA(json);
-            case 198: return handle_SMI(json);
-            case 199: return handle_SQRT(json);
-            case 200: return handle_SQZMOM(json);
-            case 201: return handle_STC(json);
-            case 202: return handle_STDDEV(json);
-            case 203: return handle_STOCH(json);
-            case 204: return handle_STOCHF(json);
-            case 205: return handle_STOCHRSI(json);
-            case 206: return handle_SUB(json);
-            case 207: return handle_SUM(json);
-            case 208: return handle_SUPERTREND(json);
-            case 209: return handle_SWAK_2PHP(json);
-            case 210: return handle_SWAK_BP(json);
-            case 211: return handle_SWAK_BUTTER(json);
-            case 212: return handle_SWAK_GAUSS(json);
-            case 213: return handle_SWAK_HP(json);
-            case 214: return handle_T3(json);
-            case 215: return handle_TAN(json);
-            case 216: return handle_TANH(json);
-            case 217: return handle_TEMA(json);
-            case 218: return handle_TRANGE(json);
-            case 219: return handle_TRIMA(json);
-            case 220: return handle_TRIX(json);
-            case 221: return handle_TSF(json);
-            case 222: return handle_TSI(json);
-            case 223: return handle_TYPPRICE(json);
-            case 224: return handle_ULTOSC(json);
-            case 225: return handle_VAR(json);
-            case 226: return handle_VHF(json);
-            case 227: return handle_VIDYA(json);
-            case 228: return handle_VORTEX(json);
-            case 229: return handle_VWAP(json);
-            case 230: return handle_VWMA(json);
-            case 231: return handle_WAD(json);
-            case 232: return handle_WAVETREND(json);
-            case 233: return handle_WCLPRICE(json);
-            case 234: return handle_WILLR(json);
-            case 235: return handle_WMA(json);
-            case 236: return handle_ZIGZAG(json);
-            case 237: return handle_ZLEMA(json);
+            case 148: return handle_MACDV(json);
+            case 149: return handle_MAMA(json);
+            case 150: return handle_MARKETFI(json);
+            case 151: return handle_MASSI(json);
+            case 152: return handle_MAVP(json);
+            case 153: return handle_MAX(json);
+            case 154: return handle_MAXINDEX(json);
+            case 155: return handle_MCGD(json);
+            case 156: return handle_MEDIAN(json);
+            case 157: return handle_MEDPRICE(json);
+            case 158: return handle_MFI(json);
+            case 159: return handle_MIDPOINT(json);
+            case 160: return handle_MIDPRICE(json);
+            case 161: return handle_MIN(json);
+            case 162: return handle_MININDEX(json);
+            case 163: return handle_MINMAX(json);
+            case 164: return handle_MINMAXINDEX(json);
+            case 165: return handle_MINUS_DI(json);
+            case 166: return handle_MINUS_DM(json);
+            case 167: return handle_MOM(json);
+            case 168: return handle_MULT(json);
+            case 169: return handle_NATR(json);
+            case 170: return handle_NVI(json);
+            case 171: return handle_OBV(json);
+            case 172: return handle_PERCENTB(json);
+            case 173: return handle_PERCENTILE(json);
+            case 174: return handle_PERCENTRANK(json);
+            case 175: return handle_PLUS_DI(json);
+            case 176: return handle_PLUS_DM(json);
+            case 177: return handle_PPO(json);
+            case 178: return handle_PSO(json);
+            case 179: return handle_PVI(json);
+            case 180: return handle_PVO(json);
+            case 181: return handle_PVT(json);
+            case 182: return handle_QSTICK(json);
+            case 183: return handle_RMA(json);
+            case 184: return handle_ROC(json);
+            case 185: return handle_ROCP(json);
+            case 186: return handle_ROCR(json);
+            case 187: return handle_ROCR100(json);
+            case 188: return handle_ROGERSSATCHELL(json);
+            case 189: return handle_RSI(json);
+            case 190: return handle_RVI(json);
+            case 191: return handle_RVIR(json);
+            case 192: return handle_RVOL(json);
+            case 193: return handle_SAR(json);
+            case 194: return handle_SAREXT(json);
+            case 195: return handle_SI(json);
+            case 196: return handle_SIN(json);
+            case 197: return handle_SINH(json);
+            case 198: return handle_SMA(json);
+            case 199: return handle_SMI(json);
+            case 200: return handle_SQRT(json);
+            case 201: return handle_SQZMOM(json);
+            case 202: return handle_STC(json);
+            case 203: return handle_STDDEV(json);
+            case 204: return handle_STOCH(json);
+            case 205: return handle_STOCHF(json);
+            case 206: return handle_STOCHRSI(json);
+            case 207: return handle_SUB(json);
+            case 208: return handle_SUM(json);
+            case 209: return handle_SUPERTREND(json);
+            case 210: return handle_SWAK_2PHP(json);
+            case 211: return handle_SWAK_BP(json);
+            case 212: return handle_SWAK_BUTTER(json);
+            case 213: return handle_SWAK_GAUSS(json);
+            case 214: return handle_SWAK_HP(json);
+            case 215: return handle_T3(json);
+            case 216: return handle_TAN(json);
+            case 217: return handle_TANH(json);
+            case 218: return handle_TEMA(json);
+            case 219: return handle_TRANGE(json);
+            case 220: return handle_TRIMA(json);
+            case 221: return handle_TRIX(json);
+            case 222: return handle_TSF(json);
+            case 223: return handle_TSI(json);
+            case 224: return handle_TYPPRICE(json);
+            case 225: return handle_ULTOSC(json);
+            case 226: return handle_VAR(json);
+            case 227: return handle_VHF(json);
+            case 228: return handle_VIDYA(json);
+            case 229: return handle_VORTEX(json);
+            case 230: return handle_VWAP(json);
+            case 231: return handle_VWMA(json);
+            case 232: return handle_WAD(json);
+            case 233: return handle_WAVETREND(json);
+            case 234: return handle_WCLPRICE(json);
+            case 235: return handle_WILLR(json);
+            case 236: return handle_WMA(json);
+            case 237: return handle_ZIGZAG(json);
+            case 238: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -257300,6 +258915,176 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideMacdfix(core, json, endIdx, inReal, optInSignalPeriod, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_MACDV(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
+        if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            inLow = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+            inClose = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+        } else {
+            inHigh = jsonDoubleArray(json, "inHigh");
+            inLow = jsonDoubleArray(json, "inLow");
+            inClose = jsonDoubleArray(json, "inClose");
+        }
+        boolean _optRejected = false;
+        int optInFastPeriod = jsonInt(json, "optInFastPeriod");
+        int optInSlowPeriod = jsonInt(json, "optInSlowPeriod");
+        int optInSignalPeriod = jsonInt(json, "optInSignalPeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
+        double[] outArr1 = new double[_outLen];
+        java.util.Arrays.fill(outArr1, Double.longBitsToDouble(TAIL_F64_BITS));
+        double[] outArr2 = new double[_outLen];
+        java.util.Arrays.fill(outArr2, Double.longBitsToDouble(TAIL_F64_BITS));
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.macdvImpl(startIdx, endIdx, inHigh, inLow, inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.macdv(startIdx, endIdx, inHigh, inLow, inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1, outArr2);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.macdvOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+            } else {
+                Core.MacdvStream _wh = core.macdvOpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1, outArr2);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.macdv(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1, outArr2);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value) + tailDirty(outArr1, outNBElement.value) + tailDirty(outArr2, outNBElement.value)) : "";
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+                _h = svHashF64(_h, outArr2, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
+            rideMacdv(core, json, endIdx, inHigh, inLow, inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideMacdv(core, json, endIdx, inHigh, inLow, inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -297093,6 +298878,229 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_MACDV(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 12;
+        int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 26;
+        int optInSignalPeriod = json.contains("\"optInSignalPeriod\"") ? jsonInt(json, "optInSignalPeriod") : 9;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        double[] b1 = new double[svN];
+        double[] b2 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[5] = svK;
+            c2.unstablePeriod[2] = svK;
+            RetCode rc;
+            try { rc = c2.macdvImpl(0, svN - 1, fz_h, fz_l, fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, beg, nb, b0, b1, b2); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.macdvOpen(fz_h, fz_l, fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                double[] f2 = new double[svN];
+                java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                Core.MacdvStream _fh = c2.macdvOpenAndFill(fz_h, fz_l, fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1, f2);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f2[i], b2[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f2[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.macdvOpenAndFill(fz_h, fz_l, fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fz_h, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                try { c2.macdvOpenAndFill(fz_h, fz_l, fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f0, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.MacdvStream st;
+                try { st = c2.macdvOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInFastPeriod, optInSlowPeriod, optInSignalPeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                Core.MacdvOut v0 = new Core.MacdvOut(); st.value(v0);
+                if (svXtierNe(v0.macdv, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.macdvSignal, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.macdvHist, b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                Core.MacdvOut pk = new Core.MacdvOut();
+                Core.MacdvOut up = new Core.MacdvOut();
+                Core.MacdvOut vc = new Core.MacdvOut();
+                Core.MacdvOut rp = new Core.MacdvOut();
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    try { st.peek(fz_h[t], fz_l[t], fz_c[t], pk); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], rp); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        try { st.peek(fz_h[t], fz_l[t], fz_c[t], rp); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp.macdv, pk.macdv)) peekRepAll = false;
+                            if (svBne(rp.macdvSignal, pk.macdvSignal)) peekRepAll = false;
+                            if (svBne(rp.macdvHist, pk.macdvHist)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                    if (pkTook && svBne(pk.macdv, up.macdv)) peekAll = false;
+                    if (pkTook && svBne(pk.macdvSignal, up.macdvSignal)) peekAll = false;
+                    if (pkTook && svBne(pk.macdvHist, up.macdvHist)) peekAll = false;
+                    try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], pk); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    st.value(vc);
+                    if (svBne(vc.macdv, up.macdv)) allOk = false;
+                    if (svBne(vc.macdvSignal, up.macdvSignal)) allOk = false;
+                    if (svBne(vc.macdvHist, up.macdvHist)) allOk = false;
+                    if (svXtierNe(up.macdv, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdv)) + "\""; }
+                    if (svXtierNe(up.macdvSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdvSignal)) + "\""; }
+                    if (svXtierNe(up.macdvHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.macdvHist)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        double[] f1 = new double[svN];
+                        java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                        double[] f2 = new double[svN];
+                        java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                        Core.MacdvStream sA = c2.macdvOpenAndFill(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1, f2);
+                        int mid = (p0 + svN) / 2;
+                        Core.MacdvOut uA = new Core.MacdvOut();
+                        Core.MacdvOut uB = new Core.MacdvOut();
+                        for (int t = p0; t < mid; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svXtierNe(uA.macdv, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.macdvSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svXtierNe(uA.macdvHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        Core.MacdvStream sB = sA.clone();
+                        sB.advance();
+                        sB.advance();
+                        double[] fk0 = new double[svN];
+                        double[] fk1 = new double[svN];
+                        double[] fk2 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            fk0[t] = uB.macdv;
+                            if (svXtierNe(uB.macdv, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk1[t] = uB.macdvSignal;
+                            if (svXtierNe(uB.macdvSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            fk2[t] = uB.macdvHist;
+                            if (svXtierNe(uB.macdvHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            if (svBne(uA.macdv, fk0[t]) || svXtierNe(uA.macdv, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdvSignal, fk1[t]) || svXtierNe(uA.macdvSignal, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.macdvHist, fk2[t]) || svXtierNe(uA.macdvHist, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.macdvOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInFastPeriod, optInSlowPeriod, optInSignalPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    double[] f1 = new double[svN];
+                    java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                    double[] f2 = new double[svN];
+                    java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                    try { c2.macdvOpenAndFill(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1, f2); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.MacdvStream sD = c2.macdvOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+                Core.MacdvStream sE = c2.macdvOpen(fz_h, fz_l, fz_c, 12, 26, 9);
+                Core.MacdvOut vD = new Core.MacdvOut(); sD.value(vD);
+                Core.MacdvOut vE = new Core.MacdvOut(); sE.value(vE);
+                if (svBne(vD.macdv, vE.macdv)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.macdvSignal, vE.macdvSignal)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.macdvHist, vE.macdvHist)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.macdvImpl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, begS, nbS, b0, b1, b2); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.MacdvStream stA = c2.macdvOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_MAMA(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -312970,6 +314978,7 @@ public class TaCodegenServe {
         case "TA_MACD": return sv_MACD(json);
         case "TA_MACDEXT": return sv_MACDEXT(json);
         case "TA_MACDFIX": return sv_MACDFIX(json);
+        case "TA_MACDV": return sv_MACDV(json);
         case "TA_MAMA": return sv_MAMA(json);
         case "TA_MARKETFI": return sv_MARKETFI(json);
         case "TA_MASSI": return sv_MASSI(json);
@@ -328155,6 +330164,120 @@ public class TaCodegenServe {
             double[] fb2 = new double[m];
             try {
                 Core.MacdfixStream st2 = core.macdfixOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInSignalPeriod, fb0, fb1, fb2);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp && svXtierNe(rb1[k], fb1[k], r.benign)) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rb1[k]); r.stream = Double.doubleToRawLongBits(fb1[k]); }
+                        if (cmp && svXtierNe(rb2[k], fb2[k], r.benign)) { cmp = false; r.out = 2; r.batch = Double.doubleToRawLongBits(rb2[k]); r.stream = Double.doubleToRawLongBits(fb2[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideMacdv(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodyMacdv(core, json, endIdx, inHigh, inLow, inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodyMacdv(Core core, String json, int endIdx, double[] inHigh, double[] inLow, double[] inClose, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, RideResult r) {
+        try { r.lb = core.macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inHigh.length < navail) navail = inHigh.length;
+        if (inLow.length < navail) navail = inLow.length;
+        if (inClose.length < navail) navail = inClose.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inHigh, m) || !rideFinite(inLow, m) || !rideFinite(inClose, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_MACDV");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInFastPeriod);
+        hash = rideMix(hash, optInSlowPeriod);
+        hash = rideMix(hash, optInSignalPeriod);
+        hash = rideMixArr(hash, inHigh, m);
+        hash = rideMixArr(hash, inLow, m);
+        hash = rideMixArr(hash, inClose, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        double[] rb1 = new double[m];
+        double[] rb2 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.macdv(0, m - 1, java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, rb0, rb1, rb2); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.macdvOpen(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInFastPeriod, optInSlowPeriod, optInSignalPeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try { core.macdvOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fb0, fb1, fb2); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.MacdvStream st = core.macdvOpen(java.util.Arrays.copyOf(inHigh, lb + 1), java.util.Arrays.copyOf(inLow, lb + 1), java.util.Arrays.copyOf(inClose, lb + 1), optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+            Core.MacdvOut uo = new Core.MacdvOut(); st.value(uo);
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uo.macdv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uo.macdv); }
+            if (cmp && svXtierNe(rb1[lb - beg], uo.macdvSignal, r.benign)) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rb1[lb - beg]); r.stream = Double.doubleToRawLongBits(uo.macdvSignal); }
+            if (cmp && svXtierNe(rb2[lb - beg], uo.macdvHist, r.benign)) { cmp = false; r.out = 2; r.batch = Double.doubleToRawLongBits(rb2[lb - beg]); r.stream = Double.doubleToRawLongBits(uo.macdvHist); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                st.update(inHigh[t], inLow[t], inClose[t], uo);
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uo.macdv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uo.macdv); }
+                if (cmp && svXtierNe(rb1[t - beg], uo.macdvSignal, r.benign)) { cmp = false; r.out = 1; r.batch = Double.doubleToRawLongBits(rb1[t - beg]); r.stream = Double.doubleToRawLongBits(uo.macdvSignal); }
+                if (cmp && svXtierNe(rb2[t - beg], uo.macdvHist, r.benign)) { cmp = false; r.out = 2; r.batch = Double.doubleToRawLongBits(rb2[t - beg]); r.stream = Double.doubleToRawLongBits(uo.macdvHist); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            double[] fb1 = new double[m];
+            double[] fb2 = new double[m];
+            try {
+                Core.MacdvStream st2 = core.macdvOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), java.util.Arrays.copyOf(inClose, m), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fb0, fb1, fb2);
                 if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
                 if (r.ok) {
                     for (int k = 0; k < nb; k++) {

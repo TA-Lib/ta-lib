@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 4:0:3
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 3135
+function-count 3148
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -1670,6 +1670,16 @@ function TA_RetCode TA_MACDFIX_OutRange(const TA_MACDFIX_Stream *, int *, int *)
 function TA_RetCode TA_MACDFIX_Peek(const TA_MACDFIX_Stream *, double, double *, double *, double *)
 function TA_RetCode TA_MACDFIX_Update(TA_MACDFIX_Stream *, double, double *, double *, double *)
 function TA_RetCode TA_MACDFIX_Value(const TA_MACDFIX_Stream *, double *, double *, double *)
+function TA_RetCode TA_MACDV(int, int, const double *, const double *, const double *, int, int, int, int *, int *, double *, double *, double *)
+function TA_RetCode TA_MACDV_Advance(TA_MACDV_Stream *)
+function TA_RetCode TA_MACDV_Clone(const TA_MACDV_Stream *, TA_MACDV_Stream **)
+function TA_RetCode TA_MACDV_Close(TA_MACDV_Stream *)
+function TA_RetCode TA_MACDV_Open(TA_MACDV_Stream **, const double *, const double *, const double *, int, int, int, int, double *, double *, double *)
+function TA_RetCode TA_MACDV_OpenAndFill(TA_MACDV_Stream **, const double *, const double *, const double *, int, int, int, int, int *, int *, double *, double *, double *)
+function TA_RetCode TA_MACDV_OutRange(const TA_MACDV_Stream *, int *, int *)
+function TA_RetCode TA_MACDV_Peek(const TA_MACDV_Stream *, double, double, double, double *, double *, double *)
+function TA_RetCode TA_MACDV_Update(TA_MACDV_Stream *, double, double, double, double *, double *, double *)
+function TA_RetCode TA_MACDV_Value(const TA_MACDV_Stream *, double *, double *, double *)
 function TA_RetCode TA_MACD_Advance(TA_MACD_Stream *)
 function TA_RetCode TA_MACD_Clone(const TA_MACD_Stream *, TA_MACD_Stream **)
 function TA_RetCode TA_MACD_Close(TA_MACD_Stream *)
@@ -2499,6 +2509,7 @@ function TA_RetCode TA_S_MA(int, int, const float *, int, TA_MAType, int *, int 
 function TA_RetCode TA_S_MACD(int, int, const float *, int, int, int, int *, int *, double *, double *, double *)
 function TA_RetCode TA_S_MACDEXT(int, int, const float *, int, TA_MAType, int, TA_MAType, int, TA_MAType, int *, int *, double *, double *, double *)
 function TA_RetCode TA_S_MACDFIX(int, int, const float *, int, int *, int *, double *, double *, double *)
+function TA_RetCode TA_S_MACDV(int, int, const float *, const float *, const float *, int, int, int, int *, int *, double *, double *, double *)
 function TA_RetCode TA_S_MAMA(int, int, const float *, double, double, int *, int *, double *, double *)
 function TA_RetCode TA_S_MARKETFI(int, int, const float *, const float *, const float *, int *, int *, double *)
 function TA_RetCode TA_S_MASSI(int, int, const float *, const float *, int, int, int *, int *, double *)
@@ -3141,6 +3152,8 @@ function int TA_MACDEXT_DisplayShift(int, TA_MAType, int, TA_MAType, int, TA_MAT
 function int TA_MACDEXT_Lookback(int, TA_MAType, int, TA_MAType, int, TA_MAType)
 function int TA_MACDFIX_DisplayShift(int, int)
 function int TA_MACDFIX_Lookback(int)
+function int TA_MACDV_DisplayShift(int, int, int, int)
+function int TA_MACDV_Lookback(int, int, int)
 function int TA_MACD_DisplayShift(int, int, int, int)
 function int TA_MACD_Lookback(int, int, int)
 function int TA_MAMA_DisplayShift(double, double, int)

@@ -4092,6 +4092,38 @@ int TA_MACDFIX_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 {
    return TA_MACDFIX_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
+TA_RetCode TA_MACDV_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_MACDV(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->in[0].data.inPrice.close, /* inClose */
+               params->optIn[0].data.optInInteger, /* optInFastPeriod*/
+               params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
+               params->optIn[2].data.optInInteger, /* optInSignalPeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal, /*  outMACDV */
+               params->out[1].data.outReal, /*  outMACDVSignal */
+               params->out[2].data.outReal /*  outMACDVHist */
+               );
+}
+unsigned int TA_MACDV_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_MACDV_Lookback(params->optIn[0].data.optInInteger, /* optInFastPeriod*/
+                    params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
+                    params->optIn[2].data.optInInteger /* optInSignalPeriod*/ );
+}
+int TA_MACDV_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_MACDV_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_MAMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

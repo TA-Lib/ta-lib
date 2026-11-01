@@ -338,6 +338,8 @@ pub enum FuncId {
     MACDEXT,
     /// Moving Average Convergence/Divergence Fix 12/26 — [`Core::macdfix`](crate::Core::macdfix).
     MACDFIX,
+    /// MACD-V, Volatility Normalised Momentum — [`Core::macdv`](crate::Core::macdv).
+    MACDV,
     /// MESA Adaptive Moving Average — [`Core::mama`](crate::Core::mama).
     MAMA,
     /// Market Facilitation Index — [`Core::marketfi`](crate::Core::marketfi).
@@ -522,7 +524,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 238;
+    pub const COUNT: usize = 239;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -870,7 +872,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 238] = [
+static FUNC_TABLE: [FuncInfo; 239] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2500,6 +2502,17 @@ static FUNC_TABLE: [FuncInfo; 238] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::MACDV,
+        name: "MACDV",
+        group: Group::MomentumIndicators,
+        hint: "MACD-V, Volatility Normalised Momentum",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA and of the ATR", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing for the signal line (period length)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outMACDV", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outMACDVSignal", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, OutputInfo { param_name: "outMACDVHist", kind: OutputType::Real, flags: OutputFlags(0x00000010) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::MAMA,
         name: "MAMA",
         group: Group::OverlapStudies,
@@ -3655,6 +3668,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "MACD" => FuncId::MACD,
         "MACDEXT" => FuncId::MACDEXT,
         "MACDFIX" => FuncId::MACDFIX,
+        "MACDV" => FuncId::MACDV,
         "MAMA" => FuncId::MAMA,
         "MARKETFI" => FuncId::MARKETFI,
         "MASSI" => FuncId::MASSI,
@@ -4158,6 +4172,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::MACD => self.core.macd_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::MACDEXT => self.core.macdext_lookback(self.int_opt[0], MAType::try_from(self.int_opt[1])?, self.int_opt[2], MAType::try_from(self.int_opt[3])?, self.int_opt[4], MAType::try_from(self.int_opt[5])?),
             FuncId::MACDFIX => self.core.macdfix_lookback(self.int_opt[0]),
+            FuncId::MACDV => self.core.macdv_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::MAMA => self.core.mama_lookback(self.real_opt[0], self.real_opt[1]),
             FuncId::MARKETFI => self.core.marketfi_lookback(),
             FuncId::MASSI => self.core.massi_lookback(self.int_opt[0], self.int_opt[1]),
@@ -4409,6 +4424,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::MACD => self.core.macd_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], output_idx),
             FuncId::MACDEXT => self.core.macdext_display_shift(self.int_opt[0], MAType::try_from(self.int_opt[1])?, self.int_opt[2], MAType::try_from(self.int_opt[3])?, self.int_opt[4], MAType::try_from(self.int_opt[5])?, output_idx),
             FuncId::MACDFIX => self.core.macdfix_display_shift(self.int_opt[0], output_idx),
+            FuncId::MACDV => self.core.macdv_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], output_idx),
             FuncId::MAMA => self.core.mama_display_shift(self.real_opt[0], self.real_opt[1], output_idx),
             FuncId::MARKETFI => self.core.marketfi_display_shift(output_idx),
             FuncId::MASSI => self.core.massi_display_shift(self.int_opt[0], self.int_opt[1], output_idx),
@@ -6630,6 +6646,24 @@ impl<'a> ParamHolder<'a> {
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.macdfix(start_idx, end_idx, i0, self.int_opt[0], &mut *o0, &mut *o1, &mut *o2);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                self.real_out[2] = Some(o2);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::MACDV => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.macdv(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);

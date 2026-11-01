@@ -178,7 +178,7 @@
 //! * [`TAN`](Core::tan) — Vector Trigonometric Tan
 //! * [`TANH`](Core::tanh) — Vector Trigonometric Tanh
 //!
-//! ## Momentum Indicators (63)
+//! ## Momentum Indicators (64)
 //!
 //! * [`AC`](Core::ac) — Accelerator/Decelerator Oscillator
 //! * [`ADX`](Core::adx) — Average Directional Movement Index
@@ -214,6 +214,7 @@
 //! * [`MACD`](Core::macd) — Moving Average Convergence/Divergence
 //! * [`MACDEXT`](Core::macdext) — MACD with controllable MA type
 //! * [`MACDFIX`](Core::macdfix) — Moving Average Convergence/Divergence Fix 12/26
+//! * [`MACDV`](Core::macdv) — MACD-V, Volatility Normalised Momentum
 //! * [`MFI`](Core::mfi) — Money Flow Index
 //! * [`MINUS_DI`](Core::minus_di) — Minus Directional Indicator
 //! * [`MINUS_DM`](Core::minus_dm) — Minus Directional Movement

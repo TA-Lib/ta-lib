@@ -268,6 +268,7 @@ public final class Functions {
       put(m, f_MACD());
       put(m, f_MACDEXT());
       put(m, f_MACDFIX());
+      put(m, f_MACDV());
       put(m, f_MAMA());
       put(m, f_MARKETFI());
       put(m, f_MASSI());
@@ -2910,6 +2911,36 @@ public final class Functions {
             new OutputInfo(OutputType.REAL, "outMACD", 0x00000001),
             new OutputInfo(OutputType.REAL, "outMACDSignal", 0x00000004),
             new OutputInfo(OutputType.REAL, "outMACDHist", 0x00000010)
+         ));
+   }
+
+   private static FuncInfo f_MACDV() {
+      return new FuncInfo(
+         "MACDV", "Momentum Indicators", "MACD-V, Volatility Normalised Momentum", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInFastPeriod", 0x00000000,
+               "Fast Period", "Period of the fast MA", 12.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSlowPeriod", 0x00000000,
+               "Slow Period", "Period of the slow MA and of the ATR", 26.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSignalPeriod", 0x00000000,
+               "Signal Period", "Smoothing for the signal line (period length)", 9.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outMACDV", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outMACDVSignal", 0x00000004),
+            new OutputInfo(OutputType.REAL, "outMACDVHist", 0x00000010)
          ));
    }
 

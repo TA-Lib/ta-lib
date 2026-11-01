@@ -7329,6 +7329,95 @@ public static class FunctionDescription
 	</FinancialFunction>
 
 
+	<!-- MACDV -->
+	<FinancialFunction>
+		<Abbreviation>MACDV</Abbreviation>
+		<ShortDescription>MACD-V, Volatility Normalised Momentum</ShortDescription>
+		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>High</Type>
+				<Name>High</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Low</Type>
+				<Name>Low</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Close</Type>
+				<Name>Close</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Fast Period</Name>
+				<ShortDescription>Period of the fast MA</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>4</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>12</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Slow Period</Name>
+				<ShortDescription>Period of the slow MA and of the ATR</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>4</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>26</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Signal Period</Name>
+				<ShortDescription>Smoothing for the signal line (period length)</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>9</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outMACDV</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outMACDVSignal</Name>
+				<Flags>
+					<Flag>Dashed Line</Flag>
+				</Flags>
+			</OutputArgument>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outMACDVHist</Name>
+				<Flags>
+					<Flag>Histogram</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- MAMA -->
 	<FinancialFunction>
 		<Abbreviation>MAMA</Abbreviation>

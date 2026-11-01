@@ -1,0 +1,40 @@
+name: MACDV
+group: Momentum Indicators
+hint: MACD-V, Volatility Normalised Momentum
+flags: [stream]
+inputs:
+  - name: inPriceHLC
+    type: price
+    price_components: [high, low, close]
+optional_inputs:
+  - name: optInFastPeriod
+    type: integer
+    display_name: Fast Period
+    hint: Period of the fast MA
+    range: [2, 100000]
+    default: 12
+    suggested: [4, 200, 1]
+  - name: optInSlowPeriod
+    type: integer
+    display_name: Slow Period
+    hint: Period of the slow MA and of the ATR
+    range: [2, 100000]
+    default: 26
+    suggested: [4, 200, 1]
+  - name: optInSignalPeriod
+    type: integer
+    display_name: Signal Period
+    hint: Smoothing for the signal line (period length)
+    range: [1, 100000]
+    default: 9
+    suggested: [1, 200, 1]
+outputs:
+  - name: outMACDV
+    type: real
+    flags: [line]
+  - name: outMACDVSignal
+    type: real
+    flags: [dash_line]
+  - name: outMACDVHist
+    type: real
+    flags: [histogram]

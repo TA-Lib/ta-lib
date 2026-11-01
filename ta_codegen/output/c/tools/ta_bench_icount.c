@@ -7829,6 +7829,67 @@ static void icount_MACDFIX(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_MACDV(int iters) {
+    const char *nm = "MACDV";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_MACDV_Stream *st = NULL;
+    TA_MACDV_Stream *stf = NULL;
+    double v0 = 0.0;
+    double v1 = 0.0;
+    double v2 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_MACDV(0, g_nPoints - 1, g_high, g_low, g_close, 12, 26, 9, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1, g_outBuf2);
+    ICOUNT_DUMP("MACDV/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+    acc += g_outBuf1[0];
+    acc += g_outBuf2[0];
+
+    ICOUNT_ZERO();
+    rc = TA_MACDV_OpenAndFill(&stf, g_high, g_low, g_close, g_nPoints, 12, 26, 9, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1, g_outBuf2);
+    ICOUNT_DUMP("MACDV/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    acc += g_outBuf1[0];
+    acc += g_outBuf2[0];
+    if( stf ) TA_MACDV_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_MACDV_Open(&st, g_high, g_low, g_close, g_nPoints, 12, 26, 9, &v0, &v1, &v2);
+    ICOUNT_DUMP("MACDV/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_MACDV_Update(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], &v0, &v1, &v2);
+            acc += v0;
+            acc += v1;
+            acc += v2;
+        }
+        ICOUNT_DUMP("MACDV/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_MACDV_Peek(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], &v0, &v1, &v2);
+            acc += v0;
+            acc += v1;
+            acc += v2;
+        }
+        ICOUNT_DUMP("MACDV/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_MACDV_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_MAMA(int iters) {
     const char *nm = "MAMA";
     int outBegIdx = 0, outNBElement = 0;
@@ -12633,6 +12694,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "MACD") ) { icount_MACD(iters); fflush(stdout); }
     if( func_matches(filter, "MACDEXT") ) { icount_MACDEXT(iters); fflush(stdout); }
     if( func_matches(filter, "MACDFIX") ) { icount_MACDFIX(iters); fflush(stdout); }
+    if( func_matches(filter, "MACDV") ) { icount_MACDV(iters); fflush(stdout); }
     if( func_matches(filter, "MAMA") ) { icount_MAMA(iters); fflush(stdout); }
     if( func_matches(filter, "MARKETFI") ) { icount_MARKETFI(iters); fflush(stdout); }
     if( func_matches(filter, "MASSI") ) { icount_MASSI(iters); fflush(stdout); }

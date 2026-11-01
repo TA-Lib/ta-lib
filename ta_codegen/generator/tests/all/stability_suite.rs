@@ -47,8 +47,8 @@ fn load() -> Vec<FuncDef> {
 /// function each one inherits from. Measured: every one of these moves at default params
 /// except CRSI, whose default 101-bar rank lookback outlasts both RSI legs at an unstable
 /// period of 10; it moves at (14,14,20), 21 -> 25.
-/// KC and DOSC are the two with TWO sources -- KC takes EMA for its centre line and ATR for
-/// its band, DOSC takes RSI for its first stage and EMA for the two smoothings stacked on it.
+/// KC, MACDV and DOSC have TWO sources -- KC and MACDV take EMA and ATR,
+/// DOSC takes RSI for its first stage and EMA for the two smoothings stacked on it.
 /// KC shares the ATR one with SUPERTREND -- which inherits it through `atr_lookback()` alone,
 /// with no call to `atr()` in the body at all.
 /// STC is the one row that also declares an id of its own.
@@ -67,6 +67,7 @@ const INHERITED: &[(&str, &str)] = &[
     ("KVO", "EMA"),
     ("MACD", "EMA"),
     ("MACDFIX", "EMA"),
+    ("MACDV", "ATR"),
     ("MASSI", "EMA"),
     ("PSO", "EMA"),
     ("RVIR", "RVI"),
@@ -135,7 +136,7 @@ fn classification_matches_the_measured_library() {
     got.sort_unstable();
     assert_eq!(got, MATYPE_DEPENDENT, "set of MA-type-dependent functions changed");
 
-    // KC and DOSC each inherit from TWO different ids, and both matter: ta_regtest's
+    // KC, MACDV and DOSC each inherit from TWO different ids, and both matter: ta_regtest's
     // UNSTABLE_MAP sweeps the set it is given and leaves the rest at zero, so a leg whose
     // id is missing there never warms while the convergence envelope tightens around it.
     // The INHERITED row above can name only one source, so assert each pair here.
@@ -152,6 +153,14 @@ fn classification_matches_the_measured_library() {
         assert!(
             kc.iter().any(|g| g == "EMA") && kc.iter().any(|g| g == "ATR"),
             "KC must inherit from both EMA and ATR, got {kc:?}"
+        );
+    }
+
+    {
+        let macdv = &st["MACDV"].inherited_from;
+        assert!(
+            macdv.iter().any(|g| g == "EMA") && macdv.iter().any(|g| g == "ATR"),
+            "MACDV must inherit from both EMA and ATR, got {macdv:?}"
         );
     }
 

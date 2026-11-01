@@ -188,6 +188,7 @@ extern const TA_FuncDef TA_DEF_MA;
 extern const TA_FuncDef TA_DEF_MACD;
 extern const TA_FuncDef TA_DEF_MACDEXT;
 extern const TA_FuncDef TA_DEF_MACDFIX;
+extern const TA_FuncDef TA_DEF_MACDV;
 extern const TA_FuncDef TA_DEF_MAMA;
 extern const TA_FuncDef TA_DEF_MARKETFI;
 extern const TA_FuncDef TA_DEF_MASSI;
@@ -403,6 +404,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_MACD,
 &TA_DEF_MACDEXT,
 &TA_DEF_MACDFIX,
+&TA_DEF_MACDV,
 &TA_DEF_MFI,
 &TA_DEF_MINUS_DI,
 &TA_DEF_MINUS_DM,

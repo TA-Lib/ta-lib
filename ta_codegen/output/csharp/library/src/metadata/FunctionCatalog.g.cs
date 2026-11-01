@@ -263,6 +263,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeMacd(),
             MakeMacdext(),
             MakeMacdfix(),
+            MakeMacdv(),
             MakeMama(),
             MakeMarketfi(),
             MakeMassi(),
@@ -3812,6 +3813,34 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Macdfix(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
+
+    private static FuncInfo MakeMacdv() => new(
+        name: "MACDV",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "MACD-V, Volatility Normalised Momentum",
+        flags: FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInFastPeriod", "Fast Period", "Period of the fast MA", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 12, 4, 200, 1)),
+            new OptInputInfo("optInSlowPeriod", "Slow Period", "Period of the slow MA and of the ATR", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 26, 4, 200, 1)),
+            new OptInputInfo("optInSignalPeriod", "Signal Period", "Smoothing for the signal line (period length)", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 9, 1, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outMACDV", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outMACDVSignal", OutputFlags.DashLine),
+            new OutputInfo(OutputKind.Real, "outMACDVHist", OutputFlags.Histogram),
+        ],
+        lookback: static (core, c) => core.MacdvLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
+        displayShift: static (core, c, outputIdx) => core.MacdvDisplayShift(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Macdv(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
 
     private static FuncInfo MakeMama() => new(
         name: "MAMA",

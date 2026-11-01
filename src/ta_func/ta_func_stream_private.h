@@ -163,6 +163,7 @@ struct TA_MA_Stream;
 struct TA_MACD_Stream;
 struct TA_MACDEXT_Stream;
 struct TA_MACDFIX_Stream;
+struct TA_MACDV_Stream;
 struct TA_MAMA_Stream;
 struct TA_MARKETFI_Stream;
 struct TA_MASSI_Stream;
@@ -401,6 +402,7 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
 TA_RetCode TA_MACD_OpenInternal( struct TA_MACD_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double *outMACD, double *outMACDSignal, double *outMACDHist );
 TA_RetCode TA_MACDEXT_OpenInternal( struct TA_MACDEXT_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, double *outMACD, double *outMACDSignal, double *outMACDHist );
 TA_RetCode TA_MACDFIX_OpenInternal( struct TA_MACDFIX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInSignalPeriod, double *outMACD, double *outMACDSignal, double *outMACDHist );
+TA_RetCode TA_MACDV_OpenInternal( struct TA_MACDV_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double *outMACDV, double *outMACDVSignal, double *outMACDVHist );
 TA_RetCode TA_MAMA_OpenInternal( struct TA_MAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, double optInFastLimit, double optInSlowLimit, double *outMAMA, double *outFAMA );
 TA_RetCode TA_MARKETFI_OpenInternal( struct TA_MARKETFI_Stream **stream, const double inHigh[], const double inLow[], const double inVolume[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_MASSI_OpenInternal( struct TA_MASSI_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, double *outReal );
@@ -641,6 +643,7 @@ TA_RetCode TA_MA_OpenAndFillInternal( struct TA_MA_Stream **stream, const double
 TA_RetCode TA_MACD_OpenAndFillInternal( struct TA_MACD_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] );
 TA_RetCode TA_MACDEXT_OpenAndFillInternal( struct TA_MACDEXT_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] );
 TA_RetCode TA_MACDFIX_OpenAndFillInternal( struct TA_MACDFIX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] );
+TA_RetCode TA_MACDV_OpenAndFillInternal( struct TA_MACDV_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACDV[], double outMACDVSignal[], double outMACDVHist[] );
 TA_RetCode TA_MAMA_OpenAndFillInternal( struct TA_MAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, double optInFastLimit, double optInSlowLimit, int *outBegIdx, int *outNBElement, double outMAMA[], double outFAMA[] );
 TA_RetCode TA_MARKETFI_OpenAndFillInternal( struct TA_MARKETFI_Stream **stream, const double inHigh[], const double inLow[], const double inVolume[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_MASSI_OpenAndFillInternal( struct TA_MASSI_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int *outBegIdx, int *outNBElement, double outReal[] );

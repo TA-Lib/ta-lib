@@ -6418,6 +6418,59 @@ static const TA_VOptSpec TA_VOpt_MACDFIX[] = {
    { "optInSignalPeriod", TA_VOPT_INT, 1.0, 100000.0, 9.0 },
 };
 
+static TA_RetCode TA_MACDV_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_MACDV(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInFastPeriod */,
+               (int)optIn[1] /* optInSlowPeriod */,
+               (int)optIn[2] /* optInSignalPeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outMACDV */,
+               outReal[1] /* outMACDVSignal */,
+               outReal[2] /* outMACDVHist */
+               );
+}
+static TA_RetCode TA_MACDV_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_MACDV(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInFastPeriod */,
+               (int)optIn[1] /* optInSlowPeriod */,
+               (int)optIn[2] /* optInSignalPeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outMACDV */,
+               outReal[1] /* outMACDVSignal */,
+               outReal[2] /* outMACDVHist */
+               );
+}
+
+static const TA_VInputKind TA_VIn_MACDV[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_MACDV[] = { 0, 0, 0 };
+static const TA_VOptSpec TA_VOpt_MACDV[] = {
+   { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 12.0 },
+   { "optInSlowPeriod", TA_VOPT_INT, 2.0, 100000.0, 26.0 },
+   { "optInSignalPeriod", TA_VOPT_INT, 1.0, 100000.0, 9.0 },
+};
+
 static TA_RetCode TA_MAMA_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10488,6 +10541,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_MACDEXT, 6, TA_VOpt_MACDEXT, 3, TA_VOutIsInt_MACDEXT, 0 },
    { "MACDFIX", TA_MACDFIX_VFrameD, TA_MACDFIX_VFrameS,
      1, TA_VIn_MACDFIX, 1, TA_VOpt_MACDFIX, 3, TA_VOutIsInt_MACDFIX, 0 },
+   { "MACDV", TA_MACDV_VFrameD, TA_MACDV_VFrameS,
+     3, TA_VIn_MACDV, 3, TA_VOpt_MACDV, 3, TA_VOutIsInt_MACDV, 0 },
    { "MAMA", TA_MAMA_VFrameD, TA_MAMA_VFrameS,
      1, TA_VIn_MAMA, 2, TA_VOpt_MAMA, 2, TA_VOutIsInt_MAMA, 0 },
    { "MARKETFI", TA_MARKETFI_VFrameD, TA_MARKETFI_VFrameS,
@@ -10670,6 +10725,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 238
+#define TA_VARIANT_TABLE_SIZE 239
 
 #endif /* TA_VARIANT_FRAME_H */

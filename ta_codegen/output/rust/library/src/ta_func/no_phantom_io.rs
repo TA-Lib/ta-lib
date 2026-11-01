@@ -13514,6 +13514,109 @@ fn legs_MACDFIX(r: &mut Report) {
     r.legs_done("MACDFIX", 1);
 }
 
+const V_MACDV: &[(&str, i32, i32, i32)] = &[
+    ("defaults", i32::MIN, i32::MIN, i32::MIN),
+    ("minimums", 2i32, 2i32, 1i32),
+];
+
+fn sub_MACDV(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInFastPeriod, optInSlowPeriod, optInSignalPeriod) in V_MACDV {
+        let Ok(lb) = core.macdv_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod) else { continue; };
+        r.control("MACDV", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outMACDV: Vec<f64> = Vec::with_capacity(1);
+            let mut outMACDVSignal: Vec<f64> = Vec::with_capacity(1);
+            let mut outMACDVHist: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.macdv_impl(0, lb, &inHigh, &inLow, &inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outMACDV, &mut outMACDVSignal, &mut outMACDVHist);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("MACDV", label); continue; }
+        r.quiet("MACDV", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outMACDV: Vec<f64> = Vec::with_capacity(1);
+            let mut outMACDVSignal: Vec<f64> = Vec::with_capacity(1);
+            let mut outMACDVHist: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.macdv_impl(0, lb - 1, &inHigh, &inLow, &inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outMACDV, &mut outMACDVSignal, &mut outMACDVHist);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_MACDV(r: &mut Report) {
+    let core = Core::new();
+    let optInFastPeriod = i32::MIN;
+    let optInSlowPeriod = i32::MIN;
+    let optInSignalPeriod = i32::MIN;
+    let Ok(lb) = core.macdv_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod) else { r.no_legs("MACDV"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outMACDV: Vec<f64> = vec![Default::default(); 5];
+        let mut outMACDVSignal: Vec<f64> = vec![Default::default(); 5];
+        let mut outMACDVHist: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("MACDV", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.macdv_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outMACDV, &mut outMACDVSignal, &mut outMACDVHist);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outMACDV: Vec<f64> = vec![Default::default(); 5];
+        let mut outMACDVSignal: Vec<f64> = vec![Default::default(); 5];
+        let mut outMACDVHist: Vec<f64> = vec![Default::default(); 5];
+        r.leg("MACDV", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.macdv_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outMACDV, &mut outMACDVSignal, &mut outMACDVHist);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outMACDV: Vec<f64> = vec![Default::default(); 5];
+        let mut outMACDVSignal: Vec<f64> = vec![Default::default(); 5];
+        let mut outMACDVHist: Vec<f64> = vec![Default::default(); 5];
+        r.leg("MACDV", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.macdv_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outMACDV, &mut outMACDVSignal, &mut outMACDVHist);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outMACDV: Vec<f64> = vec![Default::default(); 5];
+        let mut outMACDVSignal: Vec<f64> = vec![Default::default(); 5];
+        let mut outMACDVHist: Vec<f64> = vec![Default::default(); 5];
+        r.leg("MACDV", "inClose", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.macdv_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut _b, &mut _n, &mut outMACDV, &mut outMACDVSignal, &mut outMACDVHist);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("MACDV", 3);
+}
+
 const V_MAMA: &[(&str, f64, f64)] = &[
     ("defaults", Core::REAL_DEFAULT, Core::REAL_DEFAULT),
     ("minimums", 0.01f64, 0.01f64),
@@ -20189,6 +20292,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("MACD", sub_MACD, legs_MACD),
     ("MACDEXT", sub_MACDEXT, legs_MACDEXT),
     ("MACDFIX", sub_MACDFIX, legs_MACDFIX),
+    ("MACDV", sub_MACDV, legs_MACDV),
     ("MAMA", sub_MAMA, legs_MAMA),
     ("MARKETFI", sub_MARKETFI, legs_MARKETFI),
     ("MASSI", sub_MASSI, legs_MASSI),
@@ -20317,7 +20421,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 238, "probe count");
+    assert_eq!(PROBES.len(), 239, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

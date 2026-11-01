@@ -76,6 +76,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_rma.c \
 	ta_test_func/test_cksp.c \
 	ta_test_func/test_ce.c \
+	ta_test_func/test_macdv.c \
 	ta_test_func/test_supertrend.c \
 	ta_test_func/test_mfi.c \
 	ta_test_func/test_cmou.c \

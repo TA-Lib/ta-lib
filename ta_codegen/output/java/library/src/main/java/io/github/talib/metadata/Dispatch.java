@@ -502,6 +502,9 @@ final class Dispatch {
          case "MACDFIX":
             return core.macdfix(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0), h.realOutput(1), h.realOutput(2));
+         case "MACDV":
+            return core.macdv(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.realOutput(0), h.realOutput(1), h.realOutput(2));
          case "MAMA":
             return core.mama(
                startIdx, endIdx, h.realInput(0), h.realOpt(0), h.realOpt(1), h.realOutput(0), h.realOutput(1));
@@ -1079,6 +1082,8 @@ final class Dispatch {
             return core.macdextLookback(h.intOpt(0), h.maTypeOpt(1), h.intOpt(2), h.maTypeOpt(3), h.intOpt(4), h.maTypeOpt(5));
          case "MACDFIX":
             return core.macdfixLookback(h.intOpt(0));
+         case "MACDV":
+            return core.macdvLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2));
          case "MAMA":
             return core.mamaLookback(h.realOpt(0), h.realOpt(1));
          case "MARKETFI":
@@ -1563,6 +1568,8 @@ final class Dispatch {
             return core.macdextDisplayShift(h.intOpt(0), h.maTypeOpt(1), h.intOpt(2), h.maTypeOpt(3), h.intOpt(4), h.maTypeOpt(5), outputIdx);
          case "MACDFIX":
             return core.macdfixDisplayShift(h.intOpt(0), outputIdx);
+         case "MACDV":
+            return core.macdvDisplayShift(h.intOpt(0), h.intOpt(1), h.intOpt(2), outputIdx);
          case "MAMA":
             return core.mamaDisplayShift(h.realOpt(0), h.realOpt(1), outputIdx);
          case "MARKETFI":

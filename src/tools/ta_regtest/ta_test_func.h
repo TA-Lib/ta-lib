@@ -60,6 +60,7 @@ ErrorNumber test_func_donchian( TA_History *history );
 ErrorNumber test_func_rma     ( TA_History *history );
 ErrorNumber test_func_cksp    ( TA_History *history );
 ErrorNumber test_func_ce      ( TA_History *history );
+ErrorNumber test_func_macdv   ( TA_History *history );
 ErrorNumber test_func_supertrend( TA_History *history );
 ErrorNumber test_func_mfi     ( TA_History *history );
 ErrorNumber test_func_vwap    ( TA_History *history );

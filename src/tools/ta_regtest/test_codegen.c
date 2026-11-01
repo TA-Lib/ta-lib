@@ -734,6 +734,8 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"MACDEXT",      TA_FUNC_UNST_EMA},
     {"KSTEXT",       TA_FUNC_UNST_EMA},
     {"MACDFIX",      TA_FUNC_UNST_EMA},
+    {"MACDV",        TA_FUNC_UNST_EMA},
+    {"MACDV",        TA_FUNC_UNST_ATR},
     /* APO/PPO default to EMA (#120) -> EMA-converging, like MACDEXT. PVO is
      * PPO over volume and defaults to EMA the same way, so it belongs here for
      * the same reason. Without it PVO classifies EPSILON -- measured, it moves

@@ -263,6 +263,72 @@ DEF_FUNCTION( MACDFIX,
              );
 /* MACDFIX END */
 
+/* MACDV BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_MACDV_SlowPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInSlowPeriod",
+   0,
+
+   "Slow Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   26,
+   "Period of the slow MA and of the ATR",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_MACDV_SignalPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInSignalPeriod",
+   0,
+
+   "Signal Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   9,
+   "Smoothing for the signal line (period length)",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDV_outMACDV =
+                               { TA_Output_Real, "outMACDV", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDV_outMACDVSignal =
+                               { TA_Output_Real, "outMACDVSignal", TA_OUT_DASH_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_MACDV_outMACDVHist =
+                               { TA_Output_Real, "outMACDVHist", TA_OUT_HISTO };
+
+static const TA_InputParameterInfo    *TA_MACDV_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_MACDV_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_MACDV_outMACDV,
+  &TA_DEF_UI_Output_Real_MACDV_outMACDVSignal,
+  &TA_DEF_UI_Output_Real_MACDV_outMACDVHist,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_MACDV_OptInputs[] =
+{ &TA_DEF_UI_Fast_Period,
+  &TA_DEF_UI_D_MACDV_SlowPeriod,
+  &TA_DEF_UI_D_MACDV_SignalPeriod,
+  NULL
+};
+
+DEF_FUNCTION( MACDV,
+              TA_GroupId_MomentumIndicators,
+              "MACD-V, Volatility Normalised Momentum",
+              TA_FUNC_FLG_STREAM
+             );
+/* MACDV END */
+
 /* MAMA BEGIN */
 static const TA_RealRange TA_DEF_MAMA_FastLimit =
 {
@@ -980,6 +1046,7 @@ const TA_FuncDef *TA_DEF_TableM[] =
    ADD_TO_TABLE(MACD),
    ADD_TO_TABLE(MACDEXT),
    ADD_TO_TABLE(MACDFIX),
+   ADD_TO_TABLE(MACDV),
    ADD_TO_TABLE(MAMA),
    ADD_TO_TABLE(MARKETFI),
    ADD_TO_TABLE(MASSI),

@@ -85,6 +85,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [MACD](/functions/macd.md) — Moving Average Convergence/Divergence
 - [MACDEXT](/functions/macdext.md) — MACD with controllable MA type
 - [MACDFIX](/functions/macdfix.md) — Moving Average Convergence/Divergence Fix 12/26
+- [MACDV](/functions/macdv.md) — MACD-V, Volatility Normalised Momentum
 - [MFI](/functions/mfi.md) — Money Flow Index
 - [MINUS_DI](/functions/minus_di.md) — Minus Directional Indicator
 - [MINUS_DM](/functions/minus_dm.md) — Minus Directional Movement

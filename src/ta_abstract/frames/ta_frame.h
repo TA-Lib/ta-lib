@@ -1675,6 +1675,17 @@ unsigned int TA_MACDFIX_FramePPLB( const TA_ParamHolderPriv *params )
 int TA_MACDFIX_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
+TA_RetCode TA_MACDV_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_MACDV_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_MACDV_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
 TA_RetCode TA_MAMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
