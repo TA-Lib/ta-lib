@@ -9,7 +9,7 @@ package io.github.talib;
  */
 public final class BuildStamp {
     /** Digest of the generated {@code Core} method text this build carries. */
-    public static final String GENCODE_DIGEST = "2fed8956ceb47a55";
+    public static final String GENCODE_DIGEST = "ed81010c44e13065";
 
     private BuildStamp() {
     }

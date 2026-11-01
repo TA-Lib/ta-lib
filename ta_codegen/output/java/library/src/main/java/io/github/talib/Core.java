@@ -144854,6 +144854,7 @@ public final class Core {
       double val2 = 0;
       double val3 = 0;
       double greatest = 0;
+      double spread = 0;
       double tempCY = 0;
       double tempLT = 0;
       double tempHT = 0;
@@ -145036,13 +145037,17 @@ public final class Core {
          prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
          today += 1;
       }
-      /* An Average True Range of exactly zero is a window with no price
-       * movement, where the line answers its neutral point, 0.0, whatever the
-       * spread's rounding residue is (#570).
+      /* Without price movement the line answers its neutral point, 0.0 (#570).
+       * Both tests are relative to the price: a Wilder average entered before a
+       * flat run only decays toward zero, sticking at a subnormal, while the
+       * spread keeps a residue of a few ulps of the price, so an exact test lets
+       * their quotient grow without bound and overflow.
        */
+      spread = prevFast - prevSlow;
+      tempReal = Math.abs(inClose[lineIdx]);
       lineValue = 0.0;
-      if( prevATR != 0.0 ) {
-         lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+      if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         lineValue = spread / prevATR * 100.0;
       }
       /* Seed the signal EMA with a simple average of the first 'signal period'
        * line values, accumulated as they are produced.
@@ -145068,9 +145073,11 @@ public final class Core {
          prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         spread = prevFast - prevSlow;
+         tempReal = Math.abs(tempReal);
          lineValue = 0.0;
-         if( prevATR != 0.0 ) {
-            lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+            lineValue = spread / prevATR * 100.0;
          }
          prevSignal += lineValue;
          today += 1;
@@ -145097,9 +145104,11 @@ public final class Core {
          prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         spread = prevFast - prevSlow;
+         tempReal = Math.abs(tempReal);
          lineValue = 0.0;
-         if( prevATR != 0.0 ) {
-            lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+            lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
             prevSignal = lineValue;
@@ -145131,9 +145140,11 @@ public final class Core {
          prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         spread = prevFast - prevSlow;
+         tempReal = Math.abs(tempReal);
          lineValue = 0.0;
-         if( prevATR != 0.0 ) {
-            lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+            lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
             prevSignal = lineValue;
@@ -145183,6 +145194,7 @@ public final class Core {
       double val2 = 0;
       double val3 = 0;
       double greatest = 0;
+      double spread = 0;
       double tempCY = 0;
       double tempLT = 0;
       double tempHT = 0;
@@ -145314,9 +145326,11 @@ public final class Core {
          prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
          today += 1;
       }
+      spread = prevFast - prevSlow;
+      tempReal = Math.abs((double)inClose[lineIdx]);
       lineValue = 0.0;
-      if( prevATR != 0.0 ) {
-         lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+      if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         lineValue = spread / prevATR * 100.0;
       }
       prevSignal = 0.0;
       prevSignal += lineValue;
@@ -145338,9 +145352,11 @@ public final class Core {
          prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         spread = prevFast - prevSlow;
+         tempReal = Math.abs(tempReal);
          lineValue = 0.0;
-         if( prevATR != 0.0 ) {
-            lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+            lineValue = spread / prevATR * 100.0;
          }
          prevSignal += lineValue;
          today += 1;
@@ -145363,9 +145379,11 @@ public final class Core {
          prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         spread = prevFast - prevSlow;
+         tempReal = Math.abs(tempReal);
          lineValue = 0.0;
-         if( prevATR != 0.0 ) {
-            lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+            lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
             prevSignal = lineValue;
@@ -145395,9 +145413,11 @@ public final class Core {
          prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         spread = prevFast - prevSlow;
+         tempReal = Math.abs(tempReal);
          lineValue = 0.0;
-         if( prevATR != 0.0 ) {
-            lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+            lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
             prevSignal = lineValue;
@@ -145428,7 +145448,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/macdv">ta-lib.org/functions/macdv</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>The Average True Range is Wilder's, over the slow period: the publication's {@code ATR(26)} beside the 26-bar slow EMA, so one parameter sets both. An ATR of exactly zero, a window with no price movement, gives a MACD-V of 0, the line's neutral point.</li>
+    * <li>The Average True Range is Wilder's, over the slow period: the publication's {@code ATR(26)} beside the 26-bar slow EMA, so one parameter sets both. Without price movement the line is 0, its neutral point.</li>
     * <li>The two price EMAs and the Average True Range each warm up as when calling {@code EMA} and {@code ATR} directly, so a caller who wants the line converged sets {@code TA_FUNC_UNST_EMA} and {@code TA_FUNC_UNST_ATR}, as for those functions.</li>
     * <li>If the slow period is set smaller than the fast period, the two are swapped so the slow EMA is always the longer one, as {@code MACD} does; the ATR period follows the slow period after the swap.</li>
     * <li>A signal period of 1 disables signal-line smoothing: the signal equals the MACD-V line and the histogram is zero.</li>
@@ -145525,7 +145545,7 @@ public final class Core {
     * href="https://ta-lib.org/functions/macdv">ta-lib.org/functions/macdv</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>The Average True Range is Wilder's, over the slow period: the publication's {@code ATR(26)} beside the 26-bar slow EMA, so one parameter sets both. An ATR of exactly zero, a window with no price movement, gives a MACD-V of 0, the line's neutral point.</li>
+    * <li>The Average True Range is Wilder's, over the slow period: the publication's {@code ATR(26)} beside the 26-bar slow EMA, so one parameter sets both. Without price movement the line is 0, its neutral point.</li>
     * <li>The two price EMAs and the Average True Range each warm up as when calling {@code EMA} and {@code ATR} directly, so a caller who wants the line converged sets {@code TA_FUNC_UNST_EMA} and {@code TA_FUNC_UNST_ATR}, as for those functions.</li>
     * <li>If the slow period is set smaller than the fast period, the two are swapped so the slow EMA is always the longer one, as {@code MACD} does; the ATR period follows the slow period after the swap.</li>
     * <li>A signal period of 1 disables signal-line smoothing: the signal equals the MACD-V line and the histogram is zero.</li>
@@ -145761,6 +145781,7 @@ public final class Core {
          double val2 = 0.0;
          double val3 = 0.0;
          double greatest = 0.0;
+         double spread = 0.0;
          double tempCY = 0.0;
          double tempLT = 0.0;
          double tempHT = 0.0;
@@ -145788,9 +145809,11 @@ public final class Core {
          prevATR = Math.fma(sp.wBeta, prevATR, sp.wAlpha * greatest);
          prevFast = Math.fma(sp.fastBeta, prevFast, sp.fastK * tempReal);
          prevSlow = Math.fma(sp.slowBeta, prevSlow, sp.slowK * tempReal);
+         spread = prevFast - prevSlow;
+         tempReal = Math.abs(tempReal);
          lineValue = 0.0;
-         if( prevATR != 0.0 ) {
-            lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+            lineValue = spread / prevATR * 100.0;
          }
          if( sp.optInSignalPeriod == 1 ) {
             prevSignal = lineValue;
@@ -145865,6 +145888,7 @@ public final class Core {
       double val2 = 0.0;
       double val3 = 0.0;
       double greatest = 0.0;
+      double spread = 0.0;
       double tempCY = 0.0;
       double tempLT = 0.0;
       double tempHT = 0.0;
@@ -145885,9 +145909,11 @@ public final class Core {
       sp.prevATR = Math.fma(sp.wBeta, sp.prevATR, sp.wAlpha * greatest);
       sp.prevFast = Math.fma(sp.fastBeta, sp.prevFast, sp.fastK * tempReal);
       sp.prevSlow = Math.fma(sp.slowBeta, sp.prevSlow, sp.slowK * tempReal);
+      spread = sp.prevFast - sp.prevSlow;
+      tempReal = Math.abs(tempReal);
       lineValue = 0.0;
-      if( sp.prevATR != 0.0 ) {
-         lineValue = (sp.prevFast - sp.prevSlow) / sp.prevATR * 100.0;
+      if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(sp.prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         lineValue = spread / sp.prevATR * 100.0;
       }
       if( sp.optInSignalPeriod == 1 ) {
          sp.prevSignal = lineValue;
@@ -145919,6 +145945,7 @@ public final class Core {
       double val2 = 0;
       double val3 = 0;
       double greatest = 0;
+      double spread = 0;
       double tempCY = 0;
       double tempLT = 0;
       double tempHT = 0;
@@ -146108,13 +146135,17 @@ public final class Core {
          prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
          today += 1;
       }
-      /* An Average True Range of exactly zero is a window with no price
-       * movement, where the line answers its neutral point, 0.0, whatever the
-       * spread's rounding residue is (#570).
+      /* Without price movement the line answers its neutral point, 0.0 (#570).
+       * Both tests are relative to the price: a Wilder average entered before a
+       * flat run only decays toward zero, sticking at a subnormal, while the
+       * spread keeps a residue of a few ulps of the price, so an exact test lets
+       * their quotient grow without bound and overflow.
        */
+      spread = prevFast - prevSlow;
+      tempReal = Math.abs(inClose[lineIdx]);
       lineValue = 0.0;
-      if( prevATR != 0.0 ) {
-         lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+      if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         lineValue = spread / prevATR * 100.0;
       }
       /* Seed the signal EMA with a simple average of the first 'signal period'
        * line values, accumulated as they are produced.
@@ -146140,9 +146171,11 @@ public final class Core {
          prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         spread = prevFast - prevSlow;
+         tempReal = Math.abs(tempReal);
          lineValue = 0.0;
-         if( prevATR != 0.0 ) {
-            lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+            lineValue = spread / prevATR * 100.0;
          }
          prevSignal += lineValue;
          today += 1;
@@ -146169,9 +146202,11 @@ public final class Core {
          prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         spread = prevFast - prevSlow;
+         tempReal = Math.abs(tempReal);
          lineValue = 0.0;
-         if( prevATR != 0.0 ) {
-            lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+            lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
             prevSignal = lineValue;
@@ -146203,9 +146238,11 @@ public final class Core {
          prevATR = Math.fma(wBeta, prevATR, wAlpha * greatest);
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
+         spread = prevFast - prevSlow;
+         tempReal = Math.abs(tempReal);
          lineValue = 0.0;
-         if( prevATR != 0.0 ) {
-            lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+            lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
             prevSignal = lineValue;

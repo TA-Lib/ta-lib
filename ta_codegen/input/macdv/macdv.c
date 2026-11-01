@@ -57,7 +57,7 @@ TA_RetCode macdv(int startIdx, int endIdx,
    double slowK, fastK, signalK;
    double slowBeta, fastBeta, signalBeta;
    double wAlpha, wBeta, periodTotal;
-   double val2, val3, greatest;
+   double val2, val3, greatest, spread;
    double tempCY, tempLT, tempHT;
    int i, today, outIdx, tempInteger;
    int lookbackTotal, lookbackSignal, lookbackSlow, lookbackFast, lookbackATR;
@@ -218,13 +218,17 @@ TA_RetCode macdv(int startIdx, int endIdx,
       today++;
    }
 
-   /* An Average True Range of exactly zero is a window with no price
-    * movement, where the line answers its neutral point, 0.0, whatever the
-    * spread's rounding residue is (#570).
+   /* Without price movement the line answers its neutral point, 0.0 (#570).
+    * Both tests are relative to the price: a Wilder average entered before a
+    * flat run only decays toward zero, sticking at a subnormal, while the
+    * spread keeps a residue of a few ulps of the price, so an exact test lets
+    * their quotient grow without bound and overflow.
     */
+   spread = prevFast - prevSlow;
+   tempReal = fabs( inClose[lineIdx] );
    lineValue = 0.0;
-   if( prevATR != 0.0 )
-      lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+   if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
+      lineValue = spread / prevATR * 100.0;
 
    /* Seed the signal EMA with a simple average of the first 'signal period'
     * line values, accumulated as they are produced.
@@ -251,9 +255,11 @@ TA_RetCode macdv(int startIdx, int endIdx,
       prevATR = wAlpha * greatest + wBeta * prevATR;
       prevFast = fastK * tempReal + fastBeta * prevFast;
       prevSlow = slowK * tempReal + slowBeta * prevSlow;
+      spread = prevFast - prevSlow;
+      tempReal = fabs( tempReal );
       lineValue = 0.0;
-      if( prevATR != 0.0 )
-         lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+      if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
+         lineValue = spread / prevATR * 100.0;
       prevSignal += lineValue;
       today++;
    }
@@ -281,9 +287,11 @@ TA_RetCode macdv(int startIdx, int endIdx,
       prevATR = wAlpha * greatest + wBeta * prevATR;
       prevFast = fastK * tempReal + fastBeta * prevFast;
       prevSlow = slowK * tempReal + slowBeta * prevSlow;
+      spread = prevFast - prevSlow;
+      tempReal = fabs( tempReal );
       lineValue = 0.0;
-      if( prevATR != 0.0 )
-         lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+      if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
+         lineValue = spread / prevATR * 100.0;
       if( optInSignalPeriod == 1 )
          prevSignal = lineValue;
       else
@@ -315,9 +323,11 @@ TA_RetCode macdv(int startIdx, int endIdx,
       prevATR = wAlpha * greatest + wBeta * prevATR;
       prevFast = fastK * tempReal + fastBeta * prevFast;
       prevSlow = slowK * tempReal + slowBeta * prevSlow;
+      spread = prevFast - prevSlow;
+      tempReal = fabs( tempReal );
       lineValue = 0.0;
-      if( prevATR != 0.0 )
-         lineValue = (prevFast - prevSlow) / prevATR * 100.0;
+      if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
+         lineValue = spread / prevATR * 100.0;
       if( optInSignalPeriod == 1 )
          prevSignal = lineValue;
       else

@@ -257,6 +257,7 @@ impl Core {
         let mut val2: f64 = 0.0_f64;
         let mut val3: f64 = 0.0_f64;
         let mut greatest: f64 = 0.0_f64;
+        let mut spread: f64 = 0.0_f64;
         let mut tempCY: f64 = 0.0_f64;
         let mut tempLT: f64 = 0.0_f64;
         let mut tempHT: f64 = 0.0_f64;
@@ -420,14 +421,16 @@ impl Core {
                 today += 1;
             }
         }
-        // An Average True Range of exactly zero is a window with no price
-        // movement, where the line answers its neutral point, 0.0, whatever the
-        // spread's rounding residue is (#570).
+        // Without price movement the line answers its neutral point, 0.0 (#570).
+        // Both tests are relative to the price: a Wilder average entered before a
+        // flat run only decays toward zero, sticking at a subnormal, while the
+        // spread keeps a residue of a few ulps of the price, so an exact test lets
+        // their quotient grow without bound and overflow.
+        spread = prevFast - prevSlow;
+        tempReal = (inClose[lineIdx]).abs();
         lineValue = 0.0;
-        if prevATR != 0.0 {
-            lineValue = (prevFast - prevSlow) / prevATR * 100.0;
-        } else {
-            cold_arm();
+        if !(((spread).abs() <= 1e-14 * (tempReal))) && !(((prevATR).abs() <= 1e-14 * (tempReal))) {
+            lineValue = spread / prevATR * 100.0;
         }
         // Seed the signal EMA with a simple average of the first 'signal period'
         // line values, accumulated as they are produced.
@@ -448,11 +451,11 @@ impl Core {
             prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
             prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            spread = prevFast - prevSlow;
+            tempReal = (tempReal).abs();
             lineValue = 0.0;
-            if prevATR != 0.0 {
-                lineValue = (prevFast - prevSlow) / prevATR * 100.0;
-            } else {
-                cold_arm();
+            if !(((spread).abs() <= 1e-14 * (tempReal))) && !(((prevATR).abs() <= 1e-14 * (tempReal))) {
+                lineValue = spread / prevATR * 100.0;
             }
             prevSignal += lineValue;
             today += 1;
@@ -474,11 +477,11 @@ impl Core {
             prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
             prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            spread = prevFast - prevSlow;
+            tempReal = (tempReal).abs();
             lineValue = 0.0;
-            if prevATR != 0.0 {
-                lineValue = (prevFast - prevSlow) / prevATR * 100.0;
-            } else {
-                cold_arm();
+            if !(((spread).abs() <= 1e-14 * (tempReal))) && !(((prevATR).abs() <= 1e-14 * (tempReal))) {
+                lineValue = spread / prevATR * 100.0;
             }
             if optInSignalPeriod == 1 {
                 prevSignal = lineValue;
@@ -506,11 +509,11 @@ impl Core {
             prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
             prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            spread = prevFast - prevSlow;
+            tempReal = (tempReal).abs();
             lineValue = 0.0;
-            if prevATR != 0.0 {
-                lineValue = (prevFast - prevSlow) / prevATR * 100.0;
-            } else {
-                cold_arm();
+            if !(((spread).abs() <= 1e-14 * (tempReal))) && !(((prevATR).abs() <= 1e-14 * (tempReal))) {
+                lineValue = spread / prevATR * 100.0;
             }
             if optInSignalPeriod == 1 {
                 prevSignal = lineValue;
@@ -733,6 +736,7 @@ impl Core {
         let mut val2: f64 = 0.0_f64;
         let mut val3: f64 = 0.0_f64;
         let mut greatest: f64 = 0.0_f64;
+        let mut spread: f64 = 0.0_f64;
         let mut tempCY: f64 = 0.0_f64;
         let mut tempLT: f64 = 0.0_f64;
         let mut tempHT: f64 = 0.0_f64;
@@ -749,11 +753,11 @@ impl Core {
         sp.prevATR = (sp.wBeta as f64).mul_add(sp.prevATR, sp.wAlpha * greatest);
         sp.prevFast = (sp.fastBeta as f64).mul_add(sp.prevFast, sp.fastK * tempReal);
         sp.prevSlow = (sp.slowBeta as f64).mul_add(sp.prevSlow, sp.slowK * tempReal);
+        spread = sp.prevFast - sp.prevSlow;
+        tempReal = (tempReal).abs();
         lineValue = 0.0;
-        if sp.prevATR != 0.0 {
-            lineValue = (sp.prevFast - sp.prevSlow) / sp.prevATR * 100.0;
-        } else {
-            cold_arm();
+        if !(((spread).abs() <= 1e-14 * (tempReal))) && !(((sp.prevATR).abs() <= 1e-14 * (tempReal))) {
+            lineValue = spread / sp.prevATR * 100.0;
         }
         if sp.optInSignalPeriod == 1 {
             sp.prevSignal = lineValue;
@@ -844,6 +848,7 @@ impl Core {
         let mut val2: f64 = 0.0_f64;
         let mut val3: f64 = 0.0_f64;
         let mut greatest: f64 = 0.0_f64;
+        let mut spread: f64 = 0.0_f64;
         let mut tempCY: f64 = 0.0_f64;
         let mut tempLT: f64 = 0.0_f64;
         let mut tempHT: f64 = 0.0_f64;
@@ -988,14 +993,16 @@ impl Core {
             prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             today += 1;
         }
-        // An Average True Range of exactly zero is a window with no price
-        // movement, where the line answers its neutral point, 0.0, whatever the
-        // spread's rounding residue is (#570).
+        // Without price movement the line answers its neutral point, 0.0 (#570).
+        // Both tests are relative to the price: a Wilder average entered before a
+        // flat run only decays toward zero, sticking at a subnormal, while the
+        // spread keeps a residue of a few ulps of the price, so an exact test lets
+        // their quotient grow without bound and overflow.
+        spread = prevFast - prevSlow;
+        tempReal = (inClose[lineIdx]).abs();
         lineValue = 0.0;
-        if prevATR != 0.0 {
-            lineValue = (prevFast - prevSlow) / prevATR * 100.0;
-        } else {
-            cold_arm();
+        if !(((spread).abs() <= 1e-14 * (tempReal))) && !(((prevATR).abs() <= 1e-14 * (tempReal))) {
+            lineValue = spread / prevATR * 100.0;
         }
         // Seed the signal EMA with a simple average of the first 'signal period'
         // line values, accumulated as they are produced.
@@ -1016,11 +1023,11 @@ impl Core {
             prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
             prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            spread = prevFast - prevSlow;
+            tempReal = (tempReal).abs();
             lineValue = 0.0;
-            if prevATR != 0.0 {
-                lineValue = (prevFast - prevSlow) / prevATR * 100.0;
-            } else {
-                cold_arm();
+            if !(((spread).abs() <= 1e-14 * (tempReal))) && !(((prevATR).abs() <= 1e-14 * (tempReal))) {
+                lineValue = spread / prevATR * 100.0;
             }
             prevSignal += lineValue;
             today += 1;
@@ -1042,11 +1049,11 @@ impl Core {
             prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
             prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            spread = prevFast - prevSlow;
+            tempReal = (tempReal).abs();
             lineValue = 0.0;
-            if prevATR != 0.0 {
-                lineValue = (prevFast - prevSlow) / prevATR * 100.0;
-            } else {
-                cold_arm();
+            if !(((spread).abs() <= 1e-14 * (tempReal))) && !(((prevATR).abs() <= 1e-14 * (tempReal))) {
+                lineValue = spread / prevATR * 100.0;
             }
             if optInSignalPeriod == 1 {
                 prevSignal = lineValue;
@@ -1074,11 +1081,11 @@ impl Core {
             prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             prevFast = (fastBeta as f64).mul_add(prevFast, fastK * tempReal);
             prevSlow = (slowBeta as f64).mul_add(prevSlow, slowK * tempReal);
+            spread = prevFast - prevSlow;
+            tempReal = (tempReal).abs();
             lineValue = 0.0;
-            if prevATR != 0.0 {
-                lineValue = (prevFast - prevSlow) / prevATR * 100.0;
-            } else {
-                cold_arm();
+            if !(((spread).abs() <= 1e-14 * (tempReal))) && !(((prevATR).abs() <= 1e-14 * (tempReal))) {
+                lineValue = spread / prevATR * 100.0;
             }
             if optInSignalPeriod == 1 {
                 prevSignal = lineValue;
@@ -1335,6 +1342,7 @@ impl MacdvStream {
             let mut val2: f64 = 0.0_f64;
             let mut val3: f64 = 0.0_f64;
             let mut greatest: f64 = 0.0_f64;
+            let mut spread: f64 = 0.0_f64;
             let mut tempCY: f64 = 0.0_f64;
             let mut tempLT: f64 = 0.0_f64;
             let mut tempHT: f64 = 0.0_f64;
@@ -1355,11 +1363,11 @@ impl MacdvStream {
             prevATR = (sp.wBeta as f64).mul_add(prevATR, sp.wAlpha * greatest);
             prevFast = (sp.fastBeta as f64).mul_add(prevFast, sp.fastK * tempReal);
             prevSlow = (sp.slowBeta as f64).mul_add(prevSlow, sp.slowK * tempReal);
+            spread = prevFast - prevSlow;
+            tempReal = (tempReal).abs();
             lineValue = 0.0;
-            if prevATR != 0.0 {
-                lineValue = (prevFast - prevSlow) / prevATR * 100.0;
-            } else {
-                cold_arm();
+            if !(((spread).abs() <= 1e-14 * (tempReal))) && !(((prevATR).abs() <= 1e-14 * (tempReal))) {
+                lineValue = spread / prevATR * 100.0;
             }
             if sp.optInSignalPeriod == 1 {
                 prevSignal = lineValue;

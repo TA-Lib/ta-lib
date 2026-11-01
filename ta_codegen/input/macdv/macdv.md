@@ -12,7 +12,7 @@ Hist = MACDV - Signal
 
 ## Notes
 
-- The Average True Range is Wilder's, over the slow period: the publication's `ATR(26)` beside the 26-bar slow EMA, so one parameter sets both. An ATR of exactly zero, a window with no price movement, gives a MACD-V of 0, the line's neutral point.
+- The Average True Range is Wilder's, over the slow period: the publication's `ATR(26)` beside the 26-bar slow EMA, so one parameter sets both. Without price movement the line is 0, its neutral point.
 - The two price EMAs and the Average True Range each warm up as when calling `EMA` and `ATR` directly, so a caller who wants the line converged sets `TA_FUNC_UNST_EMA` and `TA_FUNC_UNST_ATR`, as for those functions.
 - If the slow period is set smaller than the fast period, the two are swapped so the slow EMA is always the longer one, as `MACD` does; the ATR period follows the slow period after the swap.
 - A signal period of 1 disables signal-line smoothing: the signal equals the MACD-V line and the histogram is zero.

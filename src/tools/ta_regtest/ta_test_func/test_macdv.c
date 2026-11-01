@@ -25,6 +25,9 @@
  *     2. LOOKBACK tier under each unstable period, and the fast/slow swap.
  *     3. ATR == 0: a moving prefix then a flat run, swept over startIdx until
  *        the ATR window lies in the run. Both 0/0 and x/0 must be reached.
+ *        And a long flat run every leg was entered before, where the ATR
+ *        only decays toward zero: the line must settle on 0.0, never grow.
+ *        And the corpus scaled by powers of two: the outputs must not move.
  *     4. SIGNAL PERIOD 1: the signal is the line, the histogram zero.
  *     5. ALIASING of each output over each input.
  *     6. The generic start/end range sweep, both unstable ids.
@@ -67,6 +70,8 @@ static const MvUnst mvUnst[] = { { 0, 0 }, { 0, 3 }, { 5, 0 }, { 2, 9 } };
 static ErrorNumber test_macdv_composite( const TA_History *history );
 static ErrorNumber test_macdv_lookback ( const TA_History *history );
 static ErrorNumber test_macdv_flat     ( const TA_History *history );
+static ErrorNumber test_macdv_long_flat( const TA_History *history );
+static ErrorNumber test_macdv_scale    ( const TA_History *history );
 static ErrorNumber test_macdv_signal1  ( const TA_History *history );
 static ErrorNumber test_macdv_aliasing ( const TA_History *history );
 static ErrorNumber test_macdv_range    ( const TA_History *history );
@@ -82,6 +87,19 @@ static void mv_clear_unst( void )
 {
    TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
    TA_SetUnstablePeriod( TA_FUNC_UNST_ATR, 0 );
+}
+
+/* The line as a caller composing TA_EMA and TA_ATR computes it, with the
+ * neutral point MACDV answers where the spread or the ATR is zero at the
+ * price's rounding scale.
+ */
+static TA_Real mv_line( TA_Real spread, TA_Real atr, TA_Real close )
+{
+   TA_Real scale = fabs( close );
+
+   if( TA_IS_ZERO_SCALED(spread, scale) || TA_IS_ZERO_SCALED(atr, scale) )
+      return 0.0;
+   return spread / atr * 100.0;
 }
 
 static int mv_same( const TA_Real *a, const TA_Real *b, int n )
@@ -105,6 +123,14 @@ ErrorNumber test_func_macdv( TA_History *history )
       return retValue;
 
    retValue = test_macdv_flat( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_macdv_long_flat( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_macdv_scale( history );
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -154,7 +180,7 @@ static int mv_reference( const TA_Real *high, const TA_Real *low,
 
    nLine = n1;
    for( i = 0; i < nLine; i++ )
-      refLine[i] = atr[i] != 0.0 ? (emaF[i] - emaS[i]) / atr[i] * 100.0 : 0.0;
+      refLine[i] = mv_line( emaF[i] - emaS[i], atr[i], close[lineIdx+i] );
 
    if( TA_EMA( startIdx-lineIdx, nLine-1, refLine, signal, &b4, &n4, refS )
           != TA_SUCCESS
@@ -282,7 +308,11 @@ static ErrorNumber mv_macd_identity( const TA_History *history )
                     history->close, fast, slow, signal,
                     &begIdx, &nbElement, gotL, gotS, gotH ) != TA_SUCCESS
           || begIdx != startIdx )
+      {
+         printf( "Fail: TA_MACDV %d/%d/%d: rc or begIdx at start %d\n",
+                 fast, slow, signal, startIdx );
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
 
       if( slow < fast ) { t = slow; slow = fast; fast = t; }
       if( TA_MACD( a, nb-1, history->close, fast, slow, 1,
@@ -300,7 +330,7 @@ static ErrorNumber mv_macd_identity( const TA_History *history )
       for( i = 0; i < nbElement; i++ )
       {
          int j = i + (startIdx - a);
-         TA_Real want = atr[j] != 0.0 ? macd[j] / atr[j] * 100.0 : 0.0;
+         TA_Real want = mv_line( macd[j], atr[j], history->close[a+j] );
 
          if( memcmp( &gotL[i], &want, sizeof(TA_Real) ) != 0 )
          {
@@ -413,12 +443,17 @@ static ErrorNumber test_macdv_lookback( const TA_History *history )
 }
 
 /* (3) ATR == 0. Bars 0..MV_FLAT_AT-1 are the corpus, the rest one price.
- * The ATR is zero only once its whole seed window, previous closes included,
- * lies in the run, which the minimum start never reaches, so startIdx is
- * swept. At that bar the spread is the slow EMA's and the fast EMA's flat-run
- * limits, exactly zero or a rounding residue depending on the price: both
- * prices are pinned, and both cases must be met. Every line value with a zero
- * ATR is +0.0.
+ * The ATR is exactly zero only once its whole seed window, previous closes
+ * included, lies in the run, which the minimum start never reaches, so
+ * startIdx is swept. Every output is held bitwise to the reference, which
+ * pins the zero test as tightly as the value test, and must be finite.
+ *
+ * Both degenerate quotients are built, not left to rounding: fast == slow
+ * makes the spread exactly zero (0/0), and an EMA unstable period seeds both
+ * EMAs back in the moving prefix while the ATR window is all flat, a spread
+ * far above any rounding band over a zero ATR (x/0). The warm settings also
+ * run the loop between the signal seed and the first output, which a cold
+ * call never enters.
  */
 #define MV_FLAT_N  200
 #define MV_FLAT_AT 60
@@ -427,19 +462,27 @@ static ErrorNumber test_macdv_flat( const TA_History *history )
 {
    static TA_Real high[MV_FLAT_N], low[MV_FLAT_N], close[MV_FLAT_N];
    static TA_Real gotL[MV_FLAT_N], gotS[MV_FLAT_N], gotH[MV_FLAT_N];
+   static TA_Real refLine[MV_FLAT_N], refL[MV_FLAT_N], refS[MV_FLAT_N], refH[MV_FLAT_N];
    static TA_Real emaF[MV_FLAT_N], emaS[MV_FLAT_N], atr[MV_FLAT_N];
    static const double level[] = { 130.0, 130.7 };
-   const TA_Real zero = 0.0;
+   static const MvCfg flatCfg[] = { { 12, 26, 9 }, { 9, 9, 4 } };
+   static const MvUnst flatUnst[] = { { 0, 0 }, { 5, 0 }, { 2, 9 } };
    TA_RetCode rc;
    TA_Integer begIdx, nbElement, b1, n1, b2, n2, b3, n3;
    int nbZeroOverZero = 0, nbXOverZero = 0;
-   int v, i, startIdx, routed;
-   int fast = 12, slow = 26, signal = 9;
-   int lookback = TA_MACDV_Lookback( fast, slow, signal );
-   int lineLb = TA_EMA_Lookback( signal );
+   int v, c, u, i, startIdx, refNb, routed;
 
+   for( u = 0; u < (int)(sizeof(flatUnst)/sizeof(flatUnst[0])); u++ )
+   for( c = 0; c < (int)(sizeof(flatCfg)/sizeof(flatCfg[0])); c++ )
    for( v = 0; v < (int)(sizeof(level)/sizeof(level[0])); v++ )
    {
+      int fast = flatCfg[c].fast, slow = flatCfg[c].slow, signal = flatCfg[c].signal;
+      int lookback, lineLb;
+
+      mv_set_unst( flatUnst[u] );
+      lookback = TA_MACDV_Lookback( fast, slow, signal );
+      lineLb = TA_EMA_Lookback( signal );
+
       for( i = 0; i < MV_FLAT_N; i++ )
       {
          high[i]  = i < MV_FLAT_AT ? history->high[i]  : level[v];
@@ -451,69 +494,65 @@ static ErrorNumber test_macdv_flat( const TA_History *history )
       for( startIdx = lookback; startIdx < MV_FLAT_N; startIdx++ )
       {
          int lineIdx = startIdx - lineLb;
-         int firstZero;
+         int zeroAtFirst;
 
          rc = TA_MACDV( startIdx, MV_FLAT_N-1, high, low, close,
                         fast, slow, signal, &begIdx, &nbElement,
                         gotL, gotS, gotH );
          if( rc != TA_SUCCESS || begIdx != startIdx
              || nbElement != MV_FLAT_N-startIdx
-             || TA_EMA( lineIdx, MV_FLAT_N-1, close, fast, &b1, &n1, emaF )
-                != TA_SUCCESS
-             || TA_EMA( lineIdx, MV_FLAT_N-1, close, slow, &b2, &n2, emaS )
-                != TA_SUCCESS
+             || !mv_reference( high, low, close, MV_FLAT_N, startIdx,
+                               fast, slow, signal, refLine, refL, refS, refH, &refNb )
+             || refNb != nbElement
+             || TA_EMA( lineIdx, MV_FLAT_N-1, close, fast, &b1, &n1, emaF ) != TA_SUCCESS
+             || TA_EMA( lineIdx, MV_FLAT_N-1, close, slow, &b2, &n2, emaS ) != TA_SUCCESS
              || TA_ATR( lineIdx, MV_FLAT_N-1, high, low, close, slow,
                         &b3, &n3, atr ) != TA_SUCCESS
              || b1 != lineIdx || b2 != lineIdx || b3 != lineIdx )
          {
-            printf( "Fail: TA_MACDV flat %g start %d: rc=%d shape (%d,%d)\n",
-                    level[v], startIdx, (int)rc, (int)begIdx, (int)nbElement );
+            printf( "Fail: TA_MACDV flat %g %d/%d/%d unstable EMA %u ATR %u "
+                    "start %d: rc=%d shape (%d,%d)\n", level[v], fast, slow,
+                    signal, flatUnst[u].ema, flatUnst[u].atr, startIdx,
+                    (int)rc, (int)begIdx, (int)nbElement );
+            mv_clear_unst();
             return TA_TESTUTIL_TFRR_BAD_RETCODE;
          }
 
-         firstZero = 0;
          for( i = 0; i < nbElement; i++ )
          {
-            int j = i + lineLb;
-
-            if( !isfinite( gotL[i] ) || !isfinite( gotS[i] )
-                || !isfinite( gotH[i] ) )
+            if( !isfinite( gotL[i] ) || !isfinite( gotS[i] ) || !isfinite( gotH[i] )
+                || memcmp( &gotL[i], &refL[i], sizeof(TA_Real) ) != 0
+                || memcmp( &gotS[i], &refS[i], sizeof(TA_Real) ) != 0
+                || memcmp( &gotH[i], &refH[i], sizeof(TA_Real) ) != 0 )
             {
-               printf( "Fail: TA_MACDV flat %g start %d at out[%d]: a "
-                       "non-finite output\n", level[v], startIdx, i );
+               printf( "Fail: TA_MACDV flat %g %d/%d/%d unstable EMA %u ATR %u "
+                       "start %d at out[%d]: line %.17g vs %.17g, signal %.17g "
+                       "vs %.17g, hist %.17g vs %.17g\n", level[v], fast, slow,
+                       signal, flatUnst[u].ema, flatUnst[u].atr, startIdx, i,
+                       gotL[i], refL[i], gotS[i], refS[i], gotH[i], refH[i] );
+               mv_clear_unst();
                return TA_TESTUTIL_TFRR_BAD_CALCULATION;
             }
-            if( atr[j] != 0.0 )
-               continue;
-            if( memcmp( &gotL[i], &zero, sizeof(TA_Real) ) != 0 )
-            {
-               printf( "Fail: TA_MACDV flat %g start %d at out[%d]: line "
-                       "%.17g where the ATR is 0, expected +0.0\n", level[v],
-                       startIdx, i, gotL[i] );
-               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
-            }
-            if( i == 0 && j == lineLb )
-               firstZero = 1;
          }
 
-         /* The cases are counted at the first output bar, where the spread
-          * is the two EMAs' values entered at this start.
+         /* Counted at the first line bar, by construction: the two EMAs are
+          * one computation when fast == slow, and a warm EMA's spread is
+          * whole percent of the price.
           */
-         if( atr[lineLb] == 0.0 )
-         {
-            if( emaF[lineLb] - emaS[lineLb] == 0.0 )
-               nbZeroOverZero++;
-            else
-               nbXOverZero++;
-         }
+         zeroAtFirst = atr[0] == 0.0;
+         if( zeroAtFirst && fast == slow && emaF[0] - emaS[0] == 0.0 )
+            nbZeroOverZero++;
+         if( zeroAtFirst && flatUnst[u].ema > 0
+             && fabs( emaF[0] - emaS[0] ) > 1e-6 * level[v] )
+            nbXOverZero++;
 
          if( server_verify_active() && (startIdx == lookback
-                                        || (firstZero && !routed)) )
+                                        || (zeroAtFirst && !routed)) )
          {
             double optIn[3];
             ErrorNumber e;
 
-            if( firstZero )
+            if( zeroAtFirst )
                routed = 1;
             optIn[0] = (double)fast;
             optIn[1] = (double)slow;
@@ -525,16 +564,151 @@ static ErrorNumber test_macdv_flat( const TA_History *history )
                                (const TA_Real*[]){ gotL, gotS, gotH, NULL },
                                NULL );
             if( e != TA_TEST_PASS )
+            {
+               mv_clear_unst();
                return e;
+            }
          }
       }
    }
+   mv_clear_unst();
 
    if( nbZeroOverZero == 0 || nbXOverZero == 0 )
    {
       printf( "Fail: TA_MACDV flat: 0/0 met %d times, x/0 %d times; both must "
               "be met\n", nbZeroOverZero, nbXOverZero );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (3c) Scale invariance: the corpus multiplied by 2^-40 and by 2^40 gives
+ * the same three outputs bit for bit. Every operation scales exactly, and so
+ * does a zero test relative to the price; an absolute one does not.
+ */
+static ErrorNumber test_macdv_scale( const TA_History *history )
+{
+   static TA_Real high[MV_CAP], low[MV_CAP], close[MV_CAP];
+   static TA_Real ref[3][MV_CAP], got[3][MV_CAP];
+   static const double factor[] = { 0x1p-40, 0x1p40 };
+   TA_Integer begIdx, nbElement, b2, n2;
+   int nb = (int)history->nbBars;
+   int f, i;
+
+   if( TA_MACDV( 0, nb-1, history->high, history->low, history->close,
+                 12, 26, 9, &begIdx, &nbElement, ref[0], ref[1], ref[2] )
+          != TA_SUCCESS || nbElement <= 0 )
+   {
+      printf( "Fail: TA_MACDV scale: the baseline call failed\n" );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+
+   for( f = 0; f < (int)(sizeof(factor)/sizeof(factor[0])); f++ )
+   {
+      for( i = 0; i < nb; i++ )
+      {
+         high[i]  = history->high[i]  * factor[f];
+         low[i]   = history->low[i]   * factor[f];
+         close[i] = history->close[i] * factor[f];
+      }
+      if( TA_MACDV( 0, nb-1, high, low, close, 12, 26, 9,
+                    &b2, &n2, got[0], got[1], got[2] ) != TA_SUCCESS
+          || b2 != begIdx || n2 != nbElement
+          || !mv_same( ref[0], got[0], nbElement )
+          || !mv_same( ref[1], got[1], nbElement )
+          || !mv_same( ref[2], got[2], nbElement ) )
+      {
+         printf( "Fail: TA_MACDV prices times %a differ from the unscaled "
+                 "outputs\n", factor[f] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (3b) The corpus, then a flat run every leg was entered before. The ATR
+ * never reaches exactly zero there, and with an exact test the spread's
+ * rounding residue over it overflows. MV_LONG_SETTLE bars into the run the
+ * spread is many orders below 1e-14 of the price on any FMA path while the
+ * ATR is still above it, so from there every line value must be +0.0, which
+ * only the test on the spread gives. Every output must stay finite. Routed:
+ * the sweep sends no such series.
+ */
+#define MV_LONG_FLAT   3000
+#define MV_LONG_SETTLE 600
+
+static ErrorNumber test_macdv_long_flat( const TA_History *history )
+{
+   static TA_Real high[MV_CAP+MV_LONG_FLAT], low[MV_CAP+MV_LONG_FLAT], close[MV_CAP+MV_LONG_FLAT];
+   static TA_Real gotL[MV_CAP+MV_LONG_FLAT], gotS[MV_CAP+MV_LONG_FLAT], gotH[MV_CAP+MV_LONG_FLAT];
+   static const double level[] = { 130.0, 130.7 };
+   const TA_Real zero = 0.0;
+   TA_RetCode rc;
+   TA_Integer begIdx, nbElement;
+   int nb = (int)history->nbBars;
+   int n = nb + MV_LONG_FLAT;
+   int v, i, nbSettled;
+
+   for( v = 0; v < (int)(sizeof(level)/sizeof(level[0])); v++ )
+   {
+      for( i = 0; i < n; i++ )
+      {
+         high[i]  = i < nb ? history->high[i]  : level[v];
+         low[i]   = i < nb ? history->low[i]   : level[v];
+         close[i] = i < nb ? history->close[i] : level[v];
+      }
+
+      rc = TA_MACDV( 0, n-1, high, low, close, 12, 26, 9,
+                     &begIdx, &nbElement, gotL, gotS, gotH );
+      if( rc != TA_SUCCESS || nbElement != n - begIdx )
+      {
+         printf( "Fail: TA_MACDV long flat %g: rc=%d shape (%d,%d)\n",
+                 level[v], (int)rc, (int)begIdx, (int)nbElement );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+
+      nbSettled = 0;
+      for( i = 0; i < nbElement; i++ )
+      {
+         if( !isfinite( gotL[i] ) || !isfinite( gotS[i] ) || !isfinite( gotH[i] ) )
+         {
+            printf( "Fail: TA_MACDV long flat %g at bar %d: line %.17g signal "
+                    "%.17g hist %.17g\n", level[v], begIdx+i, gotL[i],
+                    gotS[i], gotH[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         if( begIdx+i >= nb + MV_LONG_SETTLE )
+         {
+            if( memcmp( &gotL[i], &zero, sizeof(TA_Real) ) != 0 )
+            {
+               printf( "Fail: TA_MACDV long flat %g at bar %d, %d bars into "
+                       "the run: line %.17g, expected +0.0\n", level[v],
+                       begIdx+i, begIdx+i-nb, gotL[i] );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+            nbSettled++;
+         }
+      }
+      if( nbSettled != MV_LONG_FLAT - MV_LONG_SETTLE )
+      {
+         printf( "Fail: TA_MACDV long flat %g: %d settled bars compared, "
+                 "expected %d\n", level[v], nbSettled, MV_LONG_FLAT - MV_LONG_SETTLE );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+
+      if( server_verify_active() )
+      {
+         double optIn[3] = { 12.0, 26.0, 9.0 };
+         ErrorNumber e = server_verify( "MACDV", 0, n-1, n, rc, begIdx, nbElement,
+                                        (const TA_Real*[]){ high, low, close, NULL },
+                                        optIn, 3,
+                                        (const TA_Real*[]){ gotL, gotS, gotH, NULL },
+                                        NULL );
+         if( e != TA_TEST_PASS )
+            return e;
+      }
    }
 
    return TA_TEST_PASS;
@@ -553,7 +727,10 @@ static ErrorNumber test_macdv_signal1( const TA_History *history )
    if( TA_MACDV( 0, nb-1, history->high, history->low, history->close,
                  12, 26, 1, &begIdx, &nbElement, gotL, gotS, gotH )
           != TA_SUCCESS || nbElement <= 0 )
+   {
+      printf( "Fail: TA_MACDV 12/26/1: the call failed\n" );
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
 
    for( i = 0; i < nbElement; i++ )
    {
@@ -665,14 +842,13 @@ static ErrorNumber test_macdv_range( const TA_History *history )
  * 1500, where the two conventions have converged. What is left is the EMA step
  * spelled prev + (x-prev)*k against k*x + beta*prev, amplified by the
  * fast - slow cancellation: 9.5e-13 absolute at most from bar 1500 on, over
- * every configuration captured. 3e-12 absolute plus 1e-12 relative; an ATR
- * period off by one, a missing x100 or the histogram's sign each miss by whole
- * percent. ta4j refuses fast > slow, so the swap has no row here (leg 2 pins
+ * every configuration captured. 3e-12 absolute; an ATR period off by one, a
+ * missing x100 or the histogram's sign each miss by whole percent. ta4j refuses fast > slow, so the swap has no row here (leg 2 pins
  * it), and fast == slow has none either: its line is identically zero.
  */
 #define MV_TILES 8
 #define MV_GOLDEN_ABS 3e-12
-#define MV_GOLDEN_REL 1e-12
+#define MV_GOLDEN_REL 0.0
 
 typedef struct { int fast; int slow; int signal; int bar; double line; double sig; double hist; } MvGolden;
 
