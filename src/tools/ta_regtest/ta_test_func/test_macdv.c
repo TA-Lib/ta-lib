@@ -606,10 +606,10 @@ static ErrorNumber test_macdv_flat( const TA_History *history )
 }
 
 /* (3e) Ordinary data of low volatility: the corpus around 100 with its
- * deviations scaled by 1e-5, so the ATR is about 2e-5 of a price of 100.
- * Nothing here is degenerate: every line value must be the plain quotient,
- * non-zero, and held bitwise to the reference. A band constant large enough
- * to reach this ATR or these spreads would zero it.
+ * deviations scaled by 1e-8. Nothing here is degenerate: every line value
+ * must be the plain quotient, non-zero, and held bitwise to the reference.
+ * The smallest spread is about 7 band widths and the smallest ATR about 1e3,
+ * so a band that much wider zeroes some of it.
  */
 static ErrorNumber test_macdv_lowvol( const TA_History *history )
 {
@@ -622,9 +622,9 @@ static ErrorNumber test_macdv_lowvol( const TA_History *history )
 
    for( i = 0; i < nb; i++ )
    {
-      high[i]  = 100.0 + (history->high[i]  - 100.0) * 1e-5;
-      low[i]   = 100.0 + (history->low[i]   - 100.0) * 1e-5;
-      close[i] = 100.0 + (history->close[i] - 100.0) * 1e-5;
+      high[i]  = 100.0 + (history->high[i]  - 100.0) * 1e-8;
+      low[i]   = 100.0 + (history->low[i]   - 100.0) * 1e-8;
+      close[i] = 100.0 + (history->close[i] - 100.0) * 1e-8;
    }
 
    if( TA_MACDV( 0, nb-1, high, low, close, 12, 26, 9,
@@ -655,15 +655,18 @@ static ErrorNumber test_macdv_lowvol( const TA_History *history )
    return TA_TEST_PASS;
 }
 
-/* (3c) Scale invariance: the corpus multiplied by 2^-40 and by 2^40 gives
- * the same three outputs bit for bit. Every operation scales exactly, and so
- * does a zero test relative to the price; an absolute one does not.
+/* (3c) Scale invariance: the corpus multiplied by 2^-40, 2^40 and 2^-1010
+ * gives the same three outputs bit for bit. Every operation scales exactly,
+ * and so does a zero test relative to the EMAs while its threshold stays
+ * normal; an absolute one does not.
+ * At 2^-1010 every ATR is below 1e-303 and still normal, which pins the
+ * subnormal floor from above.
  */
 static ErrorNumber test_macdv_scale( const TA_History *history )
 {
    static TA_Real high[MV_CAP], low[MV_CAP], close[MV_CAP];
    static TA_Real ref[3][MV_CAP], got[3][MV_CAP];
-   static const double factor[] = { 0x1p-40, 0x1p40 };
+   static const double factor[] = { 0x1p-40, 0x1p40, 0x1p-1010 };
    TA_Integer begIdx, nbElement, b2, n2;
    int nb = (int)history->nbBars;
    int f, i;
@@ -707,13 +710,13 @@ static ErrorNumber test_macdv_scale( const TA_History *history )
  * must stay finite. Each case is decided by one test alone:
  *   - slow 26: the spread falls inside the band while the ATR is still
  *     orders above it (measured: zero from about 350 bars on);
- *   - slow 300 and 2000: the same, but the residue is wider than a band
- *     without the period factor, and at 2000 wider than one scaled by the
- *     fast or the signal period (about 3740 and 22570);
+ *   - slow 300: the same, but the EMAs' settled residue is wider than a band
+ *     without the period factor (about 3740);
+ *   - slow 2000: the spread must have entered the band by `settle` (about
+ *     22570), which a band a fifth as wide, or one scaled by the fast or
+ *     the signal period, has not;
  *   - price 0: no scale is left, only the ATR's subnormal floor decides
- *     (about 18110; earlier on a host that flushes subnormals). 5000 bars
- *     in, the line must still be the plain quotient, a tiny non-zero value,
- *     which pins that floor at the subnormals rather than above them.
+ *     (about 18110; earlier on a host that flushes subnormals).
  * Routed where the request fits server_verify's 256 KB buffer, about 5000
  * bars of three inputs: the sweep sends no such series.
  */
@@ -727,7 +730,6 @@ static const MvLongFlat mvLongFlat[] = {
    {   0.0, 12,   26, 20000, 19000 }
 };
 #define MV_LONG_MAX (MV_CAP + 25000)
-#define MV_ZERO_PRICE_LIVE 5000
 #define MV_SV_MAX_BARS 5000
 
 static ErrorNumber test_macdv_long_flat( const TA_History *history )
@@ -781,13 +783,6 @@ static ErrorNumber test_macdv_long_flat( const TA_History *history )
                return TA_TESTUTIL_TFRR_BAD_CALCULATION;
             }
             nbSettled++;
-         }
-         if( k->level == 0.0 && begIdx+i == nb + MV_ZERO_PRICE_LIVE
-             && !(gotL[i] != 0.0) )
-         {
-            printf( "Fail: TA_MACDV long flat 0 at bar %d: line %.17g, expected "
-                    "the non-zero quotient\n", begIdx+i, gotL[i] );
-            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
       }
       if( nbSettled != k->flat - k->settle )
