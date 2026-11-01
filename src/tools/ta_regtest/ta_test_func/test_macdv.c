@@ -717,8 +717,7 @@ static ErrorNumber test_macdv_scale( const TA_History *history )
  *     the signal period, has not;
  *   - price 0: no scale is left, only the ATR's subnormal floor decides
  *     (about 18110; earlier on a host that flushes subnormals).
- * Routed where the request fits server_verify's 256 KB buffer, about 5000
- * bars of three inputs: the sweep sends no such series.
+ * Routed: the sweep sends no such series.
  */
 typedef struct { double level; int fast; int slow; int flat; int settle; } MvLongFlat;
 
@@ -730,7 +729,6 @@ static const MvLongFlat mvLongFlat[] = {
    {   0.0, 12,   26, 20000, 19000 }
 };
 #define MV_LONG_MAX (MV_CAP + 25000)
-#define MV_SV_MAX_BARS 5000
 
 static ErrorNumber test_macdv_long_flat( const TA_History *history )
 {
@@ -793,7 +791,7 @@ static ErrorNumber test_macdv_long_flat( const TA_History *history )
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
 
-      if( server_verify_active() && n <= MV_SV_MAX_BARS )
+      if( server_verify_active() )
       {
          double optIn[3];
          ErrorNumber e;
