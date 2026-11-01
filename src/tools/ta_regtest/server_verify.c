@@ -31,7 +31,7 @@
 
 /* A request that overflows is sent truncated and fails only under --codegen:
  * at 16 hex chars per double, all input arrays together must stay well under
- * 16000 values. */
+ * 130000 values. */
 #define SV_BUF_SIZE (2 * 1024 * 1024)   /* 2MB request/response buffers */
 
 /* The transcendental tolerance (CODEGEN_TRANSCENDENTAL_TOL), the

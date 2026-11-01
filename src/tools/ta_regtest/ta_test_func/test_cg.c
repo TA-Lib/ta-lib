@@ -104,10 +104,10 @@
  *   SERVER_VERIFY: every call of legs 2, 3 and 4, one anchored call per
  *   period of leg 7, and every full call of leg 10 but those on the
  *   non-finite series, whose NaN outputs carry no sign or payload contract
- *   across languages that a bitwise hash could skip. A call longer than one
- *   256 KB request goes as the series cut at startIdx - lookback;
- *   long-n100000, flat01-n100000, flat12345-n100000 and leg 2 at n = 100000 do
- *   not fit even then.
+ *   across languages that a bitwise hash could skip. A call longer than
+ *   CG_SV_MAX_BARS goes as the series cut at startIdx - lookback;
+ *   long-n100000, flat01-n100000, flat12345-n100000 and leg 2 at n = 100000 are
+ *   not routed even then.
  */
 
 /**** Headers ****/

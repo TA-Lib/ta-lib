@@ -717,6 +717,9 @@ static ErrorNumber test_macdv_scale( const TA_History *history )
  *     the signal period, has not;
  *   - price 0: no scale is left, only the ATR's subnormal floor decides
  *     (about 18110; earlier on a host that flushes subnormals).
+ * The C stream is held to the batch on every bar too: opened on the corpus,
+ * or on the lookback when that is longer, then fed the rest one bar at a
+ * time, so the zero rule runs in the generated Update where it decides.
  * Routed: the sweep sends no such series.
  */
 typedef struct { double level; int fast; int slow; int flat; int settle; } MvLongFlat;
@@ -783,6 +786,52 @@ static ErrorNumber test_macdv_long_flat( const TA_History *history )
             nbSettled++;
          }
       }
+      {
+         TA_MACDV_Stream *stream = NULL;
+         TA_Real sL, sS, sH;
+         int hist = begIdx + 1 > nb ? begIdx + 1 : nb;
+         int j;
+
+         rc = TA_MACDV_Open( &stream, high, low, close, hist, k->fast, k->slow, 9,
+                             &sL, &sS, &sH );
+         if( rc == TA_SUCCESS
+             && ( memcmp( &sL, &gotL[hist-1-begIdx], sizeof(TA_Real) ) != 0
+                  || memcmp( &sS, &gotS[hist-1-begIdx], sizeof(TA_Real) ) != 0
+                  || memcmp( &sH, &gotH[hist-1-begIdx], sizeof(TA_Real) ) != 0 ) )
+         {
+            printf( "Fail: TA_MACDV_Open long flat %g %d/%d/9 on %d bars: line "
+                    "%.17g vs batch %.17g\n", k->level, k->fast, k->slow, hist,
+                    sL, gotL[hist-1-begIdx] );
+            TA_MACDV_Close( stream );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         for( j = hist; rc == TA_SUCCESS && j < n; j++ )
+         {
+            rc = TA_MACDV_Update( stream, high[j], low[j], close[j], &sL, &sS, &sH );
+            if( rc == TA_SUCCESS
+                && ( memcmp( &sL, &gotL[j-begIdx], sizeof(TA_Real) ) != 0
+                     || memcmp( &sS, &gotS[j-begIdx], sizeof(TA_Real) ) != 0
+                     || memcmp( &sH, &gotH[j-begIdx], sizeof(TA_Real) ) != 0 ) )
+            {
+               printf( "Fail: TA_MACDV_Update long flat %g %d/%d/9 at bar %d: "
+                       "line %.17g vs batch %.17g, signal %.17g vs %.17g\n",
+                       k->level, k->fast, k->slow, j, sL, gotL[j-begIdx],
+                       sS, gotS[j-begIdx] );
+               TA_MACDV_Close( stream );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+         }
+         if( stream )
+            TA_MACDV_Close( stream );
+         if( rc != TA_SUCCESS )
+         {
+            printf( "Fail: TA_MACDV stream long flat %g %d/%d/9: rc=%d\n",
+                    k->level, k->fast, k->slow, (int)rc );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+         rc = TA_SUCCESS;
+      }
+
       if( nbSettled != k->flat - k->settle )
       {
          printf( "Fail: TA_MACDV long flat %g %d/%d/9: %d settled bars "
@@ -1012,14 +1061,18 @@ static ErrorNumber test_macdv_range( const TA_History *history )
  * spelled prev + (x-prev)*k against k*x + beta*prev, amplified by the
  * fast - slow cancellation: 9.5e-13 absolute at most from bar 1500 on, over
  * every configuration captured. 3e-12 absolute; an ATR period off by one, a
- * missing x100 or the histogram's sign each miss by whole percent. ta4j refuses fast > slow, so the swap has no row here (leg 2 pins
- * it), and fast == slow has none either: its line is identically zero.
+ * missing x100 or the histogram's sign each miss by whole percent. ta4j
+ * refuses fast > slow, so the swap has no row here (leg 2 pins it), and
+ * fast == slow has none either: its line is identically zero.
  */
 #define MV_TILES 8
 #define MV_GOLDEN_ABS 3e-12
 #define MV_GOLDEN_REL 0.0
 
-typedef struct { int fast; int slow; int signal; int bar; double line; double sig; double hist; } MvGolden;
+typedef struct {
+   int fast; int slow; int signal; int bar;
+   double line; double sig; double hist;
+} MvGolden;
 
 static const MvGolden mvGolden[] = {
    { 12, 26,  9, 1500, 56.966491110905025, 59.213860258454247, -2.2473691475492217 },

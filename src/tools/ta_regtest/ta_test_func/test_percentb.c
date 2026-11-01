@@ -102,8 +102,8 @@
  *   No leg sees 255-bar tiles for 256: the tile only sets where the band
  *   pass splits the output.
  *
- *   SERVER_VERIFY: every golden call but the two 100500-bar ones, which do not
- *   fit server_verify's 256 KB request; leg 2 routes the 3000-bar walk once per
+ *   SERVER_VERIFY: every golden call up to PCTB_SV_MAX_BARS, so all but the
+ *   two 100500-bar ones; leg 2 routes the 3000-bar walk once per
  *   MA type and branch and under each unstable period, leg 6 one anchored call
  *   per MA type and branch.
  */
