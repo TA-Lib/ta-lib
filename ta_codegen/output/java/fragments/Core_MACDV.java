@@ -131,6 +131,8 @@
       double val3 = 0;
       double greatest = 0;
       double spread = 0;
+      double bandScale = 0;
+      double periodScale = 0;
       double tempCY = 0;
       double tempLT = 0;
       double tempHT = 0;
@@ -203,6 +205,8 @@
        */
       wBeta = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
       wAlpha = 1.0 - wBeta;
+      /* An EMA of a constant settles up to (period+1)/4 ulps away from it. */
+      periodScale = (double)(optInSlowPeriod + 1);
       lookbackSignal = emaLookback(optInSignalPeriod);
       lookbackSlow = emaLookback(optInSlowPeriod);
       lookbackFast = emaLookback(optInFastPeriod);
@@ -314,15 +318,21 @@
          today += 1;
       }
       /* Without price movement the line answers its neutral point, 0.0 (#570).
-       * Both tests are relative to the price: a Wilder average entered before a
-       * flat run only decays toward zero, sticking at a subnormal, while the
-       * spread keeps a residue of a few ulps of the price, so an exact test lets
-       * their quotient grow without bound and overflow.
+       * In a flat run the Wilder average only decays, to a subnormal floor,
+       * while the spread stalls at the EMAs' rounding residue, so an exact test
+       * lets their quotient grow until it overflows. Both are therefore tested
+       * against the EMAs' own magnitude times the residue's period factor: that
+       * also bounds |line| for any finite input, which a scale taken from the
+       * close cannot, since a close may lie outside its bar and be zero.
        */
       spread = prevFast - prevSlow;
-      tempReal = Math.abs(inClose[lineIdx]);
+      bandScale = Math.abs(prevFast);
+      if( Math.abs(prevSlow) > bandScale ) {
+         bandScale = Math.abs(prevSlow);
+      }
+      bandScale = bandScale * periodScale;
       lineValue = 0.0;
-      if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+      if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
          lineValue = spread / prevATR * 100.0;
       }
       /* Seed the signal EMA with a simple average of the first 'signal period'
@@ -350,9 +360,13 @@
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.abs(tempReal);
+         bandScale = Math.abs(prevFast);
+         if( Math.abs(prevSlow) > bandScale ) {
+            bandScale = Math.abs(prevSlow);
+         }
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          prevSignal += lineValue;
@@ -381,9 +395,13 @@
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.abs(tempReal);
+         bandScale = Math.abs(prevFast);
+         if( Math.abs(prevSlow) > bandScale ) {
+            bandScale = Math.abs(prevSlow);
+         }
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
@@ -417,9 +435,13 @@
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.abs(tempReal);
+         bandScale = Math.abs(prevFast);
+         if( Math.abs(prevSlow) > bandScale ) {
+            bandScale = Math.abs(prevSlow);
+         }
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
@@ -471,6 +493,8 @@
       double val3 = 0;
       double greatest = 0;
       double spread = 0;
+      double bandScale = 0;
+      double periodScale = 0;
       double tempCY = 0;
       double tempLT = 0;
       double tempHT = 0;
@@ -530,6 +554,7 @@
       }
       wBeta = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
       wAlpha = 1.0 - wBeta;
+      periodScale = (double)(optInSlowPeriod + 1);
       lookbackSignal = emaLookback(optInSignalPeriod);
       lookbackSlow = emaLookback(optInSlowPeriod);
       lookbackFast = emaLookback(optInFastPeriod);
@@ -603,9 +628,13 @@
          today += 1;
       }
       spread = prevFast - prevSlow;
-      tempReal = Math.abs((double)inClose[lineIdx]);
+      bandScale = Math.abs(prevFast);
+      if( Math.abs(prevSlow) > bandScale ) {
+         bandScale = Math.abs(prevSlow);
+      }
+      bandScale = bandScale * periodScale;
       lineValue = 0.0;
-      if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+      if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
          lineValue = spread / prevATR * 100.0;
       }
       prevSignal = 0.0;
@@ -629,9 +658,13 @@
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.abs(tempReal);
+         bandScale = Math.abs(prevFast);
+         if( Math.abs(prevSlow) > bandScale ) {
+            bandScale = Math.abs(prevSlow);
+         }
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          prevSignal += lineValue;
@@ -656,9 +689,13 @@
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.abs(tempReal);
+         bandScale = Math.abs(prevFast);
+         if( Math.abs(prevSlow) > bandScale ) {
+            bandScale = Math.abs(prevSlow);
+         }
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
@@ -690,9 +727,13 @@
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.abs(tempReal);
+         bandScale = Math.abs(prevFast);
+         if( Math.abs(prevSlow) > bandScale ) {
+            bandScale = Math.abs(prevSlow);
+         }
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
@@ -724,7 +765,7 @@
     * href="https://ta-lib.org/functions/macdv">ta-lib.org/functions/macdv</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>The Average True Range is Wilder's, over the slow period: the publication's {@code ATR(26)} beside the 26-bar slow EMA, so one parameter sets both. Without price movement the line is 0, its neutral point.</li>
+    * <li>The Average True Range is Wilder's, over the slow period: the publication's {@code ATR(26)} beside the 26-bar slow EMA, so one parameter sets both. Without price movement the line falls to 0, its neutral point.</li>
     * <li>The two price EMAs and the Average True Range each warm up as when calling {@code EMA} and {@code ATR} directly, so a caller who wants the line converged sets {@code TA_FUNC_UNST_EMA} and {@code TA_FUNC_UNST_ATR}, as for those functions.</li>
     * <li>If the slow period is set smaller than the fast period, the two are swapped so the slow EMA is always the longer one, as {@code MACD} does; the ATR period follows the slow period after the swap.</li>
     * <li>A signal period of 1 disables signal-line smoothing: the signal equals the MACD-V line and the histogram is zero.</li>
@@ -821,7 +862,7 @@
     * href="https://ta-lib.org/functions/macdv">ta-lib.org/functions/macdv</a>.
     * <p><b>Notes</b>
     * <ul>
-    * <li>The Average True Range is Wilder's, over the slow period: the publication's {@code ATR(26)} beside the 26-bar slow EMA, so one parameter sets both. Without price movement the line is 0, its neutral point.</li>
+    * <li>The Average True Range is Wilder's, over the slow period: the publication's {@code ATR(26)} beside the 26-bar slow EMA, so one parameter sets both. Without price movement the line falls to 0, its neutral point.</li>
     * <li>The two price EMAs and the Average True Range each warm up as when calling {@code EMA} and {@code ATR} directly, so a caller who wants the line converged sets {@code TA_FUNC_UNST_EMA} and {@code TA_FUNC_UNST_ATR}, as for those functions.</li>
     * <li>If the slow period is set smaller than the fast period, the two are swapped so the slow EMA is always the longer one, as {@code MACD} does; the ATR period follows the slow period after the swap.</li>
     * <li>A signal period of 1 disables signal-line smoothing: the signal equals the MACD-V line and the histogram is zero.</li>
@@ -940,6 +981,7 @@
       private double signalBeta;
       private double wAlpha;
       private double wBeta;
+      private double periodScale;
       private double lag1_inClose;
       private double cur_outMACDV;
       private double cur_outMACDVSignal;
@@ -1000,6 +1042,7 @@
          this.signalBeta = other.signalBeta;
          this.wAlpha = other.wAlpha;
          this.wBeta = other.wBeta;
+         this.periodScale = other.periodScale;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outMACDV = other.cur_outMACDV;
          this.cur_outMACDVSignal = other.cur_outMACDVSignal;
@@ -1058,6 +1101,7 @@
          double val3 = 0.0;
          double greatest = 0.0;
          double spread = 0.0;
+         double bandScale = 0.0;
          double tempCY = 0.0;
          double tempLT = 0.0;
          double tempHT = 0.0;
@@ -1086,9 +1130,13 @@
          prevFast = Math.fma(sp.fastBeta, prevFast, sp.fastK * tempReal);
          prevSlow = Math.fma(sp.slowBeta, prevSlow, sp.slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.abs(tempReal);
+         bandScale = Math.abs(prevFast);
+         if( Math.abs(prevSlow) > bandScale ) {
+            bandScale = Math.abs(prevSlow);
+         }
+         bandScale = bandScale * sp.periodScale;
          lineValue = 0.0;
-         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          if( sp.optInSignalPeriod == 1 ) {
@@ -1165,6 +1213,7 @@
       double val3 = 0.0;
       double greatest = 0.0;
       double spread = 0.0;
+      double bandScale = 0.0;
       double tempCY = 0.0;
       double tempLT = 0.0;
       double tempHT = 0.0;
@@ -1186,9 +1235,13 @@
       sp.prevFast = Math.fma(sp.fastBeta, sp.prevFast, sp.fastK * tempReal);
       sp.prevSlow = Math.fma(sp.slowBeta, sp.prevSlow, sp.slowK * tempReal);
       spread = sp.prevFast - sp.prevSlow;
-      tempReal = Math.abs(tempReal);
+      bandScale = Math.abs(sp.prevFast);
+      if( Math.abs(sp.prevSlow) > bandScale ) {
+         bandScale = Math.abs(sp.prevSlow);
+      }
+      bandScale = bandScale * sp.periodScale;
       lineValue = 0.0;
-      if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(sp.prevATR) <= 0.00000000000001 * (tempReal)) ) {
+      if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(sp.prevATR) <= 0.00000000000001 * (bandScale)) && sp.prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
          lineValue = spread / sp.prevATR * 100.0;
       }
       if( sp.optInSignalPeriod == 1 ) {
@@ -1222,6 +1275,8 @@
       double val3 = 0;
       double greatest = 0;
       double spread = 0;
+      double bandScale = 0;
+      double periodScale = 0;
       double tempCY = 0;
       double tempLT = 0;
       double tempHT = 0;
@@ -1301,6 +1356,8 @@
        */
       wBeta = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
       wAlpha = 1.0 - wBeta;
+      /* An EMA of a constant settles up to (period+1)/4 ulps away from it. */
+      periodScale = (double)(optInSlowPeriod + 1);
       lookbackSignal = emaLookback(optInSignalPeriod);
       lookbackSlow = emaLookback(optInSlowPeriod);
       lookbackFast = emaLookback(optInFastPeriod);
@@ -1412,15 +1469,21 @@
          today += 1;
       }
       /* Without price movement the line answers its neutral point, 0.0 (#570).
-       * Both tests are relative to the price: a Wilder average entered before a
-       * flat run only decays toward zero, sticking at a subnormal, while the
-       * spread keeps a residue of a few ulps of the price, so an exact test lets
-       * their quotient grow without bound and overflow.
+       * In a flat run the Wilder average only decays, to a subnormal floor,
+       * while the spread stalls at the EMAs' rounding residue, so an exact test
+       * lets their quotient grow until it overflows. Both are therefore tested
+       * against the EMAs' own magnitude times the residue's period factor: that
+       * also bounds |line| for any finite input, which a scale taken from the
+       * close cannot, since a close may lie outside its bar and be zero.
        */
       spread = prevFast - prevSlow;
-      tempReal = Math.abs(inClose[lineIdx]);
+      bandScale = Math.abs(prevFast);
+      if( Math.abs(prevSlow) > bandScale ) {
+         bandScale = Math.abs(prevSlow);
+      }
+      bandScale = bandScale * periodScale;
       lineValue = 0.0;
-      if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+      if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
          lineValue = spread / prevATR * 100.0;
       }
       /* Seed the signal EMA with a simple average of the first 'signal period'
@@ -1448,9 +1511,13 @@
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.abs(tempReal);
+         bandScale = Math.abs(prevFast);
+         if( Math.abs(prevSlow) > bandScale ) {
+            bandScale = Math.abs(prevSlow);
+         }
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          prevSignal += lineValue;
@@ -1479,9 +1546,13 @@
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.abs(tempReal);
+         bandScale = Math.abs(prevFast);
+         if( Math.abs(prevSlow) > bandScale ) {
+            bandScale = Math.abs(prevSlow);
+         }
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
@@ -1515,9 +1586,13 @@
          prevFast = Math.fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.fma(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.abs(tempReal);
+         bandScale = Math.abs(prevFast);
+         if( Math.abs(prevSlow) > bandScale ) {
+            bandScale = Math.abs(prevSlow);
+         }
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
@@ -1550,6 +1625,7 @@
       sp.signalBeta = signalBeta;
       sp.wAlpha = wAlpha;
       sp.wBeta = wBeta;
+      sp.periodScale = periodScale;
       sp.lag1_inClose = inClose[historyLen - 1];
       sp.cur_outMACDV = outMACDV[(outNBElement.value - 1) * outStride];
       sp.cur_outMACDVSignal = outMACDVSignal[(outNBElement.value - 1) * outStride];

@@ -165,7 +165,7 @@ TA_LIB_API TA_RetCode TA_GetRuntimeInfo( const char *key, int *value );
  * whenever a source modification should trigger a repackaging of TA-Lib.
  * Written by scripts/sync.py; do not edit.
  */
-#define TA_LIB_SOURCES_DIGEST 4b5dfbb028039ec722aeed0c8175c169
+#define TA_LIB_SOURCES_DIGEST e35514c1e2e0a01948290f89c0326840
 
 #ifdef __cplusplus
 }

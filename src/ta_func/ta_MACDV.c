@@ -141,6 +141,8 @@ TA_LIB_API TA_RetCode TA_MACDV( int    startIdx,
    double val3;
    double greatest;
    double spread;
+   double bandScale;
+   double periodScale;
    double tempCY;
    double tempLT;
    double tempHT;
@@ -228,6 +230,8 @@ TA_LIB_API TA_RetCode TA_MACDV( int    startIdx,
     */
    wBeta = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
    wAlpha = 1.0 - wBeta;
+   /* An EMA of a constant settles up to (period+1)/4 ulps away from it. */
+   periodScale = (double)(optInSlowPeriod + 1);
    lookbackSignal = TA_EMA_Lookback(optInSignalPeriod);
    lookbackSlow = TA_EMA_Lookback(optInSlowPeriod);
    lookbackFast = TA_EMA_Lookback(optInFastPeriod);
@@ -351,15 +355,22 @@ TA_LIB_API TA_RetCode TA_MACDV( int    startIdx,
       today += 1;
    }
    /* Without price movement the line answers its neutral point, 0.0 (#570).
-    * Both tests are relative to the price: a Wilder average entered before a
-    * flat run only decays toward zero, sticking at a subnormal, while the
-    * spread keeps a residue of a few ulps of the price, so an exact test lets
-    * their quotient grow without bound and overflow.
+    * In a flat run the Wilder average only decays, to a subnormal floor,
+    * while the spread stalls at the EMAs' rounding residue, so an exact test
+    * lets their quotient grow until it overflows. Both are therefore tested
+    * against the EMAs' own magnitude times the residue's period factor: that
+    * also bounds |line| for any finite input, which a scale taken from the
+    * close cannot, since a close may lie outside its bar and be zero.
     */
    spread = prevFast - prevSlow;
-   tempReal = fabs(inClose[lineIdx]);
+   bandScale = fabs(prevFast);
+   if( fabs(prevSlow) > bandScale )
+   {
+      bandScale = fabs(prevSlow);
+   }
+   bandScale = bandScale * periodScale;
    lineValue = 0.0;
-   if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
+   if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 )
    {
       lineValue = spread / prevATR * 100.0;
    }
@@ -391,9 +402,14 @@ TA_LIB_API TA_RetCode TA_MACDV( int    startIdx,
       prevFast = fma(fastBeta, prevFast, fastK * tempReal);
       prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
       spread = prevFast - prevSlow;
-      tempReal = fabs(tempReal);
+      bandScale = fabs(prevFast);
+      if( fabs(prevSlow) > bandScale )
+      {
+         bandScale = fabs(prevSlow);
+      }
+      bandScale = bandScale * periodScale;
       lineValue = 0.0;
-      if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
+      if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 )
       {
          lineValue = spread / prevATR * 100.0;
       }
@@ -426,9 +442,14 @@ TA_LIB_API TA_RetCode TA_MACDV( int    startIdx,
       prevFast = fma(fastBeta, prevFast, fastK * tempReal);
       prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
       spread = prevFast - prevSlow;
-      tempReal = fabs(tempReal);
+      bandScale = fabs(prevFast);
+      if( fabs(prevSlow) > bandScale )
+      {
+         bandScale = fabs(prevSlow);
+      }
+      bandScale = bandScale * periodScale;
       lineValue = 0.0;
-      if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
+      if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 )
       {
          lineValue = spread / prevATR * 100.0;
       }
@@ -468,9 +489,14 @@ TA_LIB_API TA_RetCode TA_MACDV( int    startIdx,
       prevFast = fma(fastBeta, prevFast, fastK * tempReal);
       prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
       spread = prevFast - prevSlow;
-      tempReal = fabs(tempReal);
+      bandScale = fabs(prevFast);
+      if( fabs(prevSlow) > bandScale )
+      {
+         bandScale = fabs(prevSlow);
+      }
+      bandScale = bandScale * periodScale;
       lineValue = 0.0;
-      if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
+      if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 )
       {
          lineValue = spread / prevATR * 100.0;
       }
@@ -527,6 +553,8 @@ TA_RetCode TA_S_MACDV( int    startIdx,
    double val3;
    double greatest;
    double spread;
+   double bandScale;
+   double periodScale;
    double tempCY;
    double tempLT;
    double tempHT;
@@ -601,6 +629,7 @@ TA_RetCode TA_S_MACDV( int    startIdx,
    }
    wBeta = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
    wAlpha = 1.0 - wBeta;
+   periodScale = (double)(optInSlowPeriod + 1);
    lookbackSignal = TA_EMA_Lookback(optInSignalPeriod);
    lookbackSlow = TA_EMA_Lookback(optInSlowPeriod);
    lookbackFast = TA_EMA_Lookback(optInFastPeriod);
@@ -686,9 +715,14 @@ TA_RetCode TA_S_MACDV( int    startIdx,
       today += 1;
    }
    spread = prevFast - prevSlow;
-   tempReal = fabs((double)inClose[lineIdx]);
+   bandScale = fabs(prevFast);
+   if( fabs(prevSlow) > bandScale )
+   {
+      bandScale = fabs(prevSlow);
+   }
+   bandScale = bandScale * periodScale;
    lineValue = 0.0;
-   if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
+   if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 )
    {
       lineValue = spread / prevATR * 100.0;
    }
@@ -716,9 +750,14 @@ TA_RetCode TA_S_MACDV( int    startIdx,
       prevFast = fma(fastBeta, prevFast, fastK * tempReal);
       prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
       spread = prevFast - prevSlow;
-      tempReal = fabs(tempReal);
+      bandScale = fabs(prevFast);
+      if( fabs(prevSlow) > bandScale )
+      {
+         bandScale = fabs(prevSlow);
+      }
+      bandScale = bandScale * periodScale;
       lineValue = 0.0;
-      if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
+      if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 )
       {
          lineValue = spread / prevATR * 100.0;
       }
@@ -747,9 +786,14 @@ TA_RetCode TA_S_MACDV( int    startIdx,
       prevFast = fma(fastBeta, prevFast, fastK * tempReal);
       prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
       spread = prevFast - prevSlow;
-      tempReal = fabs(tempReal);
+      bandScale = fabs(prevFast);
+      if( fabs(prevSlow) > bandScale )
+      {
+         bandScale = fabs(prevSlow);
+      }
+      bandScale = bandScale * periodScale;
       lineValue = 0.0;
-      if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
+      if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 )
       {
          lineValue = spread / prevATR * 100.0;
       }
@@ -787,9 +831,14 @@ TA_RetCode TA_S_MACDV( int    startIdx,
       prevFast = fma(fastBeta, prevFast, fastK * tempReal);
       prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
       spread = prevFast - prevSlow;
-      tempReal = fabs(tempReal);
+      bandScale = fabs(prevFast);
+      if( fabs(prevSlow) > bandScale )
+      {
+         bandScale = fabs(prevSlow);
+      }
+      bandScale = bandScale * periodScale;
       lineValue = 0.0;
-      if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
+      if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 )
       {
          lineValue = spread / prevATR * 100.0;
       }
@@ -837,6 +886,7 @@ struct TA_MACDV_Stream {
    double signalBeta;
    double wAlpha;
    double wBeta;
+   double periodScale;
    double pad_1;
    double lag1_inClose;
 };
@@ -850,6 +900,7 @@ static TA_FMA_STEP_INLINE void TA_MACDV_StepImpl( struct TA_MACDV_Stream *sp, do
    double val3;
    double greatest;
    double spread;
+   double bandScale;
    double tempCY;
    double tempLT;
    double tempHT;
@@ -876,9 +927,14 @@ static TA_FMA_STEP_INLINE void TA_MACDV_StepImpl( struct TA_MACDV_Stream *sp, do
    sp->prevFast = fma(sp->fastBeta, sp->prevFast, sp->fastK * tempReal);
    sp->prevSlow = fma(sp->slowBeta, sp->prevSlow, sp->slowK * tempReal);
    spread = sp->prevFast - sp->prevSlow;
-   tempReal = fabs(tempReal);
+   bandScale = fabs(sp->prevFast);
+   if( fabs(sp->prevSlow) > bandScale )
+   {
+      bandScale = fabs(sp->prevSlow);
+   }
+   bandScale = bandScale * sp->periodScale;
    lineValue = 0.0;
-   if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(sp->prevATR, tempReal) )
+   if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(sp->prevATR, bandScale) && sp->prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 )
    {
       lineValue = spread / sp->prevATR * 100.0;
    }
@@ -950,6 +1006,8 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_MACDV_OpenImpl( struct TA_MACDV_Stream *
       double val3;
       double greatest;
       double spread;
+      double bandScale;
+      double periodScale = 0.0;
       double tempCY;
       double tempLT;
       double tempHT;
@@ -1002,6 +1060,8 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_MACDV_OpenImpl( struct TA_MACDV_Stream *
        */
       wBeta = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
       wAlpha = 1.0 - wBeta;
+      /* An EMA of a constant settles up to (period+1)/4 ulps away from it. */
+      periodScale = (double)(optInSlowPeriod + 1);
       lookbackSignal = TA_EMA_Lookback(optInSignalPeriod);
       lookbackSlow = TA_EMA_Lookback(optInSlowPeriod);
       lookbackFast = TA_EMA_Lookback(optInFastPeriod);
@@ -1125,15 +1185,22 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_MACDV_OpenImpl( struct TA_MACDV_Stream *
          today += 1;
       }
       /* Without price movement the line answers its neutral point, 0.0 (#570).
-       * Both tests are relative to the price: a Wilder average entered before a
-       * flat run only decays toward zero, sticking at a subnormal, while the
-       * spread keeps a residue of a few ulps of the price, so an exact test lets
-       * their quotient grow without bound and overflow.
+       * In a flat run the Wilder average only decays, to a subnormal floor,
+       * while the spread stalls at the EMAs' rounding residue, so an exact test
+       * lets their quotient grow until it overflows. Both are therefore tested
+       * against the EMAs' own magnitude times the residue's period factor: that
+       * also bounds |line| for any finite input, which a scale taken from the
+       * close cannot, since a close may lie outside its bar and be zero.
        */
       spread = prevFast - prevSlow;
-      tempReal = fabs(inClose[lineIdx]);
+      bandScale = fabs(prevFast);
+      if( fabs(prevSlow) > bandScale )
+      {
+         bandScale = fabs(prevSlow);
+      }
+      bandScale = bandScale * periodScale;
       lineValue = 0.0;
-      if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
+      if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 )
       {
          lineValue = spread / prevATR * 100.0;
       }
@@ -1165,9 +1232,14 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_MACDV_OpenImpl( struct TA_MACDV_Stream *
          prevFast = fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = fabs(tempReal);
+         bandScale = fabs(prevFast);
+         if( fabs(prevSlow) > bandScale )
+         {
+            bandScale = fabs(prevSlow);
+         }
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
+         if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 )
          {
             lineValue = spread / prevATR * 100.0;
          }
@@ -1200,9 +1272,14 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_MACDV_OpenImpl( struct TA_MACDV_Stream *
          prevFast = fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = fabs(tempReal);
+         bandScale = fabs(prevFast);
+         if( fabs(prevSlow) > bandScale )
+         {
+            bandScale = fabs(prevSlow);
+         }
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
+         if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 )
          {
             lineValue = spread / prevATR * 100.0;
          }
@@ -1242,9 +1319,14 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_MACDV_OpenImpl( struct TA_MACDV_Stream *
          prevFast = fma(fastBeta, prevFast, fastK * tempReal);
          prevSlow = fma(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = fabs(tempReal);
+         bandScale = fabs(prevFast);
+         if( fabs(prevSlow) > bandScale )
+         {
+            bandScale = fabs(prevSlow);
+         }
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
+         if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 )
          {
             lineValue = spread / prevATR * 100.0;
          }
@@ -1284,6 +1366,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_MACDV_OpenImpl( struct TA_MACDV_Stream *
       sp->signalBeta = signalBeta;
       sp->wAlpha = wAlpha;
       sp->wBeta = wBeta;
+      sp->periodScale = periodScale;
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
@@ -1392,6 +1475,7 @@ TA_LIB_API TA_RetCode TA_MACDV_Peek( const TA_MACDV_Stream *stream, double inHig
    double val3;
    double greatest;
    double spread;
+   double bandScale;
    double tempCY;
    double tempLT;
    double tempHT;
@@ -1426,9 +1510,14 @@ TA_LIB_API TA_RetCode TA_MACDV_Peek( const TA_MACDV_Stream *stream, double inHig
    prevFast = fma(sp->fastBeta, prevFast, sp->fastK * tempReal);
    prevSlow = fma(sp->slowBeta, prevSlow, sp->slowK * tempReal);
    spread = prevFast - prevSlow;
-   tempReal = fabs(tempReal);
+   bandScale = fabs(prevFast);
+   if( fabs(prevSlow) > bandScale )
+   {
+      bandScale = fabs(prevSlow);
+   }
+   bandScale = bandScale * sp->periodScale;
    lineValue = 0.0;
-   if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
+   if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 )
    {
       lineValue = spread / prevATR * 100.0;
    }

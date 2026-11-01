@@ -5351,6 +5351,7 @@ static int sv_steq_TA_MACDV( const struct TA_MACDV_Stream *a, const struct TA_MA
    if( sv_xtier_ne(a->signalBeta, b->signalBeta, z) ) { *w = "signalBeta"; return 1; }
    if( sv_xtier_ne(a->wAlpha, b->wAlpha, z) ) { *w = "wAlpha"; return 1; }
    if( sv_xtier_ne(a->wBeta, b->wBeta, z) ) { *w = "wBeta"; return 1; }
+   if( sv_xtier_ne(a->periodScale, b->periodScale, z) ) { *w = "periodScale"; return 1; }
    if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
    return 0;
 }

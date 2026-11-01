@@ -28,6 +28,7 @@
  *        And a long flat run every leg was entered before, where the ATR
  *        only decays toward zero: the line must settle on 0.0, never grow.
  *        And the corpus scaled by powers of two: the outputs must not move.
+ *        And closes outside their bars, under EMAs far above a tiny ATR.
  *     4. SIGNAL PERIOD 1: the signal is the line, the histogram zero.
  *     5. ALIASING of each output over each input.
  *     6. The generic start/end range sweep, both unstable ids.
@@ -38,6 +39,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
@@ -72,6 +74,7 @@ static ErrorNumber test_macdv_lookback ( const TA_History *history );
 static ErrorNumber test_macdv_flat     ( const TA_History *history );
 static ErrorNumber test_macdv_long_flat( const TA_History *history );
 static ErrorNumber test_macdv_scale    ( const TA_History *history );
+static ErrorNumber test_macdv_odd_bars ( void );
 static ErrorNumber test_macdv_signal1  ( const TA_History *history );
 static ErrorNumber test_macdv_aliasing ( const TA_History *history );
 static ErrorNumber test_macdv_range    ( const TA_History *history );
@@ -91,13 +94,16 @@ static void mv_clear_unst( void )
 
 /* The line as a caller composing TA_EMA and TA_ATR computes it, with the
  * neutral point MACDV answers where the spread or the ATR is zero at the
- * price's rounding scale.
+ * EMAs' rounding scale, or the ATR is subnormal. slow is after the swap.
  */
-static TA_Real mv_line( TA_Real spread, TA_Real atr, TA_Real close )
+static TA_Real mv_line( TA_Real emaF, TA_Real emaS, TA_Real atr, int slow )
 {
-   TA_Real scale = fabs( close );
+   TA_Real spread = emaF - emaS;
+   TA_Real scale = fabs( emaF ) > fabs( emaS ) ? fabs( emaF ) : fabs( emaS );
 
-   if( TA_IS_ZERO_SCALED(spread, scale) || TA_IS_ZERO_SCALED(atr, scale) )
+   scale = scale * (double)(slow + 1);
+   if( TA_IS_ZERO_SCALED(spread, scale) || TA_IS_ZERO_SCALED(atr, scale)
+       || atr < DBL_MIN )
       return 0.0;
    return spread / atr * 100.0;
 }
@@ -131,6 +137,10 @@ ErrorNumber test_func_macdv( TA_History *history )
       return retValue;
 
    retValue = test_macdv_scale( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_macdv_odd_bars();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -180,7 +190,7 @@ static int mv_reference( const TA_Real *high, const TA_Real *low,
 
    nLine = n1;
    for( i = 0; i < nLine; i++ )
-      refLine[i] = mv_line( emaF[i] - emaS[i], atr[i], close[lineIdx+i] );
+      refLine[i] = mv_line( emaF[i], emaS[i], atr[i], slow );
 
    if( TA_EMA( startIdx-lineIdx, nLine-1, refLine, signal, &b4, &n4, refS )
           != TA_SUCCESS
@@ -294,7 +304,8 @@ static ErrorNumber mv_macd_identity( const TA_History *history )
 {
    static TA_Real gotL[MV_CAP], gotS[MV_CAP], gotH[MV_CAP];
    static TA_Real macd[MV_CAP], msig[MV_CAP], mhist[MV_CAP], atr[MV_CAP];
-   TA_Integer begIdx, nbElement, b2, n2, b3, n3;
+   static TA_Real emaF[MV_CAP], emaS[MV_CAP];
+   TA_Integer begIdx, nbElement, b2, n2, b3, n3, b4, n4;
    int nb = (int)history->nbBars;
    int c, i, t;
 
@@ -319,7 +330,10 @@ static ErrorNumber mv_macd_identity( const TA_History *history )
                    &b2, &n2, macd, msig, mhist ) != TA_SUCCESS
           || TA_ATR( a, nb-1, history->high, history->low, history->close,
                      slow, &b3, &n3, atr ) != TA_SUCCESS
-          || b2 != a || b3 != a || n2 != n3 || n2 != nbElement + (startIdx-a) )
+          || TA_EMA( a, nb-1, history->close, fast, &b4, &n4, emaF ) != TA_SUCCESS
+          || TA_EMA( a, nb-1, history->close, slow, &b4, &n4, emaS ) != TA_SUCCESS
+          || b2 != a || b3 != a || b4 != a || n2 != n3 || n4 != n3
+          || n2 != nbElement + (startIdx-a) )
       {
          printf( "Fail: TA_MACDV vs TA_MACD %d/%d/1 and TA_ATR %d from %d: "
                  "shape (%d,%d) (%d,%d)\n", fast, slow, slow, a, (int)b2,
@@ -330,13 +344,15 @@ static ErrorNumber mv_macd_identity( const TA_History *history )
       for( i = 0; i < nbElement; i++ )
       {
          int j = i + (startIdx - a);
-         TA_Real want = mv_line( macd[j], atr[j], history->close[a+j] );
+         TA_Real spread = emaF[j] - emaS[j];
+         TA_Real want = mv_line( emaF[j], emaS[j], atr[j], slow );
 
-         if( memcmp( &gotL[i], &want, sizeof(TA_Real) ) != 0 )
+         if( memcmp( &macd[j], &spread, sizeof(TA_Real) ) != 0
+             || memcmp( &gotL[i], &want, sizeof(TA_Real) ) != 0 )
          {
-            printf( "Fail: TA_MACDV %d/%d/%d at out[%d]: %.17g, TA_MACD over "
-                    "TA_ATR %.17g\n", mvCfg[c].fast, mvCfg[c].slow, signal, i,
-                    gotL[i], want );
+            printf( "Fail: TA_MACDV %d/%d/%d at out[%d]: %.17g, TA_MACD %.17g "
+                    "over TA_ATR %.17g\n", mvCfg[c].fast, mvCfg[c].slow, signal,
+                    i, gotL[i], macd[j], want );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
       }
@@ -629,43 +645,58 @@ static ErrorNumber test_macdv_scale( const TA_History *history )
 }
 
 /* (3b) The corpus, then a flat run every leg was entered before. The ATR
- * never reaches exactly zero there, and with an exact test the spread's
- * rounding residue over it overflows. MV_LONG_SETTLE bars into the run the
- * spread is many orders below 1e-14 of the price on any FMA path while the
- * ATR is still above it, so from there every line value must be +0.0, which
- * only the test on the spread gives. Every output must stay finite. Routed:
- * the sweep sends no such series.
+ * never reaches exactly zero there and the spread stalls at the EMAs'
+ * rounding residue, so with an exact test their quotient overflows. From
+ * `settle` bars into the run every line value must be +0.0, and every output
+ * must stay finite. Each case is decided by one test alone:
+ *   - slow 26: the spread falls inside the band while the ATR is still
+ *     orders above it (measured: zero from 352 bars on);
+ *   - slow 300: the same, but the residue is wider than a band without the
+ *     period factor (zero from 3739 bars on);
+ *   - price 0: no scale is left, only the ATR's subnormal floor decides
+ *     (zero from 18113 bars on; earlier on a host that flushes subnormals).
+ * Routed where the request fits server_verify's 256 KB buffer, about 5000
+ * bars of three inputs: the sweep sends no such series.
  */
-#define MV_LONG_FLAT   3000
-#define MV_LONG_SETTLE 600
+typedef struct { double level; int slow; int flat; int settle; } MvLongFlat;
+
+static const MvLongFlat mvLongFlat[] = {
+   { 130.0,  26,  3000,   600 },
+   { 130.7,  26,  3000,   600 },
+   { 130.7, 300,  6000,  5000 },
+   {   0.0,  26, 20000, 19000 }
+};
+#define MV_LONG_MAX (MV_CAP + 20000)
+#define MV_SV_MAX_BARS 5000
 
 static ErrorNumber test_macdv_long_flat( const TA_History *history )
 {
-   static TA_Real high[MV_CAP+MV_LONG_FLAT], low[MV_CAP+MV_LONG_FLAT], close[MV_CAP+MV_LONG_FLAT];
-   static TA_Real gotL[MV_CAP+MV_LONG_FLAT], gotS[MV_CAP+MV_LONG_FLAT], gotH[MV_CAP+MV_LONG_FLAT];
-   static const double level[] = { 130.0, 130.7 };
+   static TA_Real high[MV_LONG_MAX], low[MV_LONG_MAX], close[MV_LONG_MAX];
+   static TA_Real gotL[MV_LONG_MAX], gotS[MV_LONG_MAX], gotH[MV_LONG_MAX];
    const TA_Real zero = 0.0;
    TA_RetCode rc;
    TA_Integer begIdx, nbElement;
    int nb = (int)history->nbBars;
-   int n = nb + MV_LONG_FLAT;
    int v, i, nbSettled;
 
-   for( v = 0; v < (int)(sizeof(level)/sizeof(level[0])); v++ )
+   for( v = 0; v < (int)(sizeof(mvLongFlat)/sizeof(mvLongFlat[0])); v++ )
    {
+      const MvLongFlat *k = &mvLongFlat[v];
+      int n = nb + k->flat;
+
       for( i = 0; i < n; i++ )
       {
-         high[i]  = i < nb ? history->high[i]  : level[v];
-         low[i]   = i < nb ? history->low[i]   : level[v];
-         close[i] = i < nb ? history->close[i] : level[v];
+         high[i]  = i < nb ? history->high[i]  : k->level;
+         low[i]   = i < nb ? history->low[i]   : k->level;
+         close[i] = i < nb ? history->close[i] : k->level;
       }
 
-      rc = TA_MACDV( 0, n-1, high, low, close, 12, 26, 9,
+      rc = TA_MACDV( 0, n-1, high, low, close, 12, k->slow, 9,
                      &begIdx, &nbElement, gotL, gotS, gotH );
       if( rc != TA_SUCCESS || nbElement != n - begIdx )
       {
-         printf( "Fail: TA_MACDV long flat %g: rc=%d shape (%d,%d)\n",
-                 level[v], (int)rc, (int)begIdx, (int)nbElement );
+         printf( "Fail: TA_MACDV long flat %g 12/%d/9: rc=%d shape (%d,%d)\n",
+                 k->level, k->slow, (int)rc, (int)begIdx, (int)nbElement );
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
       }
 
@@ -674,34 +705,107 @@ static ErrorNumber test_macdv_long_flat( const TA_History *history )
       {
          if( !isfinite( gotL[i] ) || !isfinite( gotS[i] ) || !isfinite( gotH[i] ) )
          {
-            printf( "Fail: TA_MACDV long flat %g at bar %d: line %.17g signal "
-                    "%.17g hist %.17g\n", level[v], begIdx+i, gotL[i],
-                    gotS[i], gotH[i] );
+            printf( "Fail: TA_MACDV long flat %g 12/%d/9 at bar %d: line %.17g "
+                    "signal %.17g hist %.17g\n", k->level, k->slow, begIdx+i,
+                    gotL[i], gotS[i], gotH[i] );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
-         if( begIdx+i >= nb + MV_LONG_SETTLE )
+         if( begIdx+i >= nb + k->settle )
          {
             if( memcmp( &gotL[i], &zero, sizeof(TA_Real) ) != 0 )
             {
-               printf( "Fail: TA_MACDV long flat %g at bar %d, %d bars into "
-                       "the run: line %.17g, expected +0.0\n", level[v],
-                       begIdx+i, begIdx+i-nb, gotL[i] );
+               printf( "Fail: TA_MACDV long flat %g 12/%d/9 at bar %d, %d bars "
+                       "into the run: line %.17g, expected +0.0\n", k->level,
+                       k->slow, begIdx+i, begIdx+i-nb, gotL[i] );
                return TA_TESTUTIL_TFRR_BAD_CALCULATION;
             }
             nbSettled++;
          }
       }
-      if( nbSettled != MV_LONG_FLAT - MV_LONG_SETTLE )
+      if( nbSettled != k->flat - k->settle )
       {
-         printf( "Fail: TA_MACDV long flat %g: %d settled bars compared, "
-                 "expected %d\n", level[v], nbSettled, MV_LONG_FLAT - MV_LONG_SETTLE );
+         printf( "Fail: TA_MACDV long flat %g 12/%d/9: %d settled bars "
+                 "compared, expected %d\n", k->level, k->slow, nbSettled,
+                 k->flat - k->settle );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+
+      if( server_verify_active() && n <= MV_SV_MAX_BARS )
+      {
+         double optIn[3];
+         ErrorNumber e;
+
+         optIn[0] = 12.0;
+         optIn[1] = (double)k->slow;
+         optIn[2] = 9.0;
+         e = server_verify( "MACDV", 0, n-1, n, rc, begIdx, nbElement,
+                            (const TA_Real*[]){ high, low, close, NULL },
+                            optIn, 3,
+                            (const TA_Real*[]){ gotL, gotS, gotH, NULL },
+                            NULL );
+         if( e != TA_TEST_PASS )
+            return e;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (3d) A close outside its own bar, which no layer rejects. Here every True
+ * Range but one is zero, so the ATR is a subnormal-sized remnant of 1e-300
+ * under EMAs of 1e30, and the last close is set to values that would make a
+ * scale taken from the close vanish. Every output must be finite and every
+ * line value +0.0.
+ */
+#define MV_ODD_N 41
+
+static ErrorNumber test_macdv_odd_bars( void )
+{
+   static TA_Real high[MV_ODD_N], low[MV_ODD_N], close[MV_ODD_N];
+   static TA_Real gotL[MV_ODD_N], gotS[MV_ODD_N], gotH[MV_ODD_N];
+   static const double lastClose[] = { 0.0, 1e-290, -1e-290, 1.0 };
+   const TA_Real zero = 0.0;
+   TA_RetCode rc;
+   TA_Integer begIdx, nbElement;
+   int v, i;
+
+   for( v = 0; v < (int)(sizeof(lastClose)/sizeof(lastClose[0])); v++ )
+   {
+      for( i = 0; i < MV_ODD_N; i++ )
+      {
+         close[i] = i < 2 ? 0.0 : 1e30;
+         high[i]  = i < 2 ? 0.0 : close[i-1];
+         low[i]   = high[i];
+      }
+      high[1] = 1e-300;
+      close[MV_ODD_N-1] = lastClose[v];
+
+      rc = TA_MACDV( 0, MV_ODD_N-1, high, low, close, 12, 26, 9,
+                     &begIdx, &nbElement, gotL, gotS, gotH );
+      if( rc != TA_SUCCESS || nbElement <= 0 )
+      {
+         printf( "Fail: TA_MACDV odd bars, last close %g: rc=%d nbElement=%d\n",
+                 lastClose[v], (int)rc, (int)nbElement );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+
+      for( i = 0; i < nbElement; i++ )
+      {
+         if( !isfinite( gotS[i] ) || !isfinite( gotH[i] )
+             || memcmp( &gotL[i], &zero, sizeof(TA_Real) ) != 0 )
+         {
+            printf( "Fail: TA_MACDV odd bars, last close %g, at out[%d]: line "
+                    "%.17g signal %.17g hist %.17g\n", lastClose[v], i,
+                    gotL[i], gotS[i], gotH[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
       }
 
       if( server_verify_active() )
       {
          double optIn[3] = { 12.0, 26.0, 9.0 };
-         ErrorNumber e = server_verify( "MACDV", 0, n-1, n, rc, begIdx, nbElement,
+         ErrorNumber e = server_verify( "MACDV", 0, MV_ODD_N-1, MV_ODD_N,
+                                        rc, begIdx, nbElement,
                                         (const TA_Real*[]){ high, low, close, NULL },
                                         optIn, 3,
                                         (const TA_Real*[]){ gotL, gotS, gotH, NULL },

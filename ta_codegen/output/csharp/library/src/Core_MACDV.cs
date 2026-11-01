@@ -175,6 +175,8 @@ public partial class Core
       double val3 = 0;
       double greatest = 0;
       double spread = 0;
+      double bandScale = 0;
+      double periodScale = 0;
       double tempCY = 0;
       double tempLT = 0;
       double tempHT = 0;
@@ -250,6 +252,8 @@ public partial class Core
        */
       wBeta = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
       wAlpha = 1.0 - wBeta;
+      /* An EMA of a constant settles up to (period+1)/4 ulps away from it. */
+      periodScale = (double)(optInSlowPeriod + 1);
       lookbackSignal = EmaLookback(optInSignalPeriod);
       lookbackSlow = EmaLookback(optInSlowPeriod);
       lookbackFast = EmaLookback(optInFastPeriod);
@@ -353,15 +357,19 @@ public partial class Core
          today += 1;
       }
       /* Without price movement the line answers its neutral point, 0.0 (#570).
-       * Both tests are relative to the price: a Wilder average entered before a
-       * flat run only decays toward zero, sticking at a subnormal, while the
-       * spread keeps a residue of a few ulps of the price, so an exact test lets
-       * their quotient grow without bound and overflow.
+       * In a flat run the Wilder average only decays, to a subnormal floor,
+       * while the spread stalls at the EMAs' rounding residue, so an exact test
+       * lets their quotient grow until it overflows. Both are therefore tested
+       * against the EMAs' own magnitude times the residue's period factor: that
+       * also bounds |line| for any finite input, which a scale taken from the
+       * close cannot, since a close may lie outside its bar and be zero.
        */
       spread = prevFast - prevSlow;
-      tempReal = Math.Abs(inClose[lineIdx]);
+      bandScale = Math.Abs(prevFast);
+      bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
+      bandScale = bandScale * periodScale;
       lineValue = 0.0;
-      if( !(Math.Abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+      if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
          lineValue = spread / prevATR * 100.0;
       }
       /* Seed the signal EMA with a simple average of the first 'signal period'
@@ -385,9 +393,11 @@ public partial class Core
          prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.Abs(tempReal);
+         bandScale = Math.Abs(prevFast);
+         bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.Abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          prevSignal += lineValue;
@@ -412,9 +422,11 @@ public partial class Core
          prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.Abs(tempReal);
+         bandScale = Math.Abs(prevFast);
+         bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.Abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
@@ -444,9 +456,11 @@ public partial class Core
          prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.Abs(tempReal);
+         bandScale = Math.Abs(prevFast);
+         bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.Abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
@@ -500,6 +514,8 @@ public partial class Core
       double val3 = 0;
       double greatest = 0;
       double spread = 0;
+      double bandScale = 0;
+      double periodScale = 0;
       double tempCY = 0;
       double tempLT = 0;
       double tempHT = 0;
@@ -562,6 +578,7 @@ public partial class Core
       }
       wBeta = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
       wAlpha = 1.0 - wBeta;
+      periodScale = (double)(optInSlowPeriod + 1);
       lookbackSignal = EmaLookback(optInSignalPeriod);
       lookbackSlow = EmaLookback(optInSlowPeriod);
       lookbackFast = EmaLookback(optInFastPeriod);
@@ -627,9 +644,11 @@ public partial class Core
          today += 1;
       }
       spread = prevFast - prevSlow;
-      tempReal = Math.Abs((double)inClose[lineIdx]);
+      bandScale = Math.Abs(prevFast);
+      bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
+      bandScale = bandScale * periodScale;
       lineValue = 0.0;
-      if( !(Math.Abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+      if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
          lineValue = spread / prevATR * 100.0;
       }
       prevSignal = 0.0;
@@ -649,9 +668,11 @@ public partial class Core
          prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.Abs(tempReal);
+         bandScale = Math.Abs(prevFast);
+         bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.Abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          prevSignal += lineValue;
@@ -672,9 +693,11 @@ public partial class Core
          prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.Abs(tempReal);
+         bandScale = Math.Abs(prevFast);
+         bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.Abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
@@ -702,9 +725,11 @@ public partial class Core
          prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.Abs(tempReal);
+         bandScale = Math.Abs(prevFast);
+         bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.Abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
@@ -739,7 +764,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/macdv">ta-lib.org/functions/macdv</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>The Average True Range is Wilder's, over the slow period: the publication's <c>ATR(26)</c> beside the 26-bar slow EMA, so one parameter sets both. Without price movement the line is 0, its neutral point.</description></item>
+   /// <item><description>The Average True Range is Wilder's, over the slow period: the publication's <c>ATR(26)</c> beside the 26-bar slow EMA, so one parameter sets both. Without price movement the line falls to 0, its neutral point.</description></item>
    /// <item><description>The two price EMAs and the Average True Range each warm up as when calling <c>EMA</c> and <c>ATR</c> directly, so a caller who wants the line converged sets <c>TA_FUNC_UNST_EMA</c> and <c>TA_FUNC_UNST_ATR</c>, as for those functions.</description></item>
    /// <item><description>If the slow period is set smaller than the fast period, the two are swapped so the slow EMA is always the longer one, as <c>MACD</c> does; the ATR period follows the slow period after the swap.</description></item>
    /// <item><description>A signal period of 1 disables signal-line smoothing: the signal equals the MACD-V line and the histogram is zero.</description></item>
@@ -852,7 +877,7 @@ public partial class Core
    /// <see href="https://ta-lib.org/functions/macdv">ta-lib.org/functions/macdv</see>.
    /// </para>
    /// <list type="bullet">
-   /// <item><description>The Average True Range is Wilder's, over the slow period: the publication's <c>ATR(26)</c> beside the 26-bar slow EMA, so one parameter sets both. Without price movement the line is 0, its neutral point.</description></item>
+   /// <item><description>The Average True Range is Wilder's, over the slow period: the publication's <c>ATR(26)</c> beside the 26-bar slow EMA, so one parameter sets both. Without price movement the line falls to 0, its neutral point.</description></item>
    /// <item><description>The two price EMAs and the Average True Range each warm up as when calling <c>EMA</c> and <c>ATR</c> directly, so a caller who wants the line converged sets <c>TA_FUNC_UNST_EMA</c> and <c>TA_FUNC_UNST_ATR</c>, as for those functions.</description></item>
    /// <item><description>If the slow period is set smaller than the fast period, the two are swapped so the slow EMA is always the longer one, as <c>MACD</c> does; the ATR period follows the slow period after the swap.</description></item>
    /// <item><description>A signal period of 1 disables signal-line smoothing: the signal equals the MACD-V line and the histogram is zero.</description></item>
@@ -1006,6 +1031,7 @@ public partial class Core
       internal double signalBeta;
       internal double wAlpha;
       internal double wBeta;
+      internal double periodScale;
       internal double lag1_inClose;
       internal double cur_outMACDV;
       internal double cur_outMACDVSignal;
@@ -1066,6 +1092,7 @@ public partial class Core
          this.signalBeta = other.signalBeta;
          this.wAlpha = other.wAlpha;
          this.wBeta = other.wBeta;
+         this.periodScale = other.periodScale;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outMACDV = other.cur_outMACDV;
          this.cur_outMACDVSignal = other.cur_outMACDVSignal;
@@ -1128,6 +1155,7 @@ public partial class Core
          double val3 = 0.0;
          double greatest = 0.0;
          double spread = 0.0;
+         double bandScale = 0.0;
          double tempCY = 0.0;
          double tempLT = 0.0;
          double tempHT = 0.0;
@@ -1152,9 +1180,11 @@ public partial class Core
          prevFast = Math.FusedMultiplyAdd(sp.fastBeta, prevFast, sp.fastK * tempReal);
          prevSlow = Math.FusedMultiplyAdd(sp.slowBeta, prevSlow, sp.slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.Abs(tempReal);
+         bandScale = Math.Abs(prevFast);
+         bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
+         bandScale = bandScale * sp.periodScale;
          lineValue = 0.0;
-         if( !(Math.Abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          if( sp.optInSignalPeriod == 1 ) {
@@ -1193,6 +1223,7 @@ public partial class Core
       double val3 = 0.0;
       double greatest = 0.0;
       double spread = 0.0;
+      double bandScale = 0.0;
       double tempCY = 0.0;
       double tempLT = 0.0;
       double tempHT = 0.0;
@@ -1210,9 +1241,11 @@ public partial class Core
       sp.prevFast = Math.FusedMultiplyAdd(sp.fastBeta, sp.prevFast, sp.fastK * tempReal);
       sp.prevSlow = Math.FusedMultiplyAdd(sp.slowBeta, sp.prevSlow, sp.slowK * tempReal);
       spread = sp.prevFast - sp.prevSlow;
-      tempReal = Math.Abs(tempReal);
+      bandScale = Math.Abs(sp.prevFast);
+      bandScale = MaxGt(Math.Abs(sp.prevSlow), bandScale);
+      bandScale = bandScale * sp.periodScale;
       lineValue = 0.0;
-      if( !(Math.Abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.Abs(sp.prevATR) <= 0.00000000000001 * (tempReal)) ) {
+      if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(sp.prevATR) <= 0.00000000000001 * (bandScale)) && sp.prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
          lineValue = spread / sp.prevATR * 100.0;
       }
       if( sp.optInSignalPeriod == 1 ) {
@@ -1249,6 +1282,8 @@ public partial class Core
       double val3 = 0;
       double greatest = 0;
       double spread = 0;
+      double bandScale = 0;
+      double periodScale = 0;
       double tempCY = 0;
       double tempLT = 0;
       double tempHT = 0;
@@ -1328,6 +1363,8 @@ public partial class Core
        */
       wBeta = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
       wAlpha = 1.0 - wBeta;
+      /* An EMA of a constant settles up to (period+1)/4 ulps away from it. */
+      periodScale = (double)(optInSlowPeriod + 1);
       lookbackSignal = EmaLookback(optInSignalPeriod);
       lookbackSlow = EmaLookback(optInSlowPeriod);
       lookbackFast = EmaLookback(optInFastPeriod);
@@ -1431,15 +1468,19 @@ public partial class Core
          today += 1;
       }
       /* Without price movement the line answers its neutral point, 0.0 (#570).
-       * Both tests are relative to the price: a Wilder average entered before a
-       * flat run only decays toward zero, sticking at a subnormal, while the
-       * spread keeps a residue of a few ulps of the price, so an exact test lets
-       * their quotient grow without bound and overflow.
+       * In a flat run the Wilder average only decays, to a subnormal floor,
+       * while the spread stalls at the EMAs' rounding residue, so an exact test
+       * lets their quotient grow until it overflows. Both are therefore tested
+       * against the EMAs' own magnitude times the residue's period factor: that
+       * also bounds |line| for any finite input, which a scale taken from the
+       * close cannot, since a close may lie outside its bar and be zero.
        */
       spread = prevFast - prevSlow;
-      tempReal = Math.Abs(inClose[lineIdx]);
+      bandScale = Math.Abs(prevFast);
+      bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
+      bandScale = bandScale * periodScale;
       lineValue = 0.0;
-      if( !(Math.Abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+      if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
          lineValue = spread / prevATR * 100.0;
       }
       /* Seed the signal EMA with a simple average of the first 'signal period'
@@ -1463,9 +1504,11 @@ public partial class Core
          prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.Abs(tempReal);
+         bandScale = Math.Abs(prevFast);
+         bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.Abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          prevSignal += lineValue;
@@ -1490,9 +1533,11 @@ public partial class Core
          prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.Abs(tempReal);
+         bandScale = Math.Abs(prevFast);
+         bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.Abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
@@ -1522,9 +1567,11 @@ public partial class Core
          prevFast = Math.FusedMultiplyAdd(fastBeta, prevFast, fastK * tempReal);
          prevSlow = Math.FusedMultiplyAdd(slowBeta, prevSlow, slowK * tempReal);
          spread = prevFast - prevSlow;
-         tempReal = Math.Abs(tempReal);
+         bandScale = Math.Abs(prevFast);
+         bandScale = MaxGt(Math.Abs(prevSlow), bandScale);
+         bandScale = bandScale * periodScale;
          lineValue = 0.0;
-         if( !(Math.Abs(spread) <= 0.00000000000001 * (tempReal)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (tempReal)) ) {
+         if( !(Math.Abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.Abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
             lineValue = spread / prevATR * 100.0;
          }
          if( optInSignalPeriod == 1 ) {
@@ -1557,6 +1604,7 @@ public partial class Core
       sp.signalBeta = signalBeta;
       sp.wAlpha = wAlpha;
       sp.wBeta = wBeta;
+      sp.periodScale = periodScale;
       sp.lag1_inClose = inClose[historyLen - 1];
       sp.cur_outMACDV = outMACDV[(outNBElement - 1) * outStride];
       sp.cur_outMACDVSignal = outMACDVSignal[(outNBElement - 1) * outStride];

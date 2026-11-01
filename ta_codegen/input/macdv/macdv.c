@@ -57,7 +57,7 @@ TA_RetCode macdv(int startIdx, int endIdx,
    double slowK, fastK, signalK;
    double slowBeta, fastBeta, signalBeta;
    double wAlpha, wBeta, periodTotal;
-   double val2, val3, greatest, spread;
+   double val2, val3, greatest, spread, bandScale, periodScale;
    double tempCY, tempLT, tempHT;
    int i, today, outIdx, tempInteger;
    int lookbackTotal, lookbackSignal, lookbackSlow, lookbackFast, lookbackATR;
@@ -97,6 +97,9 @@ TA_RetCode macdv(int startIdx, int endIdx,
     */
    wBeta  = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
    wAlpha = 1.0 - wBeta;
+
+   /* An EMA of a constant settles up to (period+1)/4 ulps away from it. */
+   periodScale = (double)(optInSlowPeriod + 1);
 
    lookbackSignal = ema_lookback( optInSignalPeriod );
    lookbackSlow   = ema_lookback( optInSlowPeriod );
@@ -219,16 +222,22 @@ TA_RetCode macdv(int startIdx, int endIdx,
    }
 
    /* Without price movement the line answers its neutral point, 0.0 (#570).
-    * Both tests are relative to the price: a Wilder average entered before a
-    * flat run only decays toward zero, sticking at a subnormal, while the
-    * spread keeps a residue of a few ulps of the price, so an exact test lets
-    * their quotient grow without bound and overflow.
+    * In a flat run the Wilder average only decays, to a subnormal floor,
+    * while the spread stalls at the EMAs' rounding residue, so an exact test
+    * lets their quotient grow until it overflows. Both are therefore tested
+    * against the EMAs' own magnitude times the residue's period factor: that
+    * also bounds |line| for any finite input, which a scale taken from the
+    * close cannot, since a close may lie outside its bar and be zero.
     */
    spread = prevFast - prevSlow;
-   tempReal = fabs( inClose[lineIdx] );
+   bandScale = fabs( prevFast );
+   if( fabs( prevSlow ) > bandScale )
+      bandScale = fabs( prevSlow );
+   bandScale = bandScale * periodScale;
    lineValue = 0.0;
-   if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
-      lineValue = spread / prevATR * 100.0;
+   if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale)
+      && prevATR >= 2.2250738585072014e-308 )
+   lineValue = spread / prevATR * 100.0;
 
    /* Seed the signal EMA with a simple average of the first 'signal period'
     * line values, accumulated as they are produced.
@@ -256,10 +265,14 @@ TA_RetCode macdv(int startIdx, int endIdx,
       prevFast = fastK * tempReal + fastBeta * prevFast;
       prevSlow = slowK * tempReal + slowBeta * prevSlow;
       spread = prevFast - prevSlow;
-      tempReal = fabs( tempReal );
+      bandScale = fabs( prevFast );
+      if( fabs( prevSlow ) > bandScale )
+         bandScale = fabs( prevSlow );
+      bandScale = bandScale * periodScale;
       lineValue = 0.0;
-      if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
-         lineValue = spread / prevATR * 100.0;
+      if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale)
+         && prevATR >= 2.2250738585072014e-308 )
+      lineValue = spread / prevATR * 100.0;
       prevSignal += lineValue;
       today++;
    }
@@ -288,10 +301,14 @@ TA_RetCode macdv(int startIdx, int endIdx,
       prevFast = fastK * tempReal + fastBeta * prevFast;
       prevSlow = slowK * tempReal + slowBeta * prevSlow;
       spread = prevFast - prevSlow;
-      tempReal = fabs( tempReal );
+      bandScale = fabs( prevFast );
+      if( fabs( prevSlow ) > bandScale )
+         bandScale = fabs( prevSlow );
+      bandScale = bandScale * periodScale;
       lineValue = 0.0;
-      if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
-         lineValue = spread / prevATR * 100.0;
+      if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale)
+         && prevATR >= 2.2250738585072014e-308 )
+      lineValue = spread / prevATR * 100.0;
       if( optInSignalPeriod == 1 )
          prevSignal = lineValue;
       else
@@ -324,10 +341,14 @@ TA_RetCode macdv(int startIdx, int endIdx,
       prevFast = fastK * tempReal + fastBeta * prevFast;
       prevSlow = slowK * tempReal + slowBeta * prevSlow;
       spread = prevFast - prevSlow;
-      tempReal = fabs( tempReal );
+      bandScale = fabs( prevFast );
+      if( fabs( prevSlow ) > bandScale )
+         bandScale = fabs( prevSlow );
+      bandScale = bandScale * periodScale;
       lineValue = 0.0;
-      if( !TA_IS_ZERO_SCALED(spread, tempReal) && !TA_IS_ZERO_SCALED(prevATR, tempReal) )
-         lineValue = spread / prevATR * 100.0;
+      if( !TA_IS_ZERO_SCALED(spread, bandScale) && !TA_IS_ZERO_SCALED(prevATR, bandScale)
+         && prevATR >= 2.2250738585072014e-308 )
+      lineValue = spread / prevATR * 100.0;
       if( optInSignalPeriod == 1 )
          prevSignal = lineValue;
       else
