@@ -98,7 +98,9 @@ TA_RetCode macdv(int startIdx, int endIdx,
    wBeta  = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
    wAlpha = 1.0 - wBeta;
 
-   /* An EMA of a constant settles up to (period+1)/4 ulps away from it. */
+   /* An EMA of a constant can settle short of it by a number of ulps that
+    * grows in proportion to the period.
+    */
    periodScale = (double)(optInSlowPeriod + 1);
 
    lookbackSignal = ema_lookback( optInSignalPeriod );

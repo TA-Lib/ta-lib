@@ -144567,7 +144567,9 @@ class Core {
            */
           wBeta = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
           wAlpha = 1.0 - wBeta;
-          /* An EMA of a constant settles up to (period+1)/4 ulps away from it. */
+          /* An EMA of a constant can settle short of it by a number of ulps that
+           * grows in proportion to the period.
+           */
           periodScale = (double)(optInSlowPeriod + 1);
           lookbackSignal = emaLookback(optInSignalPeriod);
           lookbackSlow = emaLookback(optInSlowPeriod);
@@ -145718,7 +145720,9 @@ class Core {
            */
           wBeta = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
           wAlpha = 1.0 - wBeta;
-          /* An EMA of a constant settles up to (period+1)/4 ulps away from it. */
+          /* An EMA of a constant can settle short of it by a number of ulps that
+           * grows in proportion to the period.
+           */
           periodScale = (double)(optInSlowPeriod + 1);
           lookbackSignal = emaLookback(optInSignalPeriod);
           lookbackSlow = emaLookback(optInSlowPeriod);
@@ -233629,7 +233633,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "c03ef0f036877d06";
+    static final String SPLICED_GENCODE_DIGEST = "758a8c024cf30dfa";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

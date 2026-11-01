@@ -305,7 +305,8 @@ impl Core {
         // reverse, so that the pair is the one TA_ATR runs.
         wBeta = ((optInSlowPeriod - 1) as f64) / (optInSlowPeriod as f64);
         wAlpha = 1.0 - wBeta;
-        // An EMA of a constant settles up to (period+1)/4 ulps away from it.
+        // An EMA of a constant can settle short of it by a number of ulps that
+        // grows in proportion to the period.
         periodScale = (optInSlowPeriod + 1) as f64;
         lookbackSignal = self.ema_lookback(optInSignalPeriod).unwrap_or(usize::MAX);
         lookbackSlow = self.ema_lookback(optInSlowPeriod).unwrap_or(usize::MAX);
@@ -924,7 +925,8 @@ impl Core {
         // reverse, so that the pair is the one TA_ATR runs.
         wBeta = ((optInSlowPeriod - 1) as f64) / (optInSlowPeriod as f64);
         wAlpha = 1.0 - wBeta;
-        // An EMA of a constant settles up to (period+1)/4 ulps away from it.
+        // An EMA of a constant can settle short of it by a number of ulps that
+        // grows in proportion to the period.
         periodScale = (optInSlowPeriod + 1) as f64;
         lookbackSignal = self.ema_lookback(optInSignalPeriod)?;
         lookbackSlow = self.ema_lookback(optInSlowPeriod)?;

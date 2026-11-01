@@ -230,7 +230,9 @@ TA_LIB_API TA_RetCode TA_MACDV( int    startIdx,
     */
    wBeta = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
    wAlpha = 1.0 - wBeta;
-   /* An EMA of a constant settles up to (period+1)/4 ulps away from it. */
+   /* An EMA of a constant can settle short of it by a number of ulps that
+    * grows in proportion to the period.
+    */
    periodScale = (double)(optInSlowPeriod + 1);
    lookbackSignal = TA_EMA_Lookback(optInSignalPeriod);
    lookbackSlow = TA_EMA_Lookback(optInSlowPeriod);
@@ -1060,7 +1062,9 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_MACDV_OpenImpl( struct TA_MACDV_Stream *
        */
       wBeta = (double)(optInSlowPeriod - 1) / (double)optInSlowPeriod;
       wAlpha = 1.0 - wBeta;
-      /* An EMA of a constant settles up to (period+1)/4 ulps away from it. */
+      /* An EMA of a constant can settle short of it by a number of ulps that
+       * grows in proportion to the period.
+       */
       periodScale = (double)(optInSlowPeriod + 1);
       lookbackSignal = TA_EMA_Lookback(optInSignalPeriod);
       lookbackSlow = TA_EMA_Lookback(optInSlowPeriod);

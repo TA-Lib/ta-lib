@@ -26,9 +26,10 @@
  *     3. ATR == 0: a moving prefix then a flat run, swept over startIdx until
  *        the ATR window lies in the run. Both 0/0 and x/0 must be reached.
  *        And a long flat run every leg was entered before, where the ATR
- *        only decays toward zero: the line must settle on 0.0, never grow.
+ *        only decays toward zero: the line must settle on +0.0.
  *        And the corpus scaled by powers of two: the outputs must not move.
  *        And closes outside their bars, under EMAs far above a tiny ATR.
+ *        And low-volatility data, which must not be zeroed.
  *     4. SIGNAL PERIOD 1: the signal is the line, the histogram zero.
  *     5. ALIASING of each output over each input.
  *     6. The generic start/end range sweep, both unstable ids.
@@ -75,6 +76,7 @@ static ErrorNumber test_macdv_flat     ( const TA_History *history );
 static ErrorNumber test_macdv_long_flat( const TA_History *history );
 static ErrorNumber test_macdv_scale    ( const TA_History *history );
 static ErrorNumber test_macdv_odd_bars ( void );
+static ErrorNumber test_macdv_lowvol   ( const TA_History *history );
 static ErrorNumber test_macdv_signal1  ( const TA_History *history );
 static ErrorNumber test_macdv_aliasing ( const TA_History *history );
 static ErrorNumber test_macdv_range    ( const TA_History *history );
@@ -141,6 +143,10 @@ ErrorNumber test_func_macdv( TA_History *history )
       return retValue;
 
    retValue = test_macdv_odd_bars();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_macdv_lowvol( history );
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -461,8 +467,8 @@ static ErrorNumber test_macdv_lookback( const TA_History *history )
 /* (3) ATR == 0. Bars 0..MV_FLAT_AT-1 are the corpus, the rest one price.
  * The ATR is exactly zero only once its whole seed window, previous closes
  * included, lies in the run, which the minimum start never reaches, so
- * startIdx is swept. Every output is held bitwise to the reference, which
- * pins the zero test as tightly as the value test, and must be finite.
+ * startIdx is swept. Every output is held bitwise to the reference and must
+ * be finite.
  *
  * Both degenerate quotients are built, not left to rounding: fast == slow
  * makes the spread exactly zero (0/0), and an EMA unstable period seeds both
@@ -599,6 +605,56 @@ static ErrorNumber test_macdv_flat( const TA_History *history )
    return TA_TEST_PASS;
 }
 
+/* (3e) Ordinary data of low volatility: the corpus around 100 with its
+ * deviations scaled by 1e-5, so the ATR is about 2e-5 of a price of 100.
+ * Nothing here is degenerate: every line value must be the plain quotient,
+ * non-zero, and held bitwise to the reference. A band constant large enough
+ * to reach this ATR or these spreads would zero it.
+ */
+static ErrorNumber test_macdv_lowvol( const TA_History *history )
+{
+   static TA_Real high[MV_CAP], low[MV_CAP], close[MV_CAP];
+   static TA_Real gotL[MV_CAP], gotS[MV_CAP], gotH[MV_CAP];
+   static TA_Real refLine[MV_CAP], refL[MV_CAP], refS[MV_CAP], refH[MV_CAP];
+   TA_Integer begIdx, nbElement;
+   int nb = (int)history->nbBars;
+   int i, refNb;
+
+   for( i = 0; i < nb; i++ )
+   {
+      high[i]  = 100.0 + (history->high[i]  - 100.0) * 1e-5;
+      low[i]   = 100.0 + (history->low[i]   - 100.0) * 1e-5;
+      close[i] = 100.0 + (history->close[i] - 100.0) * 1e-5;
+   }
+
+   if( TA_MACDV( 0, nb-1, high, low, close, 12, 26, 9,
+                 &begIdx, &nbElement, gotL, gotS, gotH ) != TA_SUCCESS
+       || nbElement <= 0
+       || !mv_reference( high, low, close, nb, begIdx, 12, 26, 9,
+                         refLine, refL, refS, refH, &refNb )
+       || refNb != nbElement )
+   {
+      printf( "Fail: TA_MACDV low volatility: the call or its reference failed\n" );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+
+   for( i = 0; i < nbElement; i++ )
+   {
+      if( !(gotL[i] != 0.0)
+          || memcmp( &gotL[i], &refL[i], sizeof(TA_Real) ) != 0
+          || memcmp( &gotS[i], &refS[i], sizeof(TA_Real) ) != 0
+          || memcmp( &gotH[i], &refH[i], sizeof(TA_Real) ) != 0 )
+      {
+         printf( "Fail: TA_MACDV low volatility at out[%d]: line %.17g vs "
+                 "%.17g, signal %.17g vs %.17g\n", i, gotL[i], refL[i],
+                 gotS[i], refS[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
 /* (3c) Scale invariance: the corpus multiplied by 2^-40 and by 2^40 gives
  * the same three outputs bit for bit. Every operation scales exactly, and so
  * does a zero test relative to the price; an absolute one does not.
@@ -650,23 +706,28 @@ static ErrorNumber test_macdv_scale( const TA_History *history )
  * `settle` bars into the run every line value must be +0.0, and every output
  * must stay finite. Each case is decided by one test alone:
  *   - slow 26: the spread falls inside the band while the ATR is still
- *     orders above it (measured: zero from 352 bars on);
- *   - slow 300: the same, but the residue is wider than a band without the
- *     period factor (zero from 3739 bars on);
+ *     orders above it (measured: zero from about 350 bars on);
+ *   - slow 300 and 2000: the same, but the residue is wider than a band
+ *     without the period factor, and at 2000 wider than one scaled by the
+ *     fast or the signal period (about 3740 and 22570);
  *   - price 0: no scale is left, only the ATR's subnormal floor decides
- *     (zero from 18113 bars on; earlier on a host that flushes subnormals).
+ *     (about 18110; earlier on a host that flushes subnormals). 5000 bars
+ *     in, the line must still be the plain quotient, a tiny non-zero value,
+ *     which pins that floor at the subnormals rather than above them.
  * Routed where the request fits server_verify's 256 KB buffer, about 5000
  * bars of three inputs: the sweep sends no such series.
  */
-typedef struct { double level; int slow; int flat; int settle; } MvLongFlat;
+typedef struct { double level; int fast; int slow; int flat; int settle; } MvLongFlat;
 
 static const MvLongFlat mvLongFlat[] = {
-   { 130.0,  26,  3000,   600 },
-   { 130.7,  26,  3000,   600 },
-   { 130.7, 300,  6000,  5000 },
-   {   0.0,  26, 20000, 19000 }
+   { 130.0, 12,   26,  3000,   600 },
+   { 130.7, 12,   26,  3000,   600 },
+   { 130.7, 12,  300,  6000,  5000 },
+   { 130.7,  2, 2000, 25000, 24000 },
+   {   0.0, 12,   26, 20000, 19000 }
 };
-#define MV_LONG_MAX (MV_CAP + 20000)
+#define MV_LONG_MAX (MV_CAP + 25000)
+#define MV_ZERO_PRICE_LIVE 5000
 #define MV_SV_MAX_BARS 5000
 
 static ErrorNumber test_macdv_long_flat( const TA_History *history )
@@ -691,12 +752,12 @@ static ErrorNumber test_macdv_long_flat( const TA_History *history )
          close[i] = i < nb ? history->close[i] : k->level;
       }
 
-      rc = TA_MACDV( 0, n-1, high, low, close, 12, k->slow, 9,
+      rc = TA_MACDV( 0, n-1, high, low, close, k->fast, k->slow, 9,
                      &begIdx, &nbElement, gotL, gotS, gotH );
       if( rc != TA_SUCCESS || nbElement != n - begIdx )
       {
-         printf( "Fail: TA_MACDV long flat %g 12/%d/9: rc=%d shape (%d,%d)\n",
-                 k->level, k->slow, (int)rc, (int)begIdx, (int)nbElement );
+         printf( "Fail: TA_MACDV long flat %g %d/%d/9: rc=%d shape (%d,%d)\n",
+                 k->level, k->fast, k->slow, (int)rc, (int)begIdx, (int)nbElement );
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
       }
 
@@ -705,8 +766,8 @@ static ErrorNumber test_macdv_long_flat( const TA_History *history )
       {
          if( !isfinite( gotL[i] ) || !isfinite( gotS[i] ) || !isfinite( gotH[i] ) )
          {
-            printf( "Fail: TA_MACDV long flat %g 12/%d/9 at bar %d: line %.17g "
-                    "signal %.17g hist %.17g\n", k->level, k->slow, begIdx+i,
+            printf( "Fail: TA_MACDV long flat %g %d/%d/9 at bar %d: line %.17g "
+                    "signal %.17g hist %.17g\n", k->level, k->fast, k->slow, begIdx+i,
                     gotL[i], gotS[i], gotH[i] );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
@@ -714,18 +775,25 @@ static ErrorNumber test_macdv_long_flat( const TA_History *history )
          {
             if( memcmp( &gotL[i], &zero, sizeof(TA_Real) ) != 0 )
             {
-               printf( "Fail: TA_MACDV long flat %g 12/%d/9 at bar %d, %d bars "
+               printf( "Fail: TA_MACDV long flat %g %d/%d/9 at bar %d, %d bars "
                        "into the run: line %.17g, expected +0.0\n", k->level,
-                       k->slow, begIdx+i, begIdx+i-nb, gotL[i] );
+                       k->fast, k->slow, begIdx+i, begIdx+i-nb, gotL[i] );
                return TA_TESTUTIL_TFRR_BAD_CALCULATION;
             }
             nbSettled++;
          }
+         if( k->level == 0.0 && begIdx+i == nb + MV_ZERO_PRICE_LIVE
+             && !(gotL[i] != 0.0) )
+         {
+            printf( "Fail: TA_MACDV long flat 0 at bar %d: line %.17g, expected "
+                    "the non-zero quotient\n", begIdx+i, gotL[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
       }
       if( nbSettled != k->flat - k->settle )
       {
-         printf( "Fail: TA_MACDV long flat %g 12/%d/9: %d settled bars "
-                 "compared, expected %d\n", k->level, k->slow, nbSettled,
+         printf( "Fail: TA_MACDV long flat %g %d/%d/9: %d settled bars "
+                 "compared, expected %d\n", k->level, k->fast, k->slow, nbSettled,
                  k->flat - k->settle );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
@@ -735,7 +803,7 @@ static ErrorNumber test_macdv_long_flat( const TA_History *history )
          double optIn[3];
          ErrorNumber e;
 
-         optIn[0] = 12.0;
+         optIn[0] = (double)k->fast;
          optIn[1] = (double)k->slow;
          optIn[2] = 9.0;
          e = server_verify( "MACDV", 0, n-1, n, rc, begIdx, nbElement,
@@ -751,11 +819,13 @@ static ErrorNumber test_macdv_long_flat( const TA_History *history )
    return TA_TEST_PASS;
 }
 
-/* (3d) A close outside its own bar, which no layer rejects. Here every True
- * Range but one is zero, so the ATR is a subnormal-sized remnant of 1e-300
+/* (3d) A close outside its own bar, which no layer rejects. Every True Range
+ * but the one at bar 1 is zero, so the ATR is a remnant of that bar's range
  * under EMAs of 1e30, and the last close is set to values that would make a
- * scale taken from the close vanish. Every output must be finite and every
- * line value +0.0.
+ * scale taken from the close vanish. A range of 1e-300 would overflow the
+ * quotient; one of 1e17 leaves an ATR near 4e15, finite as a quotient but
+ * inside the band, which pins the band's constant from below. Every output
+ * must be finite and every line value +0.0.
  */
 #define MV_ODD_N 41
 
@@ -764,11 +834,13 @@ static ErrorNumber test_macdv_odd_bars( void )
    static TA_Real high[MV_ODD_N], low[MV_ODD_N], close[MV_ODD_N];
    static TA_Real gotL[MV_ODD_N], gotS[MV_ODD_N], gotH[MV_ODD_N];
    static const double lastClose[] = { 0.0, 1e-290, -1e-290, 1.0 };
+   static const double firstRange[] = { 1e-300, 1e17 };
    const TA_Real zero = 0.0;
    TA_RetCode rc;
    TA_Integer begIdx, nbElement;
-   int v, i;
+   int r, v, i;
 
+   for( r = 0; r < (int)(sizeof(firstRange)/sizeof(firstRange[0])); r++ )
    for( v = 0; v < (int)(sizeof(lastClose)/sizeof(lastClose[0])); v++ )
    {
       for( i = 0; i < MV_ODD_N; i++ )
@@ -777,15 +849,15 @@ static ErrorNumber test_macdv_odd_bars( void )
          high[i]  = i < 2 ? 0.0 : close[i-1];
          low[i]   = high[i];
       }
-      high[1] = 1e-300;
+      high[1] = firstRange[r];
       close[MV_ODD_N-1] = lastClose[v];
 
       rc = TA_MACDV( 0, MV_ODD_N-1, high, low, close, 12, 26, 9,
                      &begIdx, &nbElement, gotL, gotS, gotH );
       if( rc != TA_SUCCESS || nbElement <= 0 )
       {
-         printf( "Fail: TA_MACDV odd bars, last close %g: rc=%d nbElement=%d\n",
-                 lastClose[v], (int)rc, (int)nbElement );
+         printf( "Fail: TA_MACDV odd bars, range %g, last close %g: rc=%d "
+                 "nbElement=%d\n", firstRange[r], lastClose[v], (int)rc, (int)nbElement );
          return TA_TESTUTIL_TFRR_BAD_RETCODE;
       }
 
@@ -794,8 +866,8 @@ static ErrorNumber test_macdv_odd_bars( void )
          if( !isfinite( gotS[i] ) || !isfinite( gotH[i] )
              || memcmp( &gotL[i], &zero, sizeof(TA_Real) ) != 0 )
          {
-            printf( "Fail: TA_MACDV odd bars, last close %g, at out[%d]: line "
-                    "%.17g signal %.17g hist %.17g\n", lastClose[v], i,
+            printf( "Fail: TA_MACDV odd bars, range %g, last close %g, at out[%d]: "
+                    "line %.17g signal %.17g hist %.17g\n", firstRange[r], lastClose[v], i,
                     gotL[i], gotS[i], gotH[i] );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
