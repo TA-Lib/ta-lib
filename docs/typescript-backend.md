@@ -1,0 +1,556 @@
+# TypeScript backend
+
+**Status:** this is the living plan for the TypeScript backend of `ta_codegen`, and the tracking issue links here. Rows marked Ruled were decided by the owner on 2026-11-01. The owner left the module format, the array types and the error model to this design. Those rows read Proposed and stand unless he reopens them. The implementation session updates each phase's Status line and appends to section 8. Nothing else in this file records progress.
+
+## 1. Goal and scope
+
+- **What ships.** An npm package that `ta_codegen` generates the same way it generates the Java and C# libraries. For every function it carries the batch tier, lookback, display shift and streaming tier, plus the metadata (abstract) API. It is pure TypeScript compiled to standard ES modules, with no runtime dependencies. It runs on Node and on any runtime that loads standard ESM.
+- **How it is gated.** It is gated like the other managed backends. A generated JSON-RPC server is driven by `ta_regtest --codegen` and `--xlang-hash` and compared against the C library. Every call must match bit for bit, except a call that reaches a transcendental function (D11).
+- **What does not ship:**
+  - WASM
+  - a native addon
+  - a browser-specific bundle (standard ESM is the browser story)
+  - a CommonJS build
+  - a single-precision (`TA_S_`) surface
+
+## 2. Decisions
+
+| # | Decision | Choice | Why | Status |
+|---|---|---|---|---|
+| D1 | Implementation | Pure TypeScript compiled to JS. No WASM, no native addon | One artifact for every JS runtime, emitted by the managed-backend machinery | Ruled (owner, 2026-11-01) |
+| D2 | npm name | Primary `ta-lib`. Fallbacks in order: `@ta-lib/ta-lib`, then `ta-lib-ts`. The name is one constant in the TS scaffolding emitter | Pending the owner (O1) | Open |
+| D3 | Module format, min Node | ESM only, with no top-level await anywhere and no `node:` imports in the library. `exports` has `"."` and `"./metadata"`, each with `"types"` first and `"default"` last. `"sideEffects": false`. `engines.node` is `>=22.12.0`, and CI runs 22, 24 and 26 | Every supported Node line can `require()` an ESM-only package. One artifact means no dual-package hazard breaking `instanceof TALibError` | Proposed |
+| D4 | TS compile target | `target` and `lib` ES2022, plus `strict`, `erasableSyntaxOnly`, `verbatimModuleSyntax`, `isolatedModules`, `declaration` and `stripInternal`. No `enum` or `namespace` (use `as const` objects). `noUncheckedIndexedAccess` is off. `types: []` in the library tsconfig. TypeScript is pinned in the tooling lockfile | ES2022 runs on every supported runtime. Erasable syntax lets Node run the sources by type stripping. Use no option that TS 6.0 deprecates, so 7.x also compiles it | Proposed |
+| D5 | Input arrays | `ArrayLike<number>`: any typed array or a dense `number[]`. `Float64Array` is the recommended form and is read in place. The public tier and `Open` copy every other form into a `Float64Array` once on entry | Numerical libraries take typed arrays. JS TA libraries and platform data (OHLC objects, row arrays) produce `number[]`. The copy is for correctness: it applies ToNumber, so a `number[]` holding numeric strings (common from CSV or JSON parsing) cannot reach a body where `+` concatenates and `<` compares text. Phase 4 measures the copy's cost only | Proposed |
+| D6 | Output arrays | Caller-owned `Float64Array` for real outputs and `Int32Array` for integer outputs. Never `number[]` | Bit-faithful to float64. `Int32Array` matches C `int`. Hands off to Arrow and similar with no copy. A `number[]` would grow silently on an out-of-range write | Proposed |
+| D7 | Single precision | No `TA_S_` analogue: a `Float32Array` is an `ArrayLike<number>`, widened exactly by the D5 copy. The server serves the float leg's `use_float` by passing the widened values as a `Float32Array` to the same public tier | C's `TA_S_<F>` widens every float input and is bit-identical to `TA_<F>` on the widened doubles, so a widened `Float32Array` is the same contract. The float leg then gates the non-`Float64Array` path | Proposed |
+| D8 | Error model | Throw one class, `TALibError extends Error`, carrying a stable `code` (`'TA_BAD_PARAM'`, ...) that is the documented contract, and a numeric `retCode`. A JS `TypeError` or `RangeError` from misuse is never wrapped. No Result unions | Throwing is idiomatic TS and Node. A `code` match survives duplicate package copies and realms, where `instanceof` does not. Warm-up is an output range, not an error | Proposed |
+| D9 | FMA | Every fused site calls one runtime helper, `fma(a, b, c)`: software, exact and correctly rounded. Sites are chosen by the shared `fma.rs`. The helper is the single swap point | Bit-exactness lets the existing harness gate TS with no tolerance | Ruled (owner, 2026-11-01) |
+| D10 | Integer semantics | Emitted from IR types: a C type pass (`Int32`, `Real`, `Bool`) over every expression. An integer `/`, an integer `%` and every real-to-int conversion, explicit or implicit, truncate with `\| 0`. Generation fails on any expression it cannot type | JS has no integer type, and a wrong guess fails silently | Ruled (owner, 2026-11-01) |
+| D11 | Transcendental functions | The JS engine's `Math.*`. A call that reaches one (the function carries `uses_transcendental`, or an MA-type parameter selects MAMA or ALMA) compares in the existing 1e-9 lane. Every other call, and same-language stream against batch, stays bitwise | `Math.*` is neither correctly rounded nor glibc. This is the exception Java and C# already have (rD1). Consequence: such a call can also differ between JS engines and between engine versions | Proposed; owner to confirm (O2) |
+| D12 | Function shape and settings | One ES module per function, exporting free functions. A trailing optional `core: Core = Core.DEFAULT` carries unstable periods and candle settings. `Core` is immutable and built by `CoreBuilder`. A stream captures its `Core` at open | Tree-shakable, and keeps the Java and C# `Core`/`CoreBuilder` words | Proposed |
+| D13 | Optional parameters | Positional, in C order, with verbatim names (naming spec E1). `Core.INTEGER_DEFAULT` or `Core.REAL_DEFAULT` selects the default. Enum parameters are typed as the enum's literal union plus the integer sentinel. An integer parameter is rejected unless it passes `Number.isInteger` and fits int32 | One signature shape across five backends, a 1:1 map for the metadata tier, and no object per call | Proposed |
+| D14 | Allocating convenience form | None in the first release | Keeps a single public batch tier, which is the one the harness gates | Proposed |
+| D15 | Streaming handle | Class `<N>Stream`, returned by `<n>Open` and `<n>OpenAndFill`, with `update`, `peek`, `value`, `outRange`, `advance` and `clone`. A single-output function returns a `number`. A multi-output function writes into a caller-owned `<N>Out`. No `close()` | Garbage collection frees the handle. The sink avoids an allocation per bar, as in Java | Proposed |
+| D16 | Naming and tiers | Java casing: functions lowerCamel, types UpperCamel. `<n>Impl`, `<n>OpenInternal` and `<n>OpenAndFillInternal` are exported from their module, tagged `@internal`, and absent from the package barrel. `<n>OpenImpl` and `<n>StepImpl` stay module-local. Handle state fields are public and tagged `@internal`, because a module-local function cannot reach a TS `private` member | This is the CLAUDE.md vocabulary recast. The `exports` map plus an explicit barrel is TS's package-private | Proposed |
+| D17 | Backend id | `--backend=ts`, `--language=ts`, label `TypeScript`, release tag `ts-v<version>` | Follows the `java-v` / `rust-v` / `csharp-v` pattern | Proposed |
+| D18 | Metadata API | Subpath `./metadata` with `Functions.byName` / `all` / `groups`, `ParamHolder` (`setInput`, `setOptInput`, `setOutput`, `lookback`, `displayShift`, `call`), `FuncInfo`, the flags, `FunctionDescription` and `getRuntimeInfo`. `call` invokes the public tier. The server answers every abstract RPC from this registry | Naming spec section 7 words. One table, and no table private to the server | Proposed |
+| D19 | Docs | TSDoc generated from each `<name>.md` through `doc_meta.rs`. Each `@example` is also emitted into a generated test that `node --test` runs | The analogue of the Rust doctests | Proposed |
+| D20 | Package layout | See the layout under this table | The C# model: the server compiles the shipped source | Proposed |
+| D21 | Toolchain | Building and testing need Node `>=22.18` (type stripping on by default, so `node --test` runs `.ts` tests) and npm. TypeScript and `@types/node` come from the committed lockfile through `npm ci`, and only the first run needs the network. A missing tool is a failure; narrow with `--backend` / `--language` | Same rule as the JDK and the .NET SDK. Consumers need only D3's `>=22.12` | Proposed |
+
+Package layout under `ta_codegen/output/ts/` (D20):
+
+- **Tooling root:** `package.json` (private, no workspaces; devDependencies `typescript` and `@types/node` pinned to the lowest supported Node major) and `package-lock.json`. Only the tools and test tsconfigs list `node` in `types`, so the library compiles with no Node types (D3).
+- **`library/`:** the published package.
+  - Generated:
+    - `package.json` (version from `VERSION`)
+    - `src/func/<lowerCamel>.ts`
+    - `src/index.ts` (explicit export lists)
+    - `src/enums.ts`
+    - `src/metadata/`
+    - `test/gen/*.test.ts`: `generate` owns the directory and deletes any file there it did not write
+  - Hand-written:
+    - `src/runtime/`
+    - `test/` outside `test/gen/`
+    - `README.md`
+- **`tools/`:** the generated server, the fuzz port and a tsconfig that compiles `../library/src`.
+- **No bench package:** `ta_bench` times the server's `timed` path.
+
+## 3. Public API sketch
+
+```ts
+import { sma, smaLookback, macd, smaOpen, macdOpen, MacdOut,
+         ema, CoreBuilder, FuncUnstId, TALibError } from 'ta-lib'; // name pending (O1)
+
+const n = close.length;                         // close: Float64Array (number[] also accepted)
+const out = new Float64Array(n);
+const { begIdx, count } = sma(0, n - 1, close, 20, out);
+// out[k] is the value at bar begIdx + k, for k < count; smaLookback(20) bars are consumed first
+
+const m = new Float64Array(n), s = new Float64Array(n), h = new Float64Array(n);
+macd(0, n - 1, close, 12, 26, 9, m, s, h);
+
+const st = smaOpen(history, 20);                // TALibError 'TA_INSUFFICIENT_HISTORY' if too short
+st.value();                                     // value at the last history bar
+const v = st.update(bar);                       // commits a closed bar
+const p = st.peek(formingBar);                  // commits nothing
+
+const ms = macdOpen(history, 12, 26, 9);
+const mo = new MacdOut();
+ms.update(bar, mo);                             // mo.macd, mo.macdSignal, mo.macdHist
+
+const core = new CoreBuilder().unstablePeriod(FuncUnstId.EMA, 100).build();
+ema(0, n - 1, close, 30, out, core);
+
+try { sma(0, n - 1, close, 0, out); }
+catch (e) { if (e instanceof TALibError && e.code === 'TA_BAD_PARAM') { /* e.retCode */ } }
+```
+
+```ts
+export type RetCodeName = `TA_${Exclude<keyof typeof RetCode, 'SUCCESS'>}`;
+export class TALibError extends Error {
+  override readonly name = 'TALibError';
+  readonly code: RetCodeName;       // the contract; match on this
+  readonly retCode: RetCode;        // same number C, Java and C# report
+}
+```
+
+## 4. Architecture
+
+### 4.1 Generator modules (`ta_codegen/generator/src/`)
+
+| New module | Cloned from | Notes |
+|---|---|---|
+| `backends/ts.rs` | `java.rs` (leaf `ExprEmitter`/`StatementEmitter`, out-parameters, `gen_public_wrapper`, `gen_argument_checks`) | One module per function: lookback, display shift, `<n>Impl` and public `<n>`. Call `FuncDef::resolved_for(Lang::Ts)` first. Import the helpers C# already takes from `java.rs` (`is_boolean_expr`, `bool_ternary_collapse`, `collect_address_of_vars`, `collect_double_address_of_vars`, `build_matype_map`, ...). Out-parameters copy Java exactly: `MInteger { value }` and a 1-element `Float64Array`. Allocation: `malloc` becomes `new Float64Array`/`new Int32Array`, `memcpy`/`memmove` become `set` or `copyWithin`, and `memset` becomes `fill` |
+| `backends/ctype.rs` | none (new, shared) | The D10 type pass, seeded from `VarDecl` types, YAML `ParamType`, helper signatures, `MathFn` return types and stream-state field types, using C's usual arithmetic conversions. It marks an implicit real-to-int conversion (assignment to an int local, return from an int helper, an int argument) as a cast. A store into an `Int32Array` element needs no mark, because the store truncates. TS is its only consumer. Leave the other backends' typing alone |
+| `backends/ts_stream.rs` | `java_stream.rs` | Handle class, the five-hop `_Open*` family, the `<N>Out` sink, and tape frames for MA (Dispatch) and MAVP (PeriodBank), which take no `outStride`. Supplies `streaming.rs`'s `NameMap` |
+| `backends/ts_doc.rs` | `java_doc.rs` | TSDoc plus the generated example tests |
+| `backends/ts_enums.rs` | `csharp_enums.rs` | Whole-file `as const` objects: `MAType`, `FuncUnstId`. `RetCode`, `CandleSettingType` and `RangeType` are hand-written in `runtime/`, as in Java |
+| `backends/ts_metadata.rs` | `java_metadata.rs` | Renders `abstract_rows::rows()`. Its `Dispatch` analogue calls the public tier |
+| `backends/ts_phantom_io.rs` | `rust_phantom_io.rs` | Generated sweep test (H14) |
+| `server_gen.rs::generate_ts_server` | C# for the model (the server compiles library source), `generate_java_server` for handler text | Reuse `expand_input_names`, `output_json_key`, `func_unst_id`, `price_input_to_ref` and `doc_produced_extent`. Add `TS_FUZZ = include_str!("../templates/ts/fuzzData.ts")`, plus a `ts_predicate_expr` pin in `predicate_form_tests` |
+| `ride_gen/ts.rs` | `ride_gen/java.rs` | The full field and diagnostic set |
+| `stream_verify_gen/ts.rs` | `stream_verify_gen/java.rs` | `SV_RANGE_MASK_TS` takes all five sites, since the server reaches `_OpenInternal`. Reuse `sv_reject_condition` and `sv_guard_enum_ints` |
+
+Template `ta_codegen/generator/templates/ts/fuzzData.ts`: a bit-exact port of `fuzz_data.h`. splitmix64 runs in BigInt (`BigInt.asUintN(64, ...)`) or as a hi/lo pair. The hash ports `fuzz_hash_init`, `fuzz_hash_bytes` and `fuzz_hash_fin`: standard FNV-1a 64 followed by the murmur fmix64 finalizer. Without the finalizer no hash matches.
+
+Edits to existing modules:
+
+- `ir.rs`:
+  - add `Lang::Ts` (`as_str`, `from_backend_name`) and grow `ALL_LANGS`
+  - add `LangClaim::Ts` (`parse`, and `covers`; `AllLanguages` already covers every `Lang`)
+  - every `ALL_LANGUAGES` alternate applies to TS: `resolved_for(Lang::Ts)` must select ALMA's batch alternate and every `{STREAM,ALL_LANGUAGES}` stream alternate. ALMA compares in the 1e-9 lane, so the cross-language gate cannot see a wrong choice there; a TS arm in `alt_suite` pins it
+- `registry.rs::resolve_call`: a `Ts` arm using `camel_words`. It must agree with the emitter, or cross-calls break.
+- `common.rs::enum_limit_names_of`: a `Ts` arm.
+- `candle_settings.rs`: `emit_ts_unpacking`.
+- `naming.rs`: a TS/JS reserved-word list, and a test that pins one.
+- `backends/mod.rs`:
+  - add `TsBackend` to `all()`
+  - `out_subdir` is `library/src/func/`, which `clean_glob` covers
+  - `clean_keep` lists the hand-written files
+- `backends/runtime_info.rs`: `ts_fn()` and `TS_SERVER_HANDLER`.
+- `main.rs`:
+  - a TS tail in `generate()` for enums, metadata, `library/package.json` from `VERSION` (model: `generate_rust_crate_scaffolding`), `index.ts` and `library/test/gen/` (stale files removed)
+  - a `build_servers` arm `"ts" => build_ts`
+  - phase 3: a `build_libraries` arm `build_ts_library`, with `"ts"` added to its default list
+  - the usage text
+- `docs_site.rs`: `implementation_section` picks TS up from `all()`. `build_index()` hardcodes a language list; fix it in phase 3.
+
+Not cloned:
+
+- `java_keyscan.rs` (a HotSpot workaround)
+- `java_shipped.rs` and the gencode digest (there is no spliced Core)
+- `java_abstract.rs` (there is no second table)
+- `stream_frame.rs`, `variant_frame.rs`, `meta_frame.rs` and `bench_gen.rs` (C only)
+- `select_chain.rs`, unless phase 4 measures a reason
+
+Shared and unchanged: `streaming.rs`, `fma.rs`, `ir_cleanup.rs`, `cond_fold.rs`, `divisor_guard.rs`, `expr_walk.rs`, `stmt_walk.rs`, `builtins.rs`, `abstract_rows.rs`, `price_bundle.rs`, `doc_meta.rs`, `helper_registry.rs`.
+
+New generator suites: `ts_render_statement_suite.rs`, `ts_int_semantics_suite.rs` (the section 5 structural gate) and `ts_stream_suite.rs`. Register them in `tests/all/main.rs`.
+
+### 4.2 Server
+
+`tools/taCodegenServe.ts`:
+
+- **Build.** `build_ts` wipes `bin/ta_codegen_ts/`, writes `{"type":"module"}` there as `package.json`, and runs `tsc -p ta_codegen/output/ts/tools` into it.
+- **Launch.** From `bin/`: `node ta_codegen_ts/tools/taCodegenServe.js`.
+- **Contract.** It is the Java and C# servers' contract, specified in `src/tools/ta_regtest/CLAUDE.md`.
+
+What is specific to TS:
+
+- **Transport.** Hex, `usesSeed=0`. Encode and decode real arrays through a `DataView` with explicit endianness, never as JSON numbers: `JSON.stringify` turns -0 into `0` and NaN into `null`. `out_hash` is FNV-1a 64 over the raw bytes (I32 for integer outputs, F64 for real), then `fuzz_hash_fin`, in BigInt.
+- **Correctness requests** call the public tier. A `TALibError` becomes `retCode = e.retCode`, with `outBegIdx` and `outNBElement` both 0. Any other throw reaches the top-level handler, which answers `{"error":"<name>: <msg>"}` and keeps reading. Never convert it to a code.
+- **`use_float`.** Pass the widened inputs as a `Float32Array` to the same public tier (D7).
+- **Timed requests.** `"timed":1` calls `<n>Impl` directly. Time with `process.hrtime.bigint()`; iteration 0 is a discarded warm-up.
+- **Optional parameters.** An absent one means the default.
+- **Output buffers.** Every output is pre-filled with the tail canaries, and `out_tail_dirty` is reported on success.
+- **Input.** Read stdin with `readline`; a request line reaches 2 MB.
+
+### 4.3 Harness (`src/tools/ta_regtest/`, `src/tools/ta_bench/`)
+
+- `test_codegen.c`:
+  - `argv_ts[] = {"node","ta_codegen_ts/tools/taCodegenServe.js",NULL}` and an `ALL_LANGUAGES` row `{"ts","TypeScript",argv_ts}`.
+  - `codegen_lang_needs_transcendental_tol` gains `"ts"`. That brings the `xlang_illcond` skip with it and turns off `codegen_call_needs_vmath_tol`.
+  - `codegen_lang_can_pass_enum_sentinel` is true for ts.
+  - The float-leg tests (`!= "rust"`, and `server_verify.c::sv_serves_float`) already include TS, so the server must serve `use_float` from phase 1.
+  - `stream_fuzz_port_selfcheck`: fail when a non-C server checks zero shapes. Today a missing `in_hash` skips silently, and a broken port then stays self-consistent through every stream leg. Prove it red with a server that drops `in_hash`.
+  - `check_stream_counter_parity` also compares TS against Java, per function (phase 2).
+  - A floor that fails when a server which passed the stream probe streams zero functions on an unfiltered run, proven red (phase 2). Today every stream floor is guarded by `streamFunctions > 0`.
+  - `xlang_hash` `servers[]` gets a row with `usesSeed=0`, and its "valid:" error text.
+  - `codegen_check_gencode_digest` stays Java only.
+- `server_verify.h`: `SV_MAX_PIPES` goes from 4 to 5.
+- `ta_regtest.c`:
+  - a `svServers[]` row and the help text (phase 1)
+  - the abstract-parity block in phase 3, matched with the exact-token `svLanguageEnabled`, not `strstr`
+- `test_abstract.c` and `codegen_pipe.c`: no change.
+- `ta_bench.c`: `argv_ts` and a `LANGUAGES[]` row.
+- `src/tools/ta_regtest/CLAUDE.md`: the `--language` table and the launch line.
+
+No new ta_regtest source file, so `CMakeLists.txt` and `Makefile.am` are unchanged.
+
+### 4.4 Scripts
+
+- `utilities/common.py`: `PREREQS_NODE` (checks `node --version` >= 22.18 and `npm`), `LANG_PREREQS["ts"]`, `CODEGEN_BACKENDS` and `PREREQS_BUILD_SERVERS` in phase 1. `LIBRARY_PREREQS["ts"]` in phase 3, together with `build_ts_library`: `synth_gate.py` and an unfiltered `build.py libraries` package every `LIBRARY_PREREQS` backend.
+- `build.py`:
+  - `build_xlanghash` rows, default and error text
+  - `TARGET_PREREQS['xlang-hash']`
+  - the help texts
+  - `REGEN_PROBE_FILES` gets one generated library module and the server. Without them, `regen-check` cannot see a path that `generate` stopped writing.
+- `synth_gate.py`: `LANGS` and the tally regex display name.
+- `check_stream_retcodes.py`: a TS row (phase 2).
+- Phase 3:
+  - `utilities/versions.py`: `get_version_string_ts` / `set_version_string_ts` for `library/package.json`, in both `sync_versions` and `check_versions`, as Cargo.toml has. `generate` writes the same value, so a `VERSION` bump followed by `sync.py` leaves `regen-check` clean.
+  - `pre-release-checks.py`: its version list, and `library/package.json` and `library/README.md` in `claim_paths`.
+  - `utilities/website.py`: an npm lookup and a `PAGES` row.
+- New scripts:
+  - `ts_fma_check.py` plus `ts_fma_check/golden.c` (phase 0)
+  - `ts_package_check.py` plus `ts_consumer_check/` (phase 3)
+
+### 4.5 CI
+
+- Phase 1, in the same commit that makes Node a prerequisite of the job's command: `actions/setup-node` in the `nightly-jobs.yml` jobs `cross-language`, `xlang-hash`, `synth-gate` and `macos-cross-language`.
+- Phase 3:
+  - `pr-codegen-gate.yml`: a `ts-compiles` job with `actions/setup-node`, then `npm ci`, `tsc` over the library, the hand-written tests and the server, and `ts_fma_check.py --random=1000000`.
+  - `nightly-jobs.yml`: a new `typescript` job: `build.py libraries --language=ts` on Node 22, 24 and 26, then `ts_package_check.py`, then `ts_fma_check.py` with a date-derived seed. The `arm64-linux` narrowing job is unchanged.
+  - `.github/dependabot.yml`: an npm entry for `/ta_codegen/output/ts`, with `target-branch: dev` and a `cooldown`.
+
+## 5. Numerical semantics
+
+The rule behind every row is the same: semantics come from the type pass, never from a name heuristic. The FMA site selection is the one exception. It calls `fma.rs` exactly as Java and C# do, heuristics included, because the fused sites must match C's.
+
+| # | Hazard | Where | Emitter rule | Gate that catches it |
+|---|---|---|---|---|
+| H1 | Untyped expression | Any body | Generation fails | `generate` (loud) |
+| H2 | Integer `/` yields a fraction | Lookbacks, auto-stabilization rules, median midpoints, DPO, ZLEMA, HMA, ... | `((a) / (b)) \| 0`. Compound `i /= k` expands to `i = ((i) / (k)) \| 0` | `ts_int_semantics_suite`; a lookback mismatch in `--codegen` |
+| H3 | Integer `%` yields -0 | `today % 2` (HT family, MAMA), FRAMA, TRIMA, PERCENTILE | `((a) % (b)) \| 0` | `ts_int_semantics_suite` |
+| H4 | Real to int, explicit or implicit | `(int)ceil`, `(int)floor`, `(int)sqrt`, `(int)DCPeriod`, the MAVP period; implicit at an int local, int return or int argument (none shipped today, and `gcc` does not warn on one) | `(x) \| 0`, which truncates and clears -0. Never `Math.trunc` alone, which keeps -0. Rely on the corpus's clamps for range | `ts_int_semantics_suite`; the HT stream legs |
+| H5 | Integer -0 leaking into real arithmetic | Integer `Neg`, `Mul`, `Mod`, and any integer produced from a real | Wrap each such producer in `\| 0`. Integer outputs, rings and scratch are `Int32Array` | `ts_int_semantics_suite` counts them; xlang-hash raw bits (reached sites only) |
+| H6 | Bool used as a number, or a number tested for truth | Candle helpers, `!ptr`, `!TA_IS_ZERO` | A Bool used as a value becomes `(c ? 1 : 0)`. A non-Bool condition gets an explicit `!== 0`. Reuse `is_boolean_expr` and `bool_ternary_collapse` | `tsc --strict`; an assert in the type pass |
+| H7 | Real max/min | `max(`/`min(`, `fmin`/`fmax` in the candle helpers, running extremes | `a > b ? a : b` and `a < b ? a : b`, in C's operand order. `Math.max` and `Math.min` differ from C on NaN and on ±0 | Text gate in `ts_render_statement_suite`: no `Math.max(`, `Math.min(`, `Math.round(` or `>>>` in library output |
+| H8 | Shifts and masks | TRIMA `>> 1`, `& (live-1)` | As written. JS bit operations are int32, like C `int` | Same text gate |
+| H9 | Fused-site selection | Every site C fuses | `build_fma_var_sets`, `fuse_operands` and `canonicalize_accumulator_add`, called where `java.rs` calls them. Copy the compound rule of `c.rs` `assign()`: `x += a*b` is not fused and `x = x + a*b` is | xlang-hash and server_verify, bitwise |
+| H10 | Stream and batch fuse different sites | Stream step and peek bodies | `NameMap` state and output names keep the `sp.` / `cur_` prefixes that `fma::stream_base` strips | stream_verify same-tier, bitwise |
+| H11 | Software fma rounding | `runtime/fma.ts` | Phase 0 | `ts_fma_check.py`, then xlang-hash on every fusing function |
+| H12 | Transcendental results | Flagged functions; MAMA or ALMA through an MA-type parameter | Engine `Math.*` | The 1e-9 lane (D11) |
+| H13 | Literal text | Every real literal | Shortest round-trip text (Rust `{:?}`), never a fixed precision | xlang-hash |
+| H14 | Out-of-bounds typed-array access | Every body | The public tier checks every length before `<n>Impl`. A read past the end gives NaN and a write is dropped, both silently | Generated phantom-I/O sweep, which passes Proxy-guarded arrays that throw on an out-of-range index and range-check the index arguments of `set`, `subarray`, `fill` and `copyWithin`; `out_tail_dirty` for writes into the slack |
+| H15 | Aliasing views | The OpenAndFill guard; C's `inReal == outReal` scratch election | Overlap means the same `buffer` with intersecting byte ranges. C pointer equality means the same `buffer` and the same `byteOffset`. Never `===` | stream_verify aliasing rejects; a library test with `subarray` views |
+| H16 | Non-`Float64Array` inputs | Public tier, `Open` | Copy into a `Float64Array` on entry (D5) | The float leg (a `Float32Array` through the public tier); library test: a `number[]` of numbers and a `number[]` of numeric strings give the `Float64Array` bits on every function |
+| H17 | Non-integer or out-of-int32 integer parameter | Public tier, `Open` | Reject before the range checks, keeping the `INT_MIN` and `-4e37` sentinels | Library test; `open_validation_suite` arm |
+| H18 | Bit access on a big-endian host | The fma helper, the server codec | `DataView` with explicit endianness, or a one-time check that picks the word order | `ts_fma_check.py`; server_verify |
+
+**Structural gate (`ts_int_semantics_suite`).** It runs the type pass over every shipped function's batch, open, step and peek bodies and their helpers. Its axes:
+
+- Each `Div` or `Mod` whose result is `Int32`, each `Cast` to `Integer`/`Index` of a `Real`, and each implicit real-to-int conversion carries the truncating form.
+- Each integer `Neg`, `Mul` and `Mod` feeding a real context or a store is wrapped.
+- Converse: no `Div` whose result is `Real` carries `| 0`.
+
+Each axis has one non-vacuity assert (found more than zero times); the implicit axis asserts that its sweep visited more than zero int locals, returns and arguments, since no shipped site exists. The suite takes its verdict from the same type pass the emitter uses, so prove it red in both directions before relying on it:
+
+1. Drop `| 0` from the emitter's integer-division arm; the suite fails.
+2. Force one known real division (for example SMA's `sum / period`) to `Int32` in `ctype.rs`; the suite fails.
+
+## 6. Phases
+
+All phases share one branch, and each phase ends with every local gate green. Run heavy commands under `scripts/quiet.py noisy <session> --defer=60 -- <cmd>`. Every timing run goes under `scripts/quiet.py measure`. The gates below omit those wrappers.
+
+Two command sets recur:
+
+- **G**, every step of `pr-codegen-gate.yml`:
+  ```
+  python3 scripts/build.py regen-check
+  cargo test --doc -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
+  cargo test --no-fail-fast --manifest-path ta_codegen/generator/Cargo.toml
+  cargo clippy --all-targets --manifest-path ta_codegen/generator/Cargo.toml -- -D warnings
+  RUSTDOCFLAGS='-D warnings' cargo doc --no-deps -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
+  cargo clippy --all-targets --manifest-path ta_codegen/output/rust/Cargo.toml -- -D warnings
+  cargo test --tests -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
+  python3 scripts/build.py && python3 scripts/abi.py check --require-artifact
+  ```
+  plus the `java-compiles` steps (`javac` of the library with doclint, `check_java_inline_budget.py`, the suites, the server) and the `csharp-compiles` steps (`dotnet build` of `TALib.csproj`, the test project and the server), copied from the workflow, and from phase 3 the `ts-compiles` job. `regen-check` skips dirty paths, so also run `scripts/build.py generate` twice and confirm that the second run changes nothing in `git diff`.
+- **T**, the TS compile set:
+  ```
+  cd ta_codegen/output/ts && npm ci
+  npx tsc -p library --noEmit && npx tsc -p library/test --noEmit && npx tsc -p tools --noEmit
+  ```
+
+### Phase 0: runtime helpers
+
+Status: Not started
+
+**Deliverables**
+
+1. `ta_codegen/output/ts/` tooling root:
+   - pin the newest stable `typescript`, and `@types/node` at the lowest supported Node major, in the lockfile
+   - add `.gitignore` entries for `node_modules/` and `library/dist/`
+   - add `library/tsconfig.json` (D4)
+2. Hand-written `library/src/runtime/`:
+   - `fma.ts`
+   - `errors.ts` (`TALibError`, `RetCode`)
+   - `outRange.ts`
+   - `core.ts` (`Core`, `CoreBuilder`, `CandleSetting`, settings enums)
+   - `bits.ts` (DataView helpers)
+3. `scripts/ts_fma_check.py` and `scripts/ts_fma_check/golden.c`:
+   - The C side calls libm `fma`, which is correctly rounded on every platform, so the goldens are machine-independent.
+   - It streams triples and results to a Node checker.
+   - Hard-case families:
+     - ties
+     - near-total cancellation (`c = -RN(a*b)` ± k ulp)
+     - products near overflow whose result is finite
+     - finite `a*b` that overflows double with finite `c` (result ±Inf)
+     - `c` near ±DBL_MAX with `c + a*b` at the overflow rounding boundary
+     - subnormal results and subnormal error terms
+     - `fma(±0, x, ±0)` signs
+     - Inf·0
+     - a finite product with an infinite `c`
+     - NaN operands
+   - It also takes `--random=N --seed=S`.
+4. `PREREQS_NODE` in `utilities/common.py`.
+
+**Algorithm guidance for `fma`**
+
+- **Fast path.** Dekker TwoProduct with a Veltkamp split, TwoSum, then round-to-odd of the low sum followed by one round-to-nearest add (Boldo and Melquiond). It is exact only inside this window:
+  - the split cannot overflow (`|a|`, `|b|` below about 2^996)
+  - the error term is normal (product exponent at least about -969)
+  - the product exponent is below the overflow bound, so `RN(a*b)` is finite
+  - `|c| + |RN(a*b)|` stays below the overflow threshold, so TwoSum cannot round to Inf
+- **Other cases.** Send every case outside that window to a simple exact path: BigInt scaled integers, rounded once to nearest even. It can be slow, because indicator data rarely reaches it.
+- **No allocation.** Use module-level scratch for the bit access.
+
+**Gotchas (silent)**
+
+- A naive `p + e + c` double-rounds on ties.
+- With finite `a` and `b` and an infinite `c`, the result is `c`, even when `a*b` overflows in double.
+- An exact cancellation gives +0, unless both addends are -0.
+- Reading the bits through a `Float64Array`/`Uint32Array` alias depends on platform endianness (H18).
+- Compare NaN results by NaN-ness only.
+
+**Exit gate**
+
+```
+cd ta_codegen/output/ts && npm ci && npx tsc -p library --noEmit
+python3 scripts/ts_fma_check.py --random=100000000 --seed=1
+python3 scripts/ts_fma_check.py --random=100000000 --seed=2
+```
+
+Also:
+
+- G passes.
+- Red proof, recorded in section 8: replace the round-to-odd step with round-to-nearest, confirm the check fails on the tie family, then restore it.
+
+### Phase 1: batch tier, server, cross-language gates
+
+Status: Not started
+
+**Deliverables**
+
+1. The registrations in 4.1 except `build_ts_library`, the harness rows in 4.3 except the phase 2 and phase 3 items, the phase 1 scripts in 4.4, and the phase 1 setup-node steps in 4.5.
+2. `ctype.rs` plus `ts_int_semantics_suite`, proven red in both directions.
+3. `ts.rs`, `ts_enums.rs`, generated `library/package.json` and `index.ts`. The per-function modules hold lookback, display shift, `<n>Impl` and the public tier. The argument-check order is Java's, with the D13 integer check first.
+4. The `ts_phantom_io.rs` sweep, the H16 input test and the aliasing-view test, all run by `node --test`.
+5. The server:
+   - batch handlers, including `use_float`
+   - `list_functions`
+   - the three settings methods, with every check made before any write
+   - `eval_predicate`
+   - `TA_GetRuntimeInfo`
+   - `fuzz_in_hash`
+   - `load_data`
+   - `stream_verify`, answering `{"error":"not_streamable"}` for now
+   - `bench_mode` 0 only
+6. TS arms in the batch-shaped generator suites (`render_features_suite`, `display_shift_suite`, `enums_suite`, `cond_comment_suite`, `arg_order_suite`, `alt_suite`, `naming.rs`), plus `ts_render_statement_suite`.
+7. Any suite that iterates `backends::all()` over stream text excludes TS with a `TS-PHASE-2` marker.
+
+**Gotchas (silent)**
+
+- **Skipped stream and ride passes.** A server that answers `not_streamable` and sends no `ride_*` fields makes ta_regtest skip the stream and ride passes for that language and still report green. That is expected here, and phase 2's gate closes it.
+- **Fuzz port.** The fuzz port must already be bit-exact; the zero-shape failure in 4.3 makes a missing `in_hash` loud.
+- **Missing abstract legs.** There is no abstract block until phase 3, so the abstract legs are absent for TS. Do not read their absence as a pass.
+- **`TA_ALT` alternates.** TS must take every `ALL_LANGUAGES` alternate and no Java or C# one. An entry point that skips `resolved_for(Lang::Ts)` gets both wrong.
+- **Stale servers.** After any input or generator edit, run `build.py servers` before `--codegen`. An unwiped `bin/ta_codegen_ts` passes every gate with old code.
+- **Lane coverage.** Confirm that the transcendental lane covers only D11 calls: every other TS call in the xlang-hash report must be counted as bitwise.
+
+**Exit gate**
+
+G and T pass, and:
+
+```
+cd ta_codegen/output/ts && npx tsc -p library && node --test 'library/test/**/*.test.ts'
+python3 scripts/build.py servers --language=c,ts
+cd bin && ./ta_regtest --codegen --language=c,ts
+cd bin && ./ta_regtest --xlang-hash --language=c,ts
+python3 scripts/build.py regtest
+cd bin && ./ta_regtest --xlang-hash
+env -u TA_CODEGEN_ROOT python3 scripts/synth_gate.py
+```
+
+Also:
+
+- The TS section of the `--codegen` output prints `Fuzz-port self-check: N/N shapes bit-identical` with N above zero.
+- The last three commands show the other backends untouched.
+
+### Phase 2: streaming tier
+
+Status: Not started
+
+**Deliverables**
+
+1. `ts_stream.rs`: handle classes, the `_Open*` family, sinks and tape frames. Add `<n>Open` / `<n>OpenAndFill` and `bench_mode` 1/2 to the server.
+2. `ride_gen/ts.rs` and `stream_verify_gen/ts.rs`, wired into the server.
+3. The phase 2 harness items in 4.3: TS in `check_stream_counter_parity`, and the zero-streaming-functions floor, proven red.
+4. TS arms in:
+   - `ride_along_suite` (`COMPARE_NEEDLE`, `servers()`, and the throwing-backend probes, which compare `code` for TS)
+   - `streaming_dispatch_suite` (`sv_range_sites_mask_matches_the_declared_set`, `the_transition_tier_is_step_impl_in_every_backend`)
+   - `managed_stream_suite`, including both no-write sweeps (`no_managed_tape_peek_writes_the_handle_or_the_tape`, `no_managed_peek_writes_its_handle`), each with its swept-count and handle-read non-vacuity asserts
+   - `open_validation_suite`, `out_range_advance_suite`, `candle_range_suite`
+   - the new `ts_stream_suite`
+   - a TS row in `check_stream_retcodes.py`
+5. Remove every `TS-PHASE-2` exclusion.
+
+**Gotchas (silent)**
+
+- **Prefixes.** The H10 prefixes: any other spelling makes stream and batch fuse different sites.
+- **Field visibility.** Handle fields are public and `@internal` (D16). Neither TS `private` nor `#private` works: the module-local frames could not reach them.
+- **Peek writes.** No runtime leg catches a peek that writes the handle or a ring. stream_verify peeks bar t and then updates bar t with the same arguments, so a peek that stores what update would store leaves identical state. There is no compile-time barrier either. The `managed_stream_suite` no-write sweeps are the whole gate.
+- **`clone()`.** It must `.slice()` every typed array and clone every sub-stream. The clone leg catches a shared ring.
+- **`update` order.** As Java: the `INDEX_MAX` ceiling, then the finite-bar check, then `<n>StepImpl`, then the count.
+- **Ride cache.** Key it by function identity, and invalidate it on every settings change (`rideGen`).
+
+**Exit gate**
+
+- Phase 1's commands pass.
+- The TS section of the `--codegen --language=c,ts` output (and of an unfiltered `--codegen` run) shows:
+  - a `ride-along:` line
+  - no `Stream verify: not supported` line
+  - no `STREAM COUNTER MISMATCH` line naming TS
+  - no `VACUOUS` line
+- The new zero-streaming-functions floor is in place, and its red proof is recorded in section 8.
+- `grep -rn TS-PHASE-2 ta_codegen/generator` prints nothing.
+
+### Phase 3: metadata, docs, packaging, CI, website, runbook
+
+Status: Not started
+
+**Deliverables**
+
+1. **Metadata.**
+   - `ts_metadata.rs`, `getRuntimeInfo` and `FunctionDescription`. The server answers every abstract RPC from the shipped registry.
+   - The `ta_regtest.c` abstract-parity block for TS.
+   - A TS arm in `indicator_variants_suite::metadata_price_setter_validates_before_writing`. The price setter validates every component before it writes any.
+2. **Docs.**
+   - `ts_doc.rs`, with the example tests generated into `library/test/gen/`.
+   - A generator test that every public declaration the TS emitters write carries a TSDoc block (the CS1591 analogue).
+   - The example tests import the package by its own name (package self-reference), so a rename (O1) is one constant.
+3. **Packaging.**
+   - Final `library/package.json` fields: `name`, `description` (containing `200+ indicators`), `exports`, `types`, `sideEffects`, `files`, `engines`, `license`, `repository`.
+   - A hand-written `library/README.md` containing `200+ indicators` (the only place that carries install lines until the first publish).
+   - `LICENSE` copied.
+   - `build_ts_library`, `LIBRARY_PREREQS["ts"]` and the `build_libraries` default-list entry, landed together: `npm ci`, `tsc` to `dist/`, `npm pack`, install the tarball into a throwaway project, then run the hand-written suites and the example tests against it with the same `node --test` glob as phase 1.
+   - `ts_package_check.py`:
+     - the exact tarball entries
+     - byte-identical `LICENSE` and README
+     - version equals `VERSION`
+     - a consumer that loads the package by `import` and by `require()` (which proves there is no top-level await)
+     - no `@internal` name in the `.d.ts` files or the runtime barrel
+     - a diff of the packed declarations against a committed API snapshot taken at each publish (the `PublicAPI.Shipped.txt` analogue)
+4. **Versions.** The phase 3 `versions.py` and `pre-release-checks.py` entries in 4.4. `website.py` gets `latest_npm_version()`: a 404 answers `NOT_PUBLISHED` and deprecated versions are skipped.
+5. **CI** as in 4.5 phase 3, and the dependabot entry.
+6. **Website.**
+   - New pages: `website/src/api/typescript/README.md` and `api/typescript/stream/README.md`.
+   - Updated pages:
+     - sidebar `en.ts`
+     - `llms.ts` and `llms-key-facts.md`
+     - homepage and `sma-example.md` tabs
+     - install page
+     - the `code-tabs#lang` blocks in `api/abstract`, `api/candle-settings` and `api/unstable-period`
+     - spec pages: rD1 and the transcendental paragraph in `spec/versions` (TS takes them from the JS engine), the errors table, `spec/streaming`, `spec/abstract`
+     - `website/src/functions/index.md`, generated by `build_index()`
+7. **Repo docs.**
+   - Root `CLAUDE.md`: the backend count, the toolchain per backend and the API-tier text.
+   - `src/tools/ta_regtest/CLAUDE.md` and `ta_codegen/generator/CLAUDE.md`.
+   - A TS column in `docs/naming-spec.md`.
+   - The per-language shape in `docs/streaming-api-design.md`.
+8. **Runbook.**
+   - `docs/release-runbooks/typescript-publish-runbook.md`, in the house shape: step ids `TP1...`, and pre-flight `build.py libraries --language=ts`, `servers --language=c,ts`, `--codegen` and `--xlang-hash --language=c,ts`, and `ts_package_check.py`.
+   - Then `npm publish --dry-run` as the last reversible step, then `npm publish`.
+   - Then verify from a clean cache, record the API snapshot, and tag `ts-v<version>`.
+   - Treat a published version as immutable.
+   - Add a line to `README.md` step 2 and a mention in `post-publish-runbook.md`.
+
+**Gotchas (silent)**
+
+- **Abstract block.** The abstract block is the coverage: without it every abstract leg short-circuits green.
+- **Lockfile.** The tooling root has no workspaces and the library has no dependencies, so the lockfile never records the library version. Otherwise `sync.py` would churn it.
+- **Barrel.** An `export *` in the barrel leaks `@internal` names at runtime, because `stripInternal` strips types only. The barrel must carry explicit lists.
+- **Lookup failure.** A website lookup that returns None instead of `NOT_PUBLISHED` makes `sync-website.py --check` exit 2 every night.
+- **Docs text.** No `npm install` line on the website before the first publish. No corpus counts in any doc.
+
+**Exit gate**
+
+G and T pass, and:
+
+```
+python3 scripts/build.py libraries --language=ts
+python3 scripts/ts_package_check.py
+python3 scripts/build.py servers && cd bin && ./ta_regtest --codegen   # abstract parity line present for TS
+cd bin && ./ta_regtest --xlang-hash
+python3 scripts/sync.py                     # changes nothing
+python3 scripts/pre-release-checks.py
+python3 scripts/sync-website.py --check
+cd website && pnpm install --frozen-lockfile && pnpm run docs:build   # on amd-1, via npx pnpm@11.2.2
+actionlint                                  # on a ./ copy of the changed workflows
+```
+
+Also: change `VERSION` in a scratch copy, run `sync.py`, and confirm `regen-check` stays clean.
+
+### Phase 4: performance pass and adversarial review
+
+Status: Not started
+
+**Deliverables**
+
+1. Load the `ta-bench` skill first.
+2. Measurements:
+   - **Where:** amd-1 and intel-1 (pin a P-core with taskset and use at least 2000 iterations), with macos-1 as an extra data point.
+   - **Format:** each figure as "X% slower/faster than C (a ns vs b ns)", with range and median and the host named.
+   - **What:**
+     - **Batch:** every function under `ta_bench --language=c,rust,ts`, at 2000 and 100k bars. Rust is timed through its public tier and TS through the body; state this next to the numbers.
+     - **Software fma:** its cost on the fusing functions, against a measurement-only build where the helper is `a*b + c`. That build is never shipped, because its values differ.
+     - **D5:** the cost of the entry copy for `number[]` and `Float32Array` inputs, against a `Float64Array` input.
+     - **D3:** barrel import time against a per-function subpath.
+     - **Streaming:** `update` and `peek` through a TS arm in `scripts/stream_ab.py`.
+     - **JIT tiers:** functions that never reach the optimizing tier (`node --trace-opt --trace-deopt` under `ta_bench`). This is the analogue of Java's inline budget.
+3. Record each result in the decision row it settles (D3, D5), and in section 8.
+4. If the pass changes shared generator code, time every backend whose output changed.
+5. Adversarial review of the whole branch:
+   - refute by default, with fan-out sized to the diff
+   - findings merged by file:line
+   - every fix re-reviewed
+   - `/code-review` given two explicit SHAs
+
+**Gotchas (silent)**
+
+- A one-bar batch call is not a target.
+- Never tune for monotonic or held series.
+- intel-1 below 2000 iterations reads about ten times slow.
+- Composed functions page-fault their scratch at 100k bars, so read the 2000-bar rows too.
+
+**Exit gate**
+
+- The measurements are recorded.
+- No other backend regresses beyond noise.
+- Every review finding is fixed or refuted in writing.
+- The gates of phases 0 to 3 pass at the final SHA.
+
+## 7. Open items
+
+- **O1. npm name.** The name is the only thing that blocks a publish. Phases 0 to 3 run with the D2 constant, and a rename changes only that constant. npm transfers a name only by its holder's choice: the unscoped `ta-lib` needs its current holder to add the owner's account, and the `@ta-lib` scope is registered but its holder is not public. If the name is `ta-lib`, its existing versions 0.9.0, 0.10.0 and 0.11.0 can never be republished, while the package version follows `VERSION` (D20): decide before the first publish whether the npm line skips those versions or starts at a major above them.
+- **O2. Transcendental lane (D11).** It is the one place TS is not bitwise against C. It is the same exception rD1 already grants Java and C#, and it does not touch the exact-FMA ruling. Confirm, or ask for a correctly rounded libm port, which would be its own project.
+- **O3. Publish credentials.** The first publish of the chosen name is by hand, from your npm account with 2FA. After that, configure trusted publishing (GitHub OIDC naming one workflow file) with `--provenance`, if you want CI to publish.
+- **O4. Landing.** Land each phase on dev as it goes green, or land once after phase 4. No push or PR happens without your go-ahead.
+
+## 8. Status log
+
+| date | phase | note |
+|---|---|---|
