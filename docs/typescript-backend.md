@@ -547,8 +547,8 @@ Status: Not started
 
 - **O1. npm name.** Only the publish waits on it: phases 0 to 3 use the D2 constant. The owner has asked the current holder of `ta-lib` to add him as an owner; `npm owner ls ta-lib` listing `mario4tier` settles it. Its versions 0.9.0, 0.10.0 and 0.11.0 can never be republished, while the package version follows `VERSION` (D20): decide before the first publish whether the npm line skips those versions or starts at a major above them.
 - **O2. Transcendental lane (D11).** It is the one place TS is not bitwise against C. It is the same exception rD1 already grants Java and C#, and it does not touch the exact-FMA ruling. Confirm, or ask for a correctly rounded libm port, which would be its own project.
-- **O3. Publish credentials.** The first publish of the chosen name is by hand, from your npm account with 2FA. After that, configure trusted publishing (GitHub OIDC naming one workflow file) with `--provenance`, if you want CI to publish.
-- **O4. Landing.** Land each phase on dev as it goes green, or land once after phase 4. No push or PR happens without your go-ahead.
+- **O3. Publish credentials.** The first publish is by hand, from the owner's npm account with 2FA, once O1 settles; nothing before it waits on this. Trusted publishing (GitHub OIDC naming one workflow file) with `--provenance` is a later choice. Until then the TS backend ships only through dev and main. Ruled (owner, 2026-11-01).
+- **O4. Landing.** Commit per phase on one branch; land on dev once, as one block, after phase 4 and a last review and test round showing nothing else broke. No nightly sees the branch before then, so that round runs the TS CI jobs (4.5) locally. Ruled (owner, 2026-11-01).
 
 ## 8. Status log
 
