@@ -6,8 +6,8 @@
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=peg stream_iters=1024 trend_strength=0.500000
-#commit	b0a97ddb1fa26fc8ed8b58832442db9319c40296
-#generated	2026-10-30T11:07:19Z
+#commit	a9c7908f95a5f5178947c77e66e4f7b0e6f11a47
+#generated	2026-11-01T11:35:56Z
 AC	batch	0	703438
 AC	open	0	704171
 AC	openfill	0	692624
@@ -438,6 +438,11 @@ CDLXSIDEGAP3METHODS	open	0	340613
 CDLXSIDEGAP3METHODS	openfill	0	340633
 CDLXSIDEGAP3METHODS	peek	0	58613
 CDLXSIDEGAP3METHODS	update	0	74899
+CE	batch	0	1021248
+CE	open	0	905781
+CE	openfill	0	1062919
+CE	peek	0	83981
+CE	update	0	116090
 CEIL	batch	0	400070
 CEIL	open	0	143
 CEIL	openfill	0	420124
