@@ -521,11 +521,13 @@ pub enum FuncId {
     CE,
     /// MACD-V, Volatility Normalised Momentum — [`Core::macdv`](crate::Core::macdv).
     MACDV,
+    /// Rolling Skewness — [`Core::skew`](crate::Core::skew).
+    SKEW,
 }
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 239;
+    pub const COUNT: usize = 240;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -873,7 +875,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 239] = [
+static FUNC_TABLE: [FuncInfo; 240] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -3503,6 +3505,17 @@ static FUNC_TABLE: [FuncInfo; 239] = [
         outputs: &[OutputInfo { param_name: "outMACDV", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outMACDVSignal", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, OutputInfo { param_name: "outMACDVHist", kind: OutputType::Real, flags: OutputFlags(0x00000010) }, ],
         unst_id: None,
     },
+    FuncInfo {
+        id: FuncId::SKEW,
+        name: "SKEW",
+        group: Group::StatisticFunctions,
+        hint: "Rolling Skewness",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 3, max: 100000, default: 30, suggested: (10, 200, 5) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
 ];
 
 /// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
@@ -3760,6 +3773,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "ZLEMA" => FuncId::ZLEMA,
         "CE" => FuncId::CE,
         "MACDV" => FuncId::MACDV,
+        "SKEW" => FuncId::SKEW,
         _ => return None,
     })
 }
@@ -4264,6 +4278,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ZLEMA => self.core.zlema_lookback(self.int_opt[0]),
             FuncId::CE => self.core.ce_lookback(self.int_opt[0], self.real_opt[1]),
             FuncId::MACDV => self.core.macdv_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::SKEW => self.core.skew_lookback(self.int_opt[0]),
         }
     }
 
@@ -4516,6 +4531,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ZLEMA => self.core.zlema_display_shift(self.int_opt[0], output_idx),
             FuncId::CE => self.core.ce_display_shift(self.int_opt[0], self.real_opt[1], output_idx),
             FuncId::MACDV => self.core.macdv_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], output_idx),
+            FuncId::SKEW => self.core.skew_display_shift(self.int_opt[0], output_idx),
         }
     }
 
@@ -7848,6 +7864,18 @@ impl<'a> ParamHolder<'a> {
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::SKEW => {
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.skew(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

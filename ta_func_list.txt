@@ -196,6 +196,7 @@ SAREXT              Parabolic SAR - Extended
 SI                  Wilder Swing Index
 SIN                 Vector Trigonometric Sin
 SINH                Vector Trigonometric Sinh
+SKEW                Rolling Skewness
 SMA                 Simple Moving Average
 SMI                 Stochastic Momentum Index
 SQRT                Vector Square Root

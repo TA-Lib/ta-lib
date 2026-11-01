@@ -617,6 +617,9 @@ typedef enum
   TA_REGTEST_ZERO_PICK_BITS    = 1727,
   TA_REGTEST_ZERO_PICK_VACUOUS = 1728,
 
+  /* (#569) SKEW legs that ran while comparing nothing. */
+  TA_SKEW_VACUOUS              = 1729,
+
   /* Error code related to bug fix documentented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,
   TA_TEST_FAIL_BUG1359452_2  = 2001,

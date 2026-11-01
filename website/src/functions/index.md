@@ -239,6 +239,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [MEDIAN](/functions/median.md) — Rolling Median
 - [PERCENTILE](/functions/percentile.md) — Percentile (nearest rank)
 - [PERCENTRANK](/functions/percentrank.md) — Percent Rank
+- [SKEW](/functions/skew.md) — Rolling Skewness
 - [STDDEV](/functions/stddev.md) — Standard Deviation
 - [TSF](/functions/tsf.md) — Time Series Forecast
 - [VAR](/functions/var.md) — Variance

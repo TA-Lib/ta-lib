@@ -431,6 +431,54 @@ DEF_FUNCTION( SINH,
              );
 /* SINH END */
 
+/* SKEW BEGIN */
+static const TA_IntegerRange TA_DEF_SKEW_TimePeriod =
+{
+   3,
+   100000,
+   10,
+   200,
+   5
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SKEW_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_SKEW_TimePeriod,
+   30,
+   "Time period",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_SKEW_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_SKEW_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_SKEW_OptInputs[] =
+{ &TA_DEF_UI_D_SKEW_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( SKEW,
+              TA_GroupId_Statistic,
+              "Rolling Skewness",
+              TA_FUNC_FLG_STREAM
+             );
+/* SKEW END */
+
 /* SMA BEGIN */
 static const TA_InputParameterInfo    *TA_SMA_Inputs[]    =
 {
@@ -1508,6 +1556,7 @@ const TA_FuncDef *TA_DEF_TableS[] =
    ADD_TO_TABLE(SI),
    ADD_TO_TABLE(SIN),
    ADD_TO_TABLE(SINH),
+   ADD_TO_TABLE(SKEW),
    ADD_TO_TABLE(SMA),
    ADD_TO_TABLE(SMI),
    ADD_TO_TABLE(SQRT),

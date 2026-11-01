@@ -17094,6 +17094,63 @@ fn legs_SINH(r: &mut Report) {
     r.legs_done("SINH", 1);
 }
 
+const V_SKEW: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 3i32),
+];
+
+fn sub_SKEW(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_SKEW {
+        let Ok(lb) = core.skew_lookback(optInTimePeriod) else { continue; };
+        r.control("SKEW", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.skew_impl(0, lb, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("SKEW", label); continue; }
+        r.quiet("SKEW", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.skew_impl(0, lb - 1, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_SKEW(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.skew_lookback(optInTimePeriod) else { r.no_legs("SKEW"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SKEW", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.skew_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("SKEW", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.skew_impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("SKEW", 1);
+}
+
 const V_SMA: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 1i32),
@@ -20342,6 +20399,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("SI", sub_SI, legs_SI),
     ("SIN", sub_SIN, legs_SIN),
     ("SINH", sub_SINH, legs_SINH),
+    ("SKEW", sub_SKEW, legs_SKEW),
     ("SMA", sub_SMA, legs_SMA),
     ("SMI", sub_SMI, legs_SMI),
     ("SQRT", sub_SQRT, legs_SQRT),
@@ -20421,7 +20479,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 239, "probe count");
+    assert_eq!(PROBES.len(), 240, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

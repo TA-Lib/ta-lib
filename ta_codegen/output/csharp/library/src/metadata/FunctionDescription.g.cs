@@ -9802,6 +9802,47 @@ public static class FunctionDescription
 	</FinancialFunction>
 
 
+	<!-- SKEW -->
+	<FinancialFunction>
+		<Abbreviation>SKEW</Abbreviation>
+		<ShortDescription>Rolling Skewness</ShortDescription>
+		<GroupId>Statistic Functions</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Time period</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>3</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>10</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>5</SuggestedIncrement>
+				</Range>
+				<DefaultValue>30</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- SMA -->
 	<FinancialFunction>
 		<Abbreviation>SMA</Abbreviation>

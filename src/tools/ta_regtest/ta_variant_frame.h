@@ -8501,6 +8501,45 @@ static TA_RetCode TA_SINH_VFrameS( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_SINH[] = { TA_VIN_REAL };
 static const int TA_VOutIsInt_SINH[] = { 0 };
 
+static TA_RetCode TA_SKEW_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SKEW(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SKEW_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_SKEW(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_SKEW[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_SKEW[] = { 0 };
+static const TA_VOptSpec TA_VOpt_SKEW[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 3.0, 100000.0, 30.0 },
+};
+
 static TA_RetCode TA_SMA_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10641,6 +10680,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_SIN, 0, NULL, 1, TA_VOutIsInt_SIN, 0 },
    { "SINH", TA_SINH_VFrameD, TA_SINH_VFrameS,
      1, TA_VIn_SINH, 0, NULL, 1, TA_VOutIsInt_SINH, 0 },
+   { "SKEW", TA_SKEW_VFrameD, TA_SKEW_VFrameS,
+     1, TA_VIn_SKEW, 1, TA_VOpt_SKEW, 1, TA_VOutIsInt_SKEW, 0 },
    { "SMA", TA_SMA_VFrameD, TA_SMA_VFrameS,
      1, TA_VIn_SMA, 1, TA_VOpt_SMA, 1, TA_VOutIsInt_SMA, 0 },
    { "SMI", TA_SMI_VFrameD, TA_SMI_VFrameS,
@@ -10725,6 +10766,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 239
+#define TA_VARIANT_TABLE_SIZE 240
 
 #endif /* TA_VARIANT_FRAME_H */

@@ -5394,6 +5394,30 @@ int TA_SINH_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
    (void)params;
    return TA_SINH_DisplayShift( outputIdx );
 }
+TA_RetCode TA_SKEW_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_SKEW(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_SKEW_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_SKEW_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
+int TA_SKEW_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_SKEW_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_SMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

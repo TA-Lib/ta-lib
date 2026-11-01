@@ -11,6 +11,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - New TA Functions:
   - CE: Chandelier Exit, the highest high and lowest low offset by a multiple of the ATR (#568)
   - MACDV: MACD-V, Spiroglou's volatility-normalised MACD, the EMA spread over the ATR (#570)
+  - SKEW: Rolling Skewness, the adjusted Fisher-Pearson coefficient (#569)
 
 ## [0.8.3] 2026-10-25
 ### Added

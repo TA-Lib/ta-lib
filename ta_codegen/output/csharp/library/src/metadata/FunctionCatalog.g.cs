@@ -313,6 +313,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeSi(),
             MakeSin(),
             MakeSinh(),
+            MakeSkew(),
             MakeSma(),
             MakeSmi(),
             MakeSqrt(),
@@ -5020,6 +5021,30 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Sinh(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
+
+    private static FuncInfo MakeSkew() => new(
+        name: "SKEW",
+        group: FunctionGroup.StatisticFunctions,
+        hint: "Rolling Skewness",
+        flags: FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(3, 100000, 30, 10, 200, 5)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.SkewLookback(c.IntOpt(0)),
+        displayShift: static (core, c, outputIdx) => core.SkewDisplayShift(c.IntOpt(0), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Skew(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
     private static FuncInfo MakeSma() => new(
         name: "SMA",

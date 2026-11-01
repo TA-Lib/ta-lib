@@ -8045,6 +8045,42 @@ static TA_RetCode TA_SINH_SFrameClose( void *stream )
    return TA_SINH_Close( (TA_SINH_Stream *)stream );
 }
 
+static TA_RetCode TA_SKEW_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SKEW_Open(
+               (TA_SKEW_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SKEW_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SKEW_OpenAndFill(
+               (TA_SKEW_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SKEW_SFrameClose( void *stream )
+{
+   return TA_SKEW_Close( (TA_SKEW_Stream *)stream );
+}
+
 static TA_RetCode TA_SMA_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -10058,6 +10094,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_SIN, 0, NULL, 1, TA_VOutIsInt_SIN },
    { "SINH", TA_SINH_SFrameOpen, TA_SINH_SFrameFill, TA_SINH_SFrameClose,
      1, TA_VIn_SINH, 0, NULL, 1, TA_VOutIsInt_SINH },
+   { "SKEW", TA_SKEW_SFrameOpen, TA_SKEW_SFrameFill, TA_SKEW_SFrameClose,
+     1, TA_VIn_SKEW, 1, TA_VOpt_SKEW, 1, TA_VOutIsInt_SKEW },
    { "SMA", TA_SMA_SFrameOpen, TA_SMA_SFrameFill, TA_SMA_SFrameClose,
      1, TA_VIn_SMA, 1, TA_VOpt_SMA, 1, TA_VOutIsInt_SMA },
    { "SMI", TA_SMI_SFrameOpen, TA_SMI_SFrameFill, TA_SMI_SFrameClose,
@@ -10142,6 +10180,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 239
+#define TA_STREAM_TABLE_SIZE 240
 
 #endif /* TA_STREAM_FRAME_H */

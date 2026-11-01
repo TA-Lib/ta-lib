@@ -2225,6 +2225,17 @@ unsigned int TA_SINH_FramePPLB( const TA_ParamHolderPriv *params )
 int TA_SINH_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
+TA_RetCode TA_SKEW_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_SKEW_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_SKEW_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
 TA_RetCode TA_SMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

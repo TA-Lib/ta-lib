@@ -318,6 +318,7 @@ public final class Functions {
       put(m, f_SI());
       put(m, f_SIN());
       put(m, f_SINH());
+      put(m, f_SKEW());
       put(m, f_SMA());
       put(m, f_SMI());
       put(m, f_SQRT());
@@ -3893,6 +3894,24 @@ public final class Functions {
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
          List.of(),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_SKEW() {
+      return new FuncInfo(
+         "SKEW", "Statistic Functions", "Rolling Skewness", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 30.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               3, 100000, 10, 200, 5, null)
+         ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));

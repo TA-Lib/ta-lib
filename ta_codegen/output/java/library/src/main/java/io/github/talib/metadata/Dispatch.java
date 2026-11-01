@@ -652,6 +652,9 @@ final class Dispatch {
          case "SINH":
             return core.sinh(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
+         case "SKEW":
+            return core.skew(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "SMA":
             return core.sma(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
@@ -1182,6 +1185,8 @@ final class Dispatch {
             return core.sinLookback();
          case "SINH":
             return core.sinhLookback();
+         case "SKEW":
+            return core.skewLookback(h.intOpt(0));
          case "SMA":
             return core.smaLookback(h.intOpt(0));
          case "SMI":
@@ -1668,6 +1673,8 @@ final class Dispatch {
             return core.sinDisplayShift(outputIdx);
          case "SINH":
             return core.sinhDisplayShift(outputIdx);
+         case "SKEW":
+            return core.skewDisplayShift(h.intOpt(0), outputIdx);
          case "SMA":
             return core.smaDisplayShift(h.intOpt(0), outputIdx);
          case "SMI":

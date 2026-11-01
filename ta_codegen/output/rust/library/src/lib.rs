@@ -356,7 +356,7 @@
 //! * [`TYPPRICE`](Core::typprice) — Typical Price
 //! * [`WCLPRICE`](Core::wclprice) — Weighted Close Price
 //!
-//! ## Statistic Functions (13)
+//! ## Statistic Functions (14)
 //!
 //! * [`BETA`](Core::beta) — Beta
 //! * [`CORREL`](Core::correl) — Pearson's Correlation Coefficient (r)
@@ -368,6 +368,7 @@
 //! * [`MEDIAN`](Core::median) — Rolling Median
 //! * [`PERCENTILE`](Core::percentile) — Percentile (nearest rank)
 //! * [`PERCENTRANK`](Core::percentrank) — Percent Rank
+//! * [`SKEW`](Core::skew) — Rolling Skewness
 //! * [`STDDEV`](Core::stddev) — Standard Deviation
 //! * [`TSF`](Core::tsf) — Time Series Forecast
 //! * [`VAR`](Core::var) — Variance

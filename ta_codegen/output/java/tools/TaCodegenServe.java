@@ -144696,7 +144696,7 @@ class Core {
           }
           bandScale = bandScale * periodScale;
           lineValue = 0.0;
-          if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
+          if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
              lineValue = spread / prevATR * 100.0;
           }
           /* Seed the signal EMA with a simple average of the first 'signal period'
@@ -144730,7 +144730,7 @@ class Core {
              }
              bandScale = bandScale * periodScale;
              lineValue = 0.0;
-             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
+             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
                 lineValue = spread / prevATR * 100.0;
              }
              prevSignal += lineValue;
@@ -144765,7 +144765,7 @@ class Core {
              }
              bandScale = bandScale * periodScale;
              lineValue = 0.0;
-             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
+             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
                 lineValue = spread / prevATR * 100.0;
              }
              if( optInSignalPeriod == 1 ) {
@@ -144805,7 +144805,7 @@ class Core {
              }
              bandScale = bandScale * periodScale;
              lineValue = 0.0;
-             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
+             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
                 lineValue = spread / prevATR * 100.0;
              }
              if( optInSignalPeriod == 1 ) {
@@ -144998,7 +144998,7 @@ class Core {
           }
           bandScale = bandScale * periodScale;
           lineValue = 0.0;
-          if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
+          if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
              lineValue = spread / prevATR * 100.0;
           }
           prevSignal = 0.0;
@@ -145028,7 +145028,7 @@ class Core {
              }
              bandScale = bandScale * periodScale;
              lineValue = 0.0;
-             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
+             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
                 lineValue = spread / prevATR * 100.0;
              }
              prevSignal += lineValue;
@@ -145059,7 +145059,7 @@ class Core {
              }
              bandScale = bandScale * periodScale;
              lineValue = 0.0;
-             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
+             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
                 lineValue = spread / prevATR * 100.0;
              }
              if( optInSignalPeriod == 1 ) {
@@ -145097,7 +145097,7 @@ class Core {
              }
              bandScale = bandScale * periodScale;
              lineValue = 0.0;
-             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
+             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
                 lineValue = spread / prevATR * 100.0;
              }
              if( optInSignalPeriod == 1 ) {
@@ -145500,7 +145500,7 @@ class Core {
              }
              bandScale = bandScale * sp.periodScale;
              lineValue = 0.0;
-             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
+             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
                 lineValue = spread / prevATR * 100.0;
              }
              if( sp.optInSignalPeriod == 1 ) {
@@ -145605,7 +145605,7 @@ class Core {
           }
           bandScale = bandScale * sp.periodScale;
           lineValue = 0.0;
-          if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(sp.prevATR) <= 0.00000000000001 * (bandScale)) && sp.prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
+          if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(sp.prevATR) <= 0.00000000000001 * (bandScale)) && sp.prevATR >= 2.2250738585072014e-308 ) {
              lineValue = spread / sp.prevATR * 100.0;
           }
           if( sp.optInSignalPeriod == 1 ) {
@@ -145849,7 +145849,7 @@ class Core {
           }
           bandScale = bandScale * periodScale;
           lineValue = 0.0;
-          if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
+          if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
              lineValue = spread / prevATR * 100.0;
           }
           /* Seed the signal EMA with a simple average of the first 'signal period'
@@ -145883,7 +145883,7 @@ class Core {
              }
              bandScale = bandScale * periodScale;
              lineValue = 0.0;
-             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
+             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
                 lineValue = spread / prevATR * 100.0;
              }
              prevSignal += lineValue;
@@ -145918,7 +145918,7 @@ class Core {
              }
              bandScale = bandScale * periodScale;
              lineValue = 0.0;
-             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
+             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
                 lineValue = spread / prevATR * 100.0;
              }
              if( optInSignalPeriod == 1 ) {
@@ -145958,7 +145958,7 @@ class Core {
              }
              bandScale = bandScale * periodScale;
              lineValue = 0.0;
-             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000022250738585072014 ) {
+             if( !(Math.abs(spread) <= 0.00000000000001 * (bandScale)) && !(Math.abs(prevATR) <= 0.00000000000001 * (bandScale)) && prevATR >= 2.2250738585072014e-308 ) {
                 lineValue = spread / prevATR * 100.0;
              }
              if( optInSignalPeriod == 1 ) {
@@ -193841,6 +193841,1181 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  110126 MF,CC  First version (issue #569).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#skew} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInTimePeriod Number of trailing values in the window (default
+        *        30; range 3..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int skewLookback( int optInTimePeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 30;
+          } else if( optInTimePeriod < 3 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          return optInTimePeriod - 1 ;
+
+       }
+       /**
+        * How many bars ahead (positive) or behind (negative) of the bar that
+        * computed it a chart draws one output of {@link Core#skew}.
+        * <p>Every output of this function is drawn at its own bar, so the answer is
+        * 0.
+        *
+        * @param optInTimePeriod Number of trailing values in the window (default
+        *        30; range 3..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outputIdx Position of the output in the batch signature, from 0.
+        * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+        *        out of range or the index names no output.
+        */
+       public int skewDisplayShift( int optInTimePeriod, int outputIdx )
+       {
+          if( skewLookback( optInTimePeriod ) < 0 ) {
+             return Integer.MIN_VALUE;
+          }
+          if( outputIdx < 0 || outputIdx >= 1 ) {
+             return Integer.MIN_VALUE;
+          }
+          return 0;
+       }
+       RetCode skewImpl( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+       {
+          double tempReal = 0;
+          double shift = 0;
+          double total1 = 0;
+          double total2 = 0;
+          double total3 = 0;
+          double dev = 0;
+          double dev2 = 0;
+          double residue = 0;
+          double residueSq = 0;
+          double moment2 = 0;
+          double moment3 = 0;
+          double dPeriod = 0;
+          double coef = 0;
+          double invPeriod = 0;
+          double skewness = 0;
+          double peak2 = 0;
+          double denominator = 0;
+          int i = 0;
+          int j = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int windowStart = 0;
+          int nbInitialElementNeeded = 0;
+          int barsSinceReseed = 0;
+          int reseedPeriod = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 30;
+          } else if( optInTimePeriod < 3 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          nbInitialElementNeeded = optInTimePeriod - 1;
+          if( startIdx < nbInitialElementNeeded ) {
+             startIdx = nbInitialElementNeeded;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          /* G1 = n*sqrt(n-1)/(n-2) * M3 / M2^(3/2), over the central sums M2 and
+           * M3. The n-2 is why the range starts at 3, and the n-1 lookback hands the
+           * estimator a full window at the first emitted bar.
+           */
+          dPeriod = (double)optInTimePeriod;
+          coef = dPeriod * Math.sqrt(dPeriod - 1.0) / (dPeriod - 2.0);
+          invPeriod = 1.0 / dPeriod;
+          /* Deviations are measured against a shift near the window, and the
+           * central sums are recovered from them below. The periodic rebuild bounds
+           * the rounding the slide accumulates, and is the only way out of a NaN or
+           * Inf input, on which every trigger comparison is false.
+           */
+          reseedPeriod = 32 * optInTimePeriod;
+          trailingIdx = startIdx - nbInitialElementNeeded;
+          shift = inReal[trailingIdx];
+          total1 = 0.0;
+          total2 = 0.0;
+          total3 = 0.0;
+          for( j = trailingIdx; j < startIdx; j += 1 ) {
+             dev = inReal[j] - shift;
+             dev2 = dev * dev;
+             total1 += dev;
+             total2 += dev2;
+             total3 += dev2 * dev;
+          }
+          i = startIdx;
+          outIdx = 0;
+          barsSinceReseed = reseedPeriod;
+          peak2 = total2;
+          do {
+             dev = inReal[i] - shift;
+             dev2 = dev * dev;
+             total1 += dev;
+             total2 += dev2;
+             total3 += dev2 * dev;
+             if( total2 > peak2 ) {
+                peak2 = total2;
+             }
+             residue = total1 * invPeriod;
+             residueSq = residue * residue;
+             moment2 = total2 - dPeriod * residueSq;
+             moment3 = Math.fma(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
+             /* Each bar rounds the cubic sum by at most eps times the peak second
+              * sum to the power 3/2, so G1's error grows as (peak/M2)^(3/2), at most
+              * 1000x before the rebuild at 1% of the peak.
+              */
+             barsSinceReseed -= 1;
+             if( moment2 < 0.01 * peak2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = reseedPeriod;
+                windowStart = i - nbInitialElementNeeded;
+                tempReal = 0.0;
+                for( j = windowStart; j <= i; j += 1 ) {
+                   tempReal += inReal[j];
+                }
+                shift = tempReal * invPeriod;
+                total1 = 0.0;
+                total2 = 0.0;
+                total3 = 0.0;
+                for( j = windowStart; j <= i; j += 1 ) {
+                   dev = inReal[j] - shift;
+                   dev2 = dev * dev;
+                   total1 += dev;
+                   total2 += dev2;
+                   total3 += dev2 * dev;
+                }
+                residue = total1 * invPeriod;
+                residueSq = residue * residue;
+                moment2 = total2 - dPeriod * residueSq;
+                moment3 = Math.fma(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
+                /* The left-to-right sum can miss the mean by more than the window's
+                 * spread, and the trigger would then fire again on every bar. Adding
+                 * the measured miss back lands within about an ulp of the mean, where
+                 * a flat window's deviations are exactly 0. Keep this threshold the
+                 * trigger's.
+                 */
+                if( moment2 < 0.01 * total2 ) {
+                   shift += residue;
+                   total1 = 0.0;
+                   total2 = 0.0;
+                   total3 = 0.0;
+                   for( j = windowStart; j <= i; j += 1 ) {
+                      dev = inReal[j] - shift;
+                      dev2 = dev * dev;
+                      total1 += dev;
+                      total2 += dev2;
+                      total3 += dev2 * dev;
+                   }
+                   residue = total1 * invPeriod;
+                   residueSq = residue * residue;
+                   moment2 = total2 - dPeriod * residueSq;
+                   moment3 = Math.fma(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
+                }
+                peak2 = total2;
+             }
+             /* A window of equal values is symmetric, and reaches here with every
+              * deviation exactly 0. The bound is the smallest normal double, not a
+              * scale: a denominator under it comes with cubed deviations that have
+              * lost their precision in the subnormals.
+              */
+             denominator = moment2 * Math.sqrt(moment2);
+             if( denominator < 2.2250738585072014e-308 ) {
+                skewness = 0.0;
+             } else {
+                skewness = coef * moment3 / denominator;
+             }
+             /* inReal and outReal may be the same buffer: read the trailing value
+              * before the output write.
+              */
+             dev = inReal[trailingIdx] - shift;
+             dev2 = dev * dev;
+             total1 -= dev;
+             total2 -= dev2;
+             total3 -= dev2 * dev;
+             trailingIdx += 1;
+             outReal[outIdx++] = skewness;
+             i += 1;
+          } while( i <= endIdx );
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode skewImpl( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+       {
+          double tempReal = 0;
+          double shift = 0;
+          double total1 = 0;
+          double total2 = 0;
+          double total3 = 0;
+          double dev = 0;
+          double dev2 = 0;
+          double residue = 0;
+          double residueSq = 0;
+          double moment2 = 0;
+          double moment3 = 0;
+          double dPeriod = 0;
+          double coef = 0;
+          double invPeriod = 0;
+          double skewness = 0;
+          double peak2 = 0;
+          double denominator = 0;
+          int i = 0;
+          int j = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int windowStart = 0;
+          int nbInitialElementNeeded = 0;
+          int barsSinceReseed = 0;
+          int reseedPeriod = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 30;
+          } else if( optInTimePeriod < 3 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          nbInitialElementNeeded = optInTimePeriod - 1;
+          if( startIdx < nbInitialElementNeeded ) {
+             startIdx = nbInitialElementNeeded;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          dPeriod = (double)optInTimePeriod;
+          coef = dPeriod * Math.sqrt(dPeriod - 1.0) / (dPeriod - 2.0);
+          invPeriod = 1.0 / dPeriod;
+          reseedPeriod = 32 * optInTimePeriod;
+          trailingIdx = startIdx - nbInitialElementNeeded;
+          shift = (double)inReal[trailingIdx];
+          total1 = 0.0;
+          total2 = 0.0;
+          total3 = 0.0;
+          for( j = trailingIdx; j < startIdx; j += 1 ) {
+             dev = (double)inReal[j] - shift;
+             dev2 = dev * dev;
+             total1 += dev;
+             total2 += dev2;
+             total3 += dev2 * dev;
+          }
+          i = startIdx;
+          outIdx = 0;
+          barsSinceReseed = reseedPeriod;
+          peak2 = total2;
+          do {
+             dev = (double)inReal[i] - shift;
+             dev2 = dev * dev;
+             total1 += dev;
+             total2 += dev2;
+             total3 += dev2 * dev;
+             if( total2 > peak2 ) {
+                peak2 = total2;
+             }
+             residue = total1 * invPeriod;
+             residueSq = residue * residue;
+             moment2 = total2 - dPeriod * residueSq;
+             moment3 = Math.fma(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
+             barsSinceReseed -= 1;
+             if( moment2 < 0.01 * peak2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = reseedPeriod;
+                windowStart = i - nbInitialElementNeeded;
+                tempReal = 0.0;
+                for( j = windowStart; j <= i; j += 1 ) {
+                   tempReal += (double)inReal[j];
+                }
+                shift = tempReal * invPeriod;
+                total1 = 0.0;
+                total2 = 0.0;
+                total3 = 0.0;
+                for( j = windowStart; j <= i; j += 1 ) {
+                   dev = (double)inReal[j] - shift;
+                   dev2 = dev * dev;
+                   total1 += dev;
+                   total2 += dev2;
+                   total3 += dev2 * dev;
+                }
+                residue = total1 * invPeriod;
+                residueSq = residue * residue;
+                moment2 = total2 - dPeriod * residueSq;
+                moment3 = Math.fma(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
+                if( moment2 < 0.01 * total2 ) {
+                   shift += residue;
+                   total1 = 0.0;
+                   total2 = 0.0;
+                   total3 = 0.0;
+                   for( j = windowStart; j <= i; j += 1 ) {
+                      dev = (double)inReal[j] - shift;
+                      dev2 = dev * dev;
+                      total1 += dev;
+                      total2 += dev2;
+                      total3 += dev2 * dev;
+                   }
+                   residue = total1 * invPeriod;
+                   residueSq = residue * residue;
+                   moment2 = total2 - dPeriod * residueSq;
+                   moment3 = Math.fma(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
+                }
+                peak2 = total2;
+             }
+             denominator = moment2 * Math.sqrt(moment2);
+             if( denominator < 2.2250738585072014e-308 ) {
+                skewness = 0.0;
+             } else {
+                skewness = coef * moment3 / denominator;
+             }
+             dev = (double)inReal[trailingIdx] - shift;
+             dev2 = dev * dev;
+             total1 -= dev;
+             total2 -= dev2;
+             total3 -= dev2 * dev;
+             trailingIdx += 1;
+             outReal[outIdx++] = skewness;
+             i += 1;
+          } while( i <= endIdx );
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * An estimate, from the trailing window, of the skewness of the distribution
+        * its values come from: the third standardised moment. An asymmetry measure:
+        * above 0 the distribution has a longer tail above its mean, below 0 a
+        * longer tail below it, and a symmetric window reads 0. The companion to <a
+        * href="https://ta-lib.org/functions/kurtosis">{@code KURTOSIS}</a>, <a
+        * href="https://ta-lib.org/functions/var">{@code VAR}</a> and <a
+        * href="https://ta-lib.org/functions/stddev">{@code STDDEV}</a> in the same
+        * group.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/skew">ta-lib.org/functions/skew</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>This is {@code G1}, the form Excel {@code SKEW}, {@code scipy.stats.skew(bias=False)} and R {@code e1071::skewness(type = 2)} compute. Two other estimators are in circulation, each a constant multiple of {@code g1} rather than a rounding convention: {@code g1} itself ({@code scipy.stats.skew(bias=True)}) and {@code b1 = g1 · ((n−1)/n)^(3/2)} ({@code type = 3}).</li>
+        * <li>One reading apart from {@code n−1} equal ones gives exactly {@code √n}, above the rest when the odd one is above and {@code −√n} when it is below. That is the largest magnitude a window can reach, so a window dominated by one outlier is legitimately far from 0.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#skewLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The series to measure.
+        * @param optInTimePeriod Number of trailing values in the window (default
+        *        30; range 3..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal Skewness of the trailing window, or 0 where the window has
+        *        no spread. Must hold at least
+        *        {@code endIdx - max(startIdx, skewLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
+        *
+        * @see Core#kurtosis
+        * @see Core#var
+        * @see Core#stddev
+        */
+       public OutRange skew( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             int optInTimePeriod,
+                             double outReal[] )
+       {
+          requireIndexRange("SKEW", startIdx, endIdx);
+          int guardStart = clampedStart("SKEW", startIdx, skewLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SKEW", "inReal", inReal, guardInLen);
+          requireLength("SKEW", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = skewImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SKEW", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * An estimate, from the trailing window, of the skewness of the distribution
+        * its values come from: the third standardised moment. An asymmetry measure:
+        * above 0 the distribution has a longer tail above its mean, below 0 a
+        * longer tail below it, and a symmetric window reads 0. The companion to <a
+        * href="https://ta-lib.org/functions/kurtosis">{@code KURTOSIS}</a>, <a
+        * href="https://ta-lib.org/functions/var">{@code VAR}</a> and <a
+        * href="https://ta-lib.org/functions/stddev">{@code STDDEV}</a> in the same
+        * group.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/skew">ta-lib.org/functions/skew</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>This is {@code G1}, the form Excel {@code SKEW}, {@code scipy.stats.skew(bias=False)} and R {@code e1071::skewness(type = 2)} compute. Two other estimators are in circulation, each a constant multiple of {@code g1} rather than a rounding convention: {@code g1} itself ({@code scipy.stats.skew(bias=True)}) and {@code b1 = g1 · ((n−1)/n)^(3/2)} ({@code type = 3}).</li>
+        * <li>One reading apart from {@code n−1} equal ones gives exactly {@code √n}, above the rest when the odd one is above and {@code −√n} when it is below. That is the largest magnitude a window can reach, so a window dominated by one outlier is legitimately far from 0.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#skewLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The series to measure.
+        * @param optInTimePeriod Number of trailing values in the window (default
+        *        30; range 3..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal Skewness of the trailing window, or 0 where the window has
+        *        no spread. Must hold at least
+        *        {@code endIdx - max(startIdx, skewLookback(...)) + 1} values, and never be
+        *        empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
+        *
+        * @see Core#kurtosis
+        * @see Core#var
+        * @see Core#stddev
+        */
+       public OutRange skew( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             int optInTimePeriod,
+                             double outReal[] )
+       {
+          requireIndexRange("SKEW", startIdx, endIdx);
+          int guardStart = clampedStart("SKEW", startIdx, skewLookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SKEW", "inReal", inReal, guardInLen);
+          requireLength("SKEW", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = skewImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SKEW", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live SKEW stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#skew} over the same series.
+        * Open with {@link Core#skewOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class SkewStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double shift;
+          private double total1;
+          private double total2;
+          private double total3;
+          private double dPeriod;
+          private double coef;
+          private double invPeriod;
+          private double peak2;
+          private int trailingIdx;
+          private int nbInitialElementNeeded;
+          private int barsSinceReseed;
+          private int reseedPeriod;
+          private int j;
+          private int i;
+          private int xMask;
+          private double[] x_inReal;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private SkewStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#skew} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SKEW advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private SkewStream( SkewStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.shift = other.shift;
+             this.total1 = other.total1;
+             this.total2 = other.total2;
+             this.total3 = other.total3;
+             this.dPeriod = other.dPeriod;
+             this.coef = other.coef;
+             this.invPeriod = other.invPeriod;
+             this.peak2 = other.peak2;
+             this.trailingIdx = other.trailingIdx;
+             this.nbInitialElementNeeded = other.nbInitialElementNeeded;
+             this.barsSinceReseed = other.barsSinceReseed;
+             this.reseedPeriod = other.reseedPeriod;
+             this.j = other.j;
+             this.i = other.i;
+             this.xMask = other.xMask;
+             this.x_inReal = other.x_inReal.clone();
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SKEW update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("SKEW update", "inReal");
+             core.skewStepImpl(this, inReal);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inReal ) {
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("SKEW peek", "inReal");
+             SkewStream sp = this;
+             double tempReal = 0.0;
+             double dev = 0.0;
+             double dev2 = 0.0;
+             double residue = 0.0;
+             double residueSq = 0.0;
+             double moment2 = 0.0;
+             double moment3 = 0.0;
+             double skewness = 0.0;
+             double denominator = 0.0;
+             int windowStart = 0;
+             int barsSinceReseed = sp.barsSinceReseed;
+             double cur_outReal = 0.0;
+             int j = sp.j;
+             double peak2 = sp.peak2;
+             double shift = sp.shift;
+             double total1 = sp.total1;
+             double total2 = sp.total2;
+             double total3 = sp.total3;
+             int trailingIdx = sp.trailingIdx;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             pkSlot0 = sp.i & sp.xMask;
+             pkVal0 = inReal;
+             dev = (((sp.i & sp.xMask) != pkSlot0) ? sp.x_inReal[sp.i & sp.xMask] : pkVal0) - shift;
+             dev2 = dev * dev;
+             total1 += dev;
+             total2 += dev2;
+             total3 += dev2 * dev;
+             if( total2 > peak2 ) {
+                peak2 = total2;
+             }
+             residue = total1 * sp.invPeriod;
+             residueSq = residue * residue;
+             moment2 = total2 - sp.dPeriod * residueSq;
+             moment3 = Math.fma(2.0 * sp.dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
+             /* Each bar rounds the cubic sum by at most eps times the peak second
+              * sum to the power 3/2, so G1's error grows as (peak/M2)^(3/2), at most
+              * 1000x before the rebuild at 1% of the peak.
+              */
+             barsSinceReseed -= 1;
+             if( moment2 < 0.01 * peak2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = sp.reseedPeriod;
+                windowStart = sp.i - sp.nbInitialElementNeeded;
+                tempReal = 0.0;
+                for( j = windowStart; j <= sp.i; j += 1 ) {
+                   tempReal += ((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0;
+                }
+                shift = tempReal * sp.invPeriod;
+                total1 = 0.0;
+                total2 = 0.0;
+                total3 = 0.0;
+                for( j = windowStart; j <= sp.i; j += 1 ) {
+                   dev = (((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0) - shift;
+                   dev2 = dev * dev;
+                   total1 += dev;
+                   total2 += dev2;
+                   total3 += dev2 * dev;
+                }
+                residue = total1 * sp.invPeriod;
+                residueSq = residue * residue;
+                moment2 = total2 - sp.dPeriod * residueSq;
+                moment3 = Math.fma(2.0 * sp.dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
+                /* The left-to-right sum can miss the mean by more than the window's
+                 * spread, and the trigger would then fire again on every bar. Adding
+                 * the measured miss back lands within about an ulp of the mean, where
+                 * a flat window's deviations are exactly 0. Keep this threshold the
+                 * trigger's.
+                 */
+                if( moment2 < 0.01 * total2 ) {
+                   shift += residue;
+                   total1 = 0.0;
+                   total2 = 0.0;
+                   total3 = 0.0;
+                   for( j = windowStart; j <= sp.i; j += 1 ) {
+                      dev = (((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0) - shift;
+                      dev2 = dev * dev;
+                      total1 += dev;
+                      total2 += dev2;
+                      total3 += dev2 * dev;
+                   }
+                   residue = total1 * sp.invPeriod;
+                   residueSq = residue * residue;
+                   moment2 = total2 - sp.dPeriod * residueSq;
+                   moment3 = Math.fma(2.0 * sp.dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
+                }
+                peak2 = total2;
+             }
+             /* A window of equal values is symmetric, and reaches here with every
+              * deviation exactly 0. The bound is the smallest normal double, not a
+              * scale: a denominator under it comes with cubed deviations that have
+              * lost their precision in the subnormals.
+              */
+             denominator = moment2 * Math.sqrt(moment2);
+             if( denominator < 2.2250738585072014e-308 ) {
+                skewness = 0.0;
+             } else {
+                skewness = sp.coef * moment3 / denominator;
+             }
+             /* inReal and outReal may be the same buffer: read the trailing value
+              * before the output write.
+              */
+             dev = (((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[trailingIdx & sp.xMask] : pkVal0) - shift;
+             dev2 = dev * dev;
+             total1 -= dev;
+             total2 -= dev2;
+             total3 -= dev2 * dev;
+             trailingIdx += 1;
+             cur_outReal = skewness;
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public SkewStream clone() {
+             return new SkewStream(this);
+          }
+       }
+       private void skewStepImpl( SkewStream sp, double inReal )
+       {
+          double tempReal = 0.0;
+          double dev = 0.0;
+          double dev2 = 0.0;
+          double residue = 0.0;
+          double residueSq = 0.0;
+          double moment2 = 0.0;
+          double moment3 = 0.0;
+          double skewness = 0.0;
+          double denominator = 0.0;
+          int windowStart = 0;
+          sp.x_inReal[sp.i & sp.xMask] = inReal;
+          dev = sp.x_inReal[sp.i & sp.xMask] - sp.shift;
+          dev2 = dev * dev;
+          sp.total1 += dev;
+          sp.total2 += dev2;
+          sp.total3 += dev2 * dev;
+          if( sp.total2 > sp.peak2 ) {
+             sp.peak2 = sp.total2;
+          }
+          residue = sp.total1 * sp.invPeriod;
+          residueSq = residue * residue;
+          moment2 = sp.total2 - sp.dPeriod * residueSq;
+          moment3 = Math.fma(2.0 * sp.dPeriod * residueSq, residue, sp.total3 - 3.0 * residue * sp.total2);
+          /* Each bar rounds the cubic sum by at most eps times the peak second
+           * sum to the power 3/2, so G1's error grows as (peak/M2)^(3/2), at most
+           * 1000x before the rebuild at 1% of the peak.
+           */
+          sp.barsSinceReseed -= 1;
+          if( moment2 < 0.01 * sp.peak2 || sp.barsSinceReseed <= 0 ) {
+             sp.barsSinceReseed = sp.reseedPeriod;
+             windowStart = sp.i - sp.nbInitialElementNeeded;
+             tempReal = 0.0;
+             for( sp.j = windowStart; sp.j <= sp.i; sp.j += 1 ) {
+                tempReal += sp.x_inReal[sp.j & sp.xMask];
+             }
+             sp.shift = tempReal * sp.invPeriod;
+             sp.total1 = 0.0;
+             sp.total2 = 0.0;
+             sp.total3 = 0.0;
+             for( sp.j = windowStart; sp.j <= sp.i; sp.j += 1 ) {
+                dev = sp.x_inReal[sp.j & sp.xMask] - sp.shift;
+                dev2 = dev * dev;
+                sp.total1 += dev;
+                sp.total2 += dev2;
+                sp.total3 += dev2 * dev;
+             }
+             residue = sp.total1 * sp.invPeriod;
+             residueSq = residue * residue;
+             moment2 = sp.total2 - sp.dPeriod * residueSq;
+             moment3 = Math.fma(2.0 * sp.dPeriod * residueSq, residue, sp.total3 - 3.0 * residue * sp.total2);
+             /* The left-to-right sum can miss the mean by more than the window's
+              * spread, and the trigger would then fire again on every bar. Adding
+              * the measured miss back lands within about an ulp of the mean, where
+              * a flat window's deviations are exactly 0. Keep this threshold the
+              * trigger's.
+              */
+             if( moment2 < 0.01 * sp.total2 ) {
+                sp.shift += residue;
+                sp.total1 = 0.0;
+                sp.total2 = 0.0;
+                sp.total3 = 0.0;
+                for( sp.j = windowStart; sp.j <= sp.i; sp.j += 1 ) {
+                   dev = sp.x_inReal[sp.j & sp.xMask] - sp.shift;
+                   dev2 = dev * dev;
+                   sp.total1 += dev;
+                   sp.total2 += dev2;
+                   sp.total3 += dev2 * dev;
+                }
+                residue = sp.total1 * sp.invPeriod;
+                residueSq = residue * residue;
+                moment2 = sp.total2 - sp.dPeriod * residueSq;
+                moment3 = Math.fma(2.0 * sp.dPeriod * residueSq, residue, sp.total3 - 3.0 * residue * sp.total2);
+             }
+             sp.peak2 = sp.total2;
+          }
+          /* A window of equal values is symmetric, and reaches here with every
+           * deviation exactly 0. The bound is the smallest normal double, not a
+           * scale: a denominator under it comes with cubed deviations that have
+           * lost their precision in the subnormals.
+           */
+          denominator = moment2 * Math.sqrt(moment2);
+          if( denominator < 2.2250738585072014e-308 ) {
+             skewness = 0.0;
+          } else {
+             skewness = sp.coef * moment3 / denominator;
+          }
+          /* inReal and outReal may be the same buffer: read the trailing value
+           * before the output write.
+           */
+          dev = sp.x_inReal[sp.trailingIdx & sp.xMask] - sp.shift;
+          dev2 = dev * dev;
+          sp.total1 -= dev;
+          sp.total2 -= dev2;
+          sp.total3 -= dev2 * dev;
+          sp.trailingIdx += 1;
+          sp.cur_outReal = skewness;
+          sp.i += 1;
+       }
+       private RetCode skewOpenImpl( SkewStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          double tempReal = 0;
+          double shift = 0;
+          double total1 = 0;
+          double total2 = 0;
+          double total3 = 0;
+          double dev = 0;
+          double dev2 = 0;
+          double residue = 0;
+          double residueSq = 0;
+          double moment2 = 0;
+          double moment3 = 0;
+          double dPeriod = 0;
+          double coef = 0;
+          double invPeriod = 0;
+          double skewness = 0;
+          double peak2 = 0;
+          double denominator = 0;
+          int i = 0;
+          int j = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int windowStart = 0;
+          int nbInitialElementNeeded = 0;
+          int barsSinceReseed = 0;
+          int reseedPeriod = 0;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX;
+          }
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 30;
+          } else if( optInTimePeriod < 3 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          nbInitialElementNeeded = optInTimePeriod - 1;
+          if( startIdx < nbInitialElementNeeded ) {
+             startIdx = nbInitialElementNeeded;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          /* G1 = n*sqrt(n-1)/(n-2) * M3 / M2^(3/2), over the central sums M2 and
+           * M3. The n-2 is why the range starts at 3, and the n-1 lookback hands the
+           * estimator a full window at the first emitted bar.
+           */
+          dPeriod = (double)optInTimePeriod;
+          coef = dPeriod * Math.sqrt(dPeriod - 1.0) / (dPeriod - 2.0);
+          invPeriod = 1.0 / dPeriod;
+          /* Deviations are measured against a shift near the window, and the
+           * central sums are recovered from them below. The periodic rebuild bounds
+           * the rounding the slide accumulates, and is the only way out of a NaN or
+           * Inf input, on which every trigger comparison is false.
+           */
+          reseedPeriod = 32 * optInTimePeriod;
+          trailingIdx = startIdx - nbInitialElementNeeded;
+          shift = inReal[trailingIdx];
+          total1 = 0.0;
+          total2 = 0.0;
+          total3 = 0.0;
+          for( j = trailingIdx; j < startIdx; j += 1 ) {
+             dev = inReal[j] - shift;
+             dev2 = dev * dev;
+             total1 += dev;
+             total2 += dev2;
+             total3 += dev2 * dev;
+          }
+          i = startIdx;
+          outIdx = 0;
+          barsSinceReseed = reseedPeriod;
+          peak2 = total2;
+          do {
+             dev = inReal[i] - shift;
+             dev2 = dev * dev;
+             total1 += dev;
+             total2 += dev2;
+             total3 += dev2 * dev;
+             if( total2 > peak2 ) {
+                peak2 = total2;
+             }
+             residue = total1 * invPeriod;
+             residueSq = residue * residue;
+             moment2 = total2 - dPeriod * residueSq;
+             moment3 = Math.fma(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
+             /* Each bar rounds the cubic sum by at most eps times the peak second
+              * sum to the power 3/2, so G1's error grows as (peak/M2)^(3/2), at most
+              * 1000x before the rebuild at 1% of the peak.
+              */
+             barsSinceReseed -= 1;
+             if( moment2 < 0.01 * peak2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = reseedPeriod;
+                windowStart = i - nbInitialElementNeeded;
+                tempReal = 0.0;
+                for( j = windowStart; j <= i; j += 1 ) {
+                   tempReal += inReal[j];
+                }
+                shift = tempReal * invPeriod;
+                total1 = 0.0;
+                total2 = 0.0;
+                total3 = 0.0;
+                for( j = windowStart; j <= i; j += 1 ) {
+                   dev = inReal[j] - shift;
+                   dev2 = dev * dev;
+                   total1 += dev;
+                   total2 += dev2;
+                   total3 += dev2 * dev;
+                }
+                residue = total1 * invPeriod;
+                residueSq = residue * residue;
+                moment2 = total2 - dPeriod * residueSq;
+                moment3 = Math.fma(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
+                /* The left-to-right sum can miss the mean by more than the window's
+                 * spread, and the trigger would then fire again on every bar. Adding
+                 * the measured miss back lands within about an ulp of the mean, where
+                 * a flat window's deviations are exactly 0. Keep this threshold the
+                 * trigger's.
+                 */
+                if( moment2 < 0.01 * total2 ) {
+                   shift += residue;
+                   total1 = 0.0;
+                   total2 = 0.0;
+                   total3 = 0.0;
+                   for( j = windowStart; j <= i; j += 1 ) {
+                      dev = inReal[j] - shift;
+                      dev2 = dev * dev;
+                      total1 += dev;
+                      total2 += dev2;
+                      total3 += dev2 * dev;
+                   }
+                   residue = total1 * invPeriod;
+                   residueSq = residue * residue;
+                   moment2 = total2 - dPeriod * residueSq;
+                   moment3 = Math.fma(2.0 * dPeriod * residueSq, residue, total3 - 3.0 * residue * total2);
+                }
+                peak2 = total2;
+             }
+             /* A window of equal values is symmetric, and reaches here with every
+              * deviation exactly 0. The bound is the smallest normal double, not a
+              * scale: a denominator under it comes with cubed deviations that have
+              * lost their precision in the subnormals.
+              */
+             denominator = moment2 * Math.sqrt(moment2);
+             if( denominator < 2.2250738585072014e-308 ) {
+                skewness = 0.0;
+             } else {
+                skewness = coef * moment3 / denominator;
+             }
+             /* inReal and outReal may be the same buffer: read the trailing value
+              * before the output write.
+              */
+             dev = inReal[trailingIdx] - shift;
+             dev2 = dev * dev;
+             total1 -= dev;
+             total2 -= dev2;
+             total3 -= dev2 * dev;
+             trailingIdx += 1;
+             outReal[outIdx++ * outStride] = skewness;
+             i += 1;
+          } while( i <= endIdx );
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          int capX = i - trailingIdx + 1;
+          if( capX < 1 || capX > historyLen ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          int physX = 1;
+          while( physX < capX ) {
+             physX <<= 1;
+          }
+          double[] capX_inReal = new double[physX];
+          for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
+             capX_inReal[fillJ & (physX - 1)] = inReal[fillJ];
+          }
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.shift = shift;
+          sp.total1 = total1;
+          sp.total2 = total2;
+          sp.total3 = total3;
+          sp.dPeriod = dPeriod;
+          sp.coef = coef;
+          sp.invPeriod = invPeriod;
+          sp.peak2 = peak2;
+          sp.trailingIdx = trailingIdx;
+          sp.nbInitialElementNeeded = nbInitialElementNeeded;
+          sp.barsSinceReseed = barsSinceReseed;
+          sp.reseedPeriod = reseedPeriod;
+          sp.j = j;
+          sp.i = i;
+          sp.xMask = physX - 1;
+          sp.x_inReal = capX_inReal;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* skewOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       SkewStream skewOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          SkewStream sp = new SkewStream(this);
+          RetCode retCode = skewOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SKEW openAndFill", inReal.length, startIdx, skewLookback(optInTimePeriod));
+          }
+          throw streamFailure("SKEW openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind skewOpen (composition seam). */
+       SkewStream skewOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+       {
+          SkewStream sp = new SkewStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = skewOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SKEW open", inReal.length, startIdx, skewLookback(optInTimePeriod));
+          }
+          throw streamFailure("SKEW open", retCode);
+       }
+       /**
+        * Open a live SKEW stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#skew} at that bar.
+        * <p>The history must hold at least {@code skewLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+        * as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public SkewStream skewOpen( double inReal[], int optInTimePeriod )
+       {
+          requireArgument("SKEW open", "inReal", inReal);
+          requireHistory("SKEW open", inReal.length);
+          return skewOpenInternal(inReal, 0, optInTimePeriod);
+       }
+       /**
+        * {@link Core#skewOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#skew} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link SkewStream#outRange()}.
+        */
+       public SkewStream skewOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+       {
+          requireArgument("SKEW openAndFill", "inReal", inReal);
+          requireHistory("SKEW openAndFill", inReal.length);
+          int guardOutLen = openFillCount("SKEW openAndFill", inReal.length, skewLookback(optInTimePeriod));
+          requireLength("SKEW openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inReal ) {
+             throw streamFailure("SKEW openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return skewOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
      *
      *
      * Change history:
@@ -233633,7 +234808,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "758a8c024cf30dfa";
+    static final String SPLICED_GENCODE_DIGEST = "15229a8517ecb05d";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -234604,6 +235779,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("SKEW", new AbsFunc("SKEW", "Statistic Functions", "Rolling Skewness", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 3,100000,10,200,5, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("SMA", new AbsFunc("SMA", "Overlap Studies", "Simple Moving Average", 50331649,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
@@ -235085,6 +236264,7 @@ public class TaCodegenServe {
         "TA_SI",
         "TA_SIN",
         "TA_SINH",
+        "TA_SKEW",
         "TA_SMA",
         "TA_SMI",
         "TA_SQRT",
@@ -235330,47 +236510,48 @@ public class TaCodegenServe {
             case 195: return handle_SI(json);
             case 196: return handle_SIN(json);
             case 197: return handle_SINH(json);
-            case 198: return handle_SMA(json);
-            case 199: return handle_SMI(json);
-            case 200: return handle_SQRT(json);
-            case 201: return handle_SQZMOM(json);
-            case 202: return handle_STC(json);
-            case 203: return handle_STDDEV(json);
-            case 204: return handle_STOCH(json);
-            case 205: return handle_STOCHF(json);
-            case 206: return handle_STOCHRSI(json);
-            case 207: return handle_SUB(json);
-            case 208: return handle_SUM(json);
-            case 209: return handle_SUPERTREND(json);
-            case 210: return handle_SWAK_2PHP(json);
-            case 211: return handle_SWAK_BP(json);
-            case 212: return handle_SWAK_BUTTER(json);
-            case 213: return handle_SWAK_GAUSS(json);
-            case 214: return handle_SWAK_HP(json);
-            case 215: return handle_T3(json);
-            case 216: return handle_TAN(json);
-            case 217: return handle_TANH(json);
-            case 218: return handle_TEMA(json);
-            case 219: return handle_TRANGE(json);
-            case 220: return handle_TRIMA(json);
-            case 221: return handle_TRIX(json);
-            case 222: return handle_TSF(json);
-            case 223: return handle_TSI(json);
-            case 224: return handle_TYPPRICE(json);
-            case 225: return handle_ULTOSC(json);
-            case 226: return handle_VAR(json);
-            case 227: return handle_VHF(json);
-            case 228: return handle_VIDYA(json);
-            case 229: return handle_VORTEX(json);
-            case 230: return handle_VWAP(json);
-            case 231: return handle_VWMA(json);
-            case 232: return handle_WAD(json);
-            case 233: return handle_WAVETREND(json);
-            case 234: return handle_WCLPRICE(json);
-            case 235: return handle_WILLR(json);
-            case 236: return handle_WMA(json);
-            case 237: return handle_ZIGZAG(json);
-            case 238: return handle_ZLEMA(json);
+            case 198: return handle_SKEW(json);
+            case 199: return handle_SMA(json);
+            case 200: return handle_SMI(json);
+            case 201: return handle_SQRT(json);
+            case 202: return handle_SQZMOM(json);
+            case 203: return handle_STC(json);
+            case 204: return handle_STDDEV(json);
+            case 205: return handle_STOCH(json);
+            case 206: return handle_STOCHF(json);
+            case 207: return handle_STOCHRSI(json);
+            case 208: return handle_SUB(json);
+            case 209: return handle_SUM(json);
+            case 210: return handle_SUPERTREND(json);
+            case 211: return handle_SWAK_2PHP(json);
+            case 212: return handle_SWAK_BP(json);
+            case 213: return handle_SWAK_BUTTER(json);
+            case 214: return handle_SWAK_GAUSS(json);
+            case 215: return handle_SWAK_HP(json);
+            case 216: return handle_T3(json);
+            case 217: return handle_TAN(json);
+            case 218: return handle_TANH(json);
+            case 219: return handle_TEMA(json);
+            case 220: return handle_TRANGE(json);
+            case 221: return handle_TRIMA(json);
+            case 222: return handle_TRIX(json);
+            case 223: return handle_TSF(json);
+            case 224: return handle_TSI(json);
+            case 225: return handle_TYPPRICE(json);
+            case 226: return handle_ULTOSC(json);
+            case 227: return handle_VAR(json);
+            case 228: return handle_VHF(json);
+            case 229: return handle_VIDYA(json);
+            case 230: return handle_VORTEX(json);
+            case 231: return handle_VWAP(json);
+            case 232: return handle_VWMA(json);
+            case 233: return handle_WAD(json);
+            case 234: return handle_WAVETREND(json);
+            case 235: return handle_WCLPRICE(json);
+            case 236: return handle_WILLR(json);
+            case 237: return handle_WMA(json);
+            case 238: return handle_ZIGZAG(json);
+            case 239: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -266639,6 +267820,152 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideSinh(core, json, endIdx, inReal, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_SKEW(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            inReal = jsonDoubleArray(json, "inReal");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.skewLookback(optInTimePeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.skewImpl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.skew(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.skewOpen(_warm_inReal, optInTimePeriod);
+            } else {
+                Core.SkewStream _wh = core.skewOpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.skew(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
+            rideSkew(core, json, endIdx, inReal, optInTimePeriod, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideSkew(core, json, endIdx, inReal, optInTimePeriod, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -307640,6 +308967,176 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_SKEW(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            RetCode rc;
+            try { rc = c2.skewImpl(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.skewLookback(optInTimePeriod);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.skewOpen(fz_c, optInTimePeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.SkewStream _fh = c2.skewOpenAndFill(fz_c, optInTimePeriod, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.skewOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.SkewStream st;
+                try { st = c2.skewOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.SkewStream sA = c2.skewOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, f0);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        Core.SkewStream sB = sA.clone();
+                        sB.advance();
+                        sB.advance();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.skewOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.skewOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.SkewStream sD = c2.skewOpen(fz_c, Integer.MIN_VALUE);
+                Core.SkewStream sE = c2.skewOpen(fz_c, 30);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.skewImpl(Sidx, svN - 1, fz_c, optInTimePeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.SkewStream stA = c2.skewOpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_SMA(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -315145,6 +316642,7 @@ public class TaCodegenServe {
         case "TA_SI": return sv_SI(json);
         case "TA_SIN": return sv_SIN(json);
         case "TA_SINH": return sv_SINH(json);
+        case "TA_SKEW": return sv_SKEW(json);
         case "TA_SMA": return sv_SMA(json);
         case "TA_SMI": return sv_SMI(json);
         case "TA_SQRT": return sv_SQRT(json);
@@ -335248,6 +336746,103 @@ public class TaCodegenServe {
             double[] fb0 = new double[m];
             try {
                 Core.SinhStream st2 = core.sinhOpenAndFill(java.util.Arrays.copyOf(inReal, m), fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideSkew(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodySkew(core, json, endIdx, inReal, optInTimePeriod, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodySkew(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, RideResult r) {
+        try { r.lb = core.skewLookback(optInTimePeriod); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inReal.length < navail) navail = inReal.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SKEW");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.skew(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.skewOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.skewOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.SkewStream st = core.skewOpen(java.util.Arrays.copyOf(inReal, lb + 1), optInTimePeriod);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inReal[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.SkewStream st2 = core.skewOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, fb0);
                 if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
                 if (r.ok) {
                     for (int k = 0; k < nb; k++) {

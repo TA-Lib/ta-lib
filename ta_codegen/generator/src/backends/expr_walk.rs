@@ -178,24 +178,15 @@ pub trait ExprEmitter {
     fn ternary(&self, cond: &Expr, then_expr: &Expr, else_expr: &Expr) -> String;
 
     /// Render an `Expr::Literal` (floating-point constant). Whole values gain a
-    /// `.0` suffix (`3` → `3.0`); others use Rust's default `f64` formatting. This
-    /// is byte-identical across the C, Rust and Java backends.
+    /// `.0` suffix (`3` → `3.0`); others use Rust's positional `f64` formatting,
+    /// byte-identical across the four backends.
     ///
-    /// One case the plain formatting gets *wrong*, reachable since the lexer
-    /// learned exponents (`1e-13`): a whole value at or above 1e15 misses the
-    /// `.0` branch above, and Rust's `Display` for `f64` never uses exponent
-    /// notation, so what comes out is a run of digits carrying neither `.` nor
-    /// `e`. In C that is an *integer* constant — a different type — and past
-    /// `LLONG_MAX` an ill-formed one. Those switch to `{:e}` (`1e300`), spelled
-    /// the same way in C, Rust, Java and C#.
-    ///
-    /// Deliberately corrective only, not cosmetic. A small literal keeps its
-    /// positional spelling — `1e-13` in the input renders as
-    /// `0.0000000000001`, the same double, long but valid everywhere. Emitting
-    /// exponent form there reads better but re-spells constants already in the
-    /// corpus (`0.000001` in `var.c` → `1e-6`, 10 generated files), which is a
-    /// deliberate re-spelling to make on its own, not a side effect of teaching
-    /// the lexer a token.
+    /// Outside [1e-15, 1e15) the positional form is unusable: a large whole value
+    /// comes out as bare digits, an integer constant in C (ill-formed past
+    /// `LLONG_MAX`), and a tiny value as hundreds of zeros. Both switch to `{:e}`
+    /// (`1e300`, `2.2250738585072014e-308`), valid in C, Rust, Java and C#. Moving
+    /// the lower edge up re-spells constants already in the corpus (`var.c`'s
+    /// `0.000001`).
     fn literal(&self, f: f64) -> String {
         #[allow(clippy::float_cmp)]
         let is_whole = f == f.floor() && f.abs() < 1e15;
@@ -204,11 +195,12 @@ pub trait ExprEmitter {
             let i = f as i64;
             return format!("{i}.0");
         }
+        let tiny = f != 0.0 && f.abs() < 1e-15;
         let s = format!("{f}");
-        if s.contains(['.', 'e', 'E']) {
-            s
-        } else {
+        if tiny || !s.contains(['.', 'e', 'E']) {
             format!("{f:e}")
+        } else {
+            s
         }
     }
 
@@ -307,8 +299,7 @@ mod tests {
     /// Every spelling below has to be a valid FLOATING constant in C, Rust,
     /// Java and C# at once -- the four backends share this one renderer, so a
     /// form only three of them accept breaks the fourth's build, not a value
-    /// gate. Reachable since the lexer learned exponents; no shipped input
-    /// body has a literal outside the middle band.
+    /// gate.
     #[test]
     fn literal_spellings() {
         let p = Probe;
@@ -333,8 +324,13 @@ mod tests {
         assert_eq!(p.literal(1e300), "1e300");
         assert_eq!(p.literal(1e16), "1e16");
 
+        // Below 1e-15 the positional form is hundreds of zeros long.
+        assert_eq!(p.literal(f64::MIN_POSITIVE), "2.2250738585072014e-308");
+        assert_eq!(p.literal(-1e-20), "-1e-20");
+        assert_eq!(p.literal(1e-15), "0.000000000000001");
+
         // Whatever the path, the result is never bare digits.
-        for v in [0.0, 3.0, 1e-13, 1e300, 1e16, 0.5, -2.5e-7, 1e15] {
+        for v in [0.0, 3.0, 1e-13, 1e300, 1e16, 0.5, -2.5e-7, 1e15, f64::MIN_POSITIVE, 1e-20] {
             let s = p.literal(v);
             assert!(
                 s.contains(['.', 'e', 'E']),
@@ -343,7 +339,7 @@ mod tests {
         }
 
         // And it round-trips: the spelling names the same double it was given.
-        for v in [1e-13, -2.5e-7, 1e300, 1e16, 0.015, 0.5, 123.456, 1e15] {
+        for v in [1e-13, -2.5e-7, 1e300, 1e16, 0.015, 0.5, 123.456, 1e15, f64::MIN_POSITIVE, 1e-20] {
             let s = p.literal(v);
             assert_eq!(
                 s.parse::<f64>().unwrap().to_bits(),

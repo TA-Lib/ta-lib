@@ -1307,6 +1307,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["SKEW"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.SkewImpl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["SMA"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.SmaImpl(
@@ -2746,6 +2752,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Series(0)), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["SKEW"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.SkewImpl(
+                startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["SMA"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.SmaImpl(
@@ -3195,6 +3207,7 @@ internal static class NoPhantomIoBinder
         ["SI"] = static (core, c) => core.SiOpen(c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0)),
         ["SIN"] = static (core, c) => core.SinOpen(c.Series(0)),
         ["SINH"] = static (core, c) => core.SinhOpen(c.Series(0)),
+        ["SKEW"] = static (core, c) => core.SkewOpen(c.Series(0), c.IntOpt(0)),
         ["SMA"] = static (core, c) => core.SmaOpen(c.Series(0), c.IntOpt(0)),
         ["SMI"] = static (core, c) => core.SmiOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3)),
         ["SQRT"] = static (core, c) => core.SqrtOpen(c.Series(0)),

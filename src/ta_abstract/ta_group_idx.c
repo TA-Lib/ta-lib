@@ -238,6 +238,7 @@ extern const TA_FuncDef TA_DEF_SAREXT;
 extern const TA_FuncDef TA_DEF_SI;
 extern const TA_FuncDef TA_DEF_SIN;
 extern const TA_FuncDef TA_DEF_SINH;
+extern const TA_FuncDef TA_DEF_SKEW;
 extern const TA_FuncDef TA_DEF_SMA;
 extern const TA_FuncDef TA_DEF_SMI;
 extern const TA_FuncDef TA_DEF_SQRT;
@@ -543,6 +544,7 @@ const TA_FuncDef *TA_PerGroupFunc_8[] = {
 &TA_DEF_MEDIAN,
 &TA_DEF_PERCENTILE,
 &TA_DEF_PERCENTRANK,
+&TA_DEF_SKEW,
 &TA_DEF_STDDEV,
 &TA_DEF_TSF,
 &TA_DEF_VAR,

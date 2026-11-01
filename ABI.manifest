@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 4:0:3
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 3148
+function-count 3161
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -2191,6 +2191,16 @@ function TA_RetCode TA_SI_OutRange(const TA_SI_Stream *, int *, int *)
 function TA_RetCode TA_SI_Peek(const TA_SI_Stream *, double, double, double, double, double *)
 function TA_RetCode TA_SI_Update(TA_SI_Stream *, double, double, double, double, double *)
 function TA_RetCode TA_SI_Value(const TA_SI_Stream *, double *)
+function TA_RetCode TA_SKEW(int, int, const double *, int, int *, int *, double *)
+function TA_RetCode TA_SKEW_Advance(TA_SKEW_Stream *)
+function TA_RetCode TA_SKEW_Clone(const TA_SKEW_Stream *, TA_SKEW_Stream **)
+function TA_RetCode TA_SKEW_Close(TA_SKEW_Stream *)
+function TA_RetCode TA_SKEW_Open(TA_SKEW_Stream **, const double *, int, int, double *)
+function TA_RetCode TA_SKEW_OpenAndFill(TA_SKEW_Stream **, const double *, int, int, int *, int *, double *)
+function TA_RetCode TA_SKEW_OutRange(const TA_SKEW_Stream *, int *, int *)
+function TA_RetCode TA_SKEW_Peek(const TA_SKEW_Stream *, double, double *)
+function TA_RetCode TA_SKEW_Update(TA_SKEW_Stream *, double, double *)
+function TA_RetCode TA_SKEW_Value(const TA_SKEW_Stream *, double *)
 function TA_RetCode TA_SMA(int, int, const double *, int, int *, int *, double *)
 function TA_RetCode TA_SMA_Advance(TA_SMA_Stream *)
 function TA_RetCode TA_SMA_Clone(const TA_SMA_Stream *, TA_SMA_Stream **)
@@ -2559,6 +2569,7 @@ function TA_RetCode TA_S_SAREXT(int, int, const float *, const float *, double, 
 function TA_RetCode TA_S_SI(int, int, const float *, const float *, const float *, const float *, double, int *, int *, double *)
 function TA_RetCode TA_S_SIN(int, int, const float *, int *, int *, double *)
 function TA_RetCode TA_S_SINH(int, int, const float *, int *, int *, double *)
+function TA_RetCode TA_S_SKEW(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_SMA(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_SMI(int, int, const float *, const float *, const float *, int, int, int, int, int *, int *, double *, double *)
 function TA_RetCode TA_S_SQRT(int, int, const float *, int *, int *, double *)
@@ -3256,6 +3267,8 @@ function int TA_SIN_DisplayShift(int)
 function int TA_SIN_Lookback(void)
 function int TA_SI_DisplayShift(double, int)
 function int TA_SI_Lookback(double)
+function int TA_SKEW_DisplayShift(int, int)
+function int TA_SKEW_Lookback(int)
 function int TA_SMA_DisplayShift(int, int)
 function int TA_SMA_Lookback(int)
 function int TA_SMI_DisplayShift(int, int, int, int, int)
