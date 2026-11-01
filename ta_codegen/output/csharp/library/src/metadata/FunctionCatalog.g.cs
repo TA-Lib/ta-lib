@@ -201,6 +201,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeCdlunique3river(),
             MakeCdlupsidegap2crows(),
             MakeCdlxsidegap3methods(),
+            MakeCe(),
             MakeCeil(),
             MakeCg(),
             MakeChop(),
@@ -2295,6 +2296,32 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Cdlxsidegap3methods(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOut(0)));
+
+    private static FuncInfo MakeCe() => new(
+        name: "CE",
+        group: FunctionGroup.OverlapStudies,
+        hint: "Chandelier Exit",
+        flags: FuncFlags.Overlap | FuncFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "ATR and extreme window", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 22, 4, 200, 1)),
+            new OptInputInfo("optInMultiplier", "Multiplier", "ATR multiplier", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 3e37, 2, 3.0, 1.0, 5.0, 0.5)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outRealLong", OutputFlags.LowerLimit),
+            new OutputInfo(OutputKind.Real, "outRealShort", OutputFlags.UpperLimit),
+        ],
+        lookback: static (core, c) => core.CeLookback(c.IntOpt(0), c.RealOpt(1)),
+        displayShift: static (core, c, outputIdx) => core.CeDisplayShift(c.IntOpt(0), c.RealOpt(1), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Ce(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOpt(1), c.RealOut(0), c.RealOut(1)));
 
     private static FuncInfo MakeCeil() => new(
         name: "CEIL",

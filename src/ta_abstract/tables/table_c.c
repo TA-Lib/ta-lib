@@ -1663,6 +1663,77 @@ DEF_FUNCTION( CDLXSIDEGAP3METHODS,
              );
 /* CDLXSIDEGAP3METHODS END */
 
+/* CE BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_CE_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   22,
+   "ATR and extreme window",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_CE_Multiplier =
+{
+   0.0,
+   TA_REAL_MAX,
+   2,
+   1.0,
+   5.0,
+   0.5
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_CE_Multiplier =
+{
+   TA_OptInput_RealRange,
+   "optInMultiplier",
+   0,
+
+   "Multiplier",
+   (const void *)&TA_DEF_CE_Multiplier,
+   3.0,
+   "ATR multiplier",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_CE_Long =
+                               { TA_Output_Real, "outRealLong", TA_OUT_LOWER_LIMIT };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_CE_Short =
+                               { TA_Output_Real, "outRealShort", TA_OUT_UPPER_LIMIT };
+
+static const TA_InputParameterInfo    *TA_CE_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CE_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_CE_Long,
+  &TA_DEF_UI_Output_Real_CE_Short,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CE_OptInputs[] =
+{ &TA_DEF_UI_D_CE_TimePeriod,
+  &TA_DEF_UI_D_CE_Multiplier,
+  NULL
+};
+
+DEF_FUNCTION( CE,
+              TA_GroupId_OverlapStudies,
+              "Chandelier Exit",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
+             );
+/* CE END */
+
 /* CEIL BEGIN */
 static const TA_InputParameterInfo    *TA_CEIL_Inputs[]    =
 {
@@ -2375,6 +2446,7 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CDLUNIQUE3RIVER),
    ADD_TO_TABLE(CDLUPSIDEGAP2CROWS),
    ADD_TO_TABLE(CDLXSIDEGAP3METHODS),
+   ADD_TO_TABLE(CE),
    ADD_TO_TABLE(CEIL),
    ADD_TO_TABLE(CG),
    ADD_TO_TABLE(CHOP),

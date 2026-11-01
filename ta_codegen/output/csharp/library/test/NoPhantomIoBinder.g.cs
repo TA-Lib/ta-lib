@@ -635,6 +635,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["CE"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.CeImpl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0), c.RealOut(1));
+            return new CallOutcome(rc, b, n);
+        },
         ["CEIL"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.CeilImpl(
@@ -2062,6 +2068,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Price(0, PriceComponents.Open)), Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["CE"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.CeImpl(
+                startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0), c.RealOut(1));
+            return new CallOutcome(rc, b, n);
+        },
         ["CEIL"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.CeilImpl(
@@ -3059,6 +3071,7 @@ internal static class NoPhantomIoBinder
         ["CDLUNIQUE3RIVER"] = static (core, c) => core.Cdlunique3riverOpen(c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close)),
         ["CDLUPSIDEGAP2CROWS"] = static (core, c) => core.Cdlupsidegap2crowsOpen(c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close)),
         ["CDLXSIDEGAP3METHODS"] = static (core, c) => core.Cdlxsidegap3methodsOpen(c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close)),
+        ["CE"] = static (core, c) => core.CeOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOpt(1)),
         ["CEIL"] = static (core, c) => core.CeilOpen(c.Series(0)),
         ["CG"] = static (core, c) => core.CgOpen(c.Series(0), c.IntOpt(0)),
         ["CHOP"] = static (core, c) => core.ChopOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),

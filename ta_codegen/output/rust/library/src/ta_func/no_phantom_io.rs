@@ -8941,6 +8941,102 @@ fn legs_CDLXSIDEGAP3METHODS(r: &mut Report) {
     r.legs_done("CDLXSIDEGAP3METHODS", 4);
 }
 
+const V_CE: &[(&str, i32, f64)] = &[
+    ("defaults", i32::MIN, Core::REAL_DEFAULT),
+    ("minimums", 2i32, 0.0f64),
+];
+
+fn sub_CE(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInMultiplier) in V_CE {
+        let Ok(lb) = core.ce_lookback(optInTimePeriod, optInMultiplier) else { continue; };
+        r.control("CE", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealLong: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealShort: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ce_impl(0, lb, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outRealLong, &mut outRealShort);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("CE", label); continue; }
+        r.quiet("CE", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealLong: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealShort: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ce_impl(0, lb - 1, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outRealLong, &mut outRealShort);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_CE(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInMultiplier = Core::REAL_DEFAULT;
+    let Ok(lb) = core.ce_lookback(optInTimePeriod, optInMultiplier) else { r.no_legs("CE"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outRealLong: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealShort: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("CE", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ce_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outRealLong, &mut outRealShort);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outRealLong: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealShort: Vec<f64> = vec![Default::default(); 5];
+        r.leg("CE", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ce_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outRealLong, &mut outRealShort);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outRealLong: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealShort: Vec<f64> = vec![Default::default(); 5];
+        r.leg("CE", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ce_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outRealLong, &mut outRealShort);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outRealLong: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealShort: Vec<f64> = vec![Default::default(); 5];
+        r.leg("CE", "inClose", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ce_impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outRealLong, &mut outRealShort);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("CE", 3);
+}
+
 const V_CEIL: &[&str] = &[
     "defaults",
 ];
@@ -20031,6 +20127,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("CDLUNIQUE3RIVER", sub_CDLUNIQUE3RIVER, legs_CDLUNIQUE3RIVER),
     ("CDLUPSIDEGAP2CROWS", sub_CDLUPSIDEGAP2CROWS, legs_CDLUPSIDEGAP2CROWS),
     ("CDLXSIDEGAP3METHODS", sub_CDLXSIDEGAP3METHODS, legs_CDLXSIDEGAP3METHODS),
+    ("CE", sub_CE, legs_CE),
     ("CEIL", sub_CEIL, legs_CEIL),
     ("CG", sub_CG, legs_CG),
     ("CHOP", sub_CHOP, legs_CHOP),
@@ -20220,7 +20317,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 237, "probe count");
+    assert_eq!(PROBES.len(), 238, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

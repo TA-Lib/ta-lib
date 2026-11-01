@@ -206,6 +206,7 @@ public final class Functions {
       put(m, f_CDLUNIQUE3RIVER());
       put(m, f_CDLUPSIDEGAP2CROWS());
       put(m, f_CDLXSIDEGAP3METHODS());
+      put(m, f_CE());
       put(m, f_CEIL());
       put(m, f_CG());
       put(m, f_CHOP());
@@ -1620,6 +1621,30 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000741)
+         ));
+   }
+
+   private static FuncInfo f_CE() {
+      return new FuncInfo(
+         "CE", "Overlap Studies", "Chandelier Exit", 0x03000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "ATR and extreme window", 22.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInMultiplier", 0x00000000,
+               "Multiplier", "ATR multiplier", 3.0,
+               0.0, 3e37, 2, 1.0, 5.0, 0.5,
+               0, 0, 0, 0, 0, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outRealLong", 0x00001000),
+            new OutputInfo(OutputType.REAL, "outRealShort", 0x00000800)
          ));
    }
 

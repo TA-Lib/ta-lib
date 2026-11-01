@@ -214,6 +214,8 @@ pub enum FuncId {
     CDLUPSIDEGAP2CROWS,
     /// Upside/Downside Gap Three Methods — [`Core::cdlxsidegap3methods`](crate::Core::cdlxsidegap3methods).
     CDLXSIDEGAP3METHODS,
+    /// Chandelier Exit — [`Core::ce`](crate::Core::ce).
+    CE,
     /// Vector Ceil — [`Core::ceil`](crate::Core::ceil).
     CEIL,
     /// Center of Gravity Oscillator — [`Core::cg`](crate::Core::cg).
@@ -520,7 +522,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 237;
+    pub const COUNT: usize = 238;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -868,7 +870,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 237] = [
+static FUNC_TABLE: [FuncInfo; 238] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -1813,6 +1815,17 @@ static FUNC_TABLE: [FuncInfo; 237] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::CE,
+        name: "CE",
+        group: Group::OverlapStudies,
+        hint: "Chandelier Exit",
+        flags: FuncFlags(0x03000000),
+        inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "ATR and extreme window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 22, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMultiplier", display_name: "Multiplier", hint: "ATR multiplier", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 2, default: 3.0, suggested: (1.0, 5.0, 0.5) } }, ],
+        outputs: &[OutputInfo { param_name: "outRealLong", kind: OutputType::Real, flags: OutputFlags(0x00001000) }, OutputInfo { param_name: "outRealShort", kind: OutputType::Real, flags: OutputFlags(0x00000800) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -3580,6 +3593,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "CDLUNIQUE3RIVER" => FuncId::CDLUNIQUE3RIVER,
         "CDLUPSIDEGAP2CROWS" => FuncId::CDLUPSIDEGAP2CROWS,
         "CDLXSIDEGAP3METHODS" => FuncId::CDLXSIDEGAP3METHODS,
+        "CE" => FuncId::CE,
         "CEIL" => FuncId::CEIL,
         "CG" => FuncId::CG,
         "CHOP" => FuncId::CHOP,
@@ -4082,6 +4096,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::CDLUNIQUE3RIVER => self.core.cdlunique3river_lookback(),
             FuncId::CDLUPSIDEGAP2CROWS => self.core.cdlupsidegap2crows_lookback(),
             FuncId::CDLXSIDEGAP3METHODS => self.core.cdlxsidegap3methods_lookback(),
+            FuncId::CE => self.core.ce_lookback(self.int_opt[0], self.real_opt[1]),
             FuncId::CEIL => self.core.ceil_lookback(),
             FuncId::CG => self.core.cg_lookback(self.int_opt[0]),
             FuncId::CHOP => self.core.chop_lookback(self.int_opt[0]),
@@ -4332,6 +4347,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::CDLUNIQUE3RIVER => self.core.cdlunique3river_display_shift(output_idx),
             FuncId::CDLUPSIDEGAP2CROWS => self.core.cdlupsidegap2crows_display_shift(output_idx),
             FuncId::CDLXSIDEGAP3METHODS => self.core.cdlxsidegap3methods_display_shift(output_idx),
+            FuncId::CE => self.core.ce_display_shift(self.int_opt[0], self.real_opt[1], output_idx),
             FuncId::CEIL => self.core.ceil_display_shift(output_idx),
             FuncId::CG => self.core.cg_display_shift(self.int_opt[0], output_idx),
             FuncId::CHOP => self.core.chop_display_shift(self.int_opt[0], output_idx),
@@ -5770,6 +5786,22 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.cdlxsidegap3methods(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0);
                 self.int_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::CE => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.ce(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.real_opt[1], &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

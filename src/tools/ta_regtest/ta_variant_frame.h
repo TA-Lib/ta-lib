@@ -3770,6 +3770,54 @@ static TA_RetCode TA_CDLXSIDEGAP3METHODS_VFrameS( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_CDLXSIDEGAP3METHODS[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const int TA_VOutIsInt_CDLXSIDEGAP3METHODS[] = { 1 };
 
+static TA_RetCode TA_CE_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_CE(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInMultiplier */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outRealLong */,
+               outReal[1] /* outRealShort */
+               );
+}
+static TA_RetCode TA_CE_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_CE(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInMultiplier */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outRealLong */,
+               outReal[1] /* outRealShort */
+               );
+}
+
+static const TA_VInputKind TA_VIn_CE[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_CE[] = { 0, 0 };
+static const TA_VOptSpec TA_VOpt_CE[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 22.0 },
+   { "optInMultiplier", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 3.0 },
+};
+
 static TA_RetCode TA_CEIL_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10316,6 +10364,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      4, TA_VIn_CDLUPSIDEGAP2CROWS, 0, NULL, 1, TA_VOutIsInt_CDLUPSIDEGAP2CROWS, 0 },
    { "CDLXSIDEGAP3METHODS", TA_CDLXSIDEGAP3METHODS_VFrameD, TA_CDLXSIDEGAP3METHODS_VFrameS,
      4, TA_VIn_CDLXSIDEGAP3METHODS, 0, NULL, 1, TA_VOutIsInt_CDLXSIDEGAP3METHODS, 0 },
+   { "CE", TA_CE_VFrameD, TA_CE_VFrameS,
+     3, TA_VIn_CE, 2, TA_VOpt_CE, 2, TA_VOutIsInt_CE, 0 },
    { "CEIL", TA_CEIL_VFrameD, TA_CEIL_VFrameS,
      1, TA_VIn_CEIL, 0, NULL, 1, TA_VOutIsInt_CEIL, 0 },
    { "CG", TA_CG_VFrameD, TA_CG_VFrameS,
@@ -10620,6 +10670,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 237
+#define TA_VARIANT_TABLE_SIZE 238
 
 #endif /* TA_VARIANT_FRAME_H */

@@ -812,6 +812,7 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * it by 5.8%. */
     {"RVIR",         TA_FUNC_UNST_RVI},
     {"CKSP",         TA_FUNC_UNST_ATR},
+    {"CE",           TA_FUNC_UNST_ATR},
     /* SUPERTREND is listed for the SECOND consumer of this map, not the first.
      * It carries `path_dependent`, so stability_class() answers SKIP before it
      * ever asks about an unstable id and the range envelope is not what this row

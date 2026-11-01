@@ -2422,6 +2422,35 @@ int TA_CDLXSIDEGAP3METHODS_FramePPDS( const TA_ParamHolderPriv *params, int outp
    (void)params;
    return TA_CDLXSIDEGAP3METHODS_DisplayShift( outputIdx );
 }
+TA_RetCode TA_CE_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_CE(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->in[0].data.inPrice.close, /* inClose */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               params->optIn[1].data.optInReal, /* optInMultiplier*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal, /*  outRealLong */
+               params->out[1].data.outReal /*  outRealShort */
+               );
+}
+unsigned int TA_CE_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_CE_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+                    params->optIn[1].data.optInReal /* optInMultiplier*/ );
+}
+int TA_CE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_CE_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, outputIdx );
+}
 TA_RetCode TA_CEIL_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

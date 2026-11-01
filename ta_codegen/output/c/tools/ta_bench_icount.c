@@ -4527,6 +4527,62 @@ static void icount_CDLXSIDEGAP3METHODS(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_CE(int iters) {
+    const char *nm = "CE";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_CE_Stream *st = NULL;
+    TA_CE_Stream *stf = NULL;
+    double v0 = 0.0;
+    double v1 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_CE(0, g_nPoints - 1, g_high, g_low, g_close, 22, 3.000000000000000, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
+    ICOUNT_DUMP("CE/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+    acc += g_outBuf1[0];
+
+    ICOUNT_ZERO();
+    rc = TA_CE_OpenAndFill(&stf, g_high, g_low, g_close, g_nPoints, 22, 3.000000000000000, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
+    ICOUNT_DUMP("CE/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    acc += g_outBuf1[0];
+    if( stf ) TA_CE_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_CE_Open(&st, g_high, g_low, g_close, g_nPoints, 22, 3.000000000000000, &v0, &v1);
+    ICOUNT_DUMP("CE/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_CE_Update(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], &v0, &v1);
+            acc += v0;
+            acc += v1;
+        }
+        ICOUNT_DUMP("CE/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_CE_Peek(st, g_high[it & ICOUNT_MASK], g_low[it & ICOUNT_MASK], g_close[it & ICOUNT_MASK], &v0, &v1);
+            acc += v0;
+            acc += v1;
+        }
+        ICOUNT_DUMP("CE/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_CE_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_CEIL(int iters) {
     const char *nm = "CEIL";
     int outBegIdx = 0, outNBElement = 0;
@@ -12515,6 +12571,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "CDLUNIQUE3RIVER") ) { icount_CDLUNIQUE3RIVER(iters); fflush(stdout); }
     if( func_matches(filter, "CDLUPSIDEGAP2CROWS") ) { icount_CDLUPSIDEGAP2CROWS(iters); fflush(stdout); }
     if( func_matches(filter, "CDLXSIDEGAP3METHODS") ) { icount_CDLXSIDEGAP3METHODS(iters); fflush(stdout); }
+    if( func_matches(filter, "CE") ) { icount_CE(iters); fflush(stdout); }
     if( func_matches(filter, "CEIL") ) { icount_CEIL(iters); fflush(stdout); }
     if( func_matches(filter, "CG") ) { icount_CG(iters); fflush(stdout); }
     if( func_matches(filter, "CHOP") ) { icount_CHOP(iters); fflush(stdout); }

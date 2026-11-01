@@ -129,7 +129,7 @@ AC_SUBST([LIBM])
 
 # libtool current:revision:age of the shared library, not the release version.
 # Written by scripts/sync.py; do not edit.
-TALIB_LIBRARY_VERSION=3:0:2
+TALIB_LIBRARY_VERSION=4:0:3
 
 AC_SUBST(TALIB_LIBRARY_VERSION)
 

@@ -316,6 +316,9 @@ final class Dispatch {
          case "CDLXSIDEGAP3METHODS":
             return core.cdlxsidegap3methods(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOutput(0));
+         case "CE":
+            return core.ce(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOpt(1), h.realOutput(0), h.realOutput(1));
          case "CEIL":
             return core.ceil(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
@@ -952,6 +955,8 @@ final class Dispatch {
             return core.cdlupsidegap2crowsLookback();
          case "CDLXSIDEGAP3METHODS":
             return core.cdlxsidegap3methodsLookback();
+         case "CE":
+            return core.ceLookback(h.intOpt(0), h.realOpt(1));
          case "CEIL":
             return core.ceilLookback();
          case "CG":
@@ -1434,6 +1439,8 @@ final class Dispatch {
             return core.cdlupsidegap2crowsDisplayShift(outputIdx);
          case "CDLXSIDEGAP3METHODS":
             return core.cdlxsidegap3methodsDisplayShift(outputIdx);
+         case "CE":
+            return core.ceDisplayShift(h.intOpt(0), h.realOpt(1), outputIdx);
          case "CEIL":
             return core.ceilDisplayShift(outputIdx);
          case "CG":

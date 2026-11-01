@@ -126,6 +126,7 @@ extern const TA_FuncDef TA_DEF_CDLTRISTAR;
 extern const TA_FuncDef TA_DEF_CDLUNIQUE3RIVER;
 extern const TA_FuncDef TA_DEF_CDLUPSIDEGAP2CROWS;
 extern const TA_FuncDef TA_DEF_CDLXSIDEGAP3METHODS;
+extern const TA_FuncDef TA_DEF_CE;
 extern const TA_FuncDef TA_DEF_CEIL;
 extern const TA_FuncDef TA_DEF_CG;
 extern const TA_FuncDef TA_DEF_CHOP;
@@ -317,6 +318,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_ACCBANDS,
 &TA_DEF_ALMA,
 &TA_DEF_BBANDS,
+&TA_DEF_CE,
 &TA_DEF_CKSP,
 &TA_DEF_DEMA,
 &TA_DEF_DONCHIAN,

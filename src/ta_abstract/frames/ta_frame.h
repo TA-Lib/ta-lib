@@ -993,6 +993,17 @@ unsigned int TA_CDLXSIDEGAP3METHODS_FramePPLB( const TA_ParamHolderPriv *params 
 int TA_CDLXSIDEGAP3METHODS_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
+TA_RetCode TA_CE_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_CE_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_CE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
 TA_RetCode TA_CEIL_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

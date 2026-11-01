@@ -112,6 +112,7 @@
 #include "ta_CDLUNIQUE3RIVER.c"
 #include "ta_CDLUPSIDEGAP2CROWS.c"
 #include "ta_CDLXSIDEGAP3METHODS.c"
+#include "ta_CE.c"
 #include "ta_CEIL.c"
 #include "ta_CG.c"
 #include "ta_CHOP.c"
@@ -1743,6 +1744,23 @@ static void bench_all(const char *filter, int iters) {
             g_sink += g_outIntBuf0[0];
         }
         printf("CDLXSIDEGAP3METHODS %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "CE") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_CE(0, g_nPoints - 1, g_high, g_low, g_close, 22, 3.000000000000000, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+            g_sink += g_outBuf1[0];
+        }
+        printf("CE %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "CEIL") ) {

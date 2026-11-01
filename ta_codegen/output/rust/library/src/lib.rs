@@ -244,11 +244,12 @@
 //! * [`WAVETREND`](Core::wavetrend) — WaveTrend Oscillator
 //! * [`WILLR`](Core::willr) — Williams' %R
 //!
-//! ## Overlap Studies (34)
+//! ## Overlap Studies (35)
 //!
 //! * [`ACCBANDS`](Core::accbands) — Acceleration Bands
 //! * [`ALMA`](Core::alma) — Arnaud Legoux Moving Average
 //! * [`BBANDS`](Core::bbands) — Bollinger Bands
+//! * [`CE`](Core::ce) — Chandelier Exit
 //! * [`CKSP`](Core::cksp) — Chande Kroll Stop
 //! * [`DEMA`](Core::dema) — Double Exponential Moving Average
 //! * [`DONCHIAN`](Core::donchian) — Donchian Channels
