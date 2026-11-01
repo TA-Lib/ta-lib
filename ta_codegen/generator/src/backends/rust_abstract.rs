@@ -15,18 +15,61 @@
 
 use super::abstract_rows::{rows, FuncRow, InputKind, InputRow, OptDomain, OptRow, OutputKind, OutputRow};
 use crate::ir::{EnumDef, FuncDef};
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::fmt::Write as _;
 use std::path::Path;
 
-/// Generate `ta_codegen/output/rust/library/src/abstract_api.rs` from the function defs.
-///
-/// [`rows`] sorts alphabetically by name (so `FuncId` discriminants and the name
-/// `match` are deterministic); this emits the registry and writes only if changed.
+const ID_LEDGER_HEADER: &str = "\
+# The Rust FuncId discriminants: a function's value is its index in `ids`.
+#
+# FuncId is #[repr(u16)], so each value is public API. A new function goes at
+# the end, never at its place in name order: an insertion moves every value
+# after it, which cargo semver-checks fails as a breaking change. Removing a
+# function moves the values after it too, and is a breaking change anyway.
+#
+# Written by `ta_codegen generate`, which appends new functions, several at
+# once sorted by name. Do not reorder by hand.
+";
+
+#[derive(serde::Deserialize)]
+struct IdLedger {
+    ids: Vec<String>,
+}
+
+/// `FuncId` order: the ledger's functions that still exist, then the new ones
+/// by name, so an existing discriminant never moves.
+fn ledger_order(funcs: &[FuncDef], path: &Path) -> Vec<String> {
+    let live: BTreeSet<&str> = funcs.iter().map(|f| f.name.as_str()).collect();
+    let mut order = match std::fs::read_to_string(path) {
+        Ok(text) => {
+            serde_yaml::from_str::<IdLedger>(&text)
+                .unwrap_or_else(|e| panic!("{}: malformed FuncId ledger: {e}", path.display()))
+                .ids
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Vec::new(),
+        Err(e) => panic!("{}: cannot read FuncId ledger: {e}", path.display()),
+    };
+    order.retain(|name| live.contains(name.as_str()));
+    let listed: BTreeSet<&str> = order.iter().map(String::as_str).collect();
+    assert_eq!(listed.len(), order.len(), "{}: a function is listed twice", path.display());
+    let new: Vec<String> = live.iter().filter(|name| !listed.contains(*name)).map(ToString::to_string).collect();
+    order.extend(new);
+    order
+}
+
+/// Generate `ta_codegen/output/rust/library/src/abstract_api.rs` from the function defs,
+/// in the order of the `FuncId` ledger at `id_ledger`, which this writes back.
 #[allow(clippy::implicit_hasher)]
-pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, out_base: &Path) {
+pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, out_base: &Path, id_ledger: &Path) {
     let n = rows(funcs, enums).len();
-    let o = render(funcs, enums);
+    let order = ledger_order(funcs, id_ledger);
+    let mut ledger = String::from(ID_LEDGER_HEADER);
+    ledger.push_str("ids:\n");
+    for name in &order {
+        let _ = writeln!(ledger, "  - {name}");
+    }
+    super::write_if_changed(id_ledger, &ledger, "rust_func_ids.yaml", n);
+    let o = render_ordered(funcs, enums, &order);
 
     // Write the XML data file embedded by function_description_xml() via include_str!.
     // Byte-identical to the repo-root ta_func_api.xml (same generator + same input),
@@ -39,11 +82,18 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, out_base: &
     super::write_if_changed(&out_path, &o, "abstract_api.rs", n);
 }
 
-/// `abstract_api.rs`'s text, without writing it — so a test can assert on the
-/// generated binder without a repo checkout to read from.
+/// `abstract_api.rs`'s text in name order, without writing it — so a test can
+/// assert on the generated binder without a repo checkout to read from.
 #[allow(clippy::implicit_hasher)]
 pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
-    let sorted = rows(funcs, enums);
+    let order: Vec<String> = rows(funcs, enums).into_iter().map(|f| f.name).collect();
+    render_ordered(funcs, enums, &order)
+}
+
+fn render_ordered(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, order: &[String]) -> String {
+    let mut sorted = rows(funcs, enums);
+    let rank: HashMap<&str, usize> = order.iter().enumerate().map(|(i, name)| (name.as_str(), i)).collect();
+    sorted.sort_by_key(|f| rank[f.name.as_str()]);
     let enum_params = enum_param_types(funcs);
     let n = sorted.len();
 
@@ -60,8 +110,9 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
 
     // --- FuncId enum (fieldless; doubles as the dense index into FUNCS) ---
     o.push_str(
-        "/// Every function in the registry, in the canonical order — and the dense\n\
-         /// index into [`FUNCS`].\n\
+        "/// Every function in the registry — and the dense index into [`FUNCS`].\n\
+         ///\n\
+         /// A new function takes the next value, so the variants are not in name order.\n\
          ///\n\
          /// Fieldless, so it is the whole handle: there is no opaque pointer to free\n\
          /// and no magic number to validate. [`FuncId::info`] is the metadata.\n",

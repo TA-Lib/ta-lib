@@ -648,7 +648,12 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
 
     // Generate the Rust abstract/introspection registry from the full function set.
     if backends_to_run.contains(&"rust") {
-        backends::rust_abstract::generate(all_funcs, &enums, &out_base);
+        backends::rust_abstract::generate(
+            all_funcs,
+            &enums,
+            &out_base,
+            &root.join("ta_codegen/input/rust_func_ids.yaml"),
+        );
     }
 
     // The Rust phantom-I/O probe (issue #235). Whole-corpus like the registry

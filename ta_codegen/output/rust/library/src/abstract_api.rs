@@ -32,8 +32,9 @@
 use crate::FuncUnstId;
 
 use crate::MAType;
-/// Every function in the registry, in the canonical order — and the dense
-/// index into [`FUNCS`].
+/// Every function in the registry — and the dense index into [`FUNCS`].
+///
+/// A new function takes the next value, so the variants are not in name order.
 ///
 /// Fieldless, so it is the whole handle: there is no opaque pointer to free
 /// and no magic number to validate. [`FuncId::info`] is the metadata.
@@ -214,8 +215,6 @@ pub enum FuncId {
     CDLUPSIDEGAP2CROWS,
     /// Upside/Downside Gap Three Methods — [`Core::cdlxsidegap3methods`](crate::Core::cdlxsidegap3methods).
     CDLXSIDEGAP3METHODS,
-    /// Chandelier Exit — [`Core::ce`](crate::Core::ce).
-    CE,
     /// Vector Ceil — [`Core::ceil`](crate::Core::ceil).
     CEIL,
     /// Center of Gravity Oscillator — [`Core::cg`](crate::Core::cg).
@@ -338,8 +337,6 @@ pub enum FuncId {
     MACDEXT,
     /// Moving Average Convergence/Divergence Fix 12/26 — [`Core::macdfix`](crate::Core::macdfix).
     MACDFIX,
-    /// MACD-V, Volatility Normalised Momentum — [`Core::macdv`](crate::Core::macdv).
-    MACDV,
     /// MESA Adaptive Moving Average — [`Core::mama`](crate::Core::mama).
     MAMA,
     /// Market Facilitation Index — [`Core::marketfi`](crate::Core::marketfi).
@@ -520,6 +517,10 @@ pub enum FuncId {
     ZIGZAG,
     /// Zero-Lag Exponential Moving Average — [`Core::zlema`](crate::Core::zlema).
     ZLEMA,
+    /// Chandelier Exit — [`Core::ce`](crate::Core::ce).
+    CE,
+    /// MACD-V, Volatility Normalised Momentum — [`Core::macdv`](crate::Core::macdv).
+    MACDV,
 }
 
 impl FuncId {
@@ -1820,17 +1821,6 @@ static FUNC_TABLE: [FuncInfo; 239] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::CE,
-        name: "CE",
-        group: Group::OverlapStudies,
-        hint: "Chandelier Exit",
-        flags: FuncFlags(0x03000000),
-        inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
-        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "ATR and extreme window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 22, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMultiplier", display_name: "Multiplier", hint: "ATR multiplier", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 2, default: 3.0, suggested: (1.0, 5.0, 0.5) } }, ],
-        outputs: &[OutputInfo { param_name: "outRealLong", kind: OutputType::Real, flags: OutputFlags(0x00001000) }, OutputInfo { param_name: "outRealShort", kind: OutputType::Real, flags: OutputFlags(0x00000800) }, ],
-        unst_id: None,
-    },
-    FuncInfo {
         id: FuncId::CEIL,
         name: "CEIL",
         group: Group::MathTransform,
@@ -2499,17 +2489,6 @@ static FUNC_TABLE: [FuncInfo; 239] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing for the signal line (period length)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outMACD", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outMACDSignal", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, OutputInfo { param_name: "outMACDHist", kind: OutputType::Real, flags: OutputFlags(0x00000010) }, ],
-        unst_id: None,
-    },
-    FuncInfo {
-        id: FuncId::MACDV,
-        name: "MACDV",
-        group: Group::MomentumIndicators,
-        hint: "MACD-V, Volatility Normalised Momentum",
-        flags: FuncFlags(0x02000000),
-        inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
-        opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA and of the ATR", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing for the signal line (period length)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, ],
-        outputs: &[OutputInfo { param_name: "outMACDV", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outMACDVSignal", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, OutputInfo { param_name: "outMACDVHist", kind: OutputType::Real, flags: OutputFlags(0x00000010) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -3502,6 +3481,28 @@ static FUNC_TABLE: [FuncInfo; 239] = [
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
+    FuncInfo {
+        id: FuncId::CE,
+        name: "CE",
+        group: Group::OverlapStudies,
+        hint: "Chandelier Exit",
+        flags: FuncFlags(0x03000000),
+        inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "ATR and extreme window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 22, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMultiplier", display_name: "Multiplier", hint: "ATR multiplier", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 2, default: 3.0, suggested: (1.0, 5.0, 0.5) } }, ],
+        outputs: &[OutputInfo { param_name: "outRealLong", kind: OutputType::Real, flags: OutputFlags(0x00001000) }, OutputInfo { param_name: "outRealShort", kind: OutputType::Real, flags: OutputFlags(0x00000800) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::MACDV,
+        name: "MACDV",
+        group: Group::MomentumIndicators,
+        hint: "MACD-V, Volatility Normalised Momentum",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA and of the ATR", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing for the signal line (period length)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outMACDV", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outMACDVSignal", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, OutputInfo { param_name: "outMACDVHist", kind: OutputType::Real, flags: OutputFlags(0x00000010) }, ],
+        unst_id: None,
+    },
 ];
 
 /// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
@@ -3606,7 +3607,6 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "CDLUNIQUE3RIVER" => FuncId::CDLUNIQUE3RIVER,
         "CDLUPSIDEGAP2CROWS" => FuncId::CDLUPSIDEGAP2CROWS,
         "CDLXSIDEGAP3METHODS" => FuncId::CDLXSIDEGAP3METHODS,
-        "CE" => FuncId::CE,
         "CEIL" => FuncId::CEIL,
         "CG" => FuncId::CG,
         "CHOP" => FuncId::CHOP,
@@ -3668,7 +3668,6 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "MACD" => FuncId::MACD,
         "MACDEXT" => FuncId::MACDEXT,
         "MACDFIX" => FuncId::MACDFIX,
-        "MACDV" => FuncId::MACDV,
         "MAMA" => FuncId::MAMA,
         "MARKETFI" => FuncId::MARKETFI,
         "MASSI" => FuncId::MASSI,
@@ -3759,6 +3758,8 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "WMA" => FuncId::WMA,
         "ZIGZAG" => FuncId::ZIGZAG,
         "ZLEMA" => FuncId::ZLEMA,
+        "CE" => FuncId::CE,
+        "MACDV" => FuncId::MACDV,
         _ => return None,
     })
 }
@@ -4110,7 +4111,6 @@ impl<'a> ParamHolder<'a> {
             FuncId::CDLUNIQUE3RIVER => self.core.cdlunique3river_lookback(),
             FuncId::CDLUPSIDEGAP2CROWS => self.core.cdlupsidegap2crows_lookback(),
             FuncId::CDLXSIDEGAP3METHODS => self.core.cdlxsidegap3methods_lookback(),
-            FuncId::CE => self.core.ce_lookback(self.int_opt[0], self.real_opt[1]),
             FuncId::CEIL => self.core.ceil_lookback(),
             FuncId::CG => self.core.cg_lookback(self.int_opt[0]),
             FuncId::CHOP => self.core.chop_lookback(self.int_opt[0]),
@@ -4172,7 +4172,6 @@ impl<'a> ParamHolder<'a> {
             FuncId::MACD => self.core.macd_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::MACDEXT => self.core.macdext_lookback(self.int_opt[0], MAType::try_from(self.int_opt[1])?, self.int_opt[2], MAType::try_from(self.int_opt[3])?, self.int_opt[4], MAType::try_from(self.int_opt[5])?),
             FuncId::MACDFIX => self.core.macdfix_lookback(self.int_opt[0]),
-            FuncId::MACDV => self.core.macdv_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::MAMA => self.core.mama_lookback(self.real_opt[0], self.real_opt[1]),
             FuncId::MARKETFI => self.core.marketfi_lookback(),
             FuncId::MASSI => self.core.massi_lookback(self.int_opt[0], self.int_opt[1]),
@@ -4263,6 +4262,8 @@ impl<'a> ParamHolder<'a> {
             FuncId::WMA => self.core.wma_lookback(self.int_opt[0]),
             FuncId::ZIGZAG => self.core.zigzag_lookback(self.real_opt[0], self.int_opt[1]),
             FuncId::ZLEMA => self.core.zlema_lookback(self.int_opt[0]),
+            FuncId::CE => self.core.ce_lookback(self.int_opt[0], self.real_opt[1]),
+            FuncId::MACDV => self.core.macdv_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
         }
     }
 
@@ -4362,7 +4363,6 @@ impl<'a> ParamHolder<'a> {
             FuncId::CDLUNIQUE3RIVER => self.core.cdlunique3river_display_shift(output_idx),
             FuncId::CDLUPSIDEGAP2CROWS => self.core.cdlupsidegap2crows_display_shift(output_idx),
             FuncId::CDLXSIDEGAP3METHODS => self.core.cdlxsidegap3methods_display_shift(output_idx),
-            FuncId::CE => self.core.ce_display_shift(self.int_opt[0], self.real_opt[1], output_idx),
             FuncId::CEIL => self.core.ceil_display_shift(output_idx),
             FuncId::CG => self.core.cg_display_shift(self.int_opt[0], output_idx),
             FuncId::CHOP => self.core.chop_display_shift(self.int_opt[0], output_idx),
@@ -4424,7 +4424,6 @@ impl<'a> ParamHolder<'a> {
             FuncId::MACD => self.core.macd_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], output_idx),
             FuncId::MACDEXT => self.core.macdext_display_shift(self.int_opt[0], MAType::try_from(self.int_opt[1])?, self.int_opt[2], MAType::try_from(self.int_opt[3])?, self.int_opt[4], MAType::try_from(self.int_opt[5])?, output_idx),
             FuncId::MACDFIX => self.core.macdfix_display_shift(self.int_opt[0], output_idx),
-            FuncId::MACDV => self.core.macdv_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], output_idx),
             FuncId::MAMA => self.core.mama_display_shift(self.real_opt[0], self.real_opt[1], output_idx),
             FuncId::MARKETFI => self.core.marketfi_display_shift(output_idx),
             FuncId::MASSI => self.core.massi_display_shift(self.int_opt[0], self.int_opt[1], output_idx),
@@ -4515,6 +4514,8 @@ impl<'a> ParamHolder<'a> {
             FuncId::WMA => self.core.wma_display_shift(self.int_opt[0], output_idx),
             FuncId::ZIGZAG => self.core.zigzag_display_shift(self.real_opt[0], self.int_opt[1], output_idx),
             FuncId::ZLEMA => self.core.zlema_display_shift(self.int_opt[0], output_idx),
+            FuncId::CE => self.core.ce_display_shift(self.int_opt[0], self.real_opt[1], output_idx),
+            FuncId::MACDV => self.core.macdv_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], output_idx),
         }
     }
 
@@ -5807,22 +5808,6 @@ impl<'a> ParamHolder<'a> {
                     Err(e) => e,
                 }
             }
-            FuncId::CE => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
-                Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let res = self.core.ce(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.real_opt[1], &mut *o0, &mut *o1);
-                self.real_out[0] = Some(o0);
-                self.real_out[1] = Some(o1);
-                match res {
-                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
-                    Err(e) => e,
-                }
-            }
             FuncId::CEIL => {
                 let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
                 if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
@@ -6646,24 +6631,6 @@ impl<'a> ParamHolder<'a> {
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.macdfix(start_idx, end_idx, i0, self.int_opt[0], &mut *o0, &mut *o1, &mut *o2);
-                self.real_out[0] = Some(o0);
-                self.real_out[1] = Some(o1);
-                self.real_out[2] = Some(o2);
-                match res {
-                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
-                    Err(e) => e,
-                }
-            }
-            FuncId::MACDV => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
-                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
-                Self::check_range(start_idx, end_idx)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
-                let res = self.core.macdv(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
@@ -7847,6 +7814,40 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.zlema(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::CE => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.ce(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.real_opt[1], &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::MACDV => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::InputNotAllInitialize)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.macdv(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut *o0, &mut *o1, &mut *o2);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                self.real_out[2] = Some(o2);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

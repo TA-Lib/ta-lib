@@ -68,6 +68,8 @@ the last word:
   `TA_INTERNAL_ERROR(<id>)`, so the number a caller reports keeps naming the same
   guard across releases. Append-only — a full C run assigns the new keys and
   drops the dead ones; never renumber an existing entry by hand.
+- `rust_func_ids.yaml`: on a rebase conflict, keep the side you are rebasing
+  onto and regenerate.
 
 Do not hand-edit **generated** files under `ta_codegen/output/` — they are
 overwritten on the next `generate`. The converse trap: some hand-written source
