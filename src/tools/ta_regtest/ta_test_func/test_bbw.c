@@ -93,8 +93,7 @@
  *   No leg sees 255-bar tiles for 256: the tile only sets where the width
  *   pass splits the output.
  *
- *   SERVER_VERIFY: every golden call up to BBW_SV_MAX_BARS, so all but the
- *   two 100500-bar ones; leg 2 routes the 3000-bar walk once per
+ *   SERVER_VERIFY: every golden call; leg 2 routes the 3000-bar walk once per
  *   MA type and under each unstable period, leg 6 one anchored call per MA
  *   type.
  */
@@ -116,7 +115,6 @@
 #define BBW_WALK_N      3000
 #define BBW_LONG_N      100500
 #define BBW_ULP         ( DBL_EPSILON / 2.0 )
-#define BBW_SV_MAX_BARS 16000
 #define BBW_NB_MATYPE   ( TA_MATYPE_MAX + 1 )
 
 enum { BBW_CORPUS, BBW_NEGCORPUS, BBW_TICK100, BBW_BIG1E8, BBW_FINE100, BBW_PEG,
@@ -1060,13 +1058,10 @@ static ErrorNumber test_bbw_goldens( void )
          }
       }
 
-      if( s->nbBars <= BBW_SV_MAX_BARS )
-      {
-         err = bbw_route( g->tag, g->startIdx, g->endIdx, s->x, s->nbBars, g->n, g->kUp,
-                          g->kDn, g->maType, retCode, beg, nb, out );
-         if( err != TA_TEST_PASS )
-            return err;
-      }
+      err = bbw_route( g->tag, g->startIdx, g->endIdx, s->x, s->nbBars, g->n, g->kUp,
+                       g->kDn, g->maType, retCode, beg, nb, out );
+      if( err != TA_TEST_PASS )
+         return err;
       TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
    }
 

@@ -102,8 +102,7 @@
  *   No leg sees 255-bar tiles for 256: the tile only sets where the band
  *   pass splits the output.
  *
- *   SERVER_VERIFY: every golden call up to PCTB_SV_MAX_BARS, so all but the
- *   two 100500-bar ones; leg 2 routes the 3000-bar walk once per
+ *   SERVER_VERIFY: every golden call; leg 2 routes the 3000-bar walk once per
  *   MA type and branch and under each unstable period, leg 6 one anchored call
  *   per MA type and branch.
  */
@@ -125,7 +124,6 @@
 #define PCTB_WALK_N      3000
 #define PCTB_LONG_N      100500
 #define PCTB_ULP         ( DBL_EPSILON / 2.0 )
-#define PCTB_SV_MAX_BARS 16000
 #define PCTB_NB_MATYPE   ( TA_MATYPE_MAX + 1 )
 
 enum { PCTB_CORPUS, PCTB_NEGCORPUS, PCTB_TICK100, PCTB_BIG1E8, PCTB_FINE100, PCTB_PEG,
@@ -1521,13 +1519,10 @@ static ErrorNumber test_pctb_goldens( void )
          }
       }
 
-      if( s->nbBars <= PCTB_SV_MAX_BARS )
-      {
-         err = pctb_route( g->tag, g->startIdx, g->endIdx, s->x, s->nbBars, g->n, g->kUp,
-                           g->kDn, g->maType, retCode, beg, nb, out );
-         if( err != TA_TEST_PASS )
-            return err;
-      }
+      err = pctb_route( g->tag, g->startIdx, g->endIdx, s->x, s->nbBars, g->n, g->kUp,
+                        g->kDn, g->maType, retCode, beg, nb, out );
+      if( err != TA_TEST_PASS )
+         return err;
       TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
    }
 

@@ -104,10 +104,7 @@
  *   SERVER_VERIFY: every call of legs 2, 3 and 4, one anchored call per
  *   period of leg 7, and every full call of leg 10 but those on the
  *   non-finite series, whose NaN outputs carry no sign or payload contract
- *   across languages that a bitwise hash could skip. A call longer than
- *   CG_SV_MAX_BARS goes as the series cut at startIdx - lookback;
- *   long-n100000, flat01-n100000, flat12345-n100000 and leg 2 at n = 100000 are
- *   not routed even then.
+ *   across languages that a bitwise hash could skip.
  */
 
 /**** Headers ****/
@@ -129,7 +126,6 @@
 #define CG_LONG_N      100150
 #define CG_FLAT_N      100002
 #define CG_MAX_PER     100
-#define CG_SV_MAX_BARS 16000
 
 /* Leg 1. The identity rounds through two running sums and a ratio; measured
  * worst 1.2e-14 relative over both corpora and every period. */
@@ -1180,34 +1176,16 @@ static int cg_same( double a, double b )
    return memcmp( &a, &b, sizeof(double) ) == 0;
 }
 
-/* Replays TA_CG( startIdx, endIdx, x, n ) on every language server. The
- * servers get endIdx+1 bars, or the series cut at startIdx - lookback when
- * that is too long for one request: the same windows. */
+/* Replays TA_CG( startIdx, endIdx, x, n ) on every language server. */
 static ErrorNumber cg_route( const char *tag, int startIdx, int endIdx, const double *x, int n,
                              TA_RetCode retCode, int beg, int nb, const double *out )
 {
-   static double cut[CG_CAP];
-   TA_Integer cutBeg, cutNb;
    double optIn[1];
-   int a, before;
+   int before;
    ErrorNumber err;
 
    if( !server_verify_active() )
       return TA_TEST_PASS;
-
-   if( endIdx + 1 > CG_SV_MAX_BARS )
-   {
-      a = startIdx - ( n - 1 );
-      if( a < 0 || endIdx + 1 - a > CG_SV_MAX_BARS )
-         return TA_TEST_PASS;
-      x += a;
-      startIdx -= a;
-      endIdx   -= a;
-      retCode = TA_CG( startIdx, endIdx, x, n, &cutBeg, &cutNb, cut );
-      beg = cutBeg;
-      nb  = cutNb;
-      out = cut;
-   }
 
    optIn[0] = (double)n;
    before = server_verify_value_comparisons();
