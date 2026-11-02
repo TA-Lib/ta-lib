@@ -2966,7 +2966,14 @@ impl RustStmt<'_, '_> {
             same_len: &same_len,
             ring_storage: &ring_storage,
         };
-        let plan = super::rust_window::plan(condition, body, update, &names)?;
+        let normalized = if update.is_none() {
+            super::rust_window::decision_body(
+                condition, body, &names,
+                &|a| ctx.int_output_names.contains(a),
+                &|name, args| try_inline_expr(self.helpers.get(name)?, args),
+            )
+        } else { None };
+        let plan = super::rust_window::plan(condition, normalized.as_deref().unwrap_or(body), update, &names)?;
         // A tested counter steps before the do-while's first test, not its
         // first pass.
         if do_while && plan.cond_step.is_some() {

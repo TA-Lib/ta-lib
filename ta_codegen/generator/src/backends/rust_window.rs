@@ -151,6 +151,119 @@ pub(crate) fn plan(cond: &Expr, body: &[Statement], update: Option<&Statement>, 
     })
 }
 
+struct DecisionChoice<'a> {
+    counter: &'a str,
+    names: &'a Names<'a>,
+    inline: &'a dyn Fn(&str, &[Expr]) -> Option<Expr>,
+    inputs: BTreeMap<String, BTreeSet<i64>>,
+    target: Option<Expr>,
+}
+impl DecisionChoice<'_> {
+    fn read(&mut self, expr: &Expr, depth: usize) -> Option<()> {
+        if depth > 32 { return None; }
+        match expr {
+            Expr::IntLiteral(_) => Some(()),
+            Expr::ArrayAccess(array, index) if (self.names.same_len)(array) => {
+                let offset = match index.as_ref() {
+                    Expr::Var(v) if v == self.counter => 0,
+                    Expr::BinOp(base, BinOp::Sub, distance)
+                        if matches!(base.as_ref(), Expr::Var(v) if v == self.counter)
+                            && matches!(distance.as_ref(), Expr::IntLiteral(1)) => -1,
+                    _ => return None,
+                };
+                self.inputs.entry(array.clone()).or_default().insert(offset);
+                Some(())
+            }
+            Expr::BinOp(l, _, r) => { self.read(l, depth + 1)?; self.read(r, depth + 1) }
+            Expr::Not(x) | Expr::Neg(x) => self.read(x, depth + 1),
+            Expr::Ternary(c, t, f) => {
+                self.boolean(c, depth + 1)?;
+                self.read(t, depth + 1)?;
+                self.read(f, depth + 1)
+            }
+            Expr::FuncCall(n, args) => self.read(&(self.inline)(n, args)?, depth + 1),
+            _ => None,
+        }
+    }
+    fn boolean(&mut self, expr: &Expr, depth: usize) -> Option<()> {
+        if depth > 32 { return None; }
+        match expr {
+            Expr::BinOp(l, BinOp::And | BinOp::Or, r) => {
+                self.boolean(l, depth + 1)?;
+                self.boolean(r, depth + 1)
+            }
+            Expr::BinOp(l, BinOp::Less | BinOp::LessEq | BinOp::Greater | BinOp::GreaterEq | BinOp::Eq | BinOp::NotEq, r) => {
+                self.read(l, depth + 1)?;
+                self.read(r, depth + 1)
+            }
+            Expr::Not(inner) => self.boolean(inner, depth + 1),
+            Expr::FuncCall(name, args) => self.boolean(&(self.inline)(name, args)?, depth + 1),
+            _ => None,
+        }
+    }
+    fn integer(&mut self, e: &Expr, depth: usize) -> Option<()> {
+        if depth > 32 { return None; }
+        match e {
+            Expr::IntLiteral(n) if i32::try_from(*n).is_ok() => Some(()),
+            Expr::BinOp(l, BinOp::Mul, r) => { self.integer(l, depth + 1)?; self.integer(r, depth + 1) }
+            Expr::Ternary(c, t, f) => {
+                self.boolean(c, depth + 1)?;
+                self.integer(t, depth + 1)?;
+                self.integer(f, depth + 1)
+            }
+            Expr::FuncCall(n, args) => self.integer(&(self.inline)(n, args)?, depth + 1),
+            _ => None,
+        }
+    }
+    fn tree(&mut self, body: &[Statement], integer_output: &dyn Fn(&str) -> bool) -> Option<Expr> {
+        let body: Vec<&Statement> = body.iter().filter(|s| !matches!(s, Statement::Comment(_))).collect();
+        match body.as_slice() {
+            [Statement::Assign { target: t @ Expr::ArrayAccess(a, _), value, compound: false }] => {
+                let index = post_increment(t)?;
+                if !integer_output(a) || index == self.counter || !(self.names.index)(index) {
+                    return None;
+                }
+                if self.target.as_ref().is_some_and(|old| old != t) { return None; }
+                self.target = Some(t.clone());
+                self.integer(value, 0)?;
+                Some(value.clone())
+            }
+            [Statement::If { condition, then_body, else_body, .. }] => {
+                self.boolean(condition, 0)?;
+                let yes = self.tree(then_body, integer_output)?;
+                let no = self.tree(else_body, integer_output)?;
+                Some(Expr::Ternary(Box::new(condition.clone()), Box::new(yes), Box::new(no)))
+            }
+            _ => None,
+        }
+    }
+}
+
+/// A total integer-output choice over two adjacent input bars.
+pub(crate) fn decision_body(
+    cond: &Expr,
+    body: &[Statement],
+    names: &Names,
+    integer_output: &dyn Fn(&str) -> bool,
+    inline: &dyn Fn(&str, &[Expr]) -> Option<Expr>,
+) -> Option<Vec<Statement>> {
+    let form = form(cond, names)?;
+    if form.step != 1 || form.cond_step.is_some() {
+        return None;
+    }
+    let pass: Vec<&Statement> = body.iter().filter(|s| !matches!(s, Statement::Comment(_))).collect();
+    let [Statement::If { .. }, advance] = pass.as_slice() else { return None };
+    if as_step(advance) != Some((form.counter.as_str(), 1)) {
+        return None;
+    }
+    let mut choice = DecisionChoice { counter: &form.counter, names, inline, inputs: BTreeMap::new(), target: None };
+    let value = choice.tree(std::slice::from_ref(*pass.first()?), integer_output)?;
+    if choice.inputs.len() != 2 || choice.inputs.values().any(|offsets| *offsets != BTreeSet::from([-1, 0])) {
+        return None;
+    }
+    Some(vec![Statement::Assign { target: choice.target?, value, compound: false }, (*advance).clone()])
+}
+
 fn variant_branches(pass: &[Statement], facts: &Facts) -> bool {
     pass.iter().any(|statement| match statement {
         Statement::If { condition, then_body, else_body, .. } => {
@@ -1000,6 +1113,101 @@ mod tests {
             each_access(s, &mut |a, i, _| out.push(format!("{a}[{}]", render_marker(i).unwrap_or_else(|| text(i)))));
         }
         out
+    }
+
+    fn decision_fixture() -> Vec<Statement> {
+        let previous = || bin(v("i"), BinOp::Sub, int(1));
+        let target = || at("out", Expr::PostIncrement(Box::new(v("k"))));
+        let value = |n| bin(Expr::FuncCall("color".into(), vec![at("in", v("i")), at("in2", v("i"))]), BinOp::Mul, int(n));
+        let choose = Statement::If {
+            condition: bin(at("in", v("i")), BinOp::NotEq, at("in2", previous())),
+            then_body: vec![set(target(), value(100))],
+            else_body: vec![set(target(), value(80))],
+            cond_comments: Vec::new(),
+        };
+        vec![Statement::If {
+            condition: bin(
+                bin(at("in", v("i")), BinOp::GreaterEq, at("in2", v("i"))), BinOp::And,
+                bin(at("in", previous()), BinOp::Less, at("in2", previous())),
+            ),
+            then_body: vec![choose],
+            else_body: vec![set(target(), int(0))],
+            cond_comments: Vec::new(),
+        }, inc("i")]
+    }
+
+    fn decision(body: &[Statement]) -> Option<Vec<Statement>> {
+        let names = Names {
+            index: &|n| ["i", "k", "e"].contains(&n),
+            usize_expr: &|e| matches!(e, Expr::Var(_) | Expr::IntLiteral(_)),
+            castable: &|_| false,
+            sliceable: &|_| true,
+            same_len: &|n| ["in", "in2", "in3"].contains(&n),
+            ring_storage: &|_| None,
+        };
+        decision_body(&bin(v("i"), BinOp::LessEq, v("e")), body, &names, &|n| n == "out", &|name, args| {
+            if name != "color" || args.len() != 2 { return None; }
+            Some(Expr::Ternary(Box::new(bin(args[0].clone(), BinOp::GreaterEq, args[1].clone())), Box::new(int(1)), Box::new(int(-1))))
+        })
+    }
+
+    #[test]
+    fn a_total_integer_choice_windows_both_bars_and_the_output() {
+        let body = decision_fixture();
+        let normalized = decision(&body).expect("total choice");
+        let Statement::Assign { value: Expr::Ternary(condition, then, other), target, .. } = &normalized[0] else { panic!("choice") };
+        let Statement::If { condition: old, .. } = &body[0] else { panic!("fixture") };
+        assert_eq!(condition.as_ref(), old);
+        assert!(matches!(then.as_ref(), Expr::Ternary(..)));
+        assert_eq!(other.as_ref(), &int(0));
+        assert_eq!(post_increment(target), Some("k"));
+        assert_eq!(format!("{:?}", normalized[1]), format!("{:?}", body[1]));
+        let p = run_full(&bin(v("i"), BinOp::LessEq, v("e")), &normalized, None, true).expect("windows");
+        assert!(p.checked);
+        assert_eq!(p.windows.iter().map(|w| (w.array.as_str(), w.extra, w.mutable)).collect::<Vec<_>>(), [("in", 1, false), ("in2", 1, false), ("out", 0, true)]);
+    }
+
+    #[test]
+    fn incomplete_or_effectful_choices_keep_the_original_control_flow() {
+        let base = decision_fixture();
+        let mut bad = Vec::new();
+        let mut b = base.clone();
+        if let Statement::If { else_body, .. } = &mut b[0] { else_body.clear(); }
+        bad.push(b);
+        let mut b = base.clone();
+        if let Statement::If { else_body, .. } = &mut b[0] { else_body.push(inc("k")); }
+        bad.push(b);
+        for target in [at("other", Expr::PostIncrement(Box::new(v("k")))), at("out", v("k")), at("out", Expr::PostIncrement(Box::new(v("i"))))] {
+            let mut b = base.clone();
+            if let Statement::If { else_body, .. } = &mut b[0] { else_body[0] = set(target, int(0)); }
+            bad.push(b);
+        }
+        for value in [v("k"), Expr::Literal(-0.0), Expr::Cast(VarType::Integer, Box::new(Expr::Literal(-1.5))), Expr::FuncCall("unknown".into(), vec![]), Expr::PostIncrement(Box::new(v("k")))] {
+            let mut b = base.clone();
+            if let Statement::If { else_body, .. } = &mut b[0] {
+                if let Statement::Assign { value: old, .. } = &mut else_body[0] { *old = value; }
+            }
+            bad.push(b);
+        }
+        let mut b = base.clone(); b[1] = inc("k"); bad.push(b);
+        let mut b = base.clone(); b.push(inc("k")); bad.push(b);
+        for b in bad { assert!(decision(&b).is_none(), "{b:?}"); }
+    }
+
+    #[test]
+    fn mutated_conditions_and_wider_input_windows_are_not_choices() {
+        for condition in [
+            at("in", v("i")),
+            Expr::IntLiteral(1),
+            Expr::PostIncrement(Box::new(v("k"))),
+            Expr::FuncCall("unknown".into(), vec![at("in", v("i"))]),
+            bin(at("in", v("i")), BinOp::Greater, at("in3", v("i"))),
+            bin(at("in", bin(v("i"), BinOp::Sub, int(2))), BinOp::Greater, at("in2", v("i"))),
+        ] {
+            let mut b = decision_fixture();
+            if let Statement::If { condition: old, .. } = &mut b[0] { *old = condition; }
+            assert!(decision(&b).is_none());
+        }
     }
 
     #[test]
