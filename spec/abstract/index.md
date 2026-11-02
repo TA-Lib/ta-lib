@@ -16,7 +16,7 @@ The Abstract API describes every function at run time and calls it by name ([rA6
 
 * <a id="bind-all"></a>**Bind every input and every output before the call.** An optional parameter may stay unbound ([rA5](/spec/abstract/#ra5)).
 * <a id="range-at-call"></a>**Do not assume a value a bind call accepts is valid for the call.** A value outside the parameter's accepted values fails the call ([rA1](/spec/abstract/#ra1)) and the holder's lookback and display shift ([rL2](/spec/lookback/#rl2), [rL11](/spec/lookback/#rl11)); in C, `TA_GetLookback` and `TA_GetDisplayShift` still return `TA_SUCCESS`: test the value they write.
-* <a id="by-name"></a>**Identify a function by its name, never by its position.** A release that adds a function moves the ones after it, and the order of the groups differs between languages. In Rust, the number of a `FuncId` is such a position.
+* <a id="by-name"></a>**Identify a function by its name, never by its position.** A release that adds a function moves the ones after it, and the order of the groups differs between languages.
 * <a id="unknown-flag"></a>**Ignore a flag you do not know.** A release may add a flag ([rV3](/spec/versions/#rv3)).
 * <a id="c-buffers"></a>**In C, keep every bound buffer valid and long enough.** Each must stay valid until the last call on the holder, and be as long as the batch call needs ([input length](/spec/inputs-outputs/#input-length), [output size](/spec/inputs-outputs/#output-size)).
 * <a id="c-release"></a>**In C, release what the API allocated, once, with its own call.** A function handle and the descriptors it leads to are static: never free them.

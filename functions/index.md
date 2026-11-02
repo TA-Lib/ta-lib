@@ -88,6 +88,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [MACD](/functions/macd.md) — Moving Average Convergence/Divergence
 * [MACDEXT](/functions/macdext.md) — MACD with controllable MA type
 * [MACDFIX](/functions/macdfix.md) — Moving Average Convergence/Divergence Fix 12/26
+* [MACDV](/functions/macdv.md) — MACD-V, Volatility Normalised Momentum
 * [MFI](/functions/mfi.md) — Money Flow Index
 * [MINUS_DI](/functions/minus_di.md) — Minus Directional Indicator
 * [MINUS_DM](/functions/minus_dm.md) — Minus Directional Movement
@@ -123,6 +124,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [ACCBANDS](/functions/accbands.md) — Acceleration Bands
 * [ALMA](/functions/alma.md) — Arnaud Legoux Moving Average
 * [BBANDS](/functions/bbands.md) — Bollinger Bands
+* [CE](/functions/ce.md) — Chandelier Exit
 * [CKSP](/functions/cksp.md) — Chande Kroll Stop
 * [DEMA](/functions/dema.md) — Double Exponential Moving Average
 * [DONCHIAN](/functions/donchian.md) — Donchian Channels
@@ -240,6 +242,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [MEDIAN](/functions/median.md) — Rolling Median
 * [PERCENTILE](/functions/percentile.md) — Percentile (nearest rank)
 * [PERCENTRANK](/functions/percentrank.md) — Percent Rank
+* [SKEW](/functions/skew.md) — Rolling Skewness
 * [STDDEV](/functions/stddev.md) — Standard Deviation
 * [TSF](/functions/tsf.md) — Time Series Forecast
 * [VAR](/functions/var.md) — Variance

@@ -152,6 +152,7 @@ This documentation is built from the main branch and can be ahead of the newest 
 - [Unique 3 River (CDLUNIQUE3RIVER)](https://ta-lib.org/functions/cdlunique3river.md): A three-candle bullish reversal pattern: a long black candle, then a black harami candle that makes a lower low, then a small white candle.
 - [Upside Gap Two Crows (CDLUPSIDEGAP2CROWS)](https://ta-lib.org/functions/cdlupsidegap2crows.md): A three-candle bearish reversal pattern: a long white candle, then a small black candle gapping up (a gap between the real bodies), then a black candle…
 - [Upside/Downside Gap Three Methods (CDLXSIDEGAP3METHODS)](https://ta-lib.org/functions/cdlxsidegap3methods.md): A three-candle continuation pattern: two same-color candles separated by a real-body gap, followed by an opposite-color candle that fills into the gap.
+- [Chandelier Exit (CE)](https://ta-lib.org/functions/ce.md): Le Beau's Chandelier Exit, a two-line volatility stop.
 - [Vector Ceil (CEIL)](https://ta-lib.org/functions/ceil.md): Element-wise ceiling (round up to the nearest integer) of the input series.
 - [Center of Gravity Oscillator (CG)](https://ta-lib.org/functions/cg.md): John Ehlers' Center of Gravity oscillator: the balance point of the last optInTimePeriod values, each weighted by its value and placed at its position…
 - [Choppiness Index (CHOP)](https://ta-lib.org/functions/chop.md): Choppiness Index: a trend-versus-consolidation gauge, the true range travelled over a window against the height of the box its bars span.
@@ -213,6 +214,7 @@ This documentation is built from the main branch and can be ahead of the newest 
 - [Moving Average Convergence/Divergence (MACD)](https://ta-lib.org/functions/macd.md): Moving Average Convergence/Divergence: the difference between a fast and a slow EMA of the input, plus an EMA-smoothed signal line and their histogram.
 - [MACD with controllable MA type (MACDEXT)](https://ta-lib.org/functions/macdext.md): MACD variant where the fast, slow, and signal moving averages each use a user-selectable MA type.
 - [Moving Average Convergence/Divergence Fix 12/26 (MACDFIX)](https://ta-lib.org/functions/macdfix.md): MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the classic fixed smoothing factors 0.15 and 0.075), exposing only the signal period.
+- [MACD-V, Volatility Normalised Momentum (MACDV)](https://ta-lib.org/functions/macdv.md): MACD-V, Alex Spiroglou's volatility-normalised MACD: the spread of a fast and a slow EMA of the close over the Average True Range, times 100.
 - [MESA Adaptive Moving Average (MAMA)](https://ta-lib.org/functions/mama.md): MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is driven by the dominant-cycle phase rate measured with a Hilbert transform.
 - [Market Facilitation Index (MARKETFI)](https://ta-lib.org/functions/marketfi.md): Bill Williams' Market Facilitation Index (Trading Chaos, 1995): the price range a bar travelled per unit of volume traded — how much movement the market…
 - [Mass Index (MASSI)](https://ta-lib.org/functions/massi.md): Mass Index: Donald Dorsey's non-directional measure of how the trading range itself is expanding or contracting.
@@ -262,6 +264,7 @@ This documentation is built from the main branch and can be ahead of the newest 
 - [Wilder Swing Index (SI)](https://ta-lib.org/functions/si.md): Wilder's Swing Index: one number rating each bar against the bar before it, from both bars' open and close and the current bar's high and low, signed by…
 - [Vector Trigonometric Sin (SIN)](https://ta-lib.org/functions/sin.md): Element-wise sine of the input series.
 - [Vector Trigonometric Sinh (SINH)](https://ta-lib.org/functions/sinh.md): Element-wise hyperbolic sine of the input series.
+- [Rolling Skewness (SKEW)](https://ta-lib.org/functions/skew.md): An estimate, from the trailing window, of the skewness of the distribution its values come from: the third standardised moment.
 - [Simple Moving Average (SMA)](https://ta-lib.org/functions/sma.md): Simple Moving Average: the unweighted arithmetic mean of the last N input values. Used to smooth a series.
 - [Stochastic Momentum Index (SMI)](https://ta-lib.org/functions/smi.md): Stochastic Momentum Index: where the close sits relative to the midpoint of the recent high/low range, double-smoothed.
 - [Vector Square Root (SQRT)](https://ta-lib.org/functions/sqrt.md): Element-wise square root of the input series.

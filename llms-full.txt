@@ -2789,7 +2789,7 @@ The Abstract API describes every function at run time and calls it by name ([rA6
 
 * <a id="bind-all"></a>**Bind every input and every output before the call.** An optional parameter may stay unbound ([rA5](/spec/abstract/#ra5)).
 * <a id="range-at-call"></a>**Do not assume a value a bind call accepts is valid for the call.** A value outside the parameter's accepted values fails the call ([rA1](/spec/abstract/#ra1)) and the holder's lookback and display shift ([rL2](/spec/lookback/#rl2), [rL11](/spec/lookback/#rl11)); in C, `TA_GetLookback` and `TA_GetDisplayShift` still return `TA_SUCCESS`: test the value they write.
-* <a id="by-name"></a>**Identify a function by its name, never by its position.** A release that adds a function moves the ones after it, and the order of the groups differs between languages. In Rust, the number of a `FuncId` is such a position.
+* <a id="by-name"></a>**Identify a function by its name, never by its position.** A release that adds a function moves the ones after it, and the order of the groups differs between languages.
 * <a id="unknown-flag"></a>**Ignore a flag you do not know.** A release may add a flag ([rV3](/spec/versions/#rv3)).
 * <a id="c-buffers"></a>**In C, keep every bound buffer valid and long enough.** Each must stay valid until the last call on the holder, and be as long as the batch call needs ([input length](/spec/inputs-outputs/#input-length), [output size](/spec/inputs-outputs/#output-size)).
 * <a id="c-release"></a>**In C, release what the API allocated, once, with its own call.** A function handle and the descriptors it leads to are static: never free them.
@@ -3230,6 +3230,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [MACD](/functions/macd.md) — Moving Average Convergence/Divergence
 * [MACDEXT](/functions/macdext.md) — MACD with controllable MA type
 * [MACDFIX](/functions/macdfix.md) — Moving Average Convergence/Divergence Fix 12/26
+* [MACDV](/functions/macdv.md) — MACD-V, Volatility Normalised Momentum
 * [MFI](/functions/mfi.md) — Money Flow Index
 * [MINUS_DI](/functions/minus_di.md) — Minus Directional Indicator
 * [MINUS_DM](/functions/minus_dm.md) — Minus Directional Movement
@@ -3265,6 +3266,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [ACCBANDS](/functions/accbands.md) — Acceleration Bands
 * [ALMA](/functions/alma.md) — Arnaud Legoux Moving Average
 * [BBANDS](/functions/bbands.md) — Bollinger Bands
+* [CE](/functions/ce.md) — Chandelier Exit
 * [CKSP](/functions/cksp.md) — Chande Kroll Stop
 * [DEMA](/functions/dema.md) — Double Exponential Moving Average
 * [DONCHIAN](/functions/donchian.md) — Donchian Channels
@@ -3382,6 +3384,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 * [MEDIAN](/functions/median.md) — Rolling Median
 * [PERCENTILE](/functions/percentile.md) — Percentile (nearest rank)
 * [PERCENTRANK](/functions/percentrank.md) — Percent Rank
+* [SKEW](/functions/skew.md) — Rolling Skewness
 * [STDDEV](/functions/stddev.md) — Standard Deviation
 * [TSF](/functions/tsf.md) — Time Series Forecast
 * [VAR](/functions/var.md) — Variance
