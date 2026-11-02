@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  103004 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  *
  */
 
@@ -91,12 +92,17 @@ TA_RetCode cdlinvertedhammer(int startIdx, int endIdx,
    outIdx = 0;
    do
    {
-      if( ta_realbodygapdown(inOpen[i], inClose[i], inOpen[i-1], inClose[i-1]) &&                                                                    // gap down
-         ta_realbody(inClose[i], inOpen[i]) < ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&                        // small rb
-         ta_uppershadow(inHigh[i], inClose[i], inOpen[i]) > ta_candleaverage(ShadowLong_rangeType, ShadowLong_avgPeriod, ShadowLong_factor, ShadowLongPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&              // long upper shadow
-         ta_lowershadow(inLow[i], inClose[i], inOpen[i]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i])   // very short lower shadow
+      if( ta_realbodygapdown(inOpen[i], inClose[i], inOpen[i-1], inClose[i-1])                                                                    // gap down
       ) {
-         outInteger[outIdx++] = 100;
+         if( ta_realbody(inClose[i], inOpen[i]) < ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&                        // small rb
+            ta_uppershadow(inHigh[i], inClose[i], inOpen[i]) > ta_candleaverage(ShadowLong_rangeType, ShadowLong_avgPeriod, ShadowLong_factor, ShadowLongPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&              // long upper shadow
+            ta_lowershadow(inLow[i], inClose[i], inOpen[i]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i])   // very short lower shadow
+         ) {
+            outInteger[outIdx++] = 100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

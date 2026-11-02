@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  121104 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Pre-check the cheap tests in an outer if, the candle averages inside
  *
  */
 
@@ -83,13 +84,18 @@ TA_RetCode cdlonneck(int startIdx, int endIdx,
    do
    {
       if( ta_candlecolor(inClose[i-1], inOpen[i-1]) == -1 &&                                                        // 1st: black
-         ta_realbody(inClose[i-1], inOpen[i-1]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&     //      long
          ta_candlecolor(inClose[i], inOpen[i]) == 1 &&                                                           // 2nd: white
-         inOpen[i] < inLow[i-1] &&                                                           //   open below prior low
-         inClose[i] <= inLow[i-1] + ta_candleaverage(Equal_rangeType, Equal_avgPeriod, Equal_factor, EqualPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&   //   close equal to prior low
-         inClose[i] >= inLow[i-1] - ta_candleaverage(Equal_rangeType, Equal_avgPeriod, Equal_factor, EqualPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+         inOpen[i] < inLow[i-1]                                                           //   open below prior low
       ) {
-         outInteger[outIdx++] = -100;
+         if( ta_realbody(inClose[i-1], inOpen[i-1]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&     //      long
+            inClose[i] <= inLow[i-1] + ta_candleaverage(Equal_rangeType, Equal_avgPeriod, Equal_factor, EqualPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&   //   close equal to prior low
+            inClose[i] >= inLow[i-1] - ta_candleaverage(Equal_rangeType, Equal_avgPeriod, Equal_factor, EqualPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+         ) {
+            outInteger[outIdx++] = -100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

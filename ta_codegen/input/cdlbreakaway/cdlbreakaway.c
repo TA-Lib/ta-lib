@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  011505 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  *
  */
 
@@ -79,25 +80,29 @@ TA_RetCode cdlbreakaway(int startIdx, int endIdx,
    {
       if( ta_candlecolor(inClose[i-4], inOpen[i-4]) == ta_candlecolor(inClose[i-3], inOpen[i-3]) &&                   // 1st, 2nd, 4th same color, 5th opposite
          ta_candlecolor(inClose[i-3], inOpen[i-3]) == ta_candlecolor(inClose[i-1], inOpen[i-1]) &&
-         ta_candlecolor(inClose[i-1], inOpen[i-1]) == -ta_candlecolor(inClose[i], inOpen[i]) &&
-         ta_realbody(inClose[i-4], inOpen[i-4]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-4], inHigh[i-4], inLow[i-4], inClose[i-4]) &&     // 1st long
-         (
-         ( ta_candlecolor(inClose[i-4], inOpen[i-4]) == -1 &&                                // when 1st is black:
-         ta_realbodygapdown(inOpen[i-3], inClose[i-3], inOpen[i-4], inClose[i-4]) &&                              // 2nd gaps down
-         inHigh[i-2] < inHigh[i-3] && inLow[i-2] < inLow[i-3] &&     // 3rd has lower high and low than 2nd
-         inHigh[i-1] < inHigh[i-2] && inLow[i-1] < inLow[i-2] &&     // 4th has lower high and low than 3rd
-         inClose[i] > inOpen[i-3] && inClose[i] < inClose[i-4]       // 5th closes inside the gap
-      )
-         ||
-         ( ta_candlecolor(inClose[i-4], inOpen[i-4]) == 1 &&                                 // when 1st is white:
-         ta_realbodygapup(inOpen[i-3], inClose[i-3], inOpen[i-4], inClose[i-4]) &&                                // 2nd gaps up
-         inHigh[i-2] > inHigh[i-3] && inLow[i-2] > inLow[i-3] &&     // 3rd has higher high and low than 2nd
-         inHigh[i-1] > inHigh[i-2] && inLow[i-1] > inLow[i-2] &&     // 4th has higher high and low than 3rd
-         inClose[i] < inOpen[i-3] && inClose[i] > inClose[i-4]       // 5th closes inside the gap
-      )
-      )
-      ) {
-         outInteger[outIdx++] = ta_candlecolor(inClose[i], inOpen[i]) * 100;
+         ta_candlecolor(inClose[i-1], inOpen[i-1]) == -ta_candlecolor(inClose[i], inOpen[i]) ) {
+         if( ta_realbody(inClose[i-4], inOpen[i-4]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-4], inHigh[i-4], inLow[i-4], inClose[i-4]) &&     // 1st long
+            (
+            ( ta_candlecolor(inClose[i-4], inOpen[i-4]) == -1 &&                                // when 1st is black:
+            ta_realbodygapdown(inOpen[i-3], inClose[i-3], inOpen[i-4], inClose[i-4]) &&                              // 2nd gaps down
+            inHigh[i-2] < inHigh[i-3] && inLow[i-2] < inLow[i-3] &&     // 3rd has lower high and low than 2nd
+            inHigh[i-1] < inHigh[i-2] && inLow[i-1] < inLow[i-2] &&     // 4th has lower high and low than 3rd
+            inClose[i] > inOpen[i-3] && inClose[i] < inClose[i-4]       // 5th closes inside the gap
+         )
+            ||
+            ( ta_candlecolor(inClose[i-4], inOpen[i-4]) == 1 &&                                 // when 1st is white:
+            ta_realbodygapup(inOpen[i-3], inClose[i-3], inOpen[i-4], inClose[i-4]) &&                                // 2nd gaps up
+            inHigh[i-2] > inHigh[i-3] && inLow[i-2] > inLow[i-3] &&     // 3rd has higher high and low than 2nd
+            inHigh[i-1] > inHigh[i-2] && inLow[i-1] > inLow[i-2] &&     // 4th has higher high and low than 3rd
+            inClose[i] < inOpen[i-3] && inClose[i] > inClose[i-4]       // 5th closes inside the gap
+         )
+         )
+         ) {
+            outInteger[outIdx++] = ta_candlecolor(inClose[i], inOpen[i]) * 100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

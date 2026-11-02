@@ -156,13 +156,7 @@ TA_LIB_API TA_RetCode TA_ROCR( int    startIdx,
    while( inIdx <= endIdx )
    {
       tempReal = inReal[trailingIdx++];
-      if( tempReal != 0.0 )
-      {
-         outReal[outIdx++] = inReal[inIdx] / tempReal;
-      } else 
-      {
-         outReal[outIdx++] = 0.0;
-      }
+      outReal[outIdx++] = ((tempReal != 0.0) ? (inReal[inIdx] / tempReal) : (0.0));
       inIdx += 1;
    }
    /* Set output limits. */
@@ -216,13 +210,7 @@ TA_RetCode TA_S_ROCR( int    startIdx,
    while( inIdx <= endIdx )
    {
       tempReal = (double)inReal[trailingIdx++];
-      if( tempReal != 0.0 )
-      {
-         outReal[outIdx++] = (double)inReal[inIdx] / tempReal;
-      } else 
-      {
-         outReal[outIdx++] = 0.0;
-      }
+      outReal[outIdx++] = ((tempReal != 0.0) ? ((double)inReal[inIdx] / tempReal) : (0.0));
       inIdx += 1;
    }
    *outNBElement= outIdx;

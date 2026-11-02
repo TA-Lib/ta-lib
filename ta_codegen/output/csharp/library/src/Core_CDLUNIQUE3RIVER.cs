@@ -57,6 +57,7 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  022005 AC     Creation
     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+    *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
     */
    /// <summary>
    /// Number of leading input bars <c>Cdlunique3river</c> consumes before it can

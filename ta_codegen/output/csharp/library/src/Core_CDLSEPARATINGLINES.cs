@@ -57,6 +57,7 @@ public partial class Core
     *  -------------------------------------------------------------------
     *  011505 AC     Creation
     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+    *  103126 MF,CC  Nest the opposite-colour and same-open tests as the pre-check
     */
    /// <summary>
    /// Number of leading input bars <c>Cdlseparatinglines</c> consumes before it

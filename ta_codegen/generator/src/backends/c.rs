@@ -837,10 +837,8 @@ fn gen_func(
 
 /// Drop `<Setting>_<prop>` declarations the rendered function never reads.
 ///
-/// The IR names all three properties of a setting the body touches, but the
-/// emitted C reaches most of them through `TA_CANDLERANGE` / `TA_CANDLEAVERAGE`,
-/// which take the setting as a token and read `TA_Globals` themselves — so the
-/// local is declared and never read (`-Wunused-variable`, 62 candlestick files).
+/// The IR names all three properties of a setting the body touches, but a body
+/// that only takes a setting's range reads one of them (`-Wunused-variable`).
 /// Only the rendered text can see that, which is the same rule
 /// `c_stream.rs::emit_used_candle_unpacking` applies to the streaming tiers.
 fn drop_unread_candle_decls(out: &mut String) {
@@ -988,6 +986,8 @@ fn gen_func_inner(
         body_stripped = super::stmt_walk::strip_comments(body);
         &body_stripped
     };
+    let selected = super::eager_select::rewrite(body, &super::eager_select::Declared::of(func), &func.outputs, helpers);
+    let body: &[Statement] = &selected;
 
     // Declare local variables from body (deduplicated)
     let mut declared_vars: Vec<String> = Vec::new();
@@ -1213,6 +1213,7 @@ fn gen_func_inner(
     }
 
     out.push_str("}\n\n");
+    let mut out = super::eager_select::lay_out(&out, true);
 
     drop_unread_candle_decls(&mut out);
 
@@ -1792,18 +1793,19 @@ impl StatementEmitter for CStmt<'_> {
             if expr_directly_contains_candle_call(left)
                 && expr_directly_contains_candle_call(right)
             {
+                let (outer_comments, inner_comments) = super::common::split_cond_comments(left, right, cond_comments);
                 // Render as: if(left) { if(right) { then } else { els } } else { els }
                 let inner_if = Statement::If {
                     condition: *right.clone(),
                     then_body: then_body.to_vec(),
                     else_body: else_body.to_vec(),
-                    cond_comments: Vec::new(),
+                    cond_comments: inner_comments,
                 };
                 let outer_if = Statement::If {
                     condition: *left.clone(),
                     then_body: vec![inner_if],
                     else_body: else_body.to_vec(),
-                    cond_comments: Vec::new(),
+                    cond_comments: outer_comments,
                 };
                 return self.walk_stmt(&outer_if, indent);
             }
@@ -2557,12 +2559,8 @@ fn args_have_input_param(args: &[Expr]) -> bool {
     })
 }
 
-/// Try to render a candle helper function call as a C preprocessor macro.
-///
-/// Converts `ta_candlerange(SET_rangeType, inOpen[idx], ...)` → `TA_CANDLERANGE(SET, idx)`
-/// and `ta_candleaverage(SET_rangeType, ..., sum, inOpen[idx], ...)` → `TA_CANDLEAVERAGE(SET, sum, idx)`.
-///
-/// Returns `None` if the function isn't a candle helper or args don't match the expected pattern.
+/// A candle helper call as its `TA_CANDLE*_OF` macro, which reads the setting
+/// from the locals the body unpacks once; `None` when the arguments do not match.
 fn try_render_candle_macro(
     fname: &str,
     args: &[Expr],
@@ -2573,19 +2571,19 @@ fn try_render_candle_macro(
     match fname {
         "ta_candlerange" if args.len() == 5 => {
             // ta_candlerange(SET_rangeType, inOpen[idx], inHigh[idx], inLow[idx], inClose[idx])
-            let setting = extract_candle_setting_name(&args[0])?;
+            extract_candle_setting_name(&args[0])?;
             let idx = extract_array_index(&args[4])?;
-            let idx_str = render_expr(&idx, ctx, registry, helpers);
-            Some(format!("TA_CANDLERANGE({setting},{idx_str})"))
+            let r = |e: &Expr| render_expr(e, ctx, registry, helpers);
+            Some(format!("TA_CANDLERANGE_OF({},{})", r(&args[0]), r(&idx)))
         }
         "ta_candleaverage" if args.len() == 8 => {
             // ta_candleaverage(SET_rangeType, SET_avgPeriod, SET_factor, sum,
             //                  inOpen[idx], inHigh[idx], inLow[idx], inClose[idx])
-            let setting = extract_candle_setting_name(&args[0])?;
-            let sum_str = render_expr(&args[3], ctx, registry, helpers);
+            extract_candle_setting_name(&args[0])?;
             let idx = extract_array_index(&args[7])?;
-            let idx_str = render_expr(&idx, ctx, registry, helpers);
-            Some(format!("TA_CANDLEAVERAGE({setting},{sum_str},{idx_str})"))
+            let r = |e: &Expr| render_expr(e, ctx, registry, helpers);
+            let settings = args[..4].iter().map(r).collect::<Vec<_>>().join(",");
+            Some(format!("TA_CANDLEAVERAGE_OF({settings},{})", r(&idx)))
         }
         _ => None,
     }
@@ -2648,6 +2646,11 @@ fn extract_array_index(expr: &Expr) -> Option<Expr> {
     }
 }
 
+/// A rendered operand as a 0/1 term of a bitwise `&` / `|` or a sum.
+fn c_bit(a: &Expr, r: &str) -> String {
+    if super::eager_select::is_boolean(a) { format!("({r})") } else { format!("(({r}) != 0)") }
+}
+
 /// Render a `FuncCall` expression to C code.
 #[allow(clippy::too_many_lines)]
 fn render_func_call(
@@ -2657,6 +2660,67 @@ fn render_func_call(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
+    if let Some(comment) = super::eager_select::note_of(fname) {
+        let [operand] = args else { panic!("a note holds one operand") };
+        return super::eager_select::noted(&render_expr(operand, ctx, registry, helpers), comment);
+    }
+    match fname {
+        super::eager_select::EAGER_AND | super::eager_select::EAGER_OR => {
+            let op = if fname == super::eager_select::EAGER_AND { " & " } else { " | " };
+            let atoms: Vec<String> = args
+                .iter()
+                .map(|a| {
+                    let r = render_expr(a, ctx, registry, helpers);
+                    match a {
+                        a if matches!(super::eager_select::peel(a).0, Expr::FuncCall(n, _) if n == super::eager_select::EAGER_AND || n == super::eager_select::EAGER_OR) => r,
+                        a => c_bit(a, &r),
+                    }
+                })
+                .collect();
+            return format!("({})", super::eager_select::join(&atoms, op));
+        }
+        super::eager_select::SELECT | super::eager_select::GUARD => {
+            let [c, t, e] = args else { panic!("{fname} takes a condition and two values") };
+            let r = |x: &Expr| render_expr(x, ctx, registry, helpers);
+            let cond = format!("(({})", r(c));
+            let pick = super::eager_select::glue(&cond, " ? ", &format!("({})", r(t)));
+            return super::eager_select::glue(&pick, " : ", &format!("({}))", r(e)));
+        }
+        super::eager_select::SELECT_INT => {
+            use super::eager_select::{glue, is_select, noted, peel};
+            let [cond, yes, no] = args else { panic!("{fname} takes a condition and two values") };
+            let render = |x: &Expr| render_expr(x, ctx, registry, helpers);
+            let flat = |x: &Expr| {
+                let mut nested = false;
+                crate::streaming::walk_expr(x, &mut |sub| nested |= matches!(sub, Expr::FuncCall(name, _) if is_select(name)));
+                !nested
+            };
+            // The arm kept whole is the one written twice, so a nested tree
+            // never is: its text would double at each level.
+            let bit = c_bit(cond, &render(cond));
+            let (keep, other, mask) = if flat(no) {
+                (no, yes, format!("-(int){bit}"))
+            } else if flat(yes) {
+                (yes, no, format!("((int){bit} - 1)"))
+            } else {
+                let pick = glue(&format!("(({})", render(cond)), " ? ", &format!("({})", render(yes)));
+                return glue(&pick, " : ", &format!("({}))", render(no)));
+            };
+            let (bare, notes) = peel(keep);
+            if matches!(bare, Expr::IntLiteral(0)) {
+                let picked = glue(&format!("(({})", render(other)), " & ", &format!("{mask})"));
+                return notes.into_iter().rev().fold(picked, |text, note| noted(&text, note));
+            }
+            let first = glue(&format!("(({})", render(keep)), " ^ ", &format!("((({})", render(other)));
+            let diff = glue(&first, " ^ ", &format!("({}))", render(bare)));
+            return glue(&diff, " & ", &format!("{mask}))"));
+        }
+        super::eager_select::EAGER_ALL => {
+            let terms: Vec<String> = args.iter().map(|a| c_bit(a, &render_expr(a, ctx, registry, helpers))).collect();
+            return format!("(({}) == {})", super::eager_select::join(&terms, " + "), args.len());
+        }
+        _ => {}
+    }
     // C candle macros: emit preprocessor macro calls instead of expanded code.
     // This enables compiler loop-unswitching, matching the reference library.
     // Stream transitions have scalar bars (no input arrays), so they use the

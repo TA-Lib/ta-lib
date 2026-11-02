@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  120804 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  *
  */
 
@@ -112,20 +113,25 @@ TA_RetCode cdlstalledpattern(int startIdx, int endIdx,
    {
       if( ta_candlecolor(inClose[i-2], inOpen[i-2]) == 1 &&                                             // 1st white
          ta_candlecolor(inClose[i-1], inOpen[i-1]) == 1 &&                                             // 2nd white
-         ta_candlecolor(inClose[i], inOpen[i]) == 1 &&                                               // 3rd white
-         inClose[i] > inClose[i-1] && inClose[i-1] > inClose[i-2] &&             // consecutive higher closes
-         ta_realbody(inClose[i-2], inOpen[i-2]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&  // 1st: long real body
-         ta_realbody(inClose[i-1], inOpen[i-1]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&  // 2nd: long real body
-         // very short upper shadow
-         ta_uppershadow(inHigh[i-1], inClose[i-1], inOpen[i-1]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&
-         // opens within/near 1st real body
-         inOpen[i-1] > inOpen[i-2] &&
-         inOpen[i-1] <= inClose[i-2] + ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
-         ta_realbody(inClose[i], inOpen[i]) < ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyShortPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&       // 3rd: small real body
-         // rides on the shoulder of 2nd real body
-         inOpen[i] >= inClose[i-1] - ta_realbody(inClose[i], inOpen[i]) - ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+         ta_candlecolor(inClose[i], inOpen[i]) == 1                                               // 3rd white
       ) {
-         outInteger[outIdx++] = -100;
+         if( inClose[i] > inClose[i-1] && inClose[i-1] > inClose[i-2] &&             // consecutive higher closes
+            ta_realbody(inClose[i-2], inOpen[i-2]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&  // 1st: long real body
+            ta_realbody(inClose[i-1], inOpen[i-1]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&  // 2nd: long real body
+            // very short upper shadow
+            ta_uppershadow(inHigh[i-1], inClose[i-1], inOpen[i-1]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&
+            // opens within/near 1st real body
+            inOpen[i-1] > inOpen[i-2] &&
+            inOpen[i-1] <= inClose[i-2] + ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
+            ta_realbody(inClose[i], inOpen[i]) < ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyShortPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&       // 3rd: small real body
+            // rides on the shoulder of 2nd real body
+            inOpen[i] >= inClose[i-1] - ta_realbody(inClose[i], inOpen[i]) - ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+         ) {
+            outInteger[outIdx++] = -100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

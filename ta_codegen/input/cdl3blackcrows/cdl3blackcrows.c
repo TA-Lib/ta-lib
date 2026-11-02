@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  103004 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  *
  */
 int cdl3blackcrows_lookback(void)
@@ -81,21 +82,26 @@ TA_RetCode cdl3blackcrows(int startIdx, int endIdx,
    {
       if( ta_candlecolor(inClose[i-3], inOpen[i-3]) == 1 &&                         // white
          ta_candlecolor(inClose[i-2], inOpen[i-2]) == -1 &&                        // 1st black
-         ta_candlecolor(inClose[i-1], inOpen[i-1]) == -1 &&                        // 2nd black
-         ta_candlecolor(inClose[i], inOpen[i]) == -1 &&                            // 3rd black
-         inOpen[i-1] < inOpen[i-2] && inOpen[i-1] > inClose[i-2] &&                // 2nd black opens within 1st black's rb
-         inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] &&                    // 3rd black opens within 2nd black's rb
-         inHigh[i-3] > inClose[i-2] &&                                             // 1st black closes under prior candle's high
-         inClose[i-2] > inClose[i-1] &&                                            // three declining
-         inClose[i-1] > inClose[i] &&                                              // three declining
-         // very short lower shadow
-         ta_lowershadow(inLow[i-2], inClose[i-2], inOpen[i-2]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
-         // very short lower shadow
-         ta_lowershadow(inLow[i-1], inClose[i-1], inOpen[i-1]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&
-         // very short lower shadow
-         ta_lowershadow(inLow[i], inClose[i], inOpen[i]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[0], inOpen[i], inHigh[i], inLow[i], inClose[i])
+         ta_candlecolor(inClose[i-1], inOpen[i-1]) == -1                        // 2nd black
       ) {
-         outInteger[outIdx++] = -100;
+         if( ta_candlecolor(inClose[i], inOpen[i]) == -1 &&                            // 3rd black
+            inOpen[i-1] < inOpen[i-2] && inOpen[i-1] > inClose[i-2] &&                // 2nd black opens within 1st black's rb
+            inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] &&                    // 3rd black opens within 2nd black's rb
+            inHigh[i-3] > inClose[i-2] &&                                             // 1st black closes under prior candle's high
+            inClose[i-2] > inClose[i-1] &&                                            // three declining
+            inClose[i-1] > inClose[i] &&                                              // three declining
+            // very short lower shadow
+            ta_lowershadow(inLow[i-2], inClose[i-2], inOpen[i-2]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
+            // very short lower shadow
+            ta_lowershadow(inLow[i-1], inClose[i-1], inOpen[i-1]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&
+            // very short lower shadow
+            ta_lowershadow(inLow[i], inClose[i], inOpen[i]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[0], inOpen[i], inHigh[i], inLow[i], inClose[i])
+         ) {
+            outInteger[outIdx++] = -100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

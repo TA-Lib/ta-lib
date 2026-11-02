@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  011505 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  *
  */
 
@@ -91,18 +92,23 @@ TA_RetCode cdlrickshawman(int startIdx, int endIdx,
    outIdx = 0;
    do
    {
-      if( ta_realbody(inClose[i], inOpen[i]) <= ta_candleaverage(BodyDoji_rangeType, BodyDoji_avgPeriod, BodyDoji_factor, BodyDojiPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&            // doji
-         ta_lowershadow(inLow[i], inClose[i], inOpen[i]) > ta_candleaverage(ShadowLong_rangeType, ShadowLong_avgPeriod, ShadowLong_factor, ShadowLongPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&      // long shadow
-         ta_uppershadow(inHigh[i], inClose[i], inOpen[i]) > ta_candleaverage(ShadowLong_rangeType, ShadowLong_avgPeriod, ShadowLong_factor, ShadowLongPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&      // long shadow
-         (                                                                                       // body near midpoint
-         min( inOpen[i], inClose[i] )
-         <= inLow[i] + ta_highlowrange(inHigh[i], inLow[i]) / 2 + ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i])
-         &&
-         max( inOpen[i], inClose[i] )
-         >= inLow[i] + ta_highlowrange(inHigh[i], inLow[i]) / 2 - ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i])
-      )
+      if( ta_realbody(inClose[i], inOpen[i]) <= ta_candleaverage(BodyDoji_rangeType, BodyDoji_avgPeriod, BodyDoji_factor, BodyDojiPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i])            // doji
       ) {
-         outInteger[outIdx++] = 100;
+         if( ta_lowershadow(inLow[i], inClose[i], inOpen[i]) > ta_candleaverage(ShadowLong_rangeType, ShadowLong_avgPeriod, ShadowLong_factor, ShadowLongPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&      // long shadow
+            ta_uppershadow(inHigh[i], inClose[i], inOpen[i]) > ta_candleaverage(ShadowLong_rangeType, ShadowLong_avgPeriod, ShadowLong_factor, ShadowLongPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&      // long shadow
+            (                                                                                       // body near midpoint
+            min( inOpen[i], inClose[i] )
+            <= inLow[i] + ta_highlowrange(inHigh[i], inLow[i]) / 2 + ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i])
+            &&
+            max( inOpen[i], inClose[i] )
+            >= inLow[i] + ta_highlowrange(inHigh[i], inLow[i]) / 2 - ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i])
+         )
+         ) {
+            outInteger[outIdx++] = 100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

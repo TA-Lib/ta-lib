@@ -150,26 +150,31 @@ impl Core {
         // - second: white (black) real body that engulfs the prior real body
         // - third: candle that closes higher (lower) than the second candle
         outIdx = 0;
-        loop {
-            if (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == 1 &&
-                (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == -1 && // white engulfs black
-                inClose[i - 1] > inOpen[i - 2] &&
-                inOpen[i - 1] < inClose[i - 2] &&
-                inClose[i] > inClose[i - 1] ||                                  // third candle higher
-               (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 &&
-                (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { -1 }) == 1 &&  // black engulfs white
-                inOpen[i - 1] > inClose[i - 2] &&
-                inClose[i - 1] < inOpen[i - 2] &&
-                inClose[i] < inClose[i - 1]                                     // third candle lower
-            {
-                outInteger[outIdx] = ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32;
+        if i <= endIdx {
+            let _wn: usize = endIdx - i + 1;
+            let _w0 = &inClose[i - 2..][.._wn + 2];
+            let _w1 = &inOpen[i - 2..][.._wn + 1];
+            let _w2 = &mut outInteger[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                _w2[_wk] = std::hint::select_unpredictable((((_w0[_wk + 1] >= _w1[_wk + 1]) & (!(_w0[_wk] >= _w1[_wk])) & // white engulfs black
+                    (_w0[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] < _w0[_wk]) & (_w0[_wk + 2] > _w0[_wk + 1])) | // third candle higher
+                    ((!(_w0[_wk + 1] >= _w1[_wk + 1])) & (_w0[_wk] >= _w1[_wk]) & // black engulfs white
+                    (_w1[_wk + 1] > _w0[_wk]) & (_w0[_wk + 1] < _w1[_wk]) & (_w0[_wk + 2] < _w0[_wk + 1]))), // third candle lower
+                    ((if _w0[_wk + 1] >= _w1[_wk + 1] { 1 } else { -1 }) * 100) as i32, 0);
                 outIdx += 1;
-            } else {
-                outInteger[outIdx] = 0;
-                outIdx += 1;
+                i += 1;
             }
-            i += 1;
-            if !(i <= endIdx) { break; }
+        } else {
+            loop {
+                outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i - 1] >= inOpen[i - 1]) & (!(inClose[i - 2] >= inOpen[i - 2])) & // white engulfs black
+                    (inClose[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i] > inClose[i - 1])) | // third candle higher
+                    ((!(inClose[i - 1] >= inOpen[i - 1])) & (inClose[i - 2] >= inOpen[i - 2]) & // black engulfs white
+                    (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i] < inClose[i - 1]))), // third candle lower
+                    ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) * 100) as i32, 0);
+                outIdx += 1;
+                i += 1;
+                if !(i <= endIdx) { break; }
+            }
         }
         // All done. Indicate the output limits and return.
         (*outNBElement) = outIdx;

@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  120904 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Pre-check the cheap tests in an outer if, the candle averages inside
  *
  */
 
@@ -80,13 +81,18 @@ TA_RetCode cdldarkcloudcover(int startIdx, int endIdx,
    do
    {
       if( ta_candlecolor(inClose[i-1], inOpen[i-1]) == 1 &&                                                     // 1st: white
-         ta_realbody(inClose[i-1], inOpen[i-1]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) && //      long
          ta_candlecolor(inClose[i], inOpen[i]) == -1 &&                                                      // 2nd: black
-         inOpen[i] > inHigh[i-1] &&                                                      //      open above prior high
-         inClose[i] > inOpen[i-1] &&                                                     //      close within prior body
-         inClose[i] < inClose[i-1] - ta_realbody(inClose[i-1], inOpen[i-1]) * optInPenetration
+         inOpen[i] > inHigh[i-1]                                                      //      open above prior high
       ) {
-         outInteger[outIdx++] = -100;
+         if( ta_realbody(inClose[i-1], inOpen[i-1]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) && //      long
+            inClose[i] > inOpen[i-1] &&                                                     //      close within prior body
+            inClose[i] < inClose[i-1] - ta_realbody(inClose[i-1], inOpen[i-1]) * optInPenetration
+         ) {
+            outInteger[outIdx++] = -100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

@@ -369,16 +369,22 @@
 #define TA_CANDLEAVGPERIOD(SET) (TA_Globals->candleSettings[TA_##SET].avgPeriod)
 #define TA_CANDLEFACTOR(SET)    (TA_Globals->candleSettings[TA_##SET].factor)
 
-#define TA_CANDLERANGE(SET,IDX) \
-    ( TA_CANDLERANGETYPE(SET) == TA_RangeType_RealBody ? TA_REALBODY(IDX) : \
-    ( TA_CANDLERANGETYPE(SET) == TA_RangeType_HighLow  ? TA_HIGHLOWRANGE(IDX) : \
-    ( TA_CANDLERANGETYPE(SET) == TA_RangeType_Shadows  ? TA_UPPERSHADOW(IDX) + TA_LOWERSHADOW(IDX) : \
+/* The _OF forms take the setting's values, so a generated batch loop can read
+ * them into locals once: the int output store may alias TA_Globals, which keeps
+ * the compiler from hoisting the reads itself. */
+#define TA_CANDLERANGE_OF(RANGETYPE,IDX) \
+    ( (RANGETYPE) == TA_RangeType_RealBody ? TA_REALBODY(IDX) : \
+    ( (RANGETYPE) == TA_RangeType_HighLow  ? TA_HIGHLOWRANGE(IDX) : \
+    ( (RANGETYPE) == TA_RangeType_Shadows  ? TA_UPPERSHADOW(IDX) + TA_LOWERSHADOW(IDX) : \
       0 ) ) )
-#define TA_CANDLEAVERAGE(SET,SUM,IDX) \
-    ( TA_CANDLEFACTOR(SET) \
-        * ( TA_CANDLEAVGPERIOD(SET) != 0.0? SUM / TA_CANDLEAVGPERIOD(SET) : TA_CANDLERANGE(SET,IDX) ) \
-        / ( TA_CANDLERANGETYPE(SET) == TA_RangeType_Shadows ? 2.0 : 1.0 ) \
+#define TA_CANDLEAVERAGE_OF(RANGETYPE,AVGPERIOD,FACTOR,SUM,IDX) \
+    ( (FACTOR) \
+        * ( (AVGPERIOD) != 0.0? SUM / (AVGPERIOD) : TA_CANDLERANGE_OF(RANGETYPE,IDX) ) \
+        / ( (RANGETYPE) == TA_RangeType_Shadows ? 2.0 : 1.0 ) \
     )
+#define TA_CANDLERANGE(SET,IDX) TA_CANDLERANGE_OF(TA_CANDLERANGETYPE(SET),IDX)
+#define TA_CANDLEAVERAGE(SET,SUM,IDX) \
+    TA_CANDLEAVERAGE_OF(TA_CANDLERANGETYPE(SET),TA_CANDLEAVGPERIOD(SET),TA_CANDLEFACTOR(SET),SUM,IDX)
 #define TA_REALBODYGAPUP(IDX2,IDX1)     ( min(inOpen[IDX2],inClose[IDX2]) > max(inOpen[IDX1],inClose[IDX1]) )
 #define TA_REALBODYGAPDOWN(IDX2,IDX1)   ( max(inOpen[IDX2],inClose[IDX2]) < min(inOpen[IDX1],inClose[IDX1]) )
 #define TA_CANDLEGAPUP(IDX2,IDX1)       ( inLow[IDX2] > inHigh[IDX1] )

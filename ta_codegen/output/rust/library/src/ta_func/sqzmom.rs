@@ -386,26 +386,23 @@ impl Core {
         // middle band, as bbands does. Written as one expression per band, the
         // upper one contracts into a fused multiply-add and the lower one cannot,
         // and a band within one ulp of an edge then changes level.
-        // for( i = 0; i < n; i += 1 )
         i = 0;
-        while i < n {
-            dev = tempSD[i] * optInNbDev;
-            up = tempMid[i] + dev;
-            lo = tempMid[i] - dev;
-            centre = tempKCM[i + kcmShift];
-            band = tempWork[i];
-            if lo > centre - ((optInFactorNarrow) as f64) * band && up < centre + ((optInFactorNarrow) as f64) * band {
-                outSqueeze[i] = 3;
-            } else if lo > centre - ((optInFactorNormal) as f64) * band && up < centre + ((optInFactorNormal) as f64) * band {
-                outSqueeze[i] = 2;
-            } else if lo > centre - ((optInFactorWide) as f64) * band && up < centre + ((optInFactorWide) as f64) * band {
-                outSqueeze[i] = 1;
-            } else if lo < centre - ((optInFactorWide) as f64) * band && up > centre + ((optInFactorWide) as f64) * band {
-                outSqueeze[i] = -1;
-            } else {
-                outSqueeze[i] = 0;
+        if i < n {
+            let _wn: usize = n - i;
+            let _w0 = &mut outSqueeze[i..][.._wn];
+            let _w1 = &tempKCM[i + kcmShift..][.._wn];
+            let _w2 = &tempMid[i..][.._wn];
+            let _w3 = &tempSD[i..][.._wn];
+            let _w4 = &tempWork[i..][.._wn];
+            for _wk in 0.._wn {
+                dev = _w3[_wk] * optInNbDev;
+                up = _w2[_wk] + dev;
+                lo = _w2[_wk] - dev;
+                centre = _w1[_wk];
+                band = _w4[_wk];
+                _w0[_wk] = std::hint::select_unpredictable(((lo > centre - ((optInFactorNarrow) as f64) * band) & (up < centre + ((optInFactorNarrow) as f64) * band)), 3, std::hint::select_unpredictable(((lo > centre - ((optInFactorNormal) as f64) * band) & (up < centre + ((optInFactorNormal) as f64) * band)), 2, std::hint::select_unpredictable(((lo > centre - ((optInFactorWide) as f64) * band) & (up < centre + ((optInFactorWide) as f64) * band)), 1, std::hint::select_unpredictable(((lo < centre - ((optInFactorWide) as f64) * band) & (up > centre + ((optInFactorWide) as f64) * band)), -1, 0))));
+                i += 1;
             }
-            i += 1;
         }
         (*outBegIdx) = startIdx;
         (*outNBElement) = n;

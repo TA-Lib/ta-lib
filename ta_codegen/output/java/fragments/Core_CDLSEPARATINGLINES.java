@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  011505 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Nest the opposite-colour and same-open tests as the pre-check
  */
 
    /**

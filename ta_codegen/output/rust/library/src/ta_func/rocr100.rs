@@ -190,16 +190,18 @@ impl Core {
         outIdx = 0;
         inIdx = startIdx;
         trailingIdx = startIdx - ((optInTimePeriod) as usize);
-        while inIdx <= endIdx {
-            tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            if tempReal != 0.0 {
-                outReal[outIdx] = ((inReal[inIdx] / tempReal * 100.0) as f64);
+        if inIdx <= endIdx {
+            let _wn: usize = endIdx - inIdx + 1;
+            let _w0 = &inReal[inIdx..][.._wn];
+            let _w1 = &inReal[trailingIdx..][.._wn];
+            let _w2 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                tempReal = _w1[_wk];
+                trailingIdx += 1;
+                _w2[_wk] = std::hint::select_unpredictable(tempReal != 0.0, ((_w0[_wk] / tempReal * 100.0) as f64), 0.0);
                 outIdx += 1;
-            } else {
-                outReal[outIdx] = 0.0;
-                outIdx += 1;
+                inIdx += 1;
             }
-            inIdx += 1;
         }
         // Set output limits.
         (*outNBElement) = outIdx;

@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  120904 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Pre-check the cheap tests in an outer if, the candle averages inside
  *
  */
 
@@ -79,14 +80,19 @@ TA_RetCode cdlpiercing(int startIdx, int endIdx,
    do
    {
       if( ta_candlecolor(inClose[i-1], inOpen[i-1]) == -1 &&                                                        // 1st: black
-         ta_realbody(inClose[i-1], inOpen[i-1]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&  //      long
          ta_candlecolor(inClose[i], inOpen[i]) == 1 &&                                                           // 2nd: white
-         ta_realbody(inClose[i], inOpen[i]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal[0], inOpen[i], inHigh[i], inLow[i], inClose[i]) &&      //      long
-         inOpen[i] < inLow[i-1] &&                                                           //      open below prior low
-         inClose[i] < inOpen[i-1] &&                                                         //      close within prior body
-         inClose[i] > inClose[i-1] + ta_realbody(inClose[i-1], inOpen[i-1]) * 0.5                                  //        above midpoint
+         inOpen[i] < inLow[i-1]                                                           //      open below prior low
       ) {
-         outInteger[outIdx++] = 100;
+         if( ta_realbody(inClose[i-1], inOpen[i-1]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&  //      long
+            ta_realbody(inClose[i], inOpen[i]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal[0], inOpen[i], inHigh[i], inLow[i], inClose[i]) &&      //      long
+            inClose[i] < inOpen[i-1] &&                                                         //      close within prior body
+            inClose[i] > inClose[i-1] + ta_realbody(inClose[i-1], inOpen[i-1]) * 0.5                                  //        above midpoint
+         ) {
+            outInteger[outIdx++] = 100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

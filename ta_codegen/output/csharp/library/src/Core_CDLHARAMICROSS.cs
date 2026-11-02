@@ -59,6 +59,7 @@ public partial class Core
     *  040309 AC     Increased flexibility to allow real bodies matching
     *                on one end (Greg Morris - "Candlestick charting explained")
     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+    *  103126 MF,CC  Join the long and doji tests into the one pre-check
     */
    /// <summary>
    /// Number of leading input bars <c>Cdlharamicross</c> consumes before it can

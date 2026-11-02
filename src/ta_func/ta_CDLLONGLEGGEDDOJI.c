@@ -57,6 +57,7 @@
  *  -------------------------------------------------------------------
  *  011505 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  */
 
 TA_LIB_API int TA_CDLLONGLEGGEDDOJI_Lookback( void )
@@ -90,8 +91,12 @@ TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI( int    startIdx,
    int BodyDojiTrailingIdx;
    int ShadowLongTrailingIdx;
    int lookbackTotal;
+   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
    int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
+   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
+   int ShadowLong_rangeType = TA_Globals->candleSettings[TA_ShadowLong].rangeType;
    int ShadowLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowLong].avgPeriod;
+   double ShadowLong_factor = TA_Globals->candleSettings[TA_ShadowLong].factor;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -138,13 +143,13 @@ TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI( int    startIdx,
    i = BodyDojiTrailingIdx;
    while( i < startIdx )
    {
-      BodyDojiPeriodTotal += TA_CANDLERANGE(BodyDoji,i);
+      BodyDojiPeriodTotal += TA_CANDLERANGE_OF(BodyDoji_rangeType,i);
       i += 1;
    }
    i = ShadowLongTrailingIdx;
    while( i < startIdx )
    {
-      ShadowLongPeriodTotal += TA_CANDLERANGE(ShadowLong,i);
+      ShadowLongPeriodTotal += TA_CANDLERANGE_OF(ShadowLong_rangeType,i);
       i += 1;
    }
    /* Proceed with the calculation for the requested range.
@@ -157,9 +162,9 @@ TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) && ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) || (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i)) )
+      if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) )
       {
-         outInteger[outIdx++] = 100;
+         outInteger[outIdx++] = ((100) & -(int)((((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) | ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)))));
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -167,8 +172,8 @@ TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI( int    startIdx,
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      BodyDojiPeriodTotal += TA_CANDLERANGE(BodyDoji,i) - TA_CANDLERANGE(BodyDoji,BodyDojiTrailingIdx);
-      ShadowLongPeriodTotal += TA_CANDLERANGE(ShadowLong,i) - TA_CANDLERANGE(ShadowLong,ShadowLongTrailingIdx);
+      BodyDojiPeriodTotal += TA_CANDLERANGE_OF(BodyDoji_rangeType,i) - TA_CANDLERANGE_OF(BodyDoji_rangeType,BodyDojiTrailingIdx);
+      ShadowLongPeriodTotal += TA_CANDLERANGE_OF(ShadowLong_rangeType,i) - TA_CANDLERANGE_OF(ShadowLong_rangeType,ShadowLongTrailingIdx);
       i += 1;
       BodyDojiTrailingIdx += 1;
       ShadowLongTrailingIdx += 1;
@@ -196,8 +201,12 @@ TA_RetCode TA_S_CDLLONGLEGGEDDOJI( int    startIdx,
    int BodyDojiTrailingIdx;
    int ShadowLongTrailingIdx;
    int lookbackTotal;
+   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
    int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
+   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
+   int ShadowLong_rangeType = TA_Globals->candleSettings[TA_ShadowLong].rangeType;
    int ShadowLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowLong].avgPeriod;
+   double ShadowLong_factor = TA_Globals->candleSettings[TA_ShadowLong].factor;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -235,27 +244,27 @@ TA_RetCode TA_S_CDLLONGLEGGEDDOJI( int    startIdx,
    i = BodyDojiTrailingIdx;
    while( i < startIdx )
    {
-      BodyDojiPeriodTotal += TA_CANDLERANGE(BodyDoji,i);
+      BodyDojiPeriodTotal += TA_CANDLERANGE_OF(BodyDoji_rangeType,i);
       i += 1;
    }
    i = ShadowLongTrailingIdx;
    while( i < startIdx )
    {
-      ShadowLongPeriodTotal += TA_CANDLERANGE(ShadowLong,i);
+      ShadowLongPeriodTotal += TA_CANDLERANGE_OF(ShadowLong_rangeType,i);
       i += 1;
    }
    outIdx = 0;
    do
    {
-      if( fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) && (((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) || ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i)) )
+      if( fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) )
       {
-         outInteger[outIdx++] = 100;
+         outInteger[outIdx++] = ((100) & -(int)(((((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) | (((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)))));
       } else 
       {
          outInteger[outIdx++] = 0;
       }
-      BodyDojiPeriodTotal += TA_CANDLERANGE(BodyDoji,i) - TA_CANDLERANGE(BodyDoji,BodyDojiTrailingIdx);
-      ShadowLongPeriodTotal += TA_CANDLERANGE(ShadowLong,i) - TA_CANDLERANGE(ShadowLong,ShadowLongTrailingIdx);
+      BodyDojiPeriodTotal += TA_CANDLERANGE_OF(BodyDoji_rangeType,i) - TA_CANDLERANGE_OF(BodyDoji_rangeType,BodyDojiTrailingIdx);
+      ShadowLongPeriodTotal += TA_CANDLERANGE_OF(ShadowLong_rangeType,i) - TA_CANDLERANGE_OF(ShadowLong_rangeType,ShadowLongTrailingIdx);
       i += 1;
       BodyDojiTrailingIdx += 1;
       ShadowLongTrailingIdx += 1;
@@ -303,9 +312,15 @@ static void TA_CDLLONGLEGGEDDOJI_StepImpl( struct TA_CDLLONGLEGGEDDOJI_Stream *s
    {
       sp->ring_ShadowLongTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(ShadowLong,inOpen,inHigh,inLow,inClose);
    }
-   if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) && ((((inClose >= inOpen) ? inOpen : inClose) - inLow) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) || (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose)) )
+   if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) )
    {
-      *outInteger= 100;
+      if( (((inClose >= inOpen) ? inOpen : inClose) - inLow) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) || (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) )
+      {
+         *outInteger= 100;
+      } else 
+      {
+         *outInteger= 0;
+      }
    } else 
    {
       *outInteger= 0;
@@ -350,8 +365,12 @@ static TA_RetCode TA_CDLLONGLEGGEDDOJI_OpenImpl( struct TA_CDLLONGLEGGEDDOJI_Str
    endIdx = historyLen - 1;
 
    {
+      int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
       int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
+      double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
+      int ShadowLong_rangeType = TA_Globals->candleSettings[TA_ShadowLong].rangeType;
       int ShadowLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowLong].avgPeriod;
+      double ShadowLong_factor = TA_Globals->candleSettings[TA_ShadowLong].factor;
       double BodyDojiPeriodTotal = 0.0;
       double ShadowLongPeriodTotal = 0.0;
       int i;
@@ -386,13 +405,13 @@ static TA_RetCode TA_CDLLONGLEGGEDDOJI_OpenImpl( struct TA_CDLLONGLEGGEDDOJI_Str
       i = BodyDojiTrailingIdx;
       while( i < startIdx )
       {
-         BodyDojiPeriodTotal += TA_CANDLERANGE(BodyDoji,i);
+         BodyDojiPeriodTotal += TA_CANDLERANGE_OF(BodyDoji_rangeType,i);
          i += 1;
       }
       i = ShadowLongTrailingIdx;
       while( i < startIdx )
       {
-         ShadowLongPeriodTotal += TA_CANDLERANGE(ShadowLong,i);
+         ShadowLongPeriodTotal += TA_CANDLERANGE_OF(ShadowLong_rangeType,i);
          i += 1;
       }
       /* Proceed with the calculation for the requested range.
@@ -405,9 +424,15 @@ static TA_RetCode TA_CDLLONGLEGGEDDOJI_OpenImpl( struct TA_CDLLONGLEGGEDDOJI_Str
       outIdx = 0;
       do
       {
-         if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) && ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) || (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i)) )
+         if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) )
          {
-            outInteger[outIdx++ * outStride] = 100;
+            if( (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i) || (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i) )
+            {
+               outInteger[outIdx++ * outStride] = 100;
+            } else 
+            {
+               outInteger[outIdx++ * outStride] = 0;
+            }
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -415,8 +440,8 @@ static TA_RetCode TA_CDLLONGLEGGEDDOJI_OpenImpl( struct TA_CDLLONGLEGGEDDOJI_Str
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
-         BodyDojiPeriodTotal += TA_CANDLERANGE(BodyDoji,i) - TA_CANDLERANGE(BodyDoji,BodyDojiTrailingIdx);
-         ShadowLongPeriodTotal += TA_CANDLERANGE(ShadowLong,i) - TA_CANDLERANGE(ShadowLong,ShadowLongTrailingIdx);
+         BodyDojiPeriodTotal += TA_CANDLERANGE_OF(BodyDoji_rangeType,i) - TA_CANDLERANGE_OF(BodyDoji_rangeType,BodyDojiTrailingIdx);
+         ShadowLongPeriodTotal += TA_CANDLERANGE_OF(ShadowLong_rangeType,i) - TA_CANDLERANGE_OF(ShadowLong_rangeType,ShadowLongTrailingIdx);
          i += 1;
          BodyDojiTrailingIdx += 1;
          ShadowLongTrailingIdx += 1;
@@ -521,9 +546,15 @@ TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_Peek( const TA_CDLLONGLEGGEDDOJI_Stre
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) && ((((inClose >= inOpen) ? inOpen : inClose) - inLow) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) || (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose)) )
+   if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) )
    {
-      *outInteger= 100;
+      if( (((inClose >= inOpen) ? inOpen : inClose) - inLow) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) || (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) )
+      {
+         *outInteger= 100;
+      } else 
+      {
+         *outInteger= 0;
+      }
    } else 
    {
       *outInteger= 0;

@@ -98,13 +98,15 @@ pub const ATOMIC_PREC: u8 = 12;
 /// One exception to "minimal": a bitwise operator's operands are wrapped as soon
 /// as they are not atomic, even where precedence already groups them right. gcc
 /// `-Wparentheses` rejects `a - 1 & mask` in the shipped library, and the
-/// ring-slot rewrite produces exactly that from any `arr[i - 1]`.
+/// ring-slot rewrite produces exactly that from any `arr[i - 1]`. It rejects
+/// `a < b == c < d` too.
 #[must_use]
 pub fn wrap_child(rendered: String, child: &Expr, parent_prec: u8, is_right: bool) -> String {
     let cp = expr_prec(child);
     if cp < parent_prec
         || (cp == parent_prec && is_right)
         || (cp < ATOMIC_PREC && is_bitwise_prec(parent_prec))
+        || (cp == binop_prec(&BinOp::Less) && parent_prec == binop_prec(&BinOp::Eq))
     {
         format!("({rendered})")
     } else {

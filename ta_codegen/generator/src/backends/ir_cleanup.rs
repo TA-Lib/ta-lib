@@ -377,6 +377,65 @@ fn renders_nothing(body: &[Statement]) -> bool {
     })
 }
 
+/// `if( a ) { if( b ) X; else Z; } else Z;` as `if( a && b ) X; else Z;`, the
+/// conjunction rebuilt left to right as the parser builds one, and each side's
+/// condition comments kept in order. An `else if` chain of pre-checks stays as
+/// written: joining one link would send the bars its test passes and its inner
+/// test fails on to the next link.
+pub(crate) fn join_pre_checks(body: &[Statement]) -> Vec<Statement> {
+    fn leaves(e: &Expr) -> usize {
+        match e {
+            Expr::BinOp(l, BinOp::And | BinOp::Or, r) => leaves(l) + leaves(r),
+            _ => 1,
+        }
+    }
+    /// The operands along `e`'s left `&&` spine, so a parenthesized group
+    /// stays one operand.
+    fn conjuncts(e: &Expr, out: &mut Vec<Expr>) {
+        match e {
+            Expr::BinOp(l, BinOp::And, r) => {
+                conjuncts(l, out);
+                out.push((**r).clone());
+            }
+            other => out.push(other.clone()),
+        }
+    }
+    fn keep_chain(s: &Statement) -> Statement {
+        let Statement::If { condition, then_body, else_body, cond_comments } = s else { return s.clone() };
+        let else_body = match else_body.as_slice() {
+            [link] if super::eager_select::pre_check_end(link).is_some() => vec![keep_chain(link)],
+            _ => join_pre_checks(else_body),
+        };
+        Statement::If { condition: condition.clone(), then_body: join_pre_checks(then_body), else_body, cond_comments: cond_comments.clone() }
+    }
+    body.iter()
+        .map(|s| {
+            if super::eager_select::is_pre_check_chain(s) {
+                return keep_chain(s);
+            }
+            let s = recurse(s, &join_pre_checks);
+            let Statement::If { condition, then_body, else_body, cond_comments } = &s else { return s };
+            let [Statement::If { condition: inner, then_body: yes, else_body: no, cond_comments: inner_comments }] = then_body.as_slice() else {
+                return s;
+            };
+            let simple = !yes.iter().any(|x| matches!(x, Statement::If { .. }));
+            if !simple || format!("{no:?}") != format!("{else_body:?}") {
+                return s;
+            }
+            let mut rest = Vec::new();
+            conjuncts(inner, &mut rest);
+            let joined = rest.into_iter().fold(condition.clone(), |acc, c| Expr::BinOp(Box::new(acc), BinOp::And, Box::new(c)));
+            let pad = |c: &[Option<Vec<String>>], e: &Expr| if c.is_empty() { vec![None; leaves(e)] } else { c.to_vec() };
+            let comments = if cond_comments.is_empty() && inner_comments.is_empty() {
+                Vec::new()
+            } else {
+                [pad(cond_comments, condition), pad(inner_comments, inner)].concat()
+            };
+            Statement::If { condition: joined, then_body: yes.clone(), else_body: else_body.clone(), cond_comments: comments }
+        })
+        .collect()
+}
+
 /// Apply `pass` to every nested body, leaving this statement's own shape alone.
 pub(crate) fn recurse(s: &Statement, pass: &dyn Fn(&[Statement]) -> Vec<Statement>) -> Statement {
     match s {
@@ -747,5 +806,22 @@ mod cleanup_pipeline_tests {
             }
             other => panic!("unexpected: {other:?}"),
         }
+    }
+
+    #[test]
+    fn a_pre_check_nest_joins_into_the_flat_conjunction() {
+        use crate::ir::{BinOp, Expr, Statement};
+        let v = |n: &str| Expr::Var(n.into());
+        let and = |l: Expr, r: Expr| Expr::BinOp(Box::new(l), BinOp::And, Box::new(r));
+        let set = |x: i64| Statement::Assign { target: v("o"), value: Expr::IntLiteral(x), compound: false };
+        let iff = |c: Expr, t: Vec<Statement>, e: Vec<Statement>, cc: Vec<Option<Vec<String>>>| Statement::If { condition: c, then_body: t, else_body: e, cond_comments: cc };
+        let nest = iff(and(v("a"), v("b")), vec![iff(and(v("c"), v("d")), vec![set(1)], vec![set(0)], vec![Some(vec!["c".into()]), None])], vec![set(0)], Vec::new());
+        let flat = iff(and(and(and(v("a"), v("b")), v("c")), v("d")), vec![set(1)], vec![set(0)], vec![None, None, Some(vec!["c".into()]), None]);
+        assert_eq!(format!("{:?}", super::join_pre_checks(&[nest])), format!("{:?}", vec![flat]));
+        let choice = iff(v("a"), vec![iff(v("c"), vec![set(1)], vec![set(2)], Vec::new())], vec![set(0)], Vec::new());
+        assert_eq!(format!("{:?}", super::join_pre_checks(std::slice::from_ref(&choice))), format!("{:?}", vec![choice]));
+        let link = |lead: &str, rest: Vec<Statement>| iff(v(lead), vec![iff(v("c"), vec![set(1)], vec![set(0)], Vec::new())], rest, Vec::new());
+        let chain = link("a", vec![link("b", vec![set(0)])]);
+        assert_eq!(format!("{:?}", super::join_pre_checks(std::slice::from_ref(&chain))), format!("{:?}", vec![chain]));
     }
 }

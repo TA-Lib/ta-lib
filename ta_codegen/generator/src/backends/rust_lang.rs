@@ -591,6 +591,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
         *body = ir_cleanup::drop_answered_cross_call_guards(body, &admits, None);
         *body = ir_cleanup::drop_deallocation(body);
         *body = ir_cleanup::drop_inert_guards(body);
+        *body = super::eager_select::rewrite(body, &super::eager_select::Declared::of(func), &func.outputs, helpers);
         let sets = super::fma::build_fma_var_sets(body, &func.outputs, &super::fma::INDEX_PARAM_SEEDS);
         *body = super::rust_respell::rewrite(body, &sets.view(), helpers, &sets.recurrent_select_targets);
     }
@@ -694,7 +695,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     }
 
     out.push_str("}\n");
-    out
+    super::eager_select::lay_out(&out, false)
 }
 
 fn gen_lookback(
@@ -2897,6 +2898,212 @@ fn wrapping_index(e: &Expr, idx: &dyn Fn(&Expr) -> String) -> String {
 }
 
 impl RustStmt<'_, '_> {
+    /// `new_value` as `target` stores it, converted to the destination's type.
+    /// A select converts each arm instead, since an arm does not see the
+    /// destination.
+    #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
+    fn stored_value(&self, target: &Expr, new_value: &Expr) -> String {
+        if let Expr::FuncCall(n, args) = new_value {
+            if let Some(note) = super::eager_select::note_of(n) {
+                let [v] = args.as_slice() else { panic!("a note holds one operand") };
+                return super::eager_select::noted(&self.stored_value(target, v), note);
+            }
+            if n == super::eager_select::GUARD {
+                let [g, t, e] = args.as_slice() else { panic!("{n} takes a guard and two values") };
+                let g = render_condition(g, self.ctx, self.opt_real_params, self.registry, self.helpers);
+                return format!("if {g} {{ {} }} else {{ {} }}", self.stored_value(target, t), self.stored_value(target, e));
+            }
+            if super::eager_select::is_select(n) {
+                let [c, t, e] = args.as_slice() else { panic!("{n} takes a condition and two values") };
+                let parts = [
+                    format!(
+                        "std::hint::select_unpredictable({}",
+                        render_condition(c, self.ctx, self.opt_real_params, self.registry, self.helpers)
+                    ),
+                    self.stored_value(target, t),
+                    format!("{})", self.stored_value(target, e)),
+                ];
+                return super::eager_select::join(&parts, ", ");
+            }
+        }
+        // A signed destination, sentinel local or i32 slot, renders a whole
+        // right-hand `(int)(float)` cast as `as i32`.
+        let signed_dest = match target {
+            Expr::Var(tname) => self.ctx.sentinel_vars.contains(tname),
+            Expr::ArrayAccess(aname, _) => {
+                self.ctx.int_output_names.contains(aname) || is_int_array_or_vec(aname, self.ctx)
+            }
+            _ => false,
+        };
+        let value_str = if signed_dest {
+            render_signed_dest_value(new_value, self.ctx, self.opt_real_params, self.registry, self.helpers)
+        } else {
+            render_expr(new_value, self.ctx, self.opt_real_params, self.registry, self.helpers)
+        };
+        let needs_f64_cast = if let Expr::ArrayAccess(name, _) = target {
+            self.output_names.contains(name)
+                && !self.ctx.int_output_names.contains(name)
+                && expr_has_uncast_array_access(new_value)
+        } else {
+            false
+        };
+        // Sentinel var assignment: cast usize value to i32 when assigning to sentinel target
+        let needs_sentinel_i32_cast = if let Expr::Var(tname) = target {
+            self.ctx.sentinel_vars.contains(tname)
+                && !expr_is_i32_typed_ctx(new_value, self.ctx)
+                && !matches!(new_value, Expr::IntLiteral(_))
+                && !is_negative_one(new_value)
+                && (expr_is_known_usize_ctx(new_value, self.ctx)
+                    || expr_binop_renders_as_usize(new_value, self.ctx)
+                    || expr_renders_as_usize_despite_i32(new_value, self.ctx)
+                    // A `*_lookback()` call returns usize.
+                    || expr_returns_usize(new_value)
+                    || matches!(new_value, Expr::Var(ref v) if self.ctx.index_vars.contains(v) || is_likely_index_var(v)))
+        } else {
+            false
+        };
+        // An integer-output target (int array in batch; the stream tier's
+        // `(*outInteger)` step write / `lastValue_outInteger` scalar sink).
+        // Computed early: it excludes such targets from the usize casts below
+        // (`lastValue_outMaxIdx` would otherwise match the `*Idx` heuristics).
+        let int_target = match target {
+            Expr::ArrayAccess(name, _) => {
+                self.ctx.int_output_names.contains(name) || is_int_array_or_vec(name, self.ctx)
+            }
+            Expr::PointerDeref(name) => {
+                self.ctx.int_output_names.contains(strip_state_prefix(name))
+            }
+            Expr::Var(name) => name
+                .strip_prefix("lastValue_")
+                .is_some_and(|base| self.ctx.int_output_names.contains(base)),
+            _ => false,
+        };
+        // Sentinel var used as value: cast i32 sentinel to usize when assigning to usize target
+        let needs_sentinel_usize_cast = if let Expr::Var(tname) = target {
+            !int_target
+                && !self.ctx.sentinel_vars.contains(tname)
+                && (self.ctx.index_vars.contains(tname) || is_likely_index_var(tname))
+                && expr_is_i32_typed_ctx(new_value, self.ctx)
+                && !expr_is_i32_typed(new_value)
+                && !matches!(new_value, Expr::IntLiteral(_))
+        } else {
+            false
+        };
+        // Check if we're assigning an i32-typed expression to a non-i32 target variable
+        // (e.g., usize var = optInTimePeriod which is i32,
+        //  or curPeriod = localPeriodArray[i] where array is Vec<i32>)
+        let value_is_i32 = expr_is_i32_typed(new_value)
+            || matches!(new_value, Expr::Var(ref v) if is_i32_opt_in_param(v) || v.ends_with("_avgPeriod") || v.ends_with("_rangeType"))
+            || matches!(new_value, Expr::ArrayAccess(ref name, _) if is_int_array_or_vec(name, self.ctx));
+        let needs_usize_cast = if let Expr::Var(tname) = target {
+            !self.ctx.enum_vars.contains_key(tname)
+                && !int_target
+                && !self.output_names.iter().any(|n| n == tname)
+                && !is_i32_opt_in_param(tname)
+                && !tname.ends_with("_avgPeriod")
+                && !tname.ends_with("_rangeType")
+                && !self.ctx.real_vars.contains(tname)
+                && !self.ctx.sentinel_vars.contains(tname)
+                && value_is_i32
+        } else {
+            false
+        };
+        // Check if target is an i32 optIn param and value is usize
+        // (e.g., optInFastPeriod = tempInteger where tempInteger is usize)
+        let needs_optin_i32_cast = if let Expr::Var(tname) = target {
+            !self.ctx.enum_vars.contains_key(tname)
+                && is_i32_opt_in_param(tname)
+                && !expr_is_i32_typed(new_value)
+                && !matches!(new_value, Expr::IntLiteral(_))
+                && (expr_is_known_usize_ctx(new_value, self.ctx)
+                    || matches!(new_value, Expr::Var(ref v) if self.ctx.index_vars.contains(v) || is_likely_index_var(v)))
+        } else {
+            false
+        };
+        // Check if target is an integer output/local array (e.g., outInteger[idx] = usize_val,
+        // sortedPeriods[i] = longestPeriod, localPeriodArray[i] = tempInt)
+        // Values assigned to i32 arrays need `as i32` cast when usize-typed
+        let needs_int_output_cast = int_target
+            && !expr_is_i32_typed(new_value)
+            && !matches!(new_value, Expr::IntLiteral(_))
+            && (expr_is_known_usize_ctx(new_value, self.ctx)
+                || matches!(new_value, Expr::Var(v) if self.ctx.index_vars.contains(v) || is_likely_index_var(v))
+                || matches!(new_value, Expr::BinOp(_, _, _)));
+        // Cast integer values to f64 when assigned to f64-typed variables
+        let needs_f64_wrap = if let Expr::Var(tname) = target {
+            // Require the target to be positively identified as Real (f64)
+            let target_is_known_real = self.ctx.real_vars.contains(tname)
+                || (expr_is_float_typed_ctx(&Expr::Var(tname.clone()), Some(self.ctx))
+                    && !self.ctx.index_vars.contains(tname)
+                    && !is_likely_index_var(tname)
+                    && !is_i32_opt_in_param(tname)
+                    && !self.ctx.sentinel_vars.contains(tname)
+                    && !tname.ends_with("_avgPeriod")
+                    && !tname.ends_with("_rangeType")
+                    && !self.output_names.iter().any(|n| n == tname));
+            target_is_known_real
+                && (expr_is_untyped_integer(new_value) || expr_is_i32_typed(new_value)
+                    || expr_is_known_usize_ctx(new_value, self.ctx))
+        } else if let Expr::ArrayAccess(name, _) = target {
+            // Array target: Real arrays (output, temp, local) need f64 values
+            // But NOT IntArray/IntPointer targets (periods, usedFlag, localPeriodArray, etc.)
+            // and NOT integer output arrays (outInteger, outMaxIdx, etc.)
+            !name.contains("Int") && !name.contains("integer")
+                && !self.ctx.index_vars.contains(name)
+                && !is_int_array_var(name)
+                && !self.ctx.int_output_names.contains(name)
+                && !self.ctx.int_vec_vars.contains(name)
+                && (expr_is_untyped_integer(new_value) || expr_is_i32_typed(new_value)
+                    || expr_is_known_usize_ctx(new_value, self.ctx))
+        } else {
+            false
+        };
+        // Check if target is a Vec<T> variable and value is a slice/output param
+        // (buffer aliasing pattern in BBANDS, STOCH, etc.)
+        let needs_to_vec = if let Expr::Var(tname) = target {
+            if self.ctx.vec_vars.contains(tname) || is_vec_local_var(tname) {
+                if let Expr::Var(vname) = new_value {
+                    self.output_names.contains(vname)
+                        || vname.starts_with("in")
+                        // Stream tier: the composed open renames output arrays
+                        // to `sc_*` scratch Vecs; the batch's pointer-alias
+                        // assignment becomes the same `.to_vec()` copy the
+                        // batch text uses for the un-renamed output param.
+                        // Batch-invariant: no batch name starts with `sc_`.
+                        || (vname.starts_with("sc_") && self.ctx.vec_vars.contains(vname))
+                } else {
+                    false
+                }
+            } else {
+                false
+            }
+        } else {
+            false
+        };
+        if needs_to_vec {
+            format!("{value_str}.to_vec()")
+        } else if needs_sentinel_i32_cast {
+            format!("({value_str}) as i32")
+        } else if needs_sentinel_usize_cast {
+            format!("({value_str}) as usize")
+        } else if needs_int_output_cast {
+            format!("({value_str}) as i32")
+        } else if needs_f64_cast || needs_f64_wrap {
+            // IntLiteral → emit as float literal instead of cast
+            if let Expr::IntLiteral(n) = new_value {
+                format!("{n}.0")
+            } else {
+                format!("(({value_str}) as f64)")
+            }
+        } else if needs_optin_i32_cast {
+            format!("({value_str}) as i32")
+        } else if needs_usize_cast {
+            format!("({value_str}) as usize")
+        } else {
+            value_str
+        }
+    }
+
     /// The stream tier keeps every cursor; the batch tier only a ring's.
     fn circbuf_has_cursor(&self, id: &str) -> bool {
         !self.ctx.circbuf_hybrid_static.contains_key(id) || self.ctx.circbuf_len_of.contains_key(id)
@@ -2966,14 +3173,7 @@ impl RustStmt<'_, '_> {
             same_len: &same_len,
             ring_storage: &ring_storage,
         };
-        let normalized = if update.is_none() {
-            super::rust_window::decision_body(
-                condition, body, &names,
-                &|a| ctx.int_output_names.contains(a),
-                &|name, args| try_inline_expr(self.helpers.get(name)?, args),
-            )
-        } else { None };
-        let plan = super::rust_window::plan(condition, normalized.as_deref().unwrap_or(body), update, &names)?;
+        let plan = super::rust_window::plan(condition, body, update, &names)?;
         // A tested counter steps before the do-while's first test, not its
         // first pass.
         if do_while && plan.cond_step.is_some() {
@@ -3470,185 +3670,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
             }
         }
         let target_str = render_assign_target(target, self.ctx, self.opt_real_params, self.registry, self.helpers);
-        // Issue #160: signed destinations render a whole-RHS (int)(float) cast
-        // as `as i32` (see render_signed_dest_value). Applies to sentinel
-        // locals and to i32 array slots (outInteger[i] = (int)(x)).
-        let signed_dest = match target {
-            Expr::Var(tname) => self.ctx.sentinel_vars.contains(tname),
-            Expr::ArrayAccess(aname, _) => {
-                self.ctx.int_output_names.contains(aname) || is_int_array_or_vec(aname, self.ctx)
-            }
-            _ => false,
-        };
-        let value_str = if signed_dest {
-            render_signed_dest_value(&new_value, self.ctx, self.opt_real_params, self.registry, self.helpers)
-        } else {
-            render_expr(&new_value, self.ctx, self.opt_real_params, self.registry, self.helpers)
-        };
-        let needs_f64_cast = if let Expr::ArrayAccess(name, _) = target {
-            self.output_names.contains(name)
-                && !self.ctx.int_output_names.contains(name)
-                && expr_has_uncast_array_access(&new_value)
-        } else {
-            false
-        };
-        // Sentinel var assignment: cast usize value to i32 when assigning to sentinel target
-        let needs_sentinel_i32_cast = if let Expr::Var(tname) = target {
-            self.ctx.sentinel_vars.contains(tname)
-                && !expr_is_i32_typed_ctx(&new_value, self.ctx)
-                && !matches!(new_value, Expr::IntLiteral(_))
-                && !is_negative_one(&new_value)
-                && (expr_is_known_usize_ctx(&new_value, self.ctx)
-                    || expr_binop_renders_as_usize(&new_value, self.ctx)
-                    || expr_renders_as_usize_despite_i32(&new_value, self.ctx)
-                    // A `*_lookback()` call returns usize. This gate was an
-                    // allowlist of variable shapes, so `lb = sma_lookback(p);`
-                    // into a signed local emitted bare and failed E0308.
-                    || expr_returns_usize(&new_value)
-                    || matches!(new_value, Expr::Var(ref v) if self.ctx.index_vars.contains(v) || is_likely_index_var(v)))
-        } else {
-            false
-        };
-        // An integer-output target (int array in batch; the stream tier's
-        // `(*outInteger)` step write / `lastValue_outInteger` scalar sink).
-        // Computed early: it excludes such targets from the usize casts below
-        // (`lastValue_outMaxIdx` would otherwise match the `*Idx` heuristics).
-        let int_target = match target {
-            Expr::ArrayAccess(name, _) => {
-                self.ctx.int_output_names.contains(name) || is_int_array_or_vec(name, self.ctx)
-            }
-            Expr::PointerDeref(name) => {
-                self.ctx.int_output_names.contains(strip_state_prefix(name))
-            }
-            Expr::Var(name) => name
-                .strip_prefix("lastValue_")
-                .is_some_and(|base| self.ctx.int_output_names.contains(base)),
-            _ => false,
-        };
-        // Sentinel var used as value: cast i32 sentinel to usize when assigning to usize target
-        let needs_sentinel_usize_cast = if let Expr::Var(tname) = target {
-            !int_target
-                && !self.ctx.sentinel_vars.contains(tname)
-                && (self.ctx.index_vars.contains(tname) || is_likely_index_var(tname))
-                && expr_is_i32_typed_ctx(&new_value, self.ctx)
-                && !expr_is_i32_typed(&new_value)
-                && !matches!(new_value, Expr::IntLiteral(_))
-        } else {
-            false
-        };
-        // Check if we're assigning an i32-typed expression to a non-i32 target variable
-        // (e.g., usize var = optInTimePeriod which is i32,
-        //  or curPeriod = localPeriodArray[i] where array is Vec<i32>)
-        let value_is_i32 = expr_is_i32_typed(&new_value)
-            || matches!(new_value, Expr::Var(ref v) if is_i32_opt_in_param(v) || v.ends_with("_avgPeriod") || v.ends_with("_rangeType"))
-            || matches!(&new_value, Expr::ArrayAccess(ref name, _) if is_int_array_or_vec(name, self.ctx));
-        let needs_usize_cast = if let Expr::Var(tname) = target {
-            !self.ctx.enum_vars.contains_key(tname)
-                && !int_target
-                && !self.output_names.iter().any(|n| n == tname)
-                && !is_i32_opt_in_param(tname)
-                && !tname.ends_with("_avgPeriod")
-                && !tname.ends_with("_rangeType")
-                && !self.ctx.real_vars.contains(tname)
-                && !self.ctx.sentinel_vars.contains(tname)
-                && value_is_i32
-        } else {
-            false
-        };
-        // Check if target is an i32 optIn param and value is usize
-        // (e.g., optInFastPeriod = tempInteger where tempInteger is usize)
-        let needs_optin_i32_cast = if let Expr::Var(tname) = target {
-            !self.ctx.enum_vars.contains_key(tname)
-                && is_i32_opt_in_param(tname)
-                && !expr_is_i32_typed(&new_value)
-                && !matches!(new_value, Expr::IntLiteral(_))
-                && (expr_is_known_usize_ctx(&new_value, self.ctx)
-                    || matches!(new_value, Expr::Var(ref v) if self.ctx.index_vars.contains(v) || is_likely_index_var(v)))
-        } else {
-            false
-        };
-        // Check if target is an integer output/local array (e.g., outInteger[idx] = usize_val,
-        // sortedPeriods[i] = longestPeriod, localPeriodArray[i] = tempInt)
-        // Values assigned to i32 arrays need `as i32` cast when usize-typed
-        let needs_int_output_cast = int_target
-            && !expr_is_i32_typed(&new_value)
-            && !matches!(new_value, Expr::IntLiteral(_))
-            && (expr_is_known_usize_ctx(&new_value, self.ctx)
-                || matches!(&new_value, Expr::Var(v) if self.ctx.index_vars.contains(v) || is_likely_index_var(v))
-                || matches!(&new_value, Expr::BinOp(_, _, _)));
-        // Cast integer values to f64 when assigned to f64-typed variables
-        let needs_f64_wrap = if let Expr::Var(tname) = target {
-            // Require the target to be positively identified as Real (f64)
-            let target_is_known_real = self.ctx.real_vars.contains(tname)
-                || (expr_is_float_typed_ctx(&Expr::Var(tname.clone()), Some(self.ctx))
-                    && !self.ctx.index_vars.contains(tname)
-                    && !is_likely_index_var(tname)
-                    && !is_i32_opt_in_param(tname)
-                    && !self.ctx.sentinel_vars.contains(tname)
-                    && !tname.ends_with("_avgPeriod")
-                    && !tname.ends_with("_rangeType")
-                    && !self.output_names.iter().any(|n| n == tname));
-            target_is_known_real
-                && (expr_is_untyped_integer(&new_value) || expr_is_i32_typed(&new_value)
-                    || expr_is_known_usize_ctx(&new_value, self.ctx))
-        } else if let Expr::ArrayAccess(name, _) = target {
-            // Array target: Real arrays (output, temp, local) need f64 values
-            // But NOT IntArray/IntPointer targets (periods, usedFlag, localPeriodArray, etc.)
-            // and NOT integer output arrays (outInteger, outMaxIdx, etc.)
-            !name.contains("Int") && !name.contains("integer")
-                && !self.ctx.index_vars.contains(name)
-                && !is_int_array_var(name)
-                && !self.ctx.int_output_names.contains(name)
-                && !self.ctx.int_vec_vars.contains(name)
-                && (expr_is_untyped_integer(&new_value) || expr_is_i32_typed(&new_value)
-                    || expr_is_known_usize_ctx(&new_value, self.ctx))
-        } else {
-            false
-        };
-        // Check if target is a Vec<T> variable and value is a slice/output param
-        // (buffer aliasing pattern in BBANDS, STOCH, etc.)
-        let needs_to_vec = if let Expr::Var(tname) = target {
-            if self.ctx.vec_vars.contains(tname) || is_vec_local_var(tname) {
-                if let Expr::Var(vname) = &new_value {
-                    self.output_names.contains(vname)
-                        || vname.starts_with("in")
-                        // Stream tier: the composed open renames output arrays
-                        // to `sc_*` scratch Vecs; the batch's pointer-alias
-                        // assignment becomes the same `.to_vec()` copy the
-                        // batch text uses for the un-renamed output param.
-                        // Batch-invariant: no batch name starts with `sc_`.
-                        || (vname.starts_with("sc_") && self.ctx.vec_vars.contains(vname))
-                } else {
-                    false
-                }
-            } else {
-                false
-            }
-        } else {
-            false
-        };
-        if needs_to_vec {
-            out.push_str(&format!("{pad}{target_str} = {value_str}.to_vec();\n"));
-        } else if needs_sentinel_i32_cast {
-            out.push_str(&format!("{pad}{target_str} = ({value_str}) as i32;\n"));
-        } else if needs_sentinel_usize_cast {
-            out.push_str(&format!("{pad}{target_str} = ({value_str}) as usize;\n"));
-        } else if needs_int_output_cast {
-            out.push_str(&format!("{pad}{target_str} = ({value_str}) as i32;\n"));
-        } else if needs_f64_cast || needs_f64_wrap {
-            // IntLiteral → emit as float literal instead of cast
-            if let Expr::IntLiteral(n) = &new_value {
-                out.push_str(&format!("{pad}{target_str} = {n}.0;\n"));
-            } else {
-                out.push_str(&format!("{pad}{target_str} = (({value_str}) as f64);\n"));
-            }
-        } else if needs_optin_i32_cast {
-            out.push_str(&format!("{pad}{target_str} = ({value_str}) as i32;\n"));
-        } else if needs_usize_cast {
-            out.push_str(&format!("{pad}{target_str} = ({value_str}) as usize;\n"));
-        } else {
-            out.push_str(&format!("{pad}{target_str} = {value_str};\n"));
-        }
+        out.push_str(&format!("{pad}{target_str} = {};\n", self.stored_value(target, &new_value)));
         out
     }
 
@@ -3758,6 +3780,7 @@ impl StatementEmitter for RustStmt<'_, '_> {
             if expr_directly_contains_candle_call(left)
                 && expr_directly_contains_candle_call(right)
             {
+                let (outer_comments, inner_comments) = super::common::split_cond_comments(left, right, cond_comments);
                 // Render as: if left { if right { then } else { els } } else { els }
                 let inner_if = Statement::If {
                     condition: if cold_then {
@@ -3767,13 +3790,13 @@ impl StatementEmitter for RustStmt<'_, '_> {
                     },
                     then_body: then_body.to_vec(),
                     else_body: else_body.to_vec(),
-                    cond_comments: Vec::new(),
+                    cond_comments: inner_comments,
                 };
                 let outer_if = Statement::If {
                     condition: *left.clone(),
                     then_body: vec![inner_if],
                     else_body: else_body.to_vec(),
-                    cond_comments: Vec::new(),
+                    cond_comments: outer_comments,
                 };
                 return self.walk_stmt(&outer_if, indent);
             }
@@ -5463,6 +5486,25 @@ fn render_func_call(
             "(match {} {{ 0 => ({}) - ({}), 1 => ({}) - ({}), 2 => ({}) - ({}), _ => 0.0 }})",
             r[0], a[0], b[0], a[1], b[1], a[2], b[2]
         )
+    } else if let Some(comment) = super::eager_select::note_of(fname) {
+        let [operand] = args else { panic!("a note holds one operand") };
+        super::eager_select::noted(&format!("({})", render_condition(operand, ctx, opt_real_params, registry, helpers)), comment)
+    } else if fname == super::eager_select::EAGER_AND || fname == super::eager_select::EAGER_OR {
+        let op = if fname == super::eager_select::EAGER_AND { " & " } else { " | " };
+        let atoms: Vec<String> = args
+            .iter()
+            .map(|a| {
+                let r = render_condition(a, ctx, opt_real_params, registry, helpers);
+                if matches!(a, Expr::FuncCall(n, _) if super::eager_select::is_pseudo_call(n)) { r } else { format!("({r})") }
+            })
+            .collect();
+        format!("({})", super::eager_select::join(&atoms, op))
+    } else if fname == super::eager_select::EAGER_ALL {
+        let terms: Vec<String> = args
+            .iter()
+            .map(|a| format!("u32::from({})", render_condition(a, ctx, opt_real_params, registry, helpers)))
+            .collect();
+        format!("(({}) == {})", super::eager_select::join(&terms, " + "), args.len())
     } else if fname == super::rust_respell::SELECT_OTHER && args.len() == 3 {
         let r: Vec<String> = args.iter().map(|a| render_expr(a, ctx, opt_real_params, registry, helpers)).collect();
         format!("f64::from_bits(f64::to_bits({}) ^ f64::to_bits({}) ^ f64::to_bits({}))", r[0], r[1], r[2])

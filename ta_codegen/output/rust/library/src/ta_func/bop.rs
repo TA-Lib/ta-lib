@@ -131,22 +131,26 @@ impl Core {
         let inClose = &inClose[..=endIdx];
         // BOP = (Close - Open)/(High - Low)
         outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            // BOP is a fraction of the bar's own range, so it is scale-free and the
-            // divisor only has to be positive. An exact test, not the fixed
-            // TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,
-            // and that band zeroed the output for any instrument quoted below it
-            // (issue #253).
-            tempReal = inHigh[i] - inLow[i];
-            if tempReal <= 0.0 {
-                outReal[outIdx] = 0.0;
+        i = startIdx;
+        if i <= endIdx {
+            let _wn: usize = endIdx - i + 1;
+            let _w0 = &inClose[i..][.._wn];
+            let _w1 = &inHigh[i..][.._wn];
+            let _w2 = &inLow[i..][.._wn];
+            let _w3 = &inOpen[i..][.._wn];
+            let _w4 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                // BOP is a fraction of the bar's own range, so it is scale-free and the
+                // divisor only has to be positive. An exact test, not the fixed
+                // TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,
+                // and that band zeroed the output for any instrument quoted below it
+                // (issue #253).
+                tempReal = _w1[_wk] - _w2[_wk];
+                _w4[_wk] = std::hint::select_unpredictable(tempReal <= 0.0, 0.0, (((_w0[_wk] - _w3[_wk]) / tempReal) as f64));
                 outIdx += 1;
-            } else {
-                outReal[outIdx] = (((inClose[i] - inOpen[i]) / tempReal) as f64);
-                outIdx += 1;
+                i += 1;
             }
         }
-        i = (endIdx as usize) + 1;
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
         return RetCode::Success;

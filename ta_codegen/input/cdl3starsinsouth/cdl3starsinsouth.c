@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  022705 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  *
  */
 
@@ -105,24 +106,29 @@ TA_RetCode cdl3starsinsouth(int startIdx, int endIdx,
    {
       if( ta_candlecolor(inClose[i-2], inOpen[i-2]) == -1 &&                                    // 1st black
          ta_candlecolor(inClose[i-1], inOpen[i-1]) == -1 &&                                    // 2nd black
-         ta_candlecolor(inClose[i], inOpen[i]) == -1 &&                                      // 3rd black
-         // 1st: long
-         ta_realbody(inClose[i-2], inOpen[i-2]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
-         //      with long lower shadow
-         ta_lowershadow(inLow[i-2], inClose[i-2], inOpen[i-2]) > ta_candleaverage(ShadowLong_rangeType, ShadowLong_avgPeriod, ShadowLong_factor, ShadowLongPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
-         ta_realbody(inClose[i-1], inOpen[i-1]) < ta_realbody(inClose[i-2], inOpen[i-2]) &&                          // 2nd: smaller candle
-         inOpen[i-1] > inClose[i-2] && inOpen[i-1] <= inHigh[i-2] &&     //      that opens higher but within 1st range
-         inLow[i-1] < inClose[i-2] &&                                    //      and trades lower than 1st close
-         inLow[i-1] >= inLow[i-2] &&                                     //      but not lower than 1st low
-         //      and has a lower shadow
-         ta_lowershadow(inLow[i-1], inClose[i-1], inOpen[i-1]) > ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&
-         // 3rd: small marubozu
-         ta_realbody(inClose[i], inOpen[i]) < ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyShortPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&
-         ta_lowershadow(inLow[i], inClose[i], inOpen[i]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[0], inOpen[i], inHigh[i], inLow[i], inClose[i]) &&
-         ta_uppershadow(inHigh[i], inClose[i], inOpen[i]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[0], inOpen[i], inHigh[i], inLow[i], inClose[i]) &&
-         inLow[i] > inLow[i-1] && inHigh[i] < inHigh[i-1]                //      engulfed by prior candle's range
+         ta_candlecolor(inClose[i], inOpen[i]) == -1                                      // 3rd black
       ) {
-         outInteger[outIdx++] = 100;
+         if( // 1st: long
+            ta_realbody(inClose[i-2], inOpen[i-2]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
+            //      with long lower shadow
+            ta_lowershadow(inLow[i-2], inClose[i-2], inOpen[i-2]) > ta_candleaverage(ShadowLong_rangeType, ShadowLong_avgPeriod, ShadowLong_factor, ShadowLongPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
+            ta_realbody(inClose[i-1], inOpen[i-1]) < ta_realbody(inClose[i-2], inOpen[i-2]) &&                          // 2nd: smaller candle
+            inOpen[i-1] > inClose[i-2] && inOpen[i-1] <= inHigh[i-2] &&     //      that opens higher but within 1st range
+            inLow[i-1] < inClose[i-2] &&                                    //      and trades lower than 1st close
+            inLow[i-1] >= inLow[i-2] &&                                     //      but not lower than 1st low
+            //      and has a lower shadow
+            ta_lowershadow(inLow[i-1], inClose[i-1], inOpen[i-1]) > ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&
+            // 3rd: small marubozu
+            ta_realbody(inClose[i], inOpen[i]) < ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyShortPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&
+            ta_lowershadow(inLow[i], inClose[i], inOpen[i]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[0], inOpen[i], inHigh[i], inLow[i], inClose[i]) &&
+            ta_uppershadow(inHigh[i], inClose[i], inOpen[i]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[0], inOpen[i], inHigh[i], inLow[i], inClose[i]) &&
+            inLow[i] > inLow[i-1] && inHigh[i] < inHigh[i-1]                //      engulfed by prior candle's range
+         ) {
+            outInteger[outIdx++] = 100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

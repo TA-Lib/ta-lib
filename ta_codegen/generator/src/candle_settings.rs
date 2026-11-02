@@ -26,6 +26,12 @@ const CANDLE_SETTINGS: &[&str] = &[
 /// The three properties each candle setting can reference.
 const CANDLE_PROPERTIES: &[&str] = &["rangeType", "avgPeriod", "factor"];
 
+/// Whether `name` is a setting's `avgPeriod`, which every backend's setter keeps
+/// non-negative.
+pub fn is_avg_period(name: &str) -> bool {
+    name.strip_suffix("_avgPeriod").is_some_and(|s| CANDLE_SETTINGS.contains(&s))
+}
+
 /// Scan a slice of statements and return the set of candle setting names referenced.
 ///
 /// Walks all expressions recursively looking for `Expr::Var("BodyLong_rangeType")` etc.

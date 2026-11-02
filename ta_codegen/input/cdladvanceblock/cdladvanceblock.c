@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  120404 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  *
  */
 
@@ -127,41 +128,46 @@ TA_RetCode cdladvanceblock(int startIdx, int endIdx,
    {
       if( ta_candlecolor(inClose[i-2], inOpen[i-2]) == 1 &&                                                     // 1st white
          ta_candlecolor(inClose[i-1], inOpen[i-1]) == 1 &&                                                     // 2nd white
-         ta_candlecolor(inClose[i], inOpen[i]) == 1 &&                                                       // 3rd white
-         inClose[i] > inClose[i-1] && inClose[i-1] > inClose[i-2] &&                     // consecutive higher closes
-         inOpen[i-1] > inOpen[i-2] &&                                                    // 2nd opens within/near 1st real body
-         inOpen[i-1] <= inClose[i-2] + ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
-         inOpen[i] > inOpen[i-1] &&                                                      // 3rd opens within/near 2nd real body
-         inOpen[i] <= inClose[i-1] + ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&
-         ta_realbody(inClose[i-2], inOpen[i-2]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) && // 1st: long real body
-         ta_uppershadow(inHigh[i-2], inClose[i-2], inOpen[i-2]) < ta_candleaverage(ShadowShort_rangeType, ShadowShort_avgPeriod, ShadowShort_factor, ShadowShortPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&   // 1st: short upper shadow
-         (
-         // ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance
-         (
-         ta_realbody(inClose[i-1], inOpen[i-1]) < ta_realbody(inClose[i-2], inOpen[i-2]) - ta_candleaverage(Far_rangeType, Far_avgPeriod, Far_factor, FarPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
-         ta_realbody(inClose[i], inOpen[i]) < ta_realbody(inClose[i-1], inOpen[i-1]) + ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
-      ) ||
-         // 3 far smaller than 2 advance blocked with the 3rd
-         (
-         ta_realbody(inClose[i], inOpen[i]) < ta_realbody(inClose[i-1], inOpen[i-1]) - ta_candleaverage(Far_rangeType, Far_avgPeriod, Far_factor, FarPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
-      ) ||
-         // ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) ) advance blocked with progressively smaller real bodies and some upper shadows
-         (
-         ta_realbody(inClose[i], inOpen[i]) < ta_realbody(inClose[i-1], inOpen[i-1]) &&
-         ta_realbody(inClose[i-1], inOpen[i-1]) < ta_realbody(inClose[i-2], inOpen[i-2]) &&
-         (
-         ta_uppershadow(inHigh[i], inClose[i], inOpen[i]) > ta_candleaverage(ShadowShort_rangeType, ShadowShort_avgPeriod, ShadowShort_factor, ShadowShortPeriodTotal[0], inOpen[i], inHigh[i], inLow[i], inClose[i]) ||
-         ta_uppershadow(inHigh[i-1], inClose[i-1], inOpen[i-1]) > ta_candleaverage(ShadowShort_rangeType, ShadowShort_avgPeriod, ShadowShort_factor, ShadowShortPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
-      )
-      ) ||
-         // ( 3 smaller than 2 && 3 long upper shadow ) advance blocked with 3rd candle's long upper shadow and smaller body
-         (
-         ta_realbody(inClose[i], inOpen[i]) < ta_realbody(inClose[i-1], inOpen[i-1]) &&
-         ta_uppershadow(inHigh[i], inClose[i], inOpen[i]) > ta_candleaverage(ShadowLong_rangeType, ShadowLong_avgPeriod, ShadowLong_factor, ShadowLongPeriodTotal[0], inOpen[i], inHigh[i], inLow[i], inClose[i])
-      )
-      )
+         ta_candlecolor(inClose[i], inOpen[i]) == 1                                                       // 3rd white
       ) {
-         outInteger[outIdx++] = -100;
+         if( inClose[i] > inClose[i-1] && inClose[i-1] > inClose[i-2] &&                     // consecutive higher closes
+            inOpen[i-1] > inOpen[i-2] &&                                                    // 2nd opens within/near 1st real body
+            inOpen[i-1] <= inClose[i-2] + ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
+            inOpen[i] > inOpen[i-1] &&                                                      // 3rd opens within/near 2nd real body
+            inOpen[i] <= inClose[i-1] + ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&
+            ta_realbody(inClose[i-2], inOpen[i-2]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) && // 1st: long real body
+            ta_uppershadow(inHigh[i-2], inClose[i-2], inOpen[i-2]) < ta_candleaverage(ShadowShort_rangeType, ShadowShort_avgPeriod, ShadowShort_factor, ShadowShortPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&   // 1st: short upper shadow
+            (
+            // ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance
+            (
+            ta_realbody(inClose[i-1], inOpen[i-1]) < ta_realbody(inClose[i-2], inOpen[i-2]) - ta_candleaverage(Far_rangeType, Far_avgPeriod, Far_factor, FarPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
+            ta_realbody(inClose[i], inOpen[i]) < ta_realbody(inClose[i-1], inOpen[i-1]) + ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+         ) ||
+            // 3 far smaller than 2 advance blocked with the 3rd
+            (
+            ta_realbody(inClose[i], inOpen[i]) < ta_realbody(inClose[i-1], inOpen[i-1]) - ta_candleaverage(Far_rangeType, Far_avgPeriod, Far_factor, FarPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+         ) ||
+            // ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) ) advance blocked with progressively smaller real bodies and some upper shadows
+            (
+            ta_realbody(inClose[i], inOpen[i]) < ta_realbody(inClose[i-1], inOpen[i-1]) &&
+            ta_realbody(inClose[i-1], inOpen[i-1]) < ta_realbody(inClose[i-2], inOpen[i-2]) &&
+            (
+            ta_uppershadow(inHigh[i], inClose[i], inOpen[i]) > ta_candleaverage(ShadowShort_rangeType, ShadowShort_avgPeriod, ShadowShort_factor, ShadowShortPeriodTotal[0], inOpen[i], inHigh[i], inLow[i], inClose[i]) ||
+            ta_uppershadow(inHigh[i-1], inClose[i-1], inOpen[i-1]) > ta_candleaverage(ShadowShort_rangeType, ShadowShort_avgPeriod, ShadowShort_factor, ShadowShortPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+         )
+         ) ||
+            // ( 3 smaller than 2 && 3 long upper shadow ) advance blocked with 3rd candle's long upper shadow and smaller body
+            (
+            ta_realbody(inClose[i], inOpen[i]) < ta_realbody(inClose[i-1], inOpen[i-1]) &&
+            ta_uppershadow(inHigh[i], inClose[i], inOpen[i]) > ta_candleaverage(ShadowLong_rangeType, ShadowLong_avgPeriod, ShadowLong_factor, ShadowLongPeriodTotal[0], inOpen[i], inHigh[i], inLow[i], inClose[i])
+         )
+         )
+         ) {
+            outInteger[outIdx++] = -100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

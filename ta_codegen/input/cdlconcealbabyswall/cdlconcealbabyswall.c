@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  022705 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  *
  */
 
@@ -83,21 +84,26 @@ TA_RetCode cdlconcealbabyswall(int startIdx, int endIdx,
    {
       if( ta_candlecolor(inClose[i-3], inOpen[i-3]) == -1 &&                                    // 1st black
          ta_candlecolor(inClose[i-2], inOpen[i-2]) == -1 &&                                    // 2nd black
-         ta_candlecolor(inClose[i-1], inOpen[i-1]) == -1 &&                                    // 3rd black
-         ta_candlecolor(inClose[i], inOpen[i]) == -1 &&                                      // 4th black
-         // 1st: marubozu
-         ta_lowershadow(inLow[i-3], inClose[i-3], inOpen[i-3]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[3], inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3]) &&
-         ta_uppershadow(inHigh[i-3], inClose[i-3], inOpen[i-3]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[3], inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3]) &&
-         // 2nd: marubozu
-         ta_lowershadow(inLow[i-2], inClose[i-2], inOpen[i-2]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
-         ta_uppershadow(inHigh[i-2], inClose[i-2], inOpen[i-2]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
-         ta_realbodygapdown(inOpen[i-1], inClose[i-1], inOpen[i-2], inClose[i-2]) &&                                  // 3rd: opens gapping down
-         //      and HAS an upper shadow
-         ta_uppershadow(inHigh[i-1], inClose[i-1], inOpen[i-1]) > ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&
-         inHigh[i-1] > inClose[i-2] &&                                   //      that extends into the prior body
-         inHigh[i] > inHigh[i-1] && inLow[i] < inLow[i-1]                // 4th: engulfs the 3rd including the shadows
+         ta_candlecolor(inClose[i-1], inOpen[i-1]) == -1                                    // 3rd black
       ) {
-         outInteger[outIdx++] = 100;
+         if( ta_candlecolor(inClose[i], inOpen[i]) == -1 &&                                      // 4th black
+            // 1st: marubozu
+            ta_lowershadow(inLow[i-3], inClose[i-3], inOpen[i-3]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[3], inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3]) &&
+            ta_uppershadow(inHigh[i-3], inClose[i-3], inOpen[i-3]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[3], inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3]) &&
+            // 2nd: marubozu
+            ta_lowershadow(inLow[i-2], inClose[i-2], inOpen[i-2]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
+            ta_uppershadow(inHigh[i-2], inClose[i-2], inOpen[i-2]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
+            ta_realbodygapdown(inOpen[i-1], inClose[i-1], inOpen[i-2], inClose[i-2]) &&                                  // 3rd: opens gapping down
+            //      and HAS an upper shadow
+            ta_uppershadow(inHigh[i-1], inClose[i-1], inOpen[i-1]) > ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&
+            inHigh[i-1] > inClose[i-2] &&                                   //      that extends into the prior body
+            inHigh[i] > inHigh[i-1] && inLow[i] < inLow[i-1]                // 4th: engulfs the 3rd including the shadows
+         ) {
+            outInteger[outIdx++] = 100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

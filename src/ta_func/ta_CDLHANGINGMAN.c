@@ -96,10 +96,18 @@ TA_LIB_API TA_RetCode TA_CDLHANGINGMAN( int    startIdx,
    int ShadowVeryShortTrailingIdx;
    int NearTrailingIdx;
    int lookbackTotal;
+   int BodyShort_rangeType = TA_Globals->candleSettings[TA_BodyShort].rangeType;
    int BodyShort_avgPeriod = TA_Globals->candleSettings[TA_BodyShort].avgPeriod;
+   double BodyShort_factor = TA_Globals->candleSettings[TA_BodyShort].factor;
+   int Near_rangeType = TA_Globals->candleSettings[TA_Near].rangeType;
    int Near_avgPeriod = TA_Globals->candleSettings[TA_Near].avgPeriod;
+   double Near_factor = TA_Globals->candleSettings[TA_Near].factor;
+   int ShadowLong_rangeType = TA_Globals->candleSettings[TA_ShadowLong].rangeType;
    int ShadowLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowLong].avgPeriod;
+   double ShadowLong_factor = TA_Globals->candleSettings[TA_ShadowLong].factor;
+   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
+   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -150,25 +158,25 @@ TA_LIB_API TA_RetCode TA_CDLHANGINGMAN( int    startIdx,
    i = BodyTrailingIdx;
    while( i < startIdx )
    {
-      BodyPeriodTotal += TA_CANDLERANGE(BodyShort,i);
+      BodyPeriodTotal += TA_CANDLERANGE_OF(BodyShort_rangeType,i);
       i += 1;
    }
    i = ShadowLongTrailingIdx;
    while( i < startIdx )
    {
-      ShadowLongPeriodTotal += TA_CANDLERANGE(ShadowLong,i);
+      ShadowLongPeriodTotal += TA_CANDLERANGE_OF(ShadowLong_rangeType,i);
       i += 1;
    }
    i = ShadowVeryShortTrailingIdx;
    while( i < startIdx )
    {
-      ShadowVeryShortPeriodTotal += TA_CANDLERANGE(ShadowVeryShort,i);
+      ShadowVeryShortPeriodTotal += TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i);
       i += 1;
    }
    i = NearTrailingIdx;
    while( i < startIdx - 1 )
    {
-      NearPeriodTotal += TA_CANDLERANGE(Near,i);
+      NearPeriodTotal += TA_CANDLERANGE_OF(Near_rangeType,i);
       i += 1;
    }
    i = startIdx;
@@ -183,23 +191,17 @@ TA_LIB_API TA_RetCode TA_CDLHANGINGMAN( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) && /* small rb */
-          (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && /* long lower shadow */
-          (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) && /* very short upper shadow */
-          min(inClose[i],inOpen[i]) >= inHigh[i - 1] - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 1) ) /* rb near the prior candle's highs */
-      {
-         outInteger[outIdx++] = -100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
+      outInteger[outIdx++] = ((-100) & -(int)(((fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i)) & /* small rb */
+          ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long lower shadow */
+          ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)) & /* very short upper shadow */
+          ((inClose[i] >= inHigh[i - 1] - TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1)) & (inOpen[i] >= inHigh[i - 1] - TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1)))))); /* rb near the prior candle's highs */
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      BodyPeriodTotal += TA_CANDLERANGE(BodyShort,i) - TA_CANDLERANGE(BodyShort,BodyTrailingIdx);
-      ShadowLongPeriodTotal += TA_CANDLERANGE(ShadowLong,i) - TA_CANDLERANGE(ShadowLong,ShadowLongTrailingIdx);
-      ShadowVeryShortPeriodTotal += TA_CANDLERANGE(ShadowVeryShort,i) - TA_CANDLERANGE(ShadowVeryShort,ShadowVeryShortTrailingIdx);
-      NearPeriodTotal += TA_CANDLERANGE(Near,i - 1) - TA_CANDLERANGE(Near,NearTrailingIdx);
+      BodyPeriodTotal += TA_CANDLERANGE_OF(BodyShort_rangeType,i) - TA_CANDLERANGE_OF(BodyShort_rangeType,BodyTrailingIdx);
+      ShadowLongPeriodTotal += TA_CANDLERANGE_OF(ShadowLong_rangeType,i) - TA_CANDLERANGE_OF(ShadowLong_rangeType,ShadowLongTrailingIdx);
+      ShadowVeryShortPeriodTotal += TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i) - TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx);
+      NearPeriodTotal += TA_CANDLERANGE_OF(Near_rangeType,i - 1) - TA_CANDLERANGE_OF(Near_rangeType,NearTrailingIdx);
       i += 1;
       BodyTrailingIdx += 1;
       ShadowLongTrailingIdx += 1;
@@ -233,10 +235,18 @@ TA_RetCode TA_S_CDLHANGINGMAN( int    startIdx,
    int ShadowVeryShortTrailingIdx;
    int NearTrailingIdx;
    int lookbackTotal;
+   int BodyShort_rangeType = TA_Globals->candleSettings[TA_BodyShort].rangeType;
    int BodyShort_avgPeriod = TA_Globals->candleSettings[TA_BodyShort].avgPeriod;
+   double BodyShort_factor = TA_Globals->candleSettings[TA_BodyShort].factor;
+   int Near_rangeType = TA_Globals->candleSettings[TA_Near].rangeType;
    int Near_avgPeriod = TA_Globals->candleSettings[TA_Near].avgPeriod;
+   double Near_factor = TA_Globals->candleSettings[TA_Near].factor;
+   int ShadowLong_rangeType = TA_Globals->candleSettings[TA_ShadowLong].rangeType;
    int ShadowLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowLong].avgPeriod;
+   double ShadowLong_factor = TA_Globals->candleSettings[TA_ShadowLong].factor;
+   int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
    int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
+   double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -278,42 +288,36 @@ TA_RetCode TA_S_CDLHANGINGMAN( int    startIdx,
    i = BodyTrailingIdx;
    while( i < startIdx )
    {
-      BodyPeriodTotal += TA_CANDLERANGE(BodyShort,i);
+      BodyPeriodTotal += TA_CANDLERANGE_OF(BodyShort_rangeType,i);
       i += 1;
    }
    i = ShadowLongTrailingIdx;
    while( i < startIdx )
    {
-      ShadowLongPeriodTotal += TA_CANDLERANGE(ShadowLong,i);
+      ShadowLongPeriodTotal += TA_CANDLERANGE_OF(ShadowLong_rangeType,i);
       i += 1;
    }
    i = ShadowVeryShortTrailingIdx;
    while( i < startIdx )
    {
-      ShadowVeryShortPeriodTotal += TA_CANDLERANGE(ShadowVeryShort,i);
+      ShadowVeryShortPeriodTotal += TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i);
       i += 1;
    }
    i = NearTrailingIdx;
    while( i < startIdx - 1 )
    {
-      NearPeriodTotal += TA_CANDLERANGE(Near,i);
+      NearPeriodTotal += TA_CANDLERANGE_OF(Near_rangeType,i);
       i += 1;
    }
    i = startIdx;
    outIdx = 0;
    do
    {
-      if( fabs((double)inClose[i] - (double)inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) && ((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) && min((double)inClose[i],(double)inOpen[i]) >= (double)inHigh[i - 1] - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 1) )
-      {
-         outInteger[outIdx++] = -100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      BodyPeriodTotal += TA_CANDLERANGE(BodyShort,i) - TA_CANDLERANGE(BodyShort,BodyTrailingIdx);
-      ShadowLongPeriodTotal += TA_CANDLERANGE(ShadowLong,i) - TA_CANDLERANGE(ShadowLong,ShadowLongTrailingIdx);
-      ShadowVeryShortPeriodTotal += TA_CANDLERANGE(ShadowVeryShort,i) - TA_CANDLERANGE(ShadowVeryShort,ShadowVeryShortTrailingIdx);
-      NearPeriodTotal += TA_CANDLERANGE(Near,i - 1) - TA_CANDLERANGE(Near,NearTrailingIdx);
+      outInteger[outIdx++] = ((-100) & -(int)(((fabs((double)inClose[i] - (double)inOpen[i]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i)) & (((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & (((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)) & ((double)inClose[i] >= (double)inHigh[i - 1] - TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1)) & ((double)inOpen[i] >= (double)inHigh[i - 1] - TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1)))));
+      BodyPeriodTotal += TA_CANDLERANGE_OF(BodyShort_rangeType,i) - TA_CANDLERANGE_OF(BodyShort_rangeType,BodyTrailingIdx);
+      ShadowLongPeriodTotal += TA_CANDLERANGE_OF(ShadowLong_rangeType,i) - TA_CANDLERANGE_OF(ShadowLong_rangeType,ShadowLongTrailingIdx);
+      ShadowVeryShortPeriodTotal += TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i) - TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx);
+      NearPeriodTotal += TA_CANDLERANGE_OF(Near_rangeType,i - 1) - TA_CANDLERANGE_OF(Near_rangeType,NearTrailingIdx);
       i += 1;
       BodyTrailingIdx += 1;
       ShadowLongTrailingIdx += 1;
@@ -453,10 +457,18 @@ static TA_RetCode TA_CDLHANGINGMAN_OpenImpl( struct TA_CDLHANGINGMAN_Stream **st
    endIdx = historyLen - 1;
 
    {
+      int BodyShort_rangeType = TA_Globals->candleSettings[TA_BodyShort].rangeType;
       int BodyShort_avgPeriod = TA_Globals->candleSettings[TA_BodyShort].avgPeriod;
+      double BodyShort_factor = TA_Globals->candleSettings[TA_BodyShort].factor;
+      int Near_rangeType = TA_Globals->candleSettings[TA_Near].rangeType;
       int Near_avgPeriod = TA_Globals->candleSettings[TA_Near].avgPeriod;
+      double Near_factor = TA_Globals->candleSettings[TA_Near].factor;
+      int ShadowLong_rangeType = TA_Globals->candleSettings[TA_ShadowLong].rangeType;
       int ShadowLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowLong].avgPeriod;
+      double ShadowLong_factor = TA_Globals->candleSettings[TA_ShadowLong].factor;
+      int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
       int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
+      double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
       double BodyPeriodTotal = 0.0;
       double ShadowLongPeriodTotal = 0.0;
       double ShadowVeryShortPeriodTotal = 0.0;
@@ -499,25 +511,25 @@ static TA_RetCode TA_CDLHANGINGMAN_OpenImpl( struct TA_CDLHANGINGMAN_Stream **st
       i = BodyTrailingIdx;
       while( i < startIdx )
       {
-         BodyPeriodTotal += TA_CANDLERANGE(BodyShort,i);
+         BodyPeriodTotal += TA_CANDLERANGE_OF(BodyShort_rangeType,i);
          i += 1;
       }
       i = ShadowLongTrailingIdx;
       while( i < startIdx )
       {
-         ShadowLongPeriodTotal += TA_CANDLERANGE(ShadowLong,i);
+         ShadowLongPeriodTotal += TA_CANDLERANGE_OF(ShadowLong_rangeType,i);
          i += 1;
       }
       i = ShadowVeryShortTrailingIdx;
       while( i < startIdx )
       {
-         ShadowVeryShortPeriodTotal += TA_CANDLERANGE(ShadowVeryShort,i);
+         ShadowVeryShortPeriodTotal += TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i);
          i += 1;
       }
       i = NearTrailingIdx;
       while( i < startIdx - 1 )
       {
-         NearPeriodTotal += TA_CANDLERANGE(Near,i);
+         NearPeriodTotal += TA_CANDLERANGE_OF(Near_rangeType,i);
          i += 1;
       }
       i = startIdx;
@@ -532,10 +544,10 @@ static TA_RetCode TA_CDLHANGINGMAN_OpenImpl( struct TA_CDLHANGINGMAN_Stream **st
       outIdx = 0;
       do
       {
-         if( fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) && /* small rb */
-             (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && /* long lower shadow */
-             (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) && /* very short upper shadow */
-             min(inClose[i],inOpen[i]) >= inHigh[i - 1] - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 1) ) /* rb near the prior candle's highs */
+         if( fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i) && /* small rb */
+             (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i) && /* long lower shadow */
+             (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i) && /* very short upper shadow */
+             min(inClose[i],inOpen[i]) >= inHigh[i - 1] - TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1) ) /* rb near the prior candle's highs */
          {
             outInteger[outIdx++ * outStride] = -100;
          } else 
@@ -545,10 +557,10 @@ static TA_RetCode TA_CDLHANGINGMAN_OpenImpl( struct TA_CDLHANGINGMAN_Stream **st
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
-         BodyPeriodTotal += TA_CANDLERANGE(BodyShort,i) - TA_CANDLERANGE(BodyShort,BodyTrailingIdx);
-         ShadowLongPeriodTotal += TA_CANDLERANGE(ShadowLong,i) - TA_CANDLERANGE(ShadowLong,ShadowLongTrailingIdx);
-         ShadowVeryShortPeriodTotal += TA_CANDLERANGE(ShadowVeryShort,i) - TA_CANDLERANGE(ShadowVeryShort,ShadowVeryShortTrailingIdx);
-         NearPeriodTotal += TA_CANDLERANGE(Near,i - 1) - TA_CANDLERANGE(Near,NearTrailingIdx);
+         BodyPeriodTotal += TA_CANDLERANGE_OF(BodyShort_rangeType,i) - TA_CANDLERANGE_OF(BodyShort_rangeType,BodyTrailingIdx);
+         ShadowLongPeriodTotal += TA_CANDLERANGE_OF(ShadowLong_rangeType,i) - TA_CANDLERANGE_OF(ShadowLong_rangeType,ShadowLongTrailingIdx);
+         ShadowVeryShortPeriodTotal += TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i) - TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx);
+         NearPeriodTotal += TA_CANDLERANGE_OF(Near_rangeType,i - 1) - TA_CANDLERANGE_OF(Near_rangeType,NearTrailingIdx);
          i += 1;
          BodyTrailingIdx += 1;
          ShadowLongTrailingIdx += 1;

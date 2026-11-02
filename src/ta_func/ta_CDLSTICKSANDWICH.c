@@ -57,6 +57,7 @@
  *  -------------------------------------------------------------------
  *  032005 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  */
 
 TA_LIB_API int TA_CDLSTICKSANDWICH_Lookback( void )
@@ -87,7 +88,9 @@ TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH( int    startIdx,
    int outIdx;
    int EqualTrailingIdx;
    int lookbackTotal;
+   int Equal_rangeType = TA_Globals->candleSettings[TA_Equal].rangeType;
    int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;
+   double Equal_factor = TA_Globals->candleSettings[TA_Equal].factor;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -132,7 +135,7 @@ TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH( int    startIdx,
    i = EqualTrailingIdx;
    while( i < startIdx )
    {
-      EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 2);
+      EqualPeriodTotal += TA_CANDLERANGE_OF(Equal_rangeType,i - 2);
       i += 1;
    }
    i = startIdx;
@@ -146,14 +149,13 @@ TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* first black */
-          ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* second white */
-          ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* third black */
-          inLow[i - 1] > inClose[i - 2] &&                      /* 2nd low > prior close */
-          inClose[i] <= inClose[i - 2] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 2) && /* 1st and 3rd same close */
-          inClose[i] >= inClose[i - 2] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 2) )
+      if( (((!(inClose[i - 2] >= inOpen[i - 2])) + /* first black */
+          (inClose[i - 1] >= inOpen[i - 1]) +      /* second white */
+          (!(inClose[i] >= inOpen[i]))) == 3) )    /* third black */
       {
-         outInteger[outIdx++] = 100;
+         outInteger[outIdx++] = ((100) & -(int)(((inLow[i - 1] > inClose[i - 2]) & /* 2nd low > prior close */
+             (inClose[i] <= inClose[i - 2] + TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 2)) & /* 1st and 3rd same close */
+             (inClose[i] >= inClose[i - 2] - TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 2)))));
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -161,7 +163,7 @@ TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH( int    startIdx,
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 2) - TA_CANDLERANGE(Equal,EqualTrailingIdx - 2);
+      EqualPeriodTotal += TA_CANDLERANGE_OF(Equal_rangeType,i - 2) - TA_CANDLERANGE_OF(Equal_rangeType,EqualTrailingIdx - 2);
       i += 1;
       EqualTrailingIdx += 1;
    } while( i <= endIdx );
@@ -186,7 +188,9 @@ TA_RetCode TA_S_CDLSTICKSANDWICH( int    startIdx,
    int outIdx;
    int EqualTrailingIdx;
    int lookbackTotal;
+   int Equal_rangeType = TA_Globals->candleSettings[TA_Equal].rangeType;
    int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;
+   double Equal_factor = TA_Globals->candleSettings[TA_Equal].factor;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -222,21 +226,21 @@ TA_RetCode TA_S_CDLSTICKSANDWICH( int    startIdx,
    i = EqualTrailingIdx;
    while( i < startIdx )
    {
-      EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 2);
+      EqualPeriodTotal += TA_CANDLERANGE_OF(Equal_rangeType,i - 2);
       i += 1;
    }
    i = startIdx;
    outIdx = 0;
    do
    {
-      if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == -1 && (double)inLow[i - 1] > (double)inClose[i - 2] && (double)inClose[i] <= (double)inClose[i - 2] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 2) && (double)inClose[i] >= (double)inClose[i - 2] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 2) )
+      if( (((!((double)inClose[i - 2] >= (double)inOpen[i - 2])) + ((double)inClose[i - 1] >= (double)inOpen[i - 1]) + (!((double)inClose[i] >= (double)inOpen[i]))) == 3) )
       {
-         outInteger[outIdx++] = 100;
+         outInteger[outIdx++] = ((100) & -(int)((((double)inLow[i - 1] > (double)inClose[i - 2]) & ((double)inClose[i] <= (double)inClose[i - 2] + TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 2)) & ((double)inClose[i] >= (double)inClose[i - 2] - TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 2)))));
       } else 
       {
          outInteger[outIdx++] = 0;
       }
-      EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 2) - TA_CANDLERANGE(Equal,EqualTrailingIdx - 2);
+      EqualPeriodTotal += TA_CANDLERANGE_OF(Equal_rangeType,i - 2) - TA_CANDLERANGE_OF(Equal_rangeType,EqualTrailingIdx - 2);
       i += 1;
       EqualTrailingIdx += 1;
    } while( i <= endIdx );
@@ -282,12 +286,17 @@ static void TA_CDLSTICKSANDWICH_StepImpl( struct TA_CDLSTICKSANDWICH_Stream *sp,
    sp->ring_EqualTrailingIdx_derived[sp->ringPos_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen,inHigh,inLow,inClose);
    if( ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) == -1 && /* first black */
        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == 1 &&  /* second white */
-       ((inClose >= inOpen) ? 1 : -1) == -1 &&                   /* third black */
-       sp->lag1_inLow > sp->lag2_inClose &&                      /* 2nd low > prior close */
-       inClose <= sp->lag2_inClose + TA_STREAM_CANDLEAVERAGE(Equal,sp->EqualPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st and 3rd same close */
-       inClose >= sp->lag2_inClose - TA_STREAM_CANDLEAVERAGE(Equal,sp->EqualPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) )
+       ((inClose >= inOpen) ? 1 : -1) == -1 )                    /* third black */
    {
-      *outInteger= 100;
+      if( sp->lag1_inLow > sp->lag2_inClose && /* 2nd low > prior close */
+          inClose <= sp->lag2_inClose + TA_STREAM_CANDLEAVERAGE(Equal,sp->EqualPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st and 3rd same close */
+          inClose >= sp->lag2_inClose - TA_STREAM_CANDLEAVERAGE(Equal,sp->EqualPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) )
+      {
+         *outInteger= 100;
+      } else 
+      {
+         *outInteger= 0;
+      }
    } else 
    {
       *outInteger= 0;
@@ -332,7 +341,9 @@ static TA_RetCode TA_CDLSTICKSANDWICH_OpenImpl( struct TA_CDLSTICKSANDWICH_Strea
    endIdx = historyLen - 1;
 
    {
+      int Equal_rangeType = TA_Globals->candleSettings[TA_Equal].rangeType;
       int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;
+      double Equal_factor = TA_Globals->candleSettings[TA_Equal].factor;
       double EqualPeriodTotal = 0.0;
       int i;
       int outIdx;
@@ -363,7 +374,7 @@ static TA_RetCode TA_CDLSTICKSANDWICH_OpenImpl( struct TA_CDLSTICKSANDWICH_Strea
       i = EqualTrailingIdx;
       while( i < startIdx )
       {
-         EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 2);
+         EqualPeriodTotal += TA_CANDLERANGE_OF(Equal_rangeType,i - 2);
          i += 1;
       }
       i = startIdx;
@@ -379,12 +390,17 @@ static TA_RetCode TA_CDLSTICKSANDWICH_OpenImpl( struct TA_CDLSTICKSANDWICH_Strea
       {
          if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* first black */
              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* second white */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* third black */
-             inLow[i - 1] > inClose[i - 2] &&                      /* 2nd low > prior close */
-             inClose[i] <= inClose[i - 2] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 2) && /* 1st and 3rd same close */
-             inClose[i] >= inClose[i - 2] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 2) )
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 )          /* third black */
          {
-            outInteger[outIdx++ * outStride] = 100;
+            if( inLow[i - 1] > inClose[i - 2] && /* 2nd low > prior close */
+                inClose[i] <= inClose[i - 2] + TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 2) && /* 1st and 3rd same close */
+                inClose[i] >= inClose[i - 2] - TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 2) )
+            {
+               outInteger[outIdx++ * outStride] = 100;
+            } else 
+            {
+               outInteger[outIdx++ * outStride] = 0;
+            }
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -392,7 +408,7 @@ static TA_RetCode TA_CDLSTICKSANDWICH_OpenImpl( struct TA_CDLSTICKSANDWICH_Strea
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
-         EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 2) - TA_CANDLERANGE(Equal,EqualTrailingIdx - 2);
+         EqualPeriodTotal += TA_CANDLERANGE_OF(Equal_rangeType,i - 2) - TA_CANDLERANGE_OF(Equal_rangeType,EqualTrailingIdx - 2);
          i += 1;
          EqualTrailingIdx += 1;
       } while( i <= endIdx );
@@ -495,12 +511,17 @@ TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH_Peek( const TA_CDLSTICKSANDWICH_Stream
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    if( ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) == -1 && /* first black */
        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == 1 &&  /* second white */
-       ((inClose >= inOpen) ? 1 : -1) == -1 &&                   /* third black */
-       sp->lag1_inLow > sp->lag2_inClose &&                      /* 2nd low > prior close */
-       inClose <= sp->lag2_inClose + TA_STREAM_CANDLEAVERAGE(Equal,sp->EqualPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st and 3rd same close */
-       inClose >= sp->lag2_inClose - TA_STREAM_CANDLEAVERAGE(Equal,sp->EqualPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) )
+       ((inClose >= inOpen) ? 1 : -1) == -1 )                    /* third black */
    {
-      *outInteger= 100;
+      if( sp->lag1_inLow > sp->lag2_inClose && /* 2nd low > prior close */
+          inClose <= sp->lag2_inClose + TA_STREAM_CANDLEAVERAGE(Equal,sp->EqualPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st and 3rd same close */
+          inClose >= sp->lag2_inClose - TA_STREAM_CANDLEAVERAGE(Equal,sp->EqualPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) )
+      {
+         *outInteger= 100;
+      } else 
+      {
+         *outInteger= 0;
+      }
    } else 
    {
       *outInteger= 0;

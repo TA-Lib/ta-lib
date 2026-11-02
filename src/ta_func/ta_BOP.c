@@ -114,13 +114,7 @@ TA_LIB_API TA_RetCode TA_BOP( int    startIdx,
        * (issue #253).
        */
       tempReal = inHigh[i] - inLow[i];
-      if( tempReal <= 0.0 )
-      {
-         outReal[outIdx++] = 0.0;
-      } else 
-      {
-         outReal[outIdx++] = (inClose[i] - inOpen[i]) / tempReal;
-      }
+      outReal[outIdx++] = ((tempReal <= 0.0) ? (0.0) : ((inClose[i] - inOpen[i]) / tempReal));
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
@@ -163,13 +157,7 @@ TA_RetCode TA_S_BOP( int    startIdx,
    for( i = startIdx; i <= endIdx; i += 1 )
    {
       tempReal = (double)inHigh[i] - (double)inLow[i];
-      if( tempReal <= 0.0 )
-      {
-         outReal[outIdx++] = 0.0;
-      } else 
-      {
-         outReal[outIdx++] = ((double)inClose[i] - (double)inOpen[i]) / tempReal;
-      }
+      outReal[outIdx++] = ((tempReal <= 0.0) ? (0.0) : (((double)inClose[i] - (double)inOpen[i]) / tempReal));
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;

@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  032005 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  *
  */
 
@@ -77,12 +78,17 @@ TA_RetCode cdlsticksandwich(int startIdx, int endIdx,
    {
       if( ta_candlecolor(inClose[i-2], inOpen[i-2]) == -1 &&                                                        // first black
          ta_candlecolor(inClose[i-1], inOpen[i-1]) == 1 &&                                                         // second white
-         ta_candlecolor(inClose[i], inOpen[i]) == -1 &&                                                          // third black
-         inLow[i-1] > inClose[i-2] &&                                                        // 2nd low > prior close
-         inClose[i] <= inClose[i-2] + ta_candleaverage(Equal_rangeType, Equal_avgPeriod, Equal_factor, EqualPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) && // 1st and 3rd same close
-         inClose[i] >= inClose[i-2] - ta_candleaverage(Equal_rangeType, Equal_avgPeriod, Equal_factor, EqualPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+         ta_candlecolor(inClose[i], inOpen[i]) == -1                                                          // third black
       ) {
-         outInteger[outIdx++] = 100;
+         if( inLow[i-1] > inClose[i-2] &&                                                        // 2nd low > prior close
+            inClose[i] <= inClose[i-2] + ta_candleaverage(Equal_rangeType, Equal_avgPeriod, Equal_factor, EqualPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) && // 1st and 3rd same close
+            inClose[i] >= inClose[i-2] - ta_candleaverage(Equal_rangeType, Equal_avgPeriod, Equal_factor, EqualPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
+         ) {
+            outInteger[outIdx++] = 100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

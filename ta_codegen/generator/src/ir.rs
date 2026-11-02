@@ -371,9 +371,26 @@ impl FuncDef {
     /// `alternates` is carried through unchanged so the emitters can name the
     /// winner in the generated output.
     ///
-    /// Borrowed and free for the 167 functions that declare no alternate.
+    /// Borrowed for C and Rust when the function declares no alternate; Java
+    /// and C# always get an owned copy, their pre-check nests joined.
     #[must_use]
     pub fn resolved_for(&self, lang: Lang) -> std::borrow::Cow<'_, Self> {
+        let resolved = self.resolved_alternates(lang);
+        if !matches!(lang, Lang::Java | Lang::CSharp) {
+            return resolved;
+        }
+        // The pre-check nest marks a C and Rust rewrite; the managed backends
+        // keep the flat conjunction, which their compilers already branch on.
+        let mut out = resolved.into_owned();
+        out.body = crate::backends::ir_cleanup::join_pre_checks(&out.body);
+        out.private_body = crate::backends::ir_cleanup::join_pre_checks(&out.private_body);
+        if let Some(stream) = &out.resolved_stream_body {
+            out.resolved_stream_body = Some(crate::backends::ir_cleanup::join_pre_checks(stream));
+        }
+        std::borrow::Cow::Owned(out)
+    }
+
+    fn resolved_alternates(&self, lang: Lang) -> std::borrow::Cow<'_, Self> {
         if self.alternates.is_empty() {
             return std::borrow::Cow::Borrowed(self);
         }

@@ -125,13 +125,7 @@ TA_LIB_API TA_RetCode TA_MARKETFI( int    startIdx,
        * unbounded volume scale. Same reasoning as the prevClose guard in
        * ta_codegen/input/nvi/nvi.c.
        */
-      if( inVolume[i] != 0.0 )
-      {
-         outReal[outIdx++] = (inHigh[i] - inLow[i]) / inVolume[i];
-      } else 
-      {
-         outReal[outIdx++] = 0.0;
-      }
+      outReal[outIdx++] = ((inVolume[i] != 0.0) ? ((inHigh[i] - inLow[i]) / inVolume[i]) : (0.0));
    }
    *outBegIdx= startIdx;
    *outNBElement= outIdx;
@@ -169,13 +163,7 @@ TA_RetCode TA_S_MARKETFI( int    startIdx,
    outIdx = 0;
    for( i = startIdx; i <= endIdx; i += 1 )
    {
-      if( (double)inVolume[i] != 0.0 )
-      {
-         outReal[outIdx++] = ((double)inHigh[i] - (double)inLow[i]) / (double)inVolume[i];
-      } else 
-      {
-         outReal[outIdx++] = 0.0;
-      }
+      outReal[outIdx++] = (((double)inVolume[i] != 0.0) ? (((double)inHigh[i] - (double)inLow[i]) / (double)inVolume[i]) : (0.0));
    }
    *outBegIdx= startIdx;
    *outNBElement= outIdx;

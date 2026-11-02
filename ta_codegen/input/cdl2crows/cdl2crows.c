@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  121104 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Pre-check the cheap tests in an outer if, the candle averages inside
  *
  */
 int cdl2crows_lookback(void)
@@ -76,14 +77,19 @@ TA_RetCode cdl2crows(int startIdx, int endIdx,
    do
    {
       if( ta_candlecolor(inClose[i-2], inOpen[i-2]) == 1 &&                                                         // 1st: white
-         ta_realbody(inClose[i-2], inOpen[i-2]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&     //      long
          ta_candlecolor(inClose[i-1], inOpen[i-1]) == -1 &&                                                        // 2nd: black
-         ta_realbodygapup(inOpen[i-1], inClose[i-1], inOpen[i-2], inClose[i-2]) &&                                                        //      gapping up
-         ta_candlecolor(inClose[i], inOpen[i]) == -1 &&                                                          // 3rd: black
-         inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] &&                              //      opening within 2nd rb
-         inClose[i] > inOpen[i-2] && inClose[i] < inClose[i-2]                               //      closing within 1st rb
+         ta_realbodygapup(inOpen[i-1], inClose[i-1], inOpen[i-2], inClose[i-2])                                                        //      gapping up
       ) {
-         outInteger[outIdx++] = -100;
+         if( ta_realbody(inClose[i-2], inOpen[i-2]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&     //      long
+            ta_candlecolor(inClose[i], inOpen[i]) == -1 &&                                                          // 3rd: black
+            inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] &&                              //      opening within 2nd rb
+            inClose[i] > inOpen[i-2] && inClose[i] < inClose[i-2]                               //      closing within 1st rb
+         ) {
+            outInteger[outIdx++] = -100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

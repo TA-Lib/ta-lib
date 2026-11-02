@@ -13,6 +13,7 @@
  *  032005 AC     Creation
  *  041305 MF     Minor modification for a compiler warning
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  */
 
 int cdlladderbottom_lookback(void)
@@ -75,16 +76,21 @@ TA_RetCode cdlladderbottom(int startIdx, int endIdx,
    do
    {
       if(
-         ta_candlecolor(inClose[i-4], inOpen[i-4]) == -1 && ta_candlecolor(inClose[i-3], inOpen[i-3]) == -1 && ta_candlecolor(inClose[i-2], inOpen[i-2]) == -1 &&  // 3 black candlesticks
-         inOpen[i-4] > inOpen[i-3] && inOpen[i-3] > inOpen[i-2] &&           // with consecutively lower opens
-         inClose[i-4] > inClose[i-3] && inClose[i-3] > inClose[i-2] &&       // and closes
-         ta_candlecolor(inClose[i-1], inOpen[i-1]) == -1 &&                                        // 4th: black with an upper shadow
-         ta_uppershadow(inHigh[i-1], inClose[i-1], inOpen[i-1]) > ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&
-         ta_candlecolor(inClose[i], inOpen[i]) == 1 &&                                           // 5th: white
-         inOpen[i] > inOpen[i-1] &&                                          // that opens above prior candle's body
-         inClose[i] > inHigh[i-1]                                            // and closes above prior candle's high
+         ta_candlecolor(inClose[i-4], inOpen[i-4]) == -1 && ta_candlecolor(inClose[i-3], inOpen[i-3]) == -1 && ta_candlecolor(inClose[i-2], inOpen[i-2]) == -1  // 3 black candlesticks
       ) {
-         outInteger[outIdx++] = 100;
+         if( inOpen[i-4] > inOpen[i-3] && inOpen[i-3] > inOpen[i-2] &&           // with consecutively lower opens
+            inClose[i-4] > inClose[i-3] && inClose[i-3] > inClose[i-2] &&       // and closes
+            ta_candlecolor(inClose[i-1], inOpen[i-1]) == -1 &&                                        // 4th: black with an upper shadow
+            ta_uppershadow(inHigh[i-1], inClose[i-1], inOpen[i-1]) > ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&
+            ta_candlecolor(inClose[i], inOpen[i]) == 1 &&                                           // 5th: white
+            inOpen[i] > inOpen[i-1] &&                                          // that opens above prior candle's body
+            inClose[i] > inHigh[i-1]                                            // and closes above prior candle's high
+         ) {
+            outInteger[outIdx++] = 100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

@@ -7,6 +7,11 @@ pub mod cmake_lists;
 pub mod common;
 pub mod cond_fold;
 pub mod divisor_guard;
+pub(crate) mod eager_select;
+#[cfg(test)]
+mod eager_entry_tests;
+#[cfg(test)]
+mod eager_guard_matrix;
 pub mod ir_cleanup;
 pub mod csharp;
 pub mod csharp_doc;

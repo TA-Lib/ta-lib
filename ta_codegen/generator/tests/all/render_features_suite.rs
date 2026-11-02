@@ -1958,8 +1958,13 @@ fn c_backend_inlines_candlerange_switch() {
     let output = backends::c::generate(&func, &enums, registry, helpers);
 
     assert!(
-        output.contains("TA_CANDLERANGE(BodyLong,i)"),
+        output.contains("TA_CANDLERANGE_OF(BodyLong_rangeType,i)"),
         "ta_candlerange should emit C macro: {output}"
+    );
+    assert!(
+        output.contains("int BodyLong_rangeType = TA_Globals->candleSettings[TA_BodyLong].rangeType;")
+            && !output.contains("BodyLong_factor"),
+        "only the setting the range reads is unpacked: {output}"
     );
     // No expanded temporaries — the macro handles everything
     assert!(
@@ -2060,11 +2065,11 @@ fn inlining_counter_avoids_name_collisions() {
 
     // Both calls should emit C macros with different settings
     assert!(
-        output.contains("TA_CANDLERANGE(BodyLong,i)"),
+        output.contains("TA_CANDLERANGE_OF(BodyLong_rangeType,i)"),
         "First call should emit BodyLong macro: {output}"
     );
     assert!(
-        output.contains("TA_CANDLERANGE(BodyShort,i - 1)"),
+        output.contains("TA_CANDLERANGE_OF(BodyShort_rangeType,i - 1)"),
         "Second call should emit BodyShort macro with offset: {output}"
     );
     // No expanded temporaries
@@ -2151,7 +2156,7 @@ fn nested_block_inlining_candleaverage_calls_candlerange() {
 
     // Should emit a single C macro — no expanded temporaries
     assert!(
-        output.contains("TA_CANDLEAVERAGE(BodyLong,periodTotal,i)"),
+        output.contains("TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,periodTotal,i)"),
         "ta_candleaverage should emit C macro: {output}"
     );
     assert!(
@@ -2175,23 +2180,11 @@ fn c_backend_emits_candle_settings_unpacking() {
     let helpers = make_helpers();
     let c_out = backends::c::generate(&func, &enums, registry, helpers);
 
-    // Only the properties the rendered C actually reads. CDL2CROWS reaches
-    // BodyLong through TA_CANDLERANGE / TA_CANDLEAVERAGE, which take the setting
-    // as a token and read TA_Globals themselves, so `_avgPeriod` is the only
-    // local it needs -- declaring the other two is the -Wunused-variable this
-    // emitter used to produce on 62 candlestick files.
-    assert!(
-        c_out.contains("BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod"),
-        "C output should unpack BodyLong_avgPeriod: {c_out}"
-    );
-    assert!(
-        !c_out.contains("BodyLong_rangeType"),
-        "C output should not declare BodyLong_rangeType, which nothing reads"
-    );
-    assert!(
-        !c_out.contains("BodyLong_factor"),
-        "C output should not declare BodyLong_factor, which nothing reads"
-    );
+    // CDL2CROWS averages BodyLong, which reads all three properties.
+    for (ty, prop) in [("int", "rangeType"), ("int", "avgPeriod"), ("double", "factor")] {
+        let decl = format!("{ty} BodyLong_{prop} = TA_Globals->candleSettings[TA_BodyLong].{prop};");
+        assert!(c_out.contains(&decl), "C output should unpack BodyLong_{prop}: {c_out}");
+    }
 
     // Should NOT contain settings that aren't referenced
     assert!(

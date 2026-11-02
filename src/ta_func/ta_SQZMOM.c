@@ -436,22 +436,7 @@ TA_LIB_API TA_RetCode TA_SQZMOM( int    startIdx,
       lo = tempMid[i] - dev;
       centre = tempKCM[i + kcmShift];
       band = tempWork[i];
-      if( lo > centre - optInFactorNarrow * band && up < centre + optInFactorNarrow * band )
-      {
-         outSqueeze[i] = 3;
-      } else if( lo > centre - optInFactorNormal * band && up < centre + optInFactorNormal * band )
-      {
-         outSqueeze[i] = 2;
-      } else if( lo > centre - optInFactorWide * band && up < centre + optInFactorWide * band )
-      {
-         outSqueeze[i] = 1;
-      } else if( lo < centre - optInFactorWide * band && up > centre + optInFactorWide * band )
-      {
-         outSqueeze[i] = -1;
-      } else 
-      {
-         outSqueeze[i] = 0;
-      }
+      outSqueeze[i] = ((3) ^ (((((2) ^ (((((1) ^ (((((-1) & -(int)(((lo < centre - optInFactorWide * band) & (up > centre + optInFactorWide * band))))) ^ (1)) & ((int)(((lo > centre - optInFactorWide * band) & (up < centre + optInFactorWide * band))) - 1)))) ^ (2)) & ((int)(((lo > centre - optInFactorNormal * band) & (up < centre + optInFactorNormal * band))) - 1)))) ^ (3)) & ((int)(((lo > centre - optInFactorNarrow * band) & (up < centre + optInFactorNarrow * band))) - 1)));
    }
    free(tempDev);
    free(tempWork);
@@ -712,22 +697,7 @@ TA_RetCode TA_S_SQZMOM( int    startIdx,
       lo = tempMid[i] - dev;
       centre = tempKCM[i + kcmShift];
       band = tempWork[i];
-      if( lo > centre - optInFactorNarrow * band && up < centre + optInFactorNarrow * band )
-      {
-         outSqueeze[i] = 3;
-      } else if( lo > centre - optInFactorNormal * band && up < centre + optInFactorNormal * band )
-      {
-         outSqueeze[i] = 2;
-      } else if( lo > centre - optInFactorWide * band && up < centre + optInFactorWide * band )
-      {
-         outSqueeze[i] = 1;
-      } else if( lo < centre - optInFactorWide * band && up > centre + optInFactorWide * band )
-      {
-         outSqueeze[i] = -1;
-      } else 
-      {
-         outSqueeze[i] = 0;
-      }
+      outSqueeze[i] = ((3) ^ (((((2) ^ (((((1) ^ (((((-1) & -(int)(((lo < centre - optInFactorWide * band) & (up > centre + optInFactorWide * band))))) ^ (1)) & ((int)(((lo > centre - optInFactorWide * band) & (up < centre + optInFactorWide * band))) - 1)))) ^ (2)) & ((int)(((lo > centre - optInFactorNormal * band) & (up < centre + optInFactorNormal * band))) - 1)))) ^ (3)) & ((int)(((lo > centre - optInFactorNarrow * band) & (up < centre + optInFactorNarrow * band))) - 1)));
    }
    free(tempDev);
    free(tempWork);

@@ -88,7 +88,9 @@ TA_LIB_API TA_RetCode TA_CDLTRISTAR( int    startIdx,
    int outIdx;
    int BodyTrailingIdx;
    int lookbackTotal;
+   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
    int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
+   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -133,7 +135,7 @@ TA_LIB_API TA_RetCode TA_CDLTRISTAR( int    startIdx,
    i = BodyTrailingIdx;
    while( i < startIdx - 2 )
    {
-      BodyPeriodTotal += TA_CANDLERANGE(BodyDoji,i);
+      BodyPeriodTotal += TA_CANDLERANGE_OF(BodyDoji_rangeType,i);
       i += 1;
    }
    /* Proceed with the calculation for the requested range.
@@ -146,9 +148,9 @@ TA_LIB_API TA_RetCode TA_CDLTRISTAR( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i - 2] - inOpen[i - 2]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) && /* 1st: doji */
-          fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) && /* 2nd: doji */
-          fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) ) /* 3rd: doji */
+      if( fabs(inClose[i - 2] - inOpen[i - 2]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyPeriodTotal,i - 2) && /* 1st: doji */
+          fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyPeriodTotal,i - 2) && /* 2nd: doji */
+          fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyPeriodTotal,i - 2) ) /* 3rd: doji */
       {
          outInteger[outIdx] = 0;
          if( ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* 2nd gaps up */
@@ -169,7 +171,7 @@ TA_LIB_API TA_RetCode TA_CDLTRISTAR( int    startIdx,
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      BodyPeriodTotal += TA_CANDLERANGE(BodyDoji,i - 2) - TA_CANDLERANGE(BodyDoji,BodyTrailingIdx);
+      BodyPeriodTotal += TA_CANDLERANGE_OF(BodyDoji_rangeType,i - 2) - TA_CANDLERANGE_OF(BodyDoji_rangeType,BodyTrailingIdx);
       i += 1;
       BodyTrailingIdx += 1;
    } while( i <= endIdx );
@@ -194,7 +196,9 @@ TA_RetCode TA_S_CDLTRISTAR( int    startIdx,
    int outIdx;
    int BodyTrailingIdx;
    int lookbackTotal;
+   int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
    int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
+   double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -230,14 +234,14 @@ TA_RetCode TA_S_CDLTRISTAR( int    startIdx,
    i = BodyTrailingIdx;
    while( i < startIdx - 2 )
    {
-      BodyPeriodTotal += TA_CANDLERANGE(BodyDoji,i);
+      BodyPeriodTotal += TA_CANDLERANGE_OF(BodyDoji_rangeType,i);
       i += 1;
    }
    i = startIdx;
    outIdx = 0;
    do
    {
-      if( fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) && fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) )
+      if( fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyPeriodTotal,i - 2) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyPeriodTotal,i - 2) && fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyPeriodTotal,i - 2) )
       {
          outInteger[outIdx] = 0;
          if( ((min((double)inOpen[i - 1],(double)inClose[i - 1]) > max((double)inOpen[i - 2],(double)inClose[i - 2])) ? 1 : 0) && max((double)inOpen[i],(double)inClose[i]) < max((double)inOpen[i - 1],(double)inClose[i - 1]) )
@@ -253,7 +257,7 @@ TA_RetCode TA_S_CDLTRISTAR( int    startIdx,
       {
          outInteger[outIdx++] = 0;
       }
-      BodyPeriodTotal += TA_CANDLERANGE(BodyDoji,i - 2) - TA_CANDLERANGE(BodyDoji,BodyTrailingIdx);
+      BodyPeriodTotal += TA_CANDLERANGE_OF(BodyDoji_rangeType,i - 2) - TA_CANDLERANGE_OF(BodyDoji_rangeType,BodyTrailingIdx);
       i += 1;
       BodyTrailingIdx += 1;
    } while( i <= endIdx );
@@ -359,7 +363,9 @@ static TA_RetCode TA_CDLTRISTAR_OpenImpl( struct TA_CDLTRISTAR_Stream **stream, 
    endIdx = historyLen - 1;
 
    {
+      int BodyDoji_rangeType = TA_Globals->candleSettings[TA_BodyDoji].rangeType;
       int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
+      double BodyDoji_factor = TA_Globals->candleSettings[TA_BodyDoji].factor;
       double BodyPeriodTotal = 0.0;
       int i;
       int outIdx;
@@ -390,7 +396,7 @@ static TA_RetCode TA_CDLTRISTAR_OpenImpl( struct TA_CDLTRISTAR_Stream **stream, 
       i = BodyTrailingIdx;
       while( i < startIdx - 2 )
       {
-         BodyPeriodTotal += TA_CANDLERANGE(BodyDoji,i);
+         BodyPeriodTotal += TA_CANDLERANGE_OF(BodyDoji_rangeType,i);
          i += 1;
       }
       /* Proceed with the calculation for the requested range.
@@ -403,9 +409,9 @@ static TA_RetCode TA_CDLTRISTAR_OpenImpl( struct TA_CDLTRISTAR_Stream **stream, 
       outIdx = 0;
       do
       {
-         if( fabs(inClose[i - 2] - inOpen[i - 2]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) && /* 1st: doji */
-             fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) && /* 2nd: doji */
-             fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) ) /* 3rd: doji */
+         if( fabs(inClose[i - 2] - inOpen[i - 2]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyPeriodTotal,i - 2) && /* 1st: doji */
+             fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyPeriodTotal,i - 2) && /* 2nd: doji */
+             fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyPeriodTotal,i - 2) ) /* 3rd: doji */
          {
             outInteger[outIdx * outStride] = 0;
             if( ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* 2nd gaps up */
@@ -426,7 +432,7 @@ static TA_RetCode TA_CDLTRISTAR_OpenImpl( struct TA_CDLTRISTAR_Stream **stream, 
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
-         BodyPeriodTotal += TA_CANDLERANGE(BodyDoji,i - 2) - TA_CANDLERANGE(BodyDoji,BodyTrailingIdx);
+         BodyPeriodTotal += TA_CANDLERANGE_OF(BodyDoji_rangeType,i - 2) - TA_CANDLERANGE_OF(BodyDoji_rangeType,BodyTrailingIdx);
          i += 1;
          BodyTrailingIdx += 1;
       } while( i <= endIdx );

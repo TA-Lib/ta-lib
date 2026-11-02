@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  032005 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  110126 MF,CC  Pre-check the colour and close tests in an outer if, the candle averages inside
  *
  */
 int cdlhomingpigeon_lookback(void)
@@ -82,12 +83,17 @@ TA_RetCode cdlhomingpigeon(int startIdx, int endIdx,
    {
       if( ta_candlecolor(inClose[i-1], inOpen[i-1]) == -1 &&                                                            // 1st black
          ta_candlecolor(inClose[i], inOpen[i]) == -1 &&                                                              // 2nd black
-         ta_realbody(inClose[i-1], inOpen[i-1]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&         // 1st long
-         ta_realbody(inClose[i], inOpen[i]) <= ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyShortPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&          // 2nd short
-         inOpen[i] < inOpen[i-1] &&                                                              // 2nd engulfed by 1st
-         inClose[i] > inClose[i-1]
+         inClose[i] > inClose[i-1]                                                              // 2nd engulfed by 1st
       ) {
-         outInteger[outIdx++] = 100;
+         if( ta_realbody(inClose[i-1], inOpen[i-1]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&         // 1st long
+            ta_realbody(inClose[i], inOpen[i]) <= ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyShortPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&          // 2nd short
+            inOpen[i] < inOpen[i-1]
+         ) {
+            outInteger[outIdx++] = 100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

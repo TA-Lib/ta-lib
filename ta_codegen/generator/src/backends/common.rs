@@ -282,6 +282,26 @@ pub(crate) fn enum_member_literal(
 /// calls are unpacked/hoisted before the surrounding expression is rendered.
 pub const CANDLE_FNS: &[&str] = &["ta_candlerange", "ta_candleaverage"];
 
+/// One condition leaf's comment lines, as `Statement::If` carries them.
+pub type CondComment = Option<Vec<String>>;
+
+/// `comments`, one per `&&` / `||` leaf of `left OP right`, split between the
+/// two sides; both empty when they do not pair with the leaves.
+#[must_use]
+pub fn split_cond_comments(left: &Expr, right: &Expr, comments: &[CondComment]) -> (Vec<CondComment>, Vec<CondComment>) {
+    fn leaves(e: &Expr) -> usize {
+        match e {
+            Expr::BinOp(l, BinOp::And | BinOp::Or, r) => leaves(l) + leaves(r),
+            _ => 1,
+        }
+    }
+    let n = leaves(left);
+    if comments.len() != n + leaves(right) {
+        return (Vec::new(), Vec::new());
+    }
+    (comments[..n].to_vec(), comments[n..].to_vec())
+}
+
 /// True if `expr` directly contains a call to a candlestick helper, stopping the
 /// walk at logical `&&`/`||` operators (which begin a separate condition in the
 /// chain).

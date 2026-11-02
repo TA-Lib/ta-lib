@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  022005 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  *
  */
 
@@ -99,29 +100,33 @@ TA_RetCode cdlmathold(int startIdx, int endIdx,
       if( // white, black, 2 black or white, white
          ta_candlecolor(inClose[i-4], inOpen[i-4]) == 1 &&
          ta_candlecolor(inClose[i-3], inOpen[i-3]) == -1 &&
-         ta_candlecolor(inClose[i], inOpen[i]) == 1 &&
-         // upside gap 1st to 2nd
-         ta_realbodygapup(inOpen[i-3], inClose[i-3], inOpen[i-4], inClose[i-4]) &&
-         // 3rd to 4th hold within 1st: a part of the real body must be within 1st real body
-         min(inOpen[i-2], inClose[i-2]) < inClose[i-4] &&
-         min(inOpen[i-1], inClose[i-1]) < inClose[i-4] &&
-         // reaction days penetrate first body less than optInPenetration percent
-         min(inOpen[i-2], inClose[i-2]) > inClose[i-4] - ta_realbody(inClose[i-4], inOpen[i-4]) * optInPenetration &&
-         min(inOpen[i-1], inClose[i-1]) > inClose[i-4] - ta_realbody(inClose[i-4], inOpen[i-4]) * optInPenetration &&
-         // 2nd to 4th are falling
-         max(inClose[i-2], inOpen[i-2]) < inOpen[i-3] &&
-         max(inClose[i-1], inOpen[i-1]) < max(inClose[i-2], inOpen[i-2]) &&
-         // 5th opens above the prior close
-         inOpen[i] > inClose[i-1] &&
-         // 5th closes above the highest high of the reaction days
-         inClose[i] > max(max(inHigh[i-3], inHigh[i-2]), inHigh[i-1]) &&
-         // 1st long, then 3 small
-         ta_realbody(inClose[i-4], inOpen[i-4]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyPeriodTotal[4], inOpen[i-4], inHigh[i-4], inLow[i-4], inClose[i-4]) &&
-         ta_realbody(inClose[i-3], inOpen[i-3]) < ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyPeriodTotal[3], inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3]) &&
-         ta_realbody(inClose[i-2], inOpen[i-2]) < ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
-         ta_realbody(inClose[i-1], inOpen[i-1]) < ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
-      ) {
-         outInteger[outIdx++] = 100;
+         ta_candlecolor(inClose[i], inOpen[i]) == 1 ) {
+         if( // upside gap 1st to 2nd
+            ta_realbodygapup(inOpen[i-3], inClose[i-3], inOpen[i-4], inClose[i-4]) &&
+            // 3rd to 4th hold within 1st: a part of the real body must be within 1st real body
+            min(inOpen[i-2], inClose[i-2]) < inClose[i-4] &&
+            min(inOpen[i-1], inClose[i-1]) < inClose[i-4] &&
+            // reaction days penetrate first body less than optInPenetration percent
+            min(inOpen[i-2], inClose[i-2]) > inClose[i-4] - ta_realbody(inClose[i-4], inOpen[i-4]) * optInPenetration &&
+            min(inOpen[i-1], inClose[i-1]) > inClose[i-4] - ta_realbody(inClose[i-4], inOpen[i-4]) * optInPenetration &&
+            // 2nd to 4th are falling
+            max(inClose[i-2], inOpen[i-2]) < inOpen[i-3] &&
+            max(inClose[i-1], inOpen[i-1]) < max(inClose[i-2], inOpen[i-2]) &&
+            // 5th opens above the prior close
+            inOpen[i] > inClose[i-1] &&
+            // 5th closes above the highest high of the reaction days
+            inClose[i] > max(max(inHigh[i-3], inHigh[i-2]), inHigh[i-1]) &&
+            // 1st long, then 3 small
+            ta_realbody(inClose[i-4], inOpen[i-4]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyPeriodTotal[4], inOpen[i-4], inHigh[i-4], inLow[i-4], inClose[i-4]) &&
+            ta_realbody(inClose[i-3], inOpen[i-3]) < ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyPeriodTotal[3], inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3]) &&
+            ta_realbody(inClose[i-2], inOpen[i-2]) < ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
+            ta_realbody(inClose[i-1], inOpen[i-1]) < ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyPeriodTotal[1], inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+         ) {
+            outInteger[outIdx++] = 100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

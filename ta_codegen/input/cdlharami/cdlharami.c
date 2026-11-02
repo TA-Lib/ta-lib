@@ -15,6 +15,7 @@
  *  040309 AC     Increased flexibility to allow real bodies matching
  *                on one end (Greg Morris - "Candlestick charting explained")
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Join the long and short tests into the one pre-check
  *
  */
 
@@ -83,24 +84,20 @@ TA_RetCode cdlharami(int startIdx, int endIdx,
    outIdx = 0;
    do
    {
-      if( ta_realbody(inClose[i-1], inOpen[i-1]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])   // 1st: long
+      if( ta_realbody(inClose[i-1], inOpen[i-1]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&   // 1st: long
+         ta_realbody(inClose[i], inOpen[i]) <= ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyShortPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i])   // 2nd: short
       ) {
-         if( ta_realbody(inClose[i], inOpen[i]) <= ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyShortPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i])   // 2nd: short
-         ) {
-            /* 2nd is engulfed by 1st */
-            if( max( inClose[i], inOpen[i] ) < max( inClose[i-1], inOpen[i-1] ) &&
-               min( inClose[i], inOpen[i] ) > min( inClose[i-1], inOpen[i-1] ) ) {
-               outInteger[outIdx++] = -ta_candlecolor(inClose[i-1], inOpen[i-1]) * 100;
-               /* 2nd is engulfed by 1st
-                * (one end of real body can match;
-                * engulfing guaranteed by "long" and "short")
-                */
-            } else if( max( inClose[i], inOpen[i] ) <= max( inClose[i-1], inOpen[i-1] ) &&
-               min( inClose[i], inOpen[i] ) >= min( inClose[i-1], inOpen[i-1] ) ) {
-               outInteger[outIdx++] = -ta_candlecolor(inClose[i-1], inOpen[i-1]) * 80;
-            } else {
-               outInteger[outIdx++] = 0;
-            }
+         /* 2nd is engulfed by 1st */
+         if( max( inClose[i], inOpen[i] ) < max( inClose[i-1], inOpen[i-1] ) &&
+            min( inClose[i], inOpen[i] ) > min( inClose[i-1], inOpen[i-1] ) ) {
+            outInteger[outIdx++] = -ta_candlecolor(inClose[i-1], inOpen[i-1]) * 100;
+            /* 2nd is engulfed by 1st
+             * (one end of real body can match;
+             * engulfing guaranteed by "long" and "short")
+             */
+         } else if( max( inClose[i], inOpen[i] ) <= max( inClose[i-1], inOpen[i-1] ) &&
+            min( inClose[i], inOpen[i] ) >= min( inClose[i-1], inOpen[i-1] ) ) {
+            outInteger[outIdx++] = -ta_candlecolor(inClose[i-1], inOpen[i-1]) * 80;
          } else {
             outInteger[outIdx++] = 0;
          }

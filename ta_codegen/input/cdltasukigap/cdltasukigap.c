@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  011605 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Write the two gaps as an else-if chain of pre-checks
  *
  */
 
@@ -77,29 +78,37 @@ TA_RetCode cdltasukigap(int startIdx, int endIdx,
    outIdx = 0;
    do
    {
-      if(
-         (
-         ta_realbodygapup(inOpen[i-1], inClose[i-1], inOpen[i-2], inClose[i-2]) &&                                // upside gap
+      if( ta_realbodygapup(inOpen[i-1], inClose[i-1], inOpen[i-2], inClose[i-2]) &&                                // upside gap
          ta_candlecolor(inClose[i-1], inOpen[i-1]) == 1 &&                                 // 1st: white
-         ta_candlecolor(inClose[i], inOpen[i]) == -1 &&                                  // 2nd: black
-         inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] &&      //      that opens within the white rb
-         inClose[i] < inOpen[i-1] &&                                 //      and closes under the white rb
-         inClose[i] > max(inClose[i-2], inOpen[i-2]) &&              //      inside the gap
-         // size of 2 rb near the same
-         fabs(ta_realbody(inClose[i-1], inOpen[i-1]) - ta_realbody(inClose[i], inOpen[i])) < ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
-      ) ||
-         (
-         ta_realbodygapdown(inOpen[i-1], inClose[i-1], inOpen[i-2], inClose[i-2]) &&                              // downside gap
-         ta_candlecolor(inClose[i-1], inOpen[i-1]) == -1 &&                                // 1st: black
-         ta_candlecolor(inClose[i], inOpen[i]) == 1 &&                                   // 2nd: white
-         inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] &&      //      that opens within the black rb
-         inClose[i] > inOpen[i-1] &&                                 //      and closes above the black rb
-         inClose[i] < min(inClose[i-2], inOpen[i-2]) &&              //      inside the gap
-         // size of 2 rb near the same
-         fabs(ta_realbody(inClose[i-1], inOpen[i-1]) - ta_realbody(inClose[i], inOpen[i])) < ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
-      )
+         ta_candlecolor(inClose[i], inOpen[i]) == -1   // 2nd: black
       ) {
-         outInteger[outIdx++] = ta_candlecolor(inClose[i-1], inOpen[i-1]) * 100;
+         if( inOpen[i] < inClose[i-1] && inOpen[i] > inOpen[i-1] &&      //      that opens within the white rb
+            inClose[i] < inOpen[i-1] &&                                 //      and closes under the white rb
+            inClose[i] > max(inClose[i-2], inOpen[i-2]) &&              //      inside the gap
+            // size of 2 rb near the same
+            fabs(ta_realbody(inClose[i-1], inOpen[i-1]) - ta_realbody(inClose[i], inOpen[i])) < ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+         ) {
+            outInteger[outIdx++] = ta_candlecolor(inClose[i-1], inOpen[i-1]) * 100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
+      }
+      else if( ta_realbodygapdown(inOpen[i-1], inClose[i-1], inOpen[i-2], inClose[i-2]) &&                              // downside gap
+         ta_candlecolor(inClose[i-1], inOpen[i-1]) == -1 &&                                // 1st: black
+         ta_candlecolor(inClose[i], inOpen[i]) == 1   // 2nd: white
+      ) {
+         if( inOpen[i] < inOpen[i-1] && inOpen[i] > inClose[i-1] &&      //      that opens within the black rb
+            inClose[i] > inOpen[i-1] &&                                 //      and closes above the black rb
+            inClose[i] < min(inClose[i-2], inOpen[i-2]) &&              //      inside the gap
+            // size of 2 rb near the same
+            fabs(ta_realbody(inClose[i-1], inOpen[i-1]) - ta_realbody(inClose[i], inOpen[i])) < ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+         ) {
+            outInteger[outIdx++] = ta_candlecolor(inClose[i-1], inOpen[i-1]) * 100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

@@ -153,71 +153,22 @@ impl Core {
         outIdx = 0;
         if i <= endIdx {
             let _wn: usize = endIdx - i + 1;
-            if let (Some(_w0), Some(_w1), Some(_w2)) = (inClose.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn + 1)), inOpen.get(i.wrapping_sub(1)..).and_then(|w| w.get(.._wn + 1)), outInteger.get_mut(outIdx..).and_then(|w| w.get_mut(.._wn))) {
-                let _w0 = &_w0[.._wn + 1];
-                let _w1 = &_w1[.._wn + 1];
-                let _w2 = &mut _w2[.._wn];
-                for _wk in 0.._wn {
-                    _w2[_wk] = (if (if _w0[_wk + 1] >= _w1[_wk + 1] { 1 } else { -1 }) == 1 && (if _w0[_wk] >= _w1[_wk] { 1 } else { -1 }) == -1 && (_w0[_wk + 1] >= _w1[_wk] && _w1[_wk + 1] < _w0[_wk] || _w0[_wk + 1] > _w1[_wk] && _w1[_wk + 1] <= _w0[_wk]) || (if _w0[_wk + 1] >= _w1[_wk + 1] { 1 } else { -1 }) == -1 && (if _w0[_wk] >= _w1[_wk] { 1 } else { -1 }) == 1 && (_w1[_wk + 1] >= _w0[_wk] && _w0[_wk + 1] < _w1[_wk] || _w1[_wk + 1] > _w0[_wk] && _w0[_wk + 1] <= _w1[_wk]) { (if _w1[_wk + 1] != _w0[_wk] && _w0[_wk + 1] != _w1[_wk] { (if _w0[_wk + 1] >= _w1[_wk + 1] { 1 } else { -1 }) * 100 } else { (if _w0[_wk + 1] >= _w1[_wk + 1] { 1 } else { -1 }) * 80 }) } else { 0 });
-                    outIdx += 1;
-                    i += 1;
-                }
-            } else {
-                loop {
-                    if (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == 1 &&
-                        (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 && // white engulfs black
-                        (inClose[i] >= inOpen[i - 1] &&
-                          inOpen[i] < inClose[i - 1] ||
-                         inClose[i] > inOpen[i - 1] &&
-                          inOpen[i] <= inClose[i - 1]) ||
-                       (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == -1 &&
-                        (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == 1 &&  // black engulfs white
-                        (inOpen[i] >= inClose[i - 1] &&
-                          inClose[i] < inOpen[i - 1] ||
-                         inOpen[i] > inClose[i - 1] &&
-                          inClose[i] <= inOpen[i - 1])
-                    {
-                        if inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] {
-                            outInteger[outIdx] = ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32;
-                            outIdx += 1;
-                        } else {
-                            outInteger[outIdx] = ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 80) as i32;
-                            outIdx += 1;
-                        }
-                    } else {
-                        outInteger[outIdx] = 0;
-                        outIdx += 1;
-                    }
-                    i += 1;
-                    if !(i <= endIdx) { break; }
-                }
+            let _w0 = &inClose[i - 1..][.._wn + 1];
+            let _w1 = &inOpen[i - 1..][.._wn + 1];
+            let _w2 = &mut outInteger[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                _w2[_wk] = std::hint::select_unpredictable((((_w0[_wk + 1] >= _w1[_wk + 1]) & (!(_w0[_wk] >= _w1[_wk])) & // white engulfs black
+                    (((_w0[_wk + 1] >= _w1[_wk]) & (_w1[_wk + 1] < _w0[_wk])) | ((_w0[_wk + 1] > _w1[_wk]) & (_w1[_wk + 1] <= _w0[_wk])))) | ((!(_w0[_wk + 1] >= _w1[_wk + 1])) & (_w0[_wk] >= _w1[_wk]) & // black engulfs white
+                    (((_w1[_wk + 1] >= _w0[_wk]) & (_w0[_wk + 1] < _w1[_wk])) | ((_w1[_wk + 1] > _w0[_wk]) & (_w0[_wk + 1] <= _w1[_wk]))))), std::hint::select_unpredictable(((_w1[_wk + 1] != _w0[_wk]) & (_w0[_wk + 1] != _w1[_wk])), ((if _w0[_wk + 1] >= _w1[_wk + 1] { 1 } else { -1 }) * 100) as i32, ((if _w0[_wk + 1] >= _w1[_wk + 1] { 1 } else { -1 }) * 80) as i32), 0);
+                outIdx += 1;
+                i += 1;
             }
         } else {
             loop {
-                if (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == 1 &&
-                    (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == -1 && // white engulfs black
-                    (inClose[i] >= inOpen[i - 1] &&
-                      inOpen[i] < inClose[i - 1] ||
-                     inClose[i] > inOpen[i - 1] &&
-                      inOpen[i] <= inClose[i - 1]) ||
-                   (if inClose[i] >= inOpen[i] { 1 } else { -1 }) == -1 &&
-                    (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { -1 }) == 1 &&  // black engulfs white
-                    (inOpen[i] >= inClose[i - 1] &&
-                      inClose[i] < inOpen[i - 1] ||
-                     inOpen[i] > inClose[i - 1] &&
-                      inClose[i] <= inOpen[i - 1])
-                {
-                    if inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] {
-                        outInteger[outIdx] = ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32;
-                        outIdx += 1;
-                    } else {
-                        outInteger[outIdx] = ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 80) as i32;
-                        outIdx += 1;
-                    }
-                } else {
-                    outInteger[outIdx] = 0;
-                    outIdx += 1;
-                }
+                outInteger[outIdx] = std::hint::select_unpredictable((((inClose[i] >= inOpen[i]) & (!(inClose[i - 1] >= inOpen[i - 1])) & // white engulfs black
+                    (((inClose[i] >= inOpen[i - 1]) & (inOpen[i] < inClose[i - 1])) | ((inClose[i] > inOpen[i - 1]) & (inOpen[i] <= inClose[i - 1])))) | ((!(inClose[i] >= inOpen[i])) & (inClose[i - 1] >= inOpen[i - 1]) & // black engulfs white
+                    (((inOpen[i] >= inClose[i - 1]) & (inClose[i] < inOpen[i - 1])) | ((inOpen[i] > inClose[i - 1]) & (inClose[i] <= inOpen[i - 1]))))), std::hint::select_unpredictable(((inOpen[i] != inClose[i - 1]) & (inClose[i] != inOpen[i - 1])), ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 100) as i32, ((if inClose[i] >= inOpen[i] { 1 } else { -1 }) * 80) as i32), 0);
+                outIdx += 1;
                 i += 1;
                 if !(i <= endIdx) { break; }
             }

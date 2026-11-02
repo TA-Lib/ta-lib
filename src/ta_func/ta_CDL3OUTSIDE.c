@@ -133,22 +133,10 @@ TA_LIB_API TA_RetCode TA_CDL3OUTSIDE( int    startIdx,
    outIdx = 0;
    do
    {
-      if( (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&
-           ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* white engulfs black */
-           inClose[i - 1] > inOpen[i - 2] &&
-           inOpen[i - 1] < inClose[i - 2] &&
-           inClose[i] > inClose[i - 1]) ||                       /* third candle higher */
-          (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 &&
-           ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* black engulfs white */
-           inOpen[i - 1] > inClose[i - 2] &&
-           inClose[i - 1] < inOpen[i - 2] &&
-           inClose[i] < inClose[i - 1]) )                        /* third candle lower */
-      {
-         outInteger[outIdx++] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
+      outInteger[outIdx++] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) & -(int)((((inClose[i - 1] >= inOpen[i - 1]) & (!(inClose[i - 2] >= inOpen[i - 2])) & /* white engulfs black */
+          (inClose[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i] > inClose[i - 1])) | /* third candle higher */
+          ((!(inClose[i - 1] >= inOpen[i - 1])) & (inClose[i - 2] >= inOpen[i - 2]) & /* black engulfs white */
+          (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i] < inClose[i - 1]))))); /* third candle lower */
       i += 1;
    } while( i <= endIdx );
    /* All done. Indicate the output limits and return. */
@@ -204,13 +192,7 @@ TA_RetCode TA_S_CDL3OUTSIDE( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == 1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == -1 && (double)inClose[i - 1] > (double)inOpen[i - 2] && (double)inOpen[i - 1] < (double)inClose[i - 2] && (double)inClose[i] > (double)inClose[i - 1]) || ((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == -1 && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == 1 && (double)inOpen[i - 1] > (double)inClose[i - 2] && (double)inClose[i - 1] < (double)inOpen[i - 2] && (double)inClose[i] < (double)inClose[i - 1]) )
-      {
-         outInteger[outIdx++] = (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
+      outInteger[outIdx++] = (((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 100) & -(int)(((((double)inClose[i - 1] >= (double)inOpen[i - 1]) & (!((double)inClose[i - 2] >= (double)inOpen[i - 2])) & ((double)inClose[i - 1] > (double)inOpen[i - 2]) & ((double)inOpen[i - 1] < (double)inClose[i - 2]) & ((double)inClose[i] > (double)inClose[i - 1])) | ((!((double)inClose[i - 1] >= (double)inOpen[i - 1])) & ((double)inClose[i - 2] >= (double)inOpen[i - 2]) & ((double)inOpen[i - 1] > (double)inClose[i - 2]) & ((double)inClose[i - 1] < (double)inOpen[i - 2]) & ((double)inClose[i] < (double)inClose[i - 1])))));
       i += 1;
    } while( i <= endIdx );
    *outNBElement= outIdx;

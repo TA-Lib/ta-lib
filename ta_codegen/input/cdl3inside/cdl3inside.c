@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  121104 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  *
  */
 
@@ -87,11 +88,15 @@ TA_RetCode cdl3inside(int startIdx, int endIdx,
          ( ( ta_candlecolor(inClose[i-2], inOpen[i-2]) == 1 && ta_candlecolor(inClose[i], inOpen[i]) == -1 && inClose[i] < inOpen[i-2] )   // 3rd: opposite to 1st and closing out
          ||
          ( ta_candlecolor(inClose[i-2], inOpen[i-2]) == -1 && ta_candlecolor(inClose[i], inOpen[i]) == 1 && inClose[i] > inOpen[i-2] )
-      ) &&
-         ta_realbody(inClose[i-2], inOpen[i-2]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&         // 1st: long
-         ta_realbody(inClose[i-1], inOpen[i-1]) <= ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyShortPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])       // 2nd: short
-      ) {
-         outInteger[outIdx++] = -ta_candlecolor(inClose[i-2], inOpen[i-2]) * 100;
+      ) ) {
+         if( ta_realbody(inClose[i-2], inOpen[i-2]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&         // 1st: long
+            ta_realbody(inClose[i-1], inOpen[i-1]) <= ta_candleaverage(BodyShort_rangeType, BodyShort_avgPeriod, BodyShort_factor, BodyShortPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])       // 2nd: short
+         ) {
+            outInteger[outIdx++] = -ta_candlecolor(inClose[i-2], inOpen[i-2]) * 100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

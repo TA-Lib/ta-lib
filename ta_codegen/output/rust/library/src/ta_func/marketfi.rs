@@ -137,25 +137,28 @@ impl Core {
         // already the Money Flow Index, so this carries the name Tulip and
         // pandas-ta-classic use.
         outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            // A zero-volume bar would divide by zero. Neither reference guards
-            // it -- they emit +/-Inf, or NaN when the range is zero too -- but
-            // issue #112 settled that a successful call never emits NaN or Inf,
-            // so an untraded bar facilitated no movement and reports 0.
-            //
-            // The comparison is an exact != 0.0 rather than TA_IS_ZERO, whose
-            // 1e-14 band is an absolute threshold and meaningless against an
-            // unbounded volume scale. Same reasoning as the prevClose guard in
-            // ta_codegen/input/nvi/nvi.c.
-            if inVolume[i] != 0.0 {
-                outReal[outIdx] = (((inHigh[i] - inLow[i]) / inVolume[i]) as f64);
+        i = startIdx;
+        if i <= endIdx {
+            let _wn: usize = endIdx - i + 1;
+            let _w0 = &inHigh[i..][.._wn];
+            let _w1 = &inLow[i..][.._wn];
+            let _w2 = &inVolume[i..][.._wn];
+            let _w3 = &mut outReal[outIdx..][.._wn];
+            for _wk in 0.._wn {
+                // A zero-volume bar would divide by zero. Neither reference guards
+                // it -- they emit +/-Inf, or NaN when the range is zero too -- but
+                // issue #112 settled that a successful call never emits NaN or Inf,
+                // so an untraded bar facilitated no movement and reports 0.
+                //
+                // The comparison is an exact != 0.0 rather than TA_IS_ZERO, whose
+                // 1e-14 band is an absolute threshold and meaningless against an
+                // unbounded volume scale. Same reasoning as the prevClose guard in
+                // ta_codegen/input/nvi/nvi.c.
+                _w3[_wk] = std::hint::select_unpredictable(_w2[_wk] != 0.0, (((_w0[_wk] - _w1[_wk]) / _w2[_wk]) as f64), 0.0);
                 outIdx += 1;
-            } else {
-                outReal[outIdx] = 0.0;
-                outIdx += 1;
+                i += 1;
             }
         }
-        i = (endIdx as usize) + 1;
         (*outBegIdx) = startIdx;
         (*outNBElement) = outIdx;
         return RetCode::Success;

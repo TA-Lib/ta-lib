@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  020605 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Pre-check the two colour tests in an outer if, the gaps inside
  *
  */
 
@@ -85,19 +86,25 @@ TA_RetCode cdlgapsidesidewhite(int startIdx, int endIdx,
    do
    {
       if(
-         ( // upside or downside gap between the 1st candle and both the next 2 candles
-         ( ta_realbodygapup(inOpen[i-1], inClose[i-1], inOpen[i-2], inClose[i-2]) && ta_realbodygapup(inOpen[i], inClose[i], inOpen[i-2], inClose[i-2]) )
-         ||
-         ( ta_realbodygapdown(inOpen[i-1], inClose[i-1], inOpen[i-2], inClose[i-2]) && ta_realbodygapdown(inOpen[i], inClose[i], inOpen[i-2], inClose[i-2]) )
-      ) &&
          ta_candlecolor(inClose[i-1], inOpen[i-1]) == 1 &&                                                                 // 2nd: white
-         ta_candlecolor(inClose[i], inOpen[i]) == 1 &&                                                                   // 3rd: white
-         ta_realbody(inClose[i], inOpen[i]) >= ta_realbody(inClose[i-1], inOpen[i-1]) - ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&   // same size 2 and 3
-         ta_realbody(inClose[i], inOpen[i]) <= ta_realbody(inClose[i-1], inOpen[i-1]) + ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&
-         inOpen[i] >= inOpen[i-1] - ta_candleaverage(Equal_rangeType, Equal_avgPeriod, Equal_factor, EqualPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&           // same open 2 and 3
-         inOpen[i] <= inOpen[i-1] + ta_candleaverage(Equal_rangeType, Equal_avgPeriod, Equal_factor, EqualPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+         ta_candlecolor(inClose[i], inOpen[i]) == 1                                                                   // 3rd: white
       ) {
-         outInteger[outIdx++] = ( ta_realbodygapup(inOpen[i-1], inClose[i-1], inOpen[i-2], inClose[i-2]) ? 100 : -100 );
+         if(
+            ( // upside or downside gap between the 1st candle and both the next 2 candles
+            ( ta_realbodygapup(inOpen[i-1], inClose[i-1], inOpen[i-2], inClose[i-2]) && ta_realbodygapup(inOpen[i], inClose[i], inOpen[i-2], inClose[i-2]) )
+            ||
+            ( ta_realbodygapdown(inOpen[i-1], inClose[i-1], inOpen[i-2], inClose[i-2]) && ta_realbodygapdown(inOpen[i], inClose[i], inOpen[i-2], inClose[i-2]) )
+         ) &&
+            ta_realbody(inClose[i], inOpen[i]) >= ta_realbody(inClose[i-1], inOpen[i-1]) - ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&   // same size 2 and 3
+            ta_realbody(inClose[i], inOpen[i]) <= ta_realbody(inClose[i-1], inOpen[i-1]) + ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&
+            inOpen[i] >= inOpen[i-1] - ta_candleaverage(Equal_rangeType, Equal_avgPeriod, Equal_factor, EqualPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) &&           // same open 2 and 3
+            inOpen[i] <= inOpen[i-1] + ta_candleaverage(Equal_rangeType, Equal_avgPeriod, Equal_factor, EqualPeriodTotal, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1])
+         ) {
+            outInteger[outIdx++] = ( ta_realbodygapup(inOpen[i-1], inClose[i-1], inOpen[i-2], inClose[i-2]) ? 100 : -100 );
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

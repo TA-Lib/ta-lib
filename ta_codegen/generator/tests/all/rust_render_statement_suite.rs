@@ -2766,8 +2766,19 @@ fn rust_candle_loops_read_their_inputs_through_windows() {
         // A data-dependent index (`in[c ? i : i - 1]`) is no window's to take.
         let linear = |index: &str| index.split([' ', '+', '-']).filter(|t| !t.is_empty()).all(|t| t.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_'));
         for body in &loops {
-            // The pattern test: the body up to the brace that opens its first arm.
-            let test = &body[..body.find("{\n").map_or(body.len(), |at| at + 1)];
+            // The pattern test: the body up to the brace that opens its first
+            // arm, a trailing comment after that brace aside.
+            let mut end = body.len();
+            let mut at = 0;
+            for line in body.split_inclusive('\n') {
+                let code = line.split("//").next().unwrap_or("").trim_end();
+                at += line.len();
+                if code.ends_with('{') {
+                    end = at;
+                    break;
+                }
+            }
+            let test = &body[..end];
             for input in ["inOpen[", "inHigh[", "inLow[", "inClose["] {
                 for (at, _) in test.match_indices(input) {
                     let rest = &test[at + input.len()..];
@@ -2845,4 +2856,26 @@ fn rust_windowed_countdown_keeps_every_decrement_of_its_condition() {
             assert_eq!(unguarded, "c = c.wrapping_sub(1);", "{out}");
         }
     }
+}
+
+/// A candle `&&` split under `TA_UNLIKELY` keeps the inner test's comments.
+#[test]
+fn an_unlikely_candle_split_keeps_the_inner_comments() {
+    use ir::{BinOp, Expr, Statement};
+    let avg = |side: &str| {
+        Expr::BinOp(
+            Box::new(Expr::FuncCall("ta_candlerange".into(), vec![Expr::Var("BodyLong_rangeType".into()), Expr::Var(side.into())])),
+            BinOp::Greater,
+            Box::new(Expr::Var("x".into())),
+        )
+    };
+    let both = Expr::BinOp(Box::new(avg("i")), BinOp::And, Box::new(avg("j")));
+    let stmt = Statement::If {
+        condition: Expr::FuncCall("UNLIKELY".into(), vec![both]),
+        then_body: vec![Statement::Assign { target: Expr::Var("y".into()), value: Expr::IntLiteral(1), compound: false }],
+        else_body: Vec::new(),
+        cond_comments: vec![Some(vec!["outer note".into()]), Some(vec!["inner note".into()])],
+    };
+    let rendered = render_rust_stmt(&stmt);
+    assert!(rendered.contains("// outer note") && rendered.contains("// inner note"), "{rendered}");
 }

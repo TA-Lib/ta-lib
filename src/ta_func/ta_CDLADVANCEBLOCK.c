@@ -57,6 +57,7 @@
  *  -------------------------------------------------------------------
  *  120404 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  */
 
 TA_LIB_API int TA_CDLADVANCEBLOCK_Lookback( void )
@@ -100,11 +101,21 @@ TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK( int    startIdx,
    int NearTrailingIdx;
    int FarTrailingIdx;
    int lookbackTotal;
+   int BodyLong_rangeType = TA_Globals->candleSettings[TA_BodyLong].rangeType;
    int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
+   double BodyLong_factor = TA_Globals->candleSettings[TA_BodyLong].factor;
+   int Far_rangeType = TA_Globals->candleSettings[TA_Far].rangeType;
    int Far_avgPeriod = TA_Globals->candleSettings[TA_Far].avgPeriod;
+   double Far_factor = TA_Globals->candleSettings[TA_Far].factor;
+   int Near_rangeType = TA_Globals->candleSettings[TA_Near].rangeType;
    int Near_avgPeriod = TA_Globals->candleSettings[TA_Near].avgPeriod;
+   double Near_factor = TA_Globals->candleSettings[TA_Near].factor;
+   int ShadowLong_rangeType = TA_Globals->candleSettings[TA_ShadowLong].rangeType;
    int ShadowLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowLong].avgPeriod;
+   double ShadowLong_factor = TA_Globals->candleSettings[TA_ShadowLong].factor;
+   int ShadowShort_rangeType = TA_Globals->candleSettings[TA_ShadowShort].rangeType;
    int ShadowShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowShort].avgPeriod;
+   double ShadowShort_factor = TA_Globals->candleSettings[TA_ShadowShort].factor;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -164,36 +175,36 @@ TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK( int    startIdx,
    i = ShadowShortTrailingIdx;
    while( i < startIdx )
    {
-      ShadowShortPeriodTotal[2] = ShadowShortPeriodTotal[2] + TA_CANDLERANGE(ShadowShort,i - 2);
-      ShadowShortPeriodTotal[1] = ShadowShortPeriodTotal[1] + TA_CANDLERANGE(ShadowShort,i - 1);
-      ShadowShortPeriodTotal[0] = ShadowShortPeriodTotal[0] + TA_CANDLERANGE(ShadowShort,i);
+      ShadowShortPeriodTotal[2] = ShadowShortPeriodTotal[2] + TA_CANDLERANGE_OF(ShadowShort_rangeType,i - 2);
+      ShadowShortPeriodTotal[1] = ShadowShortPeriodTotal[1] + TA_CANDLERANGE_OF(ShadowShort_rangeType,i - 1);
+      ShadowShortPeriodTotal[0] = ShadowShortPeriodTotal[0] + TA_CANDLERANGE_OF(ShadowShort_rangeType,i);
       i += 1;
    }
    i = ShadowLongTrailingIdx;
    while( i < startIdx )
    {
-      ShadowLongPeriodTotal[1] = ShadowLongPeriodTotal[1] + TA_CANDLERANGE(ShadowLong,i - 1);
-      ShadowLongPeriodTotal[0] = ShadowLongPeriodTotal[0] + TA_CANDLERANGE(ShadowLong,i);
+      ShadowLongPeriodTotal[1] = ShadowLongPeriodTotal[1] + TA_CANDLERANGE_OF(ShadowLong_rangeType,i - 1);
+      ShadowLongPeriodTotal[0] = ShadowLongPeriodTotal[0] + TA_CANDLERANGE_OF(ShadowLong_rangeType,i);
       i += 1;
    }
    i = NearTrailingIdx;
    while( i < startIdx )
    {
-      NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE(Near,i - 2);
-      NearPeriodTotal[1] = NearPeriodTotal[1] + TA_CANDLERANGE(Near,i - 1);
+      NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE_OF(Near_rangeType,i - 2);
+      NearPeriodTotal[1] = NearPeriodTotal[1] + TA_CANDLERANGE_OF(Near_rangeType,i - 1);
       i += 1;
    }
    i = FarTrailingIdx;
    while( i < startIdx )
    {
-      FarPeriodTotal[2] = FarPeriodTotal[2] + TA_CANDLERANGE(Far,i - 2);
-      FarPeriodTotal[1] = FarPeriodTotal[1] + TA_CANDLERANGE(Far,i - 1);
+      FarPeriodTotal[2] = FarPeriodTotal[2] + TA_CANDLERANGE_OF(Far_rangeType,i - 2);
+      FarPeriodTotal[1] = FarPeriodTotal[1] + TA_CANDLERANGE_OF(Far_rangeType,i - 1);
       i += 1;
    }
    i = BodyLongTrailingIdx;
    while( i < startIdx )
    {
-      BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i - 2);
+      BodyLongPeriodTotal += TA_CANDLERANGE_OF(BodyLong_rangeType,i - 2);
       i += 1;
    }
    i = startIdx;
@@ -209,28 +220,20 @@ TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&                     /* 1st white */
-          ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&                     /* 2nd white */
-          ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&                             /* 3rd white */
-          inClose[i] > inClose[i - 1] &&
-          inClose[i - 1] > inClose[i - 2] &&                                       /* consecutive higher closes */
-          inOpen[i - 1] > inOpen[i - 2] &&                                         /* 2nd opens within/near 1st real body */
-          inOpen[i - 1] <= inClose[i - 2] + TA_CANDLEAVERAGE(Near,NearPeriodTotal[2],i - 2) &&
-          inOpen[i] > inOpen[i - 1] &&                                             /* 3rd opens within/near 2nd real body */
-          inOpen[i] <= inClose[i - 1] + TA_CANDLEAVERAGE(Near,NearPeriodTotal[1],i - 1) &&
-          fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && /* 1st: long real body */
-          (inHigh[i - 2] - ((inClose[i - 2] >= inOpen[i - 2]) ? inClose[i - 2] : inOpen[i - 2])) < TA_CANDLEAVERAGE(ShadowShort,ShadowShortPeriodTotal[2],i - 2) && /* 1st: short upper shadow */
-          ((fabs(inClose[i - 1] - inOpen[i - 1]) < fabs(inClose[i - 2] - inOpen[i - 2]) - TA_CANDLEAVERAGE(Far,FarPeriodTotal[2],i - 2) && /* ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance */
-            fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) + TA_CANDLEAVERAGE(Near,NearPeriodTotal[1],i - 1)) ||
-           fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) - TA_CANDLEAVERAGE(Far,FarPeriodTotal[1],i - 1) || /* 3 far smaller than 2 advance blocked with the 3rd */
-           (fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) && /* ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) ) advance blocked with progressively smaller real bodies and some upper shadows */
-            fabs(inClose[i - 1] - inOpen[i - 1]) < fabs(inClose[i - 2] - inOpen[i - 2]) &&
-            ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowShort,ShadowShortPeriodTotal[0],i) ||
-             (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > TA_CANDLEAVERAGE(ShadowShort,ShadowShortPeriodTotal[1],i - 1))) ||
-           (fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) && /* ( 3 smaller than 2 && 3 long upper shadow ) advance blocked with 3rd candle's long upper shadow and smaller body */
-            (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal[0],i))) )
+      if( (((inClose[i - 2] >= inOpen[i - 2]) + /* 1st white */
+          (inClose[i - 1] >= inOpen[i - 1]) +   /* 2nd white */
+          (inClose[i] >= inOpen[i])) == 3) )    /* 3rd white */
       {
-         outInteger[outIdx++] = -100;
+         outInteger[outIdx++] = ((-100) & -(int)(((inClose[i] > inClose[i - 1]) & (inClose[i - 1] > inClose[i - 2]) & /* consecutive higher closes */
+             (inOpen[i - 1] > inOpen[i - 2]) & /* 2nd opens within/near 1st real body */
+             (inOpen[i - 1] <= inClose[i - 2] + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & (inOpen[i] > inOpen[i - 1]) & /* 3rd opens within/near 2nd real body */
+             (inOpen[i] <= inClose[i - 1] + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal[1],i - 1)) & (fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & /* 1st: long real body */
+             ((inHigh[i - 2] - ((inClose[i - 2] >= inOpen[i - 2]) ? inClose[i - 2] : inOpen[i - 2])) < TA_CANDLEAVERAGE_OF(ShadowShort_rangeType,ShadowShort_avgPeriod,ShadowShort_factor,ShadowShortPeriodTotal[2],i - 2)) & /* 1st: short upper shadow */
+             (((fabs(inClose[i - 1] - inOpen[i - 1]) < fabs(inClose[i - 2] - inOpen[i - 2]) - TA_CANDLEAVERAGE_OF(Far_rangeType,Far_avgPeriod,Far_factor,FarPeriodTotal[2],i - 2)) & /* ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance */
+             (fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal[1],i - 1))) | (fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) - TA_CANDLEAVERAGE_OF(Far_rangeType,Far_avgPeriod,Far_factor,FarPeriodTotal[1],i - 1)) | /* 3 far smaller than 2 advance blocked with the 3rd */
+             ((fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1])) & /* ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) ) advance blocked with progressively smaller real bodies and some upper shadows */
+             (fabs(inClose[i - 1] - inOpen[i - 1]) < fabs(inClose[i - 2] - inOpen[i - 2])) & (((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE_OF(ShadowShort_rangeType,ShadowShort_avgPeriod,ShadowShort_factor,ShadowShortPeriodTotal[0],i)) | ((inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > TA_CANDLEAVERAGE_OF(ShadowShort_rangeType,ShadowShort_avgPeriod,ShadowShort_factor,ShadowShortPeriodTotal[1],i - 1)))) | ((fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1])) & /* ( 3 smaller than 2 && 3 long upper shadow ) advance blocked with 3rd candle's long upper shadow and smaller body */
+             ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal[0],i)))))));
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -240,18 +243,18 @@ TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK( int    startIdx,
        */
       for( totIdx = 2; totIdx >= 0; totIdx -= 1 )
       {
-         ShadowShortPeriodTotal[totIdx] = ShadowShortPeriodTotal[totIdx] + (TA_CANDLERANGE(ShadowShort,i - totIdx) - TA_CANDLERANGE(ShadowShort,ShadowShortTrailingIdx - totIdx));
+         ShadowShortPeriodTotal[totIdx] = ShadowShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(ShadowShort_rangeType,i - totIdx) - TA_CANDLERANGE_OF(ShadowShort_rangeType,ShadowShortTrailingIdx - totIdx));
       }
       for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
       {
-         ShadowLongPeriodTotal[totIdx] = ShadowLongPeriodTotal[totIdx] + (TA_CANDLERANGE(ShadowLong,i - totIdx) - TA_CANDLERANGE(ShadowLong,ShadowLongTrailingIdx - totIdx));
+         ShadowLongPeriodTotal[totIdx] = ShadowLongPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(ShadowLong_rangeType,i - totIdx) - TA_CANDLERANGE_OF(ShadowLong_rangeType,ShadowLongTrailingIdx - totIdx));
       }
       for( totIdx = 2; totIdx >= 1; totIdx -= 1 )
       {
-         FarPeriodTotal[totIdx] = FarPeriodTotal[totIdx] + (TA_CANDLERANGE(Far,i - totIdx) - TA_CANDLERANGE(Far,FarTrailingIdx - totIdx));
-         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE(Near,i - totIdx) - TA_CANDLERANGE(Near,NearTrailingIdx - totIdx));
+         FarPeriodTotal[totIdx] = FarPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(Far_rangeType,i - totIdx) - TA_CANDLERANGE_OF(Far_rangeType,FarTrailingIdx - totIdx));
+         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(Near_rangeType,i - totIdx) - TA_CANDLERANGE_OF(Near_rangeType,NearTrailingIdx - totIdx));
       }
-      BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i - 2) - TA_CANDLERANGE(BodyLong,BodyLongTrailingIdx - 2);
+      BodyLongPeriodTotal += TA_CANDLERANGE_OF(BodyLong_rangeType,i - 2) - TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx - 2);
       i += 1;
       ShadowShortTrailingIdx += 1;
       ShadowLongTrailingIdx += 1;
@@ -289,11 +292,21 @@ TA_RetCode TA_S_CDLADVANCEBLOCK( int    startIdx,
    int NearTrailingIdx;
    int FarTrailingIdx;
    int lookbackTotal;
+   int BodyLong_rangeType = TA_Globals->candleSettings[TA_BodyLong].rangeType;
    int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
+   double BodyLong_factor = TA_Globals->candleSettings[TA_BodyLong].factor;
+   int Far_rangeType = TA_Globals->candleSettings[TA_Far].rangeType;
    int Far_avgPeriod = TA_Globals->candleSettings[TA_Far].avgPeriod;
+   double Far_factor = TA_Globals->candleSettings[TA_Far].factor;
+   int Near_rangeType = TA_Globals->candleSettings[TA_Near].rangeType;
    int Near_avgPeriod = TA_Globals->candleSettings[TA_Near].avgPeriod;
+   double Near_factor = TA_Globals->candleSettings[TA_Near].factor;
+   int ShadowLong_rangeType = TA_Globals->candleSettings[TA_ShadowLong].rangeType;
    int ShadowLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowLong].avgPeriod;
+   double ShadowLong_factor = TA_Globals->candleSettings[TA_ShadowLong].factor;
+   int ShadowShort_rangeType = TA_Globals->candleSettings[TA_ShadowShort].rangeType;
    int ShadowShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowShort].avgPeriod;
+   double ShadowShort_factor = TA_Globals->candleSettings[TA_ShadowShort].factor;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -344,63 +357,63 @@ TA_RetCode TA_S_CDLADVANCEBLOCK( int    startIdx,
    i = ShadowShortTrailingIdx;
    while( i < startIdx )
    {
-      ShadowShortPeriodTotal[2] = ShadowShortPeriodTotal[2] + TA_CANDLERANGE(ShadowShort,i - 2);
-      ShadowShortPeriodTotal[1] = ShadowShortPeriodTotal[1] + TA_CANDLERANGE(ShadowShort,i - 1);
-      ShadowShortPeriodTotal[0] = ShadowShortPeriodTotal[0] + TA_CANDLERANGE(ShadowShort,i);
+      ShadowShortPeriodTotal[2] = ShadowShortPeriodTotal[2] + TA_CANDLERANGE_OF(ShadowShort_rangeType,i - 2);
+      ShadowShortPeriodTotal[1] = ShadowShortPeriodTotal[1] + TA_CANDLERANGE_OF(ShadowShort_rangeType,i - 1);
+      ShadowShortPeriodTotal[0] = ShadowShortPeriodTotal[0] + TA_CANDLERANGE_OF(ShadowShort_rangeType,i);
       i += 1;
    }
    i = ShadowLongTrailingIdx;
    while( i < startIdx )
    {
-      ShadowLongPeriodTotal[1] = ShadowLongPeriodTotal[1] + TA_CANDLERANGE(ShadowLong,i - 1);
-      ShadowLongPeriodTotal[0] = ShadowLongPeriodTotal[0] + TA_CANDLERANGE(ShadowLong,i);
+      ShadowLongPeriodTotal[1] = ShadowLongPeriodTotal[1] + TA_CANDLERANGE_OF(ShadowLong_rangeType,i - 1);
+      ShadowLongPeriodTotal[0] = ShadowLongPeriodTotal[0] + TA_CANDLERANGE_OF(ShadowLong_rangeType,i);
       i += 1;
    }
    i = NearTrailingIdx;
    while( i < startIdx )
    {
-      NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE(Near,i - 2);
-      NearPeriodTotal[1] = NearPeriodTotal[1] + TA_CANDLERANGE(Near,i - 1);
+      NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE_OF(Near_rangeType,i - 2);
+      NearPeriodTotal[1] = NearPeriodTotal[1] + TA_CANDLERANGE_OF(Near_rangeType,i - 1);
       i += 1;
    }
    i = FarTrailingIdx;
    while( i < startIdx )
    {
-      FarPeriodTotal[2] = FarPeriodTotal[2] + TA_CANDLERANGE(Far,i - 2);
-      FarPeriodTotal[1] = FarPeriodTotal[1] + TA_CANDLERANGE(Far,i - 1);
+      FarPeriodTotal[2] = FarPeriodTotal[2] + TA_CANDLERANGE_OF(Far_rangeType,i - 2);
+      FarPeriodTotal[1] = FarPeriodTotal[1] + TA_CANDLERANGE_OF(Far_rangeType,i - 1);
       i += 1;
    }
    i = BodyLongTrailingIdx;
    while( i < startIdx )
    {
-      BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i - 2);
+      BodyLongPeriodTotal += TA_CANDLERANGE_OF(BodyLong_rangeType,i - 2);
       i += 1;
    }
    i = startIdx;
    outIdx = 0;
    do
    {
-      if( (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == 1 && (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == 1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == 1 && (double)inClose[i] > (double)inClose[i - 1] && (double)inClose[i - 1] > (double)inClose[i - 2] && (double)inOpen[i - 1] > (double)inOpen[i - 2] && (double)inOpen[i - 1] <= (double)inClose[i - 2] + TA_CANDLEAVERAGE(Near,NearPeriodTotal[2],i - 2) && (double)inOpen[i] > (double)inOpen[i - 1] && (double)inOpen[i] <= (double)inClose[i - 1] + TA_CANDLEAVERAGE(Near,NearPeriodTotal[1],i - 1) && fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && ((double)inHigh[i - 2] - (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? (double)inClose[i - 2] : (double)inOpen[i - 2])) < TA_CANDLEAVERAGE(ShadowShort,ShadowShortPeriodTotal[2],i - 2) && ((fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) < fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) - TA_CANDLEAVERAGE(Far,FarPeriodTotal[2],i - 2) && fabs((double)inClose[i] - (double)inOpen[i]) < fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) + TA_CANDLEAVERAGE(Near,NearPeriodTotal[1],i - 1)) || fabs((double)inClose[i] - (double)inOpen[i]) < fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) - TA_CANDLEAVERAGE(Far,FarPeriodTotal[1],i - 1) || (fabs((double)inClose[i] - (double)inOpen[i]) < fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) && fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) < fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) && (((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > TA_CANDLEAVERAGE(ShadowShort,ShadowShortPeriodTotal[0],i) || ((double)inHigh[i - 1] - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? (double)inClose[i - 1] : (double)inOpen[i - 1])) > TA_CANDLEAVERAGE(ShadowShort,ShadowShortPeriodTotal[1],i - 1))) || (fabs((double)inClose[i] - (double)inOpen[i]) < fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) && ((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal[0],i))) )
+      if( ((((double)inClose[i - 2] >= (double)inOpen[i - 2]) + ((double)inClose[i - 1] >= (double)inOpen[i - 1]) + ((double)inClose[i] >= (double)inOpen[i])) == 3) )
       {
-         outInteger[outIdx++] = -100;
+         outInteger[outIdx++] = ((-100) & -(int)((((double)inClose[i] > (double)inClose[i - 1]) & ((double)inClose[i - 1] > (double)inClose[i - 2]) & ((double)inOpen[i - 1] > (double)inOpen[i - 2]) & ((double)inOpen[i - 1] <= (double)inClose[i - 2] + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & ((double)inOpen[i] > (double)inOpen[i - 1]) & ((double)inOpen[i] <= (double)inClose[i - 1] + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal[1],i - 1)) & (fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & (((double)inHigh[i - 2] - (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? (double)inClose[i - 2] : (double)inOpen[i - 2])) < TA_CANDLEAVERAGE_OF(ShadowShort_rangeType,ShadowShort_avgPeriod,ShadowShort_factor,ShadowShortPeriodTotal[2],i - 2)) & (((fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) < fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) - TA_CANDLEAVERAGE_OF(Far_rangeType,Far_avgPeriod,Far_factor,FarPeriodTotal[2],i - 2)) & (fabs((double)inClose[i] - (double)inOpen[i]) < fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal[1],i - 1))) | (fabs((double)inClose[i] - (double)inOpen[i]) < fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) - TA_CANDLEAVERAGE_OF(Far_rangeType,Far_avgPeriod,Far_factor,FarPeriodTotal[1],i - 1)) | ((fabs((double)inClose[i] - (double)inOpen[i]) < fabs((double)inClose[i - 1] - (double)inOpen[i - 1])) & (fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) < fabs((double)inClose[i - 2] - (double)inOpen[i - 2])) & ((((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > TA_CANDLEAVERAGE_OF(ShadowShort_rangeType,ShadowShort_avgPeriod,ShadowShort_factor,ShadowShortPeriodTotal[0],i)) | (((double)inHigh[i - 1] - (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? (double)inClose[i - 1] : (double)inOpen[i - 1])) > TA_CANDLEAVERAGE_OF(ShadowShort_rangeType,ShadowShort_avgPeriod,ShadowShort_factor,ShadowShortPeriodTotal[1],i - 1)))) | ((fabs((double)inClose[i] - (double)inOpen[i]) < fabs((double)inClose[i - 1] - (double)inOpen[i - 1])) & (((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal[0],i)))))));
       } else 
       {
          outInteger[outIdx++] = 0;
       }
       for( totIdx = 2; totIdx >= 0; totIdx -= 1 )
       {
-         ShadowShortPeriodTotal[totIdx] = ShadowShortPeriodTotal[totIdx] + (TA_CANDLERANGE(ShadowShort,i - totIdx) - TA_CANDLERANGE(ShadowShort,ShadowShortTrailingIdx - totIdx));
+         ShadowShortPeriodTotal[totIdx] = ShadowShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(ShadowShort_rangeType,i - totIdx) - TA_CANDLERANGE_OF(ShadowShort_rangeType,ShadowShortTrailingIdx - totIdx));
       }
       for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
       {
-         ShadowLongPeriodTotal[totIdx] = ShadowLongPeriodTotal[totIdx] + (TA_CANDLERANGE(ShadowLong,i - totIdx) - TA_CANDLERANGE(ShadowLong,ShadowLongTrailingIdx - totIdx));
+         ShadowLongPeriodTotal[totIdx] = ShadowLongPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(ShadowLong_rangeType,i - totIdx) - TA_CANDLERANGE_OF(ShadowLong_rangeType,ShadowLongTrailingIdx - totIdx));
       }
       for( totIdx = 2; totIdx >= 1; totIdx -= 1 )
       {
-         FarPeriodTotal[totIdx] = FarPeriodTotal[totIdx] + (TA_CANDLERANGE(Far,i - totIdx) - TA_CANDLERANGE(Far,FarTrailingIdx - totIdx));
-         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE(Near,i - totIdx) - TA_CANDLERANGE(Near,NearTrailingIdx - totIdx));
+         FarPeriodTotal[totIdx] = FarPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(Far_rangeType,i - totIdx) - TA_CANDLERANGE_OF(Far_rangeType,FarTrailingIdx - totIdx));
+         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(Near_rangeType,i - totIdx) - TA_CANDLERANGE_OF(Near_rangeType,NearTrailingIdx - totIdx));
       }
-      BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i - 2) - TA_CANDLERANGE(BodyLong,BodyLongTrailingIdx - 2);
+      BodyLongPeriodTotal += TA_CANDLERANGE_OF(BodyLong_rangeType,i - 2) - TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx - 2);
       i += 1;
       ShadowShortTrailingIdx += 1;
       ShadowLongTrailingIdx += 1;
@@ -478,28 +491,33 @@ static void TA_CDLADVANCEBLOCK_StepImpl( struct TA_CDLADVANCEBLOCK_Stream *sp, d
    sp->ring_NearTrailingIdx_derived[sp->ringPos_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen,inHigh,inLow,inClose);
    sp->ring_ShadowLongTrailingIdx_derived[sp->ringPos_ShadowLongTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowLong,inOpen,inHigh,inLow,inClose);
    sp->ring_ShadowShortTrailingIdx_derived[sp->ringPos_ShadowShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowShort,inOpen,inHigh,inLow,inClose);
-   if( ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) == 1 &&               /* 1st white */
-       ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == 1 &&               /* 2nd white */
-       ((inClose >= inOpen) ? 1 : -1) == 1 &&                                 /* 3rd white */
-       inClose > sp->lag1_inClose &&
-       sp->lag1_inClose > sp->lag2_inClose &&                                 /* consecutive higher closes */
-       sp->lag1_inOpen > sp->lag2_inOpen &&                                   /* 2nd opens within/near 1st real body */
-       sp->lag1_inOpen <= sp->lag2_inClose + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) &&
-       inOpen > sp->lag1_inOpen &&                                            /* 3rd opens within/near 2nd real body */
-       inOpen <= sp->lag1_inClose + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) &&
-       fabs(sp->lag2_inClose - sp->lag2_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: long real body */
-       (sp->lag2_inHigh - ((sp->lag2_inClose >= sp->lag2_inOpen) ? sp->lag2_inClose : sp->lag2_inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowShort,sp->ShadowShortPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: short upper shadow */
-       ((fabs(sp->lag1_inClose - sp->lag1_inOpen) < fabs(sp->lag2_inClose - sp->lag2_inOpen) - TA_STREAM_CANDLEAVERAGE(Far,sp->FarPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance */
-         fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose)) ||
-        fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) - TA_STREAM_CANDLEAVERAGE(Far,sp->FarPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) || /* 3 far smaller than 2 advance blocked with the 3rd */
-        (fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) && /* ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) ) advance blocked with progressively smaller real bodies and some upper shadows */
-         fabs(sp->lag1_inClose - sp->lag1_inOpen) < fabs(sp->lag2_inClose - sp->lag2_inOpen) &&
-         ((inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowShort,sp->ShadowShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) ||
-          (sp->lag1_inHigh - ((sp->lag1_inClose >= sp->lag1_inOpen) ? sp->lag1_inClose : sp->lag1_inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowShort,sp->ShadowShortPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose))) ||
-        (fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) && /* ( 3 smaller than 2 && 3 long upper shadow ) advance blocked with 3rd candle's long upper shadow and smaller body */
-         (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal[0],inOpen,inHigh,inLow,inClose))) )
+   if( ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) == 1 && /* 1st white */
+       ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == 1 && /* 2nd white */
+       ((inClose >= inOpen) ? 1 : -1) == 1 )                    /* 3rd white */
    {
-      *outInteger= -100;
+      if( inClose > sp->lag1_inClose &&
+          sp->lag1_inClose > sp->lag2_inClose &&                                 /* consecutive higher closes */
+          sp->lag1_inOpen > sp->lag2_inOpen &&                                   /* 2nd opens within/near 1st real body */
+          sp->lag1_inOpen <= sp->lag2_inClose + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) &&
+          inOpen > sp->lag1_inOpen &&                                            /* 3rd opens within/near 2nd real body */
+          inOpen <= sp->lag1_inClose + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) &&
+          fabs(sp->lag2_inClose - sp->lag2_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: long real body */
+          (sp->lag2_inHigh - ((sp->lag2_inClose >= sp->lag2_inOpen) ? sp->lag2_inClose : sp->lag2_inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowShort,sp->ShadowShortPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: short upper shadow */
+          ((fabs(sp->lag1_inClose - sp->lag1_inOpen) < fabs(sp->lag2_inClose - sp->lag2_inOpen) - TA_STREAM_CANDLEAVERAGE(Far,sp->FarPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance */
+            fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose)) ||
+           fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) - TA_STREAM_CANDLEAVERAGE(Far,sp->FarPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) || /* 3 far smaller than 2 advance blocked with the 3rd */
+           (fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) && /* ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) ) advance blocked with progressively smaller real bodies and some upper shadows */
+            fabs(sp->lag1_inClose - sp->lag1_inOpen) < fabs(sp->lag2_inClose - sp->lag2_inOpen) &&
+            ((inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowShort,sp->ShadowShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) ||
+             (sp->lag1_inHigh - ((sp->lag1_inClose >= sp->lag1_inOpen) ? sp->lag1_inClose : sp->lag1_inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowShort,sp->ShadowShortPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose))) ||
+           (fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) && /* ( 3 smaller than 2 && 3 long upper shadow ) advance blocked with 3rd candle's long upper shadow and smaller body */
+            (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal[0],inOpen,inHigh,inLow,inClose))) )
+      {
+         *outInteger= -100;
+      } else 
+      {
+         *outInteger= 0;
+      }
    } else 
    {
       *outInteger= 0;
@@ -577,11 +595,21 @@ static TA_RetCode TA_CDLADVANCEBLOCK_OpenImpl( struct TA_CDLADVANCEBLOCK_Stream 
    endIdx = historyLen - 1;
 
    {
+      int BodyLong_rangeType = TA_Globals->candleSettings[TA_BodyLong].rangeType;
       int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
+      double BodyLong_factor = TA_Globals->candleSettings[TA_BodyLong].factor;
+      int Far_rangeType = TA_Globals->candleSettings[TA_Far].rangeType;
       int Far_avgPeriod = TA_Globals->candleSettings[TA_Far].avgPeriod;
+      double Far_factor = TA_Globals->candleSettings[TA_Far].factor;
+      int Near_rangeType = TA_Globals->candleSettings[TA_Near].rangeType;
       int Near_avgPeriod = TA_Globals->candleSettings[TA_Near].avgPeriod;
+      double Near_factor = TA_Globals->candleSettings[TA_Near].factor;
+      int ShadowLong_rangeType = TA_Globals->candleSettings[TA_ShadowLong].rangeType;
       int ShadowLong_avgPeriod = TA_Globals->candleSettings[TA_ShadowLong].avgPeriod;
+      double ShadowLong_factor = TA_Globals->candleSettings[TA_ShadowLong].factor;
+      int ShadowShort_rangeType = TA_Globals->candleSettings[TA_ShadowShort].rangeType;
       int ShadowShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowShort].avgPeriod;
+      double ShadowShort_factor = TA_Globals->candleSettings[TA_ShadowShort].factor;
       double ShadowShortPeriodTotal[3] = {0};
       double ShadowLongPeriodTotal[2] = {0};
       double NearPeriodTotal[3] = {0};
@@ -636,36 +664,36 @@ static TA_RetCode TA_CDLADVANCEBLOCK_OpenImpl( struct TA_CDLADVANCEBLOCK_Stream 
       i = ShadowShortTrailingIdx;
       while( i < startIdx )
       {
-         ShadowShortPeriodTotal[2] = ShadowShortPeriodTotal[2] + TA_CANDLERANGE(ShadowShort,i - 2);
-         ShadowShortPeriodTotal[1] = ShadowShortPeriodTotal[1] + TA_CANDLERANGE(ShadowShort,i - 1);
-         ShadowShortPeriodTotal[0] = ShadowShortPeriodTotal[0] + TA_CANDLERANGE(ShadowShort,i);
+         ShadowShortPeriodTotal[2] = ShadowShortPeriodTotal[2] + TA_CANDLERANGE_OF(ShadowShort_rangeType,i - 2);
+         ShadowShortPeriodTotal[1] = ShadowShortPeriodTotal[1] + TA_CANDLERANGE_OF(ShadowShort_rangeType,i - 1);
+         ShadowShortPeriodTotal[0] = ShadowShortPeriodTotal[0] + TA_CANDLERANGE_OF(ShadowShort_rangeType,i);
          i += 1;
       }
       i = ShadowLongTrailingIdx;
       while( i < startIdx )
       {
-         ShadowLongPeriodTotal[1] = ShadowLongPeriodTotal[1] + TA_CANDLERANGE(ShadowLong,i - 1);
-         ShadowLongPeriodTotal[0] = ShadowLongPeriodTotal[0] + TA_CANDLERANGE(ShadowLong,i);
+         ShadowLongPeriodTotal[1] = ShadowLongPeriodTotal[1] + TA_CANDLERANGE_OF(ShadowLong_rangeType,i - 1);
+         ShadowLongPeriodTotal[0] = ShadowLongPeriodTotal[0] + TA_CANDLERANGE_OF(ShadowLong_rangeType,i);
          i += 1;
       }
       i = NearTrailingIdx;
       while( i < startIdx )
       {
-         NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE(Near,i - 2);
-         NearPeriodTotal[1] = NearPeriodTotal[1] + TA_CANDLERANGE(Near,i - 1);
+         NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE_OF(Near_rangeType,i - 2);
+         NearPeriodTotal[1] = NearPeriodTotal[1] + TA_CANDLERANGE_OF(Near_rangeType,i - 1);
          i += 1;
       }
       i = FarTrailingIdx;
       while( i < startIdx )
       {
-         FarPeriodTotal[2] = FarPeriodTotal[2] + TA_CANDLERANGE(Far,i - 2);
-         FarPeriodTotal[1] = FarPeriodTotal[1] + TA_CANDLERANGE(Far,i - 1);
+         FarPeriodTotal[2] = FarPeriodTotal[2] + TA_CANDLERANGE_OF(Far_rangeType,i - 2);
+         FarPeriodTotal[1] = FarPeriodTotal[1] + TA_CANDLERANGE_OF(Far_rangeType,i - 1);
          i += 1;
       }
       i = BodyLongTrailingIdx;
       while( i < startIdx )
       {
-         BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i - 2);
+         BodyLongPeriodTotal += TA_CANDLERANGE_OF(BodyLong_rangeType,i - 2);
          i += 1;
       }
       i = startIdx;
@@ -681,28 +709,33 @@ static TA_RetCode TA_CDLADVANCEBLOCK_OpenImpl( struct TA_CDLADVANCEBLOCK_Stream 
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&                     /* 1st white */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&                     /* 2nd white */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&                             /* 3rd white */
-             inClose[i] > inClose[i - 1] &&
-             inClose[i - 1] > inClose[i - 2] &&                                       /* consecutive higher closes */
-             inOpen[i - 1] > inOpen[i - 2] &&                                         /* 2nd opens within/near 1st real body */
-             inOpen[i - 1] <= inClose[i - 2] + TA_CANDLEAVERAGE(Near,NearPeriodTotal[2],i - 2) &&
-             inOpen[i] > inOpen[i - 1] &&                                             /* 3rd opens within/near 2nd real body */
-             inOpen[i] <= inClose[i - 1] + TA_CANDLEAVERAGE(Near,NearPeriodTotal[1],i - 1) &&
-             fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && /* 1st: long real body */
-             (inHigh[i - 2] - ((inClose[i - 2] >= inOpen[i - 2]) ? inClose[i - 2] : inOpen[i - 2])) < TA_CANDLEAVERAGE(ShadowShort,ShadowShortPeriodTotal[2],i - 2) && /* 1st: short upper shadow */
-             ((fabs(inClose[i - 1] - inOpen[i - 1]) < fabs(inClose[i - 2] - inOpen[i - 2]) - TA_CANDLEAVERAGE(Far,FarPeriodTotal[2],i - 2) && /* ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance */
-               fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) + TA_CANDLEAVERAGE(Near,NearPeriodTotal[1],i - 1)) ||
-              fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) - TA_CANDLEAVERAGE(Far,FarPeriodTotal[1],i - 1) || /* 3 far smaller than 2 advance blocked with the 3rd */
-              (fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) && /* ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) ) advance blocked with progressively smaller real bodies and some upper shadows */
-               fabs(inClose[i - 1] - inOpen[i - 1]) < fabs(inClose[i - 2] - inOpen[i - 2]) &&
-               ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowShort,ShadowShortPeriodTotal[0],i) ||
-                (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > TA_CANDLEAVERAGE(ShadowShort,ShadowShortPeriodTotal[1],i - 1))) ||
-              (fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) && /* ( 3 smaller than 2 && 3 long upper shadow ) advance blocked with 3rd candle's long upper shadow and smaller body */
-               (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal[0],i))) )
+         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 && /* 1st white */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 && /* 2nd white */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 )          /* 3rd white */
          {
-            outInteger[outIdx++ * outStride] = -100;
+            if( inClose[i] > inClose[i - 1] &&
+                inClose[i - 1] > inClose[i - 2] &&                                       /* consecutive higher closes */
+                inOpen[i - 1] > inOpen[i - 2] &&                                         /* 2nd opens within/near 1st real body */
+                inOpen[i - 1] <= inClose[i - 2] + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2) &&
+                inOpen[i] > inOpen[i - 1] &&                                             /* 3rd opens within/near 2nd real body */
+                inOpen[i] <= inClose[i - 1] + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal[1],i - 1) &&
+                fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2) && /* 1st: long real body */
+                (inHigh[i - 2] - ((inClose[i - 2] >= inOpen[i - 2]) ? inClose[i - 2] : inOpen[i - 2])) < TA_CANDLEAVERAGE_OF(ShadowShort_rangeType,ShadowShort_avgPeriod,ShadowShort_factor,ShadowShortPeriodTotal[2],i - 2) && /* 1st: short upper shadow */
+                ((fabs(inClose[i - 1] - inOpen[i - 1]) < fabs(inClose[i - 2] - inOpen[i - 2]) - TA_CANDLEAVERAGE_OF(Far_rangeType,Far_avgPeriod,Far_factor,FarPeriodTotal[2],i - 2) && /* ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance */
+                  fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal[1],i - 1)) ||
+                 fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) - TA_CANDLEAVERAGE_OF(Far_rangeType,Far_avgPeriod,Far_factor,FarPeriodTotal[1],i - 1) || /* 3 far smaller than 2 advance blocked with the 3rd */
+                 (fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) && /* ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) ) advance blocked with progressively smaller real bodies and some upper shadows */
+                  fabs(inClose[i - 1] - inOpen[i - 1]) < fabs(inClose[i - 2] - inOpen[i - 2]) &&
+                  ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE_OF(ShadowShort_rangeType,ShadowShort_avgPeriod,ShadowShort_factor,ShadowShortPeriodTotal[0],i) ||
+                   (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > TA_CANDLEAVERAGE_OF(ShadowShort_rangeType,ShadowShort_avgPeriod,ShadowShort_factor,ShadowShortPeriodTotal[1],i - 1))) ||
+                 (fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) && /* ( 3 smaller than 2 && 3 long upper shadow ) advance blocked with 3rd candle's long upper shadow and smaller body */
+                  (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal[0],i))) )
+            {
+               outInteger[outIdx++ * outStride] = -100;
+            } else 
+            {
+               outInteger[outIdx++ * outStride] = 0;
+            }
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -712,18 +745,18 @@ static TA_RetCode TA_CDLADVANCEBLOCK_OpenImpl( struct TA_CDLADVANCEBLOCK_Stream 
           */
          for( totIdx = 2; totIdx >= 0; totIdx -= 1 )
          {
-            ShadowShortPeriodTotal[totIdx] = ShadowShortPeriodTotal[totIdx] + (TA_CANDLERANGE(ShadowShort,i - totIdx) - TA_CANDLERANGE(ShadowShort,ShadowShortTrailingIdx - totIdx));
+            ShadowShortPeriodTotal[totIdx] = ShadowShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(ShadowShort_rangeType,i - totIdx) - TA_CANDLERANGE_OF(ShadowShort_rangeType,ShadowShortTrailingIdx - totIdx));
          }
          for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
          {
-            ShadowLongPeriodTotal[totIdx] = ShadowLongPeriodTotal[totIdx] + (TA_CANDLERANGE(ShadowLong,i - totIdx) - TA_CANDLERANGE(ShadowLong,ShadowLongTrailingIdx - totIdx));
+            ShadowLongPeriodTotal[totIdx] = ShadowLongPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(ShadowLong_rangeType,i - totIdx) - TA_CANDLERANGE_OF(ShadowLong_rangeType,ShadowLongTrailingIdx - totIdx));
          }
          for( totIdx = 2; totIdx >= 1; totIdx -= 1 )
          {
-            FarPeriodTotal[totIdx] = FarPeriodTotal[totIdx] + (TA_CANDLERANGE(Far,i - totIdx) - TA_CANDLERANGE(Far,FarTrailingIdx - totIdx));
-            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE(Near,i - totIdx) - TA_CANDLERANGE(Near,NearTrailingIdx - totIdx));
+            FarPeriodTotal[totIdx] = FarPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(Far_rangeType,i - totIdx) - TA_CANDLERANGE_OF(Far_rangeType,FarTrailingIdx - totIdx));
+            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(Near_rangeType,i - totIdx) - TA_CANDLERANGE_OF(Near_rangeType,NearTrailingIdx - totIdx));
          }
-         BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i - 2) - TA_CANDLERANGE(BodyLong,BodyLongTrailingIdx - 2);
+         BodyLongPeriodTotal += TA_CANDLERANGE_OF(BodyLong_rangeType,i - 2) - TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx - 2);
          i += 1;
          ShadowShortTrailingIdx += 1;
          ShadowLongTrailingIdx += 1;
@@ -880,28 +913,33 @@ TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK_Peek( const TA_CDLADVANCEBLOCK_Stream *
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   if( ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) == 1 &&               /* 1st white */
-       ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == 1 &&               /* 2nd white */
-       ((inClose >= inOpen) ? 1 : -1) == 1 &&                                 /* 3rd white */
-       inClose > sp->lag1_inClose &&
-       sp->lag1_inClose > sp->lag2_inClose &&                                 /* consecutive higher closes */
-       sp->lag1_inOpen > sp->lag2_inOpen &&                                   /* 2nd opens within/near 1st real body */
-       sp->lag1_inOpen <= sp->lag2_inClose + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) &&
-       inOpen > sp->lag1_inOpen &&                                            /* 3rd opens within/near 2nd real body */
-       inOpen <= sp->lag1_inClose + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) &&
-       fabs(sp->lag2_inClose - sp->lag2_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: long real body */
-       (sp->lag2_inHigh - ((sp->lag2_inClose >= sp->lag2_inOpen) ? sp->lag2_inClose : sp->lag2_inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowShort,sp->ShadowShortPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: short upper shadow */
-       ((fabs(sp->lag1_inClose - sp->lag1_inOpen) < fabs(sp->lag2_inClose - sp->lag2_inOpen) - TA_STREAM_CANDLEAVERAGE(Far,sp->FarPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance */
-         fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose)) ||
-        fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) - TA_STREAM_CANDLEAVERAGE(Far,sp->FarPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) || /* 3 far smaller than 2 advance blocked with the 3rd */
-        (fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) && /* ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) ) advance blocked with progressively smaller real bodies and some upper shadows */
-         fabs(sp->lag1_inClose - sp->lag1_inOpen) < fabs(sp->lag2_inClose - sp->lag2_inOpen) &&
-         ((inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowShort,sp->ShadowShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) ||
-          (sp->lag1_inHigh - ((sp->lag1_inClose >= sp->lag1_inOpen) ? sp->lag1_inClose : sp->lag1_inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowShort,sp->ShadowShortPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose))) ||
-        (fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) && /* ( 3 smaller than 2 && 3 long upper shadow ) advance blocked with 3rd candle's long upper shadow and smaller body */
-         (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal[0],inOpen,inHigh,inLow,inClose))) )
+   if( ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) == 1 && /* 1st white */
+       ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == 1 && /* 2nd white */
+       ((inClose >= inOpen) ? 1 : -1) == 1 )                    /* 3rd white */
    {
-      *outInteger= -100;
+      if( inClose > sp->lag1_inClose &&
+          sp->lag1_inClose > sp->lag2_inClose &&                                 /* consecutive higher closes */
+          sp->lag1_inOpen > sp->lag2_inOpen &&                                   /* 2nd opens within/near 1st real body */
+          sp->lag1_inOpen <= sp->lag2_inClose + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) &&
+          inOpen > sp->lag1_inOpen &&                                            /* 3rd opens within/near 2nd real body */
+          inOpen <= sp->lag1_inClose + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) &&
+          fabs(sp->lag2_inClose - sp->lag2_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: long real body */
+          (sp->lag2_inHigh - ((sp->lag2_inClose >= sp->lag2_inOpen) ? sp->lag2_inClose : sp->lag2_inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowShort,sp->ShadowShortPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: short upper shadow */
+          ((fabs(sp->lag1_inClose - sp->lag1_inOpen) < fabs(sp->lag2_inClose - sp->lag2_inOpen) - TA_STREAM_CANDLEAVERAGE(Far,sp->FarPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance */
+            fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose)) ||
+           fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) - TA_STREAM_CANDLEAVERAGE(Far,sp->FarPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) || /* 3 far smaller than 2 advance blocked with the 3rd */
+           (fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) && /* ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) ) advance blocked with progressively smaller real bodies and some upper shadows */
+            fabs(sp->lag1_inClose - sp->lag1_inOpen) < fabs(sp->lag2_inClose - sp->lag2_inOpen) &&
+            ((inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowShort,sp->ShadowShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) ||
+             (sp->lag1_inHigh - ((sp->lag1_inClose >= sp->lag1_inOpen) ? sp->lag1_inClose : sp->lag1_inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowShort,sp->ShadowShortPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose))) ||
+           (fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) && /* ( 3 smaller than 2 && 3 long upper shadow ) advance blocked with 3rd candle's long upper shadow and smaller body */
+            (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal[0],inOpen,inHigh,inLow,inClose))) )
+      {
+         *outInteger= -100;
+      } else 
+      {
+         *outInteger= 0;
+      }
    } else 
    {
       *outInteger= 0;

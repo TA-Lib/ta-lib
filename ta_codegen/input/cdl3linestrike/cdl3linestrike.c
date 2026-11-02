@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  121104 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  *
  */
 
@@ -80,29 +81,34 @@ TA_RetCode cdl3linestrike(int startIdx, int endIdx,
    {
       if( ta_candlecolor(inClose[i-3], inOpen[i-3]) == ta_candlecolor(inClose[i-2], inOpen[i-2]) &&                                   // three with same color
          ta_candlecolor(inClose[i-2], inOpen[i-2]) == ta_candlecolor(inClose[i-1], inOpen[i-1]) &&
-         ta_candlecolor(inClose[i], inOpen[i]) == -ta_candlecolor(inClose[i-1], inOpen[i-1]) &&                                    // 4th opposite color
-         // 2nd opens within/near 1st rb
-         inOpen[i-2] >= min( inOpen[i-3], inClose[i-3] ) - ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[3], inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3]) &&
-         inOpen[i-2] <= max( inOpen[i-3], inClose[i-3] ) + ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[3], inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3]) &&
-         // 3rd opens within/near 2nd rb
-         inOpen[i-1] >= min( inOpen[i-2], inClose[i-2] ) - ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
-         inOpen[i-1] <= max( inOpen[i-2], inClose[i-2] ) + ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
-         (
-         (   // if three white
-         ta_candlecolor(inClose[i-1], inOpen[i-1]) == 1 &&
-         inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] &&           // consecutive higher closes
-         inOpen[i] > inClose[i-1] &&                                             // 4th opens above prior close
-         inClose[i] < inOpen[i-3]                                                // 4th closes below 1st open
-      ) ||
-         (   // if three black
-         ta_candlecolor(inClose[i-1], inOpen[i-1]) == -1 &&
-         inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] &&           // consecutive lower closes
-         inOpen[i] < inClose[i-1] &&                                             // 4th opens below prior close
-         inClose[i] > inOpen[i-3]                                                // 4th closes above 1st open
-      )
-      )
+         ta_candlecolor(inClose[i], inOpen[i]) == -ta_candlecolor(inClose[i-1], inOpen[i-1])                                    // 4th opposite color
       ) {
-         outInteger[outIdx++] = ta_candlecolor(inClose[i-1], inOpen[i-1]) * 100;
+         if( // 2nd opens within/near 1st rb
+            inOpen[i-2] >= min( inOpen[i-3], inClose[i-3] ) - ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[3], inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3]) &&
+            inOpen[i-2] <= max( inOpen[i-3], inClose[i-3] ) + ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[3], inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3]) &&
+            // 3rd opens within/near 2nd rb
+            inOpen[i-1] >= min( inOpen[i-2], inClose[i-2] ) - ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
+            inOpen[i-1] <= max( inOpen[i-2], inClose[i-2] ) + ta_candleaverage(Near_rangeType, Near_avgPeriod, Near_factor, NearPeriodTotal[2], inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&
+            (
+            (   // if three white
+            ta_candlecolor(inClose[i-1], inOpen[i-1]) == 1 &&
+            inClose[i-1] > inClose[i-2] && inClose[i-2] > inClose[i-3] &&           // consecutive higher closes
+            inOpen[i] > inClose[i-1] &&                                             // 4th opens above prior close
+            inClose[i] < inOpen[i-3]                                                // 4th closes below 1st open
+         ) ||
+            (   // if three black
+            ta_candlecolor(inClose[i-1], inOpen[i-1]) == -1 &&
+            inClose[i-1] < inClose[i-2] && inClose[i-2] < inClose[i-3] &&           // consecutive lower closes
+            inOpen[i] < inClose[i-1] &&                                             // 4th opens below prior close
+            inClose[i] > inOpen[i-3]                                                // 4th closes above 1st open
+         )
+         )
+         ) {
+            outInteger[outIdx++] = ta_candlecolor(inClose[i-1], inOpen[i-1]) * 100;
+         }
+         else {
+            outInteger[outIdx++] = 0;
+         }
       }
       else {
          outInteger[outIdx++] = 0;

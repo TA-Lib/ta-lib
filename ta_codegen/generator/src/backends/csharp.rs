@@ -1776,17 +1776,18 @@ impl StatementEmitter for CsStmt<'_> {
             if expr_directly_contains_candle_call(left)
                 && expr_directly_contains_candle_call(right)
             {
+                let (outer_comments, inner_comments) = super::common::split_cond_comments(left, right, cond_comments);
                 let inner_if = Statement::If {
                     condition: *right.clone(),
                     then_body: then_body.to_vec(),
                     else_body: else_body.to_vec(),
-                    cond_comments: Vec::new(),
+                    cond_comments: inner_comments,
                 };
                 let outer_if = Statement::If {
                     condition: *left.clone(),
                     then_body: vec![inner_if],
                     else_body: else_body.to_vec(),
-                    cond_comments: Vec::new(),
+                    cond_comments: outer_comments,
                 };
                 return self.walk_stmt(&outer_if, indent);
             }
@@ -2783,6 +2784,7 @@ fn render_func_call(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
+    assert!(!super::eager_select::is_pseudo_call(fname), "{fname} is rendered by C and Rust only");
     // Check if this is a call to a helper function that can be inlined
     if let Some(helper) = helpers.get(fname) {
         if let Some(inlined_expr) = try_inline_expr(helper, args) {

@@ -334,14 +334,95 @@ def _guard_chain(src, pos):
     return chain
 
 
+# Splice a guard in RAW unless it carries a top-level `||` or `?:` of its own:
+# both bind looser than the `&&` it is spliced into.
+# Wrapping everything would hide each guard's internal structure one
+# parenthesis deep, where the conjunct flattening and the arm detection
+# can no longer see it -- which silently emptied the arm map for every
+# pattern that had one.
+def _spliced(guard):
+    return "(%s)" % guard if len(_split_top(guard, "||")) > 1 or len(_split_top(guard, "?")) > 1 else guard
+
+
+_BINARY_OPS = ("||", "&&", "==", "!=", "<=", ">=", "<", ">", "+", "-", "*", "/", "%", "?", ":", "|", "&", "^")
+
+
+def _has_top(expr, ops):
+    return any(len(_split_top(expr, op)) > 1 for op in ops)
+
+
+def _complementary(p, q):
+    """Two atomic conjuncts that cannot hold together, read off their text
+    alone: `X` and `!(X)` (or `!X` with X a bare operand), one bare operand
+    compared with two different constants, or a gap up and a gap down over the
+    same arguments. A conjunct with a top-level `||` is never atomic, and the
+    compared operand and the gap call carry no top-level operator."""
+    p, q = re.sub(r"\s+", "", _peel(p)), re.sub(r"\s+", "", _peel(q))
+    if _has_top(p, ("||",)) or _has_top(q, ("||",)):
+        return False
+    for x, y in ((p, q), (q, p)):
+        if x == "!(%s)" % y or (x == "!" + y and not _has_top(y, _BINARY_OPS)):
+            return True
+    a, b = re.fullmatch(r"(.+)==(-?\d+)", p), re.fullmatch(r"(.+)==(-?\d+)", q)
+    if a and b and a.group(1) == b.group(1) and int(a.group(2)) != int(b.group(2)):
+        return not _has_top(a.group(1), _BINARY_OPS)
+    if _has_top(p, _BINARY_OPS) or _has_top(q, _BINARY_OPS):
+        return False
+    gap = r"ta_(realbody|candle)gap(up|down)(\(.*\))"
+    a, b = re.fullmatch(gap, p), re.fullmatch(gap, q)
+    return bool(a and b and a.group(1) == b.group(1) and a.group(3) == b.group(3) and a.group(2) != b.group(2))
+
+
+def _exclusive(a, b):
+    return any(_complementary(p, q) for p in _split_top(_peel(a), "&&") for q in _split_top(_peel(b), "&&"))
+
+
+def _else_if_alternatives(rest):
+    """An else-if chain's alternatives, each without the earlier leads it
+    negates.
+
+    Dropping `!A` from a later alternative is exact when A's own alternative is
+    A alone as written (`A | (!A & R)` is `A | R`), or when A cannot hold with
+    the later alternative's lead (then the lead implies `!A`). "Alone" never
+    counts a drop made elsewhere: that drop may rest on this one. Anything else would hand
+    the gate a wrong arm shape, so it is refused. An alternative left with no
+    term is the final else, and the remainder a tautology.
+    """
+    leads = {}
+    for r in rest:
+        lead = next((k for k, (_, g) in enumerate(r) if not g), None)
+        if lead is None:
+            continue
+        if r[lead][0] in leads:
+            return None, "an else-if chain has two alternatives with one lead"
+        leads[r[lead][0]] = len(r) - 1
+    alts = []
+    for r in rest:
+        own = [e for e, g in r if not g]
+        for e, g in r:
+            if not g:
+                continue
+            if e not in leads:
+                return None, "an else-if chain negates a guard that leads no alternative"
+            if leads[e] and not (own and _exclusive(e, own[0])):
+                return None, ("an else-if chain needs syntactically exclusive leads "
+                              "(complementary conjuncts on the same arguments) or a "
+                              "hand-derived model")
+        if not own:
+            return [], None
+        alts.append(" && ".join(_spliced(t) for t in own))
+    return alts, None
+
+
 def _firing_expr(src):
     """The decision that makes this pattern FIRE, as one expression string.
 
     Collects the guard chain of every NON-ZERO assignment, factors the common
     prefix into conjuncts, and ORs the remainders -- simplifying `A | !A` to a
-    tautology (which drops out) and `A | (!A & B)` to `A | B`. That one rule
-    covers a flat decision, CDLENGULFING's if/else over two non-zero values,
-    CDLHARAMI's else-if chain and CDLTRISTAR's sequential ifs alike.
+    tautology (which drops out) and an else-if chain's `!A` away where that is
+    exact. That covers a flat decision, CDLENGULFING's if/else over two
+    non-zero values, the else-if chains of CDLHARAMI and CDLTASUKIGAP, and
+    CDLTRISTAR's sequential ifs alike.
     """
     locals_ = _loop_locals(src)
     chains = []
@@ -372,23 +453,17 @@ def _firing_expr(src):
         pos = set(e for e, neg in heads if not neg)
         neg = set(e for e, neg in heads if neg)
         if pos & neg:
-            # A | (!A & ...) -- drop the negated copy, keep what follows it
-            alts = []
-            for r in rest:
-                terms = [e for e, g in r if not (g and e in pos)]
-                if terms:
-                    alts.append(" && ".join("(%s)" % t for t in terms))
+            alts, err = _else_if_alternatives(rest)
+            if err:
+                return None, err
         else:
-            alts = [" && ".join("(%s)" % e for e, g in r) for r in rest]
+            if any(g for r in rest for _, g in r):
+                return None, "a remainder negates a guard outside an else-if chain"
+            alts = [" && ".join(_spliced(e) for e, g in r) for r in rest]
         if len(alts) <= 1 and len(rest) > 1:
             alts = []                             # the remainder is a tautology
 
-    # Splice a guard in RAW unless it carries a top-level `||` of its own.
-    # Wrapping everything would hide each guard's internal structure one
-    # parenthesis deep, where the conjunct flattening and the arm detection
-    # can no longer see it -- which silently emptied the arm map for every
-    # pattern that had one.
-    parts = [("(%s)" % e if len(_split_top(e, "||")) > 1 else e) for e in common]
+    parts = [_spliced(e) for e in common]
     if alts:
         parts.append("(" + " || ".join("(%s)" % a for a in alts) + ")")
     if not parts:

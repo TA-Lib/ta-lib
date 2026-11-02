@@ -87,7 +87,9 @@ TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW( int    startIdx,
    int outIdx;
    int EqualTrailingIdx;
    int lookbackTotal;
+   int Equal_rangeType = TA_Globals->candleSettings[TA_Equal].rangeType;
    int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;
+   double Equal_factor = TA_Globals->candleSettings[TA_Equal].factor;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -132,7 +134,7 @@ TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW( int    startIdx,
    i = EqualTrailingIdx;
    while( i < startIdx )
    {
-      EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 1);
+      EqualPeriodTotal += TA_CANDLERANGE_OF(Equal_rangeType,i - 1);
       i += 1;
    }
    i = startIdx;
@@ -145,20 +147,14 @@ TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* first black */
-          ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* second black */
-          inClose[i] <= inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && /* 1st and 2nd same close */
-          inClose[i] >= inClose[i - 1] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) )
-      {
-         outInteger[outIdx++] = 100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
+      outInteger[outIdx++] = ((100) & -(int)(((!(inClose[i - 1] >= inOpen[i - 1])) & /* first black */
+          (!(inClose[i] >= inOpen[i])) & /* second black */
+          (inClose[i] <= inClose[i - 1] + TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1)) & /* 1st and 2nd same close */
+          (inClose[i] >= inClose[i - 1] - TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1)))));
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 1) - TA_CANDLERANGE(Equal,EqualTrailingIdx - 1);
+      EqualPeriodTotal += TA_CANDLERANGE_OF(Equal_rangeType,i - 1) - TA_CANDLERANGE_OF(Equal_rangeType,EqualTrailingIdx - 1);
       i += 1;
       EqualTrailingIdx += 1;
    } while( i <= endIdx );
@@ -183,7 +179,9 @@ TA_RetCode TA_S_CDLMATCHINGLOW( int    startIdx,
    int outIdx;
    int EqualTrailingIdx;
    int lookbackTotal;
+   int Equal_rangeType = TA_Globals->candleSettings[TA_Equal].rangeType;
    int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;
+   double Equal_factor = TA_Globals->candleSettings[TA_Equal].factor;
 
    if( (startIdx < 0) || (startIdx > TA_INDEX_MAX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -219,21 +217,15 @@ TA_RetCode TA_S_CDLMATCHINGLOW( int    startIdx,
    i = EqualTrailingIdx;
    while( i < startIdx )
    {
-      EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 1);
+      EqualPeriodTotal += TA_CANDLERANGE_OF(Equal_rangeType,i - 1);
       i += 1;
    }
    i = startIdx;
    outIdx = 0;
    do
    {
-      if( (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == -1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == -1 && (double)inClose[i] <= (double)inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && (double)inClose[i] >= (double)inClose[i - 1] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) )
-      {
-         outInteger[outIdx++] = 100;
-      } else 
-      {
-         outInteger[outIdx++] = 0;
-      }
-      EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 1) - TA_CANDLERANGE(Equal,EqualTrailingIdx - 1);
+      outInteger[outIdx++] = ((100) & -(int)(((!((double)inClose[i - 1] >= (double)inOpen[i - 1])) & (!((double)inClose[i] >= (double)inOpen[i])) & ((double)inClose[i] <= (double)inClose[i - 1] + TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1)) & ((double)inClose[i] >= (double)inClose[i - 1] - TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1)))));
+      EqualPeriodTotal += TA_CANDLERANGE_OF(Equal_rangeType,i - 1) - TA_CANDLERANGE_OF(Equal_rangeType,EqualTrailingIdx - 1);
       i += 1;
       EqualTrailingIdx += 1;
    } while( i <= endIdx );
@@ -319,7 +311,9 @@ static TA_RetCode TA_CDLMATCHINGLOW_OpenImpl( struct TA_CDLMATCHINGLOW_Stream **
    endIdx = historyLen - 1;
 
    {
+      int Equal_rangeType = TA_Globals->candleSettings[TA_Equal].rangeType;
       int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;
+      double Equal_factor = TA_Globals->candleSettings[TA_Equal].factor;
       double EqualPeriodTotal = 0.0;
       int i;
       int outIdx;
@@ -350,7 +344,7 @@ static TA_RetCode TA_CDLMATCHINGLOW_OpenImpl( struct TA_CDLMATCHINGLOW_Stream **
       i = EqualTrailingIdx;
       while( i < startIdx )
       {
-         EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 1);
+         EqualPeriodTotal += TA_CANDLERANGE_OF(Equal_rangeType,i - 1);
          i += 1;
       }
       i = startIdx;
@@ -365,8 +359,8 @@ static TA_RetCode TA_CDLMATCHINGLOW_OpenImpl( struct TA_CDLMATCHINGLOW_Stream **
       {
          if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* first black */
              ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* second black */
-             inClose[i] <= inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && /* 1st and 2nd same close */
-             inClose[i] >= inClose[i - 1] - TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) )
+             inClose[i] <= inClose[i - 1] + TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1) && /* 1st and 2nd same close */
+             inClose[i] >= inClose[i - 1] - TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1) )
          {
             outInteger[outIdx++ * outStride] = 100;
          } else 
@@ -376,7 +370,7 @@ static TA_RetCode TA_CDLMATCHINGLOW_OpenImpl( struct TA_CDLMATCHINGLOW_Stream **
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
-         EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 1) - TA_CANDLERANGE(Equal,EqualTrailingIdx - 1);
+         EqualPeriodTotal += TA_CANDLERANGE_OF(Equal_rangeType,i - 1) - TA_CANDLERANGE_OF(Equal_rangeType,EqualTrailingIdx - 1);
          i += 1;
          EqualTrailingIdx += 1;
       } while( i <= endIdx );
