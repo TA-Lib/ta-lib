@@ -153,7 +153,7 @@ New generator suites: `ts_render_statement_suite.rs`, `ts_int_semantics_suite.rs
 
 `tools/taCodegenServe.ts`:
 
-- **Build.** `build_ts` first runs `npm ci` in `ta_codegen/output/ts` when `node_modules/.package-lock.json` is missing or differs from `package-lock.json`; a failure is fatal. It then wipes `bin/ta_codegen_ts/`, writes `{"type":"module"}` there as `package.json`, and runs `node_modules/.bin/tsc -p ta_codegen/output/ts/tools` into it. Never bare `tsc` or `npx tsc`: with no `node_modules`, npx fetches an unrelated package named `tsc`. `build_ts_library` takes the same `npm ci` step.
+- **Build.** `build_ts` first runs `npm ci` in `ta_codegen/output/ts` when `node_modules/.ta-lock.sha256` is missing or does not hold the SHA-256 of `package-lock.json`, and writes that stamp after a successful `npm ci` (npm's hidden lockfile never equals `package-lock.json`, so comparing the two reinstalls every build); a failure is fatal. It then wipes `bin/ta_codegen_ts/`, writes `{"type":"module"}` there as `package.json`, and runs `node_modules/.bin/tsc -p ta_codegen/output/ts/tools` into it. Never bare `tsc`, and never `npx tsc` before `npm ci`: with no `node_modules`, npx fetches an unrelated package named `tsc`. `build_ts_library` takes the same `npm ci` step.
 - **Launch.** From `bin/`: `node ta_codegen_ts/tools/taCodegenServe.js`, with whichever `node` is first on PATH.
 - **Contract.** It is the Java and C# servers' contract, specified in `src/tools/ta_regtest/CLAUDE.md`.
 
@@ -258,7 +258,7 @@ Each axis has one non-vacuity assert (found more than zero times); the implicit 
 
 All phases share one branch, and each phase ends with every local gate green. Run heavy commands under `scripts/quiet.py noisy <session> --defer=60 -- <cmd>`. Every timing run goes under `scripts/quiet.py measure`. The gates below omit those wrappers.
 
-Hosts: every non-timing job, the website build included, runs on the orchestrator, in parallel where independent. Never time on the orchestrator. amd-1 runs timing only, and only in a window the owner confirms with the browser idle. intel-1 and macos-1 are often held by another set: queue with `quiet.py measure --queue=900` in short windows and do other work on exit 75. Worker hosts never install Node; a job takes it from `node_toolchain.py`, with `TA_NODE_CACHE` and `npm_config_cache` in the job's scratch directory and every path absolute.
+Hosts: every non-timing job, the website build included, runs on the orchestrator, in parallel where independent, except the two that need a worker's own platform (phase 0 item 6, phase 4 item 6's macos-1 leg). Never time on the orchestrator. amd-1 runs timing only, and only in a window the owner confirms with the browser idle. intel-1 and macos-1 are often held by another set: queue with `quiet.py measure --queue=900` in short windows and do other work on exit 75. Worker hosts never install Node; a job takes it from `node_toolchain.py`, with `TA_NODE_CACHE` and `npm_config_cache` in the job's scratch directory and every path absolute.
 
 Three command sets recur:
 
@@ -282,7 +282,8 @@ Three command sets recur:
 - **U**, other backends untouched, after `build.py generate`:
   ```
   BASE=$(git merge-base HEAD origin/dev)
-  git diff --exit-code $BASE -- src/ta_func src/ta_abstract include ta_codegen/output/rust ta_codegen/output/java ta_codegen/output/csharp
+  git diff --exit-code $BASE -- src/ta_func src/ta_abstract include ':!include/ta_common.h' ta_codegen/output/rust ta_codegen/output/java ta_codegen/output/csharp
+  ! git diff $BASE -- include/ta_common.h | grep -E '^[-+][^-+]' | grep -vq TA_LIB_SOURCES_DIGEST
   ! git diff $BASE -- website/src/functions ':!website/src/functions/index.md' | grep -E '^[-+]' | grep -Evq '^(\+\+\+|---) |TypeScript'
   ```
   The function pages may differ only by the added TypeScript row. A failure is not a red gate: it names the backends phase 4 must time, and section 8 records why their output changed.
@@ -555,7 +556,7 @@ Status: Not started
 1. Load the `ta-bench` skill first. Phase 4 never blocks landing: its timings inform D3 and D5, which stay Proposed until measured.
 2. Measurements:
    - **Where:** amd-1 and intel-1, with macos-1 as an extra data point (host rules in section 6). Every host times the same pinned Node 22 from `node_toolchain.py`.
-   - **Schedule:** dispatch the timing jobs at a pinned commit as soon as phase 3 is green, and run items 5 and 6 meanwhile. Ask the owner for the amd-1 window. Split each host's run into short `quiet.py measure` windows by `--function` lists under 400 characters (longer ones truncate silently), each carrying C SMA and EMA control rows; check that each window's row count matches its list. Read the controls first, and re-queue once a window whose C SMA or EMA median falls outside that row's range in the host's first window.
+   - **Schedule:** dispatch the timing jobs at a pinned commit as soon as phase 3 is green, and run item 5 meanwhile; run item 6 once every item 5 fix is committed. Ask the owner for the amd-1 window. Split each host's run into short `quiet.py measure` windows by `--function` lists under 400 characters (longer ones truncate silently), each carrying C SMA and EMA control rows; check that each window's row count matches its list. Read the controls first, and re-queue once a window whose C SMA or EMA median falls outside that row's range in the host's first window.
    - **intel-1:** taskset a P-core. `ta_bench` uses the skill's `--iters` (200 at 100k bars); the 2000-iteration floor is for `ta_bench_stream` only.
    - **Format:** each figure as "X% slower/faster than C (a ns vs b ns)", with range and median and the host named.
    - **What:**
