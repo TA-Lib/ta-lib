@@ -47,7 +47,7 @@
     <!-- Claims a floor, not a count: a published version is immutable, and
          scripts/pre-release-checks.py verifies the corpus still meets it. -->
     <Description>Technical analysis library: 200+ indicators (SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Stochastic, candlestick patterns) - the official .NET port of TA-Lib, verified against the C reference.</Description>
-    <PackageTags>ta-lib technical-analysis finance trading indicators candlestick</PackageTags>
+    <PackageTags>ta-lib talib technical-analysis technical-indicators indicators candlestick candlestick-patterns streaming finance trading algorithmic-trading quant backtesting stock crypto forex sma ema wma rsi macd bollinger atr adx stochastic cci obv vwap supertrend ichimoku keltner donchian sar hilbert</PackageTags>
     <PackageProjectUrl>https://ta-lib.org</PackageProjectUrl>
     <RepositoryUrl>https://github.com/TA-Lib/ta-lib</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
