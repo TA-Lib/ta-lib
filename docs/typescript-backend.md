@@ -1,6 +1,6 @@
 # TypeScript backend
 
-**Status:** this is the living plan for the TypeScript backend of `ta_codegen`, and the tracking issue links here. Rows marked Ruled were decided by the owner on 2026-11-01. The owner left the module format, the array types and the error model to this design. Those rows read Proposed and stand unless he reopens them. The implementation session updates each phase's Status line and appends to section 8. Nothing else in this file records progress.
+**Status:** this is the living plan for the TypeScript backend of `ta_codegen`, and the tracking issue links here. Rows marked Ruled were decided by the owner on 2026-11-01. The owner left the module format, the array types and the error model to this design. Those rows read Proposed and stand unless he reopens them. The implementation session updates each phase's Status line and appends a section 8 row at each deliverable checkpoint and each phase end. Nothing else in this file records progress.
 
 ## 1. Goal and scope
 
@@ -20,7 +20,7 @@
 | D1 | Implementation | Pure TypeScript compiled to JS. No WASM, no native addon | One artifact for every JS runtime, emitted by the managed-backend machinery | Ruled (owner, 2026-11-01) |
 | D2 | npm name | `ta-lib`. The name is one constant in the TS scaffolding emitter | Matches the Python and Rust package names | Ruled (owner, 2026-11-01); transfer pending (O1) |
 | D3 | Module format, min Node | ESM only, with no top-level await anywhere and no `node:` imports in the library. `exports` has `"."` and `"./metadata"`, each with `"types"` first and `"default"` last. `"sideEffects": false`. `engines.node` is `>=22.12.0`, and CI runs 22, 24 and 26 | Every supported Node line can `require()` an ESM-only package. One artifact means no dual-package hazard breaking `instanceof TALibError` | Proposed |
-| D4 | TS compile target | `target` and `lib` ES2022, plus `strict`, `erasableSyntaxOnly`, `verbatimModuleSyntax`, `isolatedModules`, `declaration` and `stripInternal`. No `enum` or `namespace` (use `as const` objects). `noUncheckedIndexedAccess` is off. `types: []` in the library tsconfig. TypeScript is pinned in the tooling lockfile | ES2022 runs on every supported runtime. Erasable syntax lets Node run the sources by type stripping. Use no option that TS 6.0 deprecates, so 7.x also compiles it | Proposed |
+| D4 | TS compile target | `target` and `lib` ES2022, plus `strict`, `erasableSyntaxOnly`, `verbatimModuleSyntax`, `isolatedModules`, `declaration` and `stripInternal`. No `enum` or `namespace` (use `as const` objects). `noUncheckedIndexedAccess` is off. `types: []` in the library tsconfig. `module` and `moduleResolution` `nodenext`; relative imports are spelled `./x.ts` with `rewriteRelativeImportExtensions`, so tsc emits `.js` and `node --test` runs the sources unchanged. Library `rootDir: src`, `outDir: dist`. TypeScript is pinned in the tooling lockfile | ES2022 runs on every supported runtime. Erasable syntax lets Node run the sources by type stripping. Use no option that TS 6.0 deprecates, so 7.x also compiles it | Proposed |
 | D5 | Input arrays | `ArrayLike<number>`: any typed array or a dense `number[]`. `Float64Array` is the recommended form and is read in place. The public tier and `Open` copy every other form into a `Float64Array` once on entry | Numerical libraries take typed arrays. JS TA libraries and platform data (OHLC objects, row arrays) produce `number[]`. The copy is for correctness: it applies ToNumber, so a `number[]` holding numeric strings (common from CSV or JSON parsing) cannot reach a body where `+` concatenates and `<` compares text. Phase 4 measures the copy's cost only | Proposed |
 | D6 | Output arrays | Caller-owned `Float64Array` for real outputs and `Int32Array` for integer outputs. Never `number[]` | Bit-faithful to float64. `Int32Array` matches C `int`. Hands off to Arrow and similar with no copy. A `number[]` would grow silently on an out-of-range write | Proposed |
 | D7 | Single precision | No `TA_S_` analogue: a `Float32Array` is an `ArrayLike<number>`, widened exactly by the D5 copy. The server serves the float leg's `use_float` by passing the widened values as a `Float32Array` to the same public tier | C's `TA_S_<F>` widens every float input and is bit-identical to `TA_<F>` on the widened doubles, so a widened `Float32Array` is the same contract. The float leg then gates the non-`Float64Array` path | Proposed |
@@ -37,7 +37,7 @@
 | D18 | Metadata API | Subpath `./metadata` with `Functions.byName` / `all` / `groups`, `ParamHolder` (`setInput`, `setOptInput`, `setOutput`, `lookback`, `displayShift`, `call`), `FuncInfo`, the flags, `FunctionDescription` and `getRuntimeInfo`. `call` invokes the public tier. The server answers every abstract RPC from this registry | Naming spec section 7 words. One table, and no table private to the server | Proposed |
 | D19 | Docs | TSDoc generated from each `<name>.md` through `doc_meta.rs`. Each `@example` is also emitted into a generated test that `node --test` runs | The analogue of the Rust doctests | Proposed |
 | D20 | Package layout | See the layout under this table | The C# model: the server compiles the shipped source | Proposed |
-| D21 | Toolchain | Building and testing need Node `>=22.18` (type stripping on by default, so `node --test` runs `.ts` tests) and npm. TypeScript and `@types/node` come from the committed lockfile through `npm ci`, and only the first run needs the network. A missing tool is a failure; narrow with `--backend` / `--language` | Same rule as the JDK and the .NET SDK. Consumers need only D3's `>=22.12` | Proposed |
+| D21 | Toolchain | Building and testing need Node `>=22.18` (type stripping on by default, so `node --test` runs `.ts` tests) and npm. TypeScript and `@types/node` come from the committed lockfile through `npm ci`, which `build_ts` runs itself, and only the first run needs the network. `scripts/node_toolchain.py` supplies a pinned Node of each CI major on any machine. A missing tool is a failure; narrow with `--backend` / `--language` | Same rule as the JDK and the .NET SDK. Consumers need only D3's `>=22.12` | Proposed |
 
 Package layout under `ta_codegen/output/ts/` (D20):
 
@@ -113,7 +113,7 @@ export class TALibError extends Error {
 | `ride_gen/ts.rs` | `ride_gen/java.rs` | The full field and diagnostic set |
 | `stream_verify_gen/ts.rs` | `stream_verify_gen/java.rs` | `SV_RANGE_MASK_TS` takes all five sites, since the server reaches `_OpenInternal`. Reuse `sv_reject_condition` and `sv_guard_enum_ints` |
 
-Template `ta_codegen/generator/templates/ts/fuzzData.ts`: a bit-exact port of `fuzz_data.h`. splitmix64 runs in BigInt (`BigInt.asUintN(64, ...)`) or as a hi/lo pair. The hash ports `fuzz_hash_init`, `fuzz_hash_bytes` and `fuzz_hash_fin`: standard FNV-1a 64 followed by the murmur fmix64 finalizer. Without the finalizer no hash matches.
+Template `ta_codegen/generator/templates/ts/fuzzData.ts`: a bit-exact port of `fuzz_data.h`. splitmix64 runs in BigInt (`BigInt.asUintN(64, ...)`) or as a hi/lo pair. The hash ports `fuzz_hash_init`, `fuzz_hash_bytes` and `fuzz_hash_fin`: FNV-1a 64 with the repo's basis `1469598103934665603`, which is not the standard one (copy the constants from `fuzz_data.h`, never retype them), followed by the murmur fmix64 finalizer. Without the finalizer no hash matches.
 
 Edits to existing modules:
 
@@ -145,7 +145,7 @@ Not cloned:
 - `stream_frame.rs`, `variant_frame.rs`, `meta_frame.rs` and `bench_gen.rs` (C only)
 - `select_chain.rs`, unless phase 4 measures a reason
 
-Shared and unchanged: `streaming.rs`, `fma.rs`, `ir_cleanup.rs`, `cond_fold.rs`, `divisor_guard.rs`, `expr_walk.rs`, `stmt_walk.rs`, `builtins.rs`, `abstract_rows.rs`, `price_bundle.rs`, `doc_meta.rs`, `helper_registry.rs`.
+Shared and unchanged: `streaming.rs`, `fma.rs`, `ir_cleanup.rs`, `cond_fold.rs`, `divisor_guard.rs`, `expr_walk.rs`, `stmt_walk.rs`, `builtins.rs`, `abstract_rows.rs`, `price_bundle.rs`, `doc_meta.rs`, `helper_registry.rs`. An edit to a shared module that changes another backend's output (check U, section 6) needs a reason in section 8, and those backends are then timed (phase 4). No `ts*.rs` code tests a function name: a fix is a construct rule. Never relax a floor, a `VACUOUS` check or a bound to get green.
 
 New generator suites: `ts_render_statement_suite.rs`, `ts_int_semantics_suite.rs` (the section 5 structural gate) and `ts_stream_suite.rs`. Register them in `tests/all/main.rs`.
 
@@ -153,8 +153,8 @@ New generator suites: `ts_render_statement_suite.rs`, `ts_int_semantics_suite.rs
 
 `tools/taCodegenServe.ts`:
 
-- **Build.** `build_ts` wipes `bin/ta_codegen_ts/`, writes `{"type":"module"}` there as `package.json`, and runs `tsc -p ta_codegen/output/ts/tools` into it.
-- **Launch.** From `bin/`: `node ta_codegen_ts/tools/taCodegenServe.js`.
+- **Build.** `build_ts` first runs `npm ci` in `ta_codegen/output/ts` when `node_modules/.package-lock.json` is missing or differs from `package-lock.json`; a failure is fatal. It then wipes `bin/ta_codegen_ts/`, writes `{"type":"module"}` there as `package.json`, and runs `node_modules/.bin/tsc -p ta_codegen/output/ts/tools` into it. Never bare `tsc` or `npx tsc`: with no `node_modules`, npx fetches an unrelated package named `tsc`. `build_ts_library` takes the same `npm ci` step.
+- **Launch.** From `bin/`: `node ta_codegen_ts/tools/taCodegenServe.js`, with whichever `node` is first on PATH.
 - **Contract.** It is the Java and C# servers' contract, specified in `src/tools/ta_regtest/CLAUDE.md`.
 
 What is specific to TS:
@@ -172,7 +172,8 @@ What is specific to TS:
 - `test_codegen.c`:
   - `argv_ts[] = {"node","ta_codegen_ts/tools/taCodegenServe.js",NULL}` and an `ALL_LANGUAGES` row `{"ts","TypeScript",argv_ts}`.
   - The lane's bound becomes per language, set in one place: `codegen_lang_needs_transcendental_tol` turns into a function returning the language's bound (0 for a bitwise language), and every site that reads `CODEGEN_TRANSCENDENTAL_TOL` today (`--codegen`, `server_verify`, `--xlang-hash`) reads it instead. `test_codegen.h` defines the TS bound as one constant, `1e-13`, beside Java's and C#'s `1e-9`, so changing it is a one-line edit. A non-zero bound brings the `xlang_illcond` skip with it and turns off `codegen_call_needs_vmath_tol`.
-  - Record the largest TS deviation per function under that lane on the phase 2 runs, in section 8. A deviation above 1e-13 goes to the owner; never widen the constant to make a run green.
+  - Every tolerance-lane compare keeps a per-language, per-function maximum of the scaled deviation, and a function over the bound keeps sweeping so its maximum is complete. For each language with a non-zero bound, `--codegen` and `--xlang-hash` end with one `TRANSCENDENTAL MAX [<lang>] TA_<F> <dev>` line per function compared in the lane (phase 1).
+  - Section 8 records the TS lines of unfiltered `--xlang-hash` runs at the phase 1 and phase 2 exits. Over 1e-13, never widen the constant: give the owner one row per function (maximum, shape, seed, parameters, and the C and TS values in `%a`), mark the phase `blocked on O2 (<functions>)`, and continue with work that does not depend on the answer.
   - `codegen_lang_can_pass_enum_sentinel` is true for ts.
   - The float-leg tests (`!= "rust"`, and `server_verify.c::sv_serves_float`) already include TS, so the server must serve `use_float` from phase 1.
   - `stream_fuzz_port_selfcheck`: fail when a non-C server checks zero shapes. Today a missing `in_hash` skips silently, and a broken port then stays self-consistent through every stream leg. Prove it red with a server that drops `in_hash`.
@@ -188,7 +189,7 @@ What is specific to TS:
 - `ta_bench.c`: `argv_ts` and a `LANGUAGES[]` row.
 - `src/tools/ta_regtest/CLAUDE.md`: the `--language` table and the launch line.
 
-No new ta_regtest source file, so `CMakeLists.txt` and `Makefile.am` are unchanged.
+`CMakeLists.txt`: the `regtest` target's `--language` list gains `ts` and its `COMMENT` names TypeScript (phase 1); `build.py regtest`, which macos-cross-language runs, otherwise never starts TS. No ta_regtest source file is added, so the source lists are unchanged.
 
 ### 4.4 Scripts
 
@@ -198,13 +199,14 @@ No new ta_regtest source file, so `CMakeLists.txt` and `Makefile.am` are unchang
   - `TARGET_PREREQS['xlang-hash']`
   - the help texts
   - `REGEN_PROBE_FILES` gets one generated library module and the server. Without them, `regen-check` cannot see a path that `generate` stopped writing.
-- `synth_gate.py`: `LANGS` and the tally regex display name.
+- `synth_gate.py`: `LANGS` and the tally regex display name. `ta_codegen/generator/input_synth/synth_values.py`: a `("ts", ["node", "ta_codegen_ts/tools/taCodegenServe.js"])` row in `servers`, or the golden-value leg never runs TS.
 - `check_stream_retcodes.py`: a TS row (phase 2).
 - Phase 3:
   - `utilities/versions.py`: `get_version_string_ts` / `set_version_string_ts` for `library/package.json`, in both `sync_versions` and `check_versions`, as Cargo.toml has. `generate` writes the same value, so a `VERSION` bump followed by `sync.py` leaves `regen-check` clean.
   - `pre-release-checks.py`: its version list, and `library/package.json` and `library/README.md` in `claim_paths`.
   - `utilities/website.py`: an npm lookup and a `PAGES` row.
 - New scripts:
+  - `node_toolchain.py` plus its pin file (phase 0)
   - `ts_fma_check.py` plus `ts_fma_check/golden.c` (phase 0)
   - `ts_package_check.py` plus `ts_consumer_check/` (phase 3)
 
@@ -213,7 +215,7 @@ No new ta_regtest source file, so `CMakeLists.txt` and `Makefile.am` are unchang
 - Phase 1, in the same commit that makes Node a prerequisite of the job's command: `actions/setup-node` in the `nightly-jobs.yml` jobs `cross-language`, `xlang-hash`, `synth-gate` and `macos-cross-language`.
 - Phase 3:
   - `pr-codegen-gate.yml`: a `ts-compiles` job with `actions/setup-node`, then `npm ci`, `tsc` over the library, the hand-written tests and the server, and `ts_fma_check.py --random=1000000`.
-  - `nightly-jobs.yml`: a new `typescript` job: `build.py libraries --language=ts` on Node 22, 24 and 26, then `ts_package_check.py`, then `ts_fma_check.py` with a date-derived seed. The `arm64-linux` narrowing job is unchanged.
+  - `nightly-jobs.yml`: a new `typescript` job: `build.py libraries --language=ts` on Node 22, 24 and 26 (an `actions/setup-node` matrix pinned to the majors of `node_toolchain.py`), then `ts_package_check.py`, then `ts_fma_check.py` with a date-derived seed. The `arm64-linux` narrowing job is unchanged.
   - `.github/dependabot.yml`: an npm entry for `/ta_codegen/output/ts`, with `target-branch: dev` and a `cooldown`.
 
 ## 5. Numerical semantics
@@ -256,7 +258,9 @@ Each axis has one non-vacuity assert (found more than zero times); the implicit 
 
 All phases share one branch, and each phase ends with every local gate green. Run heavy commands under `scripts/quiet.py noisy <session> --defer=60 -- <cmd>`. Every timing run goes under `scripts/quiet.py measure`. The gates below omit those wrappers.
 
-Two command sets recur:
+Hosts: every non-timing job, the website build included, runs on the orchestrator, in parallel where independent. Never time on the orchestrator. amd-1 runs timing only, and only in a window the owner confirms with the browser idle. intel-1 and macos-1 are often held by another set: queue with `quiet.py measure --queue=900` in short windows and do other work on exit 75. Worker hosts never install Node; a job takes it from `node_toolchain.py`, with `TA_NODE_CACHE` and `npm_config_cache` in the job's scratch directory and every path absolute.
+
+Three command sets recur:
 
 - **G**, every step of `pr-codegen-gate.yml`:
   ```
@@ -275,6 +279,25 @@ Two command sets recur:
   cd ta_codegen/output/ts && npm ci
   npx tsc -p library --noEmit && npx tsc -p library/test --noEmit && npx tsc -p tools --noEmit
   ```
+- **U**, other backends untouched, after `build.py generate`:
+  ```
+  BASE=$(git merge-base HEAD origin/dev)
+  git diff --exit-code $BASE -- src/ta_func src/ta_abstract include ta_codegen/output/rust ta_codegen/output/java ta_codegen/output/csharp
+  ! git diff $BASE -- website/src/functions ':!website/src/functions/index.md' | grep -E '^[-+]' | grep -Evq '^(\+\+\+|---) |TypeScript'
+  ```
+  The function pages may differ only by the added TypeScript row. A failure is not a red gate: it names the backends phase 4 must time, and section 8 records why their output changed.
+
+Every phase end also checks that each file `grep -li csharp ta_codegen/generator/tests/all/*.rs` lists has a TS arm, or a reason in section 8 (naming the phase that adds the arm, if one does).
+
+### Parallel tracks and collision points
+
+Run independent tracks as subagents, each in its own scratch worktree at a named SHA, returning a patch:
+
+- phase 0: `fma.ts` | `golden.c` and `ts_fma_check.py` | `errors.ts`, `core.ts`, `outRange.ts` | `node_toolchain.py`
+- phase 1: `ctype.rs` and its suite | `fuzzData.ts` and the server codec | the harness C edits | scripts and CI | `ts_enums.rs` and `ts_phantom_io.rs`
+- phase 3: metadata | docs | packaging | website | runbook
+
+Only the orchestrating session edits `ir.rs`, `backends/mod.rs`, `main.rs`, `tests/all/main.rs` and the dispatch parts of `server_gen.rs` and `test_codegen.c`, and only it runs `generate` and `build.py servers` in the branch worktree, after each merge.
 
 ### Phase 0: runtime helpers
 
@@ -308,6 +331,11 @@ Status: Not started
      - NaN operands
    - It also takes `--random=N --seed=S`.
 4. `PREREQS_NODE` in `utilities/common.py`.
+5. `scripts/node_toolchain.py <major>`, in the style of the Maven wrapper:
+   - A committed pin file holds one exact version per major (22, 24, 26) and, per platform tarball (linux-x64, linux-arm64, darwin-arm64), its SHA-256 from nodejs.org `SHASUMS256.txt`.
+   - On first use it downloads the official tarball, verifies it, and unpacks it into a cache: `~/.cache/ta-lib/node` by default, `TA_NODE_CACHE` when set. A worker job always sets `TA_NODE_CACHE` to its scratch directory.
+   - It prints the version's `bin` directory. A checksum mismatch deletes the download and exits non-zero.
+6. A job on intel-1 and on macos-1 runs `node --version; npm --version`; section 8 records the answers. Hosts without a system Node `>=22.18` go into the landing report, because an unfiltered `build.py servers` there fails once TS lands.
 
 **Algorithm guidance for `fma`**
 
@@ -333,11 +361,13 @@ Status: Not started
 cd ta_codegen/output/ts && npm ci && npx tsc -p library --noEmit
 python3 scripts/ts_fma_check.py --random=100000000 --seed=1
 python3 scripts/ts_fma_check.py --random=100000000 --seed=2
+for v in 22 24 26; do "$(python3 scripts/node_toolchain.py $v)/node" --version | grep -q "^v$v\." || echo "node $v FAILED"; done
 ```
 
 Also:
 
-- G passes.
+- G passes, and the loop prints nothing.
+- Red proof, recorded in section 8: in a scratch copy with an empty `TA_NODE_CACHE`, corrupt one pin's SHA-256 and confirm `node_toolchain.py` exits non-zero and leaves no unpacked tree.
 - Red proof, recorded in section 8: replace the round-to-odd step with round-to-nearest, confirm the check fails on the tie family, then restore it.
 
 ### Phase 1: batch tier, server, cross-language gates
@@ -369,7 +399,8 @@ Status: Not started
 - **Fuzz port.** The fuzz port must already be bit-exact; the zero-shape failure in 4.3 makes a missing `in_hash` loud.
 - **Missing abstract legs.** There is no abstract block until phase 3, so the abstract legs are absent for TS. Do not read their absence as a pass.
 - **`TA_ALT` alternates.** TS must take every `ALL_LANGUAGES` alternate and no Java or C# one. An entry point that skips `resolved_for(Lang::Ts)` gets both wrong.
-- **Stale servers.** After any input or generator edit, run `build.py servers` before `--codegen`. An unwiped `bin/ta_codegen_ts` passes every gate with old code.
+- **Stale library.** The TS server compiles `library/src`, and `build.py servers` regenerates only the server. After any edit to an input `.c` or a generator module, run `build.py generate` and then `build.py servers --language=c,ts` before any `--codegen` or `--xlang-hash` run or red proof. An unwiped `bin/ta_codegen_ts` passes every gate with old code.
+- **synth_gate snapshot.** It tests HEAD plus tracked edits, so run it after the new files are committed and check that its `testing tree <sha>` line names that commit.
 - **Lane coverage.** Confirm that the transcendental lane covers only D11 calls: every other TS call in the xlang-hash report must be counted as bitwise.
 
 **Exit gate**
@@ -377,19 +408,20 @@ Status: Not started
 G and T pass, and:
 
 ```
+python3 scripts/build.py generate
 cd ta_codegen/output/ts && npx tsc -p library && node --test 'library/test/**/*.test.ts'
 python3 scripts/build.py servers --language=c,ts
 cd bin && ./ta_regtest --codegen --language=c,ts
 cd bin && ./ta_regtest --xlang-hash --language=c,ts
-python3 scripts/build.py regtest
+out=$(python3 scripts/build.py regtest) && grep -q 'Codegen verification: TypeScript' <<<"$out"
 cd bin && ./ta_regtest --xlang-hash
 env -u TA_CODEGEN_ROOT python3 scripts/synth_gate.py
 ```
 
 Also:
 
-- The TS section of the `--codegen` output prints `Fuzz-port self-check: N/N shapes bit-identical` with N above zero.
-- The last three commands show the other backends untouched.
+- The TS section of the `--codegen` output (from `Codegen verification: TypeScript` to the next `Codegen verification:` line) prints `Fuzz-port self-check: N/N shapes bit-identical` with N above zero.
+- U is run and its result recorded in section 8.
 
 ### Phase 2: streaming tier
 
@@ -420,7 +452,7 @@ Status: Not started
 
 **Exit gate**
 
-- Phase 1's commands pass.
+- Phase 1's exit gate passes.
 - The TS section of the `--codegen --language=c,ts` output (and of an unfiltered `--codegen` run) shows:
   - a `ride-along:` line
   - no `Stream verify: not supported` line
@@ -437,25 +469,27 @@ Status: Not started
 
 1. **Metadata.**
    - `ts_metadata.rs`, `getRuntimeInfo` and `FunctionDescription`. The server answers every abstract RPC from the shipped registry.
-   - The `ta_regtest.c` abstract-parity block for TS.
+   - The `ta_regtest.c` abstract-parity block for TS, printing `  abstract parity (TypeScript): <N> functions` on success. Without a `--language` filter a missing server only prints a skip, so the gate greps this line under one.
    - A TS arm in `indicator_variants_suite::metadata_price_setter_validates_before_writing`. The price setter validates every component before it writes any.
 2. **Docs.**
    - `ts_doc.rs`, with the example tests generated into `library/test/gen/`.
    - A generator test that every public declaration the TS emitters write carries a TSDoc block (the CS1591 analogue).
    - The example tests import the package by its own name (package self-reference), so a rename (O1) is one constant.
+   - TS arms in `spec_catalog_suite`, `abstract_rows_suite`, `doc_emphasis_suite` and `circbuf_suite`.
 3. **Packaging.**
    - Final `library/package.json` fields: `name`, `description` (containing `200+ indicators`), `exports`, `types`, `sideEffects`, `files`, `engines`, `license`, `repository`.
    - A hand-written `library/README.md` containing `200+ indicators` (the only place that carries install lines until the first publish).
    - `LICENSE` copied.
-   - `build_ts_library`, `LIBRARY_PREREQS["ts"]` and the `build_libraries` default-list entry, landed together: `npm ci`, `tsc` to `dist/`, `npm pack`, install the tarball into a throwaway project, then run the hand-written suites and the example tests against it with the same `node --test` glob as phase 1.
+   - `build_ts_library`, `LIBRARY_PREREQS["ts"]` and the `build_libraries` default-list entry, landed together: `npm ci`, `tsc` to `dist/`, `npm pack`, install the tarball into a throwaway project, then run against it the tests that import `ta-lib` by self-reference (the example tests and the public-API tests). The phantom sweep and other tests that import `../src` stay source-tree tests, run by the phase 1 `node --test` glob.
+   - `build.py libraries --language=ts --node=22,24,26` (or `all`) runs the suite once per version with `node_toolchain.py`'s `bin` first on PATH.
    - `ts_package_check.py`:
      - the exact tarball entries
      - byte-identical `LICENSE` and README
      - version equals `VERSION`
      - a consumer that loads the package by `import` and by `require()` (which proves there is no top-level await)
      - no `@internal` name in the `.d.ts` files or the runtime barrel
-     - a diff of the packed declarations against a committed API snapshot taken at each publish (the `PublicAPI.Shipped.txt` analogue)
-4. **Versions.** The phase 3 `versions.py` and `pre-release-checks.py` entries in 4.4. `website.py` gets `latest_npm_version()`: a 404 answers `NOT_PUBLISHED` and deprecated versions are skipped.
+     - a diff of the packed declarations against a committed API snapshot taken at each publish (the `PublicAPI.Shipped.txt` analogue). Until the first publish the snapshot is absent and the diff is skipped; the publish runbook creates it.
+4. **Versions.** The phase 3 `versions.py` and `pre-release-checks.py` entries in 4.4. `website.py` gets `latest_npm_version()`: a 404 answers `NOT_PUBLISHED` and deprecated versions are skipped. It also ignores 0.9.0, 0.10.0 and 0.11.0, the previous holder's versions (O1), as `latest_crate_minor` ignores the old crate; with nothing left it answers `NOT_PUBLISHED`. A unit check feeds it a packument holding only those three and expects `NOT_PUBLISHED`.
 5. **CI** as in 4.5 phase 3, and the dependabot entry.
 6. **Website.**
    - New pages: `website/src/api/typescript/README.md` and `api/typescript/stream/README.md`.
@@ -492,18 +526,25 @@ Status: Not started
 G and T pass, and:
 
 ```
-python3 scripts/build.py libraries --language=ts
+python3 scripts/build.py libraries --language=ts --node=all
 python3 scripts/ts_package_check.py
-python3 scripts/build.py servers && cd bin && ./ta_regtest --codegen   # abstract parity line present for TS
+python3 scripts/build.py servers && cd bin && ./ta_regtest --codegen
+cd bin && out=$(./ta_regtest --codegen --language=c,ts) && grep -Eq 'abstract parity \(TypeScript\): [1-9]' <<<"$out"
 cd bin && ./ta_regtest --xlang-hash
-python3 scripts/sync.py                     # changes nothing
-python3 scripts/pre-release-checks.py
+a=$(git diff) && python3 scripts/sync.py && [ "$a" = "$(git diff)" ]
+python3 -c "import sys; sys.path.insert(0,'scripts'); from utilities.versions import check_versions; sys.exit(0 if check_versions('.') else 1)"
+grep -q '200+ indicators' ta_codegen/output/ts/library/package.json && grep -q '200+ indicators' ta_codegen/output/ts/library/README.md
 python3 scripts/sync-website.py --check
-cd website && pnpm install --frozen-lockfile && pnpm run docs:build   # on amd-1, via npx pnpm@11.2.2
+cd website && npx pnpm@11.2.2 install --frozen-lockfile && NODE_OPTIONS=--max_old_space_size=8192 npx pnpm@11.2.2 run docs:build
 actionlint                                  # on a ./ copy of the changed workflows
 ```
 
-Also: change `VERSION` in a scratch copy, run `sync.py`, and confirm `regen-check` stays clean.
+Also:
+
+- `actionlint` is a pinned release fetched into the session scratchpad with `gh release download <tag> --repo rhysd/actionlint --pattern '*linux_amd64.tar.gz'`, or the `rhysd/actionlint` docker image run with `--memory`.
+- `pre-release-checks.py` itself runs only in a release: it needs `dist/` assets and a fresh CHANGELOG entry. Never build `dist/` or touch `CHANGELOG.md` to make it pass.
+- In a scratch worktree, change `VERSION` and run `sync.py`, then `a=$(git diff) && python3 scripts/build.py generate && [ "$a" = "$(git diff)" ]` succeeds.
+- U is run and its result recorded in section 8.
 
 ### Phase 4: performance pass and adversarial review
 
@@ -511,38 +552,43 @@ Status: Not started
 
 **Deliverables**
 
-1. Load the `ta-bench` skill first.
+1. Load the `ta-bench` skill first. Phase 4 never blocks landing: its timings inform D3 and D5, which stay Proposed until measured.
 2. Measurements:
-   - **Where:** amd-1 and intel-1 (pin a P-core with taskset and use at least 2000 iterations), with macos-1 as an extra data point.
+   - **Where:** amd-1 and intel-1, with macos-1 as an extra data point (host rules in section 6). Every host times the same pinned Node 22 from `node_toolchain.py`.
+   - **Schedule:** dispatch the timing jobs at a pinned commit as soon as phase 3 is green, and run items 5 and 6 meanwhile. Ask the owner for the amd-1 window. Split each host's run into short `quiet.py measure` windows by `--function` lists under 400 characters (longer ones truncate silently), each carrying C SMA and EMA control rows; check that each window's row count matches its list. Read the controls first, and re-queue once a window whose C SMA or EMA median falls outside that row's range in the host's first window.
+   - **intel-1:** taskset a P-core. `ta_bench` uses the skill's `--iters` (200 at 100k bars); the 2000-iteration floor is for `ta_bench_stream` only.
    - **Format:** each figure as "X% slower/faster than C (a ns vs b ns)", with range and median and the host named.
    - **What:**
      - **Batch:** every function under `ta_bench --language=c,rust,ts`, at 2000 and 100k bars. Rust is timed through its public tier and TS through the body; state this next to the numbers.
      - **Software fma:** its cost on the fusing functions, against a measurement-only build where the helper is `a*b + c`. That build is never shipped, because its values differ.
      - **D5:** the cost of the entry copy for `number[]` and `Float32Array` inputs, against a `Float64Array` input.
      - **D3:** barrel import time against a per-function subpath.
-     - **Streaming:** `update` and `peek` through a TS arm in `scripts/stream_ab.py`.
-     - **JIT tiers:** functions that never reach the optimizing tier (`node --trace-opt --trace-deopt` under `ta_bench`). This is the analogue of Java's inline budget.
+     - **Streaming:** the C-relative figure comes from `ta_bench --language=c,rust,ts --mode=open` and `--mode=openfill`. Per-bar `update` and `peek` have no cross-language tool: a TS arm in `scripts/stream_ab.py`, with a commit that already has TS streaming as `--base`, reports only the relative change of a phase 4 edit and is never compared with C.
+     - **JIT tiers:** functions that never reach the optimizing tier (`node --trace-opt --trace-deopt` under `ta_bench`), the analogue of Java's inline budget. Not a timing job: run it on the orchestrator with the pinned Node 22.
 3. Record each result in the decision row it settles (D3, D5), and in section 8.
-4. If the pass changes shared generator code, time every backend whose output changed.
+4. If U shows another backend's output changed, time every such backend under the same rules.
 5. Adversarial review of the whole branch:
    - refute by default, with fan-out sized to the diff
    - findings merged by file:line
    - every fix re-reviewed
    - `/code-review` given two explicit SHAs
+6. Landing round (O4), from a fresh `git worktree add` of the landing SHA in a scratch path (no `node_modules`):
+   - the `ts-compiles` steps, `build.py libraries --language=ts --node=all`, `ts_package_check.py` and `ts_fma_check.py --random=1000000 --seed=<date>`
+   - the macos-cross-language commands as a build job on macos-1, under `quiet.py noisy`: `build.py servers --language=c,ts`, `ta_regtest --codegen --language=c,ts` from `bin/`, `build.py xlang-hash --language=c,ts` and `build.py libraries --language=ts`
+   - a leg that did not run is reported as not run, never as passed
 
 **Gotchas (silent)**
 
 - A one-bar batch call is not a target.
 - Never tune for monotonic or held series.
-- intel-1 below 2000 iterations reads about ten times slow.
 - Composed functions page-fault their scratch at 100k bars, so read the 2000-bar rows too.
 
 **Exit gate**
 
-- The measurements are recorded.
-- No other backend regresses beyond noise.
+- Item 2's table exists for every function at 2000 and 100k bars on each host that ran it; for each host still held when everything else is ready, section 8 says `not measured on <host>`. The same rule covers item 4.
 - Every review finding is fixed or refuted in writing.
-- The gates of phases 0 to 3 pass at the final SHA.
+- The gates of phases 0 to 3 pass at the final SHA, and item 6 is done.
+- Report to the owner with the branch ready to land: the measurements, the hosts not measured or not run, and the hosts without a system Node `>=22.18` (phase 0). Landing is the owner's call.
 
 ## 7. Open items
 
@@ -553,5 +599,5 @@ Status: Not started
 
 ## 8. Status log
 
-| date | phase | note |
-|---|---|---|
+| date | phase.deliverable | SHA | gates passed | open failures / owner questions |
+|---|---|---|---|---|
