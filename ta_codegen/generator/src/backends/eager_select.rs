@@ -1948,4 +1948,78 @@ mod tests {
         let Statement::If { condition, .. } = folded(doji) else { panic!() };
         same!(condition, a_gt_b());
     }
+
+    /// Whether `rewrite` folds some tree of `body`.
+    fn folds_in(body: &[Statement], declared: &Declared) -> bool {
+        let outputs = [Output { name: "out".into(), param_type: ParamType::Integer, flags: Vec::new(), levels: Vec::new() }];
+        let mut hit = false;
+        each_statement(&rewrite(body, declared, &outputs, helpers()), &mut |s| hit |= is_fold(s));
+        hit
+    }
+    fn local(t: VarType, n: &str, init: Option<Expr>) -> Statement {
+        Statement::VarDecl { var_type: t, name: n.into(), init }
+    }
+    fn x_half_and(e: Expr) -> Statement {
+        simple_if(and(gt(var("x"), Expr::Literal(0.5)), e), int(1))
+    }
+
+    #[test]
+    fn a_step_declared_in_its_for_init_enters_where_the_declaration_says() {
+        let d = Declared { arrays: declared().arrays.clone(), reals: names(&["x"]), lookback: "f_lookback".into(), fixed: 3, ..Declared::default() };
+        let looped = |init: Statement| {
+            let body = vec![
+                assign("lookbackTotal", call("f_lookback", Vec::new())),
+                iff(bin(var("startIdx"), BinOp::Less, var("lookbackTotal")), vec![assign("startIdx", var("lookbackTotal"))], Vec::new()),
+                iff(gt(var("startIdx"), var("endIdx")), vec![Statement::Return { value: None }], Vec::new()),
+                assign("i", var("startIdx")),
+                Statement::ForC {
+                    init: Box::new(init),
+                    condition: bin(var("i"), BinOp::LessEq, var("endIdx")),
+                    update: Box::new(step()),
+                    body: vec![x_half_and(gt(at("inClose", i_minus(3)), at("inOpen", var("i"))))],
+                },
+            ];
+            folds_in(&body, &d)
+        };
+        let below = bin(var("startIdx"), BinOp::Sub, int(3));
+        assert!(!looped(local(VarType::Integer, "i", Some(below.clone()))), "a declared step entering below the floor folds");
+        assert!(!looped(assign("i", below)));
+        assert!(looped(local(VarType::Integer, "i", Some(var("startIdx")))));
+        assert!(looped(assign("i", var("startIdx"))));
+    }
+
+    #[test]
+    fn a_helper_argument_must_be_written_before_it_runs() {
+        let tree = || x_half_and(gt(call("ta_realbody", vec![var("z"), at("inClose", var("i"))]), Expr::Literal(1.0)));
+        let write = || assign("z", at("inClose", var("i")));
+        let looped = |pass: Vec<Statement>| vec![local(VarType::Real, "z", None), Statement::While { condition: gt(var("n"), int(0)), body: pass }];
+        assert!(!folds_in(&looped(vec![tree(), write(), reads(), step()]), declared()), "an unwritten local runs eagerly in a helper");
+        assert!(folds_in(&looped(vec![write(), tree(), reads(), step()]), declared()));
+    }
+
+    #[test]
+    fn an_inner_declaration_writes_only_its_own_name() {
+        let looped = |pre: Vec<Statement>| {
+            let mut body = pre;
+            body.extend(in_loop(x_half_and(gt(var("z"), at("inClose", var("i"))))));
+            body
+        };
+        let inner = Statement::Block { body: vec![local(VarType::Real, "z", Some(Expr::Literal(1.0)))] };
+        assert!(!folds_in(&looped(vec![local(VarType::Real, "z", None), inner]), declared()), "a shadowing declaration writes the outer name");
+        assert!(folds_in(&looped(vec![local(VarType::Real, "z", Some(Expr::Literal(1.0)))]), declared()));
+    }
+
+    #[test]
+    fn a_local_array_element_must_be_written_before_the_loop() {
+        let looped = |pre: Vec<Statement>| {
+            let mut body = vec![local(VarType::RealArray("2".into()), "buf", None)];
+            body.extend(pre);
+            body.extend(in_loop(x_half_and(gt(at("buf", int(0)), at("inClose", var("i"))))));
+            body
+        };
+        let set = |k: i64| store(at("buf", int(k)), Expr::Literal(0.0));
+        assert!(!folds_in(&looped(Vec::new()), declared()), "an unwritten array element runs eagerly");
+        assert!(!folds_in(&looped(vec![set(1)]), declared()));
+        assert!(folds_in(&looped(vec![set(0)]), declared()));
+    }
 }
