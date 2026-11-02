@@ -34,7 +34,8 @@ pin on something already true, not a new convention being imposed.
 
 Both tiers are covered, because both wire the same totals:
 
-    batch/dispatch  TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[1],i - 1)
+    batch/dispatch  TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,
+                                        BodyLong_factor,BodyLongPeriodTotal[1],i - 1)
     streaming       TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal[1],
                                             sp->lag1_inOpen,...)
 
@@ -58,9 +59,15 @@ import sys
 
 FUNC_DIR = os.path.join("src", "ta_func")
 
-# TA_CANDLEAVERAGE(SET, TOTAL[k], i - m)   -- k and m both optional
-BATCH = re.compile(r"TA_CANDLEAVERAGE\(\s*(\w+)\s*,\s*(\w+?)(?:\[(\d+)\])?\s*,"
-                   r"\s*i(?:\s*-\s*(\d+))?\s*\)")
+# TA_CANDLEAVERAGE(SET, TOTAL[k], i - m), or the settings-hoisted
+# TA_CANDLEAVERAGE_OF(SET_rangeType, SET_avgPeriod, SET_factor, TOTAL[k], i - m)
+# -- k and m both optional. The hoisted form names the setting three times, and
+# all three must agree: a total averaged over one setting's period and scaled by
+# another's factor is the same silent miswiring as a crossed bar.
+BATCH = re.compile(r"TA_CANDLEAVERAGE(?:_OF)?\(\s*(\w+?)(?:_rangeType)?\s*,"
+                   r"(?:\s*(\w+?)_avgPeriod\s*,\s*(\w+?)_factor\s*,)?"
+                   r"\s*(\w+?)(?:\[(\d+)\])?\s*,\s*i(?:\s*-\s*(\d+))?\s*\)")
+_RANGE = r"TA_CANDLERANGE(?:_OF)?\(\s*(\w+?)(?:_rangeType)?\s*,"
 # TA_STREAM_CANDLEAVERAGE(SET, sp->TOTAL[k], [sp->lagN_]inOpen, ...)
 STREAM = re.compile(r"TA_STREAM_CANDLEAVERAGE\(\s*(\w+)\s*,\s*sp->(\w+?)"
                     r"(?:\[(\d+)\])?\s*,\s*(?:sp->lag(\d+)_)?inOpen")
@@ -118,8 +125,8 @@ _OFF = r"(?:\s*([-+])\s*(\w+))?"
 # form, the fill form with no subtract, and every offset omitted.
 BATCH_WRITE = re.compile(
     r"\b(\w*PeriodTotal\d?)(?:\[(\w+)\])?\s*(?:\+=|=\s*\1(?:\[(\w+)\])?\s*\+)\s*\(?\s*"
-    r"TA_CANDLERANGE\(\s*(\w+)\s*,\s*i" + _OFF + r"\s*\)"
-    r"(?:\s*-\s*TA_CANDLERANGE\(\s*(\w+)\s*,\s*(\w+)" + _OFF + r"\s*\))?")
+    + _RANGE + r"\s*i" + _OFF + r"\s*\)"
+    r"(?:\s*-\s*" + _RANGE + r"\s*(\w+)" + _OFF + r"\s*\))?")
 
 # The derived ring's own per-bar push -- what the ring actually holds.
 RING_PUSH = re.compile(
@@ -406,7 +413,11 @@ def scan(src):
             problems.append("%s[%s] is read against both %s and %s"
                             % (total, sub, prev, setting))
 
-    for setting, total, sub, off in BATCH.findall(src):
+    for setting, avg, fac, total, sub, off in BATCH.findall(src):
+        if (avg or setting) != setting or (fac or setting) != setting:
+            problems.append("%s%s averages %s's range over %s_avgPeriod with "
+                            "%s_factor" % (total, "[%s]" % sub if sub else "",
+                                           setting, avg, fac))
         off = int(off) if off else 0
         reads.append(("batch", total, sub, off))
         note_set(total, sub, setting)
@@ -451,7 +462,7 @@ def main():
         # one, so it fails here instead.
         for line in src.splitlines():
             t = line.strip()
-            if "PeriodTotal" not in t or "CANDLERANGE(" not in t:
+            if "PeriodTotal" not in t or "CANDLERANGE" not in t:
                 continue
             if (BATCH_WRITE.search(t) or STREAM_WRITE.search(t)
                     or STREAM_FOLD.search(t)):
