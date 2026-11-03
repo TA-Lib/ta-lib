@@ -73,6 +73,7 @@ TA-Lib Definition: [`macdv.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | Rust | [`macdv.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/macdv.rs) |
 | Java | [`Core_MACDV.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MACDV.java) |
 | C# | [`Core_MACDV.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MACDV.cs) |
+| TypeScript | [`macdv.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/macdv.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

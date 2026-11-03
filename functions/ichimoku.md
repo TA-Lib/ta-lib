@@ -79,6 +79,7 @@ TA-Lib Definition: [`ichimoku.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | Rust | [`ichimoku.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/ichimoku.rs) |
 | Java | [`Core_ICHIMOKU.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ICHIMOKU.java) |
 | C# | [`Core_ICHIMOKU.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ICHIMOKU.cs) |
+| TypeScript | [`ichimoku.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/ichimoku.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

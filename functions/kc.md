@@ -72,6 +72,7 @@ TA-Lib Definition: [`kc.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | Rust | [`kc.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/kc.rs) |
 | Java | [`Core_KC.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_KC.java) |
 | C# | [`Core_KC.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_KC.cs) |
+| TypeScript | [`kc.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/kc.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

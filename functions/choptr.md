@@ -72,6 +72,7 @@ TA-Lib Definition: [`choptr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | Rust | [`choptr.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/choptr.rs) |
 | Java | [`Core_CHOPTR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CHOPTR.java) |
 | C# | [`Core_CHOPTR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CHOPTR.cs) |
+| TypeScript | [`choptr.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/choptr.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

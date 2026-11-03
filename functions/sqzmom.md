@@ -93,6 +93,7 @@ TA-Lib Definition: [`sqzmom.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | Rust | [`sqzmom.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/sqzmom.rs) |
 | Java | [`Core_SQZMOM.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SQZMOM.java) |
 | C# | [`Core_SQZMOM.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SQZMOM.cs) |
+| TypeScript | [`sqzmom.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/sqzmom.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

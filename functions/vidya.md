@@ -74,6 +74,7 @@ TA-Lib Definition: [`vidya.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | Rust | [`vidya.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/vidya.rs) |
 | Java | [`Core_VIDYA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_VIDYA.java) |
 | C# | [`Core_VIDYA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_VIDYA.cs) |
+| TypeScript | [`vidya.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/vidya.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

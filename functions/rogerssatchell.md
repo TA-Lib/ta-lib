@@ -90,6 +90,7 @@ TA-Lib Definition: [`rogerssatchell.c`](https://github.com/TA-Lib/ta-lib/blob/ma
 | Rust | [`rogerssatchell.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/rogerssatchell.rs) |
 | Java | [`Core_ROGERSSATCHELL.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ROGERSSATCHELL.java) |
 | C# | [`Core_ROGERSSATCHELL.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ROGERSSATCHELL.cs) |
+| TypeScript | [`rogerssatchell.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/rogerssatchell.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

@@ -81,6 +81,7 @@ TA-Lib Definition: [`kvo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Rust | [`kvo.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/kvo.rs) |
 | Java | [`Core_KVO.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_KVO.java) |
 | C# | [`Core_KVO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_KVO.cs) |
+| TypeScript | [`kvo.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/kvo.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

@@ -62,6 +62,7 @@ TA-Lib Definition: [`vwap.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Rust | [`vwap.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/vwap.rs) |
 | Java | [`Core_VWAP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_VWAP.java) |
 | C# | [`Core_VWAP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_VWAP.cs) |
+| TypeScript | [`vwap.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/vwap.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

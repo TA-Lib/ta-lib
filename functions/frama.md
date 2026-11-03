@@ -67,6 +67,7 @@ TA-Lib Definition: [`frama.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | Rust | [`frama.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/frama.rs) |
 | Java | [`Core_FRAMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_FRAMA.java) |
 | C# | [`Core_FRAMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_FRAMA.cs) |
+| TypeScript | [`frama.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/frama.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

@@ -1,10 +1,10 @@
 ---
 url: 'https://ta-lib.org/spec/inputs-outputs/index.md'
 description: >-
-  One batch calling pattern for every function in C, Rust, Java and C#: the same
-  argument order, a sentinel that selects any parameter's default, outputs
-  holding only defined values from index 0 and how to size them, pattern
-  outputs, computing in place, and what the caller must pass.
+  One batch calling pattern for every function in C, Rust, Java, C# and
+  TypeScript: the same argument order, a sentinel that selects any parameter's
+  default, outputs holding only defined values from index 0 and how to size
+  them, pattern outputs, computing in place, and what the caller must pass.
 ---
 # Batch Inputs and Outputs
 
@@ -12,7 +12,7 @@ description: >-
 
 The rules for what a batch call takes and what a successful call writes, in C's spelling ([names](/spec/#names)). What a rejected call reports is on the [errors page](/spec/errors/).
 
-A batch call runs tight loops over the series: on modern AMD, Intel and Apple processors, most functions take under 10 nanoseconds per bar at their default parameters, in each of the four languages, and the slowest, such as HT_SINE, a few hundred.
+A batch call runs tight loops over the series: on modern AMD, Intel and Apple processors, most functions take under 10 nanoseconds per bar at their default parameters, in each of C, Rust, Java and C#, and the slowest, such as HT_SINE, a few hundred.
 
 ## The caller must {#caller}
 
@@ -25,15 +25,15 @@ A batch call runs tight loops over the series: on modern AMD, Intel and Apple pr
 
 ## What a call takes
 
-<a id="rp1"></a>**rP1** `startIdx` and `endIdx` are zero-based, inclusive indices into the input series passed. They select the bars to produce output for; bars before `startIdx` are read as history when the lookback needs them. In C# they index the span passed, not the array behind it: a slice holds no bars before its first element. Bounds and codes: [rB1](/spec/errors/#rb1), [rB2](/spec/errors/#rb2).
+<a id="rp1"></a>**rP1** `startIdx` and `endIdx` are zero-based, inclusive indices into the input series passed. They select the bars to produce output for; bars before `startIdx` are read as history when the lookback needs them. In C# they index the span passed, not the array behind it, and in TypeScript the array passed, not the buffer behind a view: a slice holds no bars before its first element. Bounds and codes: [rB1](/spec/errors/#rb1), [rB2](/spec/errors/#rb2).
 
-<a id="rp2"></a>**rP2** Each optional parameter's default and accepted values are per function: the Parameters table of its [function page](/functions/), and the same data through the [Abstract API](/spec/abstract/#provides). A value outside them is rejected, and so is a NaN or infinite value for a real parameter and, in Java, a null `MAType`. A function may also reject a single value inside the listed range, or a combination of values that are each accepted; its page's Notes state it ([FRAMA](/functions/frama) rejects an odd `optInTimePeriod`, [MAVP](/functions/mavp) rejects `optInMinPeriod > optInMaxPeriod`). Rejections: [rB3](/spec/errors/#rb3), [rS3](/spec/streaming/#rs3), [rL2](/spec/lookback/#rl2).
+<a id="rp2"></a>**rP2** Each optional parameter's default and accepted values are per function: the Parameters table of its [function page](/functions/), and the same data through the [Abstract API](/spec/abstract/#provides). A value outside them is rejected, and so is a NaN or infinite value for a real parameter and, in Java, a null `MAType`. In TypeScript an integer parameter that is not a 32-bit integer, and a real parameter that is not a number, are rejected too ([rB9](/spec/errors/#rb9)). A function may also reject a single value inside the listed range, or a combination of values that are each accepted; its page's Notes state it ([FRAMA](/functions/frama) rejects an odd `optInTimePeriod`, [MAVP](/functions/mavp) rejects `optInMinPeriod > optInMaxPeriod`). Rejections: [rB3](/spec/errors/#rb3), [rS3](/spec/streaming/#rs3), [rL2](/spec/lookback/#rl2).
 
-An MA-type parameter accepts every `MAType` member, and a release may add members ([rV3](/spec/versions/#rv3)). To check a raw integer, use the enum your code was built with: in C the range `TA_MATYPE_MIN` to `TA_MATYPE_MAX`, in Rust `MAType::try_from`, in Java `MAType.values()`, in C# `Enum.IsDefined`.
+An MA-type parameter accepts every `MAType` member, and a release may add members ([rV3](/spec/versions/#rv3)). To check a raw integer, use the enum your code was built with: in C the range `TA_MATYPE_MIN` to `TA_MATYPE_MAX`, in Rust `MAType::try_from`, in Java `MAType.values()`, in C# `Enum.IsDefined`, in TypeScript the values of `MAType`.
 
 <a id="rp3"></a>**rP3** A default sentinel selects the function's documented default: `TA_INTEGER_DEFAULT` for an integer parameter, `TA_REAL_DEFAULT` for a real one, the `DEFAULT` member for an MA type (in C, `TA_INTEGER_DEFAULT` works there too). The call is then bit-identical to one passing the default explicitly. A default MA type is not always SMA.
 
-<a id="rp4"></a>**rP4** Float inputs: C's `TA_S_<N>` functions, and the `float[]` (Java) and `ReadOnlySpan<float>` (C#) overloads, widen each element to double when they read it. Their outputs are still `double` or `int`, bit-identical to the double call on the same values widened. Rust has no float form, and streams take double only. Storing a series as float rounds it, so a float call can differ from a double call on the original values.
+<a id="rp4"></a>**rP4** Float inputs: C's `TA_S_<N>` functions, the `float[]` (Java) and `ReadOnlySpan<float>` (C#) overloads, and a `Float32Array` input in TypeScript widen each element to double when they read it. Their outputs are still `double` or `int`, bit-identical to the double call on the same values widened. Rust has no float form, and streams take double only. Storing a series as float rounds it, so a float call can differ from a double call on the original values.
 
 <a id="rp5"></a>**rP5** A batch call takes its arguments in the same order in every language: `startIdx`, `endIdx`, the inputs in the order of the Inputs list on its [function page](/functions/), the optional parameters in the order of its Parameters table, in C `outBegIdx` and `outNBElement`, then the outputs in the order of its Outputs list. Each output is a buffer the caller owns. A function with several outputs reports one range, shared by all of them.
 
@@ -55,7 +55,7 @@ An MA-type parameter accepts every `MAType` member, and a release may add member
 
 ## Computing in place {#aliasing}
 
-<a id="rw6"></a>**rW6** In a batch call, an output may be the same buffer as an input of the same element type: in C the same pointer, in Java the same array, in C# a span of the same start and length. Rust's safe code cannot express it. The outputs are bit-identical to a call with separate buffers. Afterwards, in that buffer, the elements at `[0, count)` hold the output, the elements at `[count, endIdx]` may hold any value, because the call may use them as scratch space for intermediate results, and the elements after `endIdx` keep their input values.
+<a id="rw6"></a>**rW6** In a batch call, an output may be the same buffer as an input of the same element type: in C the same pointer, in Java the same array, in C# a span of the same start and length, in TypeScript a `Float64Array` of the same buffer, start and length. Rust's safe code cannot express it. The outputs are bit-identical to a call with separate buffers. Afterwards, in that buffer, the elements at `[0, count)` hold the output, the elements at `[count, endIdx]` may hold any value, because the call may use them as scratch space for intermediate results, and the elements after `endIdx` keep their input values.
 
 ## Pattern outputs {#patterns}
 

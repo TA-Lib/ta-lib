@@ -73,6 +73,7 @@ TA-Lib Definition: [`mcgd.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Rust | [`mcgd.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/mcgd.rs) |
 | Java | [`Core_MCGD.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MCGD.java) |
 | C# | [`Core_MCGD.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MCGD.cs) |
+| TypeScript | [`mcgd.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/mcgd.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

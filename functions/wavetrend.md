@@ -80,6 +80,7 @@ TA-Lib Definition: [`wavetrend.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 | Rust | [`wavetrend.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/wavetrend.rs) |
 | Java | [`Core_WAVETREND.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_WAVETREND.java) |
 | C# | [`Core_WAVETREND.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_WAVETREND.cs) |
+| TypeScript | [`wavetrend.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/wavetrend.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

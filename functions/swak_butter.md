@@ -81,6 +81,7 @@ TA-Lib Definition: [`swak_butter.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | Rust | [`swak_butter.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/swak_butter.rs) |
 | Java | [`Core_SWAK_BUTTER.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SWAK_BUTTER.java) |
 | C# | [`Core_SWAK_BUTTER.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SWAK_BUTTER.cs) |
+| TypeScript | [`swakButter.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/swakButter.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

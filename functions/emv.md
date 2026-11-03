@@ -78,6 +78,7 @@ TA-Lib Definition: [`emv.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Rust | [`emv.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/emv.rs) |
 | Java | [`Core_EMV.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_EMV.java) |
 | C# | [`Core_EMV.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_EMV.cs) |
+| TypeScript | [`emv.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/emv.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

@@ -81,6 +81,7 @@ TA-Lib Definition: [`swak_gauss.c`](https://github.com/TA-Lib/ta-lib/blob/main/t
 | Rust | [`swak_gauss.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/swak_gauss.rs) |
 | Java | [`Core_SWAK_GAUSS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SWAK_GAUSS.java) |
 | C# | [`Core_SWAK_GAUSS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SWAK_GAUSS.cs) |
+| TypeScript | [`swakGauss.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/swakGauss.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

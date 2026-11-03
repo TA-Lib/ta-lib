@@ -68,6 +68,7 @@ TA-Lib Definition: [`cdlhomingpigeon.c`](https://github.com/TA-Lib/ta-lib/blob/m
 | Rust | [`cdlhomingpigeon.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlhomingpigeon.rs) |
 | Java | [`Core_CDLHOMINGPIGEON.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLHOMINGPIGEON.java) |
 | C# | [`Core_CDLHOMINGPIGEON.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLHOMINGPIGEON.cs) |
+| TypeScript | [`cdlhomingpigeon.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlhomingpigeon.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

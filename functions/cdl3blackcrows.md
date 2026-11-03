@@ -63,6 +63,7 @@ TA-Lib Definition: [`cdl3blackcrows.c`](https://github.com/TA-Lib/ta-lib/blob/ma
 | Rust | [`cdl3blackcrows.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdl3blackcrows.rs) |
 | Java | [`Core_CDL3BLACKCROWS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDL3BLACKCROWS.java) |
 | C# | [`Core_CDL3BLACKCROWS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDL3BLACKCROWS.cs) |
+| TypeScript | [`cdl3blackcrows.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdl3blackcrows.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

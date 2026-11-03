@@ -72,6 +72,7 @@ TA-Lib Definition: [`skew.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Rust | [`skew.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/skew.rs) |
 | Java | [`Core_SKEW.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SKEW.java) |
 | C# | [`Core_SKEW.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SKEW.cs) |
+| TypeScript | [`skew.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/skew.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

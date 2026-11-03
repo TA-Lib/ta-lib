@@ -79,6 +79,7 @@ TA-Lib Definition: [`swak_2php.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta
 | Rust | [`swak_2php.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/swak_2php.rs) |
 | Java | [`Core_SWAK_2PHP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SWAK_2PHP.java) |
 | C# | [`Core_SWAK_2PHP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SWAK_2PHP.cs) |
+| TypeScript | [`swak2php.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/swak2php.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 
