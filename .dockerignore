@@ -1,0 +1,20 @@
+# Ignore large repo directories to keep Docker build context under 1 MB
+.git
+.github
+website
+dist
+ta_ref
+src
+include
+cmake*
+m4
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.tar.gz
+*.deb
+*.msi
+ta_codegen/generator/target
+
