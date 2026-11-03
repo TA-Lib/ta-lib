@@ -1,10 +1,11 @@
 //! Rule rP5 (`https://ta-lib.org/spec/inputs-outputs/#rp5`): every public batch
-//! call takes its arguments in the YAML's order in all four languages. Read off
+//! call takes its arguments in the YAML's order in every language. Read off
 //! the committed files, so it holds the tree that ships.
 
 use crate::common;
 use std::path::{Path, PathBuf};
 use ta_codegen_lib::backends::common::{camel_words, pascal_words};
+use ta_codegen_lib::backends::ts;
 
 fn repo_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
@@ -71,12 +72,16 @@ fn every_batch_call_takes_the_yaml_argument_order_in_every_language() {
         let rust = read(&root.join(format!("ta_codegen/output/rust/library/src/ta_func/{name}.rs")));
         let java = read(&root.join(format!("ta_codegen/output/java/fragments/Core_{upper}.java")));
         let csharp = read(&root.join(format!("ta_codegen/output/csharp/library/src/Core_{upper}.cs")));
+        let ts = read(&root.join(format!("ta_codegen/output/ts/library/src/func/{}.ts", camel_words(&func.name))));
+        let mut want_ts = want.clone();
+        want_ts.push("core".to_string());
         let lanes = [
             ("C", param_lists(&header, &format!("TA_RetCode TA_{upper}(")), &want_c, 1),
             ("C float", param_lists(&header, &format!("TA_RetCode TA_S_{upper}(")), &want_c, 1),
             ("Rust", param_lists(&rust, &format!("pub fn {}(", func.name.to_lowercase())), &want, 1),
             ("Java", param_lists(&java, &format!("public OutRange {}(", camel_words(&func.name))), &want, 2),
             ("C#", param_lists(&csharp, &format!("public OutRange {}(", pascal_words(&func.name))), &want, 2),
+            ("TS", param_lists(&ts, &format!("export function {}(", ts::func_ident(&func.name))), &want_ts, 1),
         ];
         for (lang, lists, want, count) in lanes {
             assert_eq!(lists.len(), count, "{name}: {lang} has {} batch declarations, not {count}", lists.len());
@@ -86,5 +91,5 @@ fn every_batch_call_takes_the_yaml_argument_order_in_every_language() {
             }
         }
     }
-    assert!(checked >= 7 * 150, "only {checked} batch declarations checked");
+    assert!(checked >= 8 * 150, "only {checked} batch declarations checked");
 }

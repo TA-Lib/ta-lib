@@ -938,6 +938,27 @@ fn backends_render_max_min_fmax_fmin_abs() {
         "Java: ABS should render as Math.abs(): {java_out}"
     );
 
+    // TS: C's macro as a ternary, operands in C's order; `Math.max`/`Math.min`
+    // answer NaN and signed zeros differently (H7). The type pass refuses the
+    // body's undeclared `f`/`h`, so they are declared for this lane only, and
+    // the results are read at the end, or the emitted module drops them unread.
+    let mut ts_func = func.clone();
+    for n in ["f", "h"] {
+        ts_func.body.insert(0, Statement::VarDecl { var_type: VarType::Real, name: n.to_string(), init: None });
+    }
+    for (i, n) in ["a", "b", "c", "d", "e", "f", "g"].into_iter().enumerate() {
+        ts_func.body.push(Statement::Assign {
+            target: Expr::ArrayAccess("outReal".into(), Box::new(Expr::IntLiteral(i as i64))),
+            value: Expr::Var(n.to_string()),
+            compound: false,
+        });
+    }
+    let ts_out = backends::ts::generate(&ts_func, &enums, registry, &helpers);
+    for needle in ["a = (x > y ? x : y);", "b = (x < y ? x : y);", "c = (x > y ? x : y);", "d = (x < y ? x : y);", "g = (p > q ? p : q);", "e = Math.abs(x);", "f = Math.floor(x);"] {
+        assert!(ts_out.contains(needle), "TS: missing `{needle}`: {ts_out}");
+    }
+    assert!(!ts_out.contains("Math.max(") && !ts_out.contains("Math.min("), "TS: {ts_out}");
+
     // Rust: a real max/min is C's macro (`c_max`/`c_min`), not f64::max/min,
     // which answer NaN differently; an integer one keeps Ord::max. floor/ceil
     // are the inline `c_floor`/`c_ceil`, not libm calls (#438).
@@ -1511,6 +1532,10 @@ fn backends_render_math_functions_idiomatically() {
         assert!(java_fabs, "Java backend should render fabs as Math.abs");
         assert!(!java_wrong_fabs, "Java backend must not render Math.fabs");
     }
+
+    let ts_out = backends::ts::generate(&func, &enums, registry, &helpers);
+    assert!(ts_out.contains("Math.atan("), "TS backend should render Math.atan()");
+    assert!(!ts_out.contains("Math.fabs("), "TS backend must not render Math.fabs");
 
     // Rust: method call syntax on concrete f64 — .atan()
     assert!(
@@ -2238,6 +2263,21 @@ fn java_backend_emits_candle_settings() {
     assert!(
         java_out.contains("this.candleSettings[CandleSettingType.BODY_LONG.ordinal()].factor"),
         "Java output should unpack BodyLong.factor"
+    );
+}
+
+#[test]
+fn ts_backend_emits_candle_settings_from_core() {
+    let (func, enums) = load_indicator("cdl2crows");
+    let ts_out = backends::ts::generate(&func, &enums, make_registry(), make_helpers());
+    for field in ["rangeType", "avgPeriod", "factor"] {
+        let needle = format!("core.candleSettings[CandleSettingType.BODY_LONG].{field};");
+        assert!(ts_out.contains(&needle), "TS output should unpack `{needle}`: {ts_out}");
+    }
+    let lookback_end = ts_out.find("export function cdl2crowsImpl(").unwrap();
+    assert!(
+        ts_out[..lookback_end].contains("core.candleSettings[CandleSettingType.BODY_LONG]"),
+        "the TS lookback reads the settings of its own core"
     );
 }
 

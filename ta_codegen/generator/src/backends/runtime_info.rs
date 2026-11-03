@@ -1,8 +1,10 @@
-//! `TA_GetRuntimeInfo`'s analog in Rust, Java and C#.
+//! `TA_GetRuntimeInfo`'s analog in Rust, Java, C# and TypeScript.
 //!
 //! A key C answers is answered in every language, so a caller written against
-//! one probes the others without a rejection. None of the three has an optional
+//! one probes the others without a rejection. None of them has an optional
 //! path a key reports, nor a `TA_Initialize`: each answers 0.
+
+use std::fmt::Write as _;
 
 /// Every key, in C's spelling.
 pub const KEYS: &[&str] = &["vmath.transcendental", "count.initialize", "count.shutdown"];
@@ -116,3 +118,40 @@ pub const JAVA_SERVER_HANDLER: &str =
         \x20       }\n\
         \x20       return \"{\\\"retCode\\\":\" + rc + \",\\\"value\\\":\" + value + \"}\";\n\
         \x20   }\n\n";
+
+/// The TypeScript `getRuntimeInfo`. It needs `TALibError` and `RetCode` in scope.
+pub fn ts_fn() -> String {
+    let cases = KEYS.iter().fold(String::new(), |mut acc, k| {
+        let _ = writeln!(acc, "    case '{k}':");
+        acc
+    });
+    format!(
+        "/**\n\
+         \x20* Run-time state of this library, by key: the TypeScript analog of C's\n\
+         \x20* `TA_GetRuntimeInfo()`. The keys: {SPEC}.\n\
+         \x20*\n\
+         \x20* @param key - One of the keys above.\n\
+         \x20* @throws {{@link TALibError}} `TA_BAD_PARAM` for an unknown key.\n\
+         \x20*/\n\
+         export function getRuntimeInfo(key: string): number {{\n\
+         \x20 switch (key) {{\n\
+         {cases}\
+         \x20     return 0;\n\
+         \x20   default:\n\
+         \x20     throw new TALibError(RetCode.BAD_PARAM, `unknown runtime info key: ${{key}}`);\n\
+         \x20 }}\n\
+         }}\n"
+    )
+}
+
+/// The TypeScript server's handler: the library function, its rejection back as a code.
+pub const TS_SERVER_HANDLER: &str = "function handleGetRuntimeInfo(p: Params): string {\n\
+    \x20 let rc = 0;\n\
+    \x20 let value = 0;\n\
+    \x20 try {\n\
+    \x20   value = getRuntimeInfo(String(p['key']));\n\
+    \x20 } catch (e) {\n\
+    \x20   rc = failureCode(e);\n\
+    \x20 }\n\
+    \x20 return `{\"retCode\":${rc},\"value\":${value}}`;\n\
+    }\n\n";

@@ -76,6 +76,7 @@ pub enum LangClaim {
     Rust,
     Java,
     CSharp,
+    Ts,
     AllLanguages,
 }
 
@@ -93,11 +94,12 @@ pub enum Lang {
     Rust,
     Java,
     CSharp,
+    Ts,
 }
 
 /// Every concrete backend language, for the sweeps that must hold in all of
 /// them (the generate-time streamability gate, shadowing analysis).
-pub const ALL_LANGS: [Lang; 4] = [Lang::C, Lang::Rust, Lang::Java, Lang::CSharp];
+pub const ALL_LANGS: [Lang; 5] = [Lang::C, Lang::Rust, Lang::Java, Lang::CSharp, Lang::Ts];
 
 /// [`FuncDef::resolved_for`] over a whole slice — the resolution point for the
 /// generators that take the entire function list at once (the JSON-RPC servers,
@@ -137,6 +139,7 @@ impl Lang {
             Self::Rust => "RUST",
             Self::Java => "JAVA",
             Self::CSharp => "CSHARP",
+            Self::Ts => "TS",
         }
     }
 
@@ -148,6 +151,7 @@ impl Lang {
             "rust" => Some(Self::Rust),
             "java" => Some(Self::Java),
             "csharp" => Some(Self::CSharp),
+            "ts" => Some(Self::Ts),
             _ => None,
         }
     }
@@ -191,6 +195,7 @@ impl LangClaim {
             "RUST" => Some(Self::Rust),
             "JAVA" => Some(Self::Java),
             "CSHARP" => Some(Self::CSharp),
+            "TS" => Some(Self::Ts),
             "ALL_LANGUAGES" => Some(Self::AllLanguages),
             _ => None,
         }
@@ -203,6 +208,7 @@ impl LangClaim {
             Self::Rust => "RUST",
             Self::Java => "JAVA",
             Self::CSharp => "CSHARP",
+            Self::Ts => "TS",
             Self::AllLanguages => "ALL_LANGUAGES",
         }
     }
@@ -215,6 +221,7 @@ impl LangClaim {
             Self::Rust => lang == Lang::Rust,
             Self::Java => lang == Lang::Java,
             Self::CSharp => lang == Lang::CSharp,
+            Self::Ts => lang == Lang::Ts,
         }
     }
 }
@@ -376,7 +383,7 @@ impl FuncDef {
     #[must_use]
     pub fn resolved_for(&self, lang: Lang) -> std::borrow::Cow<'_, Self> {
         let resolved = self.resolved_alternates(lang);
-        if !matches!(lang, Lang::Java | Lang::CSharp) {
+        if !matches!(lang, Lang::Java | Lang::CSharp | Lang::Ts) {
             return resolved;
         }
         // The pre-check nest marks a C and Rust rewrite; the managed backends

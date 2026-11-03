@@ -384,6 +384,7 @@ def main():
         ("rust", ["./ta_codegen_serve_rust"]),
         ("java", ["java", "-cp", "ta_codegen_java", "TaCodegenServe"]),
         ("csharp", ["dotnet", "ta_codegen_csharp/TaCodegenServe.dll"]),
+        ("ts", ["node", "ta_codegen_ts/tools/taCodegenServe.js"]),
     ]
 
     fails = 0

@@ -5149,9 +5149,725 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
 
 // ---------------------------------------------------------------------------
 
+/// The bit-exact TypeScript port of `fuzz_data.h`, inlined into the server.
+const TS_FUZZ: &str = include_str!("../templates/ts/fuzzData.ts");
+
+/// The function-independent part of the TypeScript server: JSON access, output
+/// buffers and their canaries, the response, and every RPC that is not a
+/// function call.
+const TS_SERVER_PRELUDE: &str = r#"type Params = Record<string, unknown>;
+
+// Replaced, never written: a Core is frozen.
+let core = new Core();
+
+const MAX_ARRAY_SIZE = 200000;
+const refOpen = new Float64Array(MAX_ARRAY_SIZE);
+const refHigh = new Float64Array(MAX_ARRAY_SIZE);
+const refLow = new Float64Array(MAX_ARRAY_SIZE);
+const refClose = new Float64Array(MAX_ARRAY_SIZE);
+const refVolume = new Float64Array(MAX_ARRAY_SIZE);
+const refOI = new Float64Array(MAX_ARRAY_SIZE);
+let refN = 0;
+
+const OK = '{"status":"ok"}';
+
+function int(p: Params, name: string, def: number): number {
+  const v = p[name];
+  return typeof v === 'number' ? v : def;
+}
+
+function real(p: Params, name: string, def: number): number {
+  const v = p[name];
+  return typeof v === 'number' ? v : def;
+}
+
+// One f64 as the 16 hex digits of its bits, so a NaN can travel.
+function f64Bits(p: Params, name: string, def: number): number {
+  const v = p[name];
+  return typeof v === 'string' && /^[0-9a-fA-F]{16}$/.test(v) ? float64FromBits(BigInt('0x' + v)) : def;
+}
+
+function f64Array(p: Params, name: string): Float64Array {
+  const v = p[name];
+  if (typeof v === 'string') return float64ArrayFromHex(v);
+  if (Array.isArray(v)) return Float64Array.from(v as number[]);
+  return new Float64Array(0);
+}
+
+function loadRef(p: Params, name: string, dst: Float64Array): number {
+  const a = f64Array(p, name);
+  const n = Math.min(a.length, MAX_ARRAY_SIZE);
+  dst.set(a.subarray(0, n));
+  return n;
+}
+
+// The first `n` bars, zero-padded past the input's end as Java's copyOfRange is.
+function warmView(a: Float64Array, n: number): Float64Array {
+  const w = new Float64Array(n);
+  w.set(a.subarray(0, Math.min(a.length, n)));
+  return w;
+}
+
+function benchIters(p: Params): number {
+  const n = int(p, 'iters', 1);
+  return n < 1 ? 1 : n;
+}
+
+function outLength(p: Params, startIdx: number, endIdx: number, lookback: number): number {
+  const cs = startIdx > lookback ? startIdx : lookback;
+  return (lookback < 0 || cs > endIdx ? 1 : endIdx - cs + 1) + int(p, 'out_pad', 0);
+}
+
+const TAIL_HI = 0x7ff8dead;
+const TAIL_LO = 0xbeef1234;
+const TAIL_F64 = float64FromWords(TAIL_HI, TAIL_LO);
+const TAIL_I32 = 0x5eadbeef;
+
+function f64Out(len: number): Float64Array {
+  return new Float64Array(len).fill(TAIL_F64);
+}
+
+function i32Out(len: number): Int32Array {
+  return new Int32Array(len).fill(TAIL_I32);
+}
+
+function tailDirty(a: Float64Array | Int32Array, from: number): number {
+  let n = 0;
+  if (a instanceof Int32Array) {
+    for (let i = from; i < a.length; i++) if (a[i] !== TAIL_I32) n++;
+  } else {
+    for (let i = from; i < a.length; i++) if (float64Hi(a[i]) !== TAIL_HI || float64Lo(a[i]) !== TAIL_LO) n++;
+  }
+  return n;
+}
+
+// Only the library's own failure becomes a code; anything else is a divergence
+// the top-level handler reports as an error.
+function failureCode(e: unknown): number {
+  if (e instanceof TALibError) return e.retCode;
+  throw e;
+}
+
+function hex64(h: bigint): string {
+  return h.toString(16).padStart(16, '0');
+}
+
+function reply(
+  p: Params, rc: number, beg: number, nb: number, outLen: number,
+  keys: readonly string[], outs: readonly (Float64Array | Int32Array)[], usedFloat: number, elapsedNs: bigint,
+  rideFields: string,
+): string {
+  let tail = '';
+  if (rc === RetCode.SUCCESS) {
+    let dirty = 0;
+    for (const a of outs) dirty += tailDirty(a, nb);
+    tail = `,"out_tail_dirty":${dirty}`;
+  }
+  if (int(p, 'want_hash', 0) !== 0 && int(p, 'full_output', 0) === 0) {
+    let h = fuzzHashInit();
+    if (rc === RetCode.SUCCESS && nb > 0) {
+      for (const a of outs) h = a instanceof Int32Array ? fuzzHashI32(h, a, nb) : fuzzHashF64(h, a, nb);
+    }
+    return `{"retCode":${rc},"outBegIdx":${beg},"outNBElement":${nb},"out_hash":"${hex64(fuzzHashFin(h))}"${tail}${rideFields}}`;
+  }
+  let s = `{"retCode":${rc},"outBegIdx":${beg},"outNBElement":${nb},"out_len":${outLen}${tail}`;
+  if (int(p, 'no_output', 0) === 0) {
+    for (let k = 0; k < outs.length; k++) {
+      const a = outs[k];
+      s += a instanceof Int32Array
+        ? `,"${keys[k]}":[${Array.from(a.subarray(0, nb)).join(',')}]`
+        : `,"${keys[k]}":"${float64ArrayToHex(a, nb)}"`;
+    }
+  }
+  return s + `,"used_float":${usedFloat},"timing_ns":${elapsedNs}${rideFields}}`;
+}
+
+function loadData(p: Params): string {
+  refN = loadRef(p, 'open', refOpen);
+  loadRef(p, 'high', refHigh);
+  loadRef(p, 'low', refLow);
+  loadRef(p, 'close', refClose);
+  loadRef(p, 'volume', refVolume);
+  loadRef(p, 'openInterest', refOI);
+  return `{"status":"ok","n":${refN}}`;
+}
+
+function settingError(e: unknown): string {
+  if (!(e instanceof TALibError)) throw e;
+  return `{"error":${JSON.stringify(e.message)}}`;
+}
+
+// Each setter goes through the shipped CoreBuilder, which checks every argument
+// before it writes; `core` is replaced only when the build succeeded.
+function setUnstablePeriod(p: Params): string {
+  try {
+    core = core.toBuilder().unstablePeriod(int(p, 'id', -1) as FuncUnstId, int(p, 'period', 0)).build();
+  } catch (e) {
+    return settingError(e);
+  }
+  return OK;
+}
+
+function setCandleSettings(p: Params): string {
+  try {
+    core = core.toBuilder()
+      .candleSetting(int(p, 'settingType', -1) as CandleSettingType, int(p, 'rangeType', -1) as RangeType,
+        int(p, 'avgPeriod', 0), f64Bits(p, 'factorBits', 1.0))
+      .build();
+  } catch (e) {
+    return settingError(e);
+  }
+  return OK;
+}
+
+// A request's own unstablePeriod. A rejected one keeps the previous setting, as
+// C's TA_SetUnstablePeriod does.
+function pinUnstable(id: FuncUnstId, period: number): void {
+  if (core.unstablePeriod(id) === period) return;
+  try {
+    core = core.toBuilder().unstablePeriod(id, period).build();
+  } catch (e) {
+    if (!(e instanceof TALibError)) throw e;
+  }
+}
+
+function restoreCandleDefaultSettings(p: Params): string {
+  try {
+    core = core.toBuilder().restoreCandleDefault(int(p, 'settingType', -1) as CandleSettingType).build();
+  } catch (e) {
+    return settingError(e);
+  }
+  return OK;
+}
+
+function fuzzInHash(p: Params): string {
+  const shape = int(p, 'gen_shape', 0);
+  const seed = int(p, 'gen_seed', 0);
+  const n = Math.min(Math.max(int(p, 'gen_n', 0), 1), MAX_ARRAY_SIZE);
+  const a = [0, 1, 2, 3, 4, 5].map(() => new Float64Array(n));
+  fuzzGen(shape, seed, n, a[0], a[1], a[2], a[3], a[4], a[5]);
+  let h = fuzzHashInit();
+  for (const x of a) h = fuzzHashF64(h, x, n);
+  return `{"in_hash":"${hex64(fuzzHashFin(h))}"}`;
+}
+"#;
+
+/// The TypeScript server's `ta_abstract` handlers. Every answer comes from the
+/// shipped `metadata` registry, which `build_ts` compiles with the server.
+const TS_ABSTRACT_HANDLERS: &str = r#"function absLookup(p: Params): FuncInfo | undefined {
+  const name = p['funcName'];
+  return typeof name === 'string' ? Functions.byName(name) : undefined;
+}
+
+function absFuncInfo(p: Params): string {
+  const f = absLookup(p);
+  if (f === undefined) return '{"retCode":2}';
+  return `{"name":${JSON.stringify(f.name)},"group":${JSON.stringify(f.group)},"hint":${JSON.stringify(f.hint)}`
+    + `,"flags":${f.flags >>> 0},"nbInput":${f.inputs.length},"nbOptInput":${f.optInputs.length}`
+    + `,"nbOutput":${f.outputs.length}}`;
+}
+
+function absInputInfo(p: Params): string {
+  const f = absLookup(p);
+  const i = int(p, 'paramIndex', -1);
+  if (f === undefined || i < 0 || i >= f.inputs.length) return '{"retCode":2}';
+  const x = f.inputs[i];
+  return `{"type":${x.type},"paramName":${JSON.stringify(x.paramName)},"flags":${x.flags >>> 0}}`;
+}
+
+function absOutputInfo(p: Params): string {
+  const f = absLookup(p);
+  const i = int(p, 'paramIndex', -1);
+  if (f === undefined || i < 0 || i >= f.outputs.length) return '{"retCode":2}';
+  const x = f.outputs[i];
+  return `{"type":${x.type},"paramName":${JSON.stringify(x.paramName)},"flags":${x.flags >>> 0}}`;
+}
+
+function absOptInputInfo(p: Params): string {
+  const f = absLookup(p);
+  const i = int(p, 'paramIndex', -1);
+  if (f === undefined || i < 0 || i >= f.optInputs.length) return '{"retCode":2}';
+  const o: OptInputInfo = f.optInputs[i];
+  let s = `{"type":${o.type},"paramName":${JSON.stringify(o.paramName)},"flags":${o.flags >>> 0}`
+    + `,"displayName":${JSON.stringify(o.displayName)},"hint":${JSON.stringify(o.hint)}`
+    + `,"defaultValue":${o.defaultValue}`;
+  switch (o.type) {
+    case OptInputType.REAL_RANGE:
+      s += `,"min":${o.min},"max":${o.max},"precision":${o.precision}`;
+      s += `,"suggestedStart":${o.suggestedStart},"suggestedEnd":${o.suggestedEnd},"suggestedIncrement":${o.suggestedIncrement}`;
+      break;
+    case OptInputType.INTEGER_RANGE:
+      s += `,"min":${o.min},"max":${o.max}`;
+      s += `,"suggestedStart":${o.suggestedStart},"suggestedEnd":${o.suggestedEnd},"suggestedIncrement":${o.suggestedIncrement}`;
+      break;
+    case OptInputType.INTEGER_LIST:
+    case OptInputType.REAL_LIST:
+      s += `,"valueList":${JSON.stringify(o.values.map((v) => `${v.value}=${v.name}`).join(';'))}`;
+      break;
+    default: {
+      const never: never = o;
+      throw new Error(`unhandled optional-parameter domain ${String(never)}`);
+    }
+  }
+  return s + '}';
+}
+
+function absForEachFunc(): string {
+  const rows = Functions.all().map((f) =>
+    `{"name":${JSON.stringify(f.name)},"group":${JSON.stringify(f.group)},"nbInput":${f.inputs.length}`
+    + `,"nbOptInput":${f.optInputs.length},"nbOutput":${f.outputs.length}}`);
+  return `{"functions":[${rows.join(',')}]}`;
+}
+
+function absDescriptionXml(): string {
+  const xml = FunctionDescription.xml();
+  let checksum = 0;
+  for (let i = 0; i < xml.length; i++) checksum += xml.charCodeAt(i) & 0xff;
+  return `{"length":${xml.length},"checksum":${checksum}}`;
+}
+
+// The driver keys real inputs inReal / inReal0, inReal1... by rank among the non-price inputs.
+function absRealKey(f: FuncInfo, slot: number): string {
+  let total = 0;
+  let rank = 0;
+  for (let i = 0; i < f.inputs.length; i++) {
+    if (f.inputs[i].type === InputType.PRICE) continue;
+    if (i < slot) rank++;
+    total++;
+  }
+  return total === 1 ? f.inputs[slot].paramName : `inReal${rank}`;
+}
+
+function absOptional(p: Params, key: string): Float64Array | undefined {
+  return p[key] === undefined ? undefined : f64Array(p, key);
+}
+
+// An absent optional parameter stays unset, which is its default.
+function absBindOpts(f: FuncInfo, h: ParamHolder, p: Params): void {
+  for (let i = 0; i < f.optInputs.length; i++) {
+    const v = p[f.optInputs[i].paramName];
+    if (v !== undefined) h.setOptInput(i, v as number);
+  }
+}
+
+// Binds inputs and outputs too. The output length is capped so a rejected range
+// reaches the library and is answered with its code, never with an allocation.
+function absBind(f: FuncInfo, p: Params, outs: (Float64Array | Int32Array)[]): ParamHolder {
+  const h = f.newCall(core);
+  const n = Math.min(Math.max(int(p, 'endIdx', 0) - int(p, 'startIdx', 0) + 1, 1), MAX_ARRAY_SIZE);
+  const skipInput = int(p, 'skipInput', 0);
+  const skipOutput = int(p, 'skipOutput', 0);
+  for (let i = 0; i < f.inputs.length; i++) {
+    if (i + 1 === skipInput) continue;
+    const x = f.inputs[i];
+    if (x.type === InputType.PRICE) {
+      h.setPriceInput(i, {
+        open: absOptional(p, 'inOpen'),
+        high: absOptional(p, 'inHigh'),
+        low: absOptional(p, 'inLow'),
+        close: absOptional(p, 'inClose'),
+        volume: absOptional(p, 'inVolume'),
+        openInterest: absOptional(p, 'inOpenInterest'),
+      });
+    } else if (x.type === InputType.REAL) {
+      h.setInput(i, f64Array(p, absRealKey(f, i)));
+    } else {
+      h.setInput(i, Int32Array.from(f64Array(p, absRealKey(f, i))));
+    }
+  }
+  absBindOpts(f, h, p);
+  for (let k = 0; k < f.outputs.length; k++) {
+    const a = f.outputs[k].type === OutputType.REAL ? new Float64Array(n) : new Int32Array(n);
+    outs.push(a);
+    if (k + 1 !== skipOutput) h.setOutput(k, a);
+  }
+  return h;
+}
+
+function lookback(p: Params): number {
+  const f = absLookup(p);
+  if (f === undefined) return -1;
+  try {
+    const h = f.newCall(core);
+    absBindOpts(f, h, p);
+    return h.lookback();
+  } catch (e) {
+    failureCode(e);
+    return -1;
+  }
+}
+
+function displayShift(p: Params): number {
+  const f = absLookup(p);
+  if (f === undefined) return -2147483648;
+  try {
+    const h = f.newCall(core);
+    absBindOpts(f, h, p);
+    return h.displayShift(int(p, 'outputIdx', 0));
+  } catch (e) {
+    failureCode(e);
+    return -2147483648;
+  }
+}
+
+function absCall(p: Params): string {
+  const f = absLookup(p);
+  if (f === undefined) return '{"error":"Unknown function"}';
+  const outs: (Float64Array | Int32Array)[] = [];
+  let lb = -1;
+  let rc = 0;
+  let beg = 0;
+  let nb = 0;
+  try {
+    const h = absBind(f, p, outs);
+    lb = h.lookback();
+    const r = h.call(int(p, 'startIdx', 0), int(p, 'endIdx', 0));
+    beg = r.begIdx;
+    nb = r.count;
+  } catch (e) {
+    rc = failureCode(e);
+  }
+  let s = `{"lookback":${lb},"retCode":${rc},"outBegIdx":${beg},"outNBElement":${nb}`;
+  let realRank = 0;
+  let intRank = 0;
+  for (let k = 0; k < outs.length; k++) {
+    const a = outs[k];
+    if (a instanceof Int32Array) {
+      s += `,"${intRank === 0 ? 'outInteger' : `outInteger${intRank}`}":[${Array.from(a.subarray(0, nb)).join(',')}]`;
+      intRank++;
+    } else {
+      s += `,"${realRank === 0 ? 'outReal' : `outReal${realRank}`}":"${float64ArrayToHex(a, nb)}"`;
+      realRank++;
+    }
+  }
+  return s + '}';
+}
+
+"#;
+
+/// The TypeScript JSON-RPC server (`tools/taCodegenServe.ts`), compiled by
+/// `build_ts` together with the shipped `library/src`, so the harness measures
+/// the shipped modules.
+#[allow(clippy::implicit_hasher, clippy::too_many_lines)]
+pub fn generate_ts_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
+    use crate::backends::ts::ts_names;
+    let resolved = crate::ir::resolve_all(funcs, crate::ir::Lang::Ts);
+    let funcs: &[FuncDef] = &resolved;
+    let mut s = String::new();
+
+    s.push_str("// Generated by ta_codegen \u{2014} do not edit.\n\n");
+    s.push_str("import { createInterface } from 'node:readline';\n");
+    s.push_str("import { float64ArrayFromHex, float64ArrayToHex, float64Bits, float64FromBits, float64FromWords, float64Hi, float64Lo } from '../library/src/runtime/bits.ts';\n");
+    s.push_str("import { Core, type CoreBuilder, type CandleSettingType, RangeType } from '../library/src/runtime/core.ts';\n");
+    s.push_str("import { RetCode, TALibError } from '../library/src/runtime/errors.ts';\n");
+    s.push_str("import { MInteger } from '../library/src/runtime/mInteger.ts';\n");
+    s.push_str("import { FunctionDescription, Functions, getRuntimeInfo, InputType, OptInputType, OutputType, type FuncInfo, type OptInputInfo, type ParamHolder } from '../library/src/metadata/index.ts';\n");
+    let mut enum_types: Vec<&str> = funcs
+        .iter()
+        .flat_map(|f| f.optional_inputs.iter())
+        .filter_map(|o| match &o.param_type {
+            ParamType::Enum(e) => Some(e.as_str()),
+            _ => None,
+        })
+        .collect();
+    enum_types.sort_unstable();
+    enum_types.dedup();
+    let mut enum_imports = vec!["FuncUnstId".to_string()];
+    enum_imports.extend(enum_types.iter().map(|e| (*e).to_string()));
+    let _ = writeln!(s, "import {{ {} }} from '../library/src/enums.ts';", enum_imports.join(", "));
+    for func in funcs {
+        let _ = writeln!(
+            s,
+            "import * as {} from '../library/src/func/{}.ts';",
+            func.name,
+            ts_names(&func.name).module
+        );
+    }
+    s.push('\n');
+    s.push_str(TS_SERVER_PRELUDE);
+    s.push('\n');
+    s.push_str(crate::backends::runtime_info::TS_SERVER_HANDLER);
+    s.push_str(TS_ABSTRACT_HANDLERS);
+
+    // eval_predicate: the form the generated indicators use.
+    s.push_str("function evalPredicate(p: Params): string {\n");
+    s.push_str("  const which = int(p, 'which', 0);\n");
+    s.push_str("  const values = f64Array(p, 'values');\n");
+    s.push_str("  const scale = f64Array(p, 'scale');\n");
+    s.push_str("  const out: number[] = [];\n");
+    s.push_str("  for (let i = 0; i < values.length; i++) {\n");
+    s.push_str("    const v = values[i];\n");
+    s.push_str("    const sc = i < scale.length ? scale[i] : 0.0;\n");
+    s.push_str("    let r: boolean;\n");
+    let vs = ["v".to_string(), "sc".to_string()];
+    let _ = writeln!(
+        s,
+        "    if (which === 1) r = {};",
+        crate::backends::ts::ts_predicate_expr(SpecialBuiltin::IsZeroScaled, &vs)
+    );
+    let _ = writeln!(
+        s,
+        "    else if (which === 2) r = {};",
+        crate::backends::ts::ts_predicate_expr(SpecialBuiltin::IsZeroOrNeg, &vs[..1])
+    );
+    let _ = writeln!(
+        s,
+        "    else r = {};",
+        crate::backends::ts::ts_predicate_expr(SpecialBuiltin::IsZero, &vs[..1])
+    );
+    s.push_str("    out.push(r ? 1 : 0);\n");
+    s.push_str("  }\n");
+    s.push_str("  return `{\"outInteger\":[${out.join(',')}]}`;\n");
+    s.push_str("}\n\n");
+
+    s.push_str("const FUNCTION_LIST = '{\"functions\":[' + [\n");
+    for func in funcs {
+        let _ = writeln!(s, "  '\"TA_{}\"',", func.name);
+    }
+    s.push_str("].join(',') + ']}';\n\n");
+
+    // The opt-param reads of one function: an absent one is the default sentinel.
+    let opt_reads = |func: &FuncDef, indent: &str| -> String {
+        let mut r = String::new();
+        for opt in &func.optional_inputs {
+            let _ = match &opt.param_type {
+                ParamType::Real => writeln!(
+                    r,
+                    "{indent}const {n} = real(p, '{n}', Core.REAL_DEFAULT);",
+                    n = opt.name
+                ),
+                ParamType::Enum(e) => writeln!(
+                    r,
+                    "{indent}const {n} = int(p, '{n}', Core.INTEGER_DEFAULT) as {e};",
+                    n = opt.name
+                ),
+                _ => writeln!(
+                    r,
+                    "{indent}const {n} = int(p, '{n}', Core.INTEGER_DEFAULT);",
+                    n = opt.name
+                ),
+            };
+        }
+        r
+    };
+    for func in funcs {
+        s.push_str(&ts_batch_handler(func, enums, &opt_reads(func, "  ")));
+    }
+
+    s.push_str("const FUNCTIONS = new Map<string, (p: Params) => string>([\n");
+    for func in funcs {
+        let _ = writeln!(s, "  ['TA_{0}', handle_{0}],", func.name);
+    }
+    s.push_str("]);\n\n");
+
+    s.push_str("function handleRequest(line: string): string {\n");
+    s.push_str("  const req = JSON.parse(line) as { method?: unknown; params?: unknown };\n");
+    s.push_str("  const method = String(req.method);\n");
+    s.push_str("  const p = (typeof req.params === 'object' && req.params !== null ? req.params : {}) as Params;\n");
+    s.push_str("  const fn = FUNCTIONS.get(method);\n");
+    s.push_str("  if (fn !== undefined) return fn(p);\n");
+    s.push_str("  switch (method) {\n");
+    // The bool marks a setting a stream snapshots at open: changing it
+    // invalidates every cached ride verdict.
+    for (rpc, call, ambient) in [
+        ("load_data", "loadData(p)", false),
+        ("list_functions", "FUNCTION_LIST", false),
+        ("set_unstable_period", "setUnstablePeriod(p)", true),
+        ("set_candle_settings", "setCandleSettings(p)", true),
+        ("restore_candle_default_settings", "restoreCandleDefaultSettings(p)", true),
+        ("eval_predicate", "evalPredicate(p)", false),
+        ("TA_GetRuntimeInfo", "handleGetRuntimeInfo(p)", false),
+        ("fuzz_in_hash", "fuzzInHash(p)", false),
+        ("abstract_get_lookback", "`{\"lookback\":${lookback(p)}}`", false),
+        ("abstract_get_display_shift", "`{\"displayShift\":${displayShift(p)}}`", false),
+        ("TA_GetFuncInfo", "absFuncInfo(p)", false),
+        ("TA_GetInputParameterInfo", "absInputInfo(p)", false),
+        ("TA_GetOptInputParameterInfo", "absOptInputInfo(p)", false),
+        ("TA_GetOutputParameterInfo", "absOutputInfo(p)", false),
+        ("abstract_for_each_func", "absForEachFunc()", false),
+        ("TA_FunctionDescriptionXML", "absDescriptionXml()", false),
+        ("abstract_call", "absCall(p)", false),
+        ("stream_verify", "handleStreamVerify(p)", false),
+    ] {
+        let bump = if ambient { "rideGen++; " } else { "" };
+        let _ = writeln!(s, "    case '{rpc}': {bump}return {call};");
+    }
+    s.push_str("    default: return `{\"error\":${JSON.stringify('Unknown method: ' + method)}}`;\n");
+    s.push_str("  }\n");
+    s.push_str("}\n\n");
+
+    s.push_str("createInterface({ input: process.stdin, crlfDelay: Infinity, terminal: false }).on('line', (line) => {\n");
+    s.push_str("  if (line.trim() === '') return;\n");
+    s.push_str("  let out: string;\n");
+    s.push_str("  try {\n");
+    s.push_str("    out = handleRequest(line);\n");
+    s.push_str("  } catch (e) {\n");
+    s.push_str("    out = `{\"error\":${JSON.stringify(e instanceof Error ? `${e.name}: ${e.message}` : String(e))}}`;\n");
+    s.push_str("  }\n");
+    s.push_str("  process.stdout.write(out + '\\n');\n");
+    s.push_str("});\n\n");
+
+    s.push_str(&crate::stream_verify_gen::ts::generate_ts_stream_verify(funcs, enums));
+    s.push_str(&crate::ride_gen::ts::generate_ts_ridealong(funcs));
+    s.push_str(TS_FUZZ);
+    s
+}
+
+/// One `TA_<NAME>` handler. A correctness request calls the public tier; a
+/// `"timed":1` request calls `<n>Impl`, so nothing measured acquires the public
+/// tier's argument checks.
+#[allow(clippy::too_many_lines)]
+fn ts_batch_handler(func: &FuncDef, enums: &HashMap<String, EnumDef>, opt_reads: &str) -> String {
+    let n = crate::backends::ts::ts_names(&func.name);
+    let m = &func.name;
+    let input_names = expand_input_names(&func.inputs);
+    let outputs = &func.outputs;
+    let opt_names: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
+    let out_vars: Vec<String> = (0..outputs.len()).map(|k| format!("out{k}")).collect();
+    let mut s = String::new();
+
+    let _ = writeln!(s, "function handle_{m}(p: Params): string {{");
+    s.push_str("  const startIdx = int(p, 'startIdx', 0);\n");
+    s.push_str("  const endIdx = int(p, 'endIdx', 0);\n");
+    s.push_str("  const pre = int(p, 'use_preloaded', 0) !== 0 && refN > 0;\n");
+    for (j, name) in input_names.iter().enumerate() {
+        let src = price_input_to_ref(name).unwrap_or(if j == 0 { "refClose" } else { "refHigh" });
+        let _ = writeln!(s, "  const {name} = pre ? {src}.slice(0, refN) : f64Array(p, '{name}');");
+    }
+    // The warm-up arms (ta_bench --mode=open / openfill) open on the range the
+    // batch call reads, sliced once outside the timed loop.
+    s.push_str("  const benchMode = int(p, 'bench_mode', 0);\n");
+    for name in &input_names {
+        let _ = writeln!(s, "  const warm_{name} = benchMode === 0 ? {name} : warmView({name}, endIdx + 1);");
+    }
+    s.push_str(opt_reads);
+    if func_unst_id(&func.name, enums).is_some() {
+        let target = format!("TA_FUNC_UNST_{}", func.name);
+        let variant = enums["FuncUnstId"]
+            .variants
+            .iter()
+            .find(|v| v.c_name == target)
+            .map(|v| v.name.clone())
+            .expect("func_unst_id found it");
+        let _ = writeln!(s, "  pinUnstable(FuncUnstId.{variant}, int(p, 'unstablePeriod', 0));");
+    }
+    let mut lb_args: Vec<&str> = opt_names.clone();
+    lb_args.push("core");
+    let _ = writeln!(s, "  const outLen = outLength(p, startIdx, endIdx, {m}.{}({}));", n.lookback, lb_args.join(", "));
+    for (k, out) in outputs.iter().enumerate() {
+        let ctor = if out.param_type == ParamType::Integer { "i32Out" } else { "f64Out" };
+        let _ = writeln!(s, "  const out{k} = {ctor}(outLen);");
+    }
+    s.push_str("  const iters = benchIters(p);\n");
+    s.push_str("  const timed = int(p, 'timed', 0) !== 0;\n");
+    s.push_str("  const outBegIdx = new MInteger();\n");
+    s.push_str("  const outNBElement = new MInteger();\n");
+    s.push_str("  let rc: number = RetCode.SUCCESS;\n");
+    s.push_str("  let t0 = 0n;\n");
+
+    let public_call = |ins: &[String]| -> String {
+        let mut a: Vec<String> = vec!["startIdx".into(), "endIdx".into()];
+        a.extend(ins.iter().cloned());
+        a.extend(opt_names.iter().map(|o| (*o).to_string()));
+        a.extend(out_vars.iter().cloned());
+        a.push("core".into());
+        format!("{m}.{}({})", n.public, a.join(", "))
+    };
+    let mut impl_args: Vec<String> = vec!["core".into(), "startIdx".into(), "endIdx".into()];
+    impl_args.extend(input_names.iter().cloned());
+    impl_args.extend(opt_names.iter().map(|o| (*o).to_string()));
+    impl_args.push("outBegIdx".into());
+    impl_args.push("outNBElement".into());
+    impl_args.extend(out_vars.iter().cloned());
+
+    // Iteration 0 is a discarded warm-up, and makes every correctness request an
+    // idempotency check.
+    let mut open_args: Vec<String> = input_names.iter().map(|i| format!("warm_{i}")).collect();
+    open_args.extend(opt_names.iter().map(|o| (*o).to_string()));
+    let mut fill_args = open_args.clone();
+    fill_args.extend(out_vars.iter().cloned());
+    open_args.push("core".into());
+    fill_args.push("core".into());
+
+    s.push_str("  for (let bi = 0; bi <= iters; bi++) {\n");
+    s.push_str("    if (bi === 1) t0 = process.hrtime.bigint();\n");
+    s.push_str("    if (benchMode !== 0) {\n");
+    s.push_str("      try {\n");
+    s.push_str("        if (benchMode === 1) {\n");
+    let _ = writeln!(s, "          {m}.{}({});", n.open, open_args.join(", "));
+    s.push_str("        } else {\n");
+    let _ = writeln!(s, "          const wh = {m}.{}({});", n.open_and_fill, fill_args.join(", "));
+    s.push_str("          outBegIdx.value = wh.outRange().begIdx;\n");
+    s.push_str("          outNBElement.value = wh.outRange().count;\n");
+    s.push_str("        }\n");
+    s.push_str("        rc = RetCode.SUCCESS;\n");
+    s.push_str("      } catch (e) {\n");
+    s.push_str("        rc = e instanceof TALibError ? e.retCode : RetCode.BAD_PARAM;\n");
+    s.push_str("      }\n");
+    s.push_str("      continue;\n");
+    s.push_str("    }\n");
+    s.push_str("    try {\n");
+    s.push_str("      if (timed) {\n");
+    let _ = writeln!(s, "        rc = {m}.{}({});", n.body, impl_args.join(", "));
+    s.push_str("      } else {\n");
+    let _ = writeln!(s, "        const r = {};", public_call(&input_names));
+    s.push_str("        outBegIdx.value = r.begIdx;\n");
+    s.push_str("        outNBElement.value = r.count;\n");
+    s.push_str("        rc = RetCode.SUCCESS;\n");
+    s.push_str("      }\n");
+    s.push_str("    } catch (e) {\n");
+    s.push_str("      rc = failureCode(e);\n");
+    s.push_str("      outBegIdx.value = 0;\n");
+    s.push_str("      outNBElement.value = 0;\n");
+    s.push_str("    }\n");
+    s.push_str("  }\n");
+    s.push_str("  const elapsedNs = (process.hrtime.bigint() - t0) / BigInt(iters);\n");
+
+    // The float leg: the widened inputs as a Float32Array, through the same public tier.
+    s.push_str("  let usedFloat = 0;\n");
+    s.push_str("  if (int(p, 'use_float', 0) !== 0) {\n");
+    let f_ins: Vec<String> = input_names.iter().map(|i| format!("Float32Array.from({i})")).collect();
+    s.push_str("    try {\n");
+    let _ = writeln!(s, "      const r = {};", public_call(&f_ins));
+    s.push_str("      outBegIdx.value = r.begIdx;\n");
+    s.push_str("      outNBElement.value = r.count;\n");
+    s.push_str("      rc = RetCode.SUCCESS;\n");
+    s.push_str("    } catch (e) {\n");
+    s.push_str("      rc = failureCode(e);\n");
+    s.push_str("      outBegIdx.value = 0;\n");
+    s.push_str("      outNBElement.value = 0;\n");
+    s.push_str("    }\n");
+    s.push_str("    usedFloat = 1;\n");
+    s.push_str("  }\n");
+
+    if func.streaming {
+        let mut ride_args: Vec<String> = vec!["core".into(), "p".into(), "endIdx".into()];
+        ride_args.extend(input_names.iter().cloned());
+        ride_args.extend(opt_names.iter().map(|o| (*o).to_string()));
+        let _ = writeln!(
+            s,
+            "  const rideFields = ride{}({});",
+            crate::backends::common::pascal_words(&func.name),
+            ride_args.join(", ")
+        );
+    } else {
+        s.push_str("  const rideFields = '';\n");
+    }
+    let keys: Vec<String> = (0..outputs.len()).map(|k| format!("'{}'", output_json_key(outputs, k))).collect();
+    let _ = writeln!(
+        s,
+        "  return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, [{}], [{}], usedFloat, elapsedNs, rideFields);",
+        keys.join(", "),
+        out_vars.join(", ")
+    );
+    s.push_str("}\n\n");
+    s
+}
+
 #[cfg(test)]
 mod predicate_form_tests {
     use super::{c_predicate_expr, java_predicate_expr, rust_predicate_expr, SpecialBuiltin};
+    use crate::backends::ts::ts_predicate_expr;
 
     /// Pin the exact per-backend form of the boolean near-zero builtins. These are
     /// the single source shared by the indicator code path AND the eval_predicate
@@ -5179,5 +5895,15 @@ mod predicate_form_tests {
             "(Math.abs(v) <= 0.00000000000001 * (s))"
         );
         assert_eq!(java_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "(v < 0.00000000000001)");
+
+        assert_eq!(
+            ts_predicate_expr(SpecialBuiltin::IsZero, v),
+            "((-0.00000000000001 < v) && (v < 0.00000000000001))"
+        );
+        assert_eq!(
+            ts_predicate_expr(SpecialBuiltin::IsZeroScaled, vs),
+            "(Math.abs(v) <= 0.00000000000001 * (s))"
+        );
+        assert_eq!(ts_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "(v < 0.00000000000001)");
     }
 }

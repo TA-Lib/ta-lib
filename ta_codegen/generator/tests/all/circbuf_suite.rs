@@ -271,14 +271,14 @@ fn rust_circbuf_class_layout_shares_one_crossover_guard() {
     );
 }
 
-/// `TA_INDEX_MAX` is stated as a literal in five hand-written places across four
-/// languages plus the Java test server's embedded `Core` (#180). Nothing in the
+/// `TA_INDEX_MAX` is stated as a literal in a hand-written place per language,
+/// plus the Java test server's embedded `Core` (#180). Nothing in the
 /// build makes them agree — the generated prologues reference the *symbol*, so a
 /// raised cap in `ta_defs.h` alone would leave C accepting calls the other three
 /// reject, which is the one divergence the constant exists to prevent.
 ///
 /// This is the parity check. It reads the value out of each surface and requires
-/// one distinct value. Adding a fifth binding means adding it here.
+/// one distinct value. A new binding means a row here.
 #[test]
 fn ta_index_max_agrees_across_every_surface() {
     use std::path::Path;
@@ -291,6 +291,7 @@ fn ta_index_max_agrees_across_every_surface() {
         ("ta_codegen/output/java/library/src/main/java/io/github/talib/Core.java",
          "public static final int INDEX_MAX = "),
         ("ta_codegen/output/csharp/library/Core.cs", "public const int IndexMax = "),
+        ("ta_codegen/output/ts/library/src/runtime/core.ts", "const INDEX_MAX = "),
         ("ta_codegen/generator/src/server_gen.rs", "static final int INDEX_MAX = "),
     ];
 

@@ -107,9 +107,9 @@ fn main() {
             eprintln!("  generate-bench   Only the direct-call C benchmark binary source");
             eprintln!("  build            Compile generated server source into executables");
             eprintln!("                   --servers-only skips the C benchmark binaries");
-            eprintln!("  build-libraries  Build the publishable Java/C# libraries and run");
-            eprintln!("                   their suites (--backend=java,csharp; JDK + unzip");
-            eprintln!("                   and/or the .NET SDK)");
+            eprintln!("  build-libraries  Build the publishable Java/C#/TypeScript libraries and");
+            eprintln!("                   run their suites (--backend=java,csharp,ts; JDK + unzip,");
+            eprintln!("                   the .NET SDK and/or Node with npm)");
             eprintln!("  format           Re-indent the ta_codegen/input/ C source of truth");
             eprintln!("  stream-census    Report the IR-derived streamability per function");
             eprintln!("                   (--seed-yaml writes `streaming: true` for clean functions)");
@@ -125,7 +125,7 @@ fn main() {
             eprintln!(
                 "  --backend=NAME[,NAME,...]    Only generate specified backends (default: all)"
             );
-            eprintln!("                               Backends: c, rust, java, csharp");
+            eprintln!("                               Backends: c, rust, java, csharp, ts");
             std::process::exit(1);
         }
     }
@@ -789,6 +789,24 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         backends::csharp_metadata::generate(all_funcs, &enums, &csharp_src.join("metadata"));
     }
 
+    // The TS library: per-indicator modules need no `--func` guard (one file
+    // each), but the barrel, the enums, the metadata registry and the package
+    // manifest are whole-corpus, so they render `all_funcs`.
+    if backends_to_run.contains(&"ts") {
+        let ts_lib = root.join("ta_codegen/output/ts/library");
+        std::fs::create_dir_all(ts_lib.join("src")).unwrap();
+        backends::ts_enums::generate(all_funcs, &enums, &ts_lib.join("src/enums.ts"));
+        backends::ts::generate_package_files(all_funcs, &root, &ts_lib);
+        backends::ts_metadata::generate(all_funcs, &enums, &ts_lib.join("src/metadata"));
+        backends::ts_doc::write_example_tests(all_funcs, &enums, &ts_lib.join("test/gen"));
+    }
+
+    // Whole-corpus, like the Rust probe above: a `--func=X` run must not shrink it.
+    if backends_to_run.contains(&"ts") {
+        let ts_test = root.join("ta_codegen/output/ts/library/test");
+        backends::ts_phantom_io::generate(all_funcs, &enums, &ts_test);
+    }
+
     // The JSON-RPC servers and the C benches, last: the Java server inlines the
     // per-function fragments this run just rewrote, so it has to read them after
     // the clean.
@@ -1326,6 +1344,84 @@ fn build_csharp(out_base: &Path, bin_dir: &Path) -> Vec<BuildStep> {
     )]
 }
 
+/// npm and the tools it installs are `.cmd` shims on Windows, which a bare
+/// program name does not resolve to.
+fn npm_command() -> std::process::Command {
+    std::process::Command::new(if cfg!(windows) { "npm.cmd" } else { "npm" })
+}
+
+fn ts_tool(ts_root: &Path, name: &str) -> PathBuf {
+    ts_root.join("node_modules/.bin").join(if cfg!(windows) { format!("{name}.cmd") } else { name.to_string() })
+}
+
+/// The SHA-256 of `path`, hex, computed by the `node` the build uses anyway.
+fn node_sha256(path: &Path) -> Option<String> {
+    let out = std::process::Command::new("node")
+        .args([
+            "-e",
+            "process.stdout.write(require('crypto').createHash('sha256')\
+             .update(require('fs').readFileSync(process.argv[1])).digest('hex'))",
+        ])
+        .arg(path)
+        .output()
+        .ok()?;
+    out.status.success().then(|| String::from_utf8_lossy(&out.stdout).trim().to_string())
+}
+
+/// `npm ci` in the TS tooling root unless `node_modules/.ta-lock.sha256` holds
+/// the lockfile's SHA-256. npm's own hidden lockfile never equals
+/// `package-lock.json`, so comparing those two would reinstall on every build.
+fn ensure_ts_tooling(ts_root: &Path) -> Option<BuildStep> {
+    let lock = ts_root.join("package-lock.json");
+    let stamp = ts_root.join("node_modules/.ta-lock.sha256");
+    let want = node_sha256(&lock);
+    if want.is_some() && std::fs::read_to_string(&stamp).ok().as_deref().map(str::trim) == want.as_deref() {
+        return None;
+    }
+    let step = run_build_step(
+        "TypeScript npm ci",
+        "npm",
+        npm_command()
+            .args(["ci", "--no-audit", "--no-fund"])
+            .current_dir(ts_root),
+    );
+    if step.ok {
+        if let Some(sum) = want {
+            let _ = std::fs::write(&stamp, sum);
+        }
+    }
+    Some(step)
+}
+
+/// Never bare `tsc` or `npx tsc`: with no `node_modules`, npx fetches an
+/// unrelated package named `tsc`.
+fn build_ts(out_base: &Path, bin_dir: &Path) -> Vec<BuildStep> {
+    let ts_root = out_base.join("ts");
+    let mut steps = Vec::new();
+    if let Some(step) = ensure_ts_tooling(&ts_root) {
+        let ok = step.ok;
+        steps.push(step);
+        if !ok {
+            return steps;
+        }
+    }
+    let ts_out = bin_dir.join("ta_codegen_ts");
+    let _ = std::fs::remove_dir_all(&ts_out);
+    std::fs::create_dir_all(&ts_out).ok();
+    std::fs::write(ts_out.join("package.json"), "{\"type\":\"module\"}\n").ok();
+    steps.push(run_build_step(
+        "TypeScript server",
+        "tsc",
+        std::process::Command::new(ts_tool(&ts_root, "tsc")).args([
+            "-p",
+            ts_root.join("tools").to_str().unwrap(),
+            "--outDir",
+            ts_out.to_str().unwrap(),
+        ]),
+    ));
+    steps
+}
+
 fn build_rust(out_base: &Path, bin_dir: &Path) -> Vec<BuildStep> {
     let rust_dir = out_base.join("rust");
     let mut step = run_build_step(
@@ -1385,6 +1481,7 @@ fn build_servers(backend_filter: Option<&str>, servers_only: bool) {
                     "java" => Some(build_java(out_base, bin_dir)),
                     "csharp" => Some(build_csharp(out_base, bin_dir)),
                     "rust" => Some(build_rust(out_base, bin_dir)),
+                    "ts" => Some(build_ts(out_base, bin_dir)),
                     _ => None,
                 });
                 (backend, handle)
@@ -1451,7 +1548,7 @@ fn build_libraries(backend_filter: Option<&str>) {
     let bin_dir = root.join("bin");
     let backends_to_build: Vec<&str> = match backend_filter {
         Some(b) => b.split(',').map(|s| s.trim()).collect(),
-        None => vec!["java", "csharp"],
+        None => vec!["java", "csharp", "ts"],
     };
 
     let mut failures: u32 = 0;
@@ -1470,6 +1567,12 @@ fn build_libraries(backend_filter: Option<&str>) {
                     failures += 1;
                 }
             }
+            "ts" => {
+                built += 1;
+                if !build_ts_library(&root, &bin_dir) {
+                    failures += 1;
+                }
+            }
             "c" | "rust" => println!("  {backend}: no managed library, SKIPPED"),
             _ => {
                 failures += 1;
@@ -1481,7 +1584,7 @@ fn build_libraries(backend_filter: Option<&str>) {
     if built == 0 {
         eprintln!(
             "\nError: --backend={} names no backend with a publishable library (java, \
-             csharp), so this command built and tested nothing.",
+             csharp, ts), so this command built and tested nothing.",
             backends_to_build.join(",")
         );
         std::process::exit(1);
@@ -1490,6 +1593,205 @@ fn build_libraries(backend_filter: Option<&str>) {
         eprintln!("\nError: {failures} library build step(s) FAILED (see above).");
         std::process::exit(1);
     }
+}
+
+/// Pack the **shipped** TypeScript library and test the tarball.
+///
+/// The tests that import the package by its own name run in a throwaway project
+/// with the tarball installed, so they see exactly what `npm publish` uploads:
+/// the `exports` map, `files` and the emitted `.d.ts`/`.js`. The tests that
+/// import `../src` run in place. Uses whichever `node` is first on PATH.
+fn build_ts_library(root: &Path, bin_dir: &Path) -> bool {
+    let ts_root = root.join("ta_codegen/output/ts");
+    let lib_dir = ts_root.join("library");
+    if !lib_dir.join("package.json").exists() {
+        println!("  Building TypeScript library... FAILED (no {})", lib_dir.join("package.json").display());
+        return false;
+    }
+    let report = |step: &BuildStep, show_log: bool| {
+        if show_log || !step.ok {
+            print!("{}", step.log);
+            if !step.log.is_empty() && !step.log.ends_with('\n') {
+                println!();
+            }
+        }
+        println!("  {}... {}", step.label, step.status);
+        step.ok
+    };
+    match std::process::Command::new("node").arg("--version").output() {
+        Ok(o) if o.status.success() => {
+            println!("  TypeScript library on Node {}", String::from_utf8_lossy(&o.stdout).trim());
+        }
+        _ => {
+            println!("  Building TypeScript library... FAILED (no `node` on PATH)");
+            return false;
+        }
+    }
+    if let Some(step) = ensure_ts_tooling(&ts_root) {
+        if !report(&step, false) {
+            return false;
+        }
+    }
+
+    let tsc = ts_tool(&ts_root, "tsc");
+    let _ = std::fs::remove_dir_all(lib_dir.join("dist"));
+    let compile = run_build_step(
+        "Compiling the TypeScript library to dist/",
+        "tsc",
+        std::process::Command::new(&tsc).arg("-p").arg(&lib_dir),
+    );
+    if !report(&compile, false) {
+        return false;
+    }
+    let check = run_build_step(
+        "Type-checking the TypeScript tests",
+        "tsc",
+        std::process::Command::new(&tsc).arg("-p").arg(lib_dir.join("test")).arg("--noEmit"),
+    );
+    if !report(&check, false) {
+        return false;
+    }
+
+    let test_dir = lib_dir.join("test");
+    let mut tests = Vec::new();
+    collect_files(&test_dir, "ts", &["node_modules"], &mut tests);
+    tests.retain(|p| p.to_string_lossy().ends_with(".test.ts"));
+    tests.sort();
+    let (packaged, in_tree): (Vec<PathBuf>, Vec<PathBuf>) = tests.into_iter().partition(|p| {
+        std::fs::read_to_string(p).is_ok_and(|text| imports_package_by_name(&text, backends::ts::PACKAGE_NAME))
+    });
+    if packaged.is_empty() {
+        println!(
+            "  Testing the TypeScript package... FAILED (no test under {} imports '{}', so \
+             nothing would run against the tarball)",
+            test_dir.display(),
+            backends::ts::PACKAGE_NAME
+        );
+        return false;
+    }
+    let rel = |base: &Path, ps: &[PathBuf]| -> Vec<String> {
+        ps.iter().map(|p| p.strip_prefix(base).unwrap().to_string_lossy().into_owned()).collect()
+    };
+    if !in_tree.is_empty() {
+        let step = run_build_step(
+            &format!("Running {} source-tree TypeScript test file(s)", in_tree.len()),
+            "node",
+            std::process::Command::new("node")
+                .args(["--test", "--test-reporter=tap"])
+                .args(rel(&lib_dir, &in_tree))
+                .current_dir(&lib_dir),
+        );
+        if !report_node_tests(&step, &report) {
+            return false;
+        }
+    }
+
+    let pack_dir = bin_dir.join("ta_codegen_ts_package");
+    let _ = std::fs::remove_dir_all(&pack_dir);
+    let consumer = pack_dir.join("consumer");
+    if let Err(e) = std::fs::create_dir_all(&consumer) {
+        println!("  Packing the TypeScript library... FAILED (cannot create {}: {e})", consumer.display());
+        return false;
+    }
+    let pack = run_build_step(
+        "Packing the TypeScript library (npm pack)",
+        "npm",
+        npm_command()
+            .args(["pack", "--pack-destination"])
+            .arg(&pack_dir)
+            .current_dir(&lib_dir),
+    );
+    if !report(&pack, false) {
+        return false;
+    }
+    let tarballs: Vec<PathBuf> = std::fs::read_dir(&pack_dir)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| p.extension().is_some_and(|x| x == "tgz"))
+        .collect();
+    let [tarball] = tarballs.as_slice() else {
+        println!("  Packing the TypeScript library... FAILED (expected one .tgz in {}, found {})", pack_dir.display(), tarballs.len());
+        return false;
+    };
+
+    let manifest = "{\"name\":\"ta-lib-package-test\",\"private\":true,\"type\":\"module\"}\n";
+    if let Err(e) = std::fs::write(consumer.join("package.json"), manifest)
+        .and_then(|()| copy_tree(&test_dir, &consumer.join("test")))
+    {
+        println!("  Installing the TypeScript package... FAILED ({e})");
+        return false;
+    }
+    let install = run_build_step(
+        "Installing the tarball into a throwaway project",
+        "npm",
+        npm_command()
+            .args(["install", "--no-audit", "--no-fund", "--ignore-scripts"])
+            .arg(tarball)
+            .current_dir(&consumer),
+    );
+    if !report(&install, false) {
+        return false;
+    }
+    let step = run_build_step(
+        &format!("Running {} TypeScript test file(s) against the installed tarball", packaged.len()),
+        "node",
+        std::process::Command::new("node")
+            .args(["--test", "--test-reporter=tap"])
+            .args(rel(&lib_dir, &packaged))
+            .current_dir(&consumer),
+    );
+    report_node_tests(&step, &report)
+}
+
+/// Prints `node --test`'s TAP totals; fails a run that executed no test.
+fn report_node_tests(step: &BuildStep, report: &dyn Fn(&BuildStep, bool) -> bool) -> bool {
+    let total = |key: &str| {
+        step.log
+            .lines()
+            .find_map(|l| l.strip_prefix(key).and_then(|n| n.trim().parse::<u64>().ok()))
+    };
+    if step.ok && total("# tests ").unwrap_or(0) == 0 {
+        print!("{}", step.log);
+        println!("  {}... FAILED (no test ran)", step.label);
+        return false;
+    }
+    if step.ok {
+        println!(
+            "  {}... OK (tests {}, pass {}, fail {})",
+            step.label,
+            total("# tests ").unwrap_or(0),
+            total("# pass ").unwrap_or(0),
+            total("# fail ").unwrap_or(0)
+        );
+        return true;
+    }
+    report(step, true)
+}
+
+/// Whether `text` imports `name` or one of its subpaths.
+fn imports_package_by_name(text: &str, name: &str) -> bool {
+    ['\'', '"'].iter().any(|q| {
+        [q.to_string(), "/".to_string()].iter().any(|end| {
+            let spec = format!("{q}{name}{end}");
+            text.contains(&format!("from {spec}")) || text.contains(&format!("import({spec}"))
+        })
+    })
+}
+
+fn copy_tree(from: &Path, to: &Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(to)?;
+    for entry in std::fs::read_dir(from)? {
+        let entry = entry?;
+        let dest = to.join(entry.file_name());
+        if entry.file_type()?.is_dir() {
+            copy_tree(&entry.path(), &dest)?;
+        } else {
+            std::fs::copy(entry.path(), dest)?;
+        }
+    }
+    Ok(())
 }
 
 /// Compile the **shipped** Java library and run its junit-free tests.

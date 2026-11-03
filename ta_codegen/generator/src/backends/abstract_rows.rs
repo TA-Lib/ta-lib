@@ -4,7 +4,7 @@
 //! facts: a function's name, group, hint, flag bits, its inputs (with price
 //! components already folded into one bundle), its optional parameters and
 //! their domains, its outputs, and its unstable-period id. Those facts are
-//! derived here, **once**, and rendered by the Rust, Java and C# registries.
+//! derived here, **once**, and rendered by every language's registry.
 //!
 //! ## Why the model is typed rather than a bag of `i32` codes
 //!

@@ -50,6 +50,24 @@ fn rust_template_enums_are_non_exhaustive() {
     }
 }
 
+/// `NAME: 3,` members of a TS `export const <name> = Object.freeze({ ... } as const);` block,
+/// comment lines skipped; a member without a number panics.
+fn ts_const_members(text: &str, name: &str) -> Vec<(String, i64)> {
+    let open = format!("export const {name} = Object.freeze({{");
+    let at = text.find(&open).unwrap_or_else(|| panic!("no `{open}`"));
+    let rest = &text[at + open.len()..];
+    let body = &rest[..rest.find("} as const);").expect("the block closes")];
+    body.lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty() && !l.starts_with("/*") && !l.starts_with('*'))
+        .map(|l| {
+            let (n, v) = l.trim_end_matches(',').split_once(": ").unwrap_or_else(|| panic!("TS {name}: `{l}`"));
+            assert!(n.chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_'), "TS {name}: `{n}`");
+            (n.to_string(), v.trim().parse::<i64>().unwrap_or_else(|_| panic!("TS {name}.{n}: `{v}` is not a number")))
+        })
+        .collect()
+}
+
 /// `RangeType` and `CandleSettingType` are in no YAML: C's header and each port
 /// carry a copy written by hand. Nothing on the PR gate compares a Java or C#
 /// candlestick value with C's, and no library reads the number of a Rust
@@ -133,7 +151,12 @@ fn every_backend_candle_enum_member_carries_c_s_number() {
             members.push(("Java", n.to_string(), ordinal as i64));
         }
 
-        for backend in ["Rust", "C#", "Java"] {
+        let ts = read("ta_codegen/output/ts/library/src/runtime/core.ts");
+        for (n, v) in ts_const_members(&ts, name) {
+            members.push(("TS", n, v));
+        }
+
+        for backend in ["Rust", "C#", "Java", "TS"] {
             let n = members.iter().filter(|m| m.0 == backend).count();
             assert_eq!(n, floor, "parsed {n} {backend} {name} members");
         }
@@ -246,11 +269,21 @@ fn enum_param_gets_a_domain_gate_in_both_tiers() {
         "C# lost the enum domain gate:\n{cs}"
     );
 
+    let (ts_min, ts_max) =
+        backends::common::enum_limit_names_of(ma, Lang::Ts).expect("TS declares MAType limits");
+    let ts = backends::ts::generate(&func, &enums, registry, helpers);
+    let ts_gate = format!("optInMAType < {ts_min} || optInMAType > {ts_max}) {{");
+    assert!(ts.contains(&format!("{ts_gate}\n    return -1;")), "TS lookback lost the enum domain gate:\n{ts}");
+    assert!(
+        ts.contains(&format!("{ts_gate}\n    return RetCode.BAD_PARAM;")),
+        "TS body lost the enum domain gate:\n{ts}"
+    );
+
     // And no tier carries the bound as a number any more: a reintroduced literal
     // is a value that has to be re-edited in every prologue when a member is
     // appended, which is the defect the constants exist to remove.
     let hi = ma.variants.iter().map(|v| v.value).max().expect("members");
-    for (lang, src) in [("C", &c), ("C#", &cs)] {
+    for (lang, src) in [("C", &c), ("C#", &cs), ("TS", &ts)] {
         assert!(
             !src.contains(&format!("optInMAType > {hi}")),
             "{lang} spelled the MAType bound as a literal again:\n{src}"
@@ -526,6 +559,72 @@ fn csharp_resolve_call_agrees_with_the_emitted_method_names() {
     }
 }
 
+#[test]
+fn ts_resolve_call_agrees_with_the_emitted_function_names() {
+    // A cross-call imports `<symbol>` from `./<module>.ts`; a resolver and an
+    // emitter that disagree fail only at tsc, as a missing export.
+    let registry = make_registry();
+    let enums = load_enums();
+    let helpers = make_helpers();
+    for name in discover_indicators() {
+        let (func, _) = load_indicator(&name);
+        let names = backends::ts::ts_names(&func.name);
+        assert_eq!(registry.resolve_call(&name, Lang::Ts), names.public, "{name}");
+        assert_eq!(registry.resolve_call(&format!("{name}_lookback"), Lang::Ts), names.lookback, "{name}");
+        let src = backends::ts::generate(&func, &enums, registry, helpers);
+        for sym in [&names.public, &names.lookback, &names.display_shift, &names.body] {
+            assert!(src.contains(&format!("export function {sym}(")), "{name}: no `{sym}` exported");
+        }
+        let mut barrel = backends::ts::public_exports(&func);
+        barrel.sort();
+        let mut want = vec![names.public.clone(), names.lookback.clone(), names.display_shift.clone()];
+        if func.streaming {
+            for sym in [&names.open, &names.open_and_fill, &names.open_internal] {
+                assert!(src.contains(&format!("export function {sym}(")), "{name}: no `{sym}` exported");
+            }
+            let seam = format!("export function {}(", names.open_and_fill_internal);
+            assert_eq!(
+                src.contains(&seam),
+                ta_codegen_lib::streaming::emits_open_and_fill_internal(&func, registry),
+                "{name}: the anchored fill seam exists exactly where the shared predicate says"
+            );
+            assert!(src.contains(&format!("export class {} {{", names.stream_class)), "{name}: no stream class");
+            want.extend([names.open.clone(), names.open_and_fill.clone(), names.stream_class.clone()]);
+            if func.outputs.len() > 1 {
+                assert!(src.contains(&format!("export class {} {{", names.out_class)), "{name}: no out class");
+                want.push(names.out_class.clone());
+            }
+        }
+        want.sort();
+        assert_eq!(barrel, want, "{name}: the barrel must list the public names and no @internal one");
+    }
+}
+
+/// TS fuses through the runtime `fma`, called or with its body copied in (whose
+/// one call is `fmaSlow`), at the sites `fma.rs` picks for every backend: the
+/// modules that do either are exactly the inventory.
+#[test]
+fn ts_fma_calls_fire_for_exactly_the_fusing_functions() {
+    let registry = make_registry();
+    let helpers = make_helpers();
+    let mut fused: Vec<String> = Vec::new();
+    for name in discover_indicators() {
+        let (func, enums) = load_indicator(&name);
+        let src = backends::ts::generate(&func, &enums, registry, helpers);
+        let calls = ["fma(", "fmaSlow("].iter().any(|needle| {
+            src.match_indices(needle)
+                .any(|(i, _)| !src[..i].chars().next_back().is_some_and(|c| c.is_alphanumeric() || c == '_' || c == '.'))
+        });
+        if calls {
+            fused.push(name);
+        }
+    }
+    fused.sort();
+    let mut want: Vec<String> = backends::fma::FUSING_INVENTORY.iter().map(|s| (*s).to_string()).collect();
+    want.sort();
+    assert_eq!(fused, want);
+}
+
 /// Issue #156: the runtime FMA dispatch trio (public dispatcher +
 /// `#[target_feature(enable = "fma")]` clone + `#[inline(always)]` `_impl`)
 /// must be emitted for exactly the functions whose rendered body fuses — this
@@ -724,6 +823,27 @@ TA_RetCode max( int    startIdx,
     ] {
         assert!(cs.contains(needle), "C# output missing `{needle}`:\n{cs}");
     }
+
+    // JS bit operators are int32, as C's `int` ones are, so they render as written.
+    let ts = backends::ts::generate(&func, &enums, registry, &helpers);
+    for needle in [
+        "mask = (optInTimePeriod ^ 3) & ~1;",
+        "mask |= 2;",
+        "mask &= 15;",
+        "mask ^= 1;",
+        "mask <<= 1;",
+        "mask >>= 1;",
+        "mask = (mask | 4) << 1 >> 1;",
+        "neg = ~optInTimePeriod;",
+        "if ((mask & 1) === 9999) {",
+        "if ((mask & 16) !== 0) {",
+        "if ((mask & 1) !== 0 && neg < 0) {",
+        "if (!((mask & 1) !== 0)) {",
+        "while ((mask & 1024) !== 0) {",
+        "i = ((mask & 2) !== 0 ? 1 : 0);",
+    ] {
+        assert!(ts.contains(needle), "TS output missing `{needle}`:\n{ts}");
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -877,7 +997,11 @@ fn every_backend_retcode_member_carries_c_s_number() {
             }
         }
     }
-    for (backend, floor) in [("Rust", 11), ("C#", 10), ("Java", 11)] {
+    let ts = read("ta_codegen/output/ts/library/src/runtime/errors.ts");
+    for (name, value) in ts_const_members(&ts, "RetCode") {
+        members.push(("TS", name, value));
+    }
+    for (backend, floor) in [("Rust", 11), ("C#", 10), ("Java", 11), ("TS", 11)] {
         let n = members.iter().filter(|m| m.0 == backend).count();
         assert!(n >= floor, "parsed only {n} {backend} RetCode members");
     }

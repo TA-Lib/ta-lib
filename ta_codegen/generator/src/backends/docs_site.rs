@@ -1342,10 +1342,12 @@ fn build_index(funcs: &[&FuncDef]) -> String {
     let mut s = String::from(
         "---\ntitle: Functions\ndescription: \"Every TA-Lib technical analysis function, grouped by category, with the formula, inputs, outputs and source for each.\"\n---\n\n",
     );
-    s.push_str(
+    let labels: Vec<&str> = super::all().iter().map(|b| b.label()).collect();
+    s.push_str(&format!(
         "All technical-analysis functions, grouped by category. Each page documents the \
-         formula, inputs, outputs, and links to the C / Rust / Java source.\n",
-    );
+         formula, inputs, outputs, and links to the {} source.\n",
+        labels.join(" / ")
+    ));
     for (group, fns) in &by_group {
         s.push_str(&format!("\n## {group}\n\n"));
         for f in fns {
@@ -1660,6 +1662,15 @@ mod tests {
             assert!(section.contains(&row), "missing {row}:\n{section}");
         }
         assert!(section.contains("(https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_SMA.c)"));
+    }
+
+    #[test]
+    fn index_names_every_backend() {
+        let index = build_index(&[&func("SMA", vec![])]);
+        let listed = index.split("links to the ").nth(1).and_then(|t| t.split(" source.").next()).unwrap_or("");
+        let listed: Vec<&str> = listed.split(" / ").collect();
+        let labels: Vec<&str> = super::super::all().iter().map(|b| b.label()).collect();
+        assert_eq!(listed, labels, "{index}");
     }
 
     #[test]

@@ -88,6 +88,10 @@ fn the_definition_declares_the_yaml_types() {
     parser::c_source::wire_parsed_source(&mut func, &parsed);
 }
 
+fn ts_module(func: &ta_codegen_lib::ir::FuncDef) -> String {
+    backends::ts::generate(func, &load_enums(), make_registry(), crate::common::make_helpers())
+}
+
 /// The query text of one backend, from its declaration to its closing brace.
 fn query<'a>(lang: &str, text: &'a str, decl: &str) -> &'a str {
     let start = text.find(decl).unwrap_or_else(|| panic!("{lang}: no `{decl}`"));
@@ -113,9 +117,10 @@ fn an_unflagged_output_is_answered_before_the_body() {
         ("Rust", &out.rust, "fn synth24_display_shift("),
         ("Java", &out.java, "int synth24DisplayShift("),
         ("C#", &csharp, "int Synth24DisplayShift("),
+        ("TS", &ts_module(&func), "function synth24DisplayShift("),
     ] {
         let q = query(lang, text, decl);
-        let guard = q.find("outputIdx == 0").unwrap_or_else(|| panic!("{lang}: no guard:\n{q}"));
+        let guard = q.find("outputIdx == 0").or_else(|| q.find("outputIdx === 0")).unwrap_or_else(|| panic!("{lang}: no guard:\n{q}"));
         let body = q.find("optInTimePeriod / outputIdx").unwrap_or_else(|| panic!("{lang}: no body:\n{q}"));
         assert!(guard < body, "{lang}: the guard must precede the body:\n{q}");
     }
@@ -140,6 +145,7 @@ fn the_query_asks_its_own_lookback_in_every_backend() {
         ("Rust", &out.rust, "fn frama_display_shift(", "self.frama_lookback("),
         ("Java", &out.java, "int framaDisplayShift(", "framaLookback("),
         ("C#", &csharp, "int FramaDisplayShift(", "FramaLookback("),
+        ("TS", &ts_module(&func), "function framaDisplayShift(", "framaLookback("),
     ] {
         let body = query(lang, text, decl);
         assert!(body.contains(call), "{lang}: the display shift does not call `{call}`:\n{body}");

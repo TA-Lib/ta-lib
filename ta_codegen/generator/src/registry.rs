@@ -158,6 +158,7 @@ impl Registry {
                 Lang::Rust => snake_words(&name),
                 Lang::Java => camel_words(&name),
                 Lang::CSharp => pascal_words(&name),
+                Lang::Ts => crate::backends::ts::func_ident(&name),
                 Lang::C => format!("TA_{name}"),
             };
         }
@@ -186,9 +187,18 @@ impl Registry {
         match lang {
             Lang::C => format!("TA_{name}_{}", capitalize(&suffix)),
             Lang::Rust => format!("{}_{}", snake_words(&name), suffix.to_lowercase()),
-            Lang::Java => format!("{}{}", camel_words(&name), capitalize(&suffix)),
+            Lang::Java | Lang::Ts => format!("{}{}", camel_words(&name), capitalize(&suffix)),
             Lang::CSharp => format!("{}{}", pascal_words(&name), capitalize(&suffix)),
         }
+    }
+
+    /// The indicator dir-name a call names, and the suffix after it, if any:
+    /// `sma` is `("sma", None)`, `sma_lookback` is `("sma", Some("lookback"))`.
+    pub(crate) fn split_call(&self, func_name: &str) -> Option<(String, Option<String>)> {
+        if self.contains(func_name) {
+            return Some((func_name.to_string(), None));
+        }
+        self.parse_func_name(func_name).map(|(i, s)| (i, Some(s)))
     }
 
     /// Parse a prefix-free function name into (indicator, suffix).

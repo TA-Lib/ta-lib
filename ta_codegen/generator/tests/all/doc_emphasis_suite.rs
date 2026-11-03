@@ -1,5 +1,5 @@
-//! The canonical `input/<name>/<name>.md` is Markdown. Rust's doc target is
-//! Markdown too, so rustdoc renders it; Java's is HTML and C#'s is XML, and
+//! The canonical `input/<name>/<name>.md` is Markdown. Rust's and TypeScript's
+//! doc targets are Markdown too, so they render it; Java's is HTML and C#'s is XML, and
 //! whatever those emitters do not convert reaches the reader as punctuation —
 //! in the published javadoc, the NuGet XML docs and every IDE hover.
 //!
@@ -63,7 +63,8 @@ fn load(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
 /// Both doc surfaces of one function: the guarded entry point and the lookback,
 /// in both precisions. The single-precision overload is a separate render, and
 /// #386's link conversion shipped correct in one and stale in the other, so
-/// checking only the double overload would have missed half of it.
+/// checking only the double overload would have missed half of it. TypeScript's
+/// blocks ride along for the TeX and link sweeps; the emphasis sweep skips them.
 fn rendered_docs(name: &str, registry: &Registry) -> Vec<(String, String)> {
     let (func, enums) = load(name);
     let upper = func.name.to_uppercase();
@@ -87,6 +88,8 @@ fn rendered_docs(name: &str, registry: &Registry) -> Vec<(String, String)> {
         format!("csharp {upper} lookback"),
         backends::csharp_doc::lookback_docs(&func, &upper, &enums),
     ));
+    out.push((format!("ts {upper} batch"), backends::ts_doc::batch_docs(&func, &enums, registry)));
+    out.push((format!("ts {upper} lookback"), backends::ts_doc::lookback_docs(&func, &enums)));
     out
 }
 
@@ -175,6 +178,9 @@ fn emphasis_survivors() -> Vec<String> {
     let mut out = Vec::new();
     for name in documented_indicators() {
         for (label, block) in rendered_docs(&name, registry) {
+            if label.starts_with("ts ") {
+                continue;
+            }
             for line in prose_lines(&block) {
                 let masked = mask_code_spans(&line);
                 // A `*` that pairs is emphasis the emitter should have
@@ -264,16 +270,16 @@ fn tex_survivors() -> Vec<String> {
     out
 }
 
-/// The second gate. Authored TeX renders as its own source in javadoc and in the
-/// XML doc, so a `## Notes` bullet carrying it is dropped rather than shipped
-/// (`doc_meta::renderable_notes`).
+/// The second gate. Authored TeX renders as its own source in javadoc, in the
+/// XML doc and in a TSDoc hover, so a `## Notes` bullet carrying it is dropped
+/// rather than shipped (`doc_meta::renderable_notes`).
 ///
 /// The drop covers Notes only, which is what makes this sweep worth its runtime:
 /// `## Summary` and the per-argument prose are not droppable — they are the only
 /// definition a Java or C# user gets — so TeX authored there has to fail the
 /// build instead. Nothing in the corpus carries any today; this is what says so.
 #[test]
-fn no_tex_reaches_the_java_or_csharp_docs() {
+fn no_tex_reaches_the_java_csharp_or_ts_docs() {
     let survivors = tex_survivors();
     assert!(
         survivors.is_empty(),
@@ -313,16 +319,18 @@ fn the_tex_notes_are_actually_dropped() {
 fn a_code_span_keeps_its_asterisks() {
     let registry = common::make_registry();
     let blocks = rendered_docs("rma", registry);
-    let java = blocks
-        .iter()
-        .find(|(l, _)| l.starts_with("java"))
-        .map(|(_, b)| b.clone())
-        .expect("java block");
-    assert!(
-        java.contains("{@code alpha * x + (1 - alpha) * prev}"),
-        "RMA's notes spell the recurrence in a code span; the emitter must leave \
-         its asterisks alone.\n{java}"
-    );
+    for (lang, expected) in [("java", "{@code alpha * x + (1 - alpha) * prev}"), ("ts", "`alpha * x + (1 - alpha) * prev`")] {
+        let block = blocks
+            .iter()
+            .find(|(l, _)| l.starts_with(lang))
+            .map(|(_, b)| b.clone())
+            .expect("block");
+        assert!(
+            block.contains(expected),
+            "RMA's notes spell the recurrence in a code span; the {lang} emitter must leave \
+             its asterisks alone.\n{block}"
+        );
+    }
 }
 
 /// The emphasis arm runs before the `[` arm in both escapers, so it is the one
@@ -335,12 +343,15 @@ fn a_code_span_keeps_its_asterisks() {
 fn links_still_become_anchors() {
     let registry = common::make_registry();
     let blocks = rendered_docs("cdl2crows", registry);
+    let mut ts_seen = false;
     for (label, block) in &blocks {
         if !block.contains("thepatternsite.com") {
             continue;
         }
         let expected = if label.starts_with("java") {
             "<a href=\"https://thepatternsite.com/TwoCrows.html\">"
+        } else if label.starts_with("ts") {
+            "[thepatternsite.com](https://thepatternsite.com/TwoCrows.html)"
         } else {
             "<see href=\"https://thepatternsite.com/TwoCrows.html\">"
         };
@@ -348,16 +359,21 @@ fn links_still_become_anchors() {
             block.contains(expected),
             "{label}: the Markdown link must still convert; found no {expected}\n{block}"
         );
+        if label.starts_with("ts") {
+            ts_seen = true;
+            continue;
+        }
         // `](` and not `]`: the prose legitimately carries `{@code double[]}`
         // and `endIdx - startIdx + 1`. Only the two together are a link target.
         assert!(!block.contains("]("), "{label}: a Markdown link target survived\n{block}");
     }
+    assert!(ts_seen, "no TS block carried CDL2CROWS' link");
 }
 
 /// Rust must not change: rustdoc renders Markdown, so emphasis belongs in its
 /// output as authored. This is the reverse direction of the gate above, and it
-/// is what keeps a future "convert everywhere" from regressing the one backend
-/// that is already right.
+/// is what keeps a future "convert everywhere" from regressing a backend that
+/// is already right. TypeScript has its own probe below.
 #[test]
 fn rust_keeps_its_markdown() {
     let (func, enums) = load("cmou");
@@ -368,4 +384,15 @@ fn rust_keeps_its_markdown() {
         src.contains("**plain moving-window sums**"),
         "CMOU's Rust doc must keep the authored Markdown"
     );
+}
+
+/// TSDoc renders Markdown too: the authored emphasis ships as written.
+#[test]
+fn typescript_keeps_its_markdown() {
+    let registry = common::make_registry();
+    for (name, expected) in [("cmou", "**plain moving-window sums**"), ("adr", "*within*")] {
+        let blocks = rendered_docs(name, registry);
+        let ts = blocks.iter().find(|(l, _)| l.starts_with("ts ")).map(|(_, b)| b.clone()).expect("ts block");
+        assert!(ts.contains(expected), "{name}: the TS doc must keep the authored {expected}\n{ts}");
+    }
 }

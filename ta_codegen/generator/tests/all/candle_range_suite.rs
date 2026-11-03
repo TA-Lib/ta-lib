@@ -48,6 +48,7 @@ enum Lang {
     Rust,
     Java,
     CSharp,
+    Ts,
 }
 
 /// Generated source for one indicator, in one backend.
@@ -59,6 +60,7 @@ fn generated(name: &str, lang: Lang) -> String {
         Lang::Rust => backends::rust_lang::generate(&func, &enums, registry, helpers),
         Lang::Java => backends::java::generate(&func, &enums, registry, helpers),
         Lang::CSharp => backends::csharp::generate(&func, &enums, registry, helpers),
+        Lang::Ts => backends::ts::generate(&func, &enums, registry, helpers),
     };
     collapse(&full)
 }
@@ -173,7 +175,7 @@ fn java_and_csharp_also_spell_shadows_as_upper_plus_lower() {
     // caught java.rs and csharp.rs, and their hardcoded `format!` strings are
     // no more connected to the helper body than Rust's were. Pin all three so
     // the next duplicate cannot regress alone.
-    for (lang, label) in [(Lang::Java, "java"), (Lang::CSharp, "csharp")] {
+    for (lang, label) in [(Lang::Java, "java"), (Lang::CSharp, "csharp"), (Lang::Ts, "ts")] {
         let s = generated("cdldoji", lang);
         assert!(
             s.contains("(inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i])))"),
@@ -220,4 +222,20 @@ fn rust_candleaverage_halves_by_multiplying() {
         "the Shadows average should halve by a multiply: {s}"
     );
     assert!(!s.contains("{ 2.0 } else { 1.0 }"), "no divide by a selected 2.0/1.0 may remain: {s}");
+}
+
+/// The TypeScript stream step reads its bars as scalars, so its candle range is
+/// a second spelling the batch pins above cannot answer for.
+#[test]
+fn the_ts_stream_step_spells_shadows_as_upper_plus_lower() {
+    let s = generated("cdldoji", Lang::Ts);
+    let stream = &s[s.find("/**** Streaming API *****/").expect("cdldoji streams")..];
+    assert!(
+        stream.contains("(inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen)))"),
+        "ts stream: upper shadow must be high - max(close, open) — see #217"
+    );
+    assert!(
+        stream.contains("((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)"),
+        "ts stream: lower shadow must be min(close, open) - low — see #217"
+    );
 }

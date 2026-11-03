@@ -29,6 +29,7 @@ ta_codegen/output/       per-language products: library/ (shipped) + tools/ (ser
                                    into Core.java from the IR and inlined into the
                                    server from disk
   csharp/library/ + tools/         shipped TA-Lib package incl. src/metadata/
+  ts/library/ + tools/             the npm package; tools/ compiles ../library/src
 ```
 
 **Hand-written library templates** live under `templates/` — the generator's own
@@ -68,12 +69,13 @@ that names no indicator.
 | `ir` | `FuncDef`, `ParamType`, `Statement`, `Expr` |
 | `backends/c.rs` | C indicators: guarded `TA_<N>` / `TA_S_<N>`, plus `TA_<N>_Private` where declared |
 | `backends/rust_lang.rs` | Rust indicators (concrete `f64`) |
-| `backends/java.rs`, `csharp.rs` | Java `Core` methods; one `Core_<NAME>.cs` per function |
-| `backends/{c,rust,java,csharp}_stream.rs` | The four streaming emitters, each rendering the *same* backend-neutral analysis from `streaming.rs`. A fifth backend means writing only its emitter |
-| `backends/rust_doc.rs`, `csharp_doc.rs` | Per-language rendering of each function's canonical `<name>.md` |
+| `backends/java.rs`, `csharp.rs`, `ts.rs` | Java `Core` methods; one `Core_<NAME>.cs` per function; one ES module per function |
+| `backends/ctype.rs` | The C type pass behind TS integer semantics: every integer `/`, `%` and real-to-int conversion truncates with `\| 0` because this pass typed it, never because of a name |
+| `backends/{c,rust,java,csharp,ts}_stream.rs` | The streaming emitters, each rendering the *same* backend-neutral analysis from `streaming.rs`. A new backend means writing only its emitter |
+| `backends/rust_doc.rs`, `csharp_doc.rs`, `ts_doc.rs` | Per-language rendering of each function's canonical `<name>.md` |
 | `backends/ir_cleanup.rs` | Backend-selected, length-preserving IR passes between the streaming decision and rendering |
-| `backends/abstract_rows.rs` | The backend-neutral `ta_abstract` row model, rendered by Rust, Java and C# — but deliberately not by C (below) |
-| `backends/{rust,java,csharp}_metadata.rs`, `java_abstract.rs` | The per-language introspection registries |
+| `backends/abstract_rows.rs` | The backend-neutral `ta_abstract` row model, rendered by Rust, Java, C# and TS — but deliberately not by C (below) |
+| `backends/{rust,java,csharp,ts}_metadata.rs`, `java_abstract.rs` | The per-language introspection registries |
 | `backends/ta_abstract_c.rs` | C's `ta_abstract` layer: tables, frames, group index, runtime API |
 | `backends/price_bundle.rs` | Folds expanded price components back into the single `TA_Input_Price` descriptor (`inPriceHLC` + flags) — **public ABI**, so derived once from each `Input`'s `PriceRef` and never re-inferred from argument names |
 | `backends/func_api_xml.rs` | `ta_func_api.xml` |
@@ -83,7 +85,7 @@ that names no indicator.
 
 **Emission helpers stay per backend.** Factor a repeated prologue or validation
 emitter within its own backend file, not into `backends/common.rs`: the backends
-differ in tier shape (C returns a code, Java and C# throw, Rust cannot express an
+differ in tier shape (C returns a code, Java, C# and TS throw, Rust cannot express an
 absent argument), so a shared emitter becomes a switch on the language.
 `common.rs` holds backend-neutral data and IR queries.
 
@@ -108,8 +110,8 @@ cargo run -- build-libraries [--backend=java] # Build + test the publishable lib
 `generate` writes **everything committed**, so "regenerate, then `git status` is
 clean" is a total gate over the tree. `generate-servers` and `generate-bench` are
 narrowings for callers that rebuild a server without a full regeneration; they
-own no path `generate` does not write. Emitting `.java` or `.cs` is text, so none
-of this needs a JDK or the .NET SDK — those belong to `build`.
+own no path `generate` does not write. Emitting `.java`, `.cs` or `.ts` is text, so
+none of this needs a JDK, the .NET SDK or Node — those belong to `build`.
 
 The exception is `--func=`: whole-corpus files (`Core.java`, the servers, the
 benches) are skipped, because rendering them from a filtered set would drop every
@@ -167,8 +169,8 @@ always-alternate bug satisfies both.
 
 ## The abstract layer: one row model, and one independent oracle
 
-Rust's `abstract_api`, Java's server table and shipped registry, and C#'s
-`TALib.Metadata` all render `abstract_rows.rs`. **C's `ta_abstract_c` does not,
+Rust's `abstract_api`, Java's server table and shipped registry, C#'s
+`TALib.Metadata` and TS's `ta-lib/metadata` all render `abstract_rows.rs`. **C's `ta_abstract_c` does not,
 and that is the point:** `test_abstract.c` proves each server's metadata against
 the C library at run time, and folding C into the shared rows would leave a
 generator compared against itself. `func_api_xml` stays out for the same reason
@@ -179,7 +181,7 @@ equality test**, and has to stay one: a slot reuses a constant only when it
 already says exactly what the YAML says — name, display name, hint, flags,
 default, range, suggested triple, precision — so a fold is pure `.rodata` dedup
 with no semantic content. Keying on a subset lets a new function inherit another
-function's wording, and the divergence then surfaces only after a four-language
+function's wording, and the divergence then surfaces only after a cross-language
 server build, phrased as though the server were wrong.
 
 The price is worth naming: for a folded slot the gate can no longer fail on
@@ -210,7 +212,7 @@ params. No generic `<T: TaFloat>`, no `f32` variants.
 | `pub(crate) fn <n>_impl(...) -> RetCode` | The body. Keeps C's shape — a code plus `&mut outBegIdx` / `&mut outNBElement` — because that is what the transcribed bodies are written against, and it is where the FMA dispatch sits. Not a cross-call target |
 | `fn <n>_private(...)` | Only where the definition declares one; extra pre-computed params, no validation prologue. No shipped indicator declares one — the construct is carried by the `SYNTH4` gate fixture |
 
-Cross-indicator calls target the **public** wrapper, as in C, Java and C#. `?` is
+Cross-indicator calls target the **public** wrapper, as in C, Java, C# and TS. `?` is
 unavailable at those sites (the caller returns a bare `RetCode`), so
 `render_cross_indicator_call` drops the two out-meta arguments, binds the
 returned range with a `match`, assigns both out-params from it, and sets

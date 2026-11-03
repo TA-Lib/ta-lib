@@ -39,6 +39,10 @@ mod spec_catalog_suite;
 mod stability_suite;
 mod streaming_dispatch_suite;
 mod streaming_suite;
+mod ts_doc_suite;
+mod ts_int_semantics_suite;
+mod ts_render_statement_suite;
+mod ts_stream_suite;
 mod xml_metadata_suite;
 
 #[test]

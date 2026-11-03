@@ -50,6 +50,14 @@ pub mod stmt_walk;
 pub mod stream_frame;
 pub mod ta_abstract_c;
 pub mod ta_defs;
+pub mod ctype;
+pub mod ts;
+pub mod ts_doc;
+pub mod ts_enums;
+pub mod ts_phantom_io;
+pub mod ts_prune;
+pub mod ts_stream;
+pub mod ts_metadata;
 pub mod meta_frame;
 pub mod variant_frame;
 
@@ -447,6 +455,63 @@ impl LanguageBackend for CSharpBackend {
     }
 }
 
+/// The TypeScript backend: one ES module per indicator (`<lowerCamel>.ts`) into
+/// the shipped library tree, plus a JSON-RPC server that compiles those exact
+/// library sources, as C#'s does.
+pub struct TsBackend;
+impl LanguageBackend for TsBackend {
+    fn name(&self) -> &'static str {
+        "ts"
+    }
+    fn label(&self) -> &'static str {
+        "TypeScript"
+    }
+    fn generate(
+        &self,
+        func: &FuncDef,
+        enums: &HashMap<String, EnumDef>,
+        registry: &Registry,
+        helpers: &HelperRegistry,
+    ) -> String {
+        ts::generate(func, enums, registry, helpers)
+    }
+    /// Generated indicator modules only; the hand-written runtime and the
+    /// generated enums, metadata and barrel sit beside `func/`, outside the sweep.
+    fn out_subdir(&self) -> &'static str {
+        "ts/library/src/func"
+    }
+    fn file_name(&self, func: &FuncDef) -> String {
+        format!("{}.ts", ts::module_stem(func))
+    }
+    fn clean_glob(&self) -> (&'static str, &'static str) {
+        ("", ".ts")
+    }
+    fn reserved_words(&self) -> &'static [&'static str] {
+        ts::RESERVED_WORDS
+    }
+    /// Mangled, not rejected: the C API names (`VAR`) are fixed, so a name only
+    /// JS reserves renders with a trailing `_` instead of failing the gate.
+    fn rendered_name(&self, name: &str, kind: NameKind) -> String {
+        match kind {
+            NameKind::Function => ts::func_ident(name),
+            _ => ts::ts_ident(name),
+        }
+    }
+    fn generate_server(
+        &self,
+        funcs: &[FuncDef],
+        enums: &HashMap<String, EnumDef>,
+        out_base: &Path,
+    ) {
+        let output = server_gen::generate_ts_server(funcs, enums);
+        let dir = out_base.join("ts/tools");
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("taCodegenServe.ts");
+        crate::emit::write_if_changed(&path, &output).unwrap();
+        println!("  TypeScript server -> {}", path.display());
+    }
+}
+
 /// The reason string a backend's default [`LanguageBackend::check_name`]
 /// returns, spelling out the mangling when the rendered form differs from the
 /// authored one (`LOOP` is not itself a keyword; `loop` is), and the case fold
@@ -483,6 +548,7 @@ pub fn all() -> Vec<Box<dyn LanguageBackend>> {
         Box::new(RustBackend),
         Box::new(JavaBackend),
         Box::new(CSharpBackend),
+        Box::new(TsBackend),
     ]
 }
 

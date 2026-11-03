@@ -719,18 +719,95 @@ fn example_doctest(
     Some(lines)
 }
 
-/// The claim a generated example makes about the values of one integer output.
+/// What a generated example may claim about the values of one integer output.
 ///
 /// A pattern output's values come from its flags. For any other integer output the
-/// metadata does not carry the domain, so those shapes are spelled out here, the
-/// same way [`unit_domain`] names the three functions whose example input has to
-/// live in `[-1, 1]`.
+/// metadata does not carry the domain, so those shapes are spelled out in
+/// [`integer_claim`], the same way [`unit_domain`] names the three functions whose
+/// example input has to live in `[-1, 1]`. The Rust doctests and the TypeScript
+/// example tests both render from it.
+pub(crate) enum IntClaim {
+    /// Only the values a pattern output's flags declare.
+    Pattern(Vec<i32>),
+    /// Exactly one of two values; the note says what each means.
+    Either(i32, i32, String),
+    /// An ordinal in `lo..=hi`; the note says what each level means.
+    Within(i32, i32, String),
+    /// The index of the highest (`is_max`) or lowest value of the
+    /// `optInTimePeriod`-bar window ending at the reporting bar.
+    WindowExtremum { is_max: bool },
+    /// A bar at or before the reporting one, never moving back.
+    PivotIdx(String),
+}
+
+/// The claim for one integer output, or `None` for a shape with no entry.
 ///
-/// An integer output with no entry here renders no claim, which is the gap #179
+/// An integer output with no entry renders no claim, which is the gap #179
 /// E8 records — so `every_integer_output_carries_an_example_claim` sweeps the
 /// shipped corpus and goes red on one. The gate is a test rather than a panic
 /// here because `input_synth/`'s fixtures carry an integer output too, and a
 /// fixture's example ships nowhere.
+pub(crate) fn integer_claim(func: &FuncDef, output: &Output) -> Option<IntClaim> {
+    if let Some(values) = output.pattern_values(func.is_candlestick()) {
+        return Some(IntClaim::Pattern(values));
+    }
+    Some(match (func.name.to_uppercase().as_str(), output.name.as_str()) {
+        ("MAXINDEX", _) | ("MINMAXINDEX", "outMaxIdx") => IntClaim::WindowExtremum { is_max: true },
+        ("MININDEX", _) | ("MINMAXINDEX", "outMinIdx") => IntClaim::WindowExtremum { is_max: false },
+        // The DOMAIN is all a doctest can honestly claim about SUPERTREND's
+        // latch. The tempting relation -- that the flag says which side of the
+        // line price is on -- is FALSE: the carried bands can cross
+        // (`finalLower > finalUpper`, reachable at a low multiplier), and on a
+        // flip through crossed bands the emitted band lands on the far side of
+        // the close.
+        ("SUPERTREND", _) => IntClaim::Either(
+            1,
+            -1,
+            "the trend is a two-state latch: +1 riding the lower band, -1 the upper".to_string(),
+        ),
+        // Two independent flags, not one signed value: an outside bar is a swing
+        // high and a swing low at once, so both can carry 100 on the same bar.
+        ("FRACTAL", _) => IntClaim::Either(
+            0,
+            100,
+            format!(
+                "the {} flag is 0 or 100; an outside bar carries 100 on both",
+                if output.name.ends_with("High") { "swing-high" } else { "swing-low" }
+            ),
+        ),
+        // An ORDINAL, not a flag: the three Keltner channels share a centre and
+        // BAND >= 0, so they nest and the ladder is monotone. Which level a bar
+        // takes depends on three factors the caller chooses, so the domain is all
+        // a doctest can honestly claim.
+        ("SQZMOM", _) => IntClaim::Within(
+            -1,
+            3,
+            "the compression level is an ordinal: 3 narrow, 2 normal, 1 wide, -1 released, 0 otherwise"
+                .to_string(),
+        ),
+        // A two-state latch, like SUPERTREND's. Which state a bar is in depends on
+        // the whole path, so the domain is all an example can honestly claim.
+        ("ZIGZAG", "outTrend") => IntClaim::Either(
+            1,
+            -1,
+            "the leg is a two-state latch: +1 while it runs up, -1 while it runs down".to_string(),
+        ),
+        // The pivot names a bar at or before the one reporting it, and it never
+        // moves back: the index is only ever replaced by the current bar or left
+        // where it is. The seed's own bar is the true lower bound, but an example
+        // cannot name it -- the trend length is not `optInTimePeriod`.
+        ("ZIGZAG", "outPivotIdx") => IntClaim::PivotIdx(
+            "the pivot names a bar at or before the one reporting it, and never moves back".to_string(),
+        ),
+        // ta_HT_TRENDMODE.c writes its `trend` local, which is only ever 0 or 1.
+        ("HT_TRENDMODE", _) => {
+            IntClaim::Either(0, 1, "the mode is a flag: 1 in a trend, 0 in a cycle".to_string())
+        }
+        _ => return None,
+    })
+}
+
+/// The doctest lines asserting one integer output's [`IntClaim`].
 fn integer_domain_claim(
     func: &FuncDef,
     output: &Output,
@@ -738,75 +815,35 @@ fn integer_domain_claim(
     series: &str,
     period: Option<&str>,
 ) -> Vec<String> {
-    if let Some(values) = output.pattern_values(func.is_candlestick()) {
-        let list = values.iter().map(i32::to_string).collect::<Vec<_>>().join(", ");
-        return vec![
-            "// a pattern output writes only the values its flags declare".to_string(),
-            format!("assert!({var}[..out_range.count].iter().all(|v| [{list}].contains(v)));"),
-        ];
-    }
-    match (func.name.to_uppercase().as_str(), output.name.as_str()) {
-        ("MAXINDEX", _) | ("MINMAXINDEX", "outMaxIdx") => {
-            window_extremum_claim(var, series, period, true)
+    let Some(claim) = integer_claim(func, output) else {
+        return Vec::new();
+    };
+    match claim {
+        IntClaim::Pattern(values) => {
+            let list = values.iter().map(i32::to_string).collect::<Vec<_>>().join(", ");
+            vec![
+                "// a pattern output writes only the values its flags declare".to_string(),
+                format!("assert!({var}[..out_range.count].iter().all(|v| [{list}].contains(v)));"),
+            ]
         }
-        ("MININDEX", _) | ("MINMAXINDEX", "outMinIdx") => {
-            window_extremum_claim(var, series, period, false)
-        }
-        // The DOMAIN is all a doctest can honestly claim about SUPERTREND's
-        // latch. The tempting relation -- that the flag says which side of the
-        // line price is on -- is FALSE: the carried bands can cross
-        // (`finalLower > finalUpper`, reachable at a low multiplier), and on a
-        // flip through crossed bands the emitted band lands on the far side of
-        // the close.
-        ("SUPERTREND", _) => vec![
-            "// the trend is a two-state latch: +1 riding the lower band, -1 the upper".to_string(),
-            format!("assert!({var}[..out_range.count].iter().all(|&v| v == 1 || v == -1));"),
+        IntClaim::Either(a, b, note) => vec![
+            format!("// {note}"),
+            format!("assert!({var}[..out_range.count].iter().all(|&v| v == {a} || v == {b}));"),
         ],
-        // Two independent flags, not one signed value: an outside bar is a swing
-        // high and a swing low at once, so both can carry 100 on the same bar.
-        ("FRACTAL", _) => vec![
-            format!(
-                "// the {} flag is 0 or 100; an outside bar carries 100 on both",
-                if output.name.ends_with("High") { "swing-high" } else { "swing-low" }
-            ),
-            format!("assert!({var}[..out_range.count].iter().all(|&v| v == 0 || v == 100));"),
+        IntClaim::Within(lo, hi, note) => vec![
+            format!("// {note}"),
+            format!("assert!({var}[..out_range.count].iter().all(|&v| ({lo}..={hi}).contains(&v)));"),
         ],
-        // An ORDINAL, not a flag: the three Keltner channels share a centre and
-        // BAND >= 0, so they nest and the ladder is monotone. Which level a bar
-        // takes depends on three factors the caller chooses, so the domain is all
-        // a doctest can honestly claim.
-        ("SQZMOM", _) => vec![
-            "// the compression level is an ordinal: 3 narrow, 2 normal, 1 wide, -1 released, 0 otherwise"
-                .to_string(),
-            format!("assert!({var}[..out_range.count].iter().all(|&v| (-1..=3).contains(&v)));"),
-        ],
-        // A two-state latch, like SUPERTREND's. Which state a bar is in depends on
-        // the whole path, so the domain is all an example can honestly claim.
-        ("ZIGZAG", "outTrend") => vec![
-            "// the leg is a two-state latch: +1 while it runs up, -1 while it runs down"
-                .to_string(),
-            format!("assert!({var}[..out_range.count].iter().all(|&v| v == 1 || v == -1));"),
-        ],
-        // The pivot names a bar at or before the one reporting it, and it never
-        // moves back: the index is only ever replaced by the current bar or left
-        // where it is. The seed's own bar is the true lower bound, but an example
-        // cannot name it -- the trend length is not `optInTimePeriod`, so `period`
-        // is None here. The comparison is written as a sum rather than a
-        // difference so the usize rendering cannot underflow at the first bar.
-        ("ZIGZAG", "outPivotIdx") => vec![
-            "// the pivot names a bar at or before the one reporting it, and never moves back"
-                .to_string(),
+        IntClaim::WindowExtremum { is_max } => window_extremum_claim(var, series, period, is_max),
+        // Written as a sum rather than a difference so the usize rendering
+        // cannot underflow at the first bar.
+        IntClaim::PivotIdx(note) => vec![
+            format!("// {note}"),
             format!("for (k, &idx) in {var}[..out_range.count].iter().enumerate() {{"),
             "    assert!((idx as usize) <= out_range.beg_idx + k);".to_string(),
             format!("    if k > 0 {{ assert!(idx >= {var}[k - 1]); }}"),
             "}".to_string(),
         ],
-        // ta_HT_TRENDMODE.c writes its `trend` local, which is only ever 0 or 1.
-        ("HT_TRENDMODE", _) => vec![
-            "// the mode is a flag: 1 in a trend, 0 in a cycle".to_string(),
-            format!("assert!({var}[..out_range.count].iter().all(|&v| v == 0 || v == 1));"),
-        ],
-        _ => Vec::new(),
     }
 }
 
@@ -936,7 +973,7 @@ fn fmt_real_literal(v: f64) -> String {
 /// `\[label](https://…)` *and* trips rustdoc's `bare_urls` lint — the docs are required to
 /// build warning-free. Only a bracket whose matching `]` is immediately followed by
 /// `(<scheme-or-path>)` qualifies, so `inReal[i]` and `close[i](t)`-style prose still escape.
-fn escape_prose(text: &str) -> String {
+pub(super) fn escape_prose(text: &str) -> String {
     let mut out = String::with_capacity(text.len() + 8);
     let mut in_code = false;
     let chars: Vec<char> = text.chars().collect();

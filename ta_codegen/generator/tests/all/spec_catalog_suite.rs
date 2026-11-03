@@ -1,6 +1,6 @@
 //! The flag catalog of the spec page `/spec/abstract/`, read off disk and held
-//! to the C header, the three generated ports and the corpus, with the flag
-//! types `/spec/` names.
+//! to the C header, the generated ports and the corpus, with the flag types
+//! `/spec/` names.
 //!
 //! The page is hand-written and claims to list every flag. Nothing else reads
 //! it, so a flag added to the header, dropped by a port, or first set by a
@@ -15,7 +15,11 @@ const PAGE: &str = "website/src/spec/abstract/README.md";
 const NAMES_PAGE: &str = "website/src/spec/README.md";
 const NAMES_HEADING: &str = "### Metadata flags {#flag-names}";
 const UNUSED: &str = "No function sets it";
-const ABSENT: &str = "Java and C# have no member for it";
+/// TypeScript lacks every flag Java and C# lack.
+const ABSENT: &str = "Java, C# and TypeScript have no member for it";
+const TS_ABSENT: &str = "TypeScript has no member for it";
+/// TypeScript, the newest port, carries no deprecated flag either.
+const DEPRECATED: &str = "Deprecated:";
 
 fn repo_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
@@ -104,6 +108,7 @@ fn the_spec_flag_catalog_is_complete() {
 
     let header = read("include/ta_abstract.h");
     let rust_src = read("ta_codegen/output/rust/library/src/abstract_api.rs");
+    let ts_src = read("ta_codegen/output/ts/library/src/metadata/flags.ts");
     let csharp_src = read("ta_codegen/output/csharp/library/src/metadata/Vocabulary.g.cs");
     let page = read(PAGE);
 
@@ -158,6 +163,8 @@ fn the_spec_flag_catalog_is_complete() {
     assert_eq!(rust_src.matches("\nflag_newtype!(").count(), families.len(), "a Rust flag family this test does not read");
     assert_eq!(csharp_src.matches("[Flags]").count(), families.len(), "a C# flag family this test does not read");
     assert_eq!(java_flag_files, families.len(), "a Java flag family this test does not read");
+    let ts_families = ts_src.lines().filter(|l| l.starts_with("export const ") && l.contains("Flags = Object.freeze({")).count();
+    assert_eq!(ts_families, families.len(), "a TypeScript flag family this test does not read");
 
     let (mut checked, mut marked, mut absent) = (0, 0, 0);
     for fam in &families {
@@ -209,6 +216,37 @@ fn the_spec_flag_catalog_is_complete() {
                 members(&csharp_src, &format!("public enum {} : uint", fam.csharp), "\n}", fam.csharp),
             ),
         ];
+
+        // `NAME: 0x...,` members of `export const <family> = Object.freeze({ ... } as const);`.
+        let ts: BTreeMap<String, u32> = {
+            let open = format!("export const {} = Object.freeze({{\n", fam.rust);
+            let at = ts_src.find(&open).unwrap_or_else(|| panic!("flags.ts: no `{}`", open.trim()));
+            let body = &ts_src[at + open.len()..];
+            let body = &body[..body.find("} as const);").expect("flags.ts: an unclosed family")];
+            body.lines()
+                .map(str::trim)
+                .filter(|l| !l.starts_with("/*") && !l.is_empty())
+                .map(|l| {
+                    let (name, value) = l.split_once(": ").unwrap_or_else(|| panic!("flags.ts: `{l}`"));
+                    (name.to_string(), hex(value).unwrap_or_else(|| panic!("flags.ts: `{l}` is not `NAME: 0x...`")))
+                })
+                .collect()
+        };
+        let ts_values: BTreeSet<u32> = ts.values().copied().collect();
+        assert_eq!(ts_values.len(), ts.len(), "TypeScript {}: two members carry one value", fam.rust);
+        let stray: Vec<&String> = ts.iter().filter(|(_, v)| !c.values().any(|d| d == *v)).map(|(m, _)| m).collect();
+        assert!(stray.is_empty(), "TypeScript {} members that carry no {}* value: {stray:?}", fam.rust, fam.c_prefix);
+        for (c_name, c_value) in &c {
+            let row = &catalog[c_name];
+            let says_absent = row.contains(ABSENT) || row.contains(TS_ABSENT);
+            assert_eq!(
+                !ts_values.contains(c_value),
+                says_absent,
+                "TypeScript {}: `{c_name}` must be absent exactly when {PAGE} says \"{ABSENT}\" or \"{TS_ABSENT}\"",
+                fam.rust
+            );
+            assert!(!row.starts_with(DEPRECATED) || says_absent, "{PAGE}: deprecated `{c_name}` must say TypeScript lacks it");
+        }
 
         // A port's members are C's flags by value, one member per flag; only
         // Java and C# may lack one, together, and the catalog row says so.

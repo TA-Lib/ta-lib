@@ -4,11 +4,11 @@
 //! peek, state, clone -- compare within the streaming tiers, and which of them
 //! a backend can express differs; each emitter says which it emits.
 //!
-//! One emitter per backend, four hand-written string builders, deliberately not
+//! One emitter per backend, hand-written string builders, deliberately not
 //! deduplicated -- what keeps them in step is the emitted-text suites. So a
 //! helper ONE backend calls lives in that backend's file however generic its
 //! name reads, and only what two or more call lives here -- except
-//! `SV_RANGE_MASK_*`, four single-backend constants kept as one table because
+//! `SV_RANGE_MASK_*`, single-backend constants kept as one table because
 //! each is only readable against the others.
 
 use crate::ir::{EnumDef, FuncDef};
@@ -19,6 +19,7 @@ pub(crate) mod c;
 pub(crate) mod csharp;
 pub(crate) mod java;
 pub(crate) mod rust_lang;
+pub(crate) mod ts;
 
 /// The bare OHLCV/OI suffix an input maps to (shared by the per-server
 /// `sv_*`/`fz_*` array-name helpers so the mapping can never drift).
@@ -299,10 +300,8 @@ const fn sv_range_mask(sites: &[SvRangeSite]) -> u32 {
     m
 }
 
-/// C, Java and C# reach the anchored seam; Rust cannot — its server is a
-/// separate crate and `_OpenInternal` is `pub(crate)`. All four can fork a live
-/// stream since C gained `TA_<N>_Clone` (#287), so C is the only server that
-/// reaches every site.
+/// Every server but Rust reaches the anchored seam: Rust's server is a separate
+/// crate and `_OpenInternal` is `pub(crate)`.
 const SV_RANGE_MASK_C: u32 = sv_range_mask(&[
     SvRangeSite::Fill,
     SvRangeSite::Prefix,
@@ -318,6 +317,7 @@ const SV_RANGE_MASK_JAVA: u32 = sv_range_mask(&[
     SvRangeSite::Advance,
 ]);
 const SV_RANGE_MASK_CSHARP: u32 = SV_RANGE_MASK_JAVA;
+const SV_RANGE_MASK_TS: u32 = SV_RANGE_MASK_JAVA;
 const SV_RANGE_MASK_RUST: u32 =
     sv_range_mask(&[SvRangeSite::Fill, SvRangeSite::Prefix, SvRangeSite::Copy, SvRangeSite::Advance]);
 

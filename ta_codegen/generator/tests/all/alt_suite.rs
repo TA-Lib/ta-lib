@@ -120,7 +120,7 @@ fn a_language_scoped_claim_reaches_only_that_language() {
     assert_eq!(f.alternates.len(), 1);
     assert_eq!(f.alternates[0].claims, [AltClaim { api: ApiClaim::Batch, lang: LangClaim::Rust }]);
     assert!(f.resolve_alt(Tier::Batch, Lang::Rust).is_some());
-    for other in [Lang::C, Lang::Java, Lang::CSharp] {
+    for other in [Lang::C, Lang::Java, Lang::CSharp, Lang::Ts] {
         assert!(
             f.resolve_alt(Tier::Batch, other).is_none(),
             "[{}] must fall through to the base",
@@ -148,7 +148,7 @@ fn a_narrower_claim_below_a_broad_one_carves_it_out() {
         Some("sma_ALT2"),
         "C takes the later, narrower claim"
     );
-    for other in [Lang::Rust, Lang::Java, Lang::CSharp] {
+    for other in [Lang::Rust, Lang::Java, Lang::CSharp, Lang::Ts] {
         assert_eq!(
             f.resolve_alt(Tier::Batch, other).map(|a| a.name.as_str()),
             Some("sma_ALT1"),
@@ -177,7 +177,7 @@ fn an_alternate_takes_the_union_of_its_claims() {
     for lang in [Lang::Java, Lang::CSharp] {
         assert_eq!(winners(&f, lang), [Some("sma_ALT1"); 2], "[{}]", lang.as_str());
     }
-    for lang in [Lang::C, Lang::Rust] {
+    for lang in [Lang::C, Lang::Rust, Lang::Ts] {
         assert_eq!(winners(&f, lang), [None; 2], "[{}] keeps the base", lang.as_str());
     }
     // The marker names the claim that won that language's cell.
@@ -200,7 +200,7 @@ fn file_order_still_decides_between_alternates_with_several_claims() {
     let f = wire_source(SRC_TWO_CLAIMS_THEN_ONE());
     assert_eq!(winners(&f, Lang::Java), [Some("sma_ALT1"); 2]);
     assert_eq!(winners(&f, Lang::CSharp), [Some("sma_ALT2"), Some("sma_ALT1")]);
-    for lang in [Lang::C, Lang::Rust] {
+    for lang in [Lang::C, Lang::Rust, Lang::Ts] {
         assert_eq!(winners(&f, lang), [None; 2], "[{}]", lang.as_str());
     }
 
@@ -209,7 +209,7 @@ fn file_order_still_decides_between_alternates_with_several_claims() {
     for lang in [Lang::Java, Lang::CSharp] {
         assert_eq!(winners(&g, lang), [Some("sma_ALT2"), None], "[{}]", lang.as_str());
     }
-    for lang in [Lang::C, Lang::Rust] {
+    for lang in [Lang::C, Lang::Rust, Lang::Ts] {
         assert_eq!(winners(&g, lang), [Some("sma_ALT1"), None], "[{}]", lang.as_str());
     }
 }
@@ -227,12 +227,52 @@ fn a_two_claim_alternate_reaches_both_languages_and_no_other() {
         ("Rust", backends::rust_lang::generate(&f, &e, registry, &h), false),
         ("Java", backends::java::generate(&f, &e, registry, &h), true),
         ("C#", backends::csharp::generate(&f, &e, registry, &h), true),
+        ("TS", backends::ts::generate(&f, &e, registry, &h), false),
     ] {
         let (want, not) = if alt { ("7002", "7001") } else { ("7001", "7002") };
         assert!(text.contains(want), "{lang}: the {want} body is missing");
         assert!(!text.contains(not), "{lang}: the {not} body leaked in");
         assert_eq!(text.contains("Using sma_ALT1"), alt, "{lang}: marker");
     }
+}
+
+/// TS takes every `ALL_LANGUAGES` alternate and no other language's. ALMA's
+/// batch alternate compares in the transcendental lane, so no value gate sees
+/// a wrong choice there; this is the only thing that does.
+#[test]
+fn ts_resolves_exactly_the_all_languages_alternates() {
+    let mut stream_all = 0;
+    let mut other_lang = 0;
+    for name in common::discover_indicators() {
+        let (f, _) = common::load_indicator(&name);
+        for tier in ir::ALL_TIERS {
+            let want = f.alternates.iter().rev().find(|a| {
+                a.claims.iter().any(|c| c.api.covers(tier) && matches!(c.lang, LangClaim::AllLanguages | LangClaim::Ts))
+            });
+            let got = f.resolve_alt(tier, Lang::Ts);
+            assert_eq!(got.map(|a| &a.name), want.map(|a| &a.name), "{name} {tier:?}");
+            if tier == Tier::Stream && got.is_some() {
+                stream_all += 1;
+            }
+            if got.is_none() && f.alternates.iter().any(|a| a.covers(tier, Lang::Java) || a.covers(tier, Lang::CSharp)) {
+                other_lang += 1;
+            }
+        }
+    }
+    assert!(stream_all > 0, "no {{STREAM,ALL_LANGUAGES}} alternate reached TS");
+    assert!(other_lang > 0, "no Java- or C#-only alternate was there to refuse");
+
+    let (alma, enums) = common::load_indicator("alma");
+    assert_eq!(alma.resolve_alt(Tier::Batch, Lang::Ts).map(|a| a.name.as_str()), Some("alma_ALT1"));
+    let text = backends::ts::generate(&alma, &enums, common::make_registry(), common::make_helpers());
+    assert!(text.contains("/* Using alma_ALT1 for TA_ALT={BATCH,ALL_LANGUAGES} */"), "ALMA's TS module renders the base");
+
+    let (pct, _) = common::load_indicator("percentile");
+    assert_ne!(
+        format!("{:?}", pct.resolved_for(Lang::Ts).body),
+        format!("{:?}", pct.resolved_for(Lang::Java).body),
+        "PERCENTILE's TS body is the Java alternate"
+    );
 }
 
 // ---------------------------------------------------------------------------

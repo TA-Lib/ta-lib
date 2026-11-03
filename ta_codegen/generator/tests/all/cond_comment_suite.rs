@@ -103,6 +103,14 @@ fn backend_files(root: &Path, name: &str) -> Vec<(String, PathBuf, bool)> {
             root.join(format!("ta_codegen/output/csharp/library/src/Core_{upper}.cs")),
             true,
         ),
+        (
+            "ts".into(),
+            root.join(format!(
+                "ta_codegen/output/ts/library/src/func/{}.ts",
+                ta_codegen_lib::backends::common::camel_words(name)
+            )),
+            true,
+        ),
     ]
 }
 

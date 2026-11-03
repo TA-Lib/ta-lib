@@ -418,6 +418,26 @@ fn cross_typed_output_pairs_are_compared_where_the_language_can_express_it() {
         "Java: the stream tier's `(Object)` compare survives a re-type — it is inert, not \
          type-dependent"
     );
+
+    // TS is the C/C# arm with no cast to spell: an Int32Array and a Float64Array
+    // can view one buffer, so the batch body's same-start test and the fill's
+    // `overlaps` must both survive the re-type, site for site.
+    func.outputs[1].param_type = ir::ParamType::Integer;
+    let ts_same = backends::ts::generate(&func, &enums, registry, helpers);
+    func.outputs[1].param_type = ir::ParamType::Real;
+    let ts_cross = backends::ts::generate(&func, &enums, registry, helpers);
+    for needle in [
+        format!("({a}.buffer === {b}.buffer && {a}.byteOffset === {b}.byteOffset)"),
+        format!("overlaps({a}, {b})"),
+    ] {
+        let (n_same, n_cross) = (ts_same.matches(&needle).count(), ts_cross.matches(&needle).count());
+        assert!(n_same > 0, "TS: the same-typed pair is compared nowhere as `{needle}` — the control is dead");
+        assert_eq!(
+            n_cross, n_same,
+            "TS: re-typing one output changed `{needle}` at {} of {n_same} site(s)",
+            n_same.abs_diff(n_cross)
+        );
+    }
 }
 
 /// The Java argument helpers exist TWICE — hand-written in the shipped
@@ -944,9 +964,10 @@ fn the_transition_tier_is_step_impl_in_every_backend() {
     let rust = backends::rust_lang::generate(&func, &enums, registry, &helpers);
     let java = backends::java::generate(&func, &enums, registry, &helpers);
     let csharp = backends::csharp::generate(&func, &enums, registry, &helpers);
+    let ts = backends::ts::generate(&func, &enums, registry, &helpers);
 
     // (backend, source, definition, call sites, the retired word)
-    let cases: [(&str, &str, &str, &[&str], &str); 4] = [
+    let cases: [(&str, &str, &str, &[&str], &str); 5] = [
         (
             "c",
             &c,
@@ -977,6 +998,15 @@ fn the_transition_tier_is_step_impl_in_every_backend() {
             "private void SmaStepImpl( SmaStream sp,",
             // Only `Update`'s. `Peek` runs a frame inline and calls no step.
             &["core.SmaStepImpl(this,"],
+            "StreamStep",
+        ),
+        (
+            "ts",
+            &ts,
+            // Module-local: no tier is public, and a TS `private` member is out
+            // of a module-level function's reach.
+            "\nfunction smaStepImpl(sp: SmaStream,",
+            &["smaStepImpl(this,"],
             "StreamStep",
         ),
     ];
@@ -1026,7 +1056,8 @@ fn identity_anchor_clamps_before_it_rechecks_in_every_backend() {
     let rust = backends::rust_lang::generate(&func, &enums, registry, helpers);
     let java = backends::java::generate(&func, &enums, registry, helpers);
     let csharp = backends::csharp::generate(&func, &enums, registry, helpers);
-    let cases: [(&str, &str, &str, &str); 4] = [
+    let ts = backends::ts::generate(&func, &enums, registry, helpers);
+    let cases: [(&str, &str, &str, &str); 5] = [
         ("c", &c, "if( startIdx > fillLb ) fillLb = startIdx;", "if( historyLen < fillLb + 1 )"),
         (
             "rust",
@@ -1036,7 +1067,14 @@ fn identity_anchor_clamps_before_it_rechecks_in_every_backend() {
         ),
         ("java", &java, "if( startIdx > fillLb ) fillLb = startIdx;", "if( historyLen < fillLb + 1 )"),
         ("csharp", &csharp, "if( startIdx > fillLb ) fillLb = startIdx;", "if( historyLen < fillLb + 1 )"),
+        ("ts", &ts, "if (startIdx > fillLb) {\n      fillLb = startIdx;\n    }", "if (historyLen < fillLb + 1) {"),
     ];
+    // Every TS assignment of the anchor is the conditional clamp walked below.
+    assert_eq!(
+        ts.matches("fillLb = startIdx;").count(),
+        ts.matches(cases[4].2).count(),
+        "ts: an anchor assignment is not the conditional clamp"
+    );
 
     let mut checked = 0usize;
     for (lang, src, clamp, recheck) in cases {
@@ -1064,10 +1102,10 @@ fn identity_anchor_clamps_before_it_rechecks_in_every_backend() {
         assert!(seen >= 1, "{lang}: MA emits no startIdx clamp at all");
         checked += 1;
     }
-    assert_eq!(checked, 4, "all four backends must be covered");
+    assert_eq!(checked, 5, "every backend must be covered");
 }
 
-/// The #241 range leg's per-site ratchet, pinned across all four servers at once.
+/// The #241 range leg's per-site ratchet, pinned across every server at once.
 ///
 /// Each server declares the SET of range-compare sites it has as
 /// `range_sites_all`; the driver ORs what actually fired across the run and
@@ -1083,11 +1121,9 @@ fn identity_anchor_clamps_before_it_rechecks_in_every_backend() {
 /// in must be exactly the set it declares.
 ///
 /// The sets differ, which is why the declaration is a mask and not a count (see
-/// `SvRangeSite`): C, Java and C# reach the anchored `_OpenInternal` seam and
-/// Rust's server, a separate crate, cannot. All four can fork a live stream
-/// since C gained `TA_<N>_Clone` (#287), and all four advance a handle without a
-/// bar (#384), so Rust is the one server whose set is a strict subset — and a
-/// count could not say WHICH sites it has.
+/// `SvRangeSite`): every server but Rust reaches the anchored `_OpenInternal`
+/// seam, so Rust's set is a strict subset, and a count could not say WHICH sites
+/// it has.
 #[test]
 fn sv_range_sites_mask_matches_the_declared_set() {
     let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
@@ -1100,6 +1136,7 @@ fn sv_range_sites_mask_matches_the_declared_set() {
         ("java", ta_codegen_lib::server_gen::generate_java_server(&funcs, &enums), 1 | 2 | 4 | 8 | 16),
         ("csharp", ta_codegen_lib::server_gen::generate_csharp_server(&funcs, &enums), 1 | 2 | 4 | 8 | 16),
         ("rust", ta_codegen_lib::server_gen::generate_rust_server(&funcs, &enums), 1 | 2 | 8 | 16),
+        ("ts", ta_codegen_lib::server_gen::generate_ts_server(&funcs, &enums), 1 | 2 | 4 | 8 | 16),
     ];
 
     for (lang, src, want_all) in servers {

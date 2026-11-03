@@ -471,6 +471,19 @@ mod tests {
         }
     }
 
+    /// TS mangles a JS-only reserved word instead of rejecting it, because the
+    /// C API names are fixed: `VAR` becomes `var_`, and a real JS keyword spelled
+    /// in another case (`Delete`) is still rejected by the shared rule.
+    #[test]
+    fn ts_mangles_js_reserved_words() {
+        assert_eq!(crate::backends::ts::func_ident("VAR"), "var_");
+        assert_eq!(crate::backends::ts::func_ident("SMA"), "sma");
+        assert_eq!(crate::backends::ts::ts_ident("arguments"), "arguments_");
+        let ts = crate::backends::get("ts").expect("ts backend registered");
+        assert!(ts.check_name("VAR", NameKind::Function).is_ok());
+        assert!(ts.check_name("Delete", NameKind::Variable).is_err());
+    }
+
     /// A word only one backend treats as weak is still rejected: `union` is a
     /// legal Rust identifier and a C keyword, and the verdict is the union of
     /// what the backends forbid, not the intersection.

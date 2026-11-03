@@ -168,7 +168,12 @@ pub fn enum_limit_names_of(def: &EnumDef, lang: Lang) -> Option<(String, String)
         }
         // A C# enum cannot hold static members, so they live in the sibling
         // static class the `FuncUnstIds.Count` companion already established.
-        Lang::CSharp => Some((format!("{}s.Min", def.name), format!("{}s.Max", def.name))),
+        // A TS enum parameter is a number at run time whatever its declared
+        // union, so its public tier range-checks it too; the bounds sit beside
+        // the `as const` object, not in it, so they never read as members.
+        Lang::CSharp | Lang::Ts => {
+            Some((format!("{}s.Min", def.name), format!("{}s.Max", def.name)))
+        }
         Lang::Java | Lang::Rust => None,
     }
 }

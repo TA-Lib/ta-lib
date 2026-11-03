@@ -76,6 +76,16 @@ fn test_composed_open_fuses_every_sub_call() {
             (fused, unfused),
             "{name}: Java fused/unfused split differs from C"
         );
+        // TS assigns each sub-handle to a `const sub<n>` as Java does.
+        let t = backends::ts::generate(&func, &enums, registry, helpers);
+        let ts_sub_opens = |needle: &str| {
+            t.lines().filter(|l| l.trim_start().starts_with("const sub") && l.contains(needle)).count()
+        };
+        assert_eq!(
+            (ts_sub_opens("OpenAndFillInternal("), ts_sub_opens("OpenInternal(")),
+            (fused, unfused),
+            "{name}: TS fused/unfused split differs from C"
+        );
         assert!(
             fused + unfused > 0,
             "{name}: composed Open emitted no sub-stream open at all"
@@ -421,6 +431,121 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
     assert!(checked >= 352, "only {checked} public openers inspected");
 }
 
+/// The TypeScript public openers, corpus-wide: every optional parameter's type
+/// test (D13) ahead of the index pair, the fill width from the function's own
+/// lookback, rS5's input half after it, each output's capacity, and the overlap
+/// guard last, over the converted inputs so a `number[]` cannot reach it.
+#[test]
+fn ts_public_openers_type_test_then_the_index_pair_then_the_buffers() {
+    let registry = make_registry();
+    let helpers = common::make_helpers();
+    let enums = load_enums();
+    let mut checked = 0usize;
+    let mut guarded = 0usize;
+    let mut exempt_fills = 0usize;
+
+    for name in discover_indicators() {
+        let Some((func, _)) = try_load_indicator(&name) else { continue };
+        if !func.streaming {
+            continue;
+        }
+        let src = backends::ts::generate(&func, &enums, registry, helpers);
+        let f = &func.name;
+        let names = backends::ts::ts_names(f);
+        let inputs = streaming::input_array_names(&func);
+        let history = &inputs[0];
+        for (verb, entry, fill) in
+            [("open", format!("export function {}(", names.open), false), ("openAndFill", format!("export function {}(", names.open_and_fill), true)]
+        {
+            let at = src.find(&entry).unwrap_or_else(|| panic!("{f}: no public {verb}"));
+            let body = body_after(&src, at);
+            let find = |needle: &str| body.find(needle).unwrap_or_else(|| panic!("{f}: {verb} has no `{needle}`"));
+            let pair = find(&format!("requireHistory('{f} {verb}', {history}.length);"));
+            for p in &func.optional_inputs {
+                let helper = match p.param_type {
+                    ir::ParamType::Integer | ir::ParamType::Enum(_) => "requireInt32",
+                    ir::ParamType::Real => "requireReal",
+                    ir::ParamType::Price(_) => continue,
+                };
+                let at_type = find(&format!("{0} = {helper}('{f} {verb}', '{0}', {0})", p.name));
+                assert!(at_type < pair, "{f}: {verb} type-tests `{}` after the index pair", p.name);
+            }
+            let width = fill.then(|| {
+                let w = find(&format!("const guardOutLen = openFillCount('{f} {verb}', {history}.length, {}(", names.lookback));
+                assert!(w > pair, "{f}: the fill width precedes the index pair");
+                w
+            });
+            for extra in &inputs[1..] {
+                let at_in = find(&format!("requireHistoryLength('{f} {verb}', '{extra}', {extra}.length, {history}.length);"));
+                assert!(at_in > width.unwrap_or(pair), "{f}: {verb} checks `{extra}`'s length too early");
+            }
+            if fill {
+                let mut last = width.unwrap_or(pair);
+                for out in &func.outputs {
+                    let at_out = find(&format!("requireLength('{f} {verb}', '{0}', {0}, guardOutLen);", out.name));
+                    assert!(at_out > last, "{f}: `{}` is bounded out of order", out.name);
+                    last = at_out;
+                }
+                // The exempt tiers (an `OpenImpl` without a stride) guard in
+                // their own fill body, over inputs already converted.
+                let exempt = !signature_after(&src, &format!("\nfunction {}Impl(", names.open)).contains("outStride");
+                let (scope, suffix) = if exempt {
+                    let impl_at = src
+                        .find(&format!("\nfunction {}Impl(", names.open_and_fill))
+                        .unwrap_or_else(|| panic!("{f}: an exempt tier with no fill body"));
+                    (body_after(&src, impl_at), "")
+                } else {
+                    (body, "F64")
+                };
+                // One start address is refused ahead of the history check; a
+                // partial overlap only once the history is long enough.
+                let partial_head = if exempt { "if (historyLen > " } else { "if (guardOutLen > 0 && (" };
+                let clause = scope.find(" && (overlaps(").unwrap_or_else(|| panic!("{f}: no overlap guard on its fill"));
+                let g = scope[..clause].rfind('\n').map_or(0, |i| i + 1);
+                assert!(scope[g..].trim_start().starts_with(partial_head), "{f}: the overlap guard is not `{partial_head}...`");
+                let s_at = scope[..g].rfind("\n  if ((").unwrap_or_else(|| panic!("{f}: no same-start guard ahead of the overlap guard"));
+                if exempt {
+                    let insufficient = scope.find("return RetCode.INSUFFICIENT_HISTORY").unwrap_or_else(|| panic!("{f}: a fill body with no history check"));
+                    assert!(g < insufficient, "{f}: the overlap guard follows the history check it is conditioned on");
+                    let bound = scope[g..].lines().next().unwrap_or_default();
+                    assert!(
+                        bound.starts_with(&format!("  if (historyLen > {}(", names.lookback)),
+                        "{f}: the overlap guard is not bounded by the function's own lookback:\n{bound}"
+                    );
+                } else {
+                    assert!(s_at > last, "{f}: the same-start guard precedes a capacity check");
+                }
+                let same = scope[s_at + 1..].lines().next().unwrap_or_default();
+                let guard = scope[g..].lines().next().unwrap_or_default();
+                assert!(guard.contains(" && (overlaps("), "{f}: the overlap guard is not conditioned on the history:\n{guard}");
+                let outs: Vec<&str> = func.outputs.iter().map(|o| o.name.as_str()).collect();
+                let mut pairs: Vec<(String, String)> = Vec::new();
+                for out in &outs {
+                    pairs.extend(inputs.iter().map(|i| ((*out).to_string(), format!("{i}{suffix}"))));
+                }
+                for (k, a) in outs.iter().enumerate() {
+                    pairs.extend(outs[k + 1..].iter().map(|b| ((*a).to_string(), (*b).to_string())));
+                }
+                for (a, b) in &pairs {
+                    let p = format!("overlaps({a}, {b})");
+                    assert!(guard.contains(p.as_str()), "{f}: the fill's overlap guard has no `{p}`:\n{guard}");
+                    let q = format!("({a}.buffer === {b}.buffer && {a}.byteOffset === {b}.byteOffset)");
+                    assert!(same.contains(q.as_str()), "{f}: the fill's same-start guard has no `{q}`:\n{same}");
+                }
+                assert_eq!(guard.matches("overlaps(").count(), pairs.len(), "{f}: the guard tests a pair it has no business with:\n{guard}");
+                assert_eq!(same.matches(".buffer === ").count(), pairs.len(), "{f}: the same-start guard tests a pair it has no business with:\n{same}");
+                guarded += 1;
+                exempt_fills += usize::from(exempt);
+            }
+            checked += 1;
+        }
+    }
+    assert!(checked >= 400, "only {checked} public openers inspected");
+    assert!(guarded >= 200, "only {guarded} public fills guard their outputs");
+    assert_eq!(guarded * 2, checked, "a fill was skipped by the guard check");
+    assert_eq!(exempt_fills, 2, "MA and MAVP are the exempt tiers");
+}
+
 /// No opener answers the code its sub-call handed back.
 ///
 /// The composed openers guard a sub-call on `retCode != SUCCESS || count == 0`.
@@ -451,13 +576,14 @@ fn an_opener_never_answers_the_code_its_sub_call_handed_back() {
     // an Open-family identifier in this backend's own casing (Rust keeps the
     // `_open` underscore; Java/C# dropped the underscore but kept `Open`
     // PascalCase, issue #278).
-    let specs: [(&str, &str, &str, &str); 3] = [
+    let specs: [(&str, &str, &str, &str); 4] = [
         ("Rust", "pub(crate) fn", "return Err(retCode)", "_open"),
         ("Java", "private RetCode", "return retCode ;", "Open"),
         ("C#", "private RetCode", "return retCode ;", "Open"),
+        ("TS", "function ", "return retCode;", "Open"),
     ];
 
-    let mut per_backend = [0usize; 3];
+    let mut per_backend = [0usize; 4];
     for name in discover_indicators() {
         let Some((func, _)) = try_load_indicator(&name) else { continue };
         if !func.streaming {
@@ -481,6 +607,7 @@ fn an_opener_never_answers_the_code_its_sub_call_handed_back() {
             backends::rust_lang::generate(&func, &enums, registry, helpers),
             backends::java::generate(&func, &enums, registry, helpers),
             backends::csharp::generate(&func, &enums, registry, helpers),
+            backends::ts::generate(&func, &enums, registry, helpers),
         ];
         for (b, src) in sources.iter().enumerate() {
             let (lang, def_kw, bare, needle) = specs[b];
@@ -511,6 +638,12 @@ fn an_opener_never_answers_the_code_its_sub_call_handed_back() {
     for (b, n) in per_backend.iter().enumerate() {
         assert!(*n >= 200, "{}: only {n} opener bodies inspected", specs[b].0);
     }
+}
+
+/// The parameter list of the first definition whose text contains `needle`.
+fn signature_after<'a>(s: &'a str, needle: &str) -> &'a str {
+    let at = s.find(needle).unwrap_or_else(|| panic!("no definition matching {needle:?}"));
+    &s[at..at + s[at..].find(')').expect("signature closes")]
 }
 
 /// The `{`-matched body that follows `from`.
@@ -639,26 +772,31 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
     let enums = load_enums();
 
     // guard text, the emptiness check it must follow, and the signature marker
-    let specs: [(&str, &str, &str); 4] = [
+    let specs: [(&str, &str, &str); 5] = [
         ("C", "if( startIdx > historyLen - 1 )", "if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;"),
         ("Rust", "if startIdx > endIdx {", ".is_empty()"),
         ("Java", "if( startIdx > endIdx ) {", "historyLen < 1"),
         ("C#", "if( startIdx > endIdx ) {", "historyLen < 1"),
+        ("TS", "if (startIdx > endIdx) {", "historyLen < 1"),
     ];
     // Per backend: the definition keyword, which is what tells a definition
     // from a call site, and the `_OpenImpl` marker in that backend's own casing
     // (issue #278): C keeps `_OpenImpl(`, Rust lower-cases the whole family to
     // `_open_impl(`, and Java/C# dropped the underscore joiner but kept
     // `OpenImpl(` PascalCase.
-    let shapes: [&[(&str, &str)]; 4] = [
+    let shapes: [&[(&str, &str)]; 5] = [
         &[("static ", "_OpenImpl(")],
         &[("pub(crate) fn", "_open_impl("), ("    fn ", "_open_impl_scalar(")],
         &[("private RetCode", "OpenImpl(")],
         &[("private RetCode", "OpenImpl(")],
+        &[("function ", "OpenImpl(")],
     ];
+    // Java and C# write `for(`, which `for ` does not match; TS's `for (` would,
+    // and its DualMode identity fill loop precedes the arm's own guard.
+    let loops: [&[&str]; 5] = [&["while", "for "], &["while", "for "], &["while", "for "], &["while", "for "], &["while"]];
 
     let mut checked = 0usize;
-    let mut per_backend = [0usize; 4];
+    let mut per_backend = [0usize; 5];
 
     for name in discover_indicators() {
         let Some((func, _)) = try_load_indicator(&name) else { continue };
@@ -667,6 +805,7 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
             backends::rust_lang::generate(&func, &enums, registry, helpers),
             backends::java::generate(&func, &enums, registry, helpers),
             backends::csharp::generate(&func, &enums, registry, helpers),
+            backends::ts::generate(&func, &enums, registry, helpers),
         ];
 
         for (b, src) in sources.iter().enumerate() {
@@ -693,7 +832,7 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
                 // identity arm's fill loop, which its own clamp already guards.
                 // The "a guard exists" assertion above is the total one; this is
                 // a placement check that skips the 37 bodies matching no needle.
-                let first_loop = ["while", "for "]
+                let first_loop = loops[b]
                     .iter()
                     .filter_map(|kw| body.find(kw))
                     .min();
@@ -719,7 +858,7 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
             specs[b].0
         );
     }
-    assert!(checked > 600, "only {checked} bodies checked across four backends");
+    assert!(checked > 750, "only {checked} bodies checked across five backends");
     assert!(
         per_backend.iter().all(|n| *n == per_backend[0]),
         "the backends disagree on how many _OpenImpl bodies exist: {per_backend:?}"
@@ -808,6 +947,14 @@ fn csharp_batch_entries_refuse_an_empty_output_behind_the_core_s_own_verdict() {
     assert!(outputs_pinned >= 200, "only {outputs_pinned} outputs pinned");
 }
 
+/// The body of the TS public batch entry, `export function <n>(`.
+fn ts_public_entry(func: &ir::FuncDef, enums: &std::collections::HashMap<String, ir::EnumDef>) -> String {
+    let src = backends::ts::generate(func, enums, make_registry(), common::make_helpers());
+    let entry = format!("export function {}(", backends::ts::ts_names(&func.name).public);
+    let at = src.find(&entry).unwrap_or_else(|| panic!("{}: no `{entry}`", func.name));
+    body_after(&src, at).to_string()
+}
+
 /// Every DECLARED input is checked in every backend (#260).
 ///
 /// Seven candlestick legs are declared by their function and never indexed by
@@ -853,6 +1000,7 @@ fn every_declared_input_is_checked_in_every_backend() {
         }
         let out = generate_all(&func, &enums);
         let csharp = backends::csharp::generate(&func, &enums, registry, helpers);
+        let ts = ts_public_entry(&func, &enums);
         scanned += 1;
         let f = &func.name;
 
@@ -891,6 +1039,8 @@ fn every_declared_input_is_checked_in_every_backend() {
                     format!("RequireLength(\"{f}\", \"{n}\", {n}.Length, guardInLen);"),
                     2,
                 ),
+                // TS has one batch entry point, and `ts` is its body alone.
+                ("ts", &ts, format!("requireLength('{f}', '{n}', {n}, guardInLen);"), 1),
             ] {
                 assert!(
                     src.matches(&needle).count() >= want,
@@ -925,6 +1075,7 @@ fn every_declared_input_is_checked_in_every_backend() {
         let (func, enums) = load_indicator(indicator);
         let out = generate_all(&func, &enums);
         let csharp = backends::csharp::generate(&func, &enums, registry, helpers);
+        let ts = ts_public_entry(&func, &enums);
         let f = &func.name;
         // The body proper: everything after the bounds-assert preamble, so the
         // asserts this test just demanded cannot themselves satisfy "is read".
@@ -966,6 +1117,10 @@ fn every_declared_input_is_checked_in_every_backend() {
                     "RequireLength(\"{f}\", \"{leg}\", {leg}.Length, guardInLen);"
                 )),
                 "csharp: {f}.{leg}"
+            );
+            assert!(
+                ts.contains(&format!("requireLength('{f}', '{leg}', {leg}, guardInLen);")),
+                "ts: {f}.{leg}"
             );
         }
     }

@@ -1085,7 +1085,7 @@ fn mentions_word(hay: &str, word: &str) -> bool {
 fn every_integer_output_carries_an_example_claim() {
     // An integer output has no finiteness to check, so its example states its
     // domain instead: a pattern output's from its flags, any other's from
-    // `rust_doc::integer_domain_claim`. This is the gate that a function arriving
+    // `rust_doc::integer_claim`. This is the gate that a function arriving
     // with an integer output gets a claim rather than none.
     let registry = make_registry();
     let helpers = make_helpers();
@@ -1141,7 +1141,7 @@ fn every_integer_output_carries_an_example_claim() {
         assert!(
             claims >= ints,
             "{name}: {ints} integer output(s) but {claims} example claim(s) naming them -- add the \
-             output's domain to rust_doc::integer_domain_claim"
+             output's domain to rust_doc::integer_claim"
         );
         checked += 1;
     }

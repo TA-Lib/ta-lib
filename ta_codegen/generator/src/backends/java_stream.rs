@@ -546,7 +546,7 @@ enum OutMode {
 }
 
 /// `<idx>` -> `<idx> * outStride`, as IR.
-fn scale_by_stride(idx: Expr) -> Expr {
+pub(super) fn scale_by_stride(idx: Expr) -> Expr {
     Expr::BinOp(
         Box::new(idx),
         crate::ir::BinOp::Mul,
@@ -1182,7 +1182,7 @@ fn stream_ctx<'a>(
 ///
 /// `None` when a written field's bare name would collide with a bar input,
 /// where the local would shadow the parameter rather than fail to compile.
-fn localize_state_writes(
+pub(super) fn localize_state_writes(
     func: &FuncDef,
     transition: &[Statement],
     extra: &[String],
@@ -1593,7 +1593,7 @@ fn emit_identity_step_branch(
     }
 }
 
-fn has_return(stmts: &[Statement]) -> bool {
+pub(super) fn has_return(stmts: &[Statement]) -> bool {
     let found = Cell::new(false);
     streaming::rewrite_stmts(stmts, &|e| e, &|st| {
         if matches!(st, Statement::Return { .. }) {
@@ -1776,7 +1776,7 @@ fn emit_tape_entries(
 /// `InsufficientHistoryException`. Everything else passes through (BAD_PARAM /
 /// ALLOC_ERR / INTERNAL_ERROR render natively; `retCode` locals propagate a
 /// failed cross-call).
-fn map_open_return(v: &str) -> String {
+pub(super) fn map_open_return(v: &str) -> String {
     match v {
         "SUCCESS" | "TA_SUCCESS" => "InsufficientHistory".to_string(),
         other => other.to_string(),
@@ -1789,7 +1789,7 @@ fn map_open_return(v: &str) -> String {
 /// top-level return dropped (capture + `return RetCode.SUCCESS` replace it),
 /// and the body's own dead identity branch deleted (its whole-range copies
 /// reference output arrays that do not exist in Scalar mode).
-fn build_open_body_java(model: &StreamModel, body: &[Statement]) -> Vec<Statement> {
+pub(super) fn build_open_body_java(model: &StreamModel, body: &[Statement]) -> Vec<Statement> {
     let outputs = model.outputs.clone();
     let fb_outputs = model.out_feedback.clone();
     let fe = move |e: Expr| -> Expr {
@@ -2909,7 +2909,7 @@ fn emit_open_wrappers(
 /// dedup by name, conflicting `VarType`s are a hard error. A mode-B-only field
 /// is captured from the arm's untouched prologue-declared local under mode A
 /// (both are the type default).
-fn dual_scalar_union(
+pub(super) fn dual_scalar_union(
     func: &FuncDef,
     ma: &StreamModel,
     mb: &StreamModel,
@@ -4070,7 +4070,7 @@ impl streaming::NameMap for JavaComposedNames {
 
 /// The `cur_<name>` locals the composed step declares: the producer series,
 /// each sub-call's destinations in tail order (dedup), and map-defined outputs.
-fn composed_cur_scalars(
+pub(super) fn composed_cur_scalars(
     cp: &streaming::ComposedPlan,
     bar_inputs: &[String],
     outputs: &[String],
@@ -4102,7 +4102,7 @@ fn composed_cur_scalars(
 
 /// Drop the shells of the map's `for` loops, keeping inner `if` structure
 /// (the per-bar step evaluates each element body exactly once).
-fn drop_forc_shells(st: &Statement) -> Vec<Statement> {
+pub(super) fn drop_forc_shells(st: &Statement) -> Vec<Statement> {
     match st {
         Statement::ForC { body, .. } => body.iter().flat_map(drop_forc_shells).collect(),
         Statement::If {
@@ -4123,7 +4123,7 @@ fn drop_forc_shells(st: &Statement) -> Vec<Statement> {
 /// The map loop's single cursor (`for` init variable) — distinguishes a lag
 /// ring's current read (`series[cursor + lag]`) from its lagged read
 /// (`series[cursor]`).
-fn map_cursor(st: &Statement) -> Option<String> {
+pub(super) fn map_cursor(st: &Statement) -> Option<String> {
     let Statement::ForC { init, .. } = st else {
         return None;
     };
@@ -4143,7 +4143,7 @@ fn map_cursor(st: &Statement) -> Option<String> {
 /// Java twin of `c_stream::transform_map_step`: series reads/writes become the
 /// per-bar `cur_*` locals (a lag-ring series' `[cursor]` read becomes the
 /// ring's oldest slot), params read through `sp.`, `for` shells dropped.
-fn transform_map_step(
+pub(super) fn transform_map_step(
     st: &Statement,
     cur: &std::collections::BTreeMap<String, String>,
     params: &BTreeSet<String>,
@@ -4405,7 +4405,7 @@ fn emit_composed_step(
 /// to their `sc_` scratch arrays, early-success returns mapped to the
 /// insufficient-history signal, final tail return dropped. No out-meta rewrite
 /// (Scalar mode declares local MInteger boxes under the batch names).
-fn build_composed_open_bodies(
+pub(super) fn build_composed_open_bodies(
     cp: &streaming::ComposedPlan,
     outputs: &[String],
 ) -> (Vec<Statement>, Vec<Statement>) {

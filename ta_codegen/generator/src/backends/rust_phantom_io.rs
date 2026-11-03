@@ -46,7 +46,7 @@ use std::path::Path;
 /// The fixture value for one bar of one leg, mirroring `NoPhantomIoTest.bar`.
 /// The two suites must agree on the data or "this leg is read" can differ
 /// between them for reasons that have nothing to do with the generated code.
-fn leg_kind(input_name: &str) -> &'static str {
+pub(super) fn leg_kind(input_name: &str) -> &'static str {
     match input_name {
         "inOpen" => "open",
         "inHigh" => "high",
@@ -66,57 +66,80 @@ fn slice_ty(t: &ParamType) -> &'static str {
     }
 }
 
-/// The all-defaults literal for one optional parameter: the sentinel the
-/// library substitutes from, exactly as `NoPhantomIoTest.defaultFor` does.
-fn default_literal(opt: &OptInput) -> String {
-    match &opt.param_type {
-        ParamType::Real => "Core::REAL_DEFAULT".to_string(),
-        ParamType::Enum(name) => format!("{name}::DEFAULT"),
-        ParamType::Integer | ParamType::Price(_) => "i32::MIN".to_string(),
+/// How one backend spells the literals of a parameter vector.
+pub(super) trait VectorSpelling {
+    /// The all-defaults literal: the sentinel the library substitutes from.
+    fn default(&self, opt: &OptInput) -> String;
+    fn real(&self, v: f64) -> String;
+    fn int(&self, v: i64) -> String;
+    fn member(&self, enum_name: &str, variant: &str) -> String;
+}
+
+struct RustSpelling;
+
+impl VectorSpelling for RustSpelling {
+    fn default(&self, opt: &OptInput) -> String {
+        match &opt.param_type {
+            ParamType::Real => "Core::REAL_DEFAULT".to_string(),
+            ParamType::Enum(name) => format!("{name}::DEFAULT"),
+            ParamType::Integer | ParamType::Price(_) => "i32::MIN".to_string(),
+        }
+    }
+    fn real(&self, v: f64) -> String {
+        format!("{v:?}f64")
+    }
+    fn int(&self, v: i64) -> String {
+        format!("{v}i32")
+    }
+    fn member(&self, enum_name: &str, variant: &str) -> String {
+        format!("{enum_name}::{variant}")
     }
 }
 
 /// The documented minimum for one optional parameter; enums stay at their default.
-fn minimum_literal(opt: &OptInput) -> String {
+fn minimum_literal(opt: &OptInput, sp: &dyn VectorSpelling) -> String {
     match (&opt.param_type, opt.range) {
-        (ParamType::Real, Some((lo, _))) => format!("{lo:?}f64"),
-        (ParamType::Integer, Some((lo, _))) => format!("{}i32", lo as i64),
-        _ => default_literal(opt),
+        (ParamType::Real, Some((lo, _))) => sp.real(lo),
+        (ParamType::Integer, Some((lo, _))) => sp.int(lo as i64),
+        _ => sp.default(opt),
     }
 }
 
 /// `2 * default`, capped at the documented maximum — the "periods doubled" axis.
 /// `None` when doubling does not move the value (so the vector would duplicate
 /// the one it was cloned from).
-fn doubled_literal(opt: &OptInput) -> Option<String> {
+fn doubled_literal(opt: &OptInput, sp: &dyn VectorSpelling) -> Option<String> {
     let (ParamType::Integer, Some((_, hi)), Some(def)) = (&opt.param_type, opt.range, opt.default)
     else {
         return None;
     };
     let doubled = (2.0 * def).min(hi) as i64;
-    (doubled > def as i64).then(|| format!("{doubled}i32"))
+    (doubled > def as i64).then(|| sp.int(doubled))
 }
 
 /// One candidate parameter vector: a label and one literal per optional input.
-struct Vector {
-    label: String,
-    values: Vec<String>,
+pub(super) struct Vector {
+    pub label: String,
+    pub values: Vec<String>,
 }
 
 /// The star around the defaults, ported from `NoPhantomIoTest.vectors`.
 ///
 /// One axis moves per vector, deliberately: the product of every enum against
 /// every other is where the cost stops being worth it. Validity is not judged
-/// here — the emitted code keeps a vector only if `NAME_Lookback` accepts it,
-/// which it signals by returning `usize::MAX`.
-fn vectors(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Vec<Vector> {
-    let defaults: Vec<String> = func.optional_inputs.iter().map(default_literal).collect();
+/// here — the emitted code keeps a vector only if `NAME_Lookback` accepts it.
+pub(super) fn vectors(
+    func: &FuncDef,
+    enums: &HashMap<String, EnumDef>,
+    sp: &dyn VectorSpelling,
+) -> Vec<Vector> {
+    let defaults: Vec<String> = func.optional_inputs.iter().map(|o| sp.default(o)).collect();
     let mut out = vec![Vector { label: "defaults".to_string(), values: defaults.clone() }];
 
     if !func.optional_inputs.is_empty() {
         out.push(Vector {
             label: "minimums".to_string(),
-            values: func.optional_inputs.iter().map(minimum_literal).collect(),
+            values: func.optional_inputs.iter().map(|o| minimum_literal(o, sp)).collect(),
         });
     }
 
@@ -127,7 +150,7 @@ fn vectors(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Vec<Vector> {
     let mut raised = defaults.clone();
     let mut any_raised = false;
     for (k, opt) in func.optional_inputs.iter().enumerate() {
-        if let Some(lit) = doubled_literal(opt) {
+        if let Some(lit) = doubled_literal(opt, sp) {
             raised[k] = lit;
             any_raised = true;
         }
@@ -141,7 +164,7 @@ fn vectors(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Vec<Vector> {
             continue;
         };
         for variant in &def.variants {
-            let member = format!("{enum_name}::{}", variant.name);
+            let member = sp.member(enum_name, &variant.name);
             let mut v = defaults.clone();
             v[k].clone_from(&member);
             out.push(Vector { label: format!("{}={}", opt.name, variant.name), values: v });
@@ -162,7 +185,7 @@ fn vectors(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Vec<Vector> {
 fn emit_func(o: &mut String, func: &FuncDef, enums: &HashMap<String, EnumDef>) {
     let name = &func.name;
     let sname = super::common::snake_words(&func.name);
-    let vecs = vectors(func, enums);
+    let vecs = vectors(func, enums, &RustSpelling);
     let opt_args: Vec<&str> = func.optional_inputs.iter().map(|p| p.name.as_str()).collect();
     let opt_tys: Vec<String> = func
         .optional_inputs

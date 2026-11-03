@@ -1,6 +1,6 @@
-//! Java and C# stream-emitter properties that no runtime gate can see.
+//! Java, C# and TypeScript stream-emitter properties that no runtime gate can see.
 //!
-//! The two managed backends share a shape the other two do not: a peek frame
+//! The managed backends share a shape C and Rust do not: a peek frame
 //! carries the transition in locals rather than in the handle. Two properties
 //! follow from that, and each is invisible to `stream_verify` because each is
 //! about text the emitter did NOT produce -- an absent seed, an ordering.
@@ -59,6 +59,7 @@ fn render_stream(func: &ir::FuncDef, enums: &HashMap<String, ir::EnumDef>, lang:
         "rust" => backends::rust_lang::generate(func, enums, registry, helpers),
         "java" => backends::java::generate(func, enums, registry, helpers),
         "csharp" => backends::csharp::generate(func, enums, registry, helpers),
+        "ts" => backends::ts::generate(func, enums, registry, helpers),
         other => panic!("unknown backend {other}"),
     };
     match full.find("/**** Streaming API *****/") {
@@ -107,7 +108,7 @@ fn no_managed_peek_seeds_a_dead_output_local() {
     let (mut control, enums) = load("imi");
     let parsed = parser::c_source::parse_c_source_str(LOOP_STORE_CONTROL);
     parser::c_source::wire_parsed_source(&mut control, &parsed);
-    for (lang, needle) in [("java", " peek("), ("csharp", " Peek(")] {
+    for (lang, needle) in [("java", " peek("), ("csharp", " Peek("), ("ts", " peek(")] {
         let mut swept = 0usize;
         let mut seedless = 0usize;
         let mut seeded: BTreeSet<String> = BTreeSet::new();
@@ -200,17 +201,18 @@ TA_RetCode imi(int startIdx, int endIdx,
 /// mixture out as a reading.
 #[test]
 fn no_throwing_sub_call_follows_the_cur_capture_in_a_managed_step() {
-    for lang in ["java", "csharp"] {
+    for lang in ["java", "csharp", "ts"] {
         let mut with_subs: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
         for name in streaming_funcs() {
             let upper = name.to_uppercase();
-            let base = if lang == "java" {
-                backends::common::camel_words(&upper)
-            } else {
+            let base = if lang == "csharp" {
                 backends::common::pascal_words(&upper)
+            } else {
+                backends::common::camel_words(&upper)
             };
             let s = section(&name, lang);
-            let body = body_of(&s, &format!("void {base}StepImpl("));
+            let def = if lang == "ts" { format!("function {base}StepImpl(") } else { format!("void {base}StepImpl(") };
+            let body = body_of(&s, &def);
             // Only the multi-output handles hold a cache, and only they can
             // publish a half-written bar. A single-output `value()` is a field
             // read, and the dispatch tier's `sp.cur_outReal = sub.update(..)`
@@ -347,14 +349,15 @@ fn no_managed_tape_peek_writes_the_handle_or_the_tape() {
         .collect();
     assert!(!members.is_empty(), "the tape set is empty");
     let mut offenders = Vec::new();
-    for lang in ["java", "csharp"] {
+    for lang in ["java", "csharp", "ts"] {
+        let def_kw = if lang == "ts" { "export function " } else { "private " };
         let mut swept = 0usize;
         for name in &members {
             let src = section(name, lang);
             let mut found = false;
             for (at, _) in src.match_indices("PeekTape") {
                 let line_start = src[..at].rfind('\n').map_or(0, |k| k + 1);
-                if !src[line_start..at].trim_start().starts_with("private ") {
+                if !src[line_start..at].trim_start().starts_with(def_kw) {
                     continue;
                 }
                 found = true;
@@ -368,7 +371,11 @@ fn no_managed_tape_peek_writes_the_handle_or_the_tape() {
         }
         assert_eq!(swept, members.len(), "{lang}: {swept} of {} tape peeks found", members.len());
         let bank = section("mavp", lang);
-        let needle = if lang == "java" { "public double peek(" } else { "public double Peek(" };
+        let needle = match lang {
+            "java" => "public double peek(",
+            "csharp" => "public double Peek(",
+            _ => "  peek(inReal: number, inPeriods: number): number {",
+        };
         let peek = body_of(&bank, needle);
         assert!(peek.contains("sp.tape"), "{lang}: MAVP's peek no longer reads the tape");
         for l in peek.lines() {
@@ -377,7 +384,11 @@ fn no_managed_tape_peek_writes_the_handle_or_the_tape() {
             }
         }
         // A window-mode peek evaluates through this helper.
-        let eval = if lang == "java" { "private double mavpEvalWindow(" } else { "internal double MavpEvalWindow(" };
+        let eval = match lang {
+            "java" => "private double mavpEvalWindow(",
+            "csharp" => "internal double MavpEvalWindow(",
+            _ => "function mavpEvalWindow(",
+        };
         assert!(bank.contains(eval), "{lang}: MAVP's window evaluation not found");
         for l in body_of(&bank, eval).lines() {
             if handle_or_tape_store(l) {
@@ -395,7 +406,7 @@ fn no_managed_tape_peek_writes_the_handle_or_the_tape() {
 fn no_managed_peek_writes_its_handle() {
     let funcs = streaming_funcs();
     let mut offenders = Vec::new();
-    for (lang, needle) in [("java", " peek("), ("csharp", " Peek(")] {
+    for (lang, needle) in [("java", " peek("), ("csharp", " Peek("), ("ts", " peek(")] {
         let mut swept = 0usize;
         let mut handle_reads = 0usize;
         for name in &funcs {
@@ -403,13 +414,19 @@ fn no_managed_peek_writes_its_handle() {
             let mut found = false;
             for (at, _) in src.match_indices(needle) {
                 let line_start = src[..at].rfind('\n').map_or(0, |k| k + 1);
-                if !src[line_start..at].trim_start().starts_with("public ") {
+                // A TypeScript method has no modifier: the line holds only indent.
+                let head = src[line_start..at].trim_start();
+                if (lang == "ts" && !head.is_empty()) || (lang != "ts" && !head.starts_with("public ")) {
                     continue;
                 }
                 found = true;
                 for l in body_of(&src[line_start..], needle).lines() {
                     if handle_or_tape_store(l) {
                         offenders.push(format!("{lang} {name}: {}", l.trim()));
+                    }
+                    // A committing call writes the handle with no target of its own.
+                    if lang == "ts" && [".update(", "StepTape(", "StepImpl("].iter().any(|c| l.contains(c)) {
+                        offenders.push(format!("{lang} {name} commits: {}", l.trim()));
                     }
                     handle_reads += usize::from(l.contains("sp."));
                 }

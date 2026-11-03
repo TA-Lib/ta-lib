@@ -6,6 +6,14 @@
 use crate::common;
 
 use common::{all_abstract_rows, check_rust_cast_parens, generate_all, load_indicator_with_source};
+use std::collections::HashMap;
+use ta_codegen_lib::{backends, ir};
+
+/// The TypeScript module, which `generate_all` leaves out: its fixtures run
+/// without the shipped helpers, which the TS emitter requires.
+fn ts_of(func: &ir::FuncDef, enums: &HashMap<String, ir::EnumDef>) -> String {
+    backends::ts::generate(func, enums, common::make_registry(), common::make_helpers())
+}
 
 // The shared abstract row model
 // ---------------------------------------------------------------------------
@@ -248,7 +256,11 @@ TA_RetCode max( int    startIdx,
     // And nowhere does a bare cast sit directly before `<`, which would not parse.
     check_rust_cast_parens(&out.rust, "max/#159");
 
-    // C and Java are unaffected — they have no cast to place at all.
+    // C, Java and TypeScript are unaffected — they have no cast to place at all.
+    let ts = ts_of(&func, &enums);
+    for needle in ["if (dqI[hd] < trailingIdx)", "if (trailingIdx + dqI[hd] < today)", "if (trailingIdx < dqI[hd])"] {
+        assert!(ts.contains(needle), "TypeScript output should compare directly, `{needle}`:\n{ts}");
+    }
     assert!(
         out.c.contains("if( dqI[hd] < trailingIdx )"),
         "C output should compare directly:\n{}",
@@ -378,7 +390,9 @@ TA_RetCode max( int    startIdx,
 
     check_rust_cast_parens(&out.rust, "max/#163");
 
-    // C and Java compare directly; neither has a cast to place.
+    // C, Java and TypeScript compare directly; none has a cast to place.
+    let ts = ts_of(&func, &enums);
+    assert!(ts.contains("if (dqI[hd] + 1 < today)"), "TypeScript changed:\n{ts}");
     assert!(out.c.contains("if( dqI[hd] + 1 < today )"), "C changed:\n{}", out.c);
     assert!(out.java.contains("if( dqI[hd] + 1 < today )"), "Java changed:\n{}", out.java);
 }
@@ -470,6 +484,8 @@ TA_RetCode max( int    startIdx,
             "C body lost after comment {comment:?}:\n{}",
             out.c
         );
+        let ts = ts_of(&func, &enums);
+        assert!(ts.contains("outReal[outIdx++] = inReal[i];"), "TypeScript body lost after comment {comment:?}:\n{ts}");
     }
 }
 
@@ -557,7 +573,9 @@ TA_RetCode max( int    startIdx,
     );
     check_rust_cast_parens(&out.rust, "max/#165");
 
-    // C and Java have no cast to place here.
+    // C, Java and TypeScript have no cast to place here.
+    let ts = ts_of(&func, &enums);
+    assert!(ts.contains("head = lag & 3;"), "TypeScript changed:\n{ts}");
     assert!(out.c.contains("head = lag & 3;"), "C changed:\n{}", out.c);
     assert!(out.java.contains("head = lag & 3;"), "Java changed:\n{}", out.java);
 }
