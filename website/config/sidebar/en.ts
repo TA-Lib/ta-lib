@@ -35,6 +35,11 @@ export const enSidebar = sidebar({
           children: ["api/csharp/", "api/csharp/stream/"],
         },
         {
+          text: "TypeScript API",
+          collapsible: true,
+          children: ["api/typescript/", "api/typescript/stream/"],
+        },
+        {
           text: "Specification (for AI agents)",
           collapsible: true,
           children: [

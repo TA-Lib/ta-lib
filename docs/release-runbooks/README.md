@@ -8,6 +8,7 @@ run it.
    - `java-publish-runbook.md`
    - `rust-publish-runbook.md`
    - `csharp-publish-runbook.md`
+   - `typescript-publish-runbook.md`
 3. `post-publish-runbook.md`
 
 About backends at rank 2: each waits for the C publish of the same version,

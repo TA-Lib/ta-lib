@@ -24,7 +24,7 @@ Every function has a lookback call. It takes exactly the batch call's optional p
 |---|---|
 | <a id="rl2"></a>**rL2** | The call fails ([per language](/spec/#failures)) only on rejected parameters ([rL3](/spec/lookback/#rl3)). |
 | <a id="rl3"></a>**rL3** | The call rejects exactly the parameters the batch call, `Open` or `OpenAndFill` would reject (batch [rB3](/spec/errors/#rb3), streams [rS3](/spec/streaming/#rs3)). |
-| <a id="rl4"></a>**rL4** | Rust, Java and C# reach the same accept or reject decision as C for the same parameters and settings, and wherever both accept, return the same lookback or display shift. |
+| <a id="rl4"></a>**rL4** | Rust, Java, C# and TypeScript reach the same accept or reject decision as C for the same parameters and settings, and wherever both accept, return the same lookback or display shift. |
 | <a id="rl5"></a>**rL5** | A lookback depends only on the optional parameters and on the [settings](/spec/settings-threads/) in effect at the call: the unstable periods ([rL6](/spec/lookback/#rl6)) and the candle averaging periods ([rL7](/spec/lookback/#rl7)). With every setting at its bound ([rT3](/spec/settings-threads/#rt3), [rT6](/spec/settings-threads/#rt6)) a lookback is negative only when the call fails. |
 
 ## What enters the lookback {#enters}

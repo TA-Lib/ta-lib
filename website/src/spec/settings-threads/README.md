@@ -1,26 +1,26 @@
 ---
 title: Settings and Threads
-description: "Settings in an immutable Core that any number of threads share with no synchronization (Rust, Java, C#), C's initialization and process-wide settings and when they may change, setting validation, and the caller's rules across threads."
+description: "Settings in an immutable Core (Rust, Java, C#, TypeScript) that threads share with no synchronization, C's initialization and process-wide settings and when they may change, setting validation, and the caller's rules across threads."
 ---
 
 *Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
 
-C keeps its settings (unstable periods and candle settings) process-wide; Rust, Java and C# keep them in an immutable `Core`, so cores with different settings coexist in one process and any number of threads can share one with no synchronization ([rT1](/spec/settings-threads/#rt1)). What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (with the defaults). Names per language: [names](/spec/#names). How a failure reaches the caller: [failures](/spec/#failures).
+C keeps its settings (unstable periods and candle settings) process-wide; Rust, Java, C# and TypeScript keep them in an immutable `Core`, so cores with different settings coexist in one process and any number of threads can share one with no synchronization ([rT1](/spec/settings-threads/#rt1)). What each setting means: [Unstable Period](/api/unstable-period/), [Candlestick Settings](/api/candle-settings/) (with the defaults). Names per language: [names](/spec/#names). How a failure reaches the caller: [failures](/spec/#failures).
 
 ## The caller must {#caller}
 
-- <a id="initialize"></a>**In C, initialize exactly once per process.** Call `TA_Initialize` before any other TA call. Call `TA_Shutdown` before the process exits; the library must not be used after it. Rust, Java and C# have no lifecycle call: a `Core` is ready when constructed.
+- <a id="initialize"></a>**In C, initialize exactly once per process.** Call `TA_Initialize` before any other TA call. Call `TA_Shutdown` before the process exits; the library must not be used after it. Rust, Java, C# and TypeScript have no lifecycle call: a `Core` is ready when constructed.
 - <a id="idle-settings"></a>**In C, change a setting only while no TA function is running and no stream is open.** A change is a call to `TA_SetUnstablePeriod`, `TA_SetCandleSettings`, `TA_RestoreCandleDefaultSettings` or `TA_Shutdown`. Between changes, any number of threads may call the library ([rT11](/spec/settings-threads/#rt11)); it assumes the `malloc` and `free` it allocates with are thread-safe.
 - <a id="one-writer"></a>**Run a writer alone on its stream handle.** The writers are `Update`, `Advance` and C's `Close`; not even `Peek` or `Value` may run alongside one. Separate handles, a clone included ([rH8](/spec/streaming/#rh8)), may each be driven on their own thread. Rust enforces this at compile time: the writing calls take `&mut self`, and every handle is `Send + Sync + Clone`.
 - <a id="confine"></a>**Confine holders, builders and sinks to one thread.** A [parameter holder](/spec/abstract/#provides) is not thread-safe in C, Java and C#; neither is a Java or C# `CoreBuilder` nor the sink a Java multi-output stream writes into ([names](/spec/#names)). In C, the `const` in `TA_CallFunc`'s signature does not make a holder shareable: the call writes the output buffers bound to it.
 
-## `Core` in Rust, Java and C#
+## `Core` in Rust, Java, C# and TypeScript
 
-<a id="rt1"></a>**rT1** In Rust, Java and C#, settings live on an immutable `Core` made by a builder. One `Core` may be shared by any number of threads with no synchronization; Rust's is `Send + Sync`. To change a setting, build another `Core`, from defaults or seeded from an existing one (`to_builder()`, `toBuilder()`, `ToBuilder()`). A stream keeps the settings of the `Core` that opened it. A Java or C# builder stays usable after `build()`.
+<a id="rt1"></a>**rT1** In Rust, Java, C# and TypeScript, settings live on an immutable `Core` made by a builder. In Rust, Java and C#, one `Core` may be shared by any number of threads with no synchronization; Rust's is `Send + Sync`. To change a setting, build another `Core`, from defaults or seeded from an existing one (`to_builder()`, `toBuilder()`, `ToBuilder()`). A stream keeps the settings of the `Core` that opened it. A Java, C# or TypeScript builder stays usable after `build()`.
 
 ## Validation
 
-The rows hold for every setter and getter in all four languages, except where a note says otherwise. A Rust or Java enum cannot hold a value outside its members.
+The rows hold for every setter and getter in every language, except where a note says otherwise. A Rust or Java enum cannot hold a value outside its members.
 
 | Rule | Condition | Language notes |
 |---|---|---|

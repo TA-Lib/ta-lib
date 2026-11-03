@@ -4,11 +4,12 @@
 
 All indicator code is **generated** by a single generator, **`ta_codegen`**
 (`ta_codegen/generator/`, Rust): it parses `ta_codegen/input/` → IR → renders
-per-backend (C, Java, C#, Rust). The C backend is generated **in place** into
-`src/ta_func` / `src/ta_abstract` (the shipped library); the Rust/Java/C#
-bindings live under `ta_codegen/output/`. `generate` owns every committed file it
-writes — the build-system source lists and the ta-lib.org function pages included
-— so "regenerate, then `git status` is clean" is a total gate over the tree.
+per-backend (C, Java, C#, Rust, TypeScript). The C backend is generated **in
+place** into `src/ta_func` / `src/ta_abstract` (the shipped library); the
+Rust/Java/C#/TypeScript bindings live under `ta_codegen/output/`. `generate` owns
+every committed file it writes — the build-system source lists and the ta-lib.org
+function pages included — so "regenerate, then `git status` is clean" is a total
+gate over the tree.
 
 **Why the C is generated in place and not symlinked** to `ta_codegen/output/c`: a
 whole-dir symlink breaks autotools' per-dir libtool recursion (`make` enters the
@@ -19,8 +20,8 @@ of the released source tarball.
 
 **Build separation (important):** the C build systems (CMake + autotools) build
 **only C** — the library plus `ta_regtest` and `ta_bench`. `ta_codegen` is Rust,
-built and run with cargo via `scripts/build.py`; **CMake never invokes cargo**, so
-a C-only setup needs no Rust toolchain.
+built and run with cargo via `scripts/build.py`; **CMake never invokes cargo** (nor
+node), so a C-only setup needs no Rust toolchain.
 
 **Toolchain per backend.** Generating any backend's *source* needs only cargo.
 Building and testing one needs that language's toolchain, and a missing tool is a
@@ -36,6 +37,14 @@ root `global.json` pins, or a later patch of its band when the pin is not
 installed. Keep `rollForward` at `patch`: every other value but `disable`
 prefers a newer installed SDK over the pin, so CI would build with whichever
 newer SDK the runner has, and a different compiler can change the DLL.
+TypeScript needs **Node `>=22.18` and npm**: TypeScript and `@types/node` come
+from the committed `ta_codegen/output/ts/package-lock.json` through `npm ci`,
+which the build runs itself whenever the lockfile's hash differs from the
+`node_modules` stamp, so only the first run needs the network. Never call bare
+`tsc` or `npx tsc` there: before `npm ci`, npx fetches an unrelated package named
+`tsc`. `build-libraries --backend=ts` tests the tarball `npm pack` makes, installed
+in a throwaway project. `scripts/node_toolchain.py <major>` supplies a pinned,
+verified Node of each CI major on a machine without one.
 
 Correctness is verified against three baselines: the in-process C library, which
 `ta_regtest --codegen` and `--xlang-hash` diff every language server against; the
@@ -74,16 +83,19 @@ the last word:
 Do not hand-edit **generated** files under `ta_codegen/output/` — they are
 overwritten on the next `generate`. The converse trap: some hand-written source
 lives under `output/` too (the Java shared types, `Core.java` outside the GENCODE
-markers, the test suites, the C# `TALib.csproj`, `pom.xml`); the generator
-preserves those and never overwrites them. Of `pom.xml` and `TALib.csproj` only
-the version is written for you, by `scripts/sync.py`.
+markers, the test suites, the C# `TALib.csproj`, `pom.xml`, the TypeScript
+`library/src/runtime/`, `library/README.md` and tooling `package.json`); the
+generator preserves those and never overwrites them. Of `pom.xml` and
+`TALib.csproj` only the version is written for you, by `scripts/sync.py`.
 
 ### API tiers and entry points
 
 The managed backends have **two** batch tiers: `public OutRange <N>(...)`, which
 validates array lengths and throws on a rejection, and `<N>_Impl` — the
-transcribed numerics, package-private in Java and `internal` in C#, keeping C's
-`RetCode` + out-param shape. There is no third, catch-and-convert tier.
+transcribed numerics, package-private in Java, `internal` in C#, and in
+TypeScript exported from its module, tagged `@internal` and left out of the
+package barrel, keeping C's `RetCode` + out-param shape. There is no third,
+catch-and-convert tier.
 
 **Two suffixes, one meaning each:**
 
@@ -95,15 +107,16 @@ transcribed numerics, package-private in Java and `internal` in C#, keeping C's
 That is the whole vocabulary, deliberately — one word per concept. C spells them
 `<N>_OpenImpl` / `<N>_StepImpl` (plus its own `TA_<N>_ReleaseImpl`; Rust has
 `Drop`, the managed backends have GC) and stays the reference spelling below.
-Rust, Java and C# recase `<N>` and the verb to their own idiom rather than
-mirroring C: Rust `<n>_open_impl`, Java `<n>OpenImpl`, C# `<N>OpenImpl` (`<n>` =
+Rust, Java, C# and TypeScript recase `<N>` and the verb to their own idiom rather
+than mirroring C: Rust `<n>_open_impl`, Java and TypeScript `<n>OpenImpl`, C#
+`<N>OpenImpl` (`<n>` =
 camelCase, `<N>` = PascalCase, the acronym single-capitalized — `Sma`, not
 `SMA`). Neither tier is public anywhere, so no runtime gate can see the spelling:
 `the_transition_tier_is_step_impl_in_every_backend` pins the *shape* — one word
 per concept, in that backend's casing — not one literal string.
 
 **The `_Open*` family is five methods, symmetric, two hops deep** (C's spelling;
-the other three carry the same five hops in their own casing):
+the other backends carry the same five hops in their own casing):
 
 ```
 PUB  <N>_Open(in, params)                   -> <N>_OpenInternal(in, 0, params)
@@ -131,18 +144,18 @@ differ by which callee tier they call and by an anchor clamp, not by a stride �
 so their `_OpenImpl` takes no `outStride`, which is the discriminator the gates
 key on rather than a name list.
 
-A cross-call inside a body calls the callee's *public* tier, in all four
-backends, and lets its rejection surface: a throw in Java and C#, an
+A cross-call inside a body calls the callee's *public* tier, in every backend,
+and lets its rejection surface: a throw in Java, C# and TypeScript, an
 `Err(RetCode)` in Rust, a returned code in C. The callers that need a code back
 convert it themselves: the JSON-RPC servers, and C#'s `ParamHolder.TryCall`
 (whose conversion is the direct path's too — its thunk calls the function's own
 public overload, like C's frames and Java's `Dispatch`).
 
 **Every metadata tier calls the public tier.** C (`ta_frame.c`), Java
-(`Dispatch`), C# (`FunctionCatalog`'s `invoke` thunk) and Rust
-(`ParamHolder::call`) all do, so binding a leg shorter than the requested range
-is `TA_BAD_PARAM` in three of them and inexpressible in the fourth — C's setters
-take a bare pointer and carry no length.
+(`Dispatch`), C# (`FunctionCatalog`'s `invoke` thunk), Rust
+(`ParamHolder::call`) and TypeScript (`ParamHolder.call`) all do, so binding a
+leg shorter than the requested range is `TA_BAD_PARAM` in every port and
+inexpressible in C, whose setters take a bare pointer and carry no length.
 
 **And a rejected setter leaves the holder as it found it** — the price setter
 validates every consumed component before it writes any. The case that makes it
@@ -153,8 +166,8 @@ bundle, and the next call succeeds over a mixture of the two — in C# with no c
 and no exception. C is deliberately NOT the ports' whole-struct assignment: its
 macro keeps the flag guard so an unconsumed component is skipped rather than
 clobbered, which makes the fix a no-op on every call that succeeds.
-`metadata_price_setter_validates_before_writing` pins all four on the PR gate,
-because the four runtime probes are nightly-only.
+`metadata_price_setter_validates_before_writing` pins every backend on the PR
+gate, because the runtime probes are nightly-only.
 
 ## Comments and docs: guidance, not narration
 
@@ -201,8 +214,9 @@ scripts/build.py generate       # Regenerate every committed source for all back
                                 # so no JDK or .NET SDK for the Java/C# sources)
 scripts/build.py servers        # Generate + compile the JSON-RPC language servers (cargo),
                                 # and refresh bin/ta_regtest so bin/ can be driven by hand
-scripts/build.py libraries      # Build the publishable Java jars + C# library from the
-                                # committed source and run their suites against them
+scripts/build.py libraries      # Build the publishable Java jars, C# library and npm
+                                # package from the committed source and run their
+                                # suites against them
 
 # Test
 scripts/build.py regen-check    # The PR gate: regenerating must change nothing
@@ -242,11 +256,11 @@ compares every call against the C reference.
 
 A **correctness** request goes through each language's PUBLIC API, and the server
 normalises the exception back into the `retCode` / `outBegIdx` / `outNBElement`
-wire shape; that is the server's job, not the library's. In **Java and C#** a
-request declaring itself timed (`"timed":1`, sent only by `ta_bench`) calls the
-BODY instead: these servers double as the cross-language benchmark, and nothing
-measured may quietly acquire the public tier's argument checks. Rust cannot split,
-`tools` being a separate crate.
+wire shape; that is the server's job, not the library's. In **Java, C# and
+TypeScript** a request declaring itself timed (`"timed":1`, sent only by
+`ta_bench`) calls the BODY instead: these servers double as the cross-language
+benchmark, and nothing measured may quietly acquire the public tier's argument
+checks. Rust cannot split, `tools` being a separate crate.
 
 A new ta_regtest source file must be registered in BOTH `CMakeLists.txt` and the
 autotools `Makefile.am` — the dist-verification CI path builds with autotools, so

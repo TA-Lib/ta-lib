@@ -1,6 +1,6 @@
 ---
 title: Candlestick Settings
-description: "Tune the thresholds the CDL* pattern functions judge candles against: body length, shadows, near-equal candles. Defaults, and how to set them in C, Rust, Java and C#."
+description: "Tune the thresholds the CDL* pattern functions judge candles against: body length, shadows, near-equal candles. Defaults, and how to set them in C, Rust, Java, C# and TypeScript."
 toc: false
 ---
 
@@ -84,6 +84,22 @@ Core restored = core.ToBuilder()
     .Build();
 ```
 
+@tab TypeScript
+
+```ts
+import { CandleSettingType, CoreBuilder, RangeType } from 'ta-lib';
+
+// Treat a "long body" as 1.2x the average real body of the last 10 candles:
+const core = new CoreBuilder()
+  .candleSetting(CandleSettingType.BODY_LONG, RangeType.REAL_BODY, 10, 1.2)
+  .build();
+
+// ...restore one setting, or every one with ALL_CANDLE_SETTINGS:
+const restored = core.toBuilder()
+  .restoreCandleDefault(CandleSettingType.BODY_LONG)
+  .build();
+```
+
 :::
 
 In C, the unstable period and the candle settings are process-wide. Change them
@@ -94,7 +110,7 @@ only while no TA function is running and no stream is open
 
 The setting types, with the defaults every binding starts from. C spells them
 `TA_BodyLong`; Rust `CandleSettingType::BodyLong`; C# `CandleSettingType.BodyLong`;
-Java takes its own constant case, `CandleSettingType.BODY_LONG`.
+Java and TypeScript take constant case, `CandleSettingType.BODY_LONG`.
 
 | Setting            | Range type | avgPeriod | factor |
 |--------------------|------------|-----------|--------|
@@ -115,6 +131,6 @@ restore call.
 
 ## See also
 
-- [C/C++ Core API](/api/) / [Rust Core API](/api/rust/)
+- Core API: [C/C++](/api/), [Rust](/api/rust/), [Java](/api/java/), [C#](/api/csharp/), [TypeScript](/api/typescript/)
 - [Unstable Period](/api/unstable-period/)
 - The candlestick pattern functions in the [function reference](/functions/) (the `Pattern Recognition` group).

@@ -9,4 +9,6 @@ ta_codegen/output/rust/library/tests/** -linguist-generated
 # What compiles or packs into the NuGet package must not follow the checkout's
 # line endings: a CRLF checkout builds a different TALib.dll from the same commit.
 ta_codegen/output/csharp/library/** text=auto eol=lf
+# The TypeScript suites parse the modules line by line, as LF.
+ta_codegen/output/ts/** text=auto eol=lf
 /LICENSE text eol=lf

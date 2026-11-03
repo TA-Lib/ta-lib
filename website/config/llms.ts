@@ -56,6 +56,8 @@ const PAGE_ORDER = [
   "/api/java/stream/",
   "/api/csharp/",
   "/api/csharp/stream/",
+  "/api/typescript/",
+  "/api/typescript/stream/",
   "/api/abstract/",
   "/api/unstable-period/",
   "/functions/stability.html",

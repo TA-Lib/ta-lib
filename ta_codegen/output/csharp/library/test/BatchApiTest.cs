@@ -708,14 +708,14 @@ public static class BatchApiTest
         // Two outputs offset within one buffer.
         CheckThrows<ArgumentException>(
             () => core.Bbands(0, n - 1, src, 5, 2.0, 2.0, MAType.SMA,
-                              big.AsSpan(0, n), big.AsSpan(10, n), big.AsSpan(n + 12, 4)),
+                              big.AsSpan(0, n), big.AsSpan(10, n), new double[n]),
             "outputs overlapping at an offset are rejected");
 
         // Same start, DIFFERENT length: the same memory, which an equality test
         // reads as not-equal. This is the case that motivated the fix.
         CheckThrows<ArgumentException>(
             () => core.Bbands(0, n - 1, src, 5, 2.0, 2.0, MAType.SMA,
-                              big.AsSpan(0, n), big.AsSpan(0, n + 1), big.AsSpan(n + 12, 4)),
+                              big.AsSpan(0, n), big.AsSpan(0, n + 1), new double[n]),
             "outputs sharing a start but differing in length are rejected");
 
         // An output partially overlapping an INPUT.

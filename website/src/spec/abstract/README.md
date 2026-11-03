@@ -1,11 +1,11 @@
 ---
 title: Abstract API and Metadata
-description: "The rules of the Abstract API in C, Rust, Java and C#: what each function's run-time description holds, the flags a program reads instead of hard-coding per function, the XML document, the Abstract API's own return codes and the run-time information keys."
+description: "The rules of the Abstract API in C, Rust, Java, C# and TypeScript: what each function's run-time description holds, the flags a program reads instead of hard-coding per function, the XML document, the Abstract API's own return codes and the run-time information keys."
 ---
 
 *Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
 
-The Abstract API describes every function at run time and calls it by name ([rA6](/spec/abstract/#ra6)). The description is the metadata: a function's group, inputs, optional parameters, outputs and flags. The call runs the function's double-precision batch call through a parameter holder, and opens no stream ([rH9](/spec/streaming/#rh9)). From the metadata alone a program can list the functions, build a dialog for their parameters and call any of them, with no code written per function. Examples in the four languages: [Abstract API](/api/abstract/).
+The Abstract API describes every function at run time and calls it by name ([rA6](/spec/abstract/#ra6)). The description is the metadata: a function's group, inputs, optional parameters, outputs and flags. The call runs the function's double-precision batch call through a parameter holder, and opens no stream ([rH9](/spec/streaming/#rh9)). From the metadata alone a program can list the functions, build a dialog for their parameters and call any of them, with no code written per function. Examples in each language: [Abstract API](/api/abstract/).
 
 ## The caller must {#caller}
 
@@ -20,25 +20,25 @@ Two more are on other pages: one thread per holder ([confine](/spec/settings-thr
 
 ## What it provides {#provides}
 
-| | C `ta_abstract.h` | Rust `ta_lib::abstract_api` | Java `io.github.talib.metadata` | C# `TALib.Metadata` |
-|---|---|---|---|---|
-| look up by name | `TA_GetFuncHandle` | `get_func_handle`, `get_func_handle_rc` | `Functions.byName` | `FunctionCatalog.Default[name]`, `TryGet` |
-| enumerate the functions | `TA_ForEachFunc` | `FUNCS`, `for_each_func` | `Functions.all()` | `FunctionCatalog.Default` |
-| enumerate the groups | `TA_GroupTableAlloc` | `groups()` | `Functions.groups()` | `FunctionCatalog.Groups` |
-| functions of one group | `TA_FuncTableAlloc` | `funcs_in_group` | filter `Functions.all()` on `group()` | `InGroup` |
-| function descriptor | `TA_GetFuncInfo` | `FuncId::info` | `FuncInfo` | `FuncInfo` |
-| input, optional parameter, output descriptors | `TA_GetInputParameterInfo`, `TA_GetOptInputParameterInfo`, `TA_GetOutputParameterInfo` | `inputs`, `opt_inputs`, `outputs` | `inputs()`, `optInputs()`, `outputs()` | `Inputs`, `OptInputs`, `Outputs` |
-| make a parameter holder | `TA_ParamHolderAlloc` | `FuncId::new_call` | `FuncInfo.newCall` | `FuncInfo.CreateCall` |
-| bind an input | `TA_SetInputParamRealPtr`, `TA_SetInputParamIntegerPtr`, `TA_SetInputParamPricePtr` | `set_input`, `set_int_input`, `set_price_input` | `setInput`, `setPriceInput` | `SetInput`, `SetPriceInput` |
-| bind an optional parameter | `TA_SetOptInputParamInteger`, `TA_SetOptInputParamReal` | `set_opt_input` | `setOptInput` | `SetOptInput` |
-| bind an output | `TA_SetOutputParamRealPtr`, `TA_SetOutputParamIntegerPtr` | `set_output`, `set_int_output` | `setOutput` | `SetOutput` |
-| call | `TA_CallFunc` | `call` | `call` | `Call`, `TryCall` |
-| lookback | `TA_GetLookback` | `lookback` | `lookback` | `Lookback` |
-| display shift of one output | `TA_GetDisplayShift` | `display_shift` | `displayShift` | `DisplayShift` |
-| the metadata as one XML document | `TA_FunctionDescriptionXML()` | `function_description_xml()` | `FunctionDescription.xml()` | `FunctionDescription.Xml` |
-| release | `TA_ParamHolderFree`, `TA_GroupTableFree`, `TA_FuncTableFree` | none | none | none |
+| | C `ta_abstract.h` | Rust `ta_lib::abstract_api` | Java `io.github.talib.metadata` | C# `TALib.Metadata` | TypeScript `ta-lib/metadata` |
+|---|---|---|---|---|---|
+| look up by name | `TA_GetFuncHandle` | `get_func_handle`, `get_func_handle_rc` | `Functions.byName` | `FunctionCatalog.Default[name]`, `TryGet` | `Functions.byName` |
+| enumerate the functions | `TA_ForEachFunc` | `FUNCS`, `for_each_func` | `Functions.all()` | `FunctionCatalog.Default` | `Functions.all()` |
+| enumerate the groups | `TA_GroupTableAlloc` | `groups()` | `Functions.groups()` | `FunctionCatalog.Groups` | `Functions.groups()` |
+| functions of one group | `TA_FuncTableAlloc` | `funcs_in_group` | filter `Functions.all()` on `group()` | `InGroup` | filter `Functions.all()` on `group` |
+| function descriptor | `TA_GetFuncInfo` | `FuncId::info` | `FuncInfo` | `FuncInfo` | `FuncInfo` |
+| input, optional parameter, output descriptors | `TA_GetInputParameterInfo`, `TA_GetOptInputParameterInfo`, `TA_GetOutputParameterInfo` | `inputs`, `opt_inputs`, `outputs` | `inputs()`, `optInputs()`, `outputs()` | `Inputs`, `OptInputs`, `Outputs` | `inputs`, `optInputs`, `outputs` |
+| make a parameter holder | `TA_ParamHolderAlloc` | `FuncId::new_call` | `FuncInfo.newCall` | `FuncInfo.CreateCall` | `FuncInfo.newCall` |
+| bind an input | `TA_SetInputParamRealPtr`, `TA_SetInputParamIntegerPtr`, `TA_SetInputParamPricePtr` | `set_input`, `set_int_input`, `set_price_input` | `setInput`, `setPriceInput` | `SetInput`, `SetPriceInput` | `setInput`, `setPriceInput` |
+| bind an optional parameter | `TA_SetOptInputParamInteger`, `TA_SetOptInputParamReal` | `set_opt_input` | `setOptInput` | `SetOptInput` | `setOptInput` |
+| bind an output | `TA_SetOutputParamRealPtr`, `TA_SetOutputParamIntegerPtr` | `set_output`, `set_int_output` | `setOutput` | `SetOutput` | `setOutput` |
+| call | `TA_CallFunc` | `call` | `call` | `Call`, `TryCall` | `call` |
+| lookback | `TA_GetLookback` | `lookback` | `lookback` | `Lookback` | `lookback` |
+| display shift of one output | `TA_GetDisplayShift` | `display_shift` | `displayShift` | `DisplayShift` | `displayShift` |
+| the metadata as one XML document | `TA_FunctionDescriptionXML()` | `function_description_xml()` | `FunctionDescription.xml()` | `FunctionDescription.Xml` | `FunctionDescription.xml()` |
+| release | `TA_ParamHolderFree`, `TA_GroupTableFree`, `TA_FuncTableFree` | none | none | none | none |
 
-The calls from binding to the display shift are made on the holder: C's `TA_ParamHolder`, and `ParamHolder` in Rust, Java and C#. In Rust, Java and C# a holder is made on a `Core` and computes under its settings ([rT1](/spec/settings-threads/#rt1)); Java's and C#'s holder takes the default `Core` when none is given. C#'s `TryCall` returns the code where `Call` throws. The holder's lookback and display shift need no input or output bound.
+The calls from binding to the display shift are made on the holder: C's `TA_ParamHolder`, and `ParamHolder` in Rust, Java, C# and TypeScript. In Rust, Java, C# and TypeScript a holder is made on a `Core` and computes under its settings ([rT1](/spec/settings-threads/#rt1)); Java's, C#'s and TypeScript's holder takes the default `Core` when none is given. C#'s `TryCall` returns the code where `Call` throws. The holder's lookback and display shift need no input or output bound.
 
 What a descriptor holds:
 
@@ -49,7 +49,7 @@ What a descriptor holds:
 | optional parameter | name, display name, hint, [flags](/spec/abstract/#flags-display), kind, default, and its accepted values ([rP2](/spec/inputs-outputs/#rp2)): for a range its bounds, a suggested sweep (start, end, increment) and, for a real range, a display precision; for a list its named values |
 | output | name, kind, [flags](/spec/abstract/#flags) |
 
-A slot is one input, one optional parameter or one output. A bind call names it by its position among the function's inputs, optional parameters or outputs, from 0. A price input is one input, whatever number of series it consumes. An MA-type parameter is an integer list of the MA types. The kind types are `TA_InputParameterType`, `TA_OptInputParameterType` and `TA_OutputParameterType` in C; `InputType`, `OptInputType` and `OutputType` in Rust and Java; `InputKind`, `OptInputDomain` and `OutputKind` in C#.
+A slot is one input, one optional parameter or one output. A bind call names it by its position among the function's inputs, optional parameters or outputs, from 0. A price input is one input, whatever number of series it consumes. An MA-type parameter is an integer list of the MA types. The kind types are `TA_InputParameterType`, `TA_OptInputParameterType` and `TA_OutputParameterType` in C; `InputType`, `OptInputType` and `OutputType` in Rust, Java and TypeScript; `InputKind`, `OptInputDomain` and `OutputKind` in C#.
 
 ## Rules {#rules}
 
@@ -57,13 +57,13 @@ A slot is one input, one optional parameter or one output. A bind call names it 
 
 <a id="ra2"></a>**rA2** A failed bind call leaves the parameter holder as it found it.
 
-<a id="ra3"></a>**rA3** A misuse of a parameter holder (an unbound or mistyped argument, a bind index that names no slot, a holder the Abstract API did not make), or of C's lookups and tables, returns `TA_BAD_PARAM` or a code below, unspecified which. A call that fails for the state of its holder did not run, and its code is one of the [codes below](/spec/abstract/#codes), so it cannot be mistaken for the function's own result. In Java and C# the exception is a `TALibArgumentException` ([failures](/spec/#failures)).
+<a id="ra3"></a>**rA3** A misuse of a parameter holder (an unbound or mistyped argument, a bind index that names no slot, a holder the Abstract API did not make), or of C's lookups and tables, returns `TA_BAD_PARAM` or a code below, unspecified which. A call that fails for the state of its holder did not run, and its code is one of the [codes below](/spec/abstract/#codes), so it cannot be mistaken for the function's own result. In Java and C# the exception is a `TALibArgumentException`; in TypeScript, a `TALibError` carrying the code ([failures](/spec/#failures)).
 
-<a id="ra4"></a>**rA4** A lookup of a function by name ignores the case of ASCII letters. An unknown name returns `TA_FUNC_NOT_FOUND` in C and from Rust's `get_func_handle_rc`, `None` from Rust's `get_func_handle`, `null` in Java, and in C# a `KeyNotFoundException` from the indexer and `false` from `TryGet`. An empty name returns `TA_BAD_PARAM` in C and from `get_func_handle_rc`, as does an absent one in C.
+<a id="ra4"></a>**rA4** A lookup of a function by name ignores the case of ASCII letters. An unknown name returns `TA_FUNC_NOT_FOUND` in C and from Rust's `get_func_handle_rc`, `None` from Rust's `get_func_handle`, `null` in Java, `undefined` in TypeScript, and in C# a `KeyNotFoundException` from the indexer and `false` from `TryGet`. An empty name returns `TA_BAD_PARAM` in C and from `get_func_handle_rc`, as does an absent one in C.
 
 <a id="ra5"></a>**rA5** An optional parameter left unbound takes the function's documented default, as the default sentinel does in the typed call ([rP3](/spec/inputs-outputs/#rp3)).
 
-<a id="ra6"></a>**rA6** Every function is described and can be called through the Abstract API, in the four languages.
+<a id="ra6"></a>**rA6** Every function is described and can be called through the Abstract API, in every language.
 
 <a id="ra7"></a>**rA7** A [flag](/spec/abstract/#flags) has the same bit value in each language that has it.
 
@@ -84,19 +84,19 @@ Besides the codes a function call returns ([return codes](/spec/errors/#return-c
 
 ## Run-time information {#runtime-info}
 
-One call answers a key with an integer that describes the library in this process: C's `TA_GetRuntimeInfo` (`ta_common.h`), Rust's `get_runtime_info`, Java's `RuntimeInfo.get`, C#'s `RuntimeInfo.Get` and `TryGet`. It reports state and promises no output value and no speed.
+One call answers a key with an integer that describes the library in this process: C's `TA_GetRuntimeInfo` (`ta_common.h`), Rust's `get_runtime_info`, Java's `RuntimeInfo.get`, C#'s `RuntimeInfo.Get` and `TryGet`, TypeScript's `getRuntimeInfo`. It reports state and promises no output value and no speed.
 
-Every key is answered in the four languages, and the answer can differ with the language and the platform. An unknown key returns `TA_BAD_PARAM` ([failures](/spec/#failures)); C#'s `TryGet` returns `false`.
+Every key is answered in every language, and the answer can differ with the language and the platform. An unknown key returns `TA_BAD_PARAM` ([failures](/spec/#failures)); C#'s `TryGet` returns `false`.
 
 | Key | Meaning |
 |---|---|
 | `vmath.transcendental` | The vectorized math library behind the batch call of functions such as `SIN`, `EXP` and `LN`: 0 none, 1 Apple's vForce. |
-| `count.initialize` | How many times `TA_Initialize` was called in this process. 0 in Rust, Java and C#. |
-| `count.shutdown` | How many times `TA_Shutdown` was called in this process. 0 in Rust, Java and C#. |
+| `count.initialize` | How many times `TA_Initialize` was called in this process. 0 in Rust, Java, C# and TypeScript. |
+| `count.shutdown` | How many times `TA_Shutdown` was called in this process. 0 in Rust, Java, C# and TypeScript. |
 
 ## Flags {#flags}
 
-A function, an input, an optional parameter and an output each carry one word of flags, a bitmask. From these a program reads what it would otherwise hard-code per function: whether a function can write NaN or ±Inf or assumes positive input, which series a price input consumes, how a chart draws an output, and which values a pattern output writes. The tables below list every flag under its C name; [Rust, Java and C# spell them](/spec/#flag-names) in their own flag types. A flag's row links any rule that depends on it.
+A function, an input, an optional parameter and an output each carry one word of flags, a bitmask. From these a program reads what it would otherwise hard-code per function: whether a function can write NaN or ±Inf or assumes positive input, which series a price input consumes, how a chart draws an output, and which values a pattern output writes. The tables below list every flag under its C name; [Rust, Java, C# and TypeScript spell them](/spec/#flag-names) in their own flag types. A flag's row links any rule that depends on it.
 
 ### Capability {#flags-capability}
 
@@ -106,7 +106,7 @@ What a function or an output supports.
 |---|---|
 | `TA_FUNC_FLG_STREAM` | The function has a streaming API ([rH9](/spec/streaming/#rh9)). |
 | `TA_FUNC_FLG_CANDLESTICK` | A `CDL*` candlestick pattern function ([rL7](/spec/lookback/#rl7), [rW7](/spec/inputs-outputs/#rw7)). |
-| `TA_OUT_NULLABLE` | Deprecated: no output is optional. No function sets it. |
+| `TA_OUT_NULLABLE` | Deprecated: no output is optional. No function sets it. TypeScript has no member for it. |
 
 ### Price components {#flags-price}
 
@@ -120,7 +120,7 @@ The series a price input consumes. The price bind call requires each of them and
 | `TA_IN_PRICE_CLOSE` | The close. |
 | `TA_IN_PRICE_VOLUME` | The volume. |
 | `TA_IN_PRICE_OPENINTEREST` | The open interest. No function sets it. |
-| `TA_IN_PRICE_TIMESTAMP` | A timestamp. No function sets it, and no setter takes one. Java and C# have no member for it. |
+| `TA_IN_PRICE_TIMESTAMP` | A timestamp. No function sets it, and no setter takes one. Java, C# and TypeScript have no member for it. |
 
 ### Numerical property {#flags-numerical}
 

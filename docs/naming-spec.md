@@ -32,22 +32,22 @@ messages quote it, and the website and generated docs print it.
 
 Each backend uses one fold per kind of identifier: Rust snake for functions and
 UpperCamel for types, Java lowerCamel for methods and UpperCamel for types, C#
-UpperCamel for both.
+UpperCamel for both, TypeScript as Java with free functions in place of methods.
 
 ## 2. Per-function surface
 
-| surface | C (frozen) | Rust | Java | C# |
-|---|---|---|---|---|
-| batch | `TA_SMA` | `sma` | `sma` | `Sma` |
-| lookback | `TA_SMA_Lookback` | `sma_lookback` | `smaLookback` | `SmaLookback` |
-| display shift | `TA_SMA_DisplayShift` | `sma_display_shift` | `smaDisplayShift` | `SmaDisplayShift` |
-| numerics tier (not public) | body of `TA_SMA` | `sma_impl` | `smaImpl` | `SmaImpl` |
-| opener | `TA_SMA_Open` | `sma_open` | `smaOpen` | `SmaOpen` |
-| filling opener | `TA_SMA_OpenAndFill` | `sma_open_and_fill` | `smaOpenAndFill` | `SmaOpenAndFill` |
-| open seams (not public) | `TA_SMA_OpenImpl`, `TA_SMA_StepImpl`, `TA_SMA_ReleaseImpl` | `sma_open_impl`, `sma_step_impl` | `smaOpenImpl`, `smaOpenInternal`, `smaStepImpl` | `SmaOpenImpl`, `SmaOpenInternal`, `SmaStepImpl` |
-| handle type | `TA_SMA_Stream` | `SmaStream` | `Core.SmaStream` | `Core.SmaStream` |
-| handle methods | `TA_SMA_Update`, `_Peek`, `_Value`, `_OutRange`, `_Advance`, `_Clone`, `_Close` | `update`, `peek`, `value`, `out_range`, `advance`, derived `Clone` | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Advance`, `Clone`; properties `Value`, `OutRange` |
-| multi-output carrier | out-parameters | `(f64, f64, f64)` | `AccbandsOut` (`realUpperBand`) | `AccbandsValue` (`RealUpperBand`) |
+| surface | C (frozen) | Rust | Java | C# | TypeScript |
+|---|---|---|---|---|---|
+| batch | `TA_SMA` | `sma` | `sma` | `Sma` | `sma` |
+| lookback | `TA_SMA_Lookback` | `sma_lookback` | `smaLookback` | `SmaLookback` | `smaLookback` |
+| display shift | `TA_SMA_DisplayShift` | `sma_display_shift` | `smaDisplayShift` | `SmaDisplayShift` | `smaDisplayShift` |
+| numerics tier (not public) | body of `TA_SMA` | `sma_impl` | `smaImpl` | `SmaImpl` | `smaImpl` |
+| opener | `TA_SMA_Open` | `sma_open` | `smaOpen` | `SmaOpen` | `smaOpen` |
+| filling opener | `TA_SMA_OpenAndFill` | `sma_open_and_fill` | `smaOpenAndFill` | `SmaOpenAndFill` | `smaOpenAndFill` |
+| open seams (not public) | `TA_SMA_OpenImpl`, `TA_SMA_StepImpl`, `TA_SMA_ReleaseImpl` | `sma_open_impl`, `sma_step_impl` | `smaOpenImpl`, `smaOpenInternal`, `smaStepImpl` | `SmaOpenImpl`, `SmaOpenInternal`, `SmaStepImpl` | `smaOpenImpl`, `smaOpenInternal`, `smaStepImpl` |
+| handle type | `TA_SMA_Stream` | `SmaStream` | `Core.SmaStream` | `Core.SmaStream` | `SmaStream` |
+| handle methods | `TA_SMA_Update`, `_Peek`, `_Value`, `_OutRange`, `_Advance`, `_Clone`, `_Close` | `update`, `peek`, `value`, `out_range`, `advance`, derived `Clone` | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Advance`, `Clone`; properties `Value`, `OutRange` | `update`, `peek`, `value`, `outRange`, `advance`, `clone` |
+| multi-output carrier | out-parameters | `(f64, f64, f64)` | `AccbandsOut` (`realUpperBand`) | `AccbandsValue` (`RealUpperBand`) | `AccbandsOut` (`realUpperBand`) |
 
 The carrier row looks inconsistent and is not. **The suffix names the construct,
 not the function**: `<N>Out` is a caller-owned object the call writes into,
@@ -56,33 +56,33 @@ not the function**: `<N>Out` is a caller-owned object the call writes into,
 until the next call, while C#'s is a `readonly record struct` the caller may
 keep, compare and key on.
 
-Only Java needs the sink: a returned object allocates on the heap there, while
-C#'s struct and Rust's tuple do not.
+Only Java and TypeScript need the sink: a returned object allocates on the heap
+there, while C#'s struct and Rust's tuple do not.
 
 ## 3. Shared types
 
-| type | C (frozen) | Rust | Java | C# |
-|---|---|---|---|---|
-| function holder | (globals) | `Core` | `Core` | `Core` |
-| builder | `TA_SetUnstablePeriod`, `TA_SetCandleSettings` | `CoreBuilder`, `unstable_period`, `candle_setting`, `restore_candle_default`, `build` | `CoreBuilder`, `unstablePeriod`, `candleSetting`, `restoreCandleDefault`, `build` | `CoreBuilder`, `UnstablePeriod`, `CandleSetting`, `RestoreCandleDefault`, `Build` |
-| output range | `outBegIdx`, `outNBElement` out-params | `OutRange { beg_idx, count }`, `EMPTY`, `is_empty` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty` | `OutRange { BegIdx, Count }`, `Empty`, `IsEmpty` |
-| candle setting | none: the arguments of `TA_SetCandleSettings` | `CandleSetting { range_type, avg_period, factor }` | `CandleSetting`, `rangeType()`, `avgPeriod()`, `factor()` | `CandleSetting`, `RangeType`, `AvgPeriod`, `Factor` |
-| enum type names | `TA_RetCode`, `TA_MAType`, `TA_FuncUnstId`, `TA_CandleSettingType`, `TA_RangeType` | `RetCode`, `MAType`, `FuncUnstId`, `CandleSettingType`, `RangeType` | same | same |
+| type | C (frozen) | Rust | Java | C# | TypeScript |
+|---|---|---|---|---|---|
+| function holder | (globals) | `Core` | `Core` | `Core` | none: one module per function |
+| builder | `TA_SetUnstablePeriod`, `TA_SetCandleSettings` | `CoreBuilder`, `unstable_period`, `candle_setting`, `restore_candle_default`, `build` | `CoreBuilder`, `unstablePeriod`, `candleSetting`, `restoreCandleDefault`, `build` | `CoreBuilder`, `UnstablePeriod`, `CandleSetting`, `RestoreCandleDefault`, `Build` | `CoreBuilder`, `unstablePeriod`, `candleSetting`, `restoreCandleDefault`, `build` |
+| output range | `outBegIdx`, `outNBElement` out-params | `OutRange { beg_idx, count }`, `EMPTY`, `is_empty` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty` | `OutRange { BegIdx, Count }`, `Empty`, `IsEmpty` | `OutRange(begIdx, count)`, `EMPTY`, `isEmpty` |
+| candle setting | none: the arguments of `TA_SetCandleSettings` | `CandleSetting { range_type, avg_period, factor }` | `CandleSetting`, `rangeType()`, `avgPeriod()`, `factor()` | `CandleSetting`, `RangeType`, `AvgPeriod`, `Factor` | `CandleSetting`, `rangeType`, `avgPeriod`, `factor` |
+| enum type names | `TA_RetCode`, `TA_MAType`, `TA_FuncUnstId`, `TA_CandleSettingType`, `TA_RangeType` | `RetCode`, `MAType`, `FuncUnstId`, `CandleSettingType`, `RangeType` | same | same | same |
 
 C's word carries over where it is idiomatic in the target and is replaced where
 it is not: `outBegIdx` gives `begIdx`, `outNBElement` gives `count`.
 
-`MAType` keeps its two capitals in all three managed backends; see E5.
+`MAType` keeps its two capitals in every managed backend; see E5.
 
 ## 4. Enum members
 
-| enum | C (frozen) | Rust | Java | C# |
-|---|---|---|---|---|
-| `RetCode` | `TA_SUCCESS`, `TA_BAD_PARAM` | `Success`, `BadParam` | `SUCCESS`, `BAD_PARAM` | `Success`, `BadParam` |
-| `CandleSettingType` | `TA_BodyLong` | `BodyLong` | `BODY_LONG` | `BodyLong` |
-| `RangeType` | `TA_RangeType_RealBody` | `RealBody` | `REAL_BODY` | `RealBody` |
-| `MAType` | `TA_MAType_SMA` | `SMA` (E2) | `SMA` | `SMA` (E2) |
-| `FuncUnstId` | `TA_FUNC_UNST_HT_DCPERIOD` | `HT_DCPERIOD` (E2) | `HT_DCPERIOD` | `HT_DCPERIOD` (E2) |
+| enum | C (frozen) | Rust | Java | C# | TypeScript |
+|---|---|---|---|---|---|
+| `RetCode` | `TA_SUCCESS`, `TA_BAD_PARAM` | `Success`, `BadParam` | `SUCCESS`, `BAD_PARAM` | `Success`, `BadParam` | `SUCCESS`, `BAD_PARAM` |
+| `CandleSettingType` | `TA_BodyLong` | `BodyLong` | `BODY_LONG` | `BodyLong` | `BODY_LONG` |
+| `RangeType` | `TA_RangeType_RealBody` | `RealBody` | `REAL_BODY` | `RealBody` | `REAL_BODY` |
+| `MAType` | `TA_MAType_SMA` | `SMA` (E2) | `SMA` | `SMA` (E2) | `SMA` |
+| `FuncUnstId` | `TA_FUNC_UNST_HT_DCPERIOD` | `HT_DCPERIOD` (E2) | `HT_DCPERIOD` | `HT_DCPERIOD` (E2) | `HT_DCPERIOD` |
 
 The two function-keyed enums keep the canonical spelling everywhere, Rust's
 `FuncId` with them: their members are the published metadata strings, down to
@@ -95,24 +95,24 @@ their enum rather than splitting it.
 
 ## 5. Constants
 
-| constant | C (frozen) | Rust | Java | C# |
-|---|---|---|---|---|
-| defaults and bounds | `TA_REAL_DEFAULT`, `TA_INTEGER_DEFAULT`, `TA_INDEX_MAX` | `Core::REAL_DEFAULT`, `INTEGER_DEFAULT`, `INDEX_MAX` | `Core.REAL_DEFAULT`, `INTEGER_DEFAULT`, `INDEX_MAX` | `RealDefault`, `IntegerDefault`, `IndexMax` |
+| constant | C (frozen) | Rust | Java | C# | TypeScript |
+|---|---|---|---|---|---|
+| defaults and bounds | `TA_REAL_DEFAULT`, `TA_INTEGER_DEFAULT`, `TA_INDEX_MAX` | `Core::REAL_DEFAULT`, `INTEGER_DEFAULT`, `INDEX_MAX` | `Core.REAL_DEFAULT`, `INTEGER_DEFAULT`, `INDEX_MAX` | `RealDefault`, `IntegerDefault`, `IndexMax` | `Core.REAL_DEFAULT`, `INTEGER_DEFAULT`, `INDEX_MAX` |
 
-Screaming snake is the Java and Rust rule and the C inheritance; .NET spells
+Screaming snake is the Java, TypeScript and Rust rule and the C inheritance; .NET spells
 constants PascalCase. A bound puts the noun first, as `TA_REAL_MAX` and
 `TA_INTEGER_MAX` do.
 
 ## 6. Failures
 
-| surface | C (frozen) | Rust | Java | C# |
-|---|---|---|---|---|
-| carrier | `TA_RetCode` return | `Result<_, RetCode>` | thrown | thrown |
-| marker | n/a | n/a | `TALibFailure` | `ITALibFailure` |
-| bad argument | `TA_BAD_PARAM` | `RetCode::BadParam` | `TALibArgumentException` | `TALibArgumentException` |
-| bad index | `TA_OUT_OF_RANGE_*` | `RetCode::OutOfRange*` | `TALibIndexException` | `TALibArgumentOutOfRangeException`, except rU4 ([failures](https://ta-lib.org/spec/#failures)) |
-| bad state | n/a | n/a | `TALibStateException` | `TALibInvalidOperationException` |
-| short history | `TA_INSUFFICIENT_HISTORY` | `RetCode::InsufficientHistory` | `InsufficientHistoryException` | `InsufficientHistoryException` |
+| surface | C (frozen) | Rust | Java | C# | TypeScript |
+|---|---|---|---|---|---|
+| carrier | `TA_RetCode` return | `Result<_, RetCode>` | thrown | thrown | thrown |
+| marker | n/a | n/a | `TALibFailure` | `ITALibFailure` | n/a: one class, `TALibError` |
+| bad argument | `TA_BAD_PARAM` | `RetCode::BadParam` | `TALibArgumentException` | `TALibArgumentException` | `code` `'TA_BAD_PARAM'` |
+| bad index | `TA_OUT_OF_RANGE_*` | `RetCode::OutOfRange*` | `TALibIndexException` | `TALibArgumentOutOfRangeException`, except rU4 ([failures](https://ta-lib.org/spec/#failures)) | `code` `'TA_OUT_OF_RANGE_*'` |
+| bad state | n/a | n/a | `TALibStateException` | `TALibInvalidOperationException` | `code` `'TA_INTERNAL_ERROR'` |
+| short history | `TA_INSUFFICIENT_HISTORY` | `RetCode::InsufficientHistory` | `InsufficientHistoryException` | `InsufficientHistoryException` | `code` `'TA_INSUFFICIENT_HISTORY'` |
 
 Rule: an exception type is named after the platform base type it extends, so
 Java's `TALibIndexException` and C#'s `TALibArgumentOutOfRangeException` are the
@@ -123,21 +123,25 @@ The prefix is `TALib`, matching the C# namespace and assembly and both standard
 libraries' own `IOException`: a two-letter acronym, in an exception type, inside
 a namespace named by the same acronym.
 
+TypeScript throws one class, `TALibError`, and names the failure in its `code`,
+C's spelling as a string: a `code` match survives a second copy of the package
+or a second realm, where `instanceof` does not.
+
 ## 7. Metadata tier
 
-| surface | C (frozen) | Rust | Java | C# |
-|---|---|---|---|---|
-| lookup | `TA_GetFuncHandle` | `get_func_handle` | `Functions.byName` | `FunctionCatalog.Default[name]` |
-| enumerate | `TA_ForEachFunc` | `for_each_func`, `FUNCS` | `Functions.all`, `Functions.groups` | `FunctionCatalog.Default` as `IReadOnlyList`, `InGroup` |
-| holder | `TA_ParamHolder` | `ParamHolder` | `ParamHolder` | `ParamHolder` |
-| set input | `TA_SetInputParamRealPtr` | `set_input` | `setInput` | `SetInput` |
-| set parameter | `TA_SetOptInputParamInteger` | `set_opt_input` | `setOptInput` | `SetOptInput` |
-| set output | `TA_SetOutputParamRealPtr` | `set_output` | `setOutput` | `SetOutput` |
-| lookback | `TA_GetLookback` | `lookback` | `lookback` | `Lookback` |
-| display shift | `TA_GetDisplayShift` | `display_shift` | `displayShift` | `DisplayShift` |
-| invoke | `TA_CallFunc` | `call` | `call` | `Call`, `TryCall` |
-| descriptor | `TA_FuncInfo` | `FuncInfo` | `FuncInfo` | `FuncInfo` |
-| flags | `TA_FuncFlags`, `TA_InputFlags` | `FuncFlags`, `InputFlags` | `FuncFlags`, `InputFlags` | `FuncFlags` |
+| surface | C (frozen) | Rust | Java | C# | TypeScript |
+|---|---|---|---|---|---|
+| lookup | `TA_GetFuncHandle` | `get_func_handle` | `Functions.byName` | `FunctionCatalog.Default[name]` | `Functions.byName` |
+| enumerate | `TA_ForEachFunc` | `for_each_func`, `FUNCS` | `Functions.all`, `Functions.groups` | `FunctionCatalog.Default` as `IReadOnlyList`, `InGroup` | `Functions.all`, `Functions.groups` |
+| holder | `TA_ParamHolder` | `ParamHolder` | `ParamHolder` | `ParamHolder` | `ParamHolder` |
+| set input | `TA_SetInputParamRealPtr` | `set_input` | `setInput` | `SetInput` | `setInput` |
+| set parameter | `TA_SetOptInputParamInteger` | `set_opt_input` | `setOptInput` | `SetOptInput` | `setOptInput` |
+| set output | `TA_SetOutputParamRealPtr` | `set_output` | `setOutput` | `SetOutput` | `setOutput` |
+| lookback | `TA_GetLookback` | `lookback` | `lookback` | `Lookback` | `lookback` |
+| display shift | `TA_GetDisplayShift` | `display_shift` | `displayShift` | `DisplayShift` | `displayShift` |
+| invoke | `TA_CallFunc` | `call` | `call` | `Call`, `TryCall` | `call` |
+| descriptor | `TA_FuncInfo` | `FuncInfo` | `FuncInfo` | `FuncInfo` | `FuncInfo` |
+| flags | `TA_FuncFlags`, `TA_InputFlags` | `FuncFlags`, `InputFlags` | `FuncFlags`, `InputFlags` | `FuncFlags` | `FuncFlags`, `InputFlags` |
 
 This is the one area where the backends could disagree about *words*, not
 casing. The tier exists to mirror C, so it takes C's words and recases them:
@@ -150,17 +154,17 @@ the managed backends have a catalog object, so `Functions` and `FunctionCatalog`
 keep their own accessors.
 
 Out of scope here: C# models the parameter domains as a record hierarchy
-(`OptInputDomain`, `InputKind`) where Rust and Java use enums (`OptInputType`,
-`InputType`). That is a shape, and a naming specification does not decide it.
+(`OptInputDomain`, `InputKind`) where Rust, Java and TypeScript use enumerations
+(`OptInputType`, `InputType`). That is a shape, and a naming specification does not decide it.
 
 ## 8. Parameter names
 
-| surface | C (frozen) | Rust | Java | C# |
-|---|---|---|---|---|
-| index range | `startIdx`, `endIdx` | `startIdx`, `endIdx` (E1) | same | same |
-| inputs | `inReal`, `inHigh`, `inClose` | same (E1) | same | same |
-| parameters | `optInTimePeriod` | same (E1) | same | same |
-| outputs | `outReal`, `outInteger`, `outBegIdx`, `outNBElement` | `outReal` (E1) | same | same |
+| surface | C (frozen) | Rust | Java | C# | TypeScript |
+|---|---|---|---|---|---|
+| index range | `startIdx`, `endIdx` | `startIdx`, `endIdx` (E1) | same | same | same |
+| inputs | `inReal`, `inHigh`, `inClose` | same (E1) | same | same | same |
+| parameters | `optInTimePeriod` | same (E1) | same | same | same |
+| outputs | `outReal`, `outInteger`, `outBegIdx`, `outNBElement` | `outReal` (E1) | same | same | same |
 
 ## 9. Package identity
 
@@ -170,6 +174,7 @@ Out of scope here: C# models the parameter domains as a record hierarchy
 | Rust | crate `ta-lib`, lib target `ta_lib` |
 | Java | `io.github.ta-lib:ta-lib`, package `io.github.talib` |
 | C# | package `TA-Lib`, namespace and assembly `TALib`, `TALib.Metadata` |
+| TypeScript | npm `ta-lib`, entry points `ta-lib` and `ta-lib/metadata` |
 
 ## 10. Exceptions: idiom loses
 
@@ -180,12 +185,12 @@ none is inherited by default.
   not only identifiers: `OptInputInfo::param_name` carries `optInTimePeriod` and
   documents itself as "the parameter's name in the generated signature", and the
   XML description publishes the same strings. Renaming them per backend makes
-  that claim false in three backends out of four. Rust pays for this with
+  that claim false in every backend but C. Rust pays for this with
   `#![allow(non_snake_case)]`.
 - **E2. `MAType`, `FuncUnstId` and `FuncId` members keep the canonical function
   spelling** (`SMA`, `HT_DCPERIOD`, `UNUSED_1`): the same tokens are the
   published metadata strings, which is E3 in identifier position. Rust and C#
-  deviate from their conventions to do it; Java's agrees.
+  deviate from their conventions to do it; Java's and TypeScript's agree.
 - **E3. The canonical name stays upper-case wherever it is data**, whatever the
   method is called: `byName("RSI")`, the metadata tables, the XML, the error
   messages, rustdoc and javadoc prose, the website. A rename of the methods must
@@ -195,10 +200,10 @@ none is inherited by default.
   `OpenAndFill` / `Update` / `Peek` / `Value` / `OutRange` / `Advance` are the
   streaming verbs. Backends recase these; none of them invents a synonym.
 - **E5. A two-letter acronym keeps both capitals in identifiers**, so `MAType`
-  and `TALib` in all four backends, as `IOException` does in both standard
+  and `TALib` in every backend, as `IOException` does in both standard
   libraries. Canonical function names are not covered: they fold by section 1,
   which is why the `MA` and `HA` functions are `Ma` and `Ha`.
 
 Also deliberate, and cheaper to state than to re-litigate: file names track the
-canonical name (`src/ta_func/ta_SMA.c`, `Core_SMA.cs`, `sma.rs`) and are not part
+canonical name (`src/ta_func/ta_SMA.c`, `Core_SMA.cs`, `sma.rs`, `sma.ts`) and are not part
 of the API.

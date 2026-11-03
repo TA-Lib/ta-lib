@@ -1,15 +1,15 @@
 ---
 title: Errors
-description: "A rejected batch or stream call reports one code and writes no output, the same code in every language that can detect the fault: the codes a function call can return and the batch call's conditions, in C, Rust, Java and C#."
+description: "A rejected batch or stream call reports one code and writes no output, the same code in every language that can detect the fault: the codes a function call can return and the batch call's conditions, in C, Rust, Java, C# and TypeScript."
 ---
 
 *Part of TA-Lib's [specification](/spec/), a reference for AI-agent-driven integration.*
 
-The rules for what a rejected call reports, in C's spelling. Error handling written against one language maps onto the others ([rE2](/spec/errors/#re2)). How each code reaches a Rust, Java or C# caller is on the [hub](/spec/#failures).
+The rules for what a rejected call reports, in C's spelling. Error handling written against one language maps onto the others ([rE2](/spec/errors/#re2)). How each code reaches a Rust, Java, C# or TypeScript caller is on the [hub](/spec/#failures).
 
 ## The caller must {#caller}
 
-- <a id="branch-on-code"></a>**Branch on the code, never on a message.** Java's and C#'s exceptions carry a message for people; its text is not specified.
+- <a id="branch-on-code"></a>**Branch on the code, never on a message.** Java's, C#'s and TypeScript's exceptions carry a message for people; its text is not specified.
 - <a id="one-fault"></a>**Fix one fault at a time.** When a call breaks several conditions, which one it reports ([rE1](/spec/errors/#re1)) is not specified.
 - <a id="failed-range"></a>**In C, ignore the range after a failure.** `*outBegIdx` and `*outNBElement` are then unspecified. A handle out-parameter: [ownership](/spec/streaming/#ownership).
 - <a id="internal-band"></a>**In C, test internal errors as a range**, never `== TA_INTERNAL_ERROR` ([rB8](/spec/errors/#rb8)).
@@ -33,7 +33,7 @@ The Abstract API returns codes of its own: [Abstract API and Metadata](/spec/abs
 
 ## General rules
 
-<a id="re1"></a>**rE1** A rejected call reports exactly one code (in Java and C#, one exception) and stops.
+<a id="re1"></a>**rE1** A rejected call reports exactly one code (in Java, C# and TypeScript, one exception) and stops.
 
 <a id="re2"></a>**rE2** A call that breaks one condition of the batch or stream tables gets that condition's code from every language that can express and detect it.
 
@@ -51,9 +51,10 @@ The Abstract API returns codes of its own: [Abstract API and Metadata](/spec/abs
 | <a id="rb6"></a>**rB6** | Two outputs are the same buffer. | `TA_BAD_PARAM` | Rust (safe code) |
 | <a id="rb7"></a>**rB7** | A memory allocation failed. | `TA_ALLOC_ERR` (C only) | none |
 | <a id="rb8"></a>**rB8** | The library found an inconsistency in its own state. | `TA_INTERNAL_ERROR` + id | none |
+| <a id="rb9"></a>**rB9** | An index or an integer optional parameter is not a 32-bit integer (a fraction, NaN, ±Inf, or a value outside the `int` range), or a real optional parameter is not a number (a string, `null`, `undefined` or a boolean). | `TA_BAD_PARAM` | C, Rust, Java, C# |
 
-**rB4.** An input or output is absent when it is `NULL` in C, `null` or an empty array in Java, an empty slice in Rust, and an empty span in C# (a `null` array becomes one). An absent one is rejected even when the range produces no values ([rW2](/spec/inputs-outputs/#rw2)).
+**rB4.** An input or output is absent when it is `NULL` in C, `null` or an empty array in Java, an empty slice in Rust, an empty span in C# (a `null` array becomes one), and `null`, `undefined` or an empty array in TypeScript. An absent one is rejected even when the range produces no values ([rW2](/spec/inputs-outputs/#rw2)).
 
-**rB7.** Rust, Java and C# allocate through their runtime.
+**rB7.** Rust, Java, C# and TypeScript allocate through their runtime.
 
-**rB8.** Report it as a TA-Lib bug, with the number in C. C's `TA_SetRetCodeInfo` names every value from 5000 to 5999 `TA_INTERNAL_ERROR`, and a value that is not a `TA_RetCode` member `TA_UNKNOWN_ERR`. Rust, Java and C# report `TA_INTERNAL_ERROR` without an id.
+**rB8.** Report it as a TA-Lib bug, with the number in C. C's `TA_SetRetCodeInfo` names every value from 5000 to 5999 `TA_INTERNAL_ERROR`, and a value that is not a `TA_RetCode` member `TA_UNKNOWN_ERR`. Rust, Java, C# and TypeScript report `TA_INTERNAL_ERROR` without an id.

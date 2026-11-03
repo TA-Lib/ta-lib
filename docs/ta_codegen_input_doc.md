@@ -4,16 +4,17 @@ title: "ta_codegen Input: Documentation (<name>.md) Reference"
 
 # ta_codegen Input: Documentation (`<name>.md`) Reference
 
-> **Status.** Every function has a `<name>.md`, and `ta_codegen` renders it to four
-> targets: the **ta-lib.org** page (`backends/docs_site.rs` → `website/src/functions/`),
+> **Status.** Every function has a `<name>.md`, and `ta_codegen` renders it to the
+> **ta-lib.org** page (`backends/docs_site.rs` → `website/src/functions/`),
 > the **rustdoc** in the Rust crate (`backends/rust_doc.rs`, with a runnable doctest per
-> function), the **Javadoc** (`backends/java_doc.rs`) and the **C# XML doc**
-> (`backends/csharp_doc.rs`). The YAML numbers for optional inputs come from the shared
+> function), the **Javadoc** (`backends/java_doc.rs`), the **C# XML doc**
+> (`backends/csharp_doc.rs`) and the **TSDoc** in the npm package (`backends/ts_doc.rs`,
+> with examples that also run as generated tests). The YAML numbers for optional inputs come from the shared
 > `backends/doc_meta.rs`. `generate` rejects a `.md` whose `## Parameters` or `## Inputs`
 > are missing, malformed, or disagree with the YAML in name or order, one carrying a bare
 > URL, and one carrying an authored `## Implementation`. Not built: YAML facts injected into `## Inputs` /
 > `## Outputs`, a check of prose numbers against the YAML, a section-order check, a `.md`
-> canonicaliser, and the npm/TSDoc render. See the sibling references for the two other
+> canonicaliser. See the sibling references for the two other
 > input file kinds: [metadata](ta_codegen_input_yaml.md) and [code](ta_codegen_input_code.md).
 
 `<name>.md` is the **third sibling** in each `ta_codegen/input/<name>/` directory,
@@ -24,7 +25,8 @@ like every other backend — into each ecosystem's native format:
 - the **ta-lib.org** per-function page (VuePress, `website/src/functions/`),
 - **embedded rustdoc** in the generated Rust crate (docs.rs / IDE hover / offline `cargo doc`),
 - **Javadoc** and the **C# XML doc** on the generated `Core` methods,
-- later, **TSDoc** and the `ta_func_api.xml` description.
+- **TSDoc** on the generated TypeScript modules,
+- later, the `ta_func_api.xml` description.
 
 Documentation is **authored once**, then **embedded** into each package — never merely
 linked. (A crate whose docs just link to ta-lib.org shows nothing on hover, nothing
@@ -67,8 +69,8 @@ Numbers/ranges/defaults are **injected from YAML** at render — never restate t
 |---------|----------|---------|
 | `# <NAME>` | yes | H1 = the TA-Lib function name (e.g. `# RSI`). |
 | `## Summary` | yes | One prose block: what the function is + a brief intro **and** how to read its output. Interpretation is merged in — there is **no** separate `Interpretation` section. The page's meta description is the longest run of its leading sentences that fits in 155 characters, so keep the first sentence under 155 or it is cut mid-sentence with an ellipsis. Keep a name's initial (`W. Arms`) out of those characters, since the cut reads a capital after `. ` as a new sentence. |
-| `## Formula` | optional | A **brief, high-level** formula, only when the computation is expressible concisely. Omit for long detection lists (`CDL*`) or long DSP computations (`HT_*`) — that detail lives behind the Implementation source link. **Renders on ta-lib.org only**; the API doc targets link to that page in its place, so the formula may grow notation the four doc renderers could never agree on. |
-| `## Notes` | optional | Bullet list of ONLY variations / specification differences from the original indicator (e.g. rounding disabled, a pattern that does not verify the prior trend it classically assumes). **No** implementation mechanics or internal identifiers — those live behind the source link. **No** survey of how other libraries compute it: that is research for the spec issue, and it goes stale with their releases. The exception is Excel, NumPy, SciPy, Polars and R: stable references a reader can check against, so a bullet may say which of their functions computes the same value (`scipy.stats.skew(bias=False)`). **No TeX**: javadoc and the C# XML doc render markup, not notation, so a bullet carrying `$…$` or a `\command` is dropped from those two targets (per bullet — the others still ship). Notation goes in `## Formula`. |
+| `## Formula` | optional | A **brief, high-level** formula, only when the computation is expressible concisely. Omit for long detection lists (`CDL*`) or long DSP computations (`HT_*`) — that detail lives behind the Implementation source link. **Renders on ta-lib.org only**; the API doc targets link to that page in its place, so the formula may grow notation the doc renderers could never agree on. |
+| `## Notes` | optional | Bullet list of ONLY variations / specification differences from the original indicator (e.g. rounding disabled, a pattern that does not verify the prior trend it classically assumes). **No** implementation mechanics or internal identifiers — those live behind the source link. **No** survey of how other libraries compute it: that is research for the spec issue, and it goes stale with their releases. The exception is Excel, NumPy, SciPy, Polars and R: stable references a reader can check against, so a bullet may say which of their functions computes the same value (`scipy.stats.skew(bias=False)`). **No TeX**: javadoc, the C# XML doc and a TSDoc hover render markup, not notation, so a bullet carrying `$…$` or a `\command` is dropped from those three targets (per bullet — the others still ship). Notation goes in `## Formula`. |
 | `## Inputs` | yes | One short line per **input name**, matching the call signature in name and order (arity/type come from YAML). A `type: price` bundle is documented as its **components** (`inHigh`, `inLow`, `inClose`) — the bundle name is an `ta_abstract` descriptor, never a parameter. Enforced by `docs_site::validate_inputs`. |
 | `## Outputs` | yes | One short line per **output name**. |
 | `## Output Values` | if a pattern output | A `\| Value \| Meaning \|` table, one row per value the output's flags declare (plain integers, each once), and no other. A function with several pattern outputs gives each its own table under a `###` heading naming the output, in call order. The website links it to spec rule rW7. Enforced by `docs_site::validate_output_values`. |
@@ -96,7 +98,7 @@ the language wrappers. A new backend gets its row on every page without an edit 
 | **ta-lib.org** (VuePress) | `backends/docs_site.rs` → `website/src/functions/<name>.md` (scoped prune) | SEO front matter; the authored prose passed through; a `## Parameters` **table joining** `.md` prose with live YAML numbers (type, default, accepted values) plus one italic legend per enum type; the `## Properties` and `## Implementation` sections; `## See Also` linkified to sibling pages. A cross-function emitter regenerates the grouped `functions/index.md`. Inputs/Outputs remain authored bullets — see the status note. |
 | **crates.io / docs.rs** | inline `///` in the generated Rust (`backends/rust_doc.rs`) | Crate `//!` overview + quick-start doctest; per-function summary then the ta-lib.org deep link; `# Arguments` joining `.md` prose with YAML defaults/ranges; `# Errors`; a **generated runnable doctest** per function (synthetic data, defaults, asserts `Success` — run by `cargo test --doc`); `# See also` intra-doc links; `#[doc(alias)]` from Aliases. Plus Cargo.toml `description`/`license`/`homepage`/`keywords`/`categories` and a generated crate README.md. Prose is escaped for rustdoc (`[`, `<` outside code spans; list/quote markers at wrapped-line starts). |
 | **Java / .NET** | Javadoc / XML doc in the generated `Core` (`backends/java_doc.rs`, `backends/csharp_doc.rs`) | Summary, the ta-lib.org deep link, notes, the range contract; `@param` / `<param>` joining `.md` prose with YAML defaults/ranges; `@throws` / `<exception>`; `@see` / `<seealso>`. Prose is converted to the target's markup — javadoc renders HTML and the XML doc renders XML, so nothing authored may reach either as literal Markdown. |
-| **npm** (phase 4, when a JS/TS backend exists) | TSDoc `/** */` + README | Summary tier for IntelliSense; `package.json` `homepage`/`documentation` deep link. |
+| **npm** | TSDoc `/** */` in each generated module (`backends/ts_doc.rs`) | Summary, the ta-lib.org deep link, notes and the range contract on the batch function; `@param` joining `.md` prose with YAML defaults/ranges on every public function and stream method; `@returns`, `@throws`; an `@example` on the batch function, `Open` and `OpenAndFill`, each also emitted into `library/test/gen/`, where a test runs it verbatim against the packed package and checks what the block claims; `@see` links to the sibling pages. Prose passes through as Markdown with rustdoc's escaping, plus `@` outside code spans. |
 
 ## Verification & CI
 

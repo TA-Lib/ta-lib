@@ -1,6 +1,6 @@
 # Streaming (incremental) API
 
-Every function in the corpus streams, in C, Rust, Java and C#: a handle warmed
+Every function in the corpus streams, in C, Rust, Java, C# and TypeScript: a handle warmed
 on history, then one bar in and that bar's value out, bit-identical to what the
 batch tier reports for the same bar. The flag is per function (`stream` in the
 YAML `flags:`, surfaced as `TA_FUNC_FLG_STREAM`); everything else — the plan,
@@ -33,25 +33,25 @@ contract.
 
 **The handle reports its own `OutRange`** — `[begIdx, begIdx + count)`, the bars
 it has an output for, in the input series' coordinates: `TA_<N>_OutRange`,
-`out_range()`, `outRange()`, `OutRange`. It is the batch tier's range and lives
+`out_range()`, `outRange()` (Java, TypeScript), `OutRange`. It is the batch tier's range and lives
 in the batch tier's domain, so the last bar a handle can reach is `INDEX_MAX`:
 past it `update` and `advance` refuse, permanently. Which calls move
 it is rules rU4, rH5 and rH6 (https://ta-lib.org/spec/streaming/#ru4); how the
 refusal is spelled, https://ta-lib.org/spec/#failures.
 
 **`Advance` counts a bar the handle was not fed** — `TA_<N>_Advance`,
-`advance()`, `advance()`, `Advance()`, emitted per handle class in all four
-backends as `OutRange` is. It moves the count by one and nothing else, so
+`advance()`, `Advance()`, emitted per handle class in every backend as
+`OutRange` is. It moves the count by one and nothing else, so
 the skipped bar's output is the previous one, held. It exists because a rejected
 `update` changes nothing: a caller with a corrected value re-feeds the bar, and
 one without says so here rather than letting two handles on one feed drift a bar
-apart. The `INDEX_MAX` ceiling is what makes it fallible in the three
-backends where it was not already: C's has always returned a `TA_RetCode`, Rust's
-became `Result<(), RetCode>`, and Java's and C#'s stay `void` and throw.
+apart. The `INDEX_MAX` ceiling is what makes it fallible: C's returns a
+`TA_RetCode`, Rust's `Result<(), RetCode>`, and Java's, C#'s and TypeScript's are
+`void` and throw.
 
 Multi-output functions produce one value per output per update: an out-pointer
-each in C, a tuple in Rust, a caller-owned sink in Java, a `readonly record
-struct` in C#.
+each in C, a tuple in Rust, a caller-owned sink in Java and TypeScript, a
+`readonly record struct` in C#.
 
 ## Peek commits nothing, and copies nothing that grows
 
@@ -67,10 +67,10 @@ frame's own overhead is a fixed number of bytes whatever the period. No backend
 copies the struct either: a state field the frame writes becomes a local of the
 same name, seeded from the handle, and in C the handle is bound `const` so a
 frame that stored through it would not compile.
-Java and C# additionally offer the accumulators to the shadow
+Java, C# and TypeScript additionally offer the accumulators to the shadow
 rewrite, because a managed array field is a reference and localizing one means
 cloning it; a clone survives only where the rewrite refuses, which no shipped
-function makes it do. The offer is made from all four backends or from none —
+function makes it do. The offer is made from every backend or from none —
 bit-identity has no room for a per-backend difference in what the frame rewrites.
 
 No form writes the handle. That is what keeps Rust's `peek` a `&self` method and
@@ -225,6 +225,14 @@ double v = s.Update(bar);
 MacdValue m = macd.Update(bar);                 // readonly record struct
 ```
 
+```ts
+const s = smaOpen(history, 14, core);           // free function; core optional
+const v = s.update(bar);
+const t = s.clone();
+const mv = new MacdOut();                       // caller-owned sink, as Java
+m.update(bar, mv);
+```
+
 Shape rules that are not visible in those lines:
 
 - Java handles are `public static final` classes nested in `Core`
@@ -238,6 +246,11 @@ Shape rules that are not visible in those lines:
   else. Messages carry the stable prefix `"<NAME> open:"` / `"<NAME> update:"` /
   `"<NAME> peek:"`. https://ta-lib.org/spec/streaming/ is the rule-by-rule
   source.
+- TypeScript handles are classes exported from the function's own module
+  (`SmaStream` from `sma.ts`), opened by free functions that take the `Core`
+  last and optional. Every rejection throws `TALibError`, whose `code` names it.
+  The state fields are public and tagged `@internal`: the module-local step and
+  open frames must reach them, which neither `private` nor `#private` allows.
 - `value()` re-reads the value(s) at the last bar the stream counted, without
   recomputing.
 - A **multi-output Java** handle answers through a caller-owned sink —
@@ -252,19 +265,23 @@ Shape rules that are not visible in those lines:
   `-0.0`. Compare per component when bit identity is what you mean.
 - `clone()` is the universal deep copy — arrays cloned, sub-handles copied
   recursively, the `Core` reference shared — and it is the only path left that
-  copies a handle. The four backends agree on the word because their languages
-  do (`TA_<N>_Clone`, Rust's derived `Clone`, Java `clone()`, C# `Clone()`); a
+  copies a handle. The backends agree on the word because their languages do
+  (`TA_<N>_Clone`, Rust's derived `Clone`, Java and TypeScript `clone()`, C#
+  `Clone()`); a
   binding whose language names the concept otherwise uses its own word, the way
   every other verb here recases. In Python that is `copy()` plus `__copy__` —
   `clone` there reads as scikit-learn's, which returns the parameters WITHOUT
   the fitted state, the opposite of what a handle copy owes. Java's spelling
   needs no `Cloneable` and never calls `super.clone()`, which is what the
-  standard objection to Java `clone()` actually attaches to.
+  standard objection to Java `clone()` actually attaches to. TypeScript's copies
+  each typed array with `.slice()`.
 - `OpenAndFill` rejects output↔input and output↔output aliasing by reference
   equality in Java (arrays are identical or disjoint, so that is complete) and by
   `Span<T>.Overlaps` in C#, which additionally catches the PARTIAL overlap Java
   cannot express; a cross-typed `double`/`int` pair goes through
   `MemoryMarshal.AsBytes`, which is what makes the two comparable at all.
+  TypeScript compares the views' `buffer` and byte ranges, so it catches a partial
+  or cross-typed overlap too; `===` would miss two views of one buffer.
 - `Integer.MIN_VALUE` keeps its batch meaning — use the documented default — in a
   streaming open, and the gate asserts `open(MIN_VALUE) == open(default)`
   bitwise.
@@ -305,6 +322,9 @@ One rule holds in every language, each enforcing it its own way:
   multi-output `<N>Out` is the opposite case: a mutable buffer with no final
   fields, carrying no publication guarantee of its own, so give each thread its
   own sink.
+- **TypeScript** keeps settings per `Core` as Java does, and a stream captures
+  its `Core` at open. JavaScript shares no object between threads, so a handle
+  never meets a concurrent writer.
 
 ## How it fits ta_codegen
 
@@ -331,7 +351,7 @@ One rule holds in every language, each enforcing it its own way:
    callee's stream — the supported-arm set is derived from the callees' own
    stream flags at generation time) and `PeriodBank` (a bank of sub-streams
    advanced in lockstep, for a per-bar variable period).
-4. **The four emitters** (`backends/{c,rust,java,csharp}_stream.rs`) are IR-to-IR
+4. **The emitters** (`backends/{c,rust,java,csharp,ts}_stream.rs`) are IR-to-IR
    transforms feeding the existing statement/expression renderers, which is why
    bit-exactness holds by construction and survives batch-code evolution — the
    stream is re-derived from the same IR on every generate.

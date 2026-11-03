@@ -35,26 +35,27 @@ retired footnote leaves a gap, so a citation of `[4]` keeps its meaning.
 
 ### Lookback tier
 
-| Rule | Topic | C | Rust | Java | C# |
-|---|---|:---:|:---:|:---:|:---:|
-| rL2 | [rejection signal](https://ta-lib.org/spec/lookback/#rl2) | ✅ | ✅ | ✅ | ✅ |
-| rL3 | [agrees with batch and Open](https://ta-lib.org/spec/lookback/#rl3) | ✅ | ✅ | ✅ | ✅ |
-| rL4 | [agrees with C](https://ta-lib.org/spec/lookback/#rl4) | — | ✅ | ✅ | ✅ |
-| rL2 | [its only failure](https://ta-lib.org/spec/lookback/#rl2) | ✅ | ✅ | ✅ | ✅ |
-| rL11 | [display shift rejects what the lookback rejects](https://ta-lib.org/spec/lookback/#rl11) | ✅ | ✅ | ✅ | ✅ |
+| Rule | Topic | C | Rust | Java | C# | TypeScript |
+|---|---|:---:|:---:|:---:|:---:|:---:|
+| rL2 | [rejection signal](https://ta-lib.org/spec/lookback/#rl2) | ✅ | ✅ | ✅ | ✅ |  |
+| rL3 | [agrees with batch and Open](https://ta-lib.org/spec/lookback/#rl3) | ✅ | ✅ | ✅ | ✅ |  |
+| rL4 | [agrees with C](https://ta-lib.org/spec/lookback/#rl4) | — | ✅ | ✅ | ✅ |  |
+| rL2 | [its only failure](https://ta-lib.org/spec/lookback/#rl2) | ✅ | ✅ | ✅ | ✅ |  |
+| rL11 | [display shift rejects what the lookback rejects](https://ta-lib.org/spec/lookback/#rl11) | ✅ | ✅ | ✅ | ✅ |  |
 
 ### Batch tier
 
-| Rule | Topic | C | Rust | Java | C# |
-|---|---|:---:|:---:|:---:|:---:|
-| rB1 | [start index](https://ta-lib.org/spec/errors/#rb1) | ✅ | ✅ | ✅ | ✅ |
-| rB2 | [end index](https://ta-lib.org/spec/errors/#rb2) | ✅ | ✅ | ✅ | ✅ |
-| rB3 | [parameter value](https://ta-lib.org/spec/errors/#rb3) | ✅ | ✅ | ✅ | ✅ |
-| rB4 | [absent argument](https://ta-lib.org/spec/errors/#rb4) | ✅ | ✅<br>[1] | ✅ | ✅<br>[2] |
-| rB5 | [buffer length](https://ta-lib.org/spec/errors/#rb5) | ⚠️<br>[3] | ✅ | ✅ | ✅ |
-| rB6 | [one buffer, two outputs](https://ta-lib.org/spec/errors/#rb6) | ✅ | ✅ | ✅ | ✅ |
-| rB7 | [allocation failure](https://ta-lib.org/spec/errors/#rb7) | ✅<br>[24] | —<br>[24] | —<br>[24] | —<br>[24] |
-| rB8 | [internal error](https://ta-lib.org/spec/errors/#rb8) | ✅<br>[25] | —<br>[25] | ✅<br>[25] | ✅<br>[25] |
+| Rule | Topic | C | Rust | Java | C# | TypeScript |
+|---|---|:---:|:---:|:---:|:---:|:---:|
+| rB1 | [start index](https://ta-lib.org/spec/errors/#rb1) | ✅ | ✅ | ✅ | ✅ |  |
+| rB2 | [end index](https://ta-lib.org/spec/errors/#rb2) | ✅ | ✅ | ✅ | ✅ |  |
+| rB3 | [parameter value](https://ta-lib.org/spec/errors/#rb3) | ✅ | ✅ | ✅ | ✅ |  |
+| rB4 | [absent argument](https://ta-lib.org/spec/errors/#rb4) | ✅ | ✅<br>[1] | ✅ | ✅<br>[2] |  |
+| rB5 | [buffer length](https://ta-lib.org/spec/errors/#rb5) | ⚠️<br>[3] | ✅ | ✅ | ✅ |  |
+| rB6 | [one buffer, two outputs](https://ta-lib.org/spec/errors/#rb6) | ✅ | ✅ | ✅ | ✅ |  |
+| rB7 | [allocation failure](https://ta-lib.org/spec/errors/#rb7) | ✅<br>[24] | —<br>[24] | —<br>[24] | —<br>[24] | —<br>[24] |
+| rB8 | [internal error](https://ta-lib.org/spec/errors/#rb8) | ✅<br>[25] | —<br>[25] | ✅<br>[25] | ✅<br>[25] |  |
+| rB9 | [non-integer index or parameter](https://ta-lib.org/spec/errors/#rb9) | — | — | — | — |  |
 
 [1] Rust slices cannot be null: an empty one is the absent argument. What C
 writes through a pointer (the index/count pair, a stream handle) is returned
@@ -68,7 +69,7 @@ for a stream's history.
 
 [24] C: `testAllocationFailure` (`test_internals.c`) fails a real allocation,
 `TA_SMA_Open`'s ring, under an address-space limit; Linux without a sanitizer
-only. Rust, Java and C# allocate through their runtime and have no code for it.
+only. Rust, Java, C# and TypeScript allocate through their runtime and have no code for it.
 
 [25] C: `testInternalErrorReported` (`test_internals.c`) trips an Abstract API
 guard on a corrupted holder. No generated guard is reachable (rationale rB8),
@@ -77,15 +78,15 @@ tiers throw through. Rust's `RetCode::InternalError` has no field for an id.
 
 ### Stream opening
 
-| Rule | Topic | C | Rust | Java | C# |
-|---|---|:---:|:---:|:---:|:---:|
-| rS1 | [empty history](https://ta-lib.org/spec/streaming/#rs1) | ✅<br>[4] | ✅<br>[4] | ✅<br>[4] | ✅<br>[4] |
-| rS2 | [history too long](https://ta-lib.org/spec/streaming/#rs2) | ✅<br>[5] | ✅<br>[5] | ⚠️<br>[5] | ✅<br>[5] |
-| rS3 | [parameter value](https://ta-lib.org/spec/streaming/#rs3) | ✅ | ✅ | ✅ | ✅ |
-| rS4 | [absent argument](https://ta-lib.org/spec/streaming/#rs4) | ✅ | ✅<br>[1] | ✅ | ✅<br>[2] |
-| rS5 | [buffer length](https://ta-lib.org/spec/streaming/#rs5) | ⚠️<br>[3] | ✅ | ✅ | ✅ |
-| rS6 | [aliasing](https://ta-lib.org/spec/streaming/#rs6) | ✅ | —<br>[22] | ✅ | ✅ |
-| rS7 | [short history](https://ta-lib.org/spec/streaming/#rs7) | ✅ | ✅ | ✅ | ✅ |
+| Rule | Topic | C | Rust | Java | C# | TypeScript |
+|---|---|:---:|:---:|:---:|:---:|:---:|
+| rS1 | [empty history](https://ta-lib.org/spec/streaming/#rs1) | ✅<br>[4] | ✅<br>[4] | ✅<br>[4] | ✅<br>[4] |  |
+| rS2 | [history too long](https://ta-lib.org/spec/streaming/#rs2) | ✅<br>[5] | ✅<br>[5] | ⚠️<br>[5] | ✅<br>[5] |  |
+| rS3 | [parameter value](https://ta-lib.org/spec/streaming/#rs3) | ✅ | ✅ | ✅ | ✅ |  |
+| rS4 | [absent argument](https://ta-lib.org/spec/streaming/#rs4) | ✅ | ✅<br>[1] | ✅ | ✅<br>[2] |  |
+| rS5 | [buffer length](https://ta-lib.org/spec/streaming/#rs5) | ⚠️<br>[3] | ✅ | ✅ | ✅ |  |
+| rS6 | [aliasing](https://ta-lib.org/spec/streaming/#rs6) | ✅ | —<br>[22] | ✅ | ✅ |  |
+| rS7 | [short history](https://ta-lib.org/spec/streaming/#rs7) | ✅ | ✅ | ✅ | ✅ |  |
 
 The openers do not scan the history for non-finite values (rationale: finite
 inputs).
@@ -116,20 +117,20 @@ tier emits nothing.
 
 ### Stream advancing
 
-| Rule | Topic | C | Rust | Java | C# |
-|---|---|:---:|:---:|:---:|:---:|
-| rU1 | [absent handle](https://ta-lib.org/spec/streaming/#ru1) | ✅ | — | — | — |
-| rU4 | [index ceiling](https://ta-lib.org/spec/streaming/#ru4) | ✅ | ✅ | ✅ | ✅ |
-| rU2 | [absent output](https://ta-lib.org/spec/streaming/#ru2) | ✅ | — | ✅ | — |
-| rU3 | [non-finite bar](https://ta-lib.org/spec/streaming/#ru3) | ✅ | ✅ | ✅ | ✅ |
+| Rule | Topic | C | Rust | Java | C# | TypeScript |
+|---|---|:---:|:---:|:---:|:---:|:---:|
+| rU1 | [absent handle](https://ta-lib.org/spec/streaming/#ru1) | ✅ | — | — | — | — |
+| rU4 | [index ceiling](https://ta-lib.org/spec/streaming/#ru4) | ✅ | ✅ | ✅ | ✅ |  |
+| rU2 | [absent output](https://ta-lib.org/spec/streaming/#ru2) | ✅ | — | ✅ | — |  |
+| rU3 | [non-finite bar](https://ta-lib.org/spec/streaming/#ru3) | ✅ | ✅ | ✅ | ✅ |  |
 
 ### Stream release
 
-| Rule | Topic | C | Rust | Java | C# |
-|---|---|:---:|:---:|:---:|:---:|
-| rH10 | [`Close(NULL)`](https://ta-lib.org/spec/streaming/#rh10) | ✅ | — | — | — |
+| Rule | Topic | C | Rust | Java | C# | TypeScript |
+|---|---|:---:|:---:|:---:|:---:|:---:|
+| rH10 | [`Close(NULL)`](https://ta-lib.org/spec/streaming/#rh10) | ✅ | — | — | — | — |
 
-Only C has an explicit release. The other three reclaim a handle when it becomes
+Only C has an explicit release. The others reclaim a handle when it becomes
 unreachable, so there is no double release or use after release to track.
 `sf_null_arguments` (`test_stream_finite.c`) calls `Close(NULL)` on each of its
 emitted bodies, and drives a NULL handle and a NULL out-pointer through
@@ -137,18 +138,18 @@ emitted bodies, and drives a NULL handle and a NULL out-pointer through
 
 ### Configuration
 
-| Rule | Topic | C | Rust | Java | C# |
-|---|---|:---:|:---:|:---:|:---:|
-| rT2 | [target](https://ta-lib.org/spec/settings-threads/#rt2) | ✅ | ✅<br>[13] | ✅<br>[13] | ✅ |
-| rT3 | [unstable period values](https://ta-lib.org/spec/settings-threads/#rt3) | ✅ | ✅ | ✅ | ✅ |
-| rT4 | [reading](https://ta-lib.org/spec/settings-threads/#rt4) | ⚠️<br>[14] | ✅ | ✅ | ✅ |
-| rT5 | [range type](https://ta-lib.org/spec/settings-threads/#rt5) | ✅ | — | — | ✅ |
-| rT6 | [average period bound](https://ta-lib.org/spec/settings-threads/#rt6) | ✅ | ✅ | ✅ | ✅ |
-| rT7 | [factor domain](https://ta-lib.org/spec/settings-threads/#rt7) | ✅ | ✅ | ✅ | ✅ |
-| rT8 | [no change on refusal](https://ta-lib.org/spec/settings-threads/#rt8) | ✅ | ✅<br>[16] | ✅ | ✅ |
-| rT10 | [initial state](https://ta-lib.org/spec/settings-threads/#rt10) | ✅ | — | — | — |
-| rT11 | [threads in C](https://ta-lib.org/spec/settings-threads/#rt11) | ✅ | — | — | — |
-| rT12 | [a getter returns what was set](https://ta-lib.org/spec/settings-threads/#rt12) | ✅ | ✅ | ✅ | ✅ |
+| Rule | Topic | C | Rust | Java | C# | TypeScript |
+|---|---|:---:|:---:|:---:|:---:|:---:|
+| rT2 | [target](https://ta-lib.org/spec/settings-threads/#rt2) | ✅ | ✅<br>[13] | ✅<br>[13] | ✅ |  |
+| rT3 | [unstable period values](https://ta-lib.org/spec/settings-threads/#rt3) | ✅ | ✅ | ✅ | ✅ |  |
+| rT4 | [reading](https://ta-lib.org/spec/settings-threads/#rt4) | ⚠️<br>[14] | ✅ | ✅ | ✅ |  |
+| rT5 | [range type](https://ta-lib.org/spec/settings-threads/#rt5) | ✅ | — | — | ✅ |  |
+| rT6 | [average period bound](https://ta-lib.org/spec/settings-threads/#rt6) | ✅ | ✅ | ✅ | ✅ |  |
+| rT7 | [factor domain](https://ta-lib.org/spec/settings-threads/#rt7) | ✅ | ✅ | ✅ | ✅ |  |
+| rT8 | [no change on refusal](https://ta-lib.org/spec/settings-threads/#rt8) | ✅ | ✅<br>[16] | ✅ | ✅ |  |
+| rT10 | [initial state](https://ta-lib.org/spec/settings-threads/#rt10) | ✅ | — | — | — | — |
+| rT11 | [threads in C](https://ta-lib.org/spec/settings-threads/#rt11) | ✅ | — | — | — | — |
+| rT12 | [a getter returns what was set](https://ta-lib.org/spec/settings-threads/#rt12) | ✅ | ✅ | ✅ | ✅ |  |
 
 [13] The wildcard is a declared member, so it is rejected by value; a target
 outside the declared set is unrepresentable.

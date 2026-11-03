@@ -18,18 +18,18 @@
 | # | Decision | Choice | Why | Status |
 |---|---|---|---|---|
 | D1 | Implementation | Pure TypeScript compiled to JS. No WASM, no native addon | One artifact for every JS runtime, emitted by the managed-backend machinery | Ruled (owner, 2026-11-01) |
-| D2 | npm name | `ta-lib`. The name is one constant in the TS scaffolding emitter | Matches the Python and Rust package names | Ruled (owner, 2026-11-01); transfer pending (O1) |
-| D3 | Module format, min Node | ESM only, with no top-level await anywhere and no `node:` imports in the library. `exports` has `"."` and `"./metadata"`, each with `"types"` first and `"default"` last. `"sideEffects": false`. `engines.node` is `>=22.12.0`, and CI runs 22, 24 and 26 | Every supported Node line can `require()` an ESM-only package. One artifact means no dual-package hazard breaking `instanceof TALibError` | Proposed |
+| D2 | npm name | `ta-lib`. The name is one constant in the TS scaffolding emitter | Matches the Python and Rust package names | Ruled (owner, 2026-11-01); transferred 2026-11-02 (O1) |
+| D3 | Module format, min Node | ESM only, with no top-level await anywhere and no `node:` imports in the library. `exports` has `"."` and `"./metadata"`, each with `"types"` first and `"default"` last. `"sideEffects": false`. `engines.node` is `>=22.12.0`, and CI runs 22, 24 and 26, plus exactly the `engines` floor for the packed tarball and the suites that import it | Every supported Node line can `require()` an ESM-only package. One artifact means no dual-package hazard breaking `instanceof TALibError` | Proposed |
 | D4 | TS compile target | `target` and `lib` ES2022, plus `strict`, `erasableSyntaxOnly`, `verbatimModuleSyntax`, `isolatedModules`, `declaration` and `stripInternal`. No `enum` or `namespace` (use `as const` objects). `noUncheckedIndexedAccess` is off. `types: []` in the library tsconfig. `module` and `moduleResolution` `nodenext`; relative imports are spelled `./x.ts` with `rewriteRelativeImportExtensions`, so tsc emits `.js` and `node --test` runs the sources unchanged. Library `rootDir: src`, `outDir: dist`. TypeScript is pinned in the tooling lockfile | ES2022 runs on every supported runtime. Erasable syntax lets Node run the sources by type stripping. Use no option that TS 6.0 deprecates, so 7.x also compiles it | Proposed |
 | D5 | Input arrays | `ArrayLike<number>`: any typed array or a dense `number[]`. `Float64Array` is the recommended form and is read in place. The public tier and `Open` copy every other form into a `Float64Array` once on entry | Numerical libraries take typed arrays. JS TA libraries and platform data (OHLC objects, row arrays) produce `number[]`. The copy is for correctness: it applies ToNumber, so a `number[]` holding numeric strings (common from CSV or JSON parsing) cannot reach a body where `+` concatenates and `<` compares text. Phase 4 measures the copy's cost only | Proposed |
 | D6 | Output arrays | Caller-owned `Float64Array` for real outputs and `Int32Array` for integer outputs. Never `number[]` | Bit-faithful to float64. `Int32Array` matches C `int`. Hands off to Arrow and similar with no copy. A `number[]` would grow silently on an out-of-range write | Proposed |
 | D7 | Single precision | No `TA_S_` analogue: a `Float32Array` is an `ArrayLike<number>`, widened exactly by the D5 copy. The server serves the float leg's `use_float` by passing the widened values as a `Float32Array` to the same public tier | C's `TA_S_<F>` widens every float input and is bit-identical to `TA_<F>` on the widened doubles, so a widened `Float32Array` is the same contract. The float leg then gates the non-`Float64Array` path | Proposed |
 | D8 | Error model | Throw one class, `TALibError extends Error`, carrying a stable `code` (`'TA_BAD_PARAM'`, ...) that is the documented contract, and a numeric `retCode`. A JS `TypeError` or `RangeError` from misuse is never wrapped. No Result unions | Throwing is idiomatic TS and Node. A `code` match survives duplicate package copies and realms, where `instanceof` does not. Warm-up is an output range, not an error | Proposed |
-| D9 | FMA | Every fused site calls one runtime helper, `fma(a, b, c)`: software, exact and correctly rounded. Sites are chosen by the shared `fma.rs`. The helper is the single swap point | Bit-exactness lets the existing harness gate TS with no tolerance | Ruled (owner, 2026-11-01) |
+| D9 | FMA | Every fused site runs `runtime/fma.ts`'s `fma(a, b, c)`: software, exact and correctly rounded. Sites are chosen by the shared `fma.rs`. A site runs it as a call or, in a body with three or more fused sites, as its body copied in by the generator from that file, which stays the single swap point | Bit-exactness lets the existing harness gate TS with no tolerance | Ruled (owner, 2026-11-01); copy ruled (owner, 2026-11-02) |
 | D10 | Integer semantics | Emitted from IR types: a C type pass (`Int32`, `Real`, `Bool`) over every expression. An integer `/`, an integer `%` and every real-to-int conversion, explicit or implicit, truncate with `\| 0`. Generation fails on any expression it cannot type | JS has no integer type, and a wrong guess fails silently | Ruled (owner, 2026-11-01) |
-| D11 | Transcendental functions | The JS engine's `Math.*`. A call that reaches one (the function carries `uses_transcendental`, or an MA-type parameter selects MAMA or ALMA) compares in the transcendental lane at 1e-13, scaled like Java's 1e-9 (relative above magnitude 1, absolute below). Every other call, and same-language stream against batch, stays bitwise | `Math.*` is neither correctly rounded nor glibc: Node 22 against glibc 2.40 measured at most 2 ULP per call. This is the exception Java and C# already have (rD1), four orders tighter. Consequence: such a call can also differ between JS engines and between engine versions | Ruled (owner, 2026-11-01): 1e-13, a trial value (O2) |
+| D11 | Transcendental functions | The JS engine's `Math.*`. A call that reaches one (the function carries `uses_transcendental`, or an MA-type parameter selects MAMA or ALMA) compares in the transcendental lane at 1e-11, scaled like Java's 1e-9 (relative above magnitude 1, absolute below). Every other call, and same-language stream against batch, stays bitwise | `Math.*` is neither correctly rounded nor glibc: Node 22 against glibc 2.40 measured at most 2 ULP per call. This is the exception Java and C# already have (rD1), two orders tighter. V8's `Math.*` and Java's give the same maxima on the ill-conditioned functions (KSTEXT, MAMA), so the gap is the libm, amplified by the function. Consequence: such a call can also differ between JS engines and between engine versions. HT_DCPHASE and HT_SINE have no tolerance-sized bound on input that stays flat for a whole dominant cycle, in every language with a lane, Java and C# included: the cycle's in-phase and quadrature sums are then cancellation noise, so a 1-ulp `sin` or `cos` difference can flip the phase quadrant, and C's own output moves by hundreds of degrees under one | Ruled (owner, 2026-11-01): 1e-11 (O2) |
 | D12 | Function shape and settings | One ES module per function, exporting free functions. A trailing optional `core: Core = Core.DEFAULT` carries unstable periods and candle settings. `Core` is immutable and built by `CoreBuilder`. A stream captures its `Core` at open | Tree-shakable, and keeps the Java and C# `Core`/`CoreBuilder` words | Proposed |
-| D13 | Optional parameters | Positional, in C order, with verbatim names (naming spec E1). `Core.INTEGER_DEFAULT` or `Core.REAL_DEFAULT` selects the default. Enum parameters are typed as the enum's literal union plus the integer sentinel. An integer parameter is rejected unless it passes `Number.isInteger` and fits int32 | One signature shape across five backends, a 1:1 map for the metadata tier, and no object per call | Proposed |
+| D13 | Optional parameters | Positional, in C order, with verbatim names (naming spec E1). `Core.INTEGER_DEFAULT` or `Core.REAL_DEFAULT` selects the default. Enum parameters are typed as the enum's literal union plus the integer sentinel. An integer parameter is rejected unless it passes `Number.isInteger` and fits int32, and a real one unless it is a number | One signature shape across five backends, a 1:1 map for the metadata tier, and no object per call | Proposed |
 | D14 | Allocating convenience form | None in the first release | Keeps a single public batch tier, which is the one the harness gates | Proposed |
 | D15 | Streaming handle | Class `<N>Stream`, returned by `<n>Open` and `<n>OpenAndFill`, with `update`, `peek`, `value`, `outRange`, `advance` and `clone`. A single-output function returns a `number`. A multi-output function writes into a caller-owned `<N>Out`. No `close()` | Garbage collection frees the handle. The sink avoids an allocation per bar, as in Java | Proposed |
 | D16 | Naming and tiers | Java casing: functions lowerCamel, types UpperCamel. `<n>Impl`, `<n>OpenInternal` and `<n>OpenAndFillInternal` are exported from their module, tagged `@internal`, and absent from the package barrel. `<n>OpenImpl` and `<n>StepImpl` stay module-local. Handle state fields are public and tagged `@internal`, because a module-local function cannot reach a TS `private` member | This is the CLAUDE.md vocabulary recast. The `exports` map plus an explicit barrel is TS's package-private | Proposed |
@@ -61,7 +61,7 @@ Package layout under `ta_codegen/output/ts/` (D20):
 
 ```ts
 import { sma, smaLookback, macd, smaOpen, macdOpen, MacdOut,
-         ema, CoreBuilder, FuncUnstId, TALibError } from 'ta-lib'; // name pending (O1)
+         ema, CoreBuilder, FuncUnstId, TALibError } from 'ta-lib';
 
 const n = close.length;                         // close: Float64Array (number[] also accepted)
 const out = new Float64Array(n);
@@ -171,9 +171,9 @@ What is specific to TS:
 
 - `test_codegen.c`:
   - `argv_ts[] = {"node","ta_codegen_ts/tools/taCodegenServe.js",NULL}` and an `ALL_LANGUAGES` row `{"ts","TypeScript",argv_ts}`.
-  - The lane's bound becomes per language, set in one place: `codegen_lang_needs_transcendental_tol` turns into a function returning the language's bound (0 for a bitwise language), and every site that reads `CODEGEN_TRANSCENDENTAL_TOL` today (`--codegen`, `server_verify`, `--xlang-hash`) reads it instead. `test_codegen.h` defines the TS bound as one constant, `1e-13`, beside Java's and C#'s `1e-9`, so changing it is a one-line edit. A non-zero bound brings the `xlang_illcond` skip with it and turns off `codegen_call_needs_vmath_tol`.
+  - The lane's bound becomes per language, set in one place: `codegen_lang_needs_transcendental_tol` turns into a function returning the language's bound (0 for a bitwise language), and every site that reads `CODEGEN_TRANSCENDENTAL_TOL` today (`--codegen`, `server_verify`, `--xlang-hash`) reads it instead. `test_codegen.h` defines the TS bound as one constant, `1e-11`, beside Java's and C#'s `1e-9`, so changing it is a one-line edit. A non-zero bound brings the `xlang_illcond` skip with it and turns off `codegen_call_needs_vmath_tol`.
   - Every tolerance-lane compare keeps a per-language, per-function maximum of the scaled deviation, and a function over the bound keeps sweeping so its maximum is complete. For each language with a non-zero bound, `--codegen` and `--xlang-hash` end with one `TRANSCENDENTAL MAX [<lang>] TA_<F> <dev>` line per function compared in the lane (phase 1).
-  - Section 8 records the TS lines of unfiltered `--xlang-hash` runs at the phase 1 and phase 2 exits. Over 1e-13, never widen the constant: give the owner one row per function (maximum, shape, seed, parameters, and the C and TS values in `%a`), mark the phase `blocked on O2 (<functions>)`, and continue with work that does not depend on the answer.
+  - Section 8 records the TS lines of unfiltered `--xlang-hash` runs at the phase 1 and phase 2 exits. Over 1e-11, first confirm the deviation comes from the engine's `Math.*` and not from an emitter bug, then give the owner one row per function (maximum, shape, seed, parameters, and the C and TS values in `%a`), mark the phase `blocked on O2 (<functions>)`, and continue with work that does not depend on the answer. Never widen the constant without a ruling.
   - `codegen_lang_can_pass_enum_sentinel` is true for ts.
   - The float-leg tests (`!= "rust"`, and `server_verify.c::sv_serves_float`) already include TS, so the server must serve `use_float` from phase 1.
   - `stream_fuzz_port_selfcheck`: fail when a non-C server checks zero shapes. Today a missing `in_hash` skips silently, and a broken port then stays self-consistent through every stream leg. Prove it red with a server that drops `in_hash`.
@@ -185,7 +185,7 @@ What is specific to TS:
 - `ta_regtest.c`:
   - a `svServers[]` row and the help text (phase 1)
   - the abstract-parity block in phase 3, matched with the exact-token `svLanguageEnabled`, not `strstr`
-- `test_abstract.c` and `codegen_pipe.c`: no change.
+- `test_abstract.c`: an accessor for the number of functions the metadata pass compared, which the parity line prints. `codegen_pipe.c`: no change.
 - `ta_bench.c`: `argv_ts` and a `LANGUAGES[]` row.
 - `src/tools/ta_regtest/CLAUDE.md`: the `--language` table and the launch line.
 
@@ -235,12 +235,12 @@ The rule behind every row is the same: semantics come from the type pass, never 
 | H9 | Fused-site selection | Every site C fuses | `build_fma_var_sets`, `fuse_operands` and `canonicalize_accumulator_add`, called where `java.rs` calls them. Copy the compound rule of `c.rs` `assign()`: `x += a*b` is not fused and `x = x + a*b` is | xlang-hash and server_verify, bitwise |
 | H10 | Stream and batch fuse different sites | Stream step and peek bodies | `NameMap` state and output names keep the `sp.` / `cur_` prefixes that `fma::stream_base` strips | stream_verify same-tier, bitwise |
 | H11 | Software fma rounding | `runtime/fma.ts` | Phase 0 | `ts_fma_check.py`, then xlang-hash on every fusing function |
-| H12 | Transcendental results | Flagged functions; MAMA or ALMA through an MA-type parameter | Engine `Math.*` | The transcendental lane at 1e-13 (D11) |
+| H12 | Transcendental results | Flagged functions; MAMA or ALMA through an MA-type parameter | Engine `Math.*` | The transcendental lane at 1e-11 (D11) |
 | H13 | Literal text | Every real literal | Shortest round-trip text (Rust `{:?}`), never a fixed precision | xlang-hash |
 | H14 | Out-of-bounds typed-array access | Every body | The public tier checks every length before `<n>Impl`. A read past the end gives NaN and a write is dropped, both silently | Generated phantom-I/O sweep, which passes Proxy-guarded arrays that throw on an out-of-range index and range-check the index arguments of `set`, `subarray`, `fill` and `copyWithin`; `out_tail_dirty` for writes into the slack |
-| H15 | Aliasing views | The OpenAndFill guard; C's `inReal == outReal` scratch election | Overlap means the same `buffer` with intersecting byte ranges. C pointer equality means the same `buffer` and the same `byteOffset`. Never `===` | stream_verify aliasing rejects; a library test with `subarray` views |
+| H15 | Aliasing views | The OpenAndFill and batch public-tier guards; C's `inReal == outReal` scratch election | Overlap means the same `buffer` with intersecting byte ranges. C pointer equality means the same `buffer` and the same `byteOffset`. Never `===`. The batch public tier, as C#'s, rejects two outputs that overlap and an output overlapping a converted input, unless the output is that input in place: a `Float64Array` of the same `buffer`, `byteOffset` and `length` | stream_verify aliasing rejects; library tests with `subarray` views |
 | H16 | Non-`Float64Array` inputs | Public tier, `Open` | Copy into a `Float64Array` on entry (D5) | The float leg (a `Float32Array` through the public tier); library test: a `number[]` of numbers and a `number[]` of numeric strings give the `Float64Array` bits on every function |
-| H17 | Non-integer or out-of-int32 integer parameter | Public tier, `Open` | Reject before the range checks, keeping the `INT_MIN` and `-4e37` sentinels | Library test; `open_validation_suite` arm |
+| H17 | Non-integer or out-of-int32 integer parameter; non-number real parameter | Public tier, `Open` | Reject before the range checks, keeping the `INT_MIN` and `-4e37` sentinels; the lookback answers -1 | Library test; `open_validation_suite` arm |
 | H18 | Bit access on a big-endian host | The fma helper, the server codec | `DataView` with explicit endianness, or a one-time check that picks the word order | `ts_fma_check.py`; server_verify |
 
 **Structural gate (`ts_int_semantics_suite`).** It runs the type pass over every shipped function's batch, open, step and peek bodies and their helpers. Its axes:
@@ -302,7 +302,7 @@ Only the orchestrating session edits `ir.rs`, `backends/mod.rs`, `main.rs`, `tes
 
 ### Phase 0: runtime helpers
 
-Status: Not started
+Status: Done (2026-11-01)
 
 **Deliverables**
 
@@ -373,7 +373,7 @@ Also:
 
 ### Phase 1: batch tier, server, cross-language gates
 
-Status: Not started
+Status: Done (2026-11-02), exit gate run together with phase 2's
 
 **Deliverables**
 
@@ -426,7 +426,7 @@ Also:
 
 ### Phase 2: streaming tier
 
-Status: Not started
+Status: Done (2026-11-02)
 
 **Deliverables**
 
@@ -448,7 +448,7 @@ Status: Not started
 - **Field visibility.** Handle fields are public and `@internal` (D16). Neither TS `private` nor `#private` works: the module-local frames could not reach them.
 - **Peek writes.** No runtime leg catches a peek that writes the handle or a ring. stream_verify peeks bar t and then updates bar t with the same arguments, so a peek that stores what update would store leaves identical state. There is no compile-time barrier either. The `managed_stream_suite` no-write sweeps are the whole gate.
 - **`clone()`.** It must `.slice()` every typed array and clone every sub-stream. The clone leg catches a shared ring.
-- **`update` order.** As Java: the `INDEX_MAX` ceiling, then the finite-bar check, then `<n>StepImpl`, then the count.
+- **`update` order.** As Java: the `INDEX_MAX` ceiling, then the multi-output sink check, then the finite-bar check, then `<n>StepImpl`, then the count.
 - **Ride cache.** Key it by function identity, and invalidate it on every settings change (`rideGen`).
 
 **Exit gate**
@@ -464,7 +464,7 @@ Status: Not started
 
 ### Phase 3: metadata, docs, packaging, CI, website, runbook
 
-Status: Not started
+Status: Done (2026-11-02)
 
 **Deliverables**
 
@@ -549,7 +549,7 @@ Also:
 
 ### Phase 4: performance pass and adversarial review
 
-Status: Not started
+Status: Done (2026-11-02)
 
 **Deliverables**
 
@@ -593,8 +593,8 @@ Status: Not started
 
 ## 7. Open items
 
-- **O1. npm name.** Only the publish waits on it: phases 0 to 3 use the D2 constant. The owner has asked the current holder of `ta-lib` to add him as an owner; `npm owner ls ta-lib` listing `mario4tier` settles it. Its versions 0.9.0, 0.10.0 and 0.11.0 can never be republished, while the package version follows `VERSION` (D20): decide before the first publish whether the npm line skips those versions or starts at a major above them.
-- **O2. Transcendental lane (D11).** Ruled (owner, 2026-11-01): 1e-13 for TS, held in one constant. It is a trial value: the phase 2 maximum per function (4.3) shows whether it holds. Java and C# stay at 1e-9. It does not touch the exact-FMA ruling.
+- **O1. npm name.** Settled (owner, 2026-11-02): `npm owner ls ta-lib` lists `mario4tier`. Still open before the first publish: the previous holder's 0.9.0, 0.10.0 and 0.11.0 can never be republished and hold `latest`, while the package version follows `VERSION` (D20), so decide whether the npm line starts below them (publish with `--tag latest`, then deprecate the three) or above them.
+- **O2. Transcendental lane (D11).** Ruled (owner, 2026-11-01): 1e-11 for TS, held in one constant. The owner started at 1e-13 and loosened it once the phase 1 maxima showed `Math.*` against glibc reaching 9.6e-12 (SWAK_BP; section 8). Anything above 1e-11 goes back to the owner. Every call outside the lane stays bitwise. Java and C# stay at 1e-9. It does not touch the exact-FMA ruling.
 - **O3. Publish credentials.** The first publish is by hand, from the owner's npm account with 2FA, once O1 settles; nothing before it waits on this. Trusted publishing (GitHub OIDC naming one workflow file) with `--provenance` is a later choice. Until then the TS backend ships only through dev and main. Ruled (owner, 2026-11-01).
 - **O4. Landing.** Commit per phase on one branch; land on dev once, as one block, after phase 4 and a last review and test round showing nothing else broke. No nightly sees the branch before then, so that round runs the TS CI jobs (4.5) locally. Ruled (owner, 2026-11-01).
 
@@ -602,3 +602,22 @@ Status: Not started
 
 | date | phase.deliverable | SHA | gates passed | open failures / owner questions |
 |---|---|---|---|---|
+| 2026-11-01 | 0.1-0.2 | 4e0ea74b4 | `npm ci`, T, `node --test` (10/10); `typescript` 7.0.2 (per-platform compiler packages for linux-x64, linux-arm64, darwin-arm64 in the lockfile), `@types/node` 22.20.5 | `node --test <dir>/` fails on Node 22; run it with a quoted glob or from inside `library/` |
+| 2026-11-01 | 0.3 | 3049b3f1f | `ts_fma_check.py --random=100000000` seeds 1 and 2: 111,000,000 cases each, 0 mismatches. Red proof: round-to-nearest in place of round-to-odd fails `ties-sticky` (3,327 of 1,000,000), every other family 0 | none |
+| 2026-11-01 | 0.4-0.5 | 811a836f5 | pins 22.23.4, 24.22.2, 26.13.0 (`.tar.gz`); the exit loop prints nothing. Red proof: one corrupted linux-x64 SHA-256 with an empty `TA_NODE_CACHE` exits 1 and leaves the cache empty | linux-arm64 and darwin-arm64 pins not yet exercised |
+| 2026-11-01 | 0.6 | a4d3347ae | intel-1: Node v20.19.3, npm 10.8.2 (nvm). macos-1: Node v22.3.0, npm 10.8.1 (nvm). Orchestrator: Node v22.23.3 | both workers are below 22.18: landing report |
+| 2026-11-01 | 0 exit | 3049b3f1f | G (every pr-codegen-gate step), T, `generate` twice with no diff | none |
+| 2026-11-01 | 1 (lane) | dfa42f702 | TS lane maxima over 1e-13 in `--xlang-hash --language=c,ts` (seed 1793592318): APO 1.705e-13 (shape 2, seed 1, MAType ALMA), PPO 1.729e-13 (shape 6, seed 2, MAType ALMA), HT_DCPHASE 2.440e-13 (shape 0, seed 1), MACDEXT 2.911e-12 (shape 2, slow MAType ALMA), MAMA 3.184e-12 (shape 9, 0.21/0.05), KSTEXT 7.941e-12 (shapes 6 and 9, ROCMAType MAMA), SWAK_BP 9.604e-12 (shape 5, 21/0.1 and 23/0.1). With every `Math.*` replaced by glibc's result for the same argument, TS equals C bitwise on those parameter sets | Owner ruled 1e-11 |
+| 2026-11-02 | 1, 2 exit | a0b80e392 | G; T; `node --test` (17/17); `build.py servers`; `--codegen` c,ts and unfiltered (TS: fuzz port 10/10, ride-along 8894 verdicts over 240 functions, no VACUOUS, no STREAM COUNTER MISMATCH, no "not supported"); `--xlang-hash` c,ts and unfiltered PASS; `build.py regtest` with the TypeScript section; `synth_gate` (5 languages); `check_stream_retcodes.py`; no `TS-PHASE-2`. U: no change to C, Rust, Java, C# or the function pages beyond the TypeScript row | Phase 1 could not exit alone: with no stream tier, the ride-along and stream-set floors fail rather than skip, so phases 1 and 2 share one exit run. TS arms still missing in doc_emphasis, abstract_rows, circbuf, spec_catalog, indicator_variants (phase 3); csharp_stream_suite is C#-only, its TS counterpart is ts_stream_suite |
+| 2026-11-02 | 1, 2 (lane) | a0b80e392 | unfiltered `--xlang-hash` TS maxima: SWAK_BP 9.604e-12, KSTEXT 7.941e-12, MAMA 3.184e-12, MACDEXT 2.911e-12, all under 1e-11 | none |
+| 2026-11-02 | 2 | a0b80e392 | zero-streaming floor red proof: every function skipped in `stream_one_function` fails with `STREAM VACUOUS ... streamed 0 functions` (exit 1111); with the floor disabled the same sabotage passes | none |
+| 2026-11-02 | 3 exit | 4c7ac1459 | G with `ts-compiles`; phases 1 and 2 gates again; `build.py libraries --language=ts --node=all` (tarball suite on Node 22.23.4, 24.22.2, 26.13.0); `ts_package_check.py`; `abstract parity (TypeScript): 240 functions`; unfiltered `--codegen` and `--xlang-hash`; `sync.py` idempotent; `check_versions`; `200+ indicators` in package.json and README; `sync-website.py --check`; website build; unfiltered `build.py libraries`. Red proofs: abstract parity (a changed default), package check (an `@internal` re-export, a top-level await, a narrowed `files`), phantom sweep (five SMA sabotages), H16, H15, H17, the stream-sink order. U: unchanged | Phase 1 deliverable 4 (phantom sweep, H16, aliasing) landed in phase 3. The tests found two aliasing bugs, both fixed: SQZMOM and SUPERTREND accepted a real and an integer output at one address, and a multi-output stream counted a bar before rejecting an absent sink |
+| 2026-11-02 | 4.2 JIT tiers | 4c7ac1459 | Node 22.23.4: every body, public function, `update` and `peek` reaches TurboFan at default parameters. Two costs found: after a long first call, 234 bodies deopt once per call at the out-parameter store after the loop until a normal compile lands (100 to 1275 calls); the software `fma` stays a real call past V8's cumulative inlining budget in 33 bodies (e.g. T3, MAMA, the HT family) | timing pending |
+| 2026-11-02 | 4.2 timing | 5d995aac2 (4c7ac1459 plus a measurement-only probe) | `ta_bench --language=c,rust,ts`, every function, batch at 2000 and 100k bars, open and openfill at 2000, on intel-1 (P-core pinned), amd-1 and macos-1 (extra data point). TS is timed through the body, Rust through its public tier. Median TS vs C over every function: intel-1 152% slower at 2000 bars and 216% slower at 100k; amd-1 171% and 238% slower; macos-1 188% and 273% slower. Rust vs C: within 1% on intel-1 and amd-1. Worst row on every host: T3, e.g. intel-1 2764% slower at 100k (5,094,572 ns vs 177,911 ns) | Software fma is the dominant TS cost: against a measurement-only `a*b+c` build it costs more than 20% in 56 of 75 fusing functions on intel-1 and 61 on amd-1 (T3: 2173% on intel-1) |
+| 2026-11-02 | 4.2 D5, D3 | 5d995aac2 | D5, `number[]` input through the public tier: intel-1 1.0 ns per bar at 2000 bars (SMA 94% slower) and 2.2 ns per bar at 100k (SMA 213% slower); `Float32Array` 70 to 75% of that. D3, median import time: barrel 118 ms (intel-1), 229 ms (amd-1), 99 ms (macos-1); one function module 4 to 8 ms; `./metadata` about the barrel's | D3 and D5 stay as designed: a per-function subpath would need an export that exposes the `@internal` tiers at run time (owner's call) |
+| 2026-11-02 | 4 perf | 2ec63459d | A/B on intel-1 and amd-1 (adb0efdc5 against e2eb8b091 and 885d53735): the `fma` helper split into an inlinable fast path and `fmaSlow`, plus copying its body into loops with three or more fused sites, makes TS 6% to 10% faster by geomean on both hosts, the changed functions 29% to 40% (intel-1 STC 61% faster, 6,583,036 ns vs 2,537,990 ns at 100k). No changed function is more than 5% slower on both hosts. Accepted rows: PERCENTB open about 10% slower on both hosts (module unchanged, window dependent); ERI, EFI, ATR 3% to 5% slower on intel-1 only. A one-time warm-up of every body was rejected: SAREXT 18% to 67% slower on both hosts in every leg, and a repeatable intel-1 slow mode at 100k (BBANDS 177% slower) | Both merged (2ec63459d, ff012f47f) under D9's 2026-11-02 wording |
+| 2026-11-02 | 4.6 macOS leg | 9024634e1 | macos-1, fresh worktree: darwin-arm64 pins for 22, 24, 26 verify; `build.py servers --language=c,ts`; `--codegen --language=c,ts` (240/240, abstract parity 240, fuzz port 10/10); `xlang-hash --language=c,ts` PASS with the Linux maxima; `build.py libraries --language=ts --node=all` (724/724 on each); `ts_package_check.py`; `ts_fma_check.py --random=1000000` | rerun at the landing SHA |
+| 2026-11-02 | 4.2 vs Java, C# | c231b55f9 | `ta_bench --language=c,java,csharp,ts`, every function, batch at 2000 and 100k bars, intel-1 and amd-1. TS median against Java: 115% slower at 2000 bars and 82% slower at 100k on intel-1, 133% and 66% slower on amd-1. Every function more than 5 times Java's time runs exact software `fma` on a loop-carried chain (T3 at most: intel-1 3,160,190 ns vs Java 178,671 ns at 100k). Among functions that never reach `fma`, the slowest is CRSI at about 4.5 times Java, through PERCENTRANK's count loop | The `fma` chain is D9's price. The count loop is fixed below |
+| 2026-11-02 | 4 perf | 50d3eeba1 | An else-less `if` that only adds one to an integer local renders as `x += +(cond)`. A/B on intel-1 and amd-1 against c231b55f9, batch: PERCENTRANK 21% and 35% faster at 100k (intel-1 11,842,046 ns vs 9,337,971 ns), CRSI 53% to 54% faster, CCI flat. Stream `update`: CRSI 40% faster, PERCENTRANK 19% and 34% faster. `stream_ab`'s `peek` read PERCENTRANK and CRSI 10% to 12% slower on both hosts: it peeks a handle that never advances, so the branch predictor learns the fixed window. Peeking then updating a moving 100k-bar feed reads PERCENTRANK 13% and 16% faster and CRSI 46% to 49% faster (intel-1 303 ns vs 263 ns) | Merged |
+| 2026-11-02 | 4.5 coverage parity | c231b55f9..0e51a6cd7 | Adversarial audit of TS test reach against Java, C# and Rust: 23 findings survived refutation and 5 were refuted. Fixed: the TS lanes of every cross-backend generator sweep (peek copies, input checks, composed fusion, overlap guards, cross-typed aliasing, enum numbers, dead guards); library suites porting the batch, opener, stream and metadata contracts over every function, with an exact test manifest; checked typed arrays for `--codegen` and `--xlang-hash` (nightly), which found no out-of-bounds access in any function; a fail-closed transcendental table; nightly jobs for the engines floor and Windows. Behaviour fixes the new tests forced: the batch tier rejects a partial overlap as C# does; an opener names an absent history or leg; a partial overlap on a short history answers `TA_INSUFFICIENT_HISTORY`; `Core`, its settings and every exported enum and flag object are frozen; two vacuous C# overlap assertions now reach the guard. Three re-review rounds followed; the last found one doc clause too broad, now scoped | Every finding fixed |
+| 2026-11-02 | 4 exit | 0e51a6cd7 | A/B against c231b55f9 on intel-1 and amd-1, every function, batch at 2000 and 100k bars, C as the control (median ratio 0.993 to 1.001): TS median unchanged on both hosts, geomean 0.4% to 0.9% faster; CRSI 53% faster, PERCENTRANK 15% to 35%. Rows that read up to 16% slower on one host (intel-1 100k: CDLSEPARATINGLINES, STOCHF, STOCHRSI; amd-1: CMO, CMOU, SAREXT, CMF, MAX at 2000) read within 4% on the other, and STOCHF's timed body is unchanged. Stream `update`, every function: median unchanged on both hosts. Stream `open` on 14 functions covering every opener shape: within 1% on intel-1 and 4% on amd-1, CRSI and PERCENTRANK faster. Landing round from a fresh worktree: `ts-compiles`, `build.py libraries --language=ts --node=all` (Node 22.23.4, 24.22.2, 26.13.0), `ts_package_check.py`, `ts_fma_check.py --random=1000000 --seed=20261102`, checked-array self-test. macOS leg on macos-1: servers, `--codegen` and `--xlang-hash` for c,ts (also under checked typed arrays), libraries, package gate, fma check. Phases 0 to 3 gates at this SHA, all 38 passing, then `--codegen` and `--xlang-hash` for c,ts under checked typed arrays | Done |

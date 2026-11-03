@@ -80,4 +80,21 @@ double p = s.Peek(formingClose);     // bar still forming; state unchanged
 
 [API](/api/csharp/) · [Streaming](/api/csharp/stream/)
 
+@tab TypeScript
+
+```ts
+import { sma, smaOpen } from 'ta-lib';
+
+// Batch: out[0] is the value at bar r.begIdx.
+const out = new Float64Array(close.length);
+const r = sma(0, close.length - 1, close, 30, out);
+
+// Streaming: open on history, then one call per bar.
+const s = smaOpen(close, 30);
+const v = s.update(newClose);        // a bar closed
+const p = s.peek(formingClose);      // bar still forming; state unchanged
+```
+
+[API](/api/typescript/) · [Streaming](/api/typescript/stream/)
+
 :::

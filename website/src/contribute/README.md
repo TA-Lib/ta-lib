@@ -29,7 +29,7 @@ TA-Lib generates all of its per-function code from a single source of truth. One
 | `<name>.c` | The algorithm: a `<name>_lookback()` and a `<name>()` batch function, in plain portable C. Optionally a `<name>_display_shift()`, for an output a chart draws at another bar. |
 | `<name>.md` | Documentation: summary, the formula in its original algebraic form, references. |
 
-From these three files, the `ta_codegen` generator produces everything the project ships: the C library, native Rust, Java and .NET implementations, streaming variants, the test servers, benchmarks, and this website's function page. You never write Rust, Java or C# by hand, and you never edit generated files.
+From these three files, the `ta_codegen` generator produces everything the project ships: the C library, native Rust, Java, .NET and TypeScript implementations, streaming variants, the test servers, benchmarks, and this website's function page. You never write Rust, Java, C# or TypeScript by hand, and you never edit generated files.
 
 Every backend is then verified by `ta_regtest`, which drives all languages through JSON-RPC servers and cross-checks their outputs against the C reference, bit-for-bit in the strictest gates.
 
@@ -39,7 +39,7 @@ Any of Linux, macOS, Windows or WSL2. You need:
 
 - git, a C compiler (gcc/clang/MSVC), CMake ≥ 3.18
 - The Rust toolchain via [rustup](https://rustup.rs) (the generator is written in Rust)
-- Recommended, for full cross-language verification: a JDK (`javac`/`java`) and the .NET SDK (`dotnet`) that `global.json` pins, or a later patch of its band; `scripts/build.py libraries`, which builds the publishable Java/C# artifacts, also needs `unzip` for the committed Maven wrapper. Without them, pass `--language=c,rust` to `scripts/build.py servers` and `scripts/regtest.py`. The C and Rust gates still verify your function, and CI runs the full matrix.
+- Recommended, for full cross-language verification: a JDK (`javac`/`java`) and the .NET SDK (`dotnet`) that `global.json` pins, or a later patch of its band, and Node.js 22.18 or later with npm; `scripts/build.py libraries`, which builds the publishable Java, C# and TypeScript packages, also needs `unzip` for the committed Maven wrapper. Without them, pass `--language=c,rust` to `scripts/build.py servers` and `scripts/regtest.py`. The C and Rust gates still verify your function, and CI runs the full matrix.
 
 ```bash
 git clone https://github.com/TA-Lib/ta-lib.git

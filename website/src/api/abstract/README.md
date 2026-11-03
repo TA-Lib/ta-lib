@@ -1,6 +1,6 @@
 ---
 title: Abstract API
-description: "Every TA-Lib function describes itself at run time in C, Rust, Java and C#: list them, read each one's inputs, parameters, outputs and flags, and call it by name, so settings dialogs, parameter searches and generated bindings need no code per function."
+description: "Every TA-Lib function describes itself at run time in C, Rust, Java, C# and TypeScript: list them, read each one's inputs, parameters, outputs and flags, and call it by name, so settings dialogs, parameter searches and generated bindings need no code per function."
 toc: false
 ---
 
@@ -73,6 +73,18 @@ foreach (var fi in Core.Functions)
 }
 ```
 
+@tab TypeScript
+
+```ts
+import { Functions } from 'ta-lib/metadata';
+
+const f = Functions.byName('SMA');   // name, group, hint, flags, inputs, optInputs, outputs
+
+for (const fi of Functions.all()) {
+  console.log(`${fi.name} (${fi.group})`);
+}
+```
+
 :::
 
 The name lookup ignores case. `Core.Functions` in C# is an alias for `FunctionCatalog.Default`.
@@ -132,6 +144,16 @@ OutRange r = Core.Functions["SMA"].CreateCall()
     .Call(0, close.Length - 1);
 ```
 
+@tab TypeScript
+
+```ts
+const r = Functions.byName('SMA')!.newCall()
+  .setInput(0, close)
+  .setOptInput(0, 30)
+  .setOutput(0, out)
+  .call(0, close.length - 1);
+```
+
 :::
 
 The call behaves like the typed one: same values, same range, same rejections. A parameter holder is not thread-safe: confine one to one thread, or build one per call. The exact rules: [Abstract API and Metadata](/spec/abstract/).
@@ -183,6 +205,15 @@ ParamHolder call = Core.Functions["DPO"].CreateCall().SetOptInput(0, 20);
 
 int lookback = call.Lookback();
 int shift = call.DisplayShift(0);   // output 0: -11
+```
+
+@tab TypeScript
+
+```ts
+const call = Functions.byName('DPO')!.newCall().setOptInput(0, 20);
+
+const lookback = call.lookback();
+const shift = call.displayShift(0);   // output 0: -11
 ```
 
 :::
