@@ -51,8 +51,8 @@ static int  g_floatCapableLangTested = 0;
 /* ---- Language definitions ---- */
 
 typedef struct {
-    const char *name;           /* "rust", "c", "java", "csharp" */
-    const char *display;        /* "Rust", "C", "Java", "C#" */
+    const char *name;           /* "rust", "c", "java", "csharp", "ts" */
+    const char *display;        /* "Rust", "C", "Java", "C#", "TypeScript" */
     const char *const *argv;    /* NULL-terminated command array */
 } CodegenLanguage;
 
@@ -60,11 +60,13 @@ static const char *const argv_rust[]  = {"./ta_codegen_serve_rust", NULL};
 static const char *const argv_c[]     = {"./ta_codegen_serve_c", NULL};
 static const char *const argv_java[]  = {"java", "-cp", "ta_codegen_java", "TaCodegenServe", NULL};
 static const char *const argv_csharp[]= {"dotnet", "ta_codegen_csharp/TaCodegenServe.dll", NULL};
+static const char *const argv_ts[]    = {"node", "ta_codegen_ts/tools/taCodegenServe.js", NULL};
 static const CodegenLanguage ALL_LANGUAGES[] = {
     {"c",      "C",            argv_c},
     {"rust",   "Rust",         argv_rust},
     {"java",   "Java",         argv_java},
     {"csharp", "C#",           argv_csharp},
+    {"ts",     "TypeScript",   argv_ts},
 };
 #define NUM_LANGUAGES (sizeof(ALL_LANGUAGES) / sizeof(ALL_LANGUAGES[0]))
 
@@ -114,10 +116,10 @@ static int codegen_lang_has_peek_probe(const char *lang)
     return lang && strcmp(lang, "c") == 0;
 }
 
-/* Which languages cannot be held bit-identical on a call that reaches a
- * transcendental. THE single definition — both --xlang-hash (which copies it
- * into XlangServer.tolTranscendental) and server_verify's own per-call check
- * read it, because when they were two separate literals they disagreed.
+/* The bound for a language that cannot be held bit-identical on a call that
+ * reaches a transcendental, 0 for one that can. THE single definition — every
+ * gate reads it (--xlang-hash through XlangServer.tolTranscendental), because
+ * when they were separate literals they disagreed.
  *
  * Java: fdlibm is not the C libm (#113).
  * C#:   .NET does not guarantee `Math.*` reaches the platform libm, and on
@@ -127,18 +129,99 @@ static int codegen_lang_has_peek_probe(const char *lang)
  *       special-value problem: C and C# agree bit-for-bit on 0.0, -0.0 and
  *       negatives including the NaN payload, so it is a normal-value 1 ULP
  *       difference. A bitwise claim verified on one machine is a claim about
- *       that machine. */
-int codegen_lang_needs_transcendental_tol(const char *lang)
+ *       that machine.
+ * TS:   a JS engine's `Math.*` is neither correctly rounded nor glibc, and can
+ *       differ between engines and engine versions. */
+double codegen_lang_transcendental_tol(const char *lang)
 {
-    if( !lang ) return 0;
-    return strcmp(lang, "java") == 0 || strcmp(lang, "csharp") == 0;
+    if( !lang ) return 0.0;
+    if( strcmp(lang, "java") == 0 || strcmp(lang, "csharp") == 0 )
+        return CODEGEN_TRANSCENDENTAL_TOL;
+    if( strcmp(lang, "ts") == 0 )
+        return CODEGEN_TRANSCENDENTAL_TOL_TS;
+    return 0.0;
 }
 
 int codegen_call_needs_vmath_tol(const char *lang, const char *funcName)
 {
     if( lang && strcmp(lang, "c") == 0 ) return 0;
-    if( codegen_lang_needs_transcendental_tol(lang) ) return 0;
+    if( codegen_lang_transcendental_tol(lang) > 0.0 ) return 0;
     return regtest_vmath_batch(funcName);
+}
+
+double codegen_scaled_dev(double c, double s)
+{
+    if( !isfinite(c) || !isfinite(s) )
+        return ((isnan(c) && isnan(s)) || c == s) ? 0.0 : INFINITY;
+    return fabs(c - s) / fmax(1.0, fabs(c));
+}
+
+/* Per language and function, the largest scaled deviation any tolerance-lane
+ * compare saw. Reported for every function the lane compared, not only the
+ * failing ones: the margin under the bound is what says whether it holds. */
+#define TRANSC_MAX_FUNCS 512
+typedef struct { char name[48]; double maxDev; } TranscMax;
+static TranscMax g_transcMax[NUM_LANGUAGES][TRANSC_MAX_FUNCS];
+static int       g_transcMaxCount[NUM_LANGUAGES];
+/* Notes the full table could not hold. The caller has already passed the
+ * compare on the strength of the report failing it later, so a dropped note
+ * must fail the run, never vanish. */
+static long      g_transcMaxDropped[NUM_LANGUAGES];
+
+void codegen_transcendental_note(const char *lang, const char *funcName, double dev)
+{
+    unsigned int li;
+    int f;
+    if( !lang || !funcName ) return;
+    for( li = 0; li < NUM_LANGUAGES; li++ )
+        if( strcmp(ALL_LANGUAGES[li].name, lang) == 0 ) break;
+    if( li == NUM_LANGUAGES ) return;
+    for( f = 0; f < g_transcMaxCount[li]; f++ )
+        if( strcmp(g_transcMax[li][f].name, funcName) == 0 ) break;
+    if( f == g_transcMaxCount[li] )
+    {
+        if( f == TRANSC_MAX_FUNCS ) { g_transcMaxDropped[li]++; return; }
+        snprintf(g_transcMax[li][f].name, sizeof(g_transcMax[li][f].name), "%s", funcName);
+        g_transcMax[li][f].maxDev = 0.0;
+        g_transcMaxCount[li]++;
+    }
+    if( !(dev <= g_transcMax[li][f].maxDev) )
+        g_transcMax[li][f].maxDev = dev;
+}
+
+static int transc_max_by_name(const void *a, const void *b)
+{
+    return strcmp(((const TranscMax *)a)->name, ((const TranscMax *)b)->name);
+}
+
+int codegen_transcendental_report(void)
+{
+    int over = 0;
+    for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
+    {
+        double bound = codegen_lang_transcendental_tol(ALL_LANGUAGES[li].name);
+        if( bound <= 0.0 ) continue;
+        qsort(g_transcMax[li], (size_t)g_transcMaxCount[li], sizeof(TranscMax),
+              transc_max_by_name);
+        for( int f = 0; f < g_transcMaxCount[li]; f++ )
+        {
+            double dev = g_transcMax[li][f].maxDev;
+            printf("TRANSCENDENTAL MAX [%s] TA_%s %.3e\n",
+                   ALL_LANGUAGES[li].name, g_transcMax[li][f].name, dev);
+            if( !(dev <= bound) ) over++;
+        }
+        if( g_transcMaxDropped[li] > 0 )
+        {
+            printf("TRANSCENDENTAL MAX [%s] table full at %d functions: %ld "
+                   "deviation(s) of other functions went unrecorded\n",
+                   ALL_LANGUAGES[li].name, TRANSC_MAX_FUNCS, g_transcMaxDropped[li]);
+            over++;
+        }
+    }
+    if( over > 0 )
+        printf("TRANSCENDENTAL LANE FAILED: %d function(s) over their language's "
+               "bound (the TRANSCENDENTAL MAX lines above)\n", over);
+    return over;
 }
 
 int codegen_vmath_near(double a, double b)
@@ -157,10 +240,11 @@ int codegen_vmath_near(double a, double b)
  * mishandled, its server would die constructing one
  * (MAType.values()[Integer.MIN_VALUE] throws), and substituting server-side
  * would only manufacture a green. Withheld vectors are counted and printed.
+ * TS types it as the enum's literal union plus the sentinel, so it is asked.
  *
  * Lives up here with its sibling capability predicates because it has TWO
  * consumers: --xlang-hash's parameter vectors and the sentinel float leg
- * (#170). Same reason codegen_lang_needs_transcendental_tol is one definition. */
+ * (#170). Same reason codegen_lang_transcendental_tol is one definition. */
 static int codegen_lang_can_pass_enum_sentinel(const char *lang)
 {
     if( !lang ) return 1;
@@ -310,6 +394,16 @@ static long g_tailChecked[NUM_LANGUAGES];
 /* How much larger. Small on purpose — a big pad is the state this replaced, and
  * would not distinguish "the bound is a minimum" from "the bound is unchecked". */
 #define OUT_SLACK_PAD 7
+/* Edge-sweep calls repeated with a pad whose spare slots the server reported
+ * checking, for a language whose arrays drop an out-of-range store silently. */
+static long g_edgeTailChecked[NUM_LANGUAGES];
+
+/* A typed-array store past the end is a no-op in JS, so on an exact-size output
+ * buffer TS cannot fail the way Java, C# and Rust do; only a pad can see it. */
+static int lang_drops_oob_stores(const char *lang)
+{
+    return lang && strcmp(lang, "ts") == 0;
+}
 
 /* Functions that reached a real value comparison, per language: the closing
  * banner claims a pass only off this, never off a count of servers that
@@ -385,11 +479,11 @@ static int              g_numTimingResults = 0;
  * only symptom is a zero's sign is green in the stream gate, absent from
  * --xlang-hash (batch only), and invisible in the nightly.
  *
- * Compared JAVA vs C#, and not against C: C counts candidate prefixes rather
- * than successful opens, so its `legs` is on a different accounting entirely.
- * C#'s max()/min() keep the C macro's tie rule and Java's rank -0.0 below +0.0,
- * which moves `benign` only where a batch and a stream tier bring max()/min()
- * differently signed zeros. */
+ * Compared JAVA vs C# and JAVA vs TS, and not against C: C counts candidate
+ * prefixes rather than successful opens, so its `legs` is on a different
+ * accounting entirely. C#'s max()/min() keep the C macro's tie rule and Java's
+ * rank -0.0 below +0.0, which moves `benign` only where a batch and a stream
+ * tier bring max()/min() differently signed zeros. */
 typedef struct {
     char      funcName[64];
     int       seen[NUM_LANGUAGES];
@@ -447,36 +541,41 @@ static int lang_index_by_name( const char *name )
     return -1;
 }
 
-/* Returns the number of functions whose Java and C# counters disagree. Prints
- * each. Silent (and 0) when either language was not exercised in this run —
- * `--language=csharp` alone has nothing to compare against, which is a
+/* The number of functions whose counters in languages `a` and `b` disagree.
+ * Prints each. Silent (and 0) when either language was not exercised in this
+ * run: `--language=csharp` alone has nothing to compare against, which is a
  * narrowed run, not a failure. */
-static int check_stream_counter_parity( void )
+static int check_stream_counter_pair( const char *a, const char *b )
 {
-    int javaIdx = lang_index_by_name("java");
-    int csIdx   = lang_index_by_name("csharp");
+    int ia = lang_index_by_name(a);
+    int ib = lang_index_by_name(b);
     int i, bad = 0;
 
-    if( javaIdx < 0 || csIdx < 0 )
+    if( ia < 0 || ib < 0 )
         return 0;
 
     for( i = 0; i < g_numStreamCounters; i++ )
     {
         const FuncStreamCounters *r = &g_streamCounters[i];
-        if( !r->seen[javaIdx] || !r->seen[csIdx] )
+        if( !r->seen[ia] || !r->seen[ib] )
             continue;
-        if( r->legs[javaIdx] != r->legs[csIdx]
-            || r->benign[javaIdx] != r->benign[csIdx] )
+        if( r->legs[ia] != r->legs[ib] || r->benign[ia] != r->benign[ib] )
         {
-            printf("STREAM COUNTER MISMATCH [TA_%s]: java legs=%d benign=%lld, "
-                   "csharp legs=%d benign=%lld\n",
+            printf("STREAM COUNTER MISMATCH [TA_%s]: %s legs=%d benign=%lld, "
+                   "%s legs=%d benign=%lld\n",
                    r->funcName,
-                   r->legs[javaIdx], r->benign[javaIdx],
-                   r->legs[csIdx], r->benign[csIdx]);
+                   a, r->legs[ia], r->benign[ia],
+                   b, r->legs[ib], r->benign[ib]);
             bad++;
         }
     }
     return bad;
+}
+
+static int check_stream_counter_parity( void )
+{
+    return check_stream_counter_pair("java", "csharp")
+         + check_stream_counter_pair("java", "ts");
 }
 
 /* ---- Constants ---- */
@@ -996,6 +1095,10 @@ typedef struct {
 
     /* Error tracking */
     ErrorNumber codegenError;
+    /* A transcendental-lane compare over the bound. Kept out of codegenError,
+     * which stops every later leg, so the function's TRANSCENDENTAL MAX covers
+     * the whole sweep; folded into it before the verdict. */
+    ErrorNumber transcendentalError;
 
     /* When non-zero, the offset above the default that build_json_request uses
      * for every IntegerRange opt param (Task 10 large-period coverage). Carries
@@ -1453,8 +1556,10 @@ static void compare_codegen_output_generic(
          * inputs, so every server is held bit for bit, bar the calls that reach
          * a transcendental on a language whose math is not the C libm. */
         int transcendental = 0;
-        if( !p->widenFloatInputs && p->langIndex >= 0 && p->langIndex < (int)NUM_LANGUAGES
-            && codegen_lang_needs_transcendental_tol(ALL_LANGUAGES[p->langIndex].name) )
+        double transcTol = 0.0, callMaxDev = 0.0;
+        if( !p->widenFloatInputs && p->langIndex >= 0 && p->langIndex < (int)NUM_LANGUAGES )
+            transcTol = codegen_lang_transcendental_tol(ALL_LANGUAGES[p->langIndex].name);
+        if( transcTol > 0.0 )
         {
             double optVals[SWEEP_MAX_OPT];
             unsigned int k;
@@ -1500,25 +1605,22 @@ static void compare_codegen_output_generic(
             /* A bound scaled by |value| is infinite at an infinity, and a NaN
              * fails every comparison: both must match in kind before it applies
              * (a NaN's payload may differ between languages). */
-            if( !isfinite(cVal) || !isfinite(cg_out[i]) )
+            double dev = codegen_scaled_dev(cVal, cg_out[i]);
+            if( dev > callMaxDev ) callMaxDev = dev;
+            threshold = transcTol * fmax(1.0, fabs(cVal));
+            if( (!isfinite(cVal) || !isfinite(cg_out[i])) ? dev > 0.0 : diff > threshold )
             {
-                if( (isnan(cVal) && isnan(cg_out[i])) || cVal == cg_out[i] )
-                    continue;
-                printf("CODEGEN MISMATCH [TA_%s]: %s[%d] C=%.17g codegen=%.17g\n",
-                       p->funcInfo->name, fieldName, i, cVal, cg_out[i]);
-                p->codegenError = TA_CODEGEN_OUTPUT_MISMATCH;
-                return;
-            }
-            threshold = CODEGEN_TRANSCENDENTAL_TOL * fmax(1.0, fabs(cVal));
-            if( diff > threshold )
-            {
-                printf("CODEGEN MISMATCH [TA_%s]: %s[%d] C=%.10f codegen=%.10f diff=%.2e\n",
-                       p->funcInfo->name, fieldName, i,
-                       p->outRealBufs[outputNb][i], cg_out[i], diff);
-                p->codegenError = TA_CODEGEN_OUTPUT_MISMATCH;
-                return;
+                if( p->transcendentalError == TA_TEST_PASS )
+                    printf("CODEGEN MISMATCH [TA_%s]: %s[%d] C=%.17g (%a) codegen=%.17g (%a) "
+                           "scaled diff=%.3e over the transcendental bound %g\n",
+                           p->funcInfo->name, fieldName, i, cVal, cVal, cg_out[i], cg_out[i],
+                           dev, transcTol);
+                p->transcendentalError = TA_CODEGEN_OUTPUT_MISMATCH;
             }
         }
+        if( transcendental )
+            codegen_transcendental_note(ALL_LANGUAGES[p->langIndex].name,
+                                        p->funcInfo->name, callMaxDev);
     }
 
     /* Parse server timing_ns if present */
@@ -1603,14 +1705,15 @@ static void inproc_baseline(CodegenRangeTestParam *p, TA_Integer startIdx, TA_In
 }
 
 /* One (startIdx, endIdx) pair, the in-process library against the server under
- * test. Returns 0 when the caller should stop (the error is already recorded
- * and printed), 1 to carry on. */
-static int edge_compare_one(CodegenRangeTestParam *p, TA_Integer startIdx,
-                            TA_Integer endIdx, int countAsStartSweep)
+ * test, with `pad` spare output slots. Returns 0 when the caller should stop
+ * (the error is already recorded and printed), 1 to carry on. */
+static int edge_call_compare(CodegenRangeTestParam *p, TA_Integer startIdx,
+                             TA_Integer endIdx, int pad)
 {
+    p->outPad = pad;
     build_json_request(p, startIdx, endIdx);
+    p->outPad = 0;
     inproc_baseline(p, startIdx, endIdx);
-    TA_Integer refNb = p->lastNbElement;
 
     /* Language server under test. A crash (e.g. a debug-build arithmetic
      * overflow) closes the pipe, so the read returns non-PASS here. */
@@ -1619,8 +1722,8 @@ static int edge_compare_one(CodegenRangeTestParam *p, TA_Integer startIdx,
     if( rlang != TA_TEST_PASS )
     {
         printf("CODEGEN EDGE CRASH [TA_%s]: server stopped responding at "
-               "range (%d,%d) -- likely a debug-build arithmetic overflow\n",
-               p->funcInfo->name, (int)startIdx, (int)endIdx);
+               "range (%d,%d) out_pad %d -- likely a debug-build arithmetic overflow\n",
+               p->funcInfo->name, (int)startIdx, (int)endIdx, pad);
         p->codegenError = rlang;
         return 0;
     }
@@ -1632,8 +1735,8 @@ static int edge_compare_one(CodegenRangeTestParam *p, TA_Integer startIdx,
     if( p->langSupported && json_is_error(p->responseBuf) )
     {
         printf("CODEGEN EDGE MISMATCH [TA_%s]: server error at range (%d,%d) "
-               "where the in-process library produced a result: %.160s\n",
-               p->funcInfo->name, (int)startIdx, (int)endIdx, p->responseBuf);
+               "out_pad %d where the in-process library produced a result: %.160s\n",
+               p->funcInfo->name, (int)startIdx, (int)endIdx, pad, p->responseBuf);
         p->codegenError = TA_CODEGEN_RETCODE_MISMATCH;
         return 0;
     }
@@ -1642,10 +1745,33 @@ static int edge_compare_one(CodegenRangeTestParam *p, TA_Integer startIdx,
         compare_codegen_output_generic(p, o);
     if( p->codegenError != TA_TEST_PASS )
     {
-        printf("  (edge range was (%d,%d))\n", (int)startIdx, (int)endIdx);
+        printf("  (edge range was (%d,%d) out_pad %d)\n", (int)startIdx, (int)endIdx, pad);
         return 0;
     }
-    if( countAsStartSweep && p->langIndex >= 0 && p->langIndex < (int)NUM_LANGUAGES )
+    return 1;
+}
+
+static int edge_compare_one(CodegenRangeTestParam *p, TA_Integer startIdx,
+                            TA_Integer endIdx, int countAsStartSweep)
+{
+    int validLang = p->langIndex >= 0 && p->langIndex < (int)NUM_LANGUAGES;
+
+    if( !edge_call_compare(p, startIdx, endIdx, 0) )
+        return 0;
+    TA_Integer refNb = p->lastNbElement;
+
+    if( validLang && lang_drops_oob_stores(ALL_LANGUAGES[p->langIndex].name) )
+    {
+        long tailReports = codegen_tail_reports_ever();
+        if( !edge_call_compare(p, startIdx, endIdx, OUT_SLACK_PAD) )
+            return 0;
+        if( !json_is_error(p->responseBuf)
+            && json_get_int(p->responseBuf, "out_len") > p->lastNbElement
+            && codegen_tail_reports_ever() > tailReports )
+            g_edgeTailChecked[p->langIndex]++;
+    }
+
+    if( countAsStartSweep && validLang )
     {
         g_startSweepCompared[p->langIndex]++;
         if( refNb > 0 )
@@ -2794,6 +2920,8 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     }
 
     /* Check for codegen mismatch */
+    if( params.codegenError == TA_TEST_PASS )
+        params.codegenError = params.transcendentalError;
     if( params.codegenError != TA_TEST_PASS )
     {
         printf("CODEGEN FAILED (code=%d)\n", params.codegenError);
@@ -3319,7 +3447,8 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         {
             params.optOverride[i] = cand[c];
             { sweep_run_variant(&params); variants++; }
-            if( params.codegenError != TA_TEST_PASS )
+            if( params.codegenError != TA_TEST_PASS
+                || (params.transcendentalError != TA_TEST_PASS && !failParam) )
             {
                 failParam = optInfo->paramName;
                 failValue = cand[c];
@@ -3360,6 +3489,8 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     ctx->sweepVariants += variants;
     ctx->sweepFunctions++;
 
+    if( params.codegenError == TA_TEST_PASS )
+        params.codegenError = params.transcendentalError;
     if( params.codegenError != TA_TEST_PASS )
     {
         printf("  SWEEP FAIL [TA_%s]: %s=%g (mismatch detail above)\n",
@@ -4773,17 +4904,20 @@ static ErrorNumber test_unstable_bounds(CodegenPipe *cp, const CodegenLanguage *
 }
 
 /* Fuzz-port self-check for stream-capable servers (capability-gated): a
- * server that PORTS fuzz_gen (Java FuzzData, Rust fuzz.rs) must reproduce the
- * driver's inputs byte-identically, or every stream leg silently exercises
- * different data. Servers that compile fuzz_data.h directly (the C server)
- * answer no fuzz_in_hash and are skipped. Returns the number of mismatched
- * shapes (0 = port bit-identical or no port to check). */
+ * server that PORTS fuzz_gen (every one but C) must reproduce the driver's
+ * inputs byte-identically, or every stream leg silently exercises different
+ * data. The C server compiles fuzz_data.h directly and answers no
+ * fuzz_in_hash. Any other server must check every shape: one that answers
+ * none is a port nothing verifies, and its stream legs stay self-consistent
+ * on whatever it generates. Returns the number of failed shapes (0 = port
+ * bit-identical, or the C server). */
 #ifndef FUZZ_MAXN
 #define FUZZ_MAXN 256   /* bars per config (kept equal to the fuzz section's define) */
 #endif
 static unsigned long long xlang_in_hash_local(int shape, int seed, int n);
 static unsigned long long xlang_parse_hash(const char *resp, const char *field, int *present);
-static int stream_fuzz_port_selfcheck(CodegenPipe *cp, char *requestBuf, char *responseBuf)
+static int stream_fuzz_port_selfcheck(CodegenPipe *cp, const CodegenLanguage *lang,
+                                      char *requestBuf, char *responseBuf)
 {
     int fuzzChecked = 0, fuzzFails = 0, shape;
     int n = 240;
@@ -4798,7 +4932,7 @@ static int stream_fuzz_port_selfcheck(CodegenPipe *cp, char *requestBuf, char *r
         if( codegen_pipe_call(cp, requestBuf, responseBuf, JSON_BUF_SIZE) != TA_TEST_PASS )
             break;
         ih = xlang_parse_hash(responseBuf, "in_hash", &present);
-        if( !present ) break;   /* in-process fuzz (C server) — nothing to check */
+        if( !present ) break;
         fuzzChecked++;
         if( ih != xlang_in_hash_local(shape, 7, n) )
         {
@@ -4809,6 +4943,13 @@ static int stream_fuzz_port_selfcheck(CodegenPipe *cp, char *requestBuf, char *r
     if( fuzzChecked > 0 )
         printf("  Fuzz-port self-check: %d/%d shapes bit-identical\n",
                fuzzChecked - fuzzFails, fuzzChecked);
+    if( strcmp(lang->name, "c") != 0 && fuzzChecked < FUZZ_NSHAPES )
+    {
+        printf("  STREAM FUZZ PORT UNCHECKED [%s]: fuzz_in_hash answered %d of %d "
+               "shapes; every stream leg would run on unverified inputs\n",
+               lang->display, fuzzChecked, FUZZ_NSHAPES);
+        fuzzFails += FUZZ_NSHAPES - fuzzChecked;
+    }
     return fuzzFails;
 }
 
@@ -5113,7 +5254,7 @@ static ErrorNumber test_codegen_for_language(
         probeErr = codegen_pipe_call(&cp, requestBuf, responseBuf, JSON_BUF_SIZE);
         if( probeErr == TA_TEST_PASS && strstr(responseBuf, "not_streamable") )
         {
-            if( stream_fuzz_port_selfcheck(&cp, requestBuf, responseBuf) > 0 )
+            if( stream_fuzz_port_selfcheck(&cp, lang, requestBuf, responseBuf) > 0 )
                 ctx.error = TA_CODEGEN_OUTPUT_MISMATCH;
             ctx.streamFunctions     = 0;
             ctx.streamLegs          = 0;
@@ -5138,6 +5279,16 @@ static ErrorNumber test_codegen_for_language(
             ctx.streamBenign        = 0;
             ctx.streamVmath         = 0;
             TA_ForEachFunc(stream_one_function, &ctx);
+            /* Every floor below is a ratio to streamFunctions or is skipped at
+             * zero, so a server that passed the probe and then streamed nothing
+             * would read green on all of them. */
+            if( ctx.error == TA_TEST_PASS && ctx.functionFilter == NULL &&
+                ctx.streamFunctions == 0 )
+            {
+                printf("STREAM VACUOUS: the %s server answered the stream probe but "
+                       "streamed 0 functions on an unfiltered run\n", lang->name);
+                ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+            }
             /* Coverage ratchet: every function with a server stream must ALSO
              * verify OpenAndFill (the emit side and this verify side both gate on
              * the same has_open_and_fill, so they cannot desync silently — but if
@@ -6906,9 +7057,9 @@ ErrorNumber fuzz_ref(const char *version, const char *functionFilter)
  *     the exact seed-generated arrays losslessly (hex-of-IEEE-bits, the #115
  *     server_verify transport) and requests want_hash. Non-transcendental calls
  *     are diffed BITWISE; a call that reaches a transcendental (fdlibm != the C
- *     libm, a few ULP) drops to a CODEGEN_TRANSCENDENTAL_TOL (1e-9) element
- *     compare, and HT_DCPHASE/HT_SINE/HT_TRENDMODE on the zero-variance constant shape are
- *     skipped outright (xlang_illcond — atan2 of a null signal amplifies
+ *     libm, a few ULP) drops to an element compare at Java's bound
+ *     (codegen_lang_transcendental_tol), and HT_DCPHASE/HT_SINE/HT_TRENDMODE
+ *     on the zero-variance constant shape are skipped outright (xlang_illcond — atan2 of a null signal amplifies
  *     the ULP unboundedly; C and Rust stay bitwise there).
  *   - C#: the same hex-bits transport as Java (the managed server has no
  *     fuzz_gen port either), and it takes the SAME tolerance lane. It was
@@ -6937,9 +7088,9 @@ typedef struct {
     int                usesSeed;  /* transport: 1 = seed (gen_present + fuzz_in_hash
                                    * self-check), 0 = lossless hex-bits inputs (no
                                    * fuzz_gen port — Java #114, C#)           */
-    int                tolTranscendental; /* 1 = calls reaching a transcendental
-                                   * drop to the 1e-9 element compare; 0 = every
-                                   * call is bitwise. DELIBERATELY independent
+    double             tolTranscendental; /* > 0: calls reaching a transcendental
+                                   * drop to an element compare at this bound;
+                                   * 0 = every call is bitwise. DELIBERATELY independent
                                    * of the transport: inheriting the tolerance
                                    * with usesSeed=0 would silently untest 20
                                    * functions at bit level.
@@ -7153,8 +7304,8 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
 /* ---- Java-transcendental tolerance path (shared with server_verify, #113/#115)
  * Which CALLS reach a transcendental C math routine (atan/sin/cos/exp/log/...) —
  * the only ones whose Java (fdlibm) output can differ from the C libm (a few ULP),
- * hence the only ones --xlang-hash's Java leg and server_verify relax from
- * bitwise to CODEGEN_TRANSCENDENTAL_TOL. Every other function — including
+ * hence the only ones --xlang-hash and server_verify relax from bitwise to
+ * the language's codegen_lang_transcendental_tol. Every other function — including
  * sqrt/ceil/floor users (IEEE correctly-rounded) — stays bit-identical across
  * languages. ---- */
 
@@ -7210,6 +7361,7 @@ CTolVerdict codegen_compare_tol(const char *resp,
                                       return CTOL_SHAPE;
     if( goldNb <= 0 )                 return CTOL_MATCH;
 
+    CTolVerdict verdict = CTOL_MATCH;
     for( unsigned int o = 0; o < nbOutput && o < MAX_OUTPUTS; o++ )
     {
         char field[32];
@@ -7221,13 +7373,14 @@ CTolVerdict codegen_compare_tol(const char *resp,
             if( cnt != goldNb )
             { detail->output = (int)o; detail->isInt = 1; detail->srvCount = cnt; return CTOL_COUNT; }
             const TA_Integer *gold = (const TA_Integer *)outBufs[o];
-            for( int j = 0; j < goldNb; j++ )
+            for( int j = 0; j < goldNb && verdict == CTOL_MATCH; j++ )
                 if( gold[j] != srv[j] )
                 {
                     detail->output = (int)o; detail->element = j; detail->isInt = 1;
                     detail->cInt = gold[j]; detail->sInt = srv[j];
-                    return CTOL_VALUE;
+                    verdict = CTOL_VALUE;
                 }
+            if( verdict != CTOL_MATCH && tol <= 0.0 ) return verdict;
         }
         else
         {
@@ -7249,20 +7402,26 @@ CTolVerdict codegen_compare_tol(const char *resp,
                 }
                 else if( tol < 0.0 )
                     bad = memcmp(&c, &sv, sizeof(double)) != 0;
-                else if( !isfinite(c) || !isfinite(sv) )
-                    bad = !((isnan(c) && isnan(sv)) || c == sv);
                 else
-                    bad = diff > t;
-                if( bad )
+                {
+                    double dev = codegen_scaled_dev(c, sv);
+                    if( dev > detail->maxDev ) detail->maxDev = dev;
+                    if( !isfinite(c) || !isfinite(sv) )
+                        bad = dev > 0.0;
+                    else
+                        bad = diff > t;
+                }
+                if( bad && verdict == CTOL_MATCH )
                 {
                     detail->output = (int)o; detail->element = j; detail->isInt = 0;
                     detail->cReal = c; detail->sReal = sv;
-                    return CTOL_VALUE;
+                    verdict = CTOL_VALUE;
                 }
+                if( verdict != CTOL_MATCH && tol <= 0.0 ) return verdict;
             }
         }
     }
-    return CTOL_MATCH;
+    return verdict;
 }
 
 /* Send req to one server; reopen once if it died (a dead server that cannot be
@@ -7727,8 +7886,8 @@ static void xlang_tier_parse(const TA_FuncInfo *fi, const char *resp, LbTierResp
  * a value contract, not a bit contract" — stream_verify counts exactly this
  * same OpenAndFill-vs-batch case as benign). `tol > 0` is the CROSS-LANGUAGE
  * contract (issue #256's L3, a server vs C's golden): a call reaching a
- * transcendental may land on a different libm (Java's fdlibm, .NET's
- * unguaranteed Math.*), the same CODEGEN_TRANSCENDENTAL_TOL
+ * transcendental may land on a different libm (Java's fdlibm, .NET's or a JS
+ * engine's unguaranteed Math.*), the same per-language bound
  * server_verify()/--xlang-hash already tolerate there — relative for |v|>1,
  * absolute otherwise. A NaN carries no bit contract either way: two NaNs of
  * any payload are a match, at any `tol`, as in `codegen_compare_tol`; an
@@ -7737,18 +7896,26 @@ static void xlang_tier_parse(const TA_FuncInfo *fi, const char *resp, LbTierResp
  * which payload fdlibm or .NET hands back for the same input was never
  * specified.
  * Returns 1 on a real divergence, 0 otherwise; *benign counts the
- * signed-zero-only and NaN-payload-only elements. */
+ * signed-zero-only and NaN-payload-only elements. At `tol > 0` every element
+ * is scanned and *maxDev gets the largest codegen_scaled_dev. */
 static int xlang_tier_data_diff(const TA_FuncInfo *fi, const LbTierResp *a,
-                                const LbTierResp *b, double tol, long long *benign)
+                                const LbTierResp *b, double tol, long long *benign,
+                                double *maxDev)
 {
     if( a->begIdx != b->begIdx || a->nbElement != b->nbElement ) return 1;
     int n = a->nbElement;
+    int bad = 0;
     for( unsigned int o = 0; o < fi->nbOutput && o < LB_TIER_MAX_OUT; o++ )
     {
         if( a->isInt[o] )
         {
             for( int j = 0; j < n; j++ )
-                if( a->intg[o][j] != b->intg[o][j] ) return 1;
+                if( a->intg[o][j] != b->intg[o][j] )
+                {
+                    if( tol <= 0.0 ) return 1;
+                    bad = 1;
+                    break;
+                }
         }
         else
         {
@@ -7762,19 +7929,21 @@ static int xlang_tier_data_diff(const TA_FuncInfo *fi, const LbTierResp *a,
                 }
                 if( memcmp(&x, &y, sizeof(double)) == 0 ) continue;
                 if( isnan(x) && isnan(y) ) { (*benign)++; continue; }
-                if( isnan(x) != isnan(y) ) return 1;
                 if( x == y ) { (*benign)++; continue; }   /* +0.0 vs -0.0 */
-                if( !isfinite(x) || !isfinite(y) ) return 1;
-                if( tol > 0.0 )
+                if( tol <= 0.0 ) return 1;
+                double dev = codegen_scaled_dev(x, y);
+                if( maxDev && dev > *maxDev ) *maxDev = dev;
+                if( isnan(x) != isnan(y) || !isfinite(x) || !isfinite(y) )
+                    bad = 1;
+                else
                 {
                     double t = (fabs(x) > 1.0) ? tol * fabs(x) : tol;
-                    if( fabs(x - y) <= t ) continue;
+                    if( !(fabs(x - y) <= t) ) bad = 1;
                 }
-                return 1;
             }
         }
     }
-    return 0;
+    return bad;
 }
 
 /* Raw results of one same-server tier probe (batch + Open + OpenAndFill),
@@ -7914,7 +8083,7 @@ static void xlang_tier_self_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
             long long benignHere = 0;
             sv->cases++;
             ctx->tierDataCases++;
-            if( xlang_tier_data_diff(funcInfo, &out->batchR, &out->oafR, 0.0, &benignHere) )
+            if( xlang_tier_data_diff(funcInfo, &out->batchR, &out->oafR, 0.0, &benignHere, NULL) )
             {
                 sv->mism++;
                 if( ctx->reportedThisFunc < 3 )
@@ -8169,7 +8338,7 @@ static void xlang_tier_native_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
             long long benignHere = 0;
             ctx->cNativeCases++;
             ctx->tierDataCases++;
-            if( xlang_tier_data_diff(funcInfo, &out->batchR, &out->oafR, 0.0, &benignHere) )
+            if( xlang_tier_data_diff(funcInfo, &out->batchR, &out->oafR, 0.0, &benignHere, NULL) )
             {
                 ctx->cNativeMism++;
                 if( ctx->reportedThisFunc < 3 )
@@ -8192,18 +8361,18 @@ static void xlang_tier_native_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
  * OpenAndFill retCode — and, where both accepted, the batch/OpenAndFill
  * output data — match what C's own native in-process call
  * (`g`, from xlang_tier_native_check) produced for the SAME vector? Data is
- * compared at `sv`'s transcendental tolerance (Java's fdlibm, C#'s
- * unguaranteed Math.*), the same rule server_verify()/--xlang-hash already
+ * compared at `sv`'s transcendental bound (Java's fdlibm, C#'s and a JS
+ * engine's unguaranteed Math.*), the same rule server_verify()/--xlang-hash already
  * use elsewhere — never for Open, which carries no data to compare (see
  * xlang_tier_self_check). */
 static void xlang_tier_gold_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
                                   const double *optVals, XlangServer *sv,
                                   const XlangTierResults *g, const XlangTierResults *r)
 {
-    double tol = ( sv->tolTranscendental &&
+    double tol = ( sv->tolTranscendental > 0.0 &&
                    codegen_call_is_transcendental(funcInfo->handle, optVals,
                                                   (int)funcInfo->nbOptInput) )
-                 ? CODEGEN_TRANSCENDENTAL_TOL
+                 ? sv->tolTranscendental
                  : codegen_call_needs_vmath_tol(sv->name, funcInfo->name)
                  ? CODEGEN_TOL_VMATH : 0.0;
 
@@ -8234,7 +8403,12 @@ static void xlang_tier_gold_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
             sv->cases++;
             ctx->l3DataCases++;
             if( tol == CODEGEN_TOL_VMATH ) ctx->l3VmathCases++;
-            if( xlang_tier_data_diff(funcInfo, &g->batchR, &r->batchR, tol, &benignHere) )
+            double maxDev = 0.0;
+            int diverged = xlang_tier_data_diff(funcInfo, &g->batchR, &r->batchR, tol,
+                                                &benignHere, &maxDev);
+            if( tol > 0.0 && g->batchR.nbElement > 0 )
+                codegen_transcendental_note(sv->name, funcInfo->name, maxDev);
+            if( diverged )
             {
                 sv->mism++;
                 if( ctx->reportedThisFunc < 3 )
@@ -8302,7 +8476,12 @@ static void xlang_tier_gold_check(XlangCtx *ctx, const TA_FuncInfo *funcInfo,
             sv->cases++;
             ctx->l3DataCases++;
             if( tol == CODEGEN_TOL_VMATH ) ctx->l3VmathCases++;
-            if( xlang_tier_data_diff(funcInfo, &g->oafR, &r->oafR, tol, &benignHere) )
+            double maxDev = 0.0;
+            int diverged = xlang_tier_data_diff(funcInfo, &g->oafR, &r->oafR, tol,
+                                                &benignHere, &maxDev);
+            if( tol > 0.0 && g->oafR.nbElement > 0 )
+                codegen_transcendental_note(sv->name, funcInfo->name, maxDev);
+            if( diverged )
             {
                 sv->mism++;
                 if( ctx->reportedThisFunc < 3 )
@@ -9221,7 +9400,7 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                          * sending a rejected vector down that path killed the Java
                          * server. */
                         tolPath = vm ||
-                                  ( sv->tolTranscendental &&
+                                  ( sv->tolTranscendental > 0.0 &&
                                     kind[k] != FUZZ_VEC_REJECT &&
                                     codegen_call_is_transcendental(funcInfo->handle, vec[k],
                                                                    (int)funcInfo->nbOptInput) );
@@ -9254,8 +9433,11 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                                                              p.outputIsInteger, goldBufs,
                                                              curRc, curBeg, curNb,
                                                              vm ? CODEGEN_TOL_VMATH
-                                                                : CODEGEN_TRANSCENDENTAL_TOL, &d);
+                                                                : sv->tolTranscendental, &d);
                         if( d.nbNear > 0 ) ctx->vmathCases++;
+                        if( !vm && cv != CTOL_RETCODE && cv != CTOL_SHAPE && cv != CTOL_COUNT
+                            && curRc == TA_SUCCESS && curNb > 0 )
+                            codegen_transcendental_note(sv->name, funcInfo->name, d.maxDev);
                         if( cv != CTOL_MATCH )
                         {
                             sv->mism++;
@@ -9274,9 +9456,12 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                                            d.output, d.element, d.cReal, d.cReal,
                                            d.sReal, d.sReal);
                                 else if( cv == CTOL_VALUE && !d.isInt )
-                                    printf("  out%d[%d] C=%.17g server=%.17g diff=%.3g (tol %g)",
-                                           d.output, d.element, d.cReal, d.sReal,
-                                           fabs(d.cReal - d.sReal), CODEGEN_TRANSCENDENTAL_TOL);
+                                    printf("  out%d[%d] C=%.17g (%a) server=%.17g (%a) "
+                                           "scaled diff=%.3g (tol %g)",
+                                           d.output, d.element, d.cReal, d.cReal,
+                                           d.sReal, d.sReal,
+                                           codegen_scaled_dev(d.cReal, d.sReal),
+                                           sv->tolTranscendental);
                                 else if( cv == CTOL_VALUE )
                                     printf("  int out%d[%d] C=%d server=%d",
                                            d.output, d.element, d.cInt, d.sInt);
@@ -9339,16 +9524,15 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
 
     /* Each generated language server, diffed against the in-process C golden (C
      * is the golden, not a server row). Rust uses the seed transport
-     * (gen_present + fuzz_in_hash); Java and the managed C# use the lossless
-     * hex-bits transport (usesSeed=0 — no fuzz_gen port). Java and C# both
-     * relax their transcendental-using calls to the 1e-9 element compare
-     * (tolTranscendental=1) for different reasons: Java's fdlibm is not the C
-     * libm, and .NET does not guarantee `Math.*` reaches the platform libm.
-     * Every non-transcendental call in both stays bitwise. */
+     * (gen_present + fuzz_in_hash); Java, the managed C# and TS use the
+     * lossless hex-bits transport (usesSeed=0). Java, C# and TS relax their transcendental-using calls to an element
+     * compare at their language's bound: none of their `Math.*` is guaranteed
+     * to be the platform libm. Every non-transcendental call stays bitwise. */
     static XlangServer servers[] = {
-        {"rust",   "Rust", argv_rust,   1, 0, 0, {0}, 0, 0, 0, 0},
-        {"java",   "Java", argv_java,   0, 0, 0, {0}, 0, 0, 0, 0},
-        {"csharp", "C#",   argv_csharp, 0, 0, 0, {0}, 0, 0, 0, 0},
+        {"rust",   "Rust",       argv_rust,   1, 0, 0, {0}, 0, 0, 0, 0},
+        {"java",   "Java",       argv_java,   0, 0, 0, {0}, 0, 0, 0, 0},
+        {"csharp", "C#",         argv_csharp, 0, 0, 0, {0}, 0, 0, 0, 0},
+        {"ts",     "TypeScript", argv_ts,     0, 0, 0, {0}, 0, 0, 0, 0},
     };
     int nsv = (int)(sizeof(servers)/sizeof(servers[0]));
 
@@ -9360,7 +9544,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     for( int s = 0; s < nsv; s++ )
     {
         servers[s].tolTranscendental =
-            codegen_lang_needs_transcendental_tol(servers[s].name);
+            codegen_lang_transcendental_tol(servers[s].name);
         servers[s].enumSentinel =
             codegen_lang_can_pass_enum_sentinel(servers[s].name);
     }
@@ -9405,7 +9589,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
     if( nrequested == 0 )
     {
         printf("FAIL — no language server matched --language=%s "
-               "(valid: rust, java, csharp; C is the in-process golden).\n",
+               "(valid: rust, java, csharp, ts; C is the in-process golden).\n",
                languageFilter ? languageFilter : "");
         free(ctx.reqBuf); free(ctx.respBuf);
         free(ctx.tierReqBuf); free(ctx.tierRespBuf);
@@ -9458,6 +9642,7 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
      * function, which reads totalMism alone. No restart count: there is no
      * process to restart. */
     long long totalMism = ctx.cNativeMism, totalCases = ctx.cNativeCases, totalRestarts = 0;
+    int transcOver;
     printf("\n---------------------------------------------\n");
     printf("golden cases: %lld   (in-process C library; %lld with non-empty output = %.0f%% non-vacuous)\n",
            ctx.comparisons, ctx.nonEmpty,
@@ -9478,9 +9663,9 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
         totalRestarts += servers[s].restarts;
     }
     if( ctx.tolCases > 0 )
-        printf("  (%lld tolerance-lane call(s) across Java+C# compared at the "
-               "transcendental tolerance %g)\n",
-               ctx.tolCases, CODEGEN_TRANSCENDENTAL_TOL);
+        printf("  (%lld tolerance-lane call(s) compared at their language's "
+               "transcendental bound)\n", ctx.tolCases);
+    transcOver = codegen_transcendental_report();
     if( ctx.vmathCases > 0 || ctx.l3VmathCases > 0 )
         printf("  (%lld kernel-lane call(s) and %lld golden-check compare(s) held "
                "within %d representable double(s): the in-process batch is a "
@@ -9648,12 +9833,12 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
                ctx.sentEnumCases, ctx.lbSentEnumCases);
         return TA_CODEGEN_OUTPUT_MISMATCH;
     }
-    if( totalMism == 0 && preFails == 0 && ctx.error == TA_TEST_PASS )
+    if( totalMism == 0 && transcOver == 0 && preFails == 0 && ctx.error == TA_TEST_PASS )
     {
         printf("PASS — %lld function(s) swept: every server matches the in-process C "
-               "library: BIT-IDENTICAL (zero tolerance), Java+C# transcendentals "
-               "within %g%s (current-vs-current, all shapes).\n",
-               ctx.funcsSwept, CODEGEN_TRANSCENDENTAL_TOL,
+               "library: BIT-IDENTICAL (zero tolerance), transcendentals within "
+               "their language's bound%s (current-vs-current, all shapes).\n",
+               ctx.funcsSwept,
                ctx.vmathDue > 0 ? ", kernel-batch functions within the kernel lane" : "");
         return TA_TEST_PASS;
     }
@@ -10352,6 +10537,15 @@ ErrorNumber test_codegen(const TA_History *history,
                            ALL_LANGUAGES[li].display);
                     return TA_CODEGEN_OUTPUT_MISMATCH;
                 }
+                if( g_codegenCompared[li] > 0 && g_edgeTailChecked[li] == 0
+                    && lang_drops_oob_stores(ALL_LANGUAGES[li].name) )
+                {
+                    printf("\nCODEGEN FAILED: %s never once reported checking "
+                           "the output slots past outNBElement on a padded "
+                           "edge-sweep call\n",
+                           ALL_LANGUAGES[li].display);
+                    return TA_CODEGEN_OUTPUT_MISMATCH;
+                }
             }
 
 
@@ -10405,14 +10599,14 @@ ErrorNumber test_codegen(const TA_History *history,
             }
         }
 
-        /* Java/C# stream counter equality — the only observer for a
+        /* Managed stream counter equality — the only observer for a
          * signed-zero-only divergence (see FuncStreamCounters). Runs before
          * the pass banner so a mismatch cannot print underneath it. */
         if( check_stream_counter_parity() > 0 )
         {
             printf("\n=============================================\n");
-            printf("FAILED: Java and C# disagree on stream leg/benign counts.\n");
-            printf("  Both render the same source, so these are the same\n"
+            printf("FAILED: the managed servers disagree on stream leg/benign counts.\n");
+            printf("  They render the same source, so these are the same\n"
                    "  deterministic integers over the same inputs. A difference\n"
                    "  means one of them computes a different value somewhere the\n"
                    "  bitwise legs let through -- in practice a +0.0/-0.0 split,\n"

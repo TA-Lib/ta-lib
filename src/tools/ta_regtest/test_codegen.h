@@ -17,7 +17,7 @@
 
 /* Run codegen verification tests against one or more languages.
  * languageFilter: comma-separated list of languages to test (NULL = test all).
- *   Valid values: "rust", "c", "java", "csharp"
+ *   Valid values: "rust", "c", "java", "csharp", "ts"
  * functionFilter: CSV list of function names to test (NULL = test all).
  * Errors loudly if a requested language's server cannot be started.
  */
@@ -49,16 +49,30 @@ int codegen_short_filter_token_matches(const char *name, const char *token);
  * so a function's own test and the codegen sweep read the same number. */
 unsigned int codegen_range_grace(const char *funcName);
 
-/* True if this language must drop transcendental-reaching calls to the 1e-9
- * element compare instead of a bitwise hash. Single definition shared by
- * --xlang-hash and server_verify; see the comment on the implementation. */
-int codegen_lang_needs_transcendental_tol(const char *lang);
+/* The bound this language's transcendental-reaching calls are element-compared
+ * at instead of by a bitwise hash; 0 for a language held bitwise on them. The
+ * single definition --codegen, --xlang-hash and server_verify read. */
+double codegen_lang_transcendental_tol(const char *lang);
+
+/* Records one tolerance-lane compare of funcName from `lang`: dev is the call's
+ * largest scaled deviation (codegen_scaled_dev), 0 when every element agreed. */
+void codegen_transcendental_note(const char *lang, const char *funcName, double dev);
+
+/* |c - s| scaled as the lane's bound is: relative above magnitude 1, absolute
+ * below. Infinite when only one side is finite or they are different
+ * non-finite values; 0 for two NaNs or the same infinity. */
+double codegen_scaled_dev(double c, double s);
+
+/* Prints one TRANSCENDENTAL MAX line per (language, function) noted, for each
+ * language with a non-zero bound, and returns how many are over their
+ * language's bound. */
+int codegen_transcendental_report(void);
 
 /* True if a real output of funcName from `lang` is held to the in-process
  * library's by fuzz_vmath_near instead of by bits: the library answers from a
  * batch kernel (regtest_vmath_batch) and `lang` from libm. Never the C server,
- * whose batch has the kernel too, nor a language of the 1e-9 lane, which already
- * takes every such function. A NULL lang is a frozen release. */
+ * whose batch has the kernel too, nor a language with a transcendental bound,
+ * whose lane already takes every such function. A NULL lang is a frozen release. */
 int codegen_call_needs_vmath_tol(const char *lang, const char *funcName);
 
 /* fuzz_vmath_near, for a suite that does not include fuzz_data.h. */
@@ -75,8 +89,8 @@ ErrorNumber fuzz_ref(const char *version, const char *functionFilter);
  * seed-generated inputs, comparing full-precision output hashes with NO
  * tolerance. Rust crosses the boundary with a seed (gen_present); Java crosses
  * it with the lossless hex-bits transport (its server has no fuzz_gen port,
- * #114). Java and C# both fall back to a narrow tolerance on transcendental-
- * using calls (see codegen_lang_needs_transcendental_tol).
+ * #114). The languages with a transcendental bound fall back to it on
+ * transcendental-using calls (see codegen_lang_transcendental_tol).
  * functionFilter/languageFilter: CSV filters (NULL = all). Returns TA_TEST_PASS
  * iff every server matches C (bitwise, or within tolerance where noted). */
 ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter);
@@ -127,12 +141,16 @@ void codegen_hash_report(const char *who, TA_RetCode goldRc, int goldBeg,
  * bit-compared against a language whose math does not resolve to the same libm
  * the in-process golden uses: Java's fdlibm never does, and .NET's `Math.*` is
  * not guaranteed to (proven host-dependent — see
- * codegen_lang_needs_transcendental_tol). Those calls swap the bitwise out_hash
- * path for a narrow element-compare at this tolerance (relative for |v|>1,
- * absolute otherwise). Measured Java drift over both gates' scenarios peaks ~9.7e-15
- * (HT_DCPHASE), so 1e-9 keeps ~5 orders of margin over libm noise while still
- * failing any real algorithmic regression (orders of magnitude larger). ---- */
-#define CODEGEN_TRANSCENDENTAL_TOL 1e-9
+ * codegen_lang_transcendental_tol), and neither is a JS engine's `Math.*`.
+ * Those calls swap the bitwise out_hash path for a narrow element-compare at
+ * the language's bound (relative for |v|>1, absolute otherwise). Measured Java
+ * drift over both gates' scenarios peaks ~9.7e-15 (HT_DCPHASE), so 1e-9 keeps
+ * ~5 orders of margin over libm noise while still failing any real algorithmic
+ * regression (orders of magnitude larger). The TypeScript bound is the
+ * owner's: when a function's TRANSCENDENTAL MAX goes over it, report the function
+ * to the owner rather than widening it. ---- */
+#define CODEGEN_TRANSCENDENTAL_TOL    1e-9
+#define CODEGEN_TRANSCENDENTAL_TOL_TS 1e-11
 
 /* Passed as codegen_compare_tol's tol, compares bits: the sign of a zero counts. */
 #define CODEGEN_TOL_BITWISE (-1.0)
@@ -177,13 +195,16 @@ typedef struct {
     int    cInt, sInt;            /* golden vs server value (integer outputs) */
     int    srvCount;              /* server array length (CTOL_COUNT only) */
     int    nbNear;                /* reals taken through fuzz_vmath_near */
+    double maxDev;                /* largest codegen_scaled_dev over every real
+                                   * element, when tol > 0 */
 } CTolDetail;
 
 /* Parse a server's array-mode response and element-compare against the C golden
  * in logical output order — outBufs[o] is a TA_Real* or TA_Integer* per
  * outIsInteger[o], nb elements each. Reals at `tol` (relative for |v|>1,
  * absolute otherwise; finite-vs-NaN always fails), integers exact. Fills *detail
- * on COUNT/VALUE. No I/O. */
+ * on COUNT/VALUE with the first divergence; at tol > 0 every real element is
+ * still scanned so detail->maxDev is complete. No I/O. */
 CTolVerdict codegen_compare_tol(const char *resp,
                                 unsigned int nbOutput, const int *outIsInteger,
                                 const void *const *outBufs,

@@ -34,7 +34,7 @@
  * 130000 values. */
 #define SV_BUF_SIZE (2 * 1024 * 1024)   /* 2MB request/response buffers */
 
-/* The transcendental tolerance (CODEGEN_TRANSCENDENTAL_TOL), the
+/* The per-language transcendental bound (codegen_lang_transcendental_tol), the
  * transcendental-call test (codegen_call_is_transcendental), the lossless
  * hex-bits input writer (codegen_write_hexbits_array), and the tolerance
  * element-compare (codegen_compare_tol) are all shared with the --xlang-hash
@@ -45,7 +45,7 @@
 /* ---- Global state ---- */
 
 static CodegenPipe *g_pipes[SV_MAX_PIPES];
-static const char  *g_pipeLang[SV_MAX_PIPES];          /* "c"/"rust"/"java"/"csharp" */
+static const char  *g_pipeLang[SV_MAX_PIPES];          /* "c"/"rust"/"java"/"csharp"/"ts" */
 static int          g_nbPipes = 0;
 static char        *g_reqBuf  = NULL;
 static char        *g_respBuf = NULL;
@@ -713,6 +713,21 @@ static ErrorNumber compare_output_tol(const char *funcName,
                                         crefRetCode, (int)crefOutBegIdx,
                                         (int)crefOutNbElement, tol, &d);
     g_vmathComparisons += d.nbNear;
+    /* A real over the transcendental bound does not fail here: it lands in the
+     * function's TRANSCENDENTAL MAX, which fails the --codegen run at its end
+     * with every function's maximum complete. */
+    if( tol > 0.0 && crefRetCode == TA_SUCCESS && crefOutNbElement > 0
+        && (v == CTOL_MATCH || (v == CTOL_VALUE && !d.isInt)) )
+    {
+        const char *lang = g_pipeLang[g_curPipe];
+        codegen_transcendental_note(lang, funcName, d.maxDev);
+        if( v == CTOL_VALUE )
+            printf("  SV TRANSCENDENTAL OVER BOUND [%s] (pipe %d, %s): output %d [%d] "
+                   "C=%.17g (%a) server=%.17g (%a) scaled diff=%.3e, bound %g\n",
+                   funcName, g_curPipe, lang ? lang : "?", d.output, d.element,
+                   d.cReal, d.cReal, d.sReal, d.sReal, d.maxDev, tol);
+        return TA_TEST_PASS;
+    }
     switch( v )
     {
     case CTOL_MATCH:
@@ -801,8 +816,8 @@ ErrorNumber server_verify(
          * drifted apart, leaving C# bitwise here and tolerant there. */
         /* The servers take the float path only when returning arrays; an
          * out_hash is always of the double tier. */
-        int bitwise = !g_svFloat
-                      && !(codegen_lang_needs_transcendental_tol(lang) && isTranscendental);
+        double transcTol = codegen_lang_transcendental_tol(lang);
+        int bitwise = !g_svFloat && !(transcTol > 0.0 && isTranscendental);
         /* A hash cannot be held within a tolerance: such a call asks for the
          * arrays. */
         int vmath = bitwise && codegen_call_needs_vmath_tol(lang, funcName);
@@ -900,7 +915,7 @@ ErrorNumber server_verify(
                                      outReal, outInteger,
                                      g_svFloat ? CODEGEN_TOL_BITWISE
                                      : vmath   ? CODEGEN_TOL_VMATH
-                                               : CODEGEN_TRANSCENDENTAL_TOL);
+                                               : transcTol);
             if( err != TA_TEST_PASS )
                 return err;
             g_comparisons++;

@@ -485,6 +485,11 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
       - name: Every function in every language vs the in-process C library
         shell: bash
         run: python3 scripts/build.py regtest
@@ -555,7 +560,8 @@ jobs:
     needs: test
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # The bounds-checked TypeScript leg roughly doubles the job.
+    timeout-minutes: 75
     permissions:
       contents: read
 
@@ -581,12 +587,37 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
       - name: Build servers and run cross-language verification
         shell: bash
         run: |
           # Rust toolchain and cmake are preinstalled on ubuntu-latest.
           # Benchmarks are skipped: CI timing is noise.
           python3 scripts/regtest.py --no-perftest --no-direct-bench --codegen
+
+      # A JS typed array reads undefined past its end and drops the store, so the
+      # leg above cannot see an off-by-one the JVM, the CLR and safe Rust throw
+      # on. Here every typed array the TS server and library build is
+      # bounds-checked; the log proves the servers really loaded the preload.
+      - name: TypeScript with bounds-checked typed arrays
+        shell: bash
+        run: |
+          node scripts/ts_checked_arrays.mjs
+          log="$RUNNER_TEMP/ts_checked_arrays.log"
+          rm -f "$log"
+          export NODE_OPTIONS="--import=$PWD/scripts/ts_checked_arrays.mjs"
+          export TA_TS_CHECKED_LOG="$log"
+          cd bin
+          ./ta_regtest --codegen --language=c,ts
+          ./ta_regtest --xlang-hash --language=c,ts
+          if ! grep -q taCodegenServe "$log"; then
+            echo "::error::No TypeScript server loaded scripts/ts_checked_arrays.mjs, so the leg above ran unchecked. NODE_OPTIONS must reach the node that ta_regtest spawns."
+            exit 1
+          fi
 
       # The benchmark CORPUS, not the benchmark. --verify-corpus checks every
       # shape is reproducible and produces valid OHLC — deterministic, so unlike
@@ -638,6 +669,11 @@ jobs:
         uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
+
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
 
       - name: Run the synthetic cross-language gate
         shell: bash
@@ -725,6 +761,283 @@ jobs:
             echo "::error::The C# package is wrong, or does not work from outside the assembly; see the log above."
             exit 1
           fi
+
+  # The npm package built, packed and tested AS THE TARBALL on every Node major
+  # scripts/node_toolchain.json pins; the PR gate only compiles the tree.
+  typescript:
+    name: TypeScript package built and tested on Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24, 26]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Install Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Refuse a matrix that differs from the pinned Node majors
+        shell: bash
+        env:
+          WANT: ${{ matrix.node }}
+          LEGS: ${{ strategy.job-total }}
+        run: |
+          python3 - "$(node -p 'process.versions.node.split(".")[0]')" <<'EOF'
+          import json, os, sys
+          pinned = sorted(json.load(open("scripts/node_toolchain.json"))["versions"], key=int)
+          got, want, legs = sys.argv[1], os.environ["WANT"], int(os.environ["LEGS"])
+          if got != want or want not in pinned or legs != len(pinned):
+              print(f"::error::This leg runs Node {got} for matrix entry {want}, in a matrix of "
+                    f"{legs}; scripts/node_toolchain.json pins {', '.join(pinned)}. Make the "
+                    f"matrix in .github/workflows/nightly-jobs.yml list exactly those majors.")
+              sys.exit(1)
+          EOF
+
+      - name: Build the package and run every suite against the installed tarball
+        shell: bash
+        run: |
+          if ! python3 scripts/build.py libraries --language=ts; then
+            echo "::error::The TypeScript package does not build, or does not pass its own suites on Node ${{ matrix.node }}; see the log above."
+            exit 1
+          fi
+
+      - name: Pack, check what ships, and consume the package
+        shell: bash
+        run: |
+          if ! python3 scripts/ts_package_check.py; then
+            echo "::error::The npm package is wrong, or does not load from outside the source tree; see the log above."
+            exit 1
+          fi
+
+      - name: Software fma, bit for bit against libm, on a seed that changes daily
+        shell: bash
+        run: |
+          seed=$(date -u +%Y%m%d)
+          echo "Reproduce with: python3 scripts/ts_fma_check.py --random=100000000 --seed=$seed"
+          python3 scripts/ts_fma_check.py --random=100000000 --seed="$seed"
+
+      - name: The npm lookup ignores the previous holder's versions
+        if: matrix.node == 22
+        shell: bash
+        run: python3 scripts/test_website.py
+
+  # engines.node is what a consumer is promised, and every other TypeScript leg
+  # runs a newer Node. The floor is READ from the shipped package.json, so
+  # raising engines moves this job; anything but an exact `>=X.Y.Z` fails before
+  # a Node is installed. Building and the source-tree suites need the tooling
+  # Node, so only what a consumer runs moves to the floor: the package gate and
+  # the suites that import the installed tarball.
+  typescript-node-floor:
+    name: TypeScript package on its declared Node floor
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Install Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      - name: Read the declared floor from the shipped package.json
+        id: floor
+        shell: bash
+        run: |
+          python3 - <<'EOF'
+          import json, os, re, sys
+          with open("ta_codegen/output/ts/library/package.json") as f:
+              engines = json.load(f).get("engines", {}).get("node", "")
+          m = re.fullmatch(r">=(\d+\.\d+\.\d+)", engines)
+          if not m:
+              print(f"::error::engines.node is {engines!r}, not an exact '>=X.Y.Z' floor this job "
+                    f"can install. It is generated by ta_codegen/generator/src/backends/ts.rs.")
+              sys.exit(1)
+          print(f"Declared Node floor: {m.group(1)}")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"floor={m.group(1)}\n")
+          EOF
+
+      - name: Install the tooling Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Build the package and run every suite on the tooling Node
+        shell: bash
+        run: |
+          if ! python3 scripts/build.py libraries --language=ts; then
+            echo "::error::The TypeScript package does not build, or does not pass its own suites on the tooling Node; see the log above."
+            exit 1
+          fi
+
+      - name: Install the declared floor
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ steps.floor.outputs.floor }}
+
+      - name: Refuse a Node other than the floor
+        shell: bash
+        env:
+          FLOOR: ${{ steps.floor.outputs.floor }}
+        run: |
+          got=$(node -p process.versions.node)
+          if [ "$got" != "$FLOOR" ]; then
+            echo "::error::node on PATH is $got, not the declared floor $FLOOR, so the steps below would not test the floor."
+            exit 1
+          fi
+
+      - name: Pack, check what ships, and consume the package on the floor
+        shell: bash
+        run: |
+          if ! python3 scripts/ts_package_check.py; then
+            echo "::error::The npm package does not load or compute on Node ${{ steps.floor.outputs.floor }}, the floor its engines field declares; see the log above."
+            exit 1
+          fi
+
+      # The floor strips types only behind the flag.
+      - name: Run the suites that import the installed tarball on the floor
+        shell: bash
+        working-directory: bin/ta_codegen_ts_package/consumer
+        run: |
+          mapfile -t files < <(grep -rlE "(from |import\()['\"]ta-lib['\"/]" test --include='*.test.ts' | sort)
+          if ! printf '%s\n' "${files[@]}" | grep -q '^test/gen/'; then
+            echo "::error::No generated example suite under test/gen imports 'ta-lib', so nothing would run the shipped JS on the floor."
+            exit 1
+          fi
+          if ! node --experimental-strip-types --test --test-reporter=tap "${files[@]}" > tap.log; then
+            cat tap.log
+            echo "::error::The installed package computes differently on Node ${{ steps.floor.outputs.floor }}, the floor its engines field declares; see the log above."
+            exit 1
+          fi
+          grep -E '^# (tests|pass|fail) ' tap.log
+          tests=$(sed -n 's/^# tests //p' tap.log)
+          if [ "${tests:-0}" -eq 0 ]; then
+            echo "::error::${#files[@]} suite file(s) ran no test."
+            exit 1
+          fi
+
+  # The npm package on Windows, the only job that runs it off Linux and macOS:
+  # the suites in source and against the installed tarball, the consumer check,
+  # then ts_package_check.py, which also runs the scripts' .cmd launch path.
+  typescript-windows:
+    name: TypeScript package built and tested on windows-2022
+    runs-on: windows-2022
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Compile the library and type-check its tests
+        shell: bash
+        working-directory: ta_codegen/output/ts
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          node_modules/.bin/tsc -p library
+          node_modules/.bin/tsc -p library/test --noEmit
+
+      - name: Run the source-tree suites, then the rest against the installed tarball
+        shell: bash
+        working-directory: ta_codegen/output/ts/library
+        run: |
+          set -euo pipefail
+          # The log stays out of the library: the package gate refuses a dirty one.
+          log="$RUNNER_TEMP/tap.log"
+          suite() {
+            if ! node --test --test-reporter=tap "$@" > "$log"; then
+              cat "$log"
+              echo "::error::A TypeScript suite fails on Windows; see the log above."
+              return 1
+            fi
+            grep -E '^# (tests|pass|fail) ' "$log"
+            local tests
+            tests=$(sed -n 's/^# tests //p' "$log")
+            if [ "${tests:-0}" -eq 0 ]; then
+              echo "::error::$# suite file(s) ran no test."
+              return 1
+            fi
+          }
+          packaged=()
+          in_tree=()
+          while IFS= read -r f; do
+            if grep -qE "(from |import\()['\"]ta-lib['\"/]" "$f"; then packaged+=("$f"); else in_tree+=("$f"); fi
+          done < <(find test -name '*.test.ts' | sort)
+          if [ ${#packaged[@]} -eq 0 ] || [ ${#in_tree[@]} -eq 0 ]; then
+            echo "::error::${#packaged[@]} suite file(s) import 'ta-lib' and ${#in_tree[@]} do not; both must be non-zero, or one half tests nothing."
+            exit 1
+          fi
+          suite "${in_tree[@]}"
+          pack=$(cd ../../../.. && pwd)/bin/ts_windows
+          rm -rf "$pack"
+          mkdir -p "$pack/consumer"
+          npm pack --pack-destination "$pack"
+          tgz=$(cd "$pack" && ls ./*.tgz)
+          printf '{"name":"ta-lib-package-test","private":true,"type":"module"}\n' > "$pack/consumer/package.json"
+          cp -r test "$pack/consumer/test"
+          cd "$pack/consumer"
+          npm install --no-audit --no-fund --ignore-scripts "../$tgz"
+          suite "${packaged[@]}"
+
+      - name: Type-check and load the installed package by import and by require()
+        shell: bash
+        run: |
+          set -euo pipefail
+          tgz=$(cd bin/ts_windows && ls ./*.tgz)
+          mkdir bin/ts_windows/check
+          cp scripts/ts_consumer_check/* bin/ts_windows/check/
+          cd bin/ts_windows/check
+          npm install --no-audit --no-fund --ignore-scripts "../$tgz"
+          ../../../ta_codegen/output/ts/node_modules/.bin/tsc -p .
+          specs=$(node -p "Object.keys(require('./node_modules/ta-lib/package.json').exports).map((s) => s === '.' ? 'ta-lib' : 'ta-lib' + s.slice(1)).join(' ')")
+          # shellcheck disable=SC2086
+          imp=$(node import.mjs $specs | tail -n 1 | tr -d '\r')
+          # shellcheck disable=SC2086
+          req=$(node require.cjs $specs | tail -n 1 | tr -d '\r')
+          echo "$imp"
+          if [ "$imp" != "$req" ]; then
+            echo "::error::import and require() disagree on Windows: $imp vs $req"
+            exit 1
+          fi
+          case "$imp" in
+            *'"sma":[2,8,2,3,4,5,6,7,8,9]'*) ;;
+            *) echo "::error::The installed package's SMA(3) over 1..10 is wrong on Windows: $imp"; exit 1 ;;
+          esac
+
+      - name: Package gate
+        shell: bash
+        run: python scripts/ts_package_check.py
 
   # Debug-profile Rust codegen gate. The release cross-language job above wraps a
   # usize overflow silently (the wrapped value is dead), so it cannot see the
@@ -1362,6 +1675,11 @@ jobs:
         uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
+
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
 
       - name: Bitwise-diff each language server vs the in-process C library
         shell: bash

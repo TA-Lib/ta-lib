@@ -1,0 +1,28 @@
+{
+  "versions": {
+    "22": {
+      "version": "22.23.4",
+      "tar_gz_sha256": {
+        "darwin-arm64": "c9e1dbc748b33ed2d14f42445191ecaf14c56259c7a9a26d0042c49ec2b66428",
+        "linux-arm64": "f7a1e486dbc8b286847815b477d4fb5e9fb963ed4489c3e1588853d685f589f9",
+        "linux-x64": "b8492284c76a54baf58d61668dd0e41ee0fc98adabf9503d30f05d08f55b4406"
+      }
+    },
+    "24": {
+      "version": "24.22.2",
+      "tar_gz_sha256": {
+        "darwin-arm64": "aa9549349e47dffaa42dcf95d6e06ade8c4bdafc980979883b88767670df385a",
+        "linux-arm64": "95c264150aceb7f3437a29fd6984924f5f8d1511ea3cbd6c508b83f6c555dae2",
+        "linux-x64": "361718c444e49af2ca5a110c83ba6a8901143f23ab285ebbef0341f391f482a9"
+      }
+    },
+    "26": {
+      "version": "26.13.0",
+      "tar_gz_sha256": {
+        "darwin-arm64": "d38bd5e5a2ddce6bbb5ce45e46e208337da4d51fffe611e567fd32073d6439f6",
+        "linux-arm64": "439e9c438acdf6a6ffe47418da709153d66c4bed812e30a473faacb107dd2791",
+        "linux-x64": "5848553868b402d3fabb5b09270649977780a390f832155721025a08b5104455"
+      }
+    }
+  }
+}

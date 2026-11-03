@@ -21,6 +21,19 @@ updates:
           - "vuepress-theme-hope"
           - "@vuepress/*"
 
+  - package-ecosystem: "npm"
+    directory: "/ta_codegen/output/ts"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    # @types/node stays at the lowest Node major the package supports, so the
+    # tools cannot type-check against an API that major lacks.
+    ignore:
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: "github-actions"
     directory: "/"
     target-branch: "dev"

@@ -115,6 +115,7 @@ static const char *const argv_c[]      = {"./ta_codegen_serve_c", NULL};
 static const char *const argv_rust[]   = {"./ta_codegen_serve_rust", NULL};
 static const char *const argv_java[]   = {"java", "-cp", "ta_codegen_java", "TaCodegenServe", NULL};
 static const char *const argv_csharp[] = {"dotnet", "ta_codegen_csharp/TaCodegenServe.dll", NULL};
+static const char *const argv_ts[]     = {"node", "ta_codegen_ts/tools/taCodegenServe.js", NULL};
 
 static BenchLanguage LANGUAGES[] = {
     {"cref",     "C-ref",    argv_cref,     {0}, 0, 0},
@@ -122,6 +123,7 @@ static BenchLanguage LANGUAGES[] = {
     {"rust",     "Rust",     argv_rust,     {0}, 0, 0},
     {"java",     "Java",     argv_java,     {0}, 0, 0},
     {"csharp",   "C#",       argv_csharp,   {0}, 0, 0},
+    {"ts",       "TypeScript", argv_ts,     {0}, 0, 0},
 };
 #define NUM_LANGUAGES (sizeof(LANGUAGES)/sizeof(LANGUAGES[0]))
 

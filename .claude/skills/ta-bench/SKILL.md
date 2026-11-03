@@ -202,17 +202,17 @@ with-context difference in ns, not a ratio of the totals. Confirm such a claim
 on the shipped build, as in the A/B section, with the same step after each
 call. A change that only removes work needs no context run.
 
-`ta_bench_stream` is **C only**. For the Rust, Java and C# streaming tiers,
+`ta_bench_stream` is **C only**. For the Rust, Java, C# and TypeScript streaming tiers,
 `scripts/stream_ab.py` A/Bs `update` (or `peek`) per bar — or `open`, which times
 the whole warm-up instead of one bar — between the working tree
 and a git revision — same generated harness compiled against two copies of the
 library, interleaved rounds with alternating arm order, every streaming function
 so the untouched ones are the control. It reads only the generated Rust crate,
-Java fragments and C# library (no ta_abstract, no servers, no C build) and
+Java fragments, C# library and TS library (no ta_abstract, no servers, no C build) and
 derives every call from the emitted signatures, so adding an indicator needs no
 edit there.
 
-Every arm asserts a **floor** (`FUNC_FLOOR`, 170 against 176 today) on how many
+Every arm asserts a **floor** (`FUNC_FLOOR`, a little under the streaming corpus) on how many
 functions it parsed. That is not a style check: #278 recased the Rust and Java
 stream APIs and both arms' regexes kept the old spelling, so each parsed zero —
 Rust's until `c308e789`, Java's for a further day. Nothing but a person trying
@@ -226,16 +226,24 @@ rather than what a long-lived process settles at. Both arms get the same
 treatment, so the change column — the output — is unaffected, and the ns columns
 were never comparable across invocations anyway. Note also that `TALib.csproj`
 sets `TreatWarningsAsErrors`, so a `--base` from an older revision has to compile
-*warning-clean* under today's SDK, a higher bar than the other two arms impose.
+*warning-clean* under today's SDK, a higher bar than the other arms impose.
+
+The **TS arm** runs each function in its own Node process, so V8's inline
+caches in the library's shared helpers never carry another function's shapes,
+and it runs the first `node` on PATH: a timing job puts
+`scripts/node_toolchain.py 22`'s bin directory first. Its `--base` must already
+have the TS stream tier, or the arm dies at the floor before anything builds.
+Its rows are a change between two TS builds and are never compared with C.
 
 There is still **no C# row in `ta_bench`** — `ta_bench --mode=open` answers
 `unsupported_mode` for it — so batch-vs-stream ratios remain a three-language
 table.
 
 ```bash
-scripts/stream_ab.py --base=origin/dev                                  # all three
+scripts/stream_ab.py --base=origin/dev                                  # all four
 scripts/stream_ab.py --base=HEAD~1 --lang=rust --call=peek --mark=MIN,MAX
 scripts/stream_ab.py --base=origin/dev --lang=csharp --call=peek
+scripts/stream_ab.py --base=<rev with TS streaming> --lang=ts --call=update
 scripts/stream_ab.py --base=origin/dev --call=open --mark=BBANDS,STDDEV   # the Open tier
 ```
 

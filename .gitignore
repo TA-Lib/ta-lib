@@ -100,6 +100,8 @@ ta_codegen/output/csharp/library/test/bin/
 ta_codegen/output/csharp/library/test/obj/
 ta_codegen/output/java/**/*.class
 ta_codegen/output/java/library/target/
+ta_codegen/output/ts/node_modules/
+ta_codegen/output/ts/library/dist/
 scripts/java_consumer_check/target/
 
 # Git worktrees

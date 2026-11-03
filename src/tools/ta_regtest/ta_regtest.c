@@ -240,6 +240,7 @@ int main( int argc, char **argv )
 static ErrorNumber regtest_main( int argc, char **argv )
 {
    ErrorNumber retValue;
+   int tsAbstractFuncs = 0;
 
    printf( "\n" );
    printf( "ta_regtest V%s - Regression Tests of TA-Lib code\n", TA_GetVersionString() );
@@ -584,6 +585,35 @@ static ErrorNumber regtest_main( int argc, char **argv )
          ABSTRACT_SERVER_MISSING("csharp", codegenLanguageFilter, retValue);
       }
    }
+   /* TypeScript abstract parity: the same two passes, against the registry the
+    * package ships under `./metadata`. The success line carries the function
+    * count, so a gate can grep it under --language=c,ts, where a missing server
+    * is already a failure. */
+   if( retValue == TA_TEST_PASS && doCodegenTest &&
+       svLanguageEnabled( codegenLanguageFilter, "ts" ) )
+   {
+      CodegenPipe tsAbstractPipe;
+      const char *const tsArgv[] = {"node", "ta_codegen_ts/tools/taCodegenServe.js", NULL};
+      if( codegen_pipe_open(&tsAbstractPipe, tsArgv) == TA_TEST_PASS )
+      {
+         ErrorNumber e;
+         test_abstract_set_server(&tsAbstractPipe, "ts");
+         e = test_abstract_server_metadata(functionFilter);
+         if( e == TA_TEST_PASS )
+         {
+            tsAbstractFuncs = test_abstract_server_metadata_checked();
+            e = test_abstract();
+         }
+         test_abstract_set_server(NULL, NULL);
+         codegen_pipe_close(&tsAbstractPipe);
+         if( retValue == TA_TEST_PASS && e != TA_TEST_PASS )
+            retValue = e;
+      }
+      else
+      {
+         ABSTRACT_SERVER_MISSING("ts", codegenLanguageFilter, retValue);
+      }
+   }
 #undef ABSTRACT_SERVER_MISSING
 
    if( retValue != TA_TEST_PASS )
@@ -593,12 +623,14 @@ static ErrorNumber regtest_main( int argc, char **argv )
    }
    hideFeedback();
    printf( "done.\n" );
+   if( tsAbstractFuncs > 0 )
+      printf( "  abstract parity (TypeScript): %d functions\n", tsAbstractFuncs );
    fflush(stdout);
 
    {
       /* When codegen mode is active, also verify hand-written tests
-       * against every available language server (C, Rust, Java, C#),
-       * honoring --language=CSV. The Java/C# launch commands are
+       * against every available language server (C, Rust, Java, C#, TS),
+       * honoring --language=CSV. The Java/C#/TS launch commands are
        * relative to the bin directory (same as test_codegen.c).
        */
       CodegenPipe svPipes[SV_MAX_PIPES];
@@ -626,11 +658,14 @@ static ErrorNumber regtest_main( int argc, char **argv )
                                              "TaCodegenServe", NULL};
          const char *const svArgvCsharp[] = {"dotnet",
                                              "ta_codegen_csharp/TaCodegenServe.dll", NULL};
+         const char *const svArgvTs[]     = {"node",
+                                             "ta_codegen_ts/tools/taCodegenServe.js", NULL};
          const struct { const char *lang; const char *const *argvSv; } svServers[] = {
             { "c",      svArgvC },
             { "rust",   svArgvRust },
             { "java",   svArgvJava },
             { "csharp", svArgvCsharp },
+            { "ts",     svArgvTs },
          };
          unsigned int svIdx;
          for( svIdx = 0; svIdx < sizeof(svServers)/sizeof(svServers[0]); svIdx++ )
@@ -684,6 +719,8 @@ static ErrorNumber regtest_main( int argc, char **argv )
    if( doCodegenTest )
    {
       retValue = test_codegen_with_simulator();
+      if( codegen_transcendental_report() > 0 && retValue == TA_TEST_PASS )
+         retValue = TA_CODEGEN_OUTPUT_MISMATCH;
       if( retValue != TA_TEST_PASS )
          return retValue;
    }
@@ -1083,12 +1120,12 @@ static void printUsage(void)
       printf( "\n" );
       printf( "    --codegen[=LANG[,LANG,...]]\n" );
       printf( "       After normal tests, verify ta_codegen output against C reference.\n" );
-      printf( "       Languages: rust, c, java, csharp (default: all)\n" );
+      printf( "       Languages: rust, c, java, csharp, ts (default: all)\n" );
       printf( "       Example: --codegen=rust,java\n" );
       printf( "\n" );
       printf( "    --language=LANG[,LANG,...]\n" );
       printf( "       Filter which language servers to test with --codegen.\n" );
-      printf( "       Valid values: rust, c, java, csharp (default: all)\n" );
+      printf( "       Valid values: rust, c, java, csharp, ts (default: all)\n" );
       printf( "       Example: --language=c,rust\n" );
       printf( "\n" );
       printf( "       Requires language server binaries in the bin directory.\n" );
@@ -1098,7 +1135,8 @@ static void printUsage(void)
       printf( "       Cross-language BITWISE parity gate (issue #113): diff each\n" );
       printf( "       language server against the in-process C library on\n" );
       printf( "       seed-generated inputs, comparing full-precision output hashes\n" );
-      printf( "       with no tolerance. Honors --function and --language (rust today).\n" );
+      printf( "       with no tolerance. Honors --function and --language (rust, java,\n" );
+      printf( "       csharp, ts).\n" );
       printf( "       Run from the bin directory (needs the language servers).\n" );
       printf( "\n" );
       printf( "    --ref=X_Y_Z\n" );

@@ -158,6 +158,24 @@ def is_unzip_installed() -> bool:
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
 
+def is_node_installed() -> bool:
+    try:
+        out = subprocess.run(['node', '--version'], check=True, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE, text=True).stdout
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+    m = re.match(r'v(\d+)\.(\d+)\.', out.strip())
+    if not m or (int(m.group(1)), int(m.group(2))) < (22, 18):
+        return False
+    npm = shutil.which('npm')
+    if not npm:
+        return False
+    try:
+        subprocess.run([npm, '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return True
+    except (subprocess.CalledProcessError, OSError):
+        return False
+
 def check_prerequisites(tools: list):
     """Check that all required tools are installed. Exit with an error if any are missing.
 
@@ -199,12 +217,15 @@ PREREQS_DOTNET = ("dotnet", is_dotnet_installed, "see https://dotnet.microsoft.c
 # distribution without it and then fails the pinned SHA-256 with "your Maven
 # distribution might be compromised", which is a missing utility, not an attack.
 PREREQS_UNZIP = ("unzip", is_unzip_installed, "apt install unzip (or brew install unzip)")
+PREREQS_NODE = ("node", is_node_installed,
+                "Node >= 22.18 with npm from https://nodejs.org, or put the directory "
+                "`python3 scripts/node_toolchain.py 22` prints first on PATH")
 
 # Grouped prerequisite sets for common build scenarios.
 PREREQS_BUILD_BASIC = [PREREQS_CMAKE]
 PREREQS_BUILD_CODEGEN = [PREREQS_CMAKE, PREREQS_CARGO]
 PREREQS_BUILD_SERVERS = [PREREQS_CMAKE, PREREQS_CARGO, PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA,
-                         PREREQS_DOTNET]
+                         PREREQS_DOTNET, PREREQS_NODE]
 
 # Tools each --language= backend's SERVER needs, on top of the base set below.
 # Unknown tokens (ta_bench also accepts "cref") contribute nothing, so a typo can only
@@ -217,6 +238,7 @@ LANG_PREREQS = {
     "rust":   [],                            # cargo is already in the base set
     "java":   [PREREQS_JAVAC, PREREQS_JAVA],
     "csharp": [PREREQS_DOTNET],
+    "ts":     [PREREQS_NODE],
 }
 
 # Tools the PUBLISHABLE library of each backend needs, which is a different
@@ -225,11 +247,12 @@ LANG_PREREQS = {
 LIBRARY_PREREQS = {
     "java":   [PREREQS_JAVAC, PREREQS_JAVA, PREREQS_UNZIP],
     "csharp": [PREREQS_DOTNET],
+    "ts":     [PREREQS_NODE],
 }
 
 # The ta_codegen `--backend=` tokens, which are 1:1 with the --language= ones
-# (backends::all_names() == ["c", "rust", "java", "csharp"]).
-CODEGEN_BACKENDS = ("c", "rust", "java", "csharp")
+# (backends::all_names() == ["c", "rust", "java", "csharp", "ts"]).
+CODEGEN_BACKENDS = ("c", "rust", "java", "csharp", "ts")
 
 
 def prereqs_for_languages(lang_filter):

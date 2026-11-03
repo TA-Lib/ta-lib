@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""A/B the Rust, Java and C# streaming tier between two revisions of this tree.
+"""A/B the Rust, Java, C# and TypeScript streaming tier between two revisions of this tree.
 
 `ta_bench_stream` measures the C streaming tier only. This measures the other
-three: it times `update` (or `peek`) per bar for every streaming function -- or
+four: it times `update` (or `peek`) per bar for every streaming function -- or
 `open`, which times a whole warm-up pass rather than one bar -- in two
 arms — the working tree and a git revision — and reports the per-function
 change with the untouched functions as the control.
@@ -10,6 +10,7 @@ change with the untouched functions as the control.
     scripts/stream_ab.py --base=origin/dev
     scripts/stream_ab.py --base=HEAD~1 --lang=rust --call=peek --mark=MIN,MAX
     scripts/stream_ab.py --base=origin/dev --lang=csharp --call=peek
+    scripts/stream_ab.py --base=HEAD~1 --lang=ts --call=open
 
 The two arms are the SAME harness source compiled against two copies of the
 library, so a row is a library difference, not a harness difference. Rounds are
@@ -28,14 +29,20 @@ one invocation per point and reading the result as a curve reports build layout
 as if it were the parameter.
 
 Inputs: the generated `ta_codegen/output/rust/library` crate,
-`ta_codegen/output/java/fragments` and `ta_codegen/output/csharp/library`.
-Nothing else — no ta_abstract, no C library, no servers, no ta_regtest. Needs
-`cargo` for --lang=rust, `javac`/`java` for --lang=java, `dotnet` for
---lang=csharp. Both revisions must expose the same stream API surface; if they
-do not, the base arm fails to compile and says so. For C# that bar is higher
-than for the other two: `TALib.csproj` sets `TreatWarningsAsErrors`, so a base
-arm from an older revision must still compile *warning-clean* under whatever SDK
-is installed today, not merely compile.
+`ta_codegen/output/java/fragments`, `ta_codegen/output/csharp/library` and
+`ta_codegen/output/ts/library`. Nothing else — no ta_abstract, no C library, no
+servers, no ta_regtest. Needs `cargo` for --lang=rust, `javac`/`java` for
+--lang=java, `dotnet` for --lang=csharp, `node`/`npm` for --lang=ts. Both
+revisions must expose the same stream API surface; if they do not, the base arm
+fails to compile and says so. For C# that bar is higher than for the others:
+`TALib.csproj` sets `TreatWarningsAsErrors`, so a base arm from an older
+revision must still compile *warning-clean* under whatever SDK is installed
+today, not merely compile.
+
+The TS arm runs the first `node` on PATH, so a timing job puts the bin
+directory `scripts/node_toolchain.py 22` prints first. Both arms compile with
+the working tree's pinned `tsc`, and each function runs in its own process.
+Its rows are a change between two TS builds, never a figure to set beside C.
 
 The harness calls every function through its generated signature with the
 default-value sentinels (i32::MIN / -4e37 / MAType.DEFAULT), so it needs no
@@ -67,12 +74,13 @@ import subprocess
 import sys
 import tempfile
 
+import ts_package_check
+
 HIST = 4096          # bars of history handed to Open
 FEED = 4096          # bars cycled through update/peek (power of two: index & mask)
 
 # Floor on how many functions an arm must parse before it is allowed to measure
-# anything. There are 176 streaming functions today, in each of the three
-# languages, and the number only ever grows. This is not a style check: #278
+# anything. The number of streaming functions only ever grows. This is not a style check: #278
 # recased the Rust and Java stream APIs, both arms' Open regexes still spelled
 # the old names, and each silently parsed ZERO -- Rust's until c308e789, Java's
 # until this commit. Neither was found by CI; both were found by someone trying
@@ -254,6 +262,93 @@ def parse_csharp(root):
         call = [x.rsplit(" ", 1)[1] for x in m2.group(2).split(",") if x.strip()]
         funcs[name] = {"open": args, "call": call, "ret": ret, "member": member,
                        "openfn": open_fn}
+    return funcs, declined
+
+
+TS_LIB = "ta_codegen/output/ts/library"
+
+
+def parse_ts(root):
+    return parse_ts_library(os.path.join(root, TS_LIB))
+
+
+def parse_ts_library(lib):
+    """Same, from a TS library directory: a working tree's or a staged arm's."""
+    d = os.path.join(lib, "src/func")
+    funcs, declined = {}, {}
+    if not os.path.isdir(d):
+        return funcs, declined
+    # The harness imports Core and MAType from their own modules, not the barrel.
+    index = open(os.path.join(lib, "src/index.ts")).read()
+    home = {}
+    for t in ("Core", "MAType"):
+        m = re.search(r"^export \{[^}]*\b%s\b[^}]*\} from '\./([\w/]+\.ts)';" % t, index, re.M)
+        home[t] = m and m.group(1)
+    for fn in sorted(os.listdir(d)):
+        if not fn.endswith(".ts"):
+            continue
+        base = fn[:-3]
+        name = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", base).upper()
+        src = open(os.path.join(d, fn)).read()
+        if not re.search(r"^export function %sLookback\(" % re.escape(base), src, re.M):
+            continue
+        # camelCase drops an underscore before a digit (swak2php is SWAK_2PHP):
+        # take the spelling off Open's error context when it is the same name.
+        lit = re.search(r"'([A-Z0-9_]+) open'", src)
+        if lit and lit.group(1).replace("_", "") == name.replace("_", ""):
+            name = lit.group(1)
+        m = re.search(r"^export function (\w+Open)\(\n(.*?)\n\): (\w+Stream) \{\n(.*?)\n\}\n",
+                      src, re.M | re.S)
+        if not m:
+            declined[name] = "no Open signature matched"
+            continue
+        open_fn, params, cls, body = m.groups()
+        args, why = [], None
+        for line in params.split("\n"):
+            an, ty = [x.strip() for x in line.strip().rstrip(",").split(":", 1)]
+            if an == "core":
+                continue
+            if ty == "ArrayLike<number>":
+                kind = "slice"
+            elif ty.startswith("MAType"):
+                kind = "matype"
+            elif ty == "number" and re.search(r"requireInt32\('[^']*', '%s'" % an, body):
+                kind = "int"
+            elif ty == "number" and re.search(r"requireReal\('[^']*', '%s'" % an, body):
+                kind = "real"
+            else:
+                why = f"Open parameter {an}: {ty}"
+                break
+            args.append((kind, an))
+        if why:
+            declined[name] = why
+            continue
+        blk = re.search(r"^export class %s \{\n(.*?)\n\}\n" % cls, src, re.M | re.S)
+        m2 = blk and re.search(r"^  update\((.*?)\): (\w+) \{", blk.group(1), re.M)
+        if not m2:
+            declined[name] = "no update method"
+            continue
+        call, sinkty = [], None
+        for a in [x.strip() for x in m2.group(1).split(",") if x.strip()]:
+            an, ty = [x.strip() for x in a.split(":", 1)]
+            if ty == "number":
+                call.append(an)
+            else:
+                sinkty = ty
+        sinkfield = None
+        if sinkty:
+            sb = re.search(r"^export class %s \{\n(.*?)\n\}\n" % re.escape(sinkty), src, re.M | re.S)
+            fm = sb and re.search(r"^  (\w+): number = 0;", sb.group(1), re.M)
+            if not fm:
+                declined[name] = f"no field found on sink type {sinkty}"
+                continue
+            sinkfield = fm.group(1)
+        if not (home["Core"] and home["MAType"]):
+            declined[name] = "index.ts re-exports no Core or no MAType"
+            continue
+        funcs[name] = {"open": args, "call": call, "openfn": open_fn, "module": fn,
+                       "sinkty": sinkty, "sinkfield": sinkfield,
+                       "core": home["Core"], "matype": home["MAType"]}
     return funcs, declined
 
 
@@ -576,11 +671,127 @@ CSHARP_OPEN_BLOCK = """
       catch (Exception e) { Console.WriteLine("OPENFAIL %(name)s " + e.GetType().Name); }"""
 
 
+# The TypeScript arm runs ONE function per process (argv[4] picks it): V8's
+# inline caches in the library's shared helpers would otherwise carry every
+# earlier function's shapes into the later ones, so a row would depend on its
+# block order. Each entry imports only its own module, so a process does not
+# load every function. The accumulator is printed, so no call is dead code; an
+# Open handle is stored to a module binding for the same reason.
+TS_HEAD = """// Generated by scripts/stream_ab.py. Do not edit; do not commit.
+import { Core } from '../library/src/%(core)s';
+import { MAType } from '../library/src/%(matype)s';
+
+declare const process: {
+  argv: string[];
+  hrtime: { bigint(): bigint };
+  stdout: { write(s: string): boolean };
+  stderr: { write(s: string): boolean };
+  exit(code: number): never;
+};
+
+const HIST = %(hist)d;
+const FEED = %(feed)d;
+const SINK = new Float64Array(1);
+let hold: unknown = null;
+
+let seed = 42n;
+function nxt(): number {
+  seed = BigInt.asUintN(64, seed * 6364136223846793005n + 1442695040888963407n);
+  return Number(seed >> 33n) / 2147483648.0 - 0.5;
+}
+
+// Deterministic random walk. Timing-only: never hashed, unrelated to
+// fuzz_data.h and to bench_corpus.h. Bit-for-bit the Rust, Java and C# walk.
+const c: Float64Array[] = [];
+for (let k = 0; k < 7; k++) c.push(new Float64Array(HIST + FEED));
+{
+  let px = 100.0;
+  for (let i = 0; i < HIST + FEED; i++) {
+    const op = px;
+    px = Math.max(px + nxt(), 1.0);
+    c[0][i] = op;
+    c[1][i] = Math.max(op, px) + 0.5 * Math.abs(nxt());
+    c[2][i] = Math.max(Math.min(op, px) - 0.5 * Math.abs(nxt()), 0.5);
+    c[3][i] = px;
+    c[4][i] = 1000.0 + 100.0 * nxt();
+    c[5][i] = px * 0.99 + 0.3;
+    c[6][i] = 14.0;
+  }
+}
+const [h_opn, h_high, h_low, h_close, h_vol, h_real1, h_periods] = c.map((s) => s.slice(0, HIST));
+const [f_opn, f_high, f_low, f_close, f_vol, f_real1, f_periods] = c.map((s) => s.slice(HIST));
+
+function nsPer(t0: bigint, iters: number): number {
+  return Number(process.hrtime.bigint() - t0) / iters;
+}
+
+function say(name: string, all: number[]): void {
+  all.sort((a, b) => a - b);
+  process.stdout.write(`RESULT ${name} ${all[0].toFixed(4)}\\n`);
+}
+
+type Bench = (iters: number, passes: number) => void;
+const BENCH: { [name: string]: () => Promise<Bench> } = {
+"""
+
+# The first two passes are discarded: they are V8 tiering up, not the code.
+TS_BLOCK = """
+  %(name)s: () => import('../library/src/func/%(module)s').then((m): Bench => (iters, passes) => {
+    const open = m.%(openfn)s;
+    const all: number[] = [];%(decl)s
+    for (let p = 0; p < passes + 2; p++) {
+      const st = open(%(oargs)s);
+      let acc = 0;
+      for (let i = 0; i < 20000; i++) { %(body)s }
+      const t0 = process.hrtime.bigint();
+      for (let i = 0; i < iters; i++) { %(body)s }
+      if (p >= 2) all.push(nsPer(t0, iters));
+      SINK[0] += acc;
+    }
+    say('%(name)s', all);
+  }),"""
+
+TS_OPEN_BLOCK = """
+  %(name)s: () => import('../library/src/func/%(module)s').then((m): Bench => (iters, passes) => {
+    const open = m.%(openfn)s;
+    const all: number[] = [];
+    for (let p = 0; p < passes + 2; p++) {
+      for (let i = 0; i < 200; i++) { hold = open(%(oargs)s); }
+      const t0 = process.hrtime.bigint();
+      for (let i = 0; i < iters; i++) { hold = open(%(oargs)s); }
+      if (p >= 2) all.push(nsPer(t0, iters));
+    }
+    SINK[0] += hold === null ? 0 : 1;
+    say('%(name)s', all);
+  }),"""
+
+TS_TAIL = """
+};
+
+const [, , itersArg, passesArg, only] = process.argv;
+const load = BENCH[only];
+if (load === undefined) {
+  process.stderr.write(`no such function: ${only}\\n`);
+  process.exit(2);
+}
+load().then((bench) => {
+  try {
+    bench(parseInt(itersArg, 10), parseInt(passesArg, 10));
+  } catch (e) {
+    process.stdout.write(`OPENFAIL ${only} ${e instanceof Error ? e.name : typeof e}\\n`);
+  }
+  process.stderr.write(`sink ${SINK[0]}\\n`);
+});
+"""
+
+
 # How each language spells "use the documented default for this parameter".
 SENTINEL = {
     "rust":   {"int": "i32::MIN", "real": "-4e37", "matype": "MAType::DEFAULT"},
     "java":   {"int": "Integer.MIN_VALUE", "real": "-4e37", "matype": "MAType.DEFAULT"},
     "csharp": {"int": "int.MinValue", "real": "-4e37", "matype": "MAType.DEFAULT"},
+    "ts":     {"int": "Core.INTEGER_DEFAULT", "real": "Core.REAL_DEFAULT",
+               "matype": "MAType.DEFAULT"},
 }
 
 
@@ -666,6 +877,29 @@ def emit_csharp(funcs, names, call, period, marked):
         })
     s.append('\n      Console.Error.WriteLine("sink " + sink);\n   }\n}\n')
     return "".join(s)
+
+
+def emit_ts(funcs, names, call, period, marked):
+    blocks = []
+    for name in names:
+        f = funcs[name]
+        oargs = open_args(f, "ts", name, period, marked)
+        if call == "open":
+            blocks.append(TS_OPEN_BLOCK % {"name": name, "module": f["module"],
+                                           "openfn": f["openfn"], "oargs": oargs})
+            continue
+        cargs = ", ".join(f"f_{series(a)}[i & {FEED - 1}]" for a in f["call"])
+        if f["sinkty"]:
+            decl = "\n    const o = new m.%s();" % f["sinkty"]
+            body = "st.%s(%s, o); acc += o.%s;" % (call, cargs, f["sinkfield"])
+        else:
+            decl = ""
+            body = "acc += st.%s(%s);" % (call, cargs)
+        blocks.append(TS_BLOCK % {"name": name, "module": f["module"], "openfn": f["openfn"],
+                                  "oargs": oargs, "decl": decl, "body": body})
+    f = funcs[names[0]]
+    head = TS_HEAD % {"core": f["core"], "matype": f["matype"], "hist": HIST, "feed": FEED}
+    return head + "".join(blocks) + TS_TAIL
 
 
 # --------------------------------------------------------------------------
@@ -797,19 +1031,60 @@ def build_csharp(root, arm, rev, work, src):
     return ["dotnet", os.path.join(bench, f"bin/Release/{tfm}/stream_ab.dll")]
 
 
+# Extends the arm's own library tsconfig, so each arm compiles with the options
+# it ships with; the compiler is the working tree's pinned tsc for both.
+TS_BENCH_TSCONFIG = """{
+  "extends": "../library/tsconfig.json",
+  "compilerOptions": { "rootDir": "..", "outDir": "../dist", "declaration": false },
+  "include": ["bench.ts"]
+}
+"""
+
+
+def stage_ts(root, arm, rev, work):
+    d = os.path.join(work, "ts", arm)
+    if os.path.isdir(d):
+        return d
+    if rev is not None and run(["git", "cat-file", "-e", f"{rev}:{TS_LIB}/src"], cwd=root,
+                               check=False).returncode != 0:
+        os.makedirs(d)
+        return d
+    stage_tree(root, rev, d, [TS_LIB], strip=3, ignore=["dist", "node_modules"])
+    return d
+
+
+def build_ts(root, arm, rev, work, src):
+    if not ts_package_check.ensure_tooling():
+        sys.exit("[ts] npm ci failed in ta_codegen/output/ts; see its output above")
+    d = stage_ts(root, arm, rev, work)
+    bench = os.path.join(d, "bench")
+    os.makedirs(bench, exist_ok=True)
+    open(os.path.join(d, "package.json"), "w").write('{"type":"module"}\n')
+    open(os.path.join(bench, "tsconfig.json"), "w").write(TS_BENCH_TSCONFIG)
+    open(os.path.join(bench, "bench.ts"), "w").write(src)
+    run([os.path.join(ts_package_check.TS_ROOT, "node_modules/.bin/tsc"), "-p", bench])
+    if arm == "head":
+        print(f"[ts] node {run(['node', '--version']).stdout.strip()}, the first on PATH")
+    return ["node", os.path.join(d, "dist/bench/bench.js")]
+
+
 # --------------------------------------------------------------------------
 # Run and report
 # --------------------------------------------------------------------------
 
-def measure(cmd, iters, passes):
-    out = run(cmd + [str(iters), str(passes)]).stdout
+def measure(cmd, iters, passes, names=None):
+    """`names` runs one process per function, each told which by its last argument."""
+    cmds = [cmd + [str(iters), str(passes)]]
+    if names is not None:
+        cmds = [cmds[0] + [n] for n in names]
     res, failed = {}, []
-    for line in out.splitlines():
-        p = line.split()
-        if p[:1] == ["RESULT"]:
-            res[p[1]] = float(p[2])
-        elif p[:1] == ["OPENFAIL"]:
-            failed.append(p[1])
+    for c in cmds:
+        for line in run(c).stdout.splitlines():
+            p = line.split()
+            if p[:1] == ["RESULT"]:
+                res[p[1]] = float(p[2])
+            elif p[:1] == ["OPENFAIL"]:
+                failed.append(p[1])
     return res, failed
 
 
@@ -848,19 +1123,40 @@ ARMS = {
     "rust":   (parse_rust, emit_rust, build_rust),
     "java":   (parse_java, emit_java, build_java),
     "csharp": (parse_csharp, emit_csharp, build_csharp),
+    "ts":     (parse_ts, emit_ts, build_ts),
 }
+
+ONE_PER_PROCESS = {"ts"}
 
 # Checked up front for every requested arm: the rust leg alone is minutes, and
 # finding out only then that the next arm has no compiler wastes all of it.
-TOOLCHAIN = {"rust": ["cargo"], "java": ["javac", "java"], "csharp": ["dotnet"]}
+TOOLCHAIN = {"rust": ["cargo"], "java": ["javac", "java"], "csharp": ["dotnet"],
+             "ts": ["node", "npm"]}
+
+
+def floor_check(lang, n, where=""):
+    if n >= FUNC_FLOOR:
+        return
+    if where:
+        sys.exit(f"[{lang}] parsed {n} streaming functions in {where}, below the floor "
+                 f"of {FUNC_FLOOR} - that revision does not have this arm's stream API, "
+                 f"so it cannot be an arm. Pick a --base that has it, or drop {lang} "
+                 f"from --lang.")
+    sys.exit(f"[{lang}] parsed {n} streaming functions, "
+             f"below the floor of {FUNC_FLOOR} - the generated API "
+             f"spelling has moved out from under this parser. A run "
+             f"that measures nothing must not report a clean sweep. "
+             f"Fix parse_{lang}() (and raise the floor if the count "
+             f"is genuinely lower now).")
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--base", required=True, help="git revision to compare the working tree against")
-    ap.add_argument("--lang", default="rust,java,csharp",
-                    help="rust,java,csharp (default all three)")
+    ap.add_argument("--lang", default=None,
+                    help="rust,java,csharp,ts (default all four; a --base older than the "
+                         "TS stream tier drops ts from the default with a note)")
     ap.add_argument("--call", default="update", choices=["update", "peek", "open"])
     ap.add_argument("--rounds", type=int, default=6, help="interleaved A/B rounds (default 6)")
     ap.add_argument("--iters", type=int, default=None,
@@ -878,7 +1174,8 @@ def main():
         # where update/peek cost nanoseconds; 500k of them would run for hours.
         args.iters = 2000 if args.call == "open" else 500000
 
-    langs = [l for l in args.lang.split(",") if l]
+    explicit_lang = args.lang is not None
+    langs = [l for l in (args.lang or "rust,java,csharp,ts").split(",") if l]
     for lang in langs:
         if lang not in ARMS:
             sys.exit(f"unknown --lang={lang}; known: {', '.join(sorted(ARMS))}")
@@ -894,12 +1191,25 @@ def main():
     keep = bool(args.workdir)
 
     try:
+        if "ts" in langs:
+            # The TS stream tier is younger than the other three: a --base can
+            # predate it, so check that before any arm spends minutes building.
+            # The working tree first: a stale parser must not read as an old base.
+            floor_check("ts", len(parse_ts(root)[0]))
+            lib = os.path.join(stage_ts(root, "base", args.base, work), "library")
+            n_base = len(parse_ts_library(lib)[0])
+            if n_base == 0 and not explicit_lang:
+                print(f"[ts] --base={args.base} has no TS stream tier: the ts arm is "
+                      f"dropped from the default --lang.", flush=True)
+                langs.remove("ts")
+            else:
+                floor_check("ts", n_base, f"--base={args.base}")
         for lang in langs:
             parse, emit, build = ARMS[lang]
             funcs, declined = parse(root)
             if declined:
                 # Capped: when a rename takes out the whole API, every function
-                # declines for the same reason, and 176 of them bury the one
+                # declines for the same reason, and a corpus of them bury the one
                 # line that says what to do about it.
                 shown = list(declined.items())[:8]
                 print(f"[{lang}] not benchable ({len(declined)}): " +
@@ -909,13 +1219,7 @@ def main():
             # The floor is on what was PARSED, not on what `--funcs` selected:
             # it is a claim about the parser, and it must fire whether or not
             # this invocation narrowed the set.
-            if len(funcs) < FUNC_FLOOR:
-                sys.exit(f"[{lang}] parsed {len(funcs)} streaming functions, "
-                         f"below the floor of {FUNC_FLOOR} - the generated API "
-                         f"spelling has moved out from under this parser. A run "
-                         f"that measures nothing must not report a clean sweep. "
-                         f"Fix parse_{lang}() (and raise the floor if the count "
-                         f"is genuinely lower now).")
+            floor_check(lang, len(funcs))
             names = sorted(f for f in funcs if not only or f in only)
             missing = (marked | only) - set(names)
             if missing:
@@ -931,7 +1235,8 @@ def main():
                 # Alternate which arm goes first, so a box that drifts busier
                 # during a round does not bias every row the same way.
                 for arm in (("head", "base") if r % 2 == 0 else ("base", "head")):
-                    res, failed = measure(cmds[arm], args.iters, args.passes)
+                    res, failed = measure(cmds[arm], args.iters, args.passes,
+                                          names if lang in ONE_PER_PROCESS else None)
                     if failed:
                         print(f"[{lang}/{arm}] Open failed: {', '.join(sorted(failed))}")
                     for k, v in res.items():

@@ -542,6 +542,45 @@ def set_version_string_csproj(root_dir: str, new_version: str):
     with open(csproj_path, 'w') as csproj_file:
         csproj_file.writelines(lines)
 
+TS_PACKAGE_VERSION = re.compile(r'^  "version": "(\d+\.\d+\.\d+)",$')
+
+def get_version_string_ts(root_dir: str) -> str:
+    """
+    The version in the TypeScript package manifest
+    ta_codegen/output/ts/library/package.json. Example:
+      "version": "0.8.4",
+
+    Anchored on the two-space indent of a top-level key. `generate` writes the
+    same file from VERSION, so a set here must produce its exact line.
+    """
+    path = path_join(root_dir, "ta_codegen/output", "ts", "library", "package.json")
+    if not os.path.exists(path):
+        print(f"Error: package.json not found at {path}")
+        sys.exit(1)
+    with open(path, 'r') as f:
+        for line in f:
+            match = TS_PACKAGE_VERSION.match(line.rstrip('\n'))
+            if match:
+                return match.group(1)
+    print(f"Error: Package version not found in {path}")
+    sys.exit(1)
+
+def set_version_string_ts(root_dir: str, new_version: str):
+    """
+    Update the version in the TypeScript package manifest.
+    """
+    if get_version_string_ts(root_dir) == new_version:
+        return
+    path = path_join(root_dir, "ta_codegen/output", "ts", "library", "package.json")
+    with open(path, 'r') as f:
+        lines = f.readlines()
+    for i, line in enumerate(lines):
+        if TS_PACKAGE_VERSION.match(line.rstrip('\n')):
+            lines[i] = f'  "version": "{new_version}",\n'
+            break
+    with open(path, 'w') as f:
+        f.writelines(lines)
+
 def get_version_string_conanfile(root_dir: str) -> str:
     """
     Parse the file conanfile.py to get the version string. Example:
@@ -639,6 +678,7 @@ def sync_versions(root_dir: str) -> Tuple[bool,str]:
           ta_codegen/output/rust/Cargo.lock (refreshed by cargo, not edited)
           ta_codegen/output/java/library/pom.xml
           ta_codegen/output/csharp/library/TALib.csproj
+          ta_codegen/output/ts/library/package.json
           CMakeLists.txt, ta-lib.spec.in, conanfile.py (root of repos)
 
     Touches nothing when they already agree. Return (updated, version).
@@ -651,6 +691,7 @@ def sync_versions(root_dir: str) -> Tuple[bool,str]:
         ("Cargo.toml", get_version_string_cargo, set_version_string_cargo),
         ("pom.xml", get_version_string_pom, set_version_string_pom),
         ("TALib.csproj", get_version_string_csproj, set_version_string_csproj),
+        ("package.json", get_version_string_ts, set_version_string_ts),
         ("conanfile.py", get_version_string_conanfile, set_version_string_conanfile),
     )
     is_updated = False
@@ -683,11 +724,12 @@ def check_versions(root_dir: str) -> str:
     version_spec_in = get_version_string_spec_in(root_dir)
     version_conanfile = get_version_string_conanfile(root_dir)
     # The binding manifests matter most here even though sync_versions() would
-    # already have fixed them: crates.io, Maven Central and nuget.org are
+    # already have fixed them: crates.io, Maven Central, nuget.org and npm are
     # immutable, so a version published from a stale manifest cannot be withdrawn.
     version_cargo = get_version_string_cargo(root_dir)
     version_pom = get_version_string_pom(root_dir)
     version_csproj = get_version_string_csproj(root_dir)
+    version_ts = get_version_string_ts(root_dir)
     # The lock is not published -- `cargo package` synthesises a fresh one into the
     # tarball -- but it is what the git tag carries, so a stale one is a tagged tree
     # that fails `cargo build --locked` for anyone who clones it.
@@ -719,6 +761,11 @@ def check_versions(root_dir: str) -> str:
 
     if version_file != version_csproj:
         print(f"Error: VERSION [{version_file}] does not match TALib.csproj [{version_csproj}]")
+        return None
+
+    if version_file != version_ts:
+        print(f"Error: VERSION [{version_file}] does not match "
+              f"ta_codegen/output/ts/library/package.json [{version_ts}]")
         return None
 
     if version_file != version_cargo_lock:

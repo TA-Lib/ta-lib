@@ -6,12 +6,12 @@
 # output is broken on arrival. Until now the only thing checking that was the
 # 5AM regen-check on dev — i.e. after merge, one branch too late (#211).
 #
-# Cargo + Python for the regen and Rust halves, plus a JDK and a .NET SDK for the
-# two compile jobs. WRITING a .java or a .cs is text emission from the IR — but
-# the text has to compile, and until #326 nothing on the PR path checked that;
-# see the java-compiles job for what that cost. RUNNING the cross-language
-# suites still needs more toolchain than this gate carries and stays in the
-# nightly.
+# Cargo + Python for the regen and Rust halves, plus a JDK, a .NET SDK and Node
+# for the three managed compile jobs. WRITING a .java or a .cs is text emission
+# from the IR — but the text has to compile, and until #326 nothing on the PR
+# path checked that; see the java-compiles job for what that cost. RUNNING the
+# cross-language suites still needs more toolchain than this gate carries and
+# stays in the nightly.
 #
 # `scripts/build.py regen-check` is the first half of the gate, so the same
 # command reproduces that failure locally, exactly.
@@ -215,6 +215,57 @@ jobs:
             echo "::error::The generated C# server does not compile against the generated library. The two come from different emitters — server_gen.rs writes the server, csharp.rs and csharp_stream.rs write the library — so this is where they disagree about an API. Fix server_gen.rs; reproduce with scripts/build.py servers --language=csharp."
             exit 1
           fi
+
+  # The same three units for TypeScript, plus the software fma the library's
+  # bit-exactness rests on: nothing else on this gate executes it.
+  ts-compiles:
+    name: Generated TypeScript compiles
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Install the pinned TypeScript from the lockfile
+        shell: bash
+        working-directory: ta_codegen/output/ts
+        run: npm ci --no-audit --no-fund
+
+      - name: Compile the shipped library
+        shell: bash
+        working-directory: ta_codegen/output/ts
+        run: |
+          if ! node_modules/.bin/tsc -p library; then
+            echo "::error::The generated TypeScript library does not compile. Fix the emitter (ta_codegen/generator/src/backends/ts*.rs), never the generated file; src/runtime/ is hand-written."
+            exit 1
+          fi
+
+      - name: Type-check the hand-written tests against it
+        shell: bash
+        working-directory: ta_codegen/output/ts
+        run: |
+          if ! node_modules/.bin/tsc -p library/test --noEmit; then
+            echo "::error::The hand-written TypeScript tests no longer type-check against the generated library. They are NOT generated (ta_codegen/output/ts/library/test/ outside test/gen/): an API change has to be carried into them by hand."
+            exit 1
+          fi
+
+      - name: Type-check the JSON-RPC server
+        shell: bash
+        working-directory: ta_codegen/output/ts
+        run: |
+          if ! node_modules/.bin/tsc -p tools --noEmit; then
+            echo "::error::The generated TypeScript server does not type-check against the generated library. Fix server_gen.rs; reproduce with scripts/build.py servers --language=ts."
+            exit 1
+          fi
+
+      - name: Software fma, bit for bit against libm
+        shell: bash
+        run: python3 scripts/ts_fma_check.py --random=1000000
 
   # The same hole for C, and the shipped library is the one that lands in the
   # tarball. Nothing on this gate compiled a line of it: regen-check writes the

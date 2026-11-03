@@ -825,6 +825,13 @@ static ErrorNumber abstract_verify_func_metadata(
  * --------------------------------------------------------------------------- */
 typedef struct { ErrorNumber firstErr; int checked; int failed; const char *filter; } MetaParityCtx;
 
+static int g_metaParityChecked = 0;
+
+int test_abstract_server_metadata_checked( void )
+{
+    return g_metaParityChecked;
+}
+
 static void metaParityCb( const TA_FuncInfo *funcInfo, void *opaqueData )
 {
     MetaParityCtx *ctx = (MetaParityCtx *)opaqueData;
@@ -1026,7 +1033,9 @@ ErrorNumber test_abstract_server_metadata( const char *functionFilter )
     ctx.filter   = functionFilter;
     g_optHintCompared = 0;
     g_optExtendedCompared = 0;
+    g_metaParityChecked = 0;
     TA_ForEachFunc( metaParityCb, &ctx );
+    g_metaParityChecked = ctx.checked;
 
     /* A real disagreement outranks the vacuity checks below, and must be
      * reported as itself: letting a dead server fall through to the

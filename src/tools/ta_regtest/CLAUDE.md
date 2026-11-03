@@ -30,7 +30,7 @@ of a property of library output; it moves with FMA dispatch, libm and compiler.
 |------|-------------|
 | `--function=CSV` | Substring filter matched against the **group tag** in `DO_TEST`, not the function name — a function absent from its group's tag is unreachable by it, which is why the composite groups spell their members out. A tag element ending in `*` is a prefix claim (`CDL*`). `--codegen` also matches each entry against real function names; `--xlang-hash` and `--ref` match only those. An entry that matches nothing at all is `TA_REGTEST_FILTER_MATCHED_NOTHING`, even beside entries that matched. |
 | `--codegen` | Codegen verification after the C reference tests |
-| `--language=CSV` | Narrow it (`c,rust,java,csharp`) |
+| `--language=CSV` | Narrow it (`c,rust,java,csharp,ts`) |
 | `--ref=X_Y_Z` | Differential fuzz vs one frozen release. **Self-contained** |
 | `--xlang-hash` | Cross-language bitwise parity gate. **Self-contained** |
 
@@ -105,8 +105,9 @@ requests from ta_abstract metadata with no per-function hand-coding. Real inputs
 are named **positionally** (`inReal`, or `inReal0`/`inReal1`), price inputs by
 OHLCV component per the `TA_InputParameterInfo.flags` bitmask. Inputs travel as
 IEEE-754 hex bits and the baseline is the in-process library called with the
-same request, so real outputs compare **bitwise**, bar the Java and C# calls
-that reach a transcendental, which take `server_verify`'s 1e-9 rule (below).
+same request, so real outputs compare **bitwise**, bar the Java, C# and TS calls
+that reach a transcendental, which take `server_verify`'s per-language bound
+(below).
 Integer outputs compare exactly. Integer parameters sweep from each one's
 declared minimum.
 
@@ -303,14 +304,15 @@ counter that matters is `nbOutputCmp`, incremented **at the memcmp itself**: one
 bumped before the comparisons and independently of them would satisfy the assert
 while the gate checked strictly less.
 
-## The float leg — the same contract, in Java and C#
+## The float leg — the same contract, in Java, C# and TS
 
 `run_float_leg` is the cross-language form of the VARIANT gate: it sends one
 function twice to the *same* server — once normally, once with `"use_float":1` —
 on float-widened inputs and requires the two to agree, covering Java's and C#'s
-`float` overloads. Rust has no single-precision surface and is the only
-exclusion. Each call must come back with `"used_float":1`; a server ignoring the
-flag would return its double result twice and pass while verifying nothing.
+`float` overloads and TS's `Float32Array` path through the same public tier.
+Rust has no single-precision surface and is the only exclusion. Each call must
+come back with `"used_float":1`; a server ignoring the flag would return its
+double result twice and pass while verifying nothing.
 
 Two parameter vectors: the resolved defaults, and the **default sentinel** in
 every optional slot sent to *both* halves, so the property is "each tier
@@ -380,7 +382,7 @@ the C server answers `{"error":"Missing method field"}`. Use
 `separators=(",",":")`.
 
 **Send every optional parameter.** The servers disagree on an absent one: Rust
-substitutes the declared default, the C server reads zero. A period is then
+and TS substitute the declared default, the C server reads zero. A period is then
 rejected, but a real optInput where `0.0` is legal answers `retCode` 0 with a
 wrong series: `TA_STDDEV` without `optInNbDev` is all zeros. To ask for a
 default, send the sentinel: `-4e37` for a real, `INT_MIN` for an integer;
@@ -392,8 +394,9 @@ constant is that value with its last digit lost. Every server and every
 `ta_ref` serve use the repo constant, so a from-scratch reimplementation of the
 standard basis matches nothing. Call `fuzz_hash_init()`; never retype the number.
 
-Servers launch from `bin/`: `java -cp ta_codegen_java TaCodegenServe` and
-`dotnet ta_codegen_csharp/TaCodegenServe.dll`.
+Servers launch from `bin/`: `java -cp ta_codegen_java TaCodegenServe`,
+`dotnet ta_codegen_csharp/TaCodegenServe.dll` and
+`node ta_codegen_ts/tools/taCodegenServe.js`.
 
 ## Building
 
@@ -683,28 +686,33 @@ rather than the 252-bar series: full-precision inputs (a seed both sides
 regenerate, or lossless hex-of-IEEE-bits) and outputs compared by a
 full-precision FNV hash, so a ~1e-10 fusion-site divergence is a hard failure.
 `scripts/build.py xlang-hash` builds and runs it; both CI nightlies gate
-on it. Needs cmake + gcc + cargo plus the **JDK** and the **.NET SDK**.
+on it. Needs cmake + gcc + cargo plus the **JDK**, the **.NET SDK** and **Node**.
 
 - **Golden = the in-process C library**, called directly via `TA_CallFunc` with
   its raw output hashed. Each server crosses the pipe and is diffed against it.
 - **Two transports (per-server `usesSeed`).** *Seed* (Rust): `"gen_present":1` +
   `(gen_shape,gen_seed,gen_n)`, the server generating inputs from its own
-  bit-exact `fuzz_gen` port. *Hex* (Java, C#): no `fuzz_gen` port, so the driver
+  bit-exact `fuzz_gen` port. *Hex* (Java, C#, TS): the driver
   serializes its own arrays via `codegen_write_hexbits_array`, the transport
   shared with `server_verify`. Both hash the **guarded** call, like-for-like with
   the golden.
-- **Transcendental tolerance (Java and C#).** Java's fdlibm differs from the C
+- **Transcendental tolerance (Java, C# and TS).** Java's fdlibm differs from the C
   libm by a few ULP on `atan/sin/cos/exp/log/...` (3 measured on `tanh`), and **.NET does not guarantee
   `Math.*` reaches the platform libm** — an ordinary-value 1 ULP difference,
   host-dependent, so a locally clean run proves nothing here.
   `Math.FusedMultiplyAdd` is still correctly rounded, so the FMA contract is
   untouched; only transcendentals moved. Such calls are decided **per call** by
   `codegen_call_is_transcendental`, drop `want_hash`, and are element-compared at
-  `CODEGEN_TRANSCENDENTAL_TOL` (1e-9). Every other Java call and every Rust call
-  stays bitwise, and the summary reports the per-server tolerance-path count so
-  the bitwise coverage is visibly non-vacuous.
-  `codegen_lang_needs_transcendental_tol` is the single definition of which
-  languages need it, read by both gates — as two literals they drifted.
+  the language's bound: 1e-9 for Java and C#, 1e-11 for TS, whose engine `Math.*`
+  is no libm either. Every other call stays bitwise, and the summary reports the
+  per-server tolerance-path count so the bitwise coverage is visibly non-vacuous.
+  `codegen_lang_transcendental_tol` is the single definition, read by every
+  gate — as two literals they drifted.
+- **TRANSCENDENTAL MAX.** `--codegen` and `--xlang-hash` end with one line per
+  (language, function) the lane compared: the largest scaled deviation any
+  compare saw. A deviation over the bound fails the run but does not stop the
+  sweep, so the maximum is complete. Over the TS bound, report the functions to
+  the owner rather than widening it: it is a trial value.
 - **Input-port self-check.** Before the output gate, a `fuzz_in_hash` RPC on each
   *seed* server hashes its generated OHLCV inputs against the driver's own, so a
   `fuzz_gen`-port bug surfaces as an INPUT mismatch rather than a fake
@@ -779,12 +787,14 @@ server == expected".
   handler (`TA_<name>`, not `abstract_call`) with an FNV-1a of the raw GUARDED
   output bytes. C's `want_hash` block is compiled out under `TA_REF_SERVE`, so
   no `ta_ref` serve answers it.
-- **Tolerance rule.** Bitwise for C ⇄ Rust (same system libm as the golden). Java
-  and C# are bitwise for pure arithmetic and IEEE ops (SQRT/CEIL/FLOOR included)
-  and take `CODEGEN_TRANSCENDENTAL_TOL` (1e-9, against measured drift
-  ~1e-13..1e-11) only on transcendental-using calls, decided per call — so an
+- **Tolerance rule.** Bitwise for C ⇄ Rust (same system libm as the golden). Java,
+  C# and TS are bitwise for pure arithmetic and IEEE ops (SQRT/CEIL/FLOOR included)
+  and take their language's bound (1e-9 for Java and C#, against measured drift
+  ~1e-13..1e-11; 1e-11 for TS) only on transcendental-using calls, decided per call — so an
   MA-dispatch function routing to MAMA is transcendental for that call though its
-  name is not. Integer outputs still match exactly. The tolerance constant,
+  name is not. Integer outputs still match exactly. A real over the bound is
+  not failed on the spot: it goes into TRANSCENDENTAL MAX, which fails the
+  `--codegen` run at its end. The bound,
   `codegen_call_is_transcendental`, `codegen_write_hexbits_array` and
   `codegen_compare_tol` live in `test_codegen.c` and are shared verbatim with
   `--xlang-hash`.

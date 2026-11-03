@@ -16,6 +16,9 @@ FIRST_CRATE_VERSION = (0, 8, 0)
 # The SemVer 2 hive: the SemVer 1 one omits any version nuget.org classes as SemVer 2.0.0.
 # It is always served gzip-compressed, which urllib does not undo.
 NUGET_REGISTRATION_URL = "https://api.nuget.org/v3/registration5-gz-semver2/ta-lib/index.json"
+NPM_PACKUMENT_URL = "https://registry.npmjs.org/ta-lib"
+# The previous holder's versions of the npm name; npm never lets them be republished.
+FOREIGN_NPM_VERSIONS = {"0.9.0", "0.10.0", "0.11.0"}
 
 # Each pattern names the version it owns `ver`, and only that group is rewritten,
 # so a pattern may match as much surrounding text as it needs to be unambiguous.
@@ -38,6 +41,8 @@ NUGET_VERSION_PATTERN = r'<PackageReference Include="TA-Lib" Version="(?P<ver>\d
 # which already accepts every patch of that minor.
 CRATES_VERSION_PATTERN = r'(?m)^ta-lib = "(?P<ver>\d+\.\d+)"$'
 
+NPM_VERSION_PATTERN = r'npm install ta-lib@(?P<ver>\d+\.\d+\.\d+)'
+
 # A registry that has never published this artifact. Distinct from None, which
 # means the lookup failed: nothing published is a steady state the page is
 # already correct for, while a failed lookup is worth reporting and retrying.
@@ -53,6 +58,7 @@ PAGES = (
     ("Java", ('website', 'src', 'api', 'java', 'README.md'), MAVEN_VERSION_PATTERN),
     ("C#", ('website', 'src', 'api', 'csharp', 'README.md'), NUGET_VERSION_PATTERN),
     ("Rust", ('website', 'src', 'api', 'rust', 'README.md'), CRATES_VERSION_PATTERN),
+    ("TypeScript", ('website', 'src', 'api', 'typescript', 'README.md'), NPM_VERSION_PATTERN),
 )
 
 
@@ -198,8 +204,34 @@ def latest_crate_minor() -> str:
     return max(live, key=key).rsplit('.', 1)[0]
 
 
+def latest_npm_version() -> str:
+    """The newest undeprecated X.Y.Z of ta-lib on npm, NOT_PUBLISHED, or None.
+
+    The previous holder's versions never count, so until this repository
+    publishes, the name answers NOT_PUBLISHED even though npm knows it.
+    """
+    body, status, error = _get(NPM_PACKUMENT_URL, {"User-Agent": "ta-lib-sync",
+                                                   "Accept": "application/json"})
+    if body is None:
+        if status == 404:
+            return NOT_PUBLISHED
+        print(f"Warning: could not query npm ({error}).")
+        return None
+    try:
+        live = [v for v, meta in json.loads(body).get("versions", {}).items()
+                if re.fullmatch(r'\d+\.\d+\.\d+', v) and v not in FOREIGN_NPM_VERSIONS
+                and not meta.get("deprecated")]
+    except Exception as e:
+        print(f"Warning: the npm packument is not readable JSON ({e}).")
+        return None
+    if not live:
+        return NOT_PUBLISHED
+    return max(live, key=lambda v: tuple(int(x) for x in v.split('.')))
+
+
 LOOKUPS = {"C": latest_release_version, "Java": latest_maven_version,
-           "C#": latest_nuget_version, "Rust": latest_crate_minor}
+           "C#": latest_nuget_version, "Rust": latest_crate_minor,
+           "TypeScript": latest_npm_version}
 
 
 def page_path(root_dir: str, relpath) -> str:

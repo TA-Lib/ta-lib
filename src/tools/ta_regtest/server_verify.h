@@ -5,12 +5,12 @@
 #include "ta_libc.h"
 #include "codegen_pipe.h"
 
-#define SV_MAX_PIPES 4
+#define SV_MAX_PIPES 5
 
 /* Initialize server verification with one or more server pipes.
- * `langs[i]` is the language token of pipes[i] ("c"/"rust"/"java"/"csharp"),
- * used to pick the per-pipe comparison policy (bitwise vs the Java-transcendental
- * tolerance). Called from ta_regtest.c when --codegen is active. */
+ * `langs[i]` is the language token of pipes[i] ("c"/"rust"/"java"/"csharp"/"ts"),
+ * used to pick the per-pipe comparison policy (bitwise vs the language's
+ * transcendental bound). Called from ta_regtest.c when --codegen is active. */
 void server_verify_init(CodegenPipe *pipes[], const char *langs[], int nbPipes);
 
 /* Shut down server verification (frees buffers). */

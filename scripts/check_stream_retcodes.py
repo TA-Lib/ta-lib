@@ -13,8 +13,8 @@ Rule rS1: an EMPTY history reports `TA_OUT_OF_RANGE_START_INDEX`. An opener is a
 batch call over `[0, historyLen - 1]`, so the implied `startIdx` of 0 has to name
 a bar, and the fault answers rB1's code rather than the catch-all (#268).
 
-Why a structural check and not a probe. The condition is emitted from four
-independent backends at half a dozen sites each -- a transcribed early return, an
+Why a structural check and not a probe. The condition is emitted from every
+backend independently at half a dozen sites each -- a transcribed early return, an
 explicit `historyLen < lookback + 1` guard, the composed capture guard, the
 identity fast path, the period bank -- and a probe reaches only the shapes
 someone thought to write one for. When TA_INSUFFICIENT_HISTORY was introduced,
@@ -78,6 +78,12 @@ BACKENDS = [
      re.compile(r"(?:historyLen\s*<\s*(?!1\s*\))[^\n)]*?\+\s*1|outNBElement\s*<\s*1)\s*\)\s*\{\s*\n\s*"
                 r"return\s+RetCode\.(BadParam|InsufficientHistory)\s*;"), 11,
      None, 0),
+
+    ("TypeScript", os.path.join("ta_codegen", "output", "ts", "library", "src", "func"), ".ts",
+     r"RetCode.BAD_PARAM", r"RetCode.INSUFFICIENT_HISTORY",
+     re.compile(r"(?:historyLen\s*<\s*(?!1\s*\))[^\n)]*?\+\s*1|outNBElement\.value\s*<\s*1)\s*\)\s*\{\s*\n\s*"
+                r"return\s+RetCode\.(BAD_PARAM|INSUFFICIENT_HISTORY)\s*;"), 11,
+     None, 0),
 ]
 
 
@@ -100,6 +106,10 @@ EMPTY_ARMS = [
     ("C#", os.path.join("ta_codegen", "output", "csharp", "library", "src"), ".cs",
      "OutOfRangeStartIndex",
      re.compile(r"if\(\s*historyLen\s*<\s*1\s*\)\s*\{\s*\n\s*return\s+RetCode\.(\w+)\s*;"), 170),
+
+    ("TypeScript", os.path.join("ta_codegen", "output", "ts", "library", "src", "func"), ".ts",
+     "OUT_OF_RANGE_START_INDEX",
+     re.compile(r"if\s*\(\s*historyLen\s*<\s*1\s*\)\s*\{\s*\n\s*return\s+RetCode\.(\w+)\s*;"), 170),
 ]
 
 
@@ -190,9 +200,9 @@ def check_empty_history_retcodes(root_dir: str) -> bool:
 
 def main() -> int:
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    print("Short-history return code (rule rS7) across all four backends:")
+    print("Short-history return code (rule rS7) across every backend:")
     ok = check_stream_retcodes(root)
-    print("Empty-history return code (rule rS1) across all four backends:")
+    print("Empty-history return code (rule rS1) across every backend:")
     ok = check_empty_history_retcodes(root) and ok
     return 0 if ok else 1
 

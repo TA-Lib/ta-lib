@@ -15,7 +15,7 @@
 #   scripts/build.py regen-check    The PR gate: regenerating must change nothing (cargo)
 #   scripts/build.py servers        Generate + compile JSON-RPC language servers (cargo),
 #                                   plus bin/ta_regtest so bin/ is runnable by hand
-#   scripts/build.py libraries      Build + test the publishable Java/C# libraries (cargo)
+#   scripts/build.py libraries      Build + test the publishable Java/C#/TypeScript libraries (cargo)
 #   scripts/build.py test           C reference regression tests
 #   scripts/build.py regtest        Full cross-language regression tests
 #   scripts/build.py clean          Remove build directory
@@ -23,6 +23,7 @@
 
 import argparse
 import concurrent.futures
+import json
 import os
 import re
 import shlex
@@ -35,7 +36,7 @@ from utilities.common import (
     check_prerequisites,
     PREREQS_BUILD_BASIC, PREREQS_BUILD_CODEGEN, PREREQS_BUILD_SERVERS,
     PREREQS_CARGO, PREREQS_CMAKE, PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA,
-    PREREQS_DOTNET, LIBRARY_PREREQS,
+    PREREQS_DOTNET, PREREQS_NODE, LIBRARY_PREREQS,
     prereqs_for_languages, backends_for_languages,
     default_build_jobs, JobServer,
 )
@@ -155,10 +156,12 @@ def show_help():
     servers             Generate all source + compile JSON-RPC language servers,
                         and bring bin/ta_regtest — the only thing that drives
                         them — up to date, so bin/ can be run by hand
-    libraries           Build the publishable Java jars and C# library from the
-                        committed source and run their suites against them.
-                        Generates nothing; needs a JDK + unzip and/or the
-                        .NET SDK, narrowed by --language
+    libraries           Build the publishable Java jars, C# library and npm
+                        package from the committed source and run their suites
+                        against them. Generates nothing; needs a JDK + unzip,
+                        the .NET SDK and/or Node with npm, narrowed by
+                        --language. --node=22,24,26 (or all) runs the
+                        TypeScript suite once per pinned Node major instead.
     format              Re-indent the ta_codegen/input/ C source of truth
     format-check        Verify inputs are formatted (fails if not); writes nothing
     clippy              Lint both Rust crates as the dev nightly does
@@ -204,12 +207,13 @@ def show_help():
                         the release tags. --versions=0_8_1[,...] narrows it;
                         --build-only stops after the serves.
     xlang-hash          Cross-language BITWISE parity gate (opt-in; issue #113):
-                        builds the Rust + Java + C# servers + ta_regtest, then runs
-                        ta_regtest --xlang-hash — diffs each language server vs the
-                        in-process C library (Rust via seed inputs, Java and C# via
-                        lossless hex inputs) with no tolerance (except Java's
-                        transcendental calls: fdlibm != libm). Needs the JDK and
-                        the .NET SDK.
+                        builds the Rust + Java + C# + TypeScript servers +
+                        ta_regtest, then runs ta_regtest --xlang-hash — diffs each
+                        language server vs the in-process C library (Rust via seed
+                        inputs, the others via lossless hex inputs) with no
+                        tolerance, except the Java, C# and TypeScript calls that
+                        reach a transcendental (their Math.* is not the C libm).
+                        Needs the JDK, the .NET SDK and Node.
 
   Other:
     clean               Remove cmake-build/ and cmake-build-asan/
@@ -222,22 +226,30 @@ def show_help():
                         fewer on a small or busy host)
     --cmake-args="..."  Extra arguments passed to cmake configure
     --language=c,rust   For servers/regtest/xlang-hash: build only
-                        these backends, and require only their toolchains. A
-                        machine with no JDK or .NET SDK can still run
-                        `servers --language=c,rust`. Omit it and every backend
-                        is built, which does need both.
+                        these backends (c, rust, java, csharp, ts), and require
+                        only their toolchains. A machine with no JDK, .NET SDK
+                        or Node can still run `servers --language=c,rust`. Omit
+                        it and every backend is built, which needs all three.
+    --node=all          For libraries: run the TypeScript suite once per listed
+                        Node major, each from scripts/node_toolchain.py (fetched
+                        on first use), so no system Node is needed
     --sanitize          Build with AddressSanitizer + UBSan into cmake-build-asan
                         (Debug, static-only; e.g. build.py ta_regtest --sanitize)
 """)
 
-def run_codegen(root_dir: str, *cargo_args: str):
+def run_codegen(root_dir: str, *cargo_args: str, path_prefix: str = None):
     """Run a cargo command in the ta_codegen generator crate.
 
     This is how ta_codegen (Rust) is built/run — directly via cargo, never through
     CMake. Keeps the C build systems free of any Rust/cargo dependency.
     """
     codegen_dir = os.path.join(root_dir, "ta_codegen", "generator")
-    JOBS.run(['cargo', *cargo_args], check=True, cwd=codegen_dir)
+    if path_prefix is None:
+        JOBS.run(['cargo', *cargo_args], check=True, cwd=codegen_dir)
+        return
+    env = dict(JOBS.env, PATH=path_prefix + os.pathsep + JOBS.env.get('PATH', ''))
+    subprocess.run(['cargo', *cargo_args], env=env, pass_fds=JOBS.fds, check=True,
+                   cwd=codegen_dir)
 
 def run_clippy(root_dir: str):
     """Lint both Rust crates exactly as the dev nightly's clippy job does.
@@ -285,8 +297,20 @@ def build_servers(root_dir: str, lang_filter=None, alongside=None):
         alongside()
         servers.result()
 
-def build_libraries(root_dir: str, lang_filter=None) -> int:
-    """Build the publishable Java/C# libraries and run their suites (issue #428).
+def pinned_node_majors(root_dir: str, node: str):
+    """The majors `--node` names, or None after printing why it is invalid."""
+    with open(os.path.join(root_dir, 'scripts', 'node_toolchain.json'), encoding='utf-8') as f:
+        pinned = sorted(json.load(f)['versions'], key=int)
+    majors = pinned if node == 'all' else [m.strip() for m in node.split(',') if m.strip()]
+    unknown = [m for m in majors if m not in pinned]
+    if not majors or unknown:
+        print(f"Error: --node={node} names no pinned Node major "
+              f"(pinned: {', '.join(pinned)}, or all).", flush=True)
+        return None
+    return majors
+
+def build_libraries(root_dir: str, lang_filter=None, node=None) -> int:
+    """Build the publishable Java/C#/TypeScript libraries and run their suites (issue #428).
 
     Builds the COMMITTED source and generates nothing, so after editing
     ta_codegen/input/ run `generate` first or this tests the previous tree."""
@@ -295,8 +319,39 @@ def build_libraries(root_dir: str, lang_filter=None) -> int:
         print(f"Error: --language={lang_filter} selects no backend with a publishable "
               f"library (valid: {', '.join(LIBRARY_PREREQS)}).", flush=True)
         return 2
-    run_codegen(root_dir, 'run', '--release', '--', 'build-libraries',
-                f'--backend={",".join(picked)}')
+    if not node:
+        run_codegen(root_dir, 'run', '--release', '--', 'build-libraries',
+                    f'--backend={",".join(picked)}')
+        return 0
+    if 'ts' not in picked:
+        print(f"Error: --node selects Node versions for the TypeScript library, and "
+              f"--language={lang_filter} does not build it.", flush=True)
+        return 2
+    majors = pinned_node_majors(root_dir, node)
+    if majors is None:
+        return 2
+    others = [b for b in picked if b != 'ts']
+    if others:
+        run_codegen(root_dir, 'run', '--release', '--', 'build-libraries',
+                    f'--backend={",".join(others)}')
+    failed = []
+    for major in majors:
+        found = subprocess.run([sys.executable, os.path.join(root_dir, 'scripts', 'node_toolchain.py'),
+                                major], stdout=subprocess.PIPE, text=True, check=False)
+        node_bin = found.stdout.strip()
+        if found.returncode or not node_bin:
+            failed.append(major)
+            continue
+        print(f"\n--- TypeScript library, pinned Node {major} ({node_bin})", flush=True)
+        try:
+            run_codegen(root_dir, 'run', '--release', '--', 'build-libraries', '--backend=ts',
+                        path_prefix=node_bin)
+        except subprocess.CalledProcessError:
+            failed.append(major)
+    if failed:
+        print(f"\nError: the TypeScript library FAILED on Node {', '.join(failed)}.", flush=True)
+        return 1
+    return 0
     return 0
 
 def build_ref(root_dir: str, build_dir: str, jobs: int, versions, build_only: bool) -> int:
@@ -329,22 +384,22 @@ def build_xlanghash(root_dir: str, build_dir: str, jobs: int, lang_filter=None) 
     """Cross-language BITWISE parity gate (issue #113). Diffs each generated
     language server against the shipped in-process C library, comparing
     full-precision output hashes with NO tolerance. Builds the Rust + Java + C#
-    servers + ta_regtest, then runs `ta_regtest --xlang-hash`. Returns
-    ta_regtest's exit code (non-zero on any divergence). Rust crosses the JSON
-    boundary with a seed (gen_present); Java and C# cross it with lossless
-    hex-bits inputs (#114). Java and C# both relax their transcendental-using
-    calls to a 1e-9 tolerance (fdlibm != the C libm; .NET does not guarantee
-    Math.* reaches the platform libm). Needs the
-    JDK for the Java server and the .NET SDK for the C# server.
+    + TypeScript servers + ta_regtest, then runs `ta_regtest --xlang-hash`.
+    Returns ta_regtest's exit code (non-zero on any divergence). Rust crosses the
+    JSON boundary with a seed (gen_present); Java, C# and TypeScript cross it with
+    lossless hex-bits inputs (#114). Those three relax their transcendental-using
+    calls to their language's bound (fdlibm != the C libm; neither .NET nor a JS
+    engine guarantees Math.* reaches the platform libm). Needs the JDK, the .NET
+    SDK and Node.
 
-    --language narrows the gate to a subset of those three, so a machine with no
-    JDK or .NET SDK can still run the Rust leg. C is never a COMPARISON row here
+    --language narrows the gate to a subset of those rows, so a machine with no
+    JDK, .NET SDK or Node can still run the Rust leg. C is never a COMPARISON row here
     — it is the in-process golden every row is compared against — so it is
     dropped from the filter rather than being diffed against itself.
     The filter is ALSO forwarded to ta_regtest: without it the runner would try
     to spawn the servers we deliberately did not build and merely print that
     they are unavailable, turning a narrowed run into a quietly vacuous one.
-    CI passes no filter, so the nightly always runs all three rows.
+    CI passes no filter, so the nightly always runs every row.
 
     The C SERVER is nonetheless built on an unfiltered run, because one leg of
     the gate does consult it: the array-transport self-check (#257/#258) asks
@@ -353,11 +408,11 @@ def build_xlanghash(root_dir: str, build_dir: str, jobs: int, lang_filter=None) 
     reachable no other way. A narrowed run skips it along with everything else
     the filter excludes.
     """
-    rows = [b for b in (backends_for_languages(lang_filter) or 'rust,java,csharp').split(',')
-            if b in ('rust', 'java', 'csharp')]
+    rows = [b for b in (backends_for_languages(lang_filter) or 'rust,java,csharp,ts').split(',')
+            if b in ('rust', 'java', 'csharp', 'ts')]
     if not rows:
         print(f"Error: --language={lang_filter} selects no xlang-hash row "
-              f"(valid: rust, java, csharp; C is the in-process golden).", flush=True)
+              f"(valid: rust, java, csharp, ts; C is the in-process golden).", flush=True)
         return 2
     backends = ','.join(rows)
     if lang_filter:
@@ -553,10 +608,12 @@ REGEN_PROBE_FILES = (
     'src/ta_abstract/tables/table_s.c',
     'ta_codegen/output/rust/library/src/ta_func/sma.rs',
     'ta_codegen/output/csharp/library/src/Core_SMA.cs',
+    'ta_codegen/output/ts/library/src/func/sma.ts',
     'ta_codegen/output/c/tools/ta_codegen_serve.c',
     'ta_codegen/output/java/tools/TaCodegenServe.java',
     'ta_codegen/output/csharp/tools/TaCodegenServe.cs',
     'ta_codegen/output/rust/tools/src/bin/ta_codegen_serve.rs',
+    'ta_codegen/output/ts/tools/taCodegenServe.ts',
     'ta_codegen/output/c/tools/ta_bench_cg.c',
     'ta_codegen/output/c/tools/ta_bench_stream.c',
     'ta_codegen/output/c/tools/ta_bench_icount.c',
@@ -772,10 +829,11 @@ TARGET_PREREQS = {
     'test':         PREREQS_BUILD_BASIC,
     'regtest':      PREREQS_BUILD_SERVERS,
     'ref':          [PREREQS_CMAKE, PREREQS_GCC],
-    # build_xlanghash builds --backend=rust,java,csharp, so the .NET SDK is as
-    # required here as the JDK. Without it the C# server silently never builds.
+    # build_xlanghash builds --backend=rust,java,csharp,ts, so the .NET SDK and
+    # Node are as required here as the JDK. Without one, that server silently
+    # never builds.
     'xlang-hash':   PREREQS_BUILD_CODEGEN + [PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA,
-                                             PREREQS_DOTNET],
+                                             PREREQS_DOTNET, PREREQS_NODE],
 }
 
 def main():
@@ -796,11 +854,14 @@ def main():
     # machine without a JDK or the .NET SDK can still do `servers`/`regtest`
     # for the backends it does have. Same tokens as regtest.py / ta_regtest.
     parser.add_argument('--language', default=None,
-                        help='c,rust,java,csharp — limit which servers are built')
+                        help='c,rust,java,csharp,ts — limit which servers are built')
     parser.add_argument('--versions', default=None,
                         help='ref: the ta_ref members to build and run (default: all)')
     parser.add_argument('--build-only', action='store_true',
                         help='ref: build the serves, run nothing')
+    parser.add_argument('--node', default=None,
+                        help='libraries: 22,24,26 or all — run the TypeScript suite once per '
+                             'pinned Node major')
     parser.add_argument('--sanitize', action='store_true',
                         help='Build with AddressSanitizer + UBSan into cmake-build-asan (issue #94)')
     parser.add_argument('--help', '-h', action='store_true')
@@ -870,13 +931,17 @@ def main():
     # naming no real backend (`--language=cref`, or a typo) resolves to None,
     # meaning "build everything" — and then the full toolchain is required,
     # rather than promising a short tool list and building all four anyway.
+    if args.node and args.target != 'libraries':
+        print(f"Error: --node applies only to the libraries target.")
+        sys.exit(2)
     _backends = backends_for_languages(args.language)
     if args.target == 'libraries':
         # cargo runs the generator; everything else comes from the backends that
-        # actually have a publishable library.
+        # actually have a publishable library. --node brings its own node and npm.
         _prereqs = [PREREQS_CARGO]
         for _b in library_backends(args.language):
-            _prereqs += [t for t in LIBRARY_PREREQS[_b] if t not in _prereqs]
+            _prereqs += [t for t in LIBRARY_PREREQS[_b]
+                         if t not in _prereqs and not (args.node and t is PREREQS_NODE)]
         check_prerequisites(_prereqs)
     elif args.target in LANG_FILTERED_TARGETS and _backends:
         check_prerequisites(prereqs_for_languages(_backends))
@@ -896,7 +961,7 @@ def main():
         elif args.target == 'clippy':
             run_clippy(root_dir)
         elif args.target == 'libraries':
-            sys.exit(build_libraries(root_dir, args.language))
+            sys.exit(build_libraries(root_dir, args.language, args.node))
         elif args.target == 'regen-check':
             sys.exit(regen_check(root_dir))
         return

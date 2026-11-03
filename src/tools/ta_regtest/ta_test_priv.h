@@ -37,6 +37,9 @@ void test_abstract_set_server(CodegenPipe *cp, const char *lang);
  * TA_TEST_PASS on full parity. Used to lock cross-language introspection in CI. */
 ErrorNumber test_abstract_server_metadata( const char *functionFilter );
 
+/* How many functions the last test_abstract_server_metadata() compared. */
+int test_abstract_server_metadata_checked( void );
+
 /* --function matching. `entryMatches` answers for one entry of the CSV list;
  * filterMatches() says whether any entry accepts `subject` (NULL filter: all
  * do), and filterUnmatchedReport() prints the entries that accepted nothing
