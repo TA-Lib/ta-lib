@@ -153,7 +153,7 @@ double p = s.Peek(formingClose);     // bar still forming; state unchanged
 
 | Language | |
 |---|---|
-| C/C++ | `brew install ta-lib`, `vcpkg install talib`, or [installers and packages](https://ta-lib.org/install/c/) |
+| C/C++ | `brew install ta-lib`, `vcpkg install talib`, `docker pull rajnish93/ta-lib`, or [installers and packages](https://ta-lib.org/install/c/) |
 | Java | [Maven Central](https://central.sonatype.com/artifact/io.github.ta-lib/ta-lib) |
 | C# | [NuGet](https://www.nuget.org/packages/TA-Lib) |
 | Rust | [crates.io](https://crates.io/crates/ta-lib) |

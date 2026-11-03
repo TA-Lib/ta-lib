@@ -31,6 +31,8 @@ Both CMake and autotools build systems are included, enabling an optimized build
 
 - [GitHub Actions](#github-actions)
 
+- [Docker](#docker)
+
 
 ## Linux
 
@@ -224,3 +226,32 @@ The latest release is installed by default. To pin a specific version:
 ```
 
 This is handy as a step before installing a wrapper that depends on the C library, such as the Python `ta-lib` package.
+
+
+## Docker
+
+A pre-compiled, multi-architecture (`linux/amd64` and `linux/arm64`) community Docker image containing TA-Lib C headers, static archives (`libta-lib.a`), and shared objects (`libta-lib.so`) is available on Docker Hub:
+
+```bash
+docker pull rajnish93/ta-lib:latest
+```
+
+### Multi-Stage Dockerfile Integration
+
+You can copy the pre-compiled headers and libraries directly into your application's Docker image without compiling from source:
+
+```dockerfile
+# 1. Pull TA-Lib pre-compiled artifacts
+FROM rajnish93/ta-lib:latest AS talib
+
+# 2. Build your application
+FROM golang:1.23-alpine AS builder
+RUN apk add --no-cache build-base
+
+COPY --from=talib /usr/local/include/ /usr/local/include/
+COPY --from=talib /usr/local/lib/ /usr/local/lib/
+
+ENV LD_LIBRARY_PATH=/usr/local/lib
+ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+```
+
