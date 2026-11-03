@@ -25,6 +25,8 @@ beside it. `library/README.md` is hand-written and ships frozen inside each vers
 this one all carry the repo `VERSION`. Never edit the version in `library/package.json` by
 hand.
 
+**Never above the Core.** No backend publishes a version the C library has not released.
+
 **Bump `MINOR` whenever the API breaks.** Below 1.0 npm treats the minor as the breaking
 position: `^0.8.4` accepts every later 0.8.x and nothing else, so a break shipped in a patch
 reaches every consumer's next install.
@@ -138,4 +140,5 @@ release as shipped.
 
 `ta-lib` 0.9.0, 0.10.0 and 0.11.0 on npm belong to an unrelated earlier package that used the
 same name. npm never accepts a version it has already seen, so this package can never publish
-those three: TP1's version check catches a `VERSION` that lands on one.
+those three: TP1's version check catches a `VERSION` that lands on one. They are deprecated; leave
+them on the registry: the package has public dependents, so npm refuses to unpublish them.

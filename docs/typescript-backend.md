@@ -593,7 +593,15 @@ Status: Done (2026-11-02)
 
 ## 7. Open items
 
-- **O1. npm name.** Settled (owner, 2026-11-02): `npm owner ls ta-lib` lists `mario4tier`. Still open before the first publish: the previous holder's 0.9.0, 0.10.0 and 0.11.0 can never be republished and hold `latest`, while the package version follows `VERSION` (D20), so decide whether the npm line starts below them (publish with `--tag latest`, then deprecate the three) or above them.
+- **O1. npm name and first version.** Settled (owner, 2026-11-02): `npm owner ls ta-lib` lists `mario4tier`. Ruled (owner, 2026-11-03): no backend publishes a version above the latest Core release, so the first publish, by hand, is 0.8.3; from the next Core release on, npm follows `VERSION` like every other backend. The previous holder's 0.9.0, 0.10.0 and 0.11.0 are deprecated, never unpublished: the package has public dependents. The first publish is the runbook with three differences:
+  - TP1 runs in a scratch worktree detached at a green main commit, not at `v0.8.3` (which predates this backend). Set `VERSION` to 0.8.3, run `build.py generate`, check that `git status --porcelain` lists only `VERSION` and the three generated manifests (two `Cargo.toml`, `package.json`), and commit them locally; never push that commit. The package gate then runs without `--allow-dirty`, which would also pack any stray edit. The TS package embeds no version outside `package.json`, so the tarball is the main commit's code.
+  - After TP4, deprecate the three by exact version, never a bare `ta-lib`:
+    ```bash
+    for v in 0.9.0 0.10.0 0.11.0; do npm deprecate "ta-lib@$v" "An earlier, unrelated package. The official TA-Lib library: npm install ta-lib@latest"; done
+    npm view ta-lib@0.8.3 deprecated     # prints nothing
+    npm view ta-lib@0.11.0 deprecated    # prints the message
+    ```
+  - TP5 runs in that worktree. TP6 tags the main commit, the local commit's parent, `ts-v0.8.3`.
 - **O2. Transcendental lane (D11).** Ruled (owner, 2026-11-01): 1e-11 for TS, held in one constant. The owner started at 1e-13 and loosened it once the phase 1 maxima showed `Math.*` against glibc reaching 9.6e-12 (SWAK_BP; section 8). Anything above 1e-11 goes back to the owner. Every call outside the lane stays bitwise. Java and C# stay at 1e-9. It does not touch the exact-FMA ruling.
 - **O3. Publish credentials.** The first publish is by hand, from the owner's npm account with 2FA, once O1 settles; nothing before it waits on this. Trusted publishing (GitHub OIDC naming one workflow file) with `--provenance` is a later choice. Until then the TS backend ships only through dev and main. Ruled (owner, 2026-11-01).
 - **O4. Landing.** Commit per phase on one branch; land on dev once, as one block, after phase 4 and a last review and test round showing nothing else broke. No nightly sees the branch before then, so that round runs the TS CI jobs (4.5) locally. Ruled (owner, 2026-11-01).
