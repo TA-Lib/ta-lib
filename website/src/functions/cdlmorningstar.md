@@ -68,6 +68,7 @@ TA-Lib Definition: [`cdlmorningstar.c`](https://github.com/TA-Lib/ta-lib/blob/ma
 | Rust | [`cdlmorningstar.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlmorningstar.rs) |
 | Java | [`Core_CDLMORNINGSTAR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLMORNINGSTAR.java) |
 | C# | [`Core_CDLMORNINGSTAR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLMORNINGSTAR.cs) |
+| TypeScript | [`cdlmorningstar.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlmorningstar.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

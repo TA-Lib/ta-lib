@@ -65,6 +65,7 @@ TA-Lib Definition: [`cdlseparatinglines.c`](https://github.com/TA-Lib/ta-lib/blo
 | Rust | [`cdlseparatinglines.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlseparatinglines.rs) |
 | Java | [`Core_CDLSEPARATINGLINES.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLSEPARATINGLINES.java) |
 | C# | [`Core_CDLSEPARATINGLINES.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLSEPARATINGLINES.cs) |
+| TypeScript | [`cdlseparatinglines.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlseparatinglines.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

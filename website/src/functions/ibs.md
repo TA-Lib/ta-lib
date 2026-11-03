@@ -66,6 +66,7 @@ TA-Lib Definition: [`ibs.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Rust | [`ibs.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/ibs.rs) |
 | Java | [`Core_IBS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_IBS.java) |
 | C# | [`Core_IBS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_IBS.cs) |
+| TypeScript | [`ibs.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/ibs.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

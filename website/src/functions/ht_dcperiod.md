@@ -44,6 +44,7 @@ TA-Lib Definition: [`ht_dcperiod.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | Rust | [`ht_dcperiod.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/ht_dcperiod.rs) |
 | Java | [`Core_HT_DCPERIOD.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_HT_DCPERIOD.java) |
 | C# | [`Core_HT_DCPERIOD.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_HT_DCPERIOD.cs) |
+| TypeScript | [`htDcperiod.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/htDcperiod.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

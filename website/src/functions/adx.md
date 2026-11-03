@@ -60,6 +60,7 @@ TA-Lib Definition: [`adx.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Rust | [`adx.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/adx.rs) |
 | Java | [`Core_ADX.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ADX.java) |
 | C# | [`Core_ADX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ADX.cs) |
+| TypeScript | [`adx.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/adx.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

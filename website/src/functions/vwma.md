@@ -66,6 +66,7 @@ TA-Lib Definition: [`vwma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Rust | [`vwma.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/vwma.rs) |
 | Java | [`Core_VWMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_VWMA.java) |
 | C# | [`Core_VWMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_VWMA.cs) |
+| TypeScript | [`vwma.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/vwma.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

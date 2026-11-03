@@ -76,6 +76,7 @@ TA-Lib Definition: [`swak_hp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | Rust | [`swak_hp.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/swak_hp.rs) |
 | Java | [`Core_SWAK_HP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SWAK_HP.java) |
 | C# | [`Core_SWAK_HP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SWAK_HP.cs) |
+| TypeScript | [`swakHp.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/swakHp.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

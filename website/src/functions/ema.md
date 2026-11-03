@@ -58,6 +58,7 @@ TA-Lib Definition: [`ema.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Rust | [`ema.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/ema.rs) |
 | Java | [`Core_EMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_EMA.java) |
 | C# | [`Core_EMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_EMA.cs) |
+| TypeScript | [`ema.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/ema.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

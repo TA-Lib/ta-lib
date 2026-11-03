@@ -58,6 +58,7 @@ TA-Lib Definition: [`sma.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Rust | [`sma.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/sma.rs) |
 | Java | [`Core_SMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SMA.java) |
 | C# | [`Core_SMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SMA.cs) |
+| TypeScript | [`sma.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/sma.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

@@ -62,6 +62,7 @@ TA-Lib Definition: [`sarext.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | Rust | [`sarext.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/sarext.rs) |
 | Java | [`Core_SAREXT.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SAREXT.java) |
 | C# | [`Core_SAREXT.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SAREXT.cs) |
+| TypeScript | [`sarext.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/sarext.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

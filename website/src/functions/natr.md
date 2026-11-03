@@ -61,6 +61,7 @@ TA-Lib Definition: [`natr.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Rust | [`natr.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/natr.rs) |
 | Java | [`Core_NATR.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_NATR.java) |
 | C# | [`Core_NATR.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_NATR.cs) |
+| TypeScript | [`natr.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/natr.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

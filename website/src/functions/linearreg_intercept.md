@@ -56,6 +56,7 @@ TA-Lib Definition: [`linearreg_intercept.c`](https://github.com/TA-Lib/ta-lib/bl
 | Rust | [`linearreg_intercept.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/linearreg_intercept.rs) |
 | Java | [`Core_LINEARREG_INTERCEPT.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_LINEARREG_INTERCEPT.java) |
 | C# | [`Core_LINEARREG_INTERCEPT.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_LINEARREG_INTERCEPT.cs) |
+| TypeScript | [`linearregIntercept.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/linearregIntercept.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

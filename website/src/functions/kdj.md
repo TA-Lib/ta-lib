@@ -74,6 +74,7 @@ TA-Lib Definition: [`kdj.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Rust | [`kdj.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/kdj.rs) |
 | Java | [`Core_KDJ.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_KDJ.java) |
 | C# | [`Core_KDJ.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_KDJ.cs) |
+| TypeScript | [`kdj.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/kdj.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

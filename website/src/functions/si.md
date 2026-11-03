@@ -74,6 +74,7 @@ TA-Lib Definition: [`si.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | Rust | [`si.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/si.rs) |
 | Java | [`Core_SI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SI.java) |
 | C# | [`Core_SI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SI.cs) |
+| TypeScript | [`si.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/si.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

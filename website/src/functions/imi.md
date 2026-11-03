@@ -55,6 +55,7 @@ TA-Lib Definition: [`imi.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Rust | [`imi.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/imi.rs) |
 | Java | [`Core_IMI.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_IMI.java) |
 | C# | [`Core_IMI.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_IMI.cs) |
+| TypeScript | [`imi.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/imi.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

@@ -1,0 +1,9 @@
+{
+  "name": "ta-lib-ts-tooling",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "7.0.2"
+  }
+}

@@ -69,6 +69,7 @@ TA-Lib Definition: [`chop.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Rust | [`chop.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/chop.rs) |
 | Java | [`Core_CHOP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CHOP.java) |
 | C# | [`Core_CHOP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CHOP.cs) |
+| TypeScript | [`chop.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/chop.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

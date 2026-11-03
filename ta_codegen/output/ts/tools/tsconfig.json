@@ -1,0 +1,10 @@
+{
+  "extends": "../library/tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "outDir": "../../../../bin/ta_codegen_ts",
+    "declaration": false,
+    "types": ["node"]
+  },
+  "include": ["*.ts", "../library/src"]
+}

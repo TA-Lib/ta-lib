@@ -62,6 +62,7 @@ TA-Lib Definition: [`cdl3linestrike.c`](https://github.com/TA-Lib/ta-lib/blob/ma
 | Rust | [`cdl3linestrike.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdl3linestrike.rs) |
 | Java | [`Core_CDL3LINESTRIKE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDL3LINESTRIKE.java) |
 | C# | [`Core_CDL3LINESTRIKE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDL3LINESTRIKE.cs) |
+| TypeScript | [`cdl3linestrike.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdl3linestrike.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

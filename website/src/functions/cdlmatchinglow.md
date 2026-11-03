@@ -65,6 +65,7 @@ TA-Lib Definition: [`cdlmatchinglow.c`](https://github.com/TA-Lib/ta-lib/blob/ma
 | Rust | [`cdlmatchinglow.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlmatchinglow.rs) |
 | Java | [`Core_CDLMATCHINGLOW.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLMATCHINGLOW.java) |
 | C# | [`Core_CDLMATCHINGLOW.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLMATCHINGLOW.cs) |
+| TypeScript | [`cdlmatchinglow.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlmatchinglow.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

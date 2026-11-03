@@ -62,6 +62,7 @@ TA-Lib Definition: [`cdlgapsidesidewhite.c`](https://github.com/TA-Lib/ta-lib/bl
 | Rust | [`cdlgapsidesidewhite.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlgapsidesidewhite.rs) |
 | Java | [`Core_CDLGAPSIDESIDEWHITE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLGAPSIDESIDEWHITE.java) |
 | C# | [`Core_CDLGAPSIDESIDEWHITE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLGAPSIDESIDEWHITE.cs) |
+| TypeScript | [`cdlgapsidesidewhite.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlgapsidesidewhite.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

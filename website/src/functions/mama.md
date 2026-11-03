@@ -59,6 +59,7 @@ TA-Lib Definition: [`mama.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_code
 | Rust | [`mama.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/mama.rs) |
 | Java | [`Core_MAMA.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MAMA.java) |
 | C# | [`Core_MAMA.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MAMA.cs) |
+| TypeScript | [`mama.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/mama.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

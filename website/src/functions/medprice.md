@@ -49,6 +49,7 @@ TA-Lib Definition: [`medprice.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | Rust | [`medprice.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/medprice.rs) |
 | Java | [`Core_MEDPRICE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_MEDPRICE.java) |
 | C# | [`Core_MEDPRICE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MEDPRICE.cs) |
+| TypeScript | [`medprice.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/medprice.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

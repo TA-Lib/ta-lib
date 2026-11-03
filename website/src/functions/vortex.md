@@ -66,6 +66,7 @@ TA-Lib Definition: [`vortex.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | Rust | [`vortex.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/vortex.rs) |
 | Java | [`Core_VORTEX.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_VORTEX.java) |
 | C# | [`Core_VORTEX.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_VORTEX.cs) |
+| TypeScript | [`vortex.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/vortex.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

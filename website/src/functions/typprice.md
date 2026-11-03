@@ -50,6 +50,7 @@ TA-Lib Definition: [`typprice.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | Rust | [`typprice.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/typprice.rs) |
 | Java | [`Core_TYPPRICE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_TYPPRICE.java) |
 | C# | [`Core_TYPPRICE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_TYPPRICE.cs) |
+| TypeScript | [`typprice.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/typprice.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

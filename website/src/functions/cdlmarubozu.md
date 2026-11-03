@@ -65,6 +65,7 @@ TA-Lib Definition: [`cdlmarubozu.c`](https://github.com/TA-Lib/ta-lib/blob/main/
 | Rust | [`cdlmarubozu.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlmarubozu.rs) |
 | Java | [`Core_CDLMARUBOZU.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLMARUBOZU.java) |
 | C# | [`Core_CDLMARUBOZU.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLMARUBOZU.cs) |
+| TypeScript | [`cdlmarubozu.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlmarubozu.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

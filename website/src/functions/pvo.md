@@ -65,6 +65,7 @@ TA-Lib Definition: [`pvo.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Rust | [`pvo.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/pvo.rs) |
 | Java | [`Core_PVO.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_PVO.java) |
 | C# | [`Core_PVO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_PVO.cs) |
+| TypeScript | [`pvo.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/pvo.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

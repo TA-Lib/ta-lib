@@ -1,0 +1,42 @@
+{
+  "name": "ta-lib",
+  "version": "0.8.4",
+  "description": "Technical analysis library: 200+ indicators (SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Stochastic, candlestick patterns). The official TypeScript port of TA-Lib, verified against the C reference.",
+  "keywords": [
+    "ta-lib",
+    "talib",
+    "technical-analysis",
+    "technical-indicators",
+    "indicators",
+    "candlestick-patterns",
+    "streaming",
+    "finance",
+    "trading"
+  ],
+  "homepage": "https://ta-lib.org",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./metadata": {
+      "types": "./dist/metadata/index.d.ts",
+      "default": "./dist/metadata/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TA-Lib/ta-lib.git",
+    "directory": "ta_codegen/output/ts/library"
+  },
+  "license": "BSD-3-Clause"
+}

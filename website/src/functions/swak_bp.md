@@ -82,6 +82,7 @@ TA-Lib Definition: [`swak_bp.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | Rust | [`swak_bp.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/swak_bp.rs) |
 | Java | [`Core_SWAK_BP.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_SWAK_BP.java) |
 | C# | [`Core_SWAK_BP.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SWAK_BP.cs) |
+| TypeScript | [`swakBp.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/swakBp.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

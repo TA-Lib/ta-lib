@@ -85,6 +85,7 @@ TA-Lib Definition: [`zigzag.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | Rust | [`zigzag.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/zigzag.rs) |
 | Java | [`Core_ZIGZAG.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ZIGZAG.java) |
 | C# | [`Core_ZIGZAG.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ZIGZAG.cs) |
+| TypeScript | [`zigzag.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/zigzag.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

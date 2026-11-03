@@ -60,6 +60,7 @@ TA-Lib Definition: [`accbands.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_
 | Rust | [`accbands.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/accbands.rs) |
 | Java | [`Core_ACCBANDS.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ACCBANDS.java) |
 | C# | [`Core_ACCBANDS.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ACCBANDS.cs) |
+| TypeScript | [`accbands.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/accbands.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

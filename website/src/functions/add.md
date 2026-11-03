@@ -49,6 +49,7 @@ TA-Lib Definition: [`add.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Rust | [`add.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/add.rs) |
 | Java | [`Core_ADD.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ADD.java) |
 | C# | [`Core_ADD.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_ADD.cs) |
+| TypeScript | [`add.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/add.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 

@@ -65,6 +65,7 @@ TA-Lib Definition: [`cdlshortline.c`](https://github.com/TA-Lib/ta-lib/blob/main
 | Rust | [`cdlshortline.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/cdlshortline.rs) |
 | Java | [`Core_CDLSHORTLINE.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_CDLSHORTLINE.java) |
 | C# | [`Core_CDLSHORTLINE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CDLSHORTLINE.cs) |
+| TypeScript | [`cdlshortline.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/cdlshortline.ts) |
 
 TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
 
