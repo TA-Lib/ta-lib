@@ -1,15 +1,10 @@
-name: Build & Push Pure Go Docker Image
+name: Build & Push TA-Lib Docker Image
 
 on:
   push:
     branches:
       - feat/pure-go-engine
       - main
-    paths:
-      - 'go/**'
-      - 'Dockerfile'
-      - '.dockerignore'
-      - '.github/workflows/docker-publish.yml'
   workflow_dispatch:
 
 jobs:
@@ -40,6 +35,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/ta-engine:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/ta-engine:${{ github.sha }}
-
+            ${{ secrets.DOCKERHUB_USERNAME }}/ta-lib:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/ta-lib:${{ github.sha }}

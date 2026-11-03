@@ -1,39 +1,43 @@
-# ==========================================
-# 1. BUILD STAGE (Pure Go, Zero-CGO)
-# ==========================================
-FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS builder
+# ==============================================================================
+# TA-Lib Multi-Architecture Dockerfile
+# Builds the complete native C library (240+ indicators, headers, static & shared)
+# ==============================================================================
 
-ARG TARGETOS
-ARG TARGETARCH
+# 1. BUILD STAGE
+FROM alpine:3.20 AS builder
 
-WORKDIR /app
+RUN apk add --no-cache \
+    build-base \
+    cmake \
+    ninja
 
-# Install CA certificates for secure HTTPS/WSS exchange connectivity
-RUN apk --no-cache add ca-certificates
+WORKDIR /src
+COPY . .
 
-# Cache dependencies
-COPY go/go.mod ./
-RUN go mod download
+# Build both static (.a) and shared (.so) libraries, plus universal test runner
+RUN cmake -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_STATIC_LIBS=ON \
+    -DBUILD_SHARED_LIBS=ON \
+    -DBUILD_TESTING=ON \
+    -DCMAKE_INSTALL_PREFIX=/usr/local \
+    && cmake --build build \
+    && cmake --install build
 
-# Copy Go engine source
-COPY go/ .
+# 2. RUNTIME / DISTRIBUTION IMAGE STAGE
+FROM alpine:3.20
 
-# Compile static pure Go binary with CGO disabled
-RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
-    go build -ldflags="-s -w" -o /app/ta-engine .
+RUN apk add --no-cache ca-certificates libgcc
 
-# ==========================================
-# 2. RUNTIME STAGE (Zero OS dependencies, ~6MB)
-# ==========================================
-FROM scratch
+# Copy installed C headers, static archives (.a), shared objects (.so), and cmake files
+COPY --from=builder /usr/local/include/ /usr/local/include/
+COPY --from=builder /usr/local/lib/ /usr/local/lib/
+COPY --from=builder /src/bin/ta_regtest /usr/local/bin/ta_regtest
 
-# Copy root CA certificates
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+ENV LD_LIBRARY_PATH=/usr/local/lib
+ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
-# Copy statically linked pure Go binary
-COPY --from=builder /app/ta-engine /ta-engine
+WORKDIR /usr/local/bin
 
-EXPOSE 8080
-
-ENTRYPOINT ["/ta-engine"]
-
+# Default command runs the universal regression test verifying all 240 indicators
+CMD ["ta_regtest"]
