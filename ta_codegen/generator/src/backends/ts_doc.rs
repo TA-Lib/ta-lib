@@ -374,7 +374,7 @@ fn open_throws(func: &FuncDef, fill: bool) -> String {
     let bad = if causes.is_empty() { String::new() } else { format!(", and `TA_BAD_PARAM` for {}", any_of(&causes)) };
     format!(
         "`TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter than \
-         `{}(...) + 1` bars, `TA_OUT_OF_RANGE_START_INDEX` for an empty one{bad}.",
+         `{}(...) + 1` bars, an empty one included{bad}.",
         names.lookback
     )
 }

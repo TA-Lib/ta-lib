@@ -855,7 +855,7 @@ public partial class Core
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.InsufficientHistory;
       }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -1075,14 +1075,15 @@ public partial class Core
    /// <param name="optInSignalPeriod">As in the batch call; see <see cref="MacdfixLookback"/> for its default
    /// and range (<c>int.MinValue</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MacdfixLookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MacdfixLookback(...) + 1</c> bars, an
+   /// empty one included — which is what a null array becomes, since a span
+   /// cannot be null.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
-   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.IndexMax"/> + 1, the
-   /// two index faults an opener can have (rules rS1 and rS2).</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is longer than <see cref="Core.IndexMax"/> + 1, the one index
+   /// fault an opener can have (rule rS2).</exception>
    public MacdfixStream MacdfixOpen( ReadOnlySpan<double> inReal, int optInSignalPeriod )
    {
-      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MACDFIX open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MACDFIX open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MACDFIX open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return MacdfixOpenInternal(inReal, 0, optInSignalPeriod);
    }
@@ -1111,16 +1112,17 @@ public partial class Core
    /// <param name="outMACDHist">MACD minus signal. Must hold at least <c>historyLen -
    /// MacdfixLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MacdfixLookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MacdfixLookback(...) + 1</c> bars, an
+   /// empty one included — which is what a null array becomes, since a span
+   /// cannot be null.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, an output is shorter than the values the fill
    /// writes, or an output array aliases an input or another output.</exception>
-   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.IndexMax"/> + 1, the
-   /// two index faults an opener can have (rules rS1 and rS2).</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is longer than <see cref="Core.IndexMax"/> + 1, the one index
+   /// fault an opener can have (rule rS2).</exception>
    public MacdfixStream MacdfixOpenAndFill( ReadOnlySpan<double> inReal, int optInSignalPeriod, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
-      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MACDFIX openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MACDFIX openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MACDFIX openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MACDFIX", "openAndFill", inReal.Length, MacdfixLookback(optInSignalPeriod));
       RequireFillLength("MACDFIX", "openAndFill", "outMACD", outMACD.Length, guardOutLen);

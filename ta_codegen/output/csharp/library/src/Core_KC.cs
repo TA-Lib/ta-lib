@@ -791,7 +791,7 @@ public partial class Core
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.InsufficientHistory;
       }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -949,15 +949,16 @@ public partial class Core
    /// <param name="optInNbDev">As in the batch call; see <see cref="KcLookback"/> for its default and
    /// range (<see cref="Core.RealDefault"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>KcLookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>KcLookback(...) + 1</c> bars, an empty one
+   /// included — which is what a null array becomes, since a span cannot be
+   /// null.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.IndexMax"/> + 1, the
-   /// two index faults an opener can have (rules rS1 and rS2).</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is longer than <see cref="Core.IndexMax"/> + 1, the one index
+   /// fault an opener can have (rule rS2).</exception>
    public KcStream KcOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, int optInATRPeriod, double optInNbDev )
    {
-      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "KC open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("KC open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "KC open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TALibArgumentException("KC open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TALibArgumentException("KC open: inClose is empty", nameof(inClose), RetCode.BadParam);
@@ -996,16 +997,17 @@ public partial class Core
    /// <param name="outRealLowerBand">Centre line minus the scaled Average True Range. Must hold at least
    /// <c>historyLen - KcLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>KcLookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>KcLookback(...) + 1</c> bars, an empty one
+   /// included — which is what a null array becomes, since a span cannot be
+   /// null.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, an output is shorter than the values the fill
    /// writes, or an output array aliases an input or another output.</exception>
-   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.IndexMax"/> + 1, the
-   /// two index faults an opener can have (rules rS1 and rS2).</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is longer than <see cref="Core.IndexMax"/> + 1, the one index
+   /// fault an opener can have (rule rS2).</exception>
    public KcStream KcOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, int optInATRPeriod, double optInNbDev, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
    {
-      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "KC openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("KC openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "KC openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TALibArgumentException("KC openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TALibArgumentException("KC openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);

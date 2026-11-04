@@ -424,7 +424,7 @@ static TA_RetCode TA_ZIGZAG_OpenImpl( struct TA_ZIGZAG_Stream **stream, const do
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !outZigZag || !outTrend || !outPivotIdx ) return TA_BAD_PARAM;
    if( optInSensitivity == TA_REAL_DEFAULT )
@@ -586,7 +586,7 @@ TA_LIB_API TA_RetCode TA_ZIGZAG_Open( TA_ZIGZAG_Stream **stream, const double in
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !outZigZag || !outTrend || !outPivotIdx ) return TA_BAD_PARAM;
    return TA_ZIGZAG_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInSensitivity, optInMinTrendLength, outZigZag, outTrend, outPivotIdx );
@@ -596,7 +596,7 @@ TA_LIB_API TA_RetCode TA_ZIGZAG_OpenAndFill( TA_ZIGZAG_Stream **stream, const do
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !outBegIdx || !outNBElement || !outZigZag || !outTrend || !outPivotIdx ) return TA_BAD_PARAM;
    if( (const void *)outZigZag == (const void *)inHigh || (const void *)outZigZag == (const void *)inLow || (const void *)outTrend == (const void *)inHigh || (const void *)outTrend == (const void *)inLow || (const void *)outPivotIdx == (const void *)inHigh || (const void *)outPivotIdx == (const void *)inLow || (const void *)outZigZag == (const void *)outTrend || (const void *)outZigZag == (const void *)outPivotIdx || (const void *)outTrend == (const void *)outPivotIdx ) return TA_BAD_PARAM;

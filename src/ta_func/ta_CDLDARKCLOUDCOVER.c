@@ -339,7 +339,7 @@ static TA_RetCode TA_CDLDARKCLOUDCOVER_OpenImpl( struct TA_CDLDARKCLOUDCOVER_Str
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
    if( optInPenetration == TA_REAL_DEFAULT )
@@ -481,7 +481,7 @@ TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_Open( TA_CDLDARKCLOUDCOVER_Stream **s
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
    return TA_CDLDARKCLOUDCOVER_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, optInPenetration, outInteger );
@@ -491,7 +491,7 @@ TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_OpenAndFill( TA_CDLDARKCLOUDCOVER_Str
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outInteger ) return TA_BAD_PARAM;
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;

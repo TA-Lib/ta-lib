@@ -328,7 +328,7 @@ static TA_RetCode TA_RVOL_OpenImpl( struct TA_RVOL_Stream **stream, const double
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inVolume || !outReal ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
@@ -460,7 +460,7 @@ TA_LIB_API TA_RetCode TA_RVOL_Open( TA_RVOL_Stream **stream, const double inVolu
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inVolume || !outReal ) return TA_BAD_PARAM;
    return TA_RVOL_OpenInternal( stream, inVolume, 0, historyLen, optInTimePeriod, outReal );
@@ -470,7 +470,7 @@ TA_LIB_API TA_RetCode TA_RVOL_OpenAndFill( TA_RVOL_Stream **stream, const double
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inVolume || !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;

@@ -756,7 +756,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_SAR_OpenImpl( struct TA_SAR_Stream **str
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
    if( optInAcceleration == TA_REAL_DEFAULT )
@@ -1098,7 +1098,7 @@ TA_LIB_API TA_RetCode TA_SAR_Open( TA_SAR_Stream **stream, const double inHigh[]
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
    return TA_FMA_AVAILABLE ? TA_SAR_OpenSinkFma( stream, inHigh, inLow, 0, historyLen, optInAcceleration, optInMaximum, outReal ) : TA_SAR_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInAcceleration, optInMaximum, outReal );
@@ -1108,7 +1108,7 @@ TA_LIB_API TA_RetCode TA_SAR_OpenAndFill( TA_SAR_Stream **stream, const double i
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow ) return TA_BAD_PARAM;

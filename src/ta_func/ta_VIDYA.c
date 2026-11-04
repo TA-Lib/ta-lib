@@ -607,7 +607,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_VIDYA_OpenImpl( struct TA_VIDYA_Stream *
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
@@ -902,7 +902,7 @@ TA_LIB_API TA_RetCode TA_VIDYA_Open( TA_VIDYA_Stream **stream, const double inRe
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    return TA_FMA_AVAILABLE ? TA_VIDYA_OpenSinkFma( stream, inReal, 0, historyLen, optInTimePeriod, optInCMOPeriod, outReal ) : TA_VIDYA_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInCMOPeriod, outReal );
@@ -912,7 +912,7 @@ TA_LIB_API TA_RetCode TA_VIDYA_OpenAndFill( TA_VIDYA_Stream **stream, const doub
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;

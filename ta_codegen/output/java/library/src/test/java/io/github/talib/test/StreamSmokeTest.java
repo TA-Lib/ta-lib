@@ -761,7 +761,7 @@ public class StreamSmokeTest {
 
     /* The code as well as the type: {@code failure} maps BOTH index codes to
      * {@link io.github.talib.TALibIndexException}, so a type test alone would
-     * accept rU4 answering rule rS1's code. */
+     * accept rU4 answering OUT_OF_RANGE_START_INDEX. */
     private static boolean refusesPastTheCeiling(Runnable r) {
         try {
             r.run();

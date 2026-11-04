@@ -301,7 +301,7 @@ static TA_RetCode TA_QSTICK_OpenImpl( struct TA_QSTICK_Stream **stream, const do
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inClose || !outReal ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
@@ -436,7 +436,7 @@ TA_LIB_API TA_RetCode TA_QSTICK_Open( TA_QSTICK_Stream **stream, const double in
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inClose || !outReal ) return TA_BAD_PARAM;
    return TA_QSTICK_OpenInternal( stream, inOpen, inClose, 0, historyLen, optInTimePeriod, outReal );
@@ -446,7 +446,7 @@ TA_LIB_API TA_RetCode TA_QSTICK_OpenAndFill( TA_QSTICK_Stream **stream, const do
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inClose || !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inOpen || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;

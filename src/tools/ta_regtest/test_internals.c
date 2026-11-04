@@ -237,9 +237,9 @@ ErrorNumber test_internals( void )
  * against a stream that answered TA_INSUFFICIENT_HISTORY for everything:
  * ONE MORE BAR must succeed (so the rejection is about the length), and a
  * rejection that is NOT about the length must keep its OWN code -- TA_BAD_PARAM
- * for a spoiled parameter, and for CDLDOJI, which has none to spoil, rS1's
- * TA_OUT_OF_RANGE_START_INDEX. Either way the point is that rS7's code did not
- * simply swallow every other rejection this tier owns.
+ * for a spoiled parameter, and for CDLDOJI, which has none to spoil, for an
+ * absent output. Either way the point is that rS7's code did not simply
+ * swallow every other rejection this tier owns.
  */
 static int shShort, shControl;
 static int shUpper, shEmpty;
@@ -372,10 +372,10 @@ static ErrorNumber testStreamShortHistory( void )
       SH_CHECK( "TA_CDLDOJI_Open", lb,
                 TA_CDLDOJI_Open( &st, bars, bars, bars, bars, lb, &v ),
                 TA_CDLDOJI_Open( &st, bars, bars, bars, bars, lb + 1, &v ),
-                /* No optional parameter to spoil: an empty history is the
-                 * other rejection this tier owns (rule rS1). */
-                TA_CDLDOJI_Open( &st, bars, bars, bars, bars, 0, &v ),
-                TA_OUT_OF_RANGE_START_INDEX,
+                /* No optional parameter to spoil: an absent output is the
+                 * other rejection this tier owns (rule rS4). */
+                TA_CDLDOJI_Open( &st, bars, bars, bars, bars, lb + 1, NULL ),
+                TA_BAD_PARAM,
                 TA_CDLDOJI_Close( st ) );
    }
 
@@ -432,15 +432,15 @@ static ErrorNumber testStreamShortHistory( void )
                 TA_SMA_Close( st ) );
    }
 
-   /* Rule rS1, the LOWER half of the history bound: an empty history is
-    * TA_OUT_OF_RANGE_START_INDEX (https://ta-lib.org/spec/streaming/#rs1).
+   /* The LOWER half of the history bound: an empty history is
+    * TA_INSUFFICIENT_HISTORY (https://ta-lib.org/spec/streaming/#rs7).
     *
-    * What is worth the probe is the ORDER, not the code alone. The pair is
-    * evaluated ahead of every presence check, so a call that is BOTH an absent
-    * output and an empty history reports this rather than TA_BAD_PARAM; until
-    * #268 it reported the absent output, and a caller who fixed that argument
-    * got the same rejection back for a reason nothing had mentioned. The one
-    * check that still precedes the pair is the handle, and for a reason no
+    * What is worth the probe is the ORDER, not the code alone. Unlike a short
+    * non-empty history, an empty one is evaluated ahead of every presence check,
+    * so a call that is BOTH an absent output and an empty history reports this
+    * rather than TA_BAD_PARAM; until #268 it reported the absent output, and a
+    * caller who fixed that argument got the same rejection back for a reason
+    * nothing had mentioned. The one check that still precedes it is the handle, and for a reason no
     * ordering choice can remove: `*stream = NULL` is how "no handle on any
     * failure" is published, and there is nowhere to publish it without one.
     * That case is the last control below. */
@@ -478,11 +478,11 @@ static ErrorNumber testStreamShortHistory( void )
       for( i = 0; i < 8; i++ )
       {
          rc = cases[i].rc;
-         if( rc != TA_OUT_OF_RANGE_START_INDEX )
+         if( rc != TA_INSUFFICIENT_HISTORY )
          {
             printf( "\nFailed: %s returned %d, expected "
-                    "TA_OUT_OF_RANGE_START_INDEX (%d)\n",
-                    cases[i].name, (int)rc, (int)TA_OUT_OF_RANGE_START_INDEX );
+                    "TA_INSUFFICIENT_HISTORY (%d)\n",
+                    cases[i].name, (int)rc, (int)TA_INSUFFICIENT_HISTORY );
             return TA_STREAM_EMPTY_HISTORY_WRONG_CODE;
          }
          shEmpty++;
@@ -490,19 +490,25 @@ static ErrorNumber testStreamShortHistory( void )
 
       /* A candlestick reaches it through four price legs rather than one. */
       if( TA_CDLDOJI_Open( &cst, bars, bars, bars, bars, 0, &iv )
-          != TA_OUT_OF_RANGE_START_INDEX )
+          != TA_INSUFFICIENT_HISTORY )
       {
          printf( "\nFailed: TA_CDLDOJI_Open(historyLen=0) did not report "
-                 "TA_OUT_OF_RANGE_START_INDEX\n" );
+                 "TA_INSUFFICIENT_HISTORY\n" );
          return TA_STREAM_EMPTY_HISTORY_WRONG_CODE;
       }
       shEmpty++;
 
-      /* Controls. A history of exactly one bar is inside the domain -- it is
-       * rS7's business, not rS1's -- and the handle still answers first. */
+      /* Controls. A history of exactly one bar reaches the warm-up check, and
+       * only after the presence checks; the handle still answers first. */
       if( TA_SMA_Open( &sst, bars, 1, 30, &v ) != TA_INSUFFICIENT_HISTORY )
       {
          printf( "\nFailed: a one-bar history did not reach the warm-up check\n" );
+         return TA_STREAM_EMPTY_HISTORY_WRONG_CODE;
+      }
+      if( TA_SMA_Open( &sst, bars, 1, 30, NULL ) != TA_BAD_PARAM )
+      {
+         printf( "\nFailed: an absent output must outrank a short non-empty "
+                 "history\n" );
          return TA_STREAM_EMPTY_HISTORY_WRONG_CODE;
       }
       if( TA_SMA_Open( NULL, bars, 0, 30, &v ) != TA_BAD_PARAM )

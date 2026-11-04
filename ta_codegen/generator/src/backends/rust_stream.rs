@@ -20,7 +20,7 @@
 //!   `&self` and the handle `Sync` — and no buffer is copied.
 //! - Drop replaces Close; RAII replaces every OOM-unwind ladder.
 //! - `historyLen` is the FIRST input slice's length: empty is
-//!   `Err(OutOfRangeStartIndex)` (rule rS1), and a multi-input open additionally
+//!   `Err(InsufficientHistory)` (rule rS7), and a multi-input open additionally
 //!   requires the rest to match that length (`Err(BadParam)` otherwise).
 
 use std::cell::Cell;
@@ -820,7 +820,7 @@ fn open_fill_capacity_guards(func: &FuncDef, with_pair: bool) -> String {
     if with_pair {
         let _ = writeln!(
             s,
-            "        if {first}.is_empty() {{\n            return Err(RetCode::OutOfRangeStartIndex);\n        }}"
+            "        if {first}.is_empty() {{\n            return Err(RetCode::InsufficientHistory);\n        }}"
         );
         let _ = writeln!(
             s,
@@ -2246,9 +2246,9 @@ fn open_out_params(func: &FuncDef) -> String {
 /// The open validation head: the implied index pair, the equal-length input
 /// check, then optional-param validation. Shared by every tier.
 ///
-/// rS1 and rS2 run first, ahead of every other check, answering
-/// `OutOfRangeStartIndex` and `OutOfRangeEndIndex`
-/// (`https://ta-lib.org/spec/streaming/#rs1`). `historyLen` is the FIRST input's
+/// An empty history (rS7) and rS2 run first, ahead of every other check,
+/// answering `InsufficientHistory` and `OutOfRangeEndIndex`
+/// (`https://ta-lib.org/spec/streaming/#rs2`). `historyLen` is the FIRST input's
 /// length: a later input being empty is a length disagreement, which is
 /// `BadParam` like every other argument fault.
 fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<String, EnumDef>) {
@@ -2256,7 +2256,7 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
     let first = &inputs[0];
     let _ = writeln!(
         o,
-        "        if {first}.is_empty() {{\n            return Err(RetCode::OutOfRangeStartIndex);\n        }}"
+        "        if {first}.is_empty() {{\n            return Err(RetCode::InsufficientHistory);\n        }}"
     );
     // Input-size ceiling. The fill covers bars 0..historyLen-1, so its last bar
     // is an index like any other and TA_INDEX_MAX bounds it too (#180) —
@@ -2905,7 +2905,7 @@ fn stream_open_docs(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> String 
     );
     let _ = writeln!(
         d,
-        "    ///\n    /// # Errors\n    ///\n    /// [`RetCode::InsufficientHistory`] when the history holds fewer than\n    /// `lookback + 1` bars — the one failure here worth retrying, since another\n    /// bar fixes it. [`RetCode::OutOfRangeStartIndex`] when the history is empty.\n    /// [`RetCode::BadParam`] when a parameter is out of range or the input\n    /// lengths differ."
+        "    ///\n    /// # Errors\n    ///\n    /// [`RetCode::InsufficientHistory`] when the history holds fewer than\n    /// `lookback + 1` bars, an empty one included — the one failure here worth\n    /// retrying, since another bar fixes it. [`RetCode::BadParam`] when a\n    /// parameter is out of range or the input lengths differ."
     );
     if let Some(doctest) = stream_doctest(func, &sn, enums) {
         let _ = writeln!(d, "    ///");

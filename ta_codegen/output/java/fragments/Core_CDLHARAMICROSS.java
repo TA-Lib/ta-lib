@@ -650,7 +650,7 @@
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OUT_OF_RANGE_START_INDEX;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       if( historyLen > INDEX_MAX + 1 ) {
          return RetCode.OUT_OF_RANGE_END_INDEX;
@@ -823,9 +823,8 @@
     * <p>The history must hold at least {@code cdlharamicrossLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. An EMPTY history throws
-    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
-    * names no bar — and a null argument {@link IllegalArgumentException},
-    * both ahead of everything above.
+    * {@link InsufficientHistoryException} too, and a null argument
+    * {@link IllegalArgumentException}, both ahead of everything above.
     */
    public CdlharamicrossStream cdlharamicrossOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {

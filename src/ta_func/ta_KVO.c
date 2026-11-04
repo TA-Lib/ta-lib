@@ -653,7 +653,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KVO_OpenImpl( struct TA_KVO_Stream **str
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !inVolume || !outKVO || !outKVOSignal ) return TA_BAD_PARAM;
    if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
@@ -951,7 +951,7 @@ TA_LIB_API TA_RetCode TA_KVO_Open( TA_KVO_Stream **stream, const double inHigh[]
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !inVolume || !outKVO || !outKVOSignal ) return TA_BAD_PARAM;
    return TA_FMA_AVAILABLE ? TA_KVO_OpenSinkFma( stream, inHigh, inLow, inClose, inVolume, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outKVO, outKVOSignal ) : TA_KVO_OpenInternal( stream, inHigh, inLow, inClose, inVolume, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outKVO, outKVOSignal );
@@ -961,7 +961,7 @@ TA_LIB_API TA_RetCode TA_KVO_OpenAndFill( TA_KVO_Stream **stream, const double i
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !inVolume || !outBegIdx || !outNBElement || !outKVO || !outKVOSignal ) return TA_BAD_PARAM;
    if( (const void *)outKVO == (const void *)inHigh || (const void *)outKVO == (const void *)inLow || (const void *)outKVO == (const void *)inClose || (const void *)outKVO == (const void *)inVolume || (const void *)outKVOSignal == (const void *)inHigh || (const void *)outKVOSignal == (const void *)inLow || (const void *)outKVOSignal == (const void *)inClose || (const void *)outKVOSignal == (const void *)inVolume || (const void *)outKVO == (const void *)outKVOSignal ) return TA_BAD_PARAM;

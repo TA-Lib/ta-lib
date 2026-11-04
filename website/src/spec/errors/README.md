@@ -24,7 +24,7 @@ The codes a batch, lookback or stream call can return:
 | 0 | `TA_SUCCESS` | Every call that succeeds. |
 | 2 | `TA_BAD_PARAM` | Most [batch](/spec/errors/#batch), [opening](/spec/streaming/#opening) and [advancing](/spec/streaming/#advancing) conditions; a failed lookback, display shift or settings call, in a language where it reports a code ([failures](/spec/#failures)). |
 | 3 | `TA_ALLOC_ERR` | [rB7](/spec/errors/#rb7). |
-| 12 | `TA_OUT_OF_RANGE_START_INDEX` | [rB1](/spec/errors/#rb1), [rS1](/spec/streaming/#rs1). |
+| 12 | `TA_OUT_OF_RANGE_START_INDEX` | [rB1](/spec/errors/#rb1). |
 | 13 | `TA_OUT_OF_RANGE_END_INDEX` | [rB2](/spec/errors/#rb2), [rS2](/spec/streaming/#rs2), [rU4](/spec/streaming/#ru4). |
 | 17 | `TA_INSUFFICIENT_HISTORY` | Stream openers only ([rS7](/spec/streaming/#rs7)). |
 | 5000 to 5999 | `TA_INTERNAL_ERROR` + id | [rB8](/spec/errors/#rb8). |

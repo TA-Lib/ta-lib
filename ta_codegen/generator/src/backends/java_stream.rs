@@ -1025,8 +1025,8 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
     );
     let _ = writeln!(o, "      public {vt} update( {sig_bars}{sink} ) {{");
     // rU4 first, then rU2 before rU3: the index domain ahead of the call's
-    // arguments, as an opener answers rS1/rS2 ahead of rS4; and an absent sink is a
-    // fault in the call, not in the bar.
+    // arguments, as an opener answers its history bounds ahead of rS4; and an
+    // absent sink is a fault in the call, not in the bar.
     o.push_str(&out_range_ceiling_guard(func, "         ", "update"));
     o.push_str(&require_sink(func, "         ", "update"));
     o.push_str(&finite_bar_check(func, "         ", "update"));
@@ -2020,13 +2020,13 @@ fn emit_open_head(o: &mut String, func: &FuncDef, _outputs: &[String]) {
 fn emit_open_validation(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<String, EnumDef>) {
     let inputs = streaming::input_array_names(func);
     let first = &inputs[0];
-    // rS1 and rS2 run first, ahead of every presence check but the history's
-    // own, answering OUT_OF_RANGE_START_INDEX and OUT_OF_RANGE_END_INDEX
-    // (https://ta-lib.org/spec/streaming/#rs1). `historyLen` is the FIRST input's
-    // length, so a later input of a different length is an argument
-    // disagreement, not an empty history.
+    // An empty history (rS7) and rS2 run first, ahead of every presence check
+    // but the history's own, answering INSUFFICIENT_HISTORY and
+    // OUT_OF_RANGE_END_INDEX (https://ta-lib.org/spec/streaming/#rs2).
+    // `historyLen` is the FIRST input's length, so a later input of a different
+    // length is an argument disagreement, not an empty history.
     let _ = writeln!(o, "      if( historyLen < 1 ) {{");
-    let _ = writeln!(o, "         return RetCode.OUT_OF_RANGE_START_INDEX;");
+    let _ = writeln!(o, "         return RetCode.INSUFFICIENT_HISTORY;");
     let _ = writeln!(o, "      }}");
     // The fill covers bars 0..historyLen-1, so its last bar is an index like any
     // other and INDEX_MAX bounds it too (#180). Without this the streaming
@@ -2595,14 +2595,14 @@ fn emit_open_internal_seam(
 
 }
 
-/// Rule rS4 at the PUBLIC opener, with the implied index pair (rS1/rS2) in the
-/// middle of it.
+/// Rule rS4 at the PUBLIC opener, with the history bounds (an empty history,
+/// rS7; rS2) in the middle of it.
 ///
 /// **Exactly one presence check precedes the pair**: the FIRST input's, because
 /// that is the array `historyLen` is read from and a length cannot be taken from
 /// an array that is not there. Every other argument — the remaining price legs
-/// included — is checked after, which is the specified order (rule rS1's note,
-/// `https://ta-lib.org/spec/streaming/#rs1`; footnote [4] of
+/// included — is checked after, which is the specified order (rule rS4's note,
+/// `https://ta-lib.org/spec/streaming/#rs4`; footnote [4] of
 /// `docs/spec-conformance.md`). Checking them all up
 /// front reads as tidier and is wrong: a candlestick opened on an empty history
 /// with one null leg would report the leg, where C reports the empty history.
@@ -2707,9 +2707,8 @@ fn emit_public_open_doc(
          \x20   * <p>The history must hold at least {{@code {base}Lookback(...) + 1}} bars\n\
          \x20   * (unstable-period aware), or {{@link InsufficientHistoryException}} is\n\
          \x20   * thrown.{params} An EMPTY history throws\n\
-         \x20   * {{@link IndexOutOfBoundsException}} — its implied {{@code startIdx}} of 0\n\
-         \x20   * names no bar — and a null argument {{@link IllegalArgumentException}},\n\
-         \x20   * both ahead of everything above.\n\
+         \x20   * {{@link InsufficientHistoryException}} too, and a null argument\n\
+         \x20   * {{@link IllegalArgumentException}}, both ahead of everything above.\n\
          \x20   */"
     );
 }

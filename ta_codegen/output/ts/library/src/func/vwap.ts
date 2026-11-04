@@ -641,7 +641,7 @@ function vwapOpenImpl(
   const historyLen = inHigh.length;
   let endIdx = historyLen - 1;
   if (historyLen < 1) {
-    return RetCode.OUT_OF_RANGE_START_INDEX;
+    return RetCode.INSUFFICIENT_HISTORY;
   }
   if (historyLen > Core.INDEX_MAX + 1) {
     return RetCode.OUT_OF_RANGE_END_INDEX;
@@ -832,8 +832,8 @@ export function vwapOpenInternal(
  *   `Core.DEFAULT` when omitted.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `vwapLookback(...) + 1` bars, `TA_OUT_OF_RANGE_START_INDEX` for an empty
- *   one, and `TA_BAD_PARAM` for histories of different lengths.
+ *   than `vwapLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   histories of different lengths.
  *
  * @example
  * ```ts
@@ -890,11 +890,10 @@ export function vwapOpen(
  *   `Core.DEFAULT` when omitted.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `vwapLookback(...) + 1` bars, `TA_OUT_OF_RANGE_START_INDEX` for an empty
- *   one, and `TA_BAD_PARAM` for histories of different lengths or an output too
- *   short or starting where another output or a `Float64Array` input starts, or, on
- *   a history long enough to open, one sharing memory with another output or a
- *   `Float64Array` input.
+ *   than `vwapLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   histories of different lengths or an output too short or starting where another
+ *   output or a `Float64Array` input starts, or, on a history long enough to open,
+ *   one sharing memory with another output or a `Float64Array` input.
  *
  * @example
  * ```ts

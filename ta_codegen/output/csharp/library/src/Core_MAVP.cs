@@ -1048,7 +1048,7 @@ public partial class Core
    {
       int historyLen = inReal.Length;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.InsufficientHistory;
       }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -1149,7 +1149,7 @@ public partial class Core
       outNBElement = 0;
       int historyLen = inReal.Length;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.InsufficientHistory;
       }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -1307,15 +1307,16 @@ public partial class Core
    /// <param name="optInMAType">As in the batch call; see <see cref="MavpLookback"/> for its default and
    /// range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MavpLookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MavpLookback(...) + 1</c> bars, an empty
+   /// one included — which is what a null array becomes, since a span cannot be
+   /// null.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.IndexMax"/> + 1, the
-   /// two index faults an opener can have (rules rS1 and rS2).</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is longer than <see cref="Core.IndexMax"/> + 1, the one index
+   /// fault an opener can have (rule rS2).</exception>
    public MavpStream MavpOpen( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
-      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MAVP open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MAVP open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MAVP open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       if( inPeriods.IsEmpty ) throw new TALibArgumentException("MAVP open: inPeriods is empty", nameof(inPeriods), RetCode.BadParam);
       RequireHistoryLength("MAVP", "open", "inPeriods", inPeriods.Length, inReal.Length);
@@ -1347,16 +1348,17 @@ public partial class Core
    /// <param name="outReal">variable-period moving average. Must hold at least <c>historyLen -
    /// MavpLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MavpLookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MavpLookback(...) + 1</c> bars, an empty
+   /// one included — which is what a null array becomes, since a span cannot be
+   /// null.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, an output is shorter than the values the fill
    /// writes, or an output array aliases an input or another output.</exception>
-   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.IndexMax"/> + 1, the
-   /// two index faults an opener can have (rules rS1 and rS2).</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is longer than <see cref="Core.IndexMax"/> + 1, the one index
+   /// fault an opener can have (rule rS2).</exception>
    public MavpStream MavpOpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MAVP openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MAVP openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MAVP openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       if( inPeriods.IsEmpty ) throw new TALibArgumentException("MAVP openAndFill: inPeriods is empty", nameof(inPeriods), RetCode.BadParam);
       int guardOutLen = OpenFillCount("MAVP", "openAndFill", inReal.Length, MavpLookback(optInMinPeriod, optInMaxPeriod, optInMAType));

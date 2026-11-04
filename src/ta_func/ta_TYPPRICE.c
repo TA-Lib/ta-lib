@@ -172,7 +172,7 @@ static TA_RetCode TA_TYPPRICE_OpenImpl( struct TA_TYPPRICE_Stream **stream, cons
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
    if( startIdx > historyLen - 1 )
@@ -227,7 +227,7 @@ TA_LIB_API TA_RetCode TA_TYPPRICE_Open( TA_TYPPRICE_Stream **stream, const doubl
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
    return TA_TYPPRICE_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, outReal );
@@ -237,7 +237,7 @@ TA_LIB_API TA_RetCode TA_TYPPRICE_OpenAndFill( TA_TYPPRICE_Stream **stream, cons
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;

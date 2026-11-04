@@ -87,13 +87,14 @@
  *
  * A {@code startIdx} or {@code endIdx} that is negative or above
  * {@link io.github.talib.Core#INDEX_MAX}, an {@code endIdx} below
- * {@code startIdx}, or a stream history that is empty or longer than
- * {@code INDEX_MAX + 1} bars, throws
+ * {@code startIdx}, or a stream history longer than {@code INDEX_MAX + 1} bars,
+ * throws
  * {@link io.github.talib.TALibIndexException}. A parameter outside its
  * documented range, a required array that is absent, or an array too short for
  * the values the call reads or writes (including an {@code endIdx} past the end
  * of the input), throws {@link io.github.talib.TALibArgumentException}. A stream
- * opened on a non-empty history of fewer bars than its lookback plus one throws
+ * opened on a history of fewer bars than its lookback plus one, an empty one
+ * included, throws
  * {@link io.github.talib.InsufficientHistoryException}, which extends
  * {@code TALibArgumentException} so it can be caught to accumulate more bars and
  * retry.

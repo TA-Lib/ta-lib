@@ -871,7 +871,7 @@ static TA_RetCode TA_ULTOSC_OpenImpl( struct TA_ULTOSC_Stream **stream, const do
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod1 == TA_INTEGER_DEFAULT )
@@ -1235,7 +1235,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Open( TA_ULTOSC_Stream **stream, const double in
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
    return TA_ULTOSC_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outReal );
@@ -1245,7 +1245,7 @@ TA_LIB_API TA_RetCode TA_ULTOSC_OpenAndFill( TA_ULTOSC_Stream **stream, const do
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;

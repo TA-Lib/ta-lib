@@ -1182,7 +1182,7 @@ public partial class Core
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.InsufficientHistory;
       }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -1587,15 +1587,16 @@ public partial class Core
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="AdxLookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>AdxLookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>AdxLookback(...) + 1</c> bars, an empty
+   /// one included — which is what a null array becomes, since a span cannot be
+   /// null.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.IndexMax"/> + 1, the
-   /// two index faults an opener can have (rules rS1 and rS2).</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is longer than <see cref="Core.IndexMax"/> + 1, the one index
+   /// fault an opener can have (rule rS2).</exception>
    public AdxStream AdxOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ADX open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("ADX open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ADX open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TALibArgumentException("ADX open: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TALibArgumentException("ADX open: inClose is empty", nameof(inClose), RetCode.BadParam);
@@ -1626,16 +1627,17 @@ public partial class Core
    /// <param name="outReal">Smoothed directional trend-strength index (0-100) Must hold at least
    /// <c>historyLen - AdxLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>AdxLookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>AdxLookback(...) + 1</c> bars, an empty
+   /// one included — which is what a null array becomes, since a span cannot be
+   /// null.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, an output is shorter than the values the fill
    /// writes, or an output array aliases an input or another output.</exception>
-   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.IndexMax"/> + 1, the
-   /// two index faults an opener can have (rules rS1 and rS2).</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is longer than <see cref="Core.IndexMax"/> + 1, the one index
+   /// fault an opener can have (rule rS2).</exception>
    public AdxStream AdxOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ADX openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("ADX openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ADX openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       if( inLow.IsEmpty ) throw new TALibArgumentException("ADX openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TALibArgumentException("ADX openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);

@@ -616,7 +616,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_SUPERTREND_OpenImpl( struct TA_SUPERTREN
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outSupertrend || !outTrend ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
@@ -892,7 +892,7 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Open( TA_SUPERTREND_Stream **stream, const d
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outSupertrend || !outTrend ) return TA_BAD_PARAM;
    return TA_FMA_AVAILABLE ? TA_SUPERTREND_OpenSinkFma( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInMultiplier, outSupertrend, outTrend ) : TA_SUPERTREND_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInMultiplier, outSupertrend, outTrend );
@@ -902,7 +902,7 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_OpenAndFill( TA_SUPERTREND_Stream **stream, 
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outSupertrend || !outTrend ) return TA_BAD_PARAM;
    if( (const void *)outSupertrend == (const void *)inHigh || (const void *)outSupertrend == (const void *)inLow || (const void *)outSupertrend == (const void *)inClose || (const void *)outTrend == (const void *)inHigh || (const void *)outTrend == (const void *)inLow || (const void *)outTrend == (const void *)inClose || (const void *)outSupertrend == (const void *)outTrend ) return TA_BAD_PARAM;

@@ -462,7 +462,7 @@ typedef enum
   /* An entry of the --function= list matched nothing the run could select. */
   TA_REGTEST_FILTER_MATCHED_NOTHING  = 1600,
 
-  /* Streaming empty-history rejection (rule rS1 / TA_OUT_OF_RANGE_START_INDEX). */
+  /* Streaming empty-history rejection (rule rS7 / TA_INSUFFICIENT_HISTORY). */
   TA_STREAM_EMPTY_HISTORY_WRONG_CODE = 1607,
   TA_STREAM_EMPTY_HISTORY_VACUOUS    = 1608,
 

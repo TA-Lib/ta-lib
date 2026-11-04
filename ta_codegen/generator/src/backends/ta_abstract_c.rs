@@ -3031,13 +3031,12 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
          \x20* differ in the last bits.\n\
          \x20*\n\
          \x20* Open( &stream, inputs..., historyLen, params..., out ) warms up on\n\
-         \x20* historyLen bars and hands back a handle. It wants at least one bar --\n\
-         \x20* fewer is TA_OUT_OF_RANGE_START_INDEX -- and MORE than\n\
-         \x20* TA_<NAME>_Lookback() of them; short of that it answers\n\
-         \x20* TA_INSUFFICIENT_HISTORY, the one recoverable code, meaning send more bars\n\
-         \x20* rather than fix the call. A handle it returns must be closed; a FAILED\n\
-         \x20* Open sets the handle to NULL rather than leaving it alone, so do not open\n\
-         \x20* into a variable still holding a live one.\n\
+         \x20* historyLen bars and hands back a handle. It wants MORE than\n\
+         \x20* TA_<NAME>_Lookback() of them; short of that, an empty history included,\n\
+         \x20* it answers TA_INSUFFICIENT_HISTORY, the one recoverable code, meaning\n\
+         \x20* send more bars rather than fix the call. A handle it returns must be\n\
+         \x20* closed; a FAILED Open sets the handle to NULL rather than leaving it\n\
+         \x20* alone, so do not open into a variable still holding a live one.\n\
          \x20*\n\
          \x20* Update( stream, bar..., out ) commits one CLOSED bar and answers its value.\n\
          \x20* A bar that is not finite is refused with TA_BAD_PARAM and nothing moves --\n\

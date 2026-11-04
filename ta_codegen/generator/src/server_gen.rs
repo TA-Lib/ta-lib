@@ -1634,7 +1634,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    }\n\n");
     s.push_str("    static void requireHistory(String funcName, int historyLen) {\n");
     s.push_str("        if (historyLen < 1) {\n");
-    s.push_str("            throw failure(funcName, RetCode.OUT_OF_RANGE_START_INDEX);\n");
+    s.push_str("            throw failure(funcName, RetCode.INSUFFICIENT_HISTORY);\n");
     s.push_str("        }\n");
     s.push_str("        if (historyLen > INDEX_MAX + 1) {\n");
     s.push_str("            throw failure(funcName, RetCode.OUT_OF_RANGE_END_INDEX);\n");

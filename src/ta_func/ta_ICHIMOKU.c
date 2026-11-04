@@ -436,7 +436,7 @@ static TA_RetCode TA_ICHIMOKU_OpenImpl( struct TA_ICHIMOKU_Stream **stream, cons
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !outTenkanSen || !outKijunSen || !outSenkouSpanA || !outSenkouSpanB ) return TA_BAD_PARAM;
    if( (int)optInTenkanPeriod == TA_INTEGER_DEFAULT )
@@ -680,7 +680,7 @@ TA_LIB_API TA_RetCode TA_ICHIMOKU_Open( TA_ICHIMOKU_Stream **stream, const doubl
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !outTenkanSen || !outKijunSen || !outSenkouSpanA || !outSenkouSpanB ) return TA_BAD_PARAM;
    return TA_ICHIMOKU_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, outTenkanSen, outKijunSen, outSenkouSpanA, outSenkouSpanB );
@@ -690,7 +690,7 @@ TA_LIB_API TA_RetCode TA_ICHIMOKU_OpenAndFill( TA_ICHIMOKU_Stream **stream, cons
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !outBegIdx || !outNBElement || !outTenkanSen || !outKijunSen || !outSenkouSpanA || !outSenkouSpanB ) return TA_BAD_PARAM;
    if( (const void *)outTenkanSen == (const void *)inHigh || (const void *)outTenkanSen == (const void *)inLow || (const void *)outKijunSen == (const void *)inHigh || (const void *)outKijunSen == (const void *)inLow || (const void *)outSenkouSpanA == (const void *)inHigh || (const void *)outSenkouSpanA == (const void *)inLow || (const void *)outSenkouSpanB == (const void *)inHigh || (const void *)outSenkouSpanB == (const void *)inLow || (const void *)outTenkanSen == (const void *)outKijunSen || (const void *)outTenkanSen == (const void *)outSenkouSpanA || (const void *)outTenkanSen == (const void *)outSenkouSpanB || (const void *)outKijunSen == (const void *)outSenkouSpanA || (const void *)outKijunSen == (const void *)outSenkouSpanB || (const void *)outSenkouSpanA == (const void *)outSenkouSpanB ) return TA_BAD_PARAM;

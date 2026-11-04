@@ -406,7 +406,7 @@ static TA_RetCode TA_CDLRICKSHAWMAN_OpenImpl( struct TA_CDLRICKSHAWMAN_Stream **
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
    if( startIdx > historyLen - 1 )
@@ -590,7 +590,7 @@ TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN_Open( TA_CDLRICKSHAWMAN_Stream **stream,
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
    return TA_CDLRICKSHAWMAN_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
@@ -600,7 +600,7 @@ TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN_OpenAndFill( TA_CDLRICKSHAWMAN_Stream **
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outInteger ) return TA_BAD_PARAM;
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;

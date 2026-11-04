@@ -197,13 +197,13 @@ export function requireArgument(funcName: string, argName: string, array: unknow
 }
 
 /**
- * @internal An opener's history must hold 1 to `INDEX_MAX + 1` bars. Not
- * {@link requireIndexRange} over `[0, historyLen - 1]`, which reports an empty
- * history as the end index rather than the start.
+ * @internal An opener's history must hold 1 to `INDEX_MAX + 1` bars; an empty
+ * one is a short history. Not {@link requireIndexRange} over
+ * `[0, historyLen - 1]`, which reports an empty history as the end index.
  */
 export function requireHistory(funcName: string, historyLen: number): void {
   if (historyLen < 1) {
-    throw failure(funcName, RetCode.OUT_OF_RANGE_START_INDEX);
+    throw failure(funcName, RetCode.INSUFFICIENT_HISTORY);
   }
   if (historyLen > Core.INDEX_MAX + 1) {
     throw failure(funcName, RetCode.OUT_OF_RANGE_END_INDEX);

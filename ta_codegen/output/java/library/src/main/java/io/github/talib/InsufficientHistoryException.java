@@ -42,11 +42,11 @@ package io.github.talib;
 
 /**
  * Thrown by a streaming {@code xxxOpen}/{@code xxxOpenAndFill} when the
- * supplied history holds fewer than {@code xxxLookback(...) + 1} bars — the
- * one routine, data-dependent open failure a streaming caller may want to
- * catch separately (accumulate more bars and retry). An out-of-range
- * parameter, a null argument or aliased output arrays throw
- * {@link TALibArgumentException}; a history that is empty or longer than
+ * supplied history holds fewer than {@code xxxLookback(...) + 1} bars, an
+ * empty one included — the one routine, data-dependent open failure a
+ * streaming caller may want to catch separately (accumulate more bars and
+ * retry). An out-of-range parameter, a null argument or aliased output arrays
+ * throw {@link TALibArgumentException}; a history longer than
  * {@link Core#INDEX_MAX} + 1 bars throws {@link TALibIndexException}.
  *
  * <p>Still an {@link IllegalArgumentException} by inheritance, so an existing

@@ -907,9 +907,9 @@ public static class BatchApiTest
         // ...and the REST of the streaming tier, which is a separate reject
         // ladder from the batch one. Totality is a property of every failure the
         // library raises, not of the tier someone happened to convert first.
-        CheckCode(RetCode.OutOfRangeStartIndex,
+        CheckCode(RetCode.InsufficientHistory,
             () => core.SmaOpen(ReadOnlySpan<double>.Empty, 30),
-            "an empty history carries OutOfRangeStartIndex");
+            "an empty history carries InsufficientHistory");
         CheckCode(RetCode.BadParam,
             () => core.SmaOpen(input, 0),
             "an out-of-range period on a stream open carries BadParam");

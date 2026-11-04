@@ -255,7 +255,7 @@ test('a rejected bar moves nothing, and the ceiling and history rules answer fir
   assertBadParam(() => s.peek(Number.POSITIVE_INFINITY));
   assert.ok(same(s.value(), before));
   assert.deepEqual(s.outRange(), range);
-  assert.throws(() => lib.smaOpen(new Float64Array(0), 10), (e: unknown) => e instanceof TALibError && e.code === 'TA_OUT_OF_RANGE_START_INDEX');
+  assert.throws(() => lib.smaOpen(new Float64Array(0), 10), (e: unknown) => e instanceof TALibError && e.code === 'TA_INSUFFICIENT_HISTORY');
   assert.throws(() => lib.smaOpen(data.inClose.slice(0, 5), 10), (e: unknown) => e instanceof TALibError && e.code === 'TA_INSUFFICIENT_HISTORY');
   assertBadParam(() => lib.smaOpen(data.inClose, 1.5));
   assertBadParam(() => lib.smaOpen(data.inClose, 0));

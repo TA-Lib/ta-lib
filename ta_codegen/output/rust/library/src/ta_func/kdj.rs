@@ -466,7 +466,7 @@ impl Core {
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outK: &mut [f64], outD: &mut [f64], outJ: &mut [f64], outStride: usize,
     ) -> Result<KdjStream, RetCode> {
         if inHigh.is_empty() {
-            return Err(RetCode::OutOfRangeStartIndex);
+            return Err(RetCode::InsufficientHistory);
         }
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -599,10 +599,9 @@ impl Core {
     /// # Errors
     ///
     /// [`RetCode::InsufficientHistory`] when the history holds fewer than
-    /// `lookback + 1` bars — the one failure here worth retrying, since another
-    /// bar fixes it. [`RetCode::OutOfRangeStartIndex`] when the history is empty.
-    /// [`RetCode::BadParam`] when a parameter is out of range or the input
-    /// lengths differ.
+    /// `lookback + 1` bars, an empty one included — the one failure here worth
+    /// retrying, since another bar fixes it. [`RetCode::BadParam`] when a
+    /// parameter is out of range or the input lengths differ.
     ///
     /// ```
     /// use ta_lib::{Core, MAType};
@@ -675,7 +674,7 @@ impl Core {
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType, outK: &mut [f64], outD: &mut [f64], outJ: &mut [f64],
     ) -> Result<(KdjStream, OutRange), RetCode> {
         if inHigh.is_empty() {
-            return Err(RetCode::OutOfRangeStartIndex);
+            return Err(RetCode::InsufficientHistory);
         }
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);

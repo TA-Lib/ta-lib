@@ -181,7 +181,7 @@ function claiming(n: number): ArrayLike<number> {
   return { length: n } as ArrayLike<number>;
 }
 
-test('an empty history is an index fault ahead of every presence check, and one past INDEX_MAX + 1 bars is the end-index fault', () => {
+test('an empty history is a short history ahead of every presence check, and one past INDEX_MAX + 1 bars is the end-index fault', () => {
   let probes = 0;
   let legs = 0;
   let inclusive = 0;
@@ -190,12 +190,12 @@ test('an empty history is an index fault ahead of every presence check, and one 
     const ins = inputsOf(s);
     const none = outputsOf(s).map(() => null);
     const empty = ins.map(() => new Float64Array(0));
-    rejects(() => s.open(...empty, ...opts), 'TA_OUT_OF_RANGE_START_INDEX', `${s.fn} open: empty`, `${s.fn} open: startIdx out of range`);
-    rejects(() => s.fill(...empty, ...opts, ...none), 'TA_OUT_OF_RANGE_START_INDEX', `${s.fn} openAndFill: empty, no outputs`, `${s.fn} openAndFill: startIdx out of range`);
+    rejects(() => s.open(...empty, ...opts), 'TA_INSUFFICIENT_HISTORY', `${s.fn} open: empty`, `${s.fn} open: history shorter than lookback + 1`);
+    rejects(() => s.fill(...empty, ...opts, ...none), 'TA_INSUFFICIENT_HISTORY', `${s.fn} openAndFill: empty, no outputs`, `${s.fn} openAndFill: history shorter than lookback + 1`);
     if (ins.length > 1) {
       const firstOnly = ins.map((_, k) => (k === 0 ? new Float64Array(0) : null));
-      rejects(() => s.open(...firstOnly, ...opts), 'TA_OUT_OF_RANGE_START_INDEX', `${s.fn} open: empty history, absent legs`);
-      rejects(() => s.fill(...firstOnly, ...opts, ...none), 'TA_OUT_OF_RANGE_START_INDEX', `${s.fn} openAndFill: empty history, absent legs`);
+      rejects(() => s.open(...firstOnly, ...opts), 'TA_INSUFFICIENT_HISTORY', `${s.fn} open: empty history, absent legs`);
+      rejects(() => s.fill(...firstOnly, ...opts, ...none), 'TA_INSUFFICIENT_HISTORY', `${s.fn} openAndFill: empty history, absent legs`);
       legs++;
     }
     const past = ins.map(() => claiming(Core.INDEX_MAX + 2));

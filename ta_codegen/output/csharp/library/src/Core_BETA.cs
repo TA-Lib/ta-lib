@@ -1449,7 +1449,7 @@ public partial class Core
       int historyLen = inReal0.Length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.InsufficientHistory;
       }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -1856,15 +1856,16 @@ public partial class Core
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="BetaLookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>BetaLookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>BetaLookback(...) + 1</c> bars, an empty
+   /// one included — which is what a null array becomes, since a span cannot be
+   /// null.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.IndexMax"/> + 1, the
-   /// two index faults an opener can have (rules rS1 and rS2).</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is longer than <see cref="Core.IndexMax"/> + 1, the one index
+   /// fault an opener can have (rule rS2).</exception>
    public BetaStream BetaOpen( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod )
    {
-      if( inReal0.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "BETA open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal0.IsEmpty ) throw new InsufficientHistoryException("BETA open: history is empty", nameof(inReal0));
       if( inReal0.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "BETA open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       if( inReal1.IsEmpty ) throw new TALibArgumentException("BETA open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       RequireHistoryLength("BETA", "open", "inReal1", inReal1.Length, inReal0.Length);
@@ -1894,16 +1895,17 @@ public partial class Core
    /// <param name="outReal">Beta: regression slope of inReal1-returns on inReal0-returns. Must hold at
    /// least <c>historyLen - BetaLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>BetaLookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>BetaLookback(...) + 1</c> bars, an empty
+   /// one included — which is what a null array becomes, since a span cannot be
+   /// null.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, an output is shorter than the values the fill
    /// writes, or an output array aliases an input or another output.</exception>
-   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.IndexMax"/> + 1, the
-   /// two index faults an opener can have (rules rS1 and rS2).</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is longer than <see cref="Core.IndexMax"/> + 1, the one index
+   /// fault an opener can have (rule rS2).</exception>
    public BetaStream BetaOpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal0.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "BETA openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal0.IsEmpty ) throw new InsufficientHistoryException("BETA openAndFill: history is empty", nameof(inReal0));
       if( inReal0.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "BETA openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       if( inReal1.IsEmpty ) throw new TALibArgumentException("BETA openAndFill: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       int guardOutLen = OpenFillCount("BETA", "openAndFill", inReal0.Length, BetaLookback(optInTimePeriod));

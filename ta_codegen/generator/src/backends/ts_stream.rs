@@ -1152,7 +1152,7 @@ fn emit_open_validation(o: &mut String, em: &Em, mode: OutMode) {
     let func = em.func;
     let inputs = streaming::input_array_names(func);
     let first = &inputs[0];
-    o.push_str("  if (historyLen < 1) {\n    return RetCode.OUT_OF_RANGE_START_INDEX;\n  }\n");
+    o.push_str("  if (historyLen < 1) {\n    return RetCode.INSUFFICIENT_HISTORY;\n  }\n");
     o.push_str("  if (historyLen > Core.INDEX_MAX + 1) {\n    return RetCode.OUT_OF_RANGE_END_INDEX;\n  }\n");
     let mismatches: Vec<String> = inputs[1..].iter().map(|extra| format!("{extra}.length !== {first}.length")).collect();
     if !mismatches.is_empty() {
@@ -1494,8 +1494,8 @@ fn emit_open_internal_seam(o: &mut String, em: &Em, merged: bool) {
 }
 
 /// The public opener's checks, in Java's order with the type tests first
-/// (D13): rS1/rS2 on the history, rS3 through the fill width, rS5's input
-/// half, then each output's capacity.
+/// (D13): the empty history (rS7) and rS2, rS3 through the fill width, rS5's
+/// input half, then each output's capacity.
 fn emit_public_open_guards(o: &mut String, em: &Em, verb: &str, with_outputs: bool) {
     let func = em.func;
     let n = em.name();

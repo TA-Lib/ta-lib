@@ -713,7 +713,7 @@ public partial class Core
       int historyLen = inOpen.Length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.InsufficientHistory;
       }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -883,14 +883,15 @@ public partial class Core
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
    /// <returns>The open stream handle.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CdldojistarLookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CdldojistarLookback(...) + 1</c> bars, an
+   /// empty one included — which is what a null array becomes, since a span
+   /// cannot be null.</exception>
    /// <exception cref="System.ArgumentException">The input series have different lengths.</exception>
-   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.IndexMax"/> + 1, the
-   /// two index faults an opener can have (rules rS1 and rS2).</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is longer than <see cref="Core.IndexMax"/> + 1, the one index
+   /// fault an opener can have (rule rS2).</exception>
    public CdldojistarStream CdldojistarOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLDOJISTAR open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.IsEmpty ) throw new InsufficientHistoryException("CDLDOJISTAR open: history is empty", nameof(inOpen));
       if( inOpen.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLDOJISTAR open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLDOJISTAR open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TALibArgumentException("CDLDOJISTAR open: inLow is empty", nameof(inLow), RetCode.BadParam);
@@ -926,16 +927,17 @@ public partial class Core
    /// candle 1 is black (gap down) Must hold at least <c>historyLen -
    /// CdldojistarLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CdldojistarLookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CdldojistarLookback(...) + 1</c> bars, an
+   /// empty one included — which is what a null array becomes, since a span
+   /// cannot be null.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, an output is shorter than the values the fill
    /// writes, or an output array aliases an input or another output.</exception>
-   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.IndexMax"/> + 1, the
-   /// two index faults an opener can have (rules rS1 and rS2).</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is longer than <see cref="Core.IndexMax"/> + 1, the one index
+   /// fault an opener can have (rule rS2).</exception>
    public CdldojistarStream CdldojistarOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLDOJISTAR openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inOpen.IsEmpty ) throw new InsufficientHistoryException("CDLDOJISTAR openAndFill: history is empty", nameof(inOpen));
       if( inOpen.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLDOJISTAR openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLDOJISTAR openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TALibArgumentException("CDLDOJISTAR openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);

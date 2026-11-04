@@ -316,7 +316,7 @@ static TA_RetCode TA_KDJ_OpenImpl( struct TA_KDJ_Stream **stream, const double i
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outK || !outD || !outJ ) return TA_BAD_PARAM;
    if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
@@ -465,7 +465,7 @@ TA_LIB_API TA_RetCode TA_KDJ_Open( TA_KDJ_Stream **stream, const double inHigh[]
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outK || !outD || !outJ ) return TA_BAD_PARAM;
    return TA_KDJ_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outK, outD, outJ );
@@ -475,7 +475,7 @@ TA_LIB_API TA_RetCode TA_KDJ_OpenAndFill( TA_KDJ_Stream **stream, const double i
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outK || !outD || !outJ ) return TA_BAD_PARAM;
    if( (const void *)outK == (const void *)inHigh || (const void *)outK == (const void *)inLow || (const void *)outK == (const void *)inClose || (const void *)outD == (const void *)inHigh || (const void *)outD == (const void *)inLow || (const void *)outD == (const void *)inClose || (const void *)outJ == (const void *)inHigh || (const void *)outJ == (const void *)inLow || (const void *)outJ == (const void *)inClose || (const void *)outK == (const void *)outD || (const void *)outK == (const void *)outJ || (const void *)outD == (const void *)outJ ) return TA_BAD_PARAM;

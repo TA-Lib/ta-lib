@@ -1105,7 +1105,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KST_OpenImpl( struct TA_KST_Stream **str
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outKST || !outKSTSignal ) return TA_BAD_PARAM;
    if( (int)optInROC1Period == TA_INTEGER_DEFAULT )
@@ -1579,7 +1579,7 @@ TA_LIB_API TA_RetCode TA_KST_Open( TA_KST_Stream **stream, const double inReal[]
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outKST || !outKSTSignal ) return TA_BAD_PARAM;
    return TA_FMA_AVAILABLE ? TA_KST_OpenSinkFma( stream, inReal, 0, historyLen, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outKST, outKSTSignal ) : TA_KST_OpenInternal( stream, inReal, 0, historyLen, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outKST, outKSTSignal );
@@ -1589,7 +1589,7 @@ TA_LIB_API TA_RetCode TA_KST_OpenAndFill( TA_KST_Stream **stream, const double i
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outBegIdx || !outNBElement || !outKST || !outKSTSignal ) return TA_BAD_PARAM;
    if( (const void *)outKST == (const void *)inReal || (const void *)outKSTSignal == (const void *)inReal || (const void *)outKST == (const void *)outKSTSignal ) return TA_BAD_PARAM;

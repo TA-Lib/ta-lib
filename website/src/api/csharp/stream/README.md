@@ -119,16 +119,15 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 
 | Condition | Exception |
 |---|---|
-| An empty history (zero bars, or a null array) | `ArgumentOutOfRangeException` carrying `RetCode.OutOfRangeStartIndex` |
 | A history longer than `Core.IndexMax + 1` bars | `ArgumentOutOfRangeException` carrying `RetCode.OutOfRangeEndIndex` |
 | An optional parameter outside its documented range, a non-finite real parameter included | `ArgumentException` |
 | An input series whose length differs from the history's | `ArgumentException` naming it |
 | (`OpenAndFill`) an output shorter than the values the fill writes, or the same buffer as an input or another output | `ArgumentException` |
-| Fewer than `lookback + 1` history bars | `InsufficientHistoryException` |
+| Fewer than `lookback + 1` history bars, zero bars or a null array included | `InsufficientHistoryException` |
 | A non-finite bar (NaN or ±Inf) | `ArgumentException` naming the input |
 | A bar past `Core.IndexMax`, the last index the batch API addresses | `ArgumentException` carrying `RetCode.OutOfRangeEndIndex` |
 
-`InsufficientHistoryException` derives from `ArgumentException`, so you can catch it specifically — it is the one routine, data-dependent rejection — or catch every open failure uniformly. An empty history is not that case: zero bars is an index fault, so a loop that retries on `InsufficientHistoryException` until enough bars arrive must not start before the first bar. Messages carry a stable `"<NAME> <verb>: "` prefix (`open`, `openAndFill`, `update`, `peek` or `advance`), and `<NAME>` is always the *called* function's name: `core.MaOpen(...)` rejecting reports `MA open:`, never the name of whatever moving average it delegates to.
+`InsufficientHistoryException` derives from `ArgumentException`, so you can catch it specifically — it is the one routine, data-dependent rejection — or catch every open failure uniformly. Messages carry a stable `"<NAME> <verb>: "` prefix (`open`, `openAndFill`, `update`, `peek` or `advance`), and `<NAME>` is always the *called* function's name: `core.MaOpen(...)` rejecting reports `MA open:`, never the name of whatever moving average it delegates to.
 
 Insufficient history is knowable in advance, so it need not be exceptional in your code: compare against `<Name>Lookback(params) + 1` before opening.
 

@@ -438,7 +438,7 @@ public partial class Core
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OutOfRangeStartIndex;
+         return RetCode.InsufficientHistory;
       }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -501,13 +501,14 @@ public partial class Core
    /// </remarks>
    /// <param name="inReal">Input values. The warm-up history, oldest bar first.</param>
    /// <returns>The open stream handle.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>ExpLookback(...) + 1</c> bars.</exception>
-   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.IndexMax"/> + 1, the
-   /// two index faults an opener can have (rules rS1 and rS2).</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>ExpLookback(...) + 1</c> bars, an empty
+   /// one included — which is what a null array becomes, since a span cannot be
+   /// null.</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is longer than <see cref="Core.IndexMax"/> + 1, the one index
+   /// fault an opener can have (rule rS2).</exception>
    public ExpStream ExpOpen( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "EXP open: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.IsEmpty ) throw new InsufficientHistoryException("EXP open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "EXP open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return ExpOpenInternal(inReal, 0);
    }
@@ -530,16 +531,17 @@ public partial class Core
    /// <param name="outReal">e raised to each input value. Must hold at least <c>historyLen -
    /// ExpLookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
-   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>ExpLookback(...) + 1</c> bars.</exception>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>ExpLookback(...) + 1</c> bars, an empty
+   /// one included — which is what a null array becomes, since a span cannot be
+   /// null.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, an output is shorter than the values the fill
    /// writes, or an output array aliases an input or another output.</exception>
-   /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
-   /// cannot be null — or it is longer than <see cref="Core.IndexMax"/> + 1, the
-   /// two index faults an opener can have (rules rS1 and rS2).</exception>
+   /// <exception cref="System.ArgumentOutOfRangeException">The history is longer than <see cref="Core.IndexMax"/> + 1, the one index
+   /// fault an opener can have (rule rS2).</exception>
    public ExpStream ExpOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "EXP openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
+      if( inReal.IsEmpty ) throw new InsufficientHistoryException("EXP openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "EXP openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("EXP", "openAndFill", inReal.Length, ExpLookback());
       RequireFillLength("EXP", "openAndFill", "outReal", outReal.Length, guardOutLen);

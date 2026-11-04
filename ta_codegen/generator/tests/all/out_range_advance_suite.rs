@@ -147,7 +147,7 @@ fn ceiling_needle(lang: &str) -> &'static str {
 /// Rule rU4's guard, in the ONE slot its table puts it in
 /// (`https://ta-lib.org/spec/streaming/#ru4`): first, with only the
 /// handle-presence check allowed in front of it — exactly as only `!stream` may
-/// precede an opener's rS1/rS2 pair.
+/// precede an opener's history bounds.
 ///
 /// Position, not presence. C is matched as a substring including that check,
 /// because a composed `Update` opens with `TA_RetCode retCode;` and so has no

@@ -941,7 +941,7 @@ function macdOpenImpl(
   const historyLen = inReal.length;
   let endIdx = historyLen - 1;
   if (historyLen < 1) {
-    return RetCode.OUT_OF_RANGE_START_INDEX;
+    return RetCode.INSUFFICIENT_HISTORY;
   }
   if (historyLen > Core.INDEX_MAX + 1) {
     return RetCode.OUT_OF_RANGE_END_INDEX;
@@ -1374,9 +1374,8 @@ export function macdOpenInternal(
  *   `Core.DEFAULT` when omitted.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `macdLookback(...) + 1` bars, `TA_OUT_OF_RANGE_START_INDEX` for an empty
- *   one, and `TA_BAD_PARAM` for an integer parameter that is not an int32 or a
- *   parameter outside its range.
+ *   than `macdLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   an integer parameter that is not an int32 or a parameter outside its range.
  *
  * @example
  * ```ts
@@ -1428,11 +1427,11 @@ export function macdOpen(
  *   `Core.DEFAULT` when omitted.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `macdLookback(...) + 1` bars, `TA_OUT_OF_RANGE_START_INDEX` for an empty
- *   one, and `TA_BAD_PARAM` for an integer parameter that is not an int32, a
- *   parameter outside its range or an output too short or starting where another
- *   output or a `Float64Array` input starts, or, on a history long enough to open,
- *   one sharing memory with another output or a `Float64Array` input.
+ *   than `macdLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   an integer parameter that is not an int32, a parameter outside its range or an
+ *   output too short or starting where another output or a `Float64Array` input
+ *   starts, or, on a history long enough to open, one sharing memory with another
+ *   output or a `Float64Array` input.
  *
  * @example
  * ```ts

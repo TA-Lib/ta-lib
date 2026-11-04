@@ -611,7 +611,7 @@ impl Core {
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
     ) -> Result<CdlgravestonedojiStream, RetCode> {
         if inOpen.is_empty() {
-            return Err(RetCode::OutOfRangeStartIndex);
+            return Err(RetCode::InsufficientHistory);
         }
         if inOpen.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -801,10 +801,9 @@ impl Core {
     /// # Errors
     ///
     /// [`RetCode::InsufficientHistory`] when the history holds fewer than
-    /// `lookback + 1` bars — the one failure here worth retrying, since another
-    /// bar fixes it. [`RetCode::OutOfRangeStartIndex`] when the history is empty.
-    /// [`RetCode::BadParam`] when a parameter is out of range or the input
-    /// lengths differ.
+    /// `lookback + 1` bars, an empty one included — the one failure here worth
+    /// retrying, since another bar fixes it. [`RetCode::BadParam`] when a
+    /// parameter is out of range or the input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
@@ -872,7 +871,7 @@ impl Core {
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outInteger: &mut [i32],
     ) -> Result<(CdlgravestonedojiStream, OutRange), RetCode> {
         if inOpen.is_empty() {
-            return Err(RetCode::OutOfRangeStartIndex);
+            return Err(RetCode::InsufficientHistory);
         }
         if inOpen.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);

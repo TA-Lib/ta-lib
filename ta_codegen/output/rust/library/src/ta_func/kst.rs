@@ -1121,7 +1121,7 @@ impl Core {
         &self, inReal: &[f64], startIdx: usize, mut optInROC1Period: i32, mut optInROC2Period: i32, mut optInROC3Period: i32, mut optInROC4Period: i32, mut optInSMA1Period: i32, mut optInSMA2Period: i32, mut optInSMA3Period: i32, mut optInSMA4Period: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outKST: &mut [f64], outKSTSignal: &mut [f64], outStride: usize,
     ) -> Result<KstStream, RetCode> {
         if inReal.is_empty() {
-            return Err(RetCode::OutOfRangeStartIndex);
+            return Err(RetCode::InsufficientHistory);
         }
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -1529,10 +1529,9 @@ impl Core {
     /// # Errors
     ///
     /// [`RetCode::InsufficientHistory`] when the history holds fewer than
-    /// `lookback + 1` bars — the one failure here worth retrying, since another
-    /// bar fixes it. [`RetCode::OutOfRangeStartIndex`] when the history is empty.
-    /// [`RetCode::BadParam`] when a parameter is out of range or the input
-    /// lengths differ.
+    /// `lookback + 1` bars, an empty one included — the one failure here worth
+    /// retrying, since another bar fixes it. [`RetCode::BadParam`] when a
+    /// parameter is out of range or the input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
@@ -1592,7 +1591,7 @@ impl Core {
         &self, inReal: &[f64], mut optInROC1Period: i32, mut optInROC2Period: i32, mut optInROC3Period: i32, mut optInROC4Period: i32, mut optInSMA1Period: i32, mut optInSMA2Period: i32, mut optInSMA3Period: i32, mut optInSMA4Period: i32, mut optInSignalPeriod: i32, outKST: &mut [f64], outKSTSignal: &mut [f64],
     ) -> Result<(KstStream, OutRange), RetCode> {
         if inReal.is_empty() {
-            return Err(RetCode::OutOfRangeStartIndex);
+            return Err(RetCode::InsufficientHistory);
         }
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);

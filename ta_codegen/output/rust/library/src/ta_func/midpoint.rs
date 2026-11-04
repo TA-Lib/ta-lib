@@ -510,7 +510,7 @@ impl Core {
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<MidpointStream, RetCode> {
         if inReal.is_empty() {
-            return Err(RetCode::OutOfRangeStartIndex);
+            return Err(RetCode::InsufficientHistory);
         }
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
@@ -681,10 +681,9 @@ impl Core {
     /// # Errors
     ///
     /// [`RetCode::InsufficientHistory`] when the history holds fewer than
-    /// `lookback + 1` bars — the one failure here worth retrying, since another
-    /// bar fixes it. [`RetCode::OutOfRangeStartIndex`] when the history is empty.
-    /// [`RetCode::BadParam`] when a parameter is out of range or the input
-    /// lengths differ.
+    /// `lookback + 1` bars, an empty one included — the one failure here worth
+    /// retrying, since another bar fixes it. [`RetCode::BadParam`] when a
+    /// parameter is out of range or the input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;
@@ -739,7 +738,7 @@ impl Core {
         &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(MidpointStream, OutRange), RetCode> {
         if inReal.is_empty() {
-            return Err(RetCode::OutOfRangeStartIndex);
+            return Err(RetCode::InsufficientHistory);
         }
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);

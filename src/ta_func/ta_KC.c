@@ -433,7 +433,7 @@ static TA_RetCode TA_KC_OpenImpl( struct TA_KC_Stream **stream, const double inH
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
@@ -664,7 +664,7 @@ TA_LIB_API TA_RetCode TA_KC_Open( TA_KC_Stream **stream, const double inHigh[], 
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
    return TA_KC_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInATRPeriod, optInNbDev, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
@@ -674,7 +674,7 @@ TA_LIB_API TA_RetCode TA_KC_OpenAndFill( TA_KC_Stream **stream, const double inH
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
    if( (const void *)outRealUpperBand == (const void *)inHigh || (const void *)outRealUpperBand == (const void *)inLow || (const void *)outRealUpperBand == (const void *)inClose || (const void *)outRealMiddleBand == (const void *)inHigh || (const void *)outRealMiddleBand == (const void *)inLow || (const void *)outRealMiddleBand == (const void *)inClose || (const void *)outRealLowerBand == (const void *)inHigh || (const void *)outRealLowerBand == (const void *)inLow || (const void *)outRealLowerBand == (const void *)inClose || (const void *)outRealUpperBand == (const void *)outRealMiddleBand || (const void *)outRealUpperBand == (const void *)outRealLowerBand || (const void *)outRealMiddleBand == (const void *)outRealLowerBand ) return TA_BAD_PARAM;

@@ -29,13 +29,12 @@ For `Open` and `OpenAndFill`, the history is the bars the stream opens on, and `
 
 | Rule | Condition | Code | Not checked in |
 |---|---|---|---|
-| <a id="rs1"></a>**rS1** | The history is empty (`historyLen < 1`) | `TA_OUT_OF_RANGE_START_INDEX` | |
 | <a id="rs2"></a>**rS2** | The history holds more than `TA_INDEX_MAX + 1` bars | `TA_OUT_OF_RANGE_END_INDEX` | |
 | <a id="rs3"></a>**rS3** | As [rB3](/spec/errors/#rb3) or [rB9](/spec/errors/#rb9) | `TA_BAD_PARAM` | |
-| <a id="rs4"></a>**rS4** | A required argument is absent ([rB4](/spec/errors/#rb4)), including the C handle out-parameter. An empty history is rS1 | `TA_BAD_PARAM` | |
+| <a id="rs4"></a>**rS4** | A required argument is absent ([rB4](/spec/errors/#rb4)), including the C handle out-parameter. An empty history is [rS7](/spec/streaming/#rs7) | `TA_BAD_PARAM` | |
 | <a id="rs5"></a>**rS5** | An input's length differs from `historyLen`, or an `OpenAndFill` output holds fewer than `historyLen - lookback` values | `TA_BAD_PARAM` | C: cannot check ([rB5](/spec/errors/#rb5)) |
 | <a id="rs6"></a>**rS6** | `OpenAndFill`: an output is the buffer of an input or of another output; in C#, a span that starts where the other does; in TypeScript, an array sharing any memory with the other | `TA_BAD_PARAM` | Rust: cannot alias |
-| <a id="rs7"></a>**rS7** | The history holds at least one bar, but fewer than [lookback](/spec/lookback/#rl1) `+ 1` | `TA_INSUFFICIENT_HISTORY` | |
+| <a id="rs7"></a>**rS7** | The history holds fewer than [lookback](/spec/lookback/#rl1) `+ 1` bars, an empty history included | `TA_INSUFFICIENT_HISTORY` | |
 
 <a id="rh3"></a>**rH3** `OpenAndFill` writes what `batch(0, historyLen - 1)` writes ([rW1](/spec/inputs-outputs/#rw1)), compared as in [rH1](/spec/streaming/#rh1), and reports the same range. The handle it returns then updates as the one `Open` returns on the same history.
 

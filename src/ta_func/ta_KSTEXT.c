@@ -727,7 +727,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KSTEXT_OpenImpl( struct TA_KSTEXT_Stream
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outKST || !outKSTSignal ) return TA_BAD_PARAM;
    if( (int)optInROC1Period == TA_INTEGER_DEFAULT )
@@ -1180,7 +1180,7 @@ TA_LIB_API TA_RetCode TA_KSTEXT_Open( TA_KSTEXT_Stream **stream, const double in
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outKST || !outKSTSignal ) return TA_BAD_PARAM;
    return TA_FMA_AVAILABLE ? TA_KSTEXT_OpenSinkFma( stream, inReal, 0, historyLen, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKST, outKSTSignal ) : TA_KSTEXT_OpenInternal( stream, inReal, 0, historyLen, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKST, outKSTSignal );
@@ -1190,7 +1190,7 @@ TA_LIB_API TA_RetCode TA_KSTEXT_OpenAndFill( TA_KSTEXT_Stream **stream, const do
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outBegIdx || !outNBElement || !outKST || !outKSTSignal ) return TA_BAD_PARAM;
    if( (const void *)outKST == (const void *)inReal || (const void *)outKSTSignal == (const void *)inReal || (const void *)outKST == (const void *)outKSTSignal ) return TA_BAD_PARAM;

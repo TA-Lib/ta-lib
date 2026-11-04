@@ -67,7 +67,7 @@ public enum RetCode
     /// only from the dynamic binder.</summary>
     OutputNotAllInitialize = 11,
     /// <summary>An index outside its domain (<c>TA_OUT_OF_RANGE_START_INDEX</c> = 12):
-    /// <see href="https://ta-lib.org/spec/errors/#rb1">rB1</see>, <see href="https://ta-lib.org/spec/streaming/#rs1">rS1</see>.</summary>
+    /// <see href="https://ta-lib.org/spec/errors/#rb1">rB1</see>.</summary>
     OutOfRangeStartIndex = 12,
     /// <summary>An index outside its domain (<c>TA_OUT_OF_RANGE_END_INDEX</c> = 13):
     /// <see href="https://ta-lib.org/spec/errors/#rb2">rB2</see>, <see href="https://ta-lib.org/spec/streaming/#rs2">rS2</see>, <see href="https://ta-lib.org/spec/streaming/#ru4">rU4</see>.</summary>

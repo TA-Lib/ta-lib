@@ -749,7 +749,7 @@
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
-         return RetCode.OUT_OF_RANGE_START_INDEX;
+         return RetCode.INSUFFICIENT_HISTORY;
       }
       if( historyLen > INDEX_MAX + 1 ) {
          return RetCode.OUT_OF_RANGE_END_INDEX;
@@ -1101,9 +1101,8 @@
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
     * as in the batch API). An EMPTY history throws
-    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
-    * names no bar — and a null argument {@link IllegalArgumentException},
-    * both ahead of everything above.
+    * {@link InsufficientHistoryException} too, and a null argument
+    * {@link IllegalArgumentException}, both ahead of everything above.
     */
    public MinusDmStream minusDmOpen( double inHigh[], double inLow[], int optInTimePeriod )
    {

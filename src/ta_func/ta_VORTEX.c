@@ -617,7 +617,7 @@ static TA_RetCode TA_VORTEX_OpenImpl( struct TA_VORTEX_Stream **stream, const do
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outPlusVI || !outMinusVI ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
@@ -880,7 +880,7 @@ TA_LIB_API TA_RetCode TA_VORTEX_Open( TA_VORTEX_Stream **stream, const double in
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outPlusVI || !outMinusVI ) return TA_BAD_PARAM;
    return TA_VORTEX_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, outPlusVI, outMinusVI );
@@ -890,7 +890,7 @@ TA_LIB_API TA_RetCode TA_VORTEX_OpenAndFill( TA_VORTEX_Stream **stream, const do
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outPlusVI || !outMinusVI ) return TA_BAD_PARAM;
    if( (const void *)outPlusVI == (const void *)inHigh || (const void *)outPlusVI == (const void *)inLow || (const void *)outPlusVI == (const void *)inClose || (const void *)outMinusVI == (const void *)inHigh || (const void *)outMinusVI == (const void *)inLow || (const void *)outMinusVI == (const void *)inClose || (const void *)outPlusVI == (const void *)outMinusVI ) return TA_BAD_PARAM;

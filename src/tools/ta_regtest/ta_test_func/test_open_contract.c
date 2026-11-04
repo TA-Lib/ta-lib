@@ -310,20 +310,22 @@ static void oc_param_judge_code( OcCtx *c, const TA_StreamEntry *e, int p,
  * calls, which have no outBegIdx/outNBElement at all -- their two int
  * arguments are always the literal OC_SENT_IDX filler, not a real read. */
 static void oc_judge_reject( OcCtx *c, const TA_StreamEntry *e, int minParams,
-                             const char *what, int rc, int begIdx, int nbElement,
-                             int hasOutMeta )
+                             const char *what, int rc, int historyLen, int begIdx,
+                             int nbElement, int hasOutMeta )
 {
    int slot;
+   int zeroed = rc == TA_INSUFFICIENT_HISTORY && historyLen > 0;
 
    c->nbRejectChecked++;
    if( minParams ) c->nbMinParamRejects++;
 
    /* A too-short history reports an empty range, so a caller that skips the
     * return code sees nothing was output. Every other rejection leaves the pair
-    * as the caller had it. */
+    * as the caller had it, an empty history included: it is refused ahead of
+    * the pair's own presence check. */
    if( hasOutMeta )
    {
-      int want = rc == TA_INSUFFICIENT_HISTORY ? 0 : OC_SENT_IDX;
+      int want = zeroed ? 0 : OC_SENT_IDX;
       if( nbElement != want || begIdx != want )
       {
          if( c->nbReported < 12 )
@@ -334,7 +336,7 @@ static void oc_judge_reject( OcCtx *c, const TA_StreamEntry *e, int minParams,
          }
          c->nbCountLeaked++;
       }
-      else if( rc == TA_INSUFFICIENT_HISTORY )
+      else if( zeroed )
          c->nbShortHistoryZeroed++;
       else if( rc == TA_BAD_PARAM )
          c->nbParamRangeKept++;
@@ -411,7 +413,7 @@ static int oc_sweep_one( OcCtx *c, const TA_StreamEntry *e )
 
       if( rc != TA_SUCCESS )
       {
-         oc_judge_reject( c, e, pass == 1, "OpenAndFill", (int)rc, (int)begIdx, (int)nbElement, 1 );
+         oc_judge_reject( c, e, pass == 1, "OpenAndFill", (int)rc, h, (int)begIdx, (int)nbElement, 1 );
       }
       else if( nbElement > 0 )
       {
@@ -437,7 +439,7 @@ static int oc_sweep_one( OcCtx *c, const TA_StreamEntry *e )
       rc = e->open( &stream, in, h, opt, outReal, outInt );
       if( stream ) e->close( stream );
       if( rc != TA_SUCCESS )
-         oc_judge_reject( c, e, pass == 1, "Open", (int)rc, OC_SENT_IDX, OC_SENT_IDX, 0 );
+         oc_judge_reject( c, e, pass == 1, "Open", (int)rc, h, OC_SENT_IDX, OC_SENT_IDX, 0 );
       else if( firstOkPass >= 0 )
       {
          /* Open's own control, on its own counter: it writes one slot per
@@ -492,7 +494,7 @@ static int oc_sweep_one( OcCtx *c, const TA_StreamEntry *e )
          if( rc != TA_SUCCESS )
          {
             oc_param_judge_code( c, e, i, opt[i], "OpenAndFill", (int)rc );
-            oc_judge_reject( c, e, 0, "OpenAndFill/param", (int)rc, (int)begIdx, (int)nbElement, 1 );
+            oc_judge_reject( c, e, 0, "OpenAndFill/param", (int)rc, firstOk, (int)begIdx, (int)nbElement, 1 );
          }
          else
          {
@@ -510,7 +512,7 @@ static int oc_sweep_one( OcCtx *c, const TA_StreamEntry *e )
          if( rc != TA_SUCCESS )
          {
             oc_param_judge_code( c, e, i, opt[i], "Open", (int)rc );
-            oc_judge_reject( c, e, 0, "Open/param", (int)rc, OC_SENT_IDX, OC_SENT_IDX, 0 );
+            oc_judge_reject( c, e, 0, "Open/param", (int)rc, firstOk, OC_SENT_IDX, OC_SENT_IDX, 0 );
          }
          else
             c->nbParamAccepted++;

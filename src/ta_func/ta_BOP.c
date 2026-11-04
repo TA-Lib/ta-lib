@@ -203,7 +203,7 @@ static TA_RetCode TA_BOP_OpenImpl( struct TA_BOP_Stream **stream, const double i
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
    if( startIdx > historyLen - 1 )
@@ -272,7 +272,7 @@ TA_LIB_API TA_RetCode TA_BOP_Open( TA_BOP_Stream **stream, const double inOpen[]
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
    return TA_BOP_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outReal );
@@ -282,7 +282,7 @@ TA_LIB_API TA_RetCode TA_BOP_OpenAndFill( TA_BOP_Stream **stream, const double i
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inOpen || (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;

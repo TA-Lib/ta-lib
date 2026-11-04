@@ -423,9 +423,9 @@ fn finite_bar_check(func: &FuncDef, indent: &str, fail: &str) -> String {
     format!("{indent}if( {} ) return {fail};\n", conds.join(" || "))
 }
 
-/// Rules rS1 and rS2 run first, ahead of every presence check, answering
-/// `TA_OUT_OF_RANGE_START_INDEX` and `TA_OUT_OF_RANGE_END_INDEX`
-/// (`https://ta-lib.org/spec/streaming/#rs1`). Only `!stream` may precede them: the
+/// An empty history (rule rS7) and rule rS2 run first, ahead of every presence
+/// check, answering `TA_INSUFFICIENT_HISTORY` and `TA_OUT_OF_RANGE_END_INDEX`
+/// (`https://ta-lib.org/spec/streaming/#rs2`). Only `!stream` may precede them: the
 /// "`*stream` is NULL on any failure" contract is published through that
 /// pointer, so it is a precondition for reporting anything at all rather than an
 /// argument competing with the pair.
@@ -436,7 +436,7 @@ fn finite_bar_check(func: &FuncDef, indent: &str, fail: &str) -> String {
 /// bit for bit (#180).
 fn index_pair_guards() -> &'static str {
     concat!(
-        "   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;\n",
+        "   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;\n",
         "   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;\n"
     )
 }
@@ -493,7 +493,7 @@ enum Frame {
 /// prologue's order too, so both tiers state the same contract the same way.
 ///
 /// The handle is NOT in the list. Every frame checks it first and on its own,
-/// because reading the index domain (rS1/rS2 at an opener, rU4 at a step) is a
+/// because reading the index domain (rS2 at an opener, rU4 at a step) is a
 /// dereference and so has to follow it.
 ///
 /// One producer, because it is one decision and every frame makes it. Hand-rolled

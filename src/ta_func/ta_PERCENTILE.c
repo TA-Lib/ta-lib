@@ -2301,7 +2301,7 @@ static TA_RetCode TA_PERCENTILE_OpenImpl( struct TA_PERCENTILE_Stream **stream, 
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
@@ -3211,7 +3211,7 @@ TA_LIB_API TA_RetCode TA_PERCENTILE_Open( TA_PERCENTILE_Stream **stream, const d
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    return TA_PERCENTILE_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInPercentile, outReal );
@@ -3221,7 +3221,7 @@ TA_LIB_API TA_RetCode TA_PERCENTILE_OpenAndFill( TA_PERCENTILE_Stream **stream, 
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;

@@ -86,7 +86,7 @@ public class BatchApiTest {
     /* The streaming-opener cases below are counted apart from the batch ones:
      * sharing a counter would let a deleted streaming case hide behind a batch
      * one, and the floors in main() are what make a deletion loud. */
-    private static int s1Reject = 0;
+    private static int emptyReject = 0;
     private static int s4Reject = 0;
     private static int s4Accept = 0;
     private static int s5Reject = 0;
@@ -705,9 +705,9 @@ public class BatchApiTest {
         // ...and the REST of the streaming tier, which is a separate reject
         // ladder from the batch one. Totality is a property of every failure the
         // library raises, not of the tier someone happened to convert first.
-        checkCode(RetCode.OUT_OF_RANGE_START_INDEX,
+        checkCode(RetCode.INSUFFICIENT_HISTORY,
             () -> Core.DEFAULT.smaOpen(new double[0], 30),
-            "an empty history carries OutOfRangeStartIndex");
+            "an empty history carries InsufficientHistory");
         checkCode(RetCode.BAD_PARAM,
             () -> Core.DEFAULT.smaOpen(in, 0),
             "an out-of-range period on a stream open carries BAD_PARAM");
@@ -1014,9 +1014,9 @@ public class BatchApiTest {
     }
 
     /**
-     * Rule rS1, and its order. rS1 and rS2 run ahead of every presence check,
-     * answering {@code OUT_OF_RANGE_START_INDEX} and
-     * {@code OUT_OF_RANGE_END_INDEX} (https://ta-lib.org/spec/streaming/#rs1).
+     * An empty history is rule rS7, and its order: it runs ahead of every
+     * presence check, answering {@code INSUFFICIENT_HISTORY}
+     * (https://ta-lib.org/spec/streaming/#rs7).
      *
      * <p>The order is the part worth a case of its own: the third call below is
      * BOTH an empty history and an absent output, and the empty history is what
@@ -1029,43 +1029,43 @@ public class BatchApiTest {
         final double[] empty = new double[0];
         final double[] out = new double[252];
 
-        checkThrows(IndexOutOfBoundsException.class,
+        checkThrows(InsufficientHistoryException.class,
             () -> Core.DEFAULT.smaOpen(empty, 30),
-            "an empty history is an index fault", "SMA open");
-        s1Reject++;
-        checkThrows(IndexOutOfBoundsException.class,
+            "an empty history is a short history", "SMA open");
+        emptyReject++;
+        checkThrows(InsufficientHistoryException.class,
             () -> Core.DEFAULT.smaOpenAndFill(empty, 30, out),
-            "an empty history is an index fault on the fill too", "SMA openAndFill");
-        s1Reject++;
-        checkThrows(IndexOutOfBoundsException.class,
+            "an empty history is a short history on the fill too", "SMA openAndFill");
+        emptyReject++;
+        checkThrows(InsufficientHistoryException.class,
             () -> Core.DEFAULT.smaOpenAndFill(empty, 30, null),
             "an empty history outranks a null output", "SMA openAndFill");
-        s1Reject++;
-        checkThrows(IndexOutOfBoundsException.class,
+        emptyReject++;
+        checkThrows(InsufficientHistoryException.class,
             () -> Core.DEFAULT.cdldojiOpen(empty, empty, empty, empty),
             "a candlestick reaches it through four legs", "CDLDOJI open");
-        s1Reject++;
+        emptyReject++;
         // The leg that is NOT the history is an ordinary argument, so it is
-        // checked after the pair — the same call reports the empty history in C.
-        checkThrows(IndexOutOfBoundsException.class,
+        // checked after the history — the same call reports the empty history in C.
+        checkThrows(InsufficientHistoryException.class,
             () -> Core.DEFAULT.cdldojiOpen(empty, null, empty, empty),
             "an empty history outranks a null leg", "CDLDOJI open");
-        s1Reject++;
-        checkThrows(IndexOutOfBoundsException.class,
+        emptyReject++;
+        checkThrows(InsufficientHistoryException.class,
             () -> Core.DEFAULT.maOpen(empty, 30, MAType.EMA),
             "the dispatch tier answers it too", "MA open");
-        s1Reject++;
+        emptyReject++;
 
-        // The code, not just the type: one IndexOutOfBoundsException serves both
-        // index rules, so the type alone cannot say which fired.
-        check(codeOf(() -> Core.DEFAULT.smaOpen(empty, 30)) == RetCode.OUT_OF_RANGE_START_INDEX,
-            "an empty history carries OutOfRangeStartIndex");
+        check(codeOf(() -> Core.DEFAULT.smaOpen(empty, 30)) == RetCode.INSUFFICIENT_HISTORY,
+            "an empty history carries InsufficientHistory");
 
-        // A history of exactly one bar is inside the domain: that is rS7's
-        // business, and this is what keeps the cases above about EMPTY.
+        // A short history that is NOT empty is checked after the arguments:
+        // this is what keeps the order cases above about EMPTY.
         checkThrows(InsufficientHistoryException.class,
             () -> Core.DEFAULT.smaOpen(new double[1], 30),
             "a one-bar history reaches the warm-up check");
+        check(codeOf(() -> Core.DEFAULT.smaOpenAndFill(new double[1], 30, null)) == RetCode.BAD_PARAM,
+            "a null output outranks a one-bar history");
 
         // The exception: a null history is an absent argument, because its
         // length is what the rule above is about.
@@ -1258,7 +1258,7 @@ public class BatchApiTest {
 
         // Literal floors, not derived from the calls above: a count computed
         // from the cases would move with a deleted one and still "pass".
-        if (s4Reject < 13 || s4Accept < 5 || s1Reject < 6 || s5Reject < 5) {
+        if (s4Reject < 13 || s4Accept < 5 || emptyReject < 6 || s5Reject < 5) {
             failures++;
             System.out.println("  FAIL: the streaming-opener gate ran fewer checks"
                 + " than it was written with");

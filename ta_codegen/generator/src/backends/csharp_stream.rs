@@ -2081,13 +2081,13 @@ fn emit_open_validation(
 ) {
     let inputs = streaming::input_array_names(func);
     let first = &inputs[0];
-    // rS1 and rS2 run first, ahead of every other check, answering
-    // OutOfRangeStartIndex and OutOfRangeEndIndex
-    // (https://ta-lib.org/spec/streaming/#rs1). `historyLen` is the FIRST input's
+    // An empty history (rS7) and rS2 run first, ahead of every other check,
+    // answering InsufficientHistory and OutOfRangeEndIndex
+    // (https://ta-lib.org/spec/streaming/#rs2). `historyLen` is the FIRST input's
     // length, so a later input of a different length is an argument
     // disagreement, not an empty history.
     let _ = writeln!(o, "      if( historyLen < 1 ) {{");
-    let _ = writeln!(o, "         return RetCode.OutOfRangeStartIndex;");
+    let _ = writeln!(o, "         return RetCode.InsufficientHistory;");
     let _ = writeln!(o, "      }}");
     // The fill covers bars 0..historyLen-1, so its last bar is an index like any
     // other and IndexMax bounds it too (#180). Without this the streaming entry
@@ -2652,20 +2652,20 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef, merged: b
 }
 
 /// The PUBLIC opener's input guards. An empty input means two different things
-/// by position: the FIRST input carries the history, so empty there is rule rS1,
-/// the implied `startIdx` of 0 naming no bar; any other input is then a length
-/// disagreement, which is `BadParam` like every other argument fault.
+/// by position: the FIRST input carries the history, so empty there is rule rS7's
+/// short history; any other input is then a length disagreement, which is
+/// `BadParam` like every other argument fault.
 ///
-/// rS1 is answered here rather than left to the core so the pair is evaluated
-/// ahead of the aliasing guard below, which would otherwise see two empty spans
-/// and name the wrong problem. `OpenInternal` is the composition seam and is
+/// The history bounds are answered here rather than left to the core so they
+/// are evaluated ahead of the aliasing guard below, which would otherwise see
+/// two empty spans and name the wrong problem. `OpenInternal` is the composition seam and is
 /// reached only with generator-created arrays, so it stays unchecked.
 fn public_open_empty_guards(n: &str, verb: &str, inputs: &[String]) -> String {
     let mut s = String::new();
     let first = &inputs[0];
     let _ = writeln!(
         s,
-        "      if( {first}.IsEmpty ) throw new TALibArgumentOutOfRangeException(nameof({first}), \"{n} {verb}: history is empty\", RetCode.OutOfRangeStartIndex);"
+        "      if( {first}.IsEmpty ) throw new InsufficientHistoryException(\"{n} {verb}: history is empty\", nameof({first}));"
     );
     let _ = writeln!(
         s,
@@ -2865,7 +2865,10 @@ fn emit_open_wrappers(
     d.returns("The open stream handle.");
     d.exception(
         "InsufficientHistoryException",
-        &format!("The history holds fewer than <c>{base}Lookback(...) + 1</c> bars."),
+        &format!(
+            "The history holds fewer than <c>{base}Lookback(...) + 1</c> bars, an empty \
+             one included — which is what a null array becomes, since a span cannot be null."
+        ),
     );
     // Built from the same two facts the guards are: a function with no optional
     // parameter and one input span can raise neither cause.
@@ -2888,9 +2891,8 @@ fn emit_open_wrappers(
     }
     d.exception(
         "System.ArgumentOutOfRangeException",
-        "The history is empty — which is what a null array becomes, since a span cannot be \
-         null — or it is longer than <see cref=\"Core.IndexMax\"/> + 1, the two index \
-         faults an opener can have (rules rS1 and rS2).",
+        "The history is longer than <see cref=\"Core.IndexMax\"/> + 1, the one index \
+         fault an opener can have (rule rS2).",
     );
     o.push('\n');
     o.push_str(&d.render(3));
@@ -2971,7 +2973,10 @@ fn emit_open_wrappers(
     d.returns("The open stream handle, with its fill range set.");
     d.exception(
         "InsufficientHistoryException",
-        &format!("The history holds fewer than <c>{base}Lookback(...) + 1</c> bars."),
+        &format!(
+            "The history holds fewer than <c>{base}Lookback(...) + 1</c> bars, an empty \
+             one included — which is what a null array becomes, since a span cannot be null."
+        ),
     );
     d.exception(
         "System.ArgumentException",
@@ -2981,9 +2986,8 @@ fn emit_open_wrappers(
     );
     d.exception(
         "System.ArgumentOutOfRangeException",
-        "The history is empty — which is what a null array becomes, since a span cannot be \
-         null — or it is longer than <see cref=\"Core.IndexMax\"/> + 1, the two index \
-         faults an opener can have (rules rS1 and rS2).",
+        "The history is longer than <see cref=\"Core.IndexMax\"/> + 1, the one index \
+         fault an opener can have (rule rS2).",
     );
     o.push('\n');
     o.push_str(&d.render(3));
