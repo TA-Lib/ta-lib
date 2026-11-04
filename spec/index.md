@@ -56,7 +56,7 @@ A function's canonical name is its name on [/functions/](/functions/). Every spe
 | UpperCamel | lower case, upper-case the first letter of each `_`-separated part, drop `_` | `Sma` | `HtTrendline` | `Cdl3blackcrows` |
 | lowerCamel | UpperCamel, first letter lower case | `sma` | `htTrendline` | `cdl3blackcrows` |
 
-Rust uses snake for functions, UpperCamel for types; Java lowerCamel for methods, UpperCamel for types; C# UpperCamel; TypeScript lowerCamel for functions, UpperCamel for types. The Abstract API uses the canonical name. Indicator parameters keep C's names everywhere (`startIdx`, `inReal`, `optInTimePeriod`, `outReal`).
+Rust uses snake for functions, UpperCamel for types; Java lowerCamel for methods, UpperCamel for types; C# UpperCamel; TypeScript lowerCamel for functions, UpperCamel for types; a TypeScript batch function whose name is a reserved word takes a trailing `_` (`var_` for VAR, while `varLookback`, `varOpen` and `VarStream` keep the rule). The Abstract API uses the canonical name. Indicator parameters keep C's names everywhere (`startIdx`, `inReal`, `optInTimePeriod`, `outReal`).
 
 In Rust, Java and C#, a function's calls are methods of a `Core`. In TypeScript they are functions exported by the package, each taking a `Core` as an optional last argument:
 

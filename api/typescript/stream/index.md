@@ -125,7 +125,7 @@ Every rejection is a `TALibError`; branch on its `code`.
 | `<name>Open` / `<name>OpenAndFill` | Too little history throws `'TA_INSUFFICIENT_HISTORY'`: catch it to accumulate more bars and retry. Out-of-range parameters throw `'TA_BAD_PARAM'`. |
 | `update` / `peek` | <ul><li>`'TA_BAD_PARAM'` on invalid input such as NaN or ±Inf</li><li>`'TA_OUT_OF_RANGE_END_INDEX'` from `update` (never `peek`) once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses</li></ul>A rejection changes nothing at all: no state, no value, and no range. |
 | `advance` | `'TA_OUT_OF_RANGE_END_INDEX'` once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses. |
-| `value` / `clone` / `outRange` | Never throw. |
+| `value` / `clone` / `outRange` | Never throw, except `value(out)` on a multi-output stream: it throws `'TA_BAD_PARAM'` when `out` is absent or not an object, as `update` and `peek` do. |
 
 ## Discovering streamable functions
 

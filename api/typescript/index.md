@@ -168,6 +168,7 @@ Misuse throws a `TALibError` rather than returning a return code. Its `code` nam
 | Two outputs sharing one array | `'TA_BAD_PARAM'` |
 | An array too short for the range requested, including an `endIdx` past the end of the input | `'TA_BAD_PARAM'` |
 | An absent or empty array | `'TA_BAD_PARAM'` |
+| An output that is not a `Float64Array`, or not an `Int32Array` for an integer output | `'TA_BAD_PARAM'` |
 
 ```ts
 import { sma, TALibError } from 'ta-lib';
