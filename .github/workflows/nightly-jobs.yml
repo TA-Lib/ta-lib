@@ -329,10 +329,23 @@ jobs:
     name: Test macos-latest (clang, ARM64)
     runs-on: macos-latest
     timeout-minutes: 90
+    continue-on-error: true # macos-gate decides
     permissions:
       contents: read
 
     steps:
+      - name: Record that this macOS job started
+        shell: bash
+        run: mkdir -p "$RUNNER_TEMP/macos-run" && echo "$GITHUB_RUN_ATTEMPT" > "$RUNNER_TEMP/macos-run/started"
+
+      - name: Upload the 'started' record for macos-gate
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-run-test-macos-started
+          path: ${{ runner.temp }}/macos-run/started
+          retention-days: 1
+          overwrite: true
+
       - name: Checkout
         uses: actions/checkout@v7
         with:
@@ -447,6 +460,18 @@ jobs:
           done
           exit $rc
 
+      - name: Record that this macOS job passed
+        shell: bash
+        run: mkdir -p "$RUNNER_TEMP/macos-run" && echo "$GITHUB_RUN_ATTEMPT" > "$RUNNER_TEMP/macos-run/passed"
+
+      - name: Upload the 'passed' record for macos-gate
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-run-test-macos-passed
+          path: ${{ runner.temp }}/macos-run/passed
+          retention-days: 1
+          overwrite: true
+
   # Every other run of the Rust, Java and C# servers against the C library is on
   # Linux. Here the C side is AppleClang with libSystem's math, and the JVM and
   # the .NET JIT are the macOS arm64 ones.
@@ -454,10 +479,23 @@ jobs:
     name: macOS arm64 (all langs vs in-process C)
     runs-on: macos-latest
     timeout-minutes: 90
+    continue-on-error: true # macos-gate decides
     permissions:
       contents: read
 
     steps:
+      - name: Record that this macOS job started
+        shell: bash
+        run: mkdir -p "$RUNNER_TEMP/macos-run" && echo "$GITHUB_RUN_ATTEMPT" > "$RUNNER_TEMP/macos-run/started"
+
+      - name: Upload the 'started' record for macos-gate
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-run-macos-cross-language-started
+          path: ${{ runner.temp }}/macos-run/started
+          retention-days: 1
+          overwrite: true
+
       - name: Checkout
         uses: actions/checkout@v7
         with:
@@ -507,6 +545,84 @@ jobs:
       - name: Fuzz current library vs each frozen release
         shell: bash
         run: python3 scripts/build.py ref
+
+      - name: Record that this macOS job passed
+        shell: bash
+        run: mkdir -p "$RUNNER_TEMP/macos-run" && echo "$GITHUB_RUN_ATTEMPT" > "$RUNNER_TEMP/macos-run/passed"
+
+      - name: Upload the 'passed' record for macos-gate
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-run-macos-cross-language-passed
+          path: ${{ runner.temp }}/macos-run/passed
+          retention-days: 1
+          overwrite: true
+
+  # GitHub's macOS pool can go hours without a runner. The macOS jobs are
+  # continue-on-error so that cannot redden the run; this gate reddens it for
+  # a macOS job that ran and failed, and for one with no pass in 72 h. The
+  # record names are the contract: `macos-run-<matrix.job>-started|passed`.
+  macos-gate:
+    name: "macOS ${{ matrix.job }}: passed, or no runner and a pass within 72 h"
+    needs: [test-macos, macos-cross-language, rust-other-os]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        job: [test-macos, macos-cross-language, rust-macos]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      # Both nightlies are scheduled on main's ref, so the cache cannot tell
+      # them apart; the definition's pin can.
+      - name: Which branch is this run for
+        shell: bash
+        env:
+          WF_REF: ${{ job.workflow_ref }}
+        run: |
+          case "$WF_REF" in
+            */nightly-jobs.yml@refs/heads/*) ;;
+            *) echo "::error::defined by '$WF_REF', which is not a branch pin of nightly-jobs.yml."
+               exit 1 ;;
+          esac
+          echo "NIGHTLY_BRANCH=${WF_REF##*@refs/heads/}" >> "$GITHUB_ENV"
+
+      - name: Download this run's records of the job
+        uses: actions/download-artifact@v8
+        with:
+          pattern: macos-run-${{ matrix.job }}-*
+          path: ${{ runner.temp }}/records
+          merge-multiple: true
+
+      - name: Restore the last recorded pass
+        uses: actions/cache/restore@v6
+        with:
+          path: macos-pass-record
+          key: macos-pass-${{ env.NIGHTLY_BRANCH }}-${{ matrix.job }}-${{ github.run_id }}
+          restore-keys: macos-pass-${{ env.NIGHTLY_BRANCH }}-${{ matrix.job }}-
+
+      - name: Decide
+        id: decide
+        shell: bash
+        run: >-
+          python3 scripts/macos_runner_gate.py nightly --job '${{ matrix.job }}'
+          --records "$RUNNER_TEMP/records" --pass-record macos-pass-record --hours 72
+
+      - name: Record this pass
+        if: steps.decide.outputs.passed == 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: macos-pass-record
+          key: macos-pass-${{ env.NIGHTLY_BRANCH }}-${{ matrix.job }}-${{ github.run_id }}
 
   # The only thing anywhere that LINKS the Windows DLL. The dist tests check
   # that ta-lib.dll and ta-lib.lib exist as files (scripts/install_tests/msi.py),
@@ -1219,6 +1335,7 @@ jobs:
     name: Rust on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
+    continue-on-error: ${{ startsWith(matrix.os, 'macos') }} # macos-gate decides
     permissions:
       contents: read
 
@@ -1228,6 +1345,20 @@ jobs:
         os: [windows-2022, macos-latest]
 
     steps:
+      - name: Record that this macOS job started
+        if: startsWith(matrix.os, 'macos')
+        shell: bash
+        run: mkdir -p "$RUNNER_TEMP/macos-run" && echo "$GITHUB_RUN_ATTEMPT" > "$RUNNER_TEMP/macos-run/started"
+
+      - name: Upload the 'started' record for macos-gate
+        if: startsWith(matrix.os, 'macos')
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-run-rust-macos-started
+          path: ${{ runner.temp }}/macos-run/started
+          retention-days: 1
+          overwrite: true
+
       - name: Checkout
         uses: actions/checkout@v7
         with:
@@ -1260,6 +1391,20 @@ jobs:
       - name: Run the crate's doctests
         shell: bash
         run: cargo test --doc -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
+
+      - name: Record that this macOS job passed
+        if: startsWith(matrix.os, 'macos')
+        shell: bash
+        run: mkdir -p "$RUNNER_TEMP/macos-run" && echo "$GITHUB_RUN_ATTEMPT" > "$RUNNER_TEMP/macos-run/passed"
+
+      - name: Upload the 'passed' record for macos-gate
+        if: startsWith(matrix.os, 'macos')
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-run-rust-macos-passed
+          path: ${{ runner.temp }}/macos-run/passed
+          retention-days: 1
+          overwrite: true
 
   # The two publishable crates declare a `rust-version`, and only this job
   # compiles the pair at ta-lib's -- every other Rust step runs on the pinned
