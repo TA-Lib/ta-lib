@@ -25,7 +25,7 @@ import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 import { AdxStream, adx as adx_, adxLookback, adxOpenAndFillInternal } from './adx.ts';
-import { adxrLookback as adxrLookback_ } from './adxr.ts';
+const adxrLookback_ = adxrLookback;
 
 /**
  * Number of leading input bars {@link adxr} consumes before its first value: the

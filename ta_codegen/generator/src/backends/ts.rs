@@ -151,7 +151,7 @@ pub fn generate(
         out.push_str(&super::stmt_walk::block_comment(block, 0));
         out.push('\n');
     }
-    out.push_str(&render_imports(&body, &calls.borrow()));
+    out.push_str(&render_imports(&body, &calls.borrow(), &module));
     if let Some(m) = func.alt_marker(Tier::Batch, Lang::Ts) {
         let _ = write!(out, "\n/* {m} */\n");
     }
@@ -199,7 +199,7 @@ fn mentions(text: &str, word: &str) -> bool {
     })
 }
 
-fn render_imports(body: &str, calls: &BTreeMap<String, BTreeSet<String>>) -> String {
+fn render_imports(body: &str, calls: &BTreeMap<String, BTreeSet<String>>, own: &str) -> String {
     let code: String = strip_ts_comments(body);
     let mut by_path: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
     for (sym, path) in RUNTIME_IMPORTS {
@@ -212,10 +212,18 @@ fn render_imports(body: &str, calls: &BTreeMap<String, BTreeSet<String>>) -> Str
         syms.sort_unstable();
         let _ = writeln!(out, "import {{ {} }} from '{path}';", syms.join(", "));
     }
+    let mut aliases = String::new();
     for (module, syms) in calls {
+        if module == own {
+            for (sym, alias) in syms.iter().filter_map(|e| e.split_once(" as ")) {
+                let _ = writeln!(aliases, "const {alias} = {sym};");
+            }
+            continue;
+        }
         let syms: Vec<&str> = syms.iter().map(String::as_str).collect();
         let _ = writeln!(out, "import {{ {} }} from './{module}.ts';", syms.join(", "));
     }
+    out.push_str(&aliases);
     out
 }
 
@@ -1981,8 +1989,8 @@ pub(crate) fn note_import(ctx: &TsCtx, key: &str, sym: &str) -> String {
     while ctx.env.lookup(&local).is_some() {
         local.push('_');
     }
-    // A module may import from itself: that is how its own lookback is
-    // reached past a local of the same name.
+    // A module's own lookback, past a local of the same name, goes through a
+    // module-scope alias: a self-import is a cycle Rollup warns about.
     if module != ctx.svc.module || local != sym {
         let entry = if local == sym { sym.to_string() } else { format!("{sym} as {local}") };
         ctx.svc.calls.borrow_mut().entry(module).or_default().insert(entry);
