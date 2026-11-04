@@ -2139,6 +2139,13 @@ pub fn render_package_json(version: &str) -> String {
     }}
   }},
   "types": "./dist/index.d.ts",
+  "typesVersions": {{
+    "*": {{
+      "metadata": [
+        "./dist/metadata/index.d.ts"
+      ]
+    }}
+  }},
   "engines": {{
     "node": ">=22.12.0"
   }},

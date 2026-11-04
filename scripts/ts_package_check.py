@@ -9,7 +9,8 @@
   2. Contents. The tarball holds exactly package.json, README.md, LICENSE and
      one .js plus one .d.ts per src/ module; LICENSE and README are
      byte-identical to their sources; the version is VERSION; every `exports`
-     subpath lists "types" first and "default" last, and each target ships.
+     subpath lists "types" first and "default" last, each target ships, and
+     each non-root subpath has a typesVersions entry naming its types.
      No name tagged @internal in src/ appears in a packed .d.ts, as a member of
      its class's declaration, or among any subpath's runtime exports. When
      ta_codegen/output/ts/PublicAPI.Shipped.txt exists, every declaration line
@@ -280,6 +281,15 @@ def check_package(out_dir, ver, diff_snapshot):
     types = manifest.get("types")
     if not types or "package/" + types.removeprefix("./") not in entries:
         failures.append("the packed package.json \"types\" (%r) is not packed" % types)
+    # moduleResolution node10 (TS 5.x's default under module commonjs) ignores "exports":
+    # a subpath without this mapping still runs, but its import fails to type-check.
+    mapped = (manifest.get("typesVersions") or {}).get("*") or {}
+    for subpath, conditions in exports.items():
+        if subpath == "." or not isinstance(conditions, dict):
+            continue
+        if mapped.get(subpath.removeprefix("./")) != [conditions.get("types")]:
+            failures.append("exports %r has no typesVersions \"*\" entry naming %s"
+                            % (subpath, conditions.get("types")))
 
     tops, members, parse_failures = internal_names()
     failures += parse_failures

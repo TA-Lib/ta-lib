@@ -27,6 +27,13 @@
     }
   },
   "types": "./dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "metadata": [
+        "./dist/metadata/index.d.ts"
+      ]
+    }
+  },
   "engines": {
     "node": ">=22.12.0"
   },
