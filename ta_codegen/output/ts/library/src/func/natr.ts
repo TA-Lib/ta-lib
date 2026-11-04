@@ -22,7 +22,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -374,7 +374,7 @@ export function natr(
   requireLength('NATR', 'inHigh', inHigh, guardInLen);
   requireLength('NATR', 'inLow', inLow, guardInLen);
   requireLength('NATR', 'inClose', inClose, guardInLen);
-  requireLength('NATR', 'outReal', outReal, guardOutLen);
+  requireOutput('NATR', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
@@ -978,7 +978,7 @@ export function natrOpenAndFill(
   const guardOutLen = openFillCount('NATR openAndFill', inHigh.length, natrLookback(optInTimePeriod, core));
   requireHistoryLength('NATR openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('NATR openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireLength('NATR openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('NATR openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);

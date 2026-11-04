@@ -11,7 +11,7 @@
  *  090526 KL     First version (issue #372).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -159,7 +159,7 @@ export function cumsum(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('CUMSUM', 'inReal', inReal, guardInLen);
-  requireLength('CUMSUM', 'outReal', outReal, guardOutLen);
+  requireOutput('CUMSUM', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('CUMSUM', RetCode.BAD_PARAM);
@@ -464,7 +464,7 @@ export function cumsumOpenAndFill(
   requireArgument('CUMSUM openAndFill', 'inReal', inReal);
   requireHistory('CUMSUM openAndFill', inReal.length);
   const guardOutLen = openFillCount('CUMSUM openAndFill', inReal.length, cumsumLookback(core));
-  requireLength('CUMSUM openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('CUMSUM openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('CUMSUM openAndFill', RetCode.BAD_PARAM);

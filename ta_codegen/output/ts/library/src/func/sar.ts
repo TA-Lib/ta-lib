@@ -16,7 +16,7 @@
  *                the read was of an uninitialised local.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireReal, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
@@ -470,7 +470,7 @@ export function sar(
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('SAR', 'inHigh', inHigh, guardInLen);
   requireLength('SAR', 'inLow', inLow, guardInLen);
-  requireLength('SAR', 'outReal', outReal, guardOutLen);
+  requireOutput('SAR', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if (overlapsPartly(outReal, inHighF64) || overlapsPartly(outReal, inLowF64)) {
@@ -1459,7 +1459,7 @@ export function sarOpenAndFill(
   requireArgument('SAR openAndFill', 'inLow', inLow);
   const guardOutLen = openFillCount('SAR openAndFill', inHigh.length, sarLookback(optInAcceleration, optInMaximum, core));
   requireHistoryLength('SAR openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireLength('SAR openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('SAR openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if ((outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) || (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset)) {

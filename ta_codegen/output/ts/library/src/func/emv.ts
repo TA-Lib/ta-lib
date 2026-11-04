@@ -13,7 +13,7 @@
  *  092826 KL,CC  First version (#465).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireReal, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -298,7 +298,7 @@ export function emv(
   requireLength('EMV', 'inHigh', inHigh, guardInLen);
   requireLength('EMV', 'inLow', inLow, guardInLen);
   requireLength('EMV', 'inVolume', inVolume, guardInLen);
-  requireLength('EMV', 'outReal', outReal, guardOutLen);
+  requireOutput('EMV', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inVolumeF64 = float64(inVolume);
@@ -826,7 +826,7 @@ export function emvOpenAndFill(
   const guardOutLen = openFillCount('EMV openAndFill', inHigh.length, emvLookback(optInTimePeriod, optInVolumeDivisor, core));
   requireHistoryLength('EMV openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('EMV openAndFill', 'inVolume', inVolume.length, inHigh.length);
-  requireLength('EMV openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('EMV openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inVolumeF64 = float64(inVolume);

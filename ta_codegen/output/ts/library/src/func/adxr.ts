@@ -19,7 +19,7 @@
  *                streamable-source form (a sub-output lag ring).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -229,7 +229,7 @@ export function adxr(
   requireLength('ADXR', 'inHigh', inHigh, guardInLen);
   requireLength('ADXR', 'inLow', inLow, guardInLen);
   requireLength('ADXR', 'inClose', inClose, guardInLen);
-  requireLength('ADXR', 'outReal', outReal, guardOutLen);
+  requireOutput('ADXR', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
@@ -649,7 +649,7 @@ export function adxrOpenAndFill(
   const guardOutLen = openFillCount('ADXR openAndFill', inHigh.length, adxrLookback(optInTimePeriod, core));
   requireHistoryLength('ADXR openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('ADXR openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireLength('ADXR openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('ADXR openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);

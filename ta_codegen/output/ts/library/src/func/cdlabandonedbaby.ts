@@ -15,7 +15,7 @@
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireReal, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -298,7 +298,7 @@ export function cdlabandonedbaby(
   requireLength('CDLABANDONEDBABY', 'inHigh', inHigh, guardInLen);
   requireLength('CDLABANDONEDBABY', 'inLow', inLow, guardInLen);
   requireLength('CDLABANDONEDBABY', 'inClose', inClose, guardInLen);
-  requireLength('CDLABANDONEDBABY', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLABANDONEDBABY', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -997,7 +997,7 @@ export function cdlabandonedbabyOpenAndFill(
   requireHistoryLength('CDLABANDONEDBABY openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDLABANDONEDBABY openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDLABANDONEDBABY openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDLABANDONEDBABY openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLABANDONEDBABY openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

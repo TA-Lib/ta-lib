@@ -16,7 +16,7 @@
  *  103126 MF,CC  Nest the opposite-colour and same-open tests as the pre-check
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -249,7 +249,7 @@ export function cdlseparatinglines(
   requireLength('CDLSEPARATINGLINES', 'inHigh', inHigh, guardInLen);
   requireLength('CDLSEPARATINGLINES', 'inLow', inLow, guardInLen);
   requireLength('CDLSEPARATINGLINES', 'inClose', inClose, guardInLen);
-  requireLength('CDLSEPARATINGLINES', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLSEPARATINGLINES', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -886,7 +886,7 @@ export function cdlseparatinglinesOpenAndFill(
   requireHistoryLength('CDLSEPARATINGLINES openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDLSEPARATINGLINES openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDLSEPARATINGLINES openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDLSEPARATINGLINES openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLSEPARATINGLINES openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

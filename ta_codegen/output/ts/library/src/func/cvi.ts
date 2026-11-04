@@ -12,7 +12,7 @@
  *  090426 MF,CC  First version (issue #358).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -306,7 +306,7 @@ export function cvi(
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('CVI', 'inHigh', inHigh, guardInLen);
   requireLength('CVI', 'inLow', inLow, guardInLen);
-  requireLength('CVI', 'outReal', outReal, guardOutLen);
+  requireOutput('CVI', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if (overlapsPartly(outReal, inHighF64) || overlapsPartly(outReal, inLowF64)) {
@@ -798,7 +798,7 @@ export function cviOpenAndFill(
   requireArgument('CVI openAndFill', 'inLow', inLow);
   const guardOutLen = openFillCount('CVI openAndFill', inHigh.length, cviLookback(optInTimePeriod, optInROCPeriod, core));
   requireHistoryLength('CVI openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireLength('CVI openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('CVI openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if ((outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) || (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset)) {

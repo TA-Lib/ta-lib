@@ -22,7 +22,7 @@
  *  092426 MF,CC  #440 ratio once per bar, not per element; branch-free split.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -201,7 +201,7 @@ export function imi(
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('IMI', 'inOpen', inOpen, guardInLen);
   requireLength('IMI', 'inClose', inClose, guardInLen);
-  requireLength('IMI', 'outReal', outReal, guardOutLen);
+  requireOutput('IMI', 'outReal', outReal, guardOutLen, Float64Array);
   const inOpenF64 = float64(inOpen);
   const inCloseF64 = float64(inClose);
   if (overlapsPartly(outReal, inOpenF64) || overlapsPartly(outReal, inCloseF64)) {
@@ -633,7 +633,7 @@ export function imiOpenAndFill(
   requireArgument('IMI openAndFill', 'inClose', inClose);
   const guardOutLen = openFillCount('IMI openAndFill', inOpen.length, imiLookback(optInTimePeriod, core));
   requireHistoryLength('IMI openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('IMI openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('IMI openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inOpenF64 = float64(inOpen);
   const inCloseF64 = float64(inClose);
   if ((outReal.buffer === inOpenF64.buffer && outReal.byteOffset === inOpenF64.byteOffset) || (outReal.buffer === inCloseF64.buffer && outReal.byteOffset === inCloseF64.byteOffset)) {

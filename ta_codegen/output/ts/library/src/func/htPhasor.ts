@@ -14,7 +14,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma, fmaSlow } from '../runtime/fma.ts';
@@ -603,8 +603,8 @@ export function htPhasor(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('HT_PHASOR', 'inReal', inReal, guardInLen);
-  requireLength('HT_PHASOR', 'outInPhase', outInPhase, guardOutLen);
-  requireLength('HT_PHASOR', 'outQuadrature', outQuadrature, guardOutLen);
+  requireOutput('HT_PHASOR', 'outInPhase', outInPhase, guardOutLen, Float64Array);
+  requireOutput('HT_PHASOR', 'outQuadrature', outQuadrature, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outInPhase, inRealF64) || overlapsPartly(outQuadrature, inRealF64) || overlaps(outInPhase, outQuadrature)) {
     throw failure('HT_PHASOR', RetCode.BAD_PARAM);
@@ -1932,8 +1932,8 @@ export function htPhasorOpenAndFill(
   requireArgument('HT_PHASOR openAndFill', 'inReal', inReal);
   requireHistory('HT_PHASOR openAndFill', inReal.length);
   const guardOutLen = openFillCount('HT_PHASOR openAndFill', inReal.length, htPhasorLookback(core));
-  requireLength('HT_PHASOR openAndFill', 'outInPhase', outInPhase, guardOutLen);
-  requireLength('HT_PHASOR openAndFill', 'outQuadrature', outQuadrature, guardOutLen);
+  requireOutput('HT_PHASOR openAndFill', 'outInPhase', outInPhase, guardOutLen, Float64Array);
+  requireOutput('HT_PHASOR openAndFill', 'outQuadrature', outQuadrature, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outInPhase.buffer === inRealF64.buffer && outInPhase.byteOffset === inRealF64.byteOffset) || (outQuadrature.buffer === inRealF64.buffer && outQuadrature.byteOffset === inRealF64.byteOffset) || (outInPhase.buffer === outQuadrature.buffer && outInPhase.byteOffset === outQuadrature.byteOffset)) {
     throw streamFailure('HT_PHASOR openAndFill', RetCode.BAD_PARAM);

@@ -12,7 +12,7 @@
  *  090426 MF,CC  First version (issue #364).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -176,7 +176,7 @@ export function pvt(
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('PVT', 'inClose', inClose, guardInLen);
   requireLength('PVT', 'inVolume', inVolume, guardInLen);
-  requireLength('PVT', 'outReal', outReal, guardOutLen);
+  requireOutput('PVT', 'outReal', outReal, guardOutLen, Float64Array);
   const inCloseF64 = float64(inClose);
   const inVolumeF64 = float64(inVolume);
   if (overlapsPartly(outReal, inCloseF64) || overlapsPartly(outReal, inVolumeF64)) {
@@ -521,7 +521,7 @@ export function pvtOpenAndFill(
   requireArgument('PVT openAndFill', 'inVolume', inVolume);
   const guardOutLen = openFillCount('PVT openAndFill', inClose.length, pvtLookback(core));
   requireHistoryLength('PVT openAndFill', 'inVolume', inVolume.length, inClose.length);
-  requireLength('PVT openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('PVT openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inCloseF64 = float64(inClose);
   const inVolumeF64 = float64(inVolume);
   if ((outReal.buffer === inCloseF64.buffer && outReal.byteOffset === inCloseF64.byteOffset) || (outReal.buffer === inVolumeF64.buffer && outReal.byteOffset === inVolumeF64.byteOffset)) {

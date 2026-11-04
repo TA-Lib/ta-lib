@@ -174,6 +174,7 @@ const RUNTIME_IMPORTS: &[(&str, &str)] = &[
     ("requireInt32", "../runtime/checks.ts"),
     ("requireReal", "../runtime/checks.ts"),
     ("requireLength", "../runtime/checks.ts"),
+    ("requireOutput", "../runtime/checks.ts"),
     ("requireArgument", "../runtime/checks.ts"),
     ("requireHistory", "../runtime/checks.ts"),
     ("requireHistoryLength", "../runtime/checks.ts"),
@@ -1071,7 +1072,7 @@ fn gen_public(func: &FuncDef, svc: &Services) -> String {
             let _ = writeln!(b, "  requireLength('{canonical}', '{0}', {0}, guardInLen);", i.name);
         }
         for o in &func.outputs {
-            let _ = writeln!(b, "  requireLength('{canonical}', '{0}', {0}, guardOutLen);", o.name);
+            let _ = writeln!(b, "  requireOutput('{canonical}', '{0}', {0}, guardOutLen, {1});", o.name, array_ts_type(&o.param_type));
         }
     }
     for i in &func.inputs {

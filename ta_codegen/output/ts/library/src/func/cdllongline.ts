@@ -15,7 +15,7 @@
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -225,7 +225,7 @@ export function cdllongline(
   requireLength('CDLLONGLINE', 'inHigh', inHigh, guardInLen);
   requireLength('CDLLONGLINE', 'inLow', inLow, guardInLen);
   requireLength('CDLLONGLINE', 'inClose', inClose, guardInLen);
-  requireLength('CDLLONGLINE', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLLONGLINE', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -746,7 +746,7 @@ export function cdllonglineOpenAndFill(
   requireHistoryLength('CDLLONGLINE openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDLLONGLINE openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDLLONGLINE openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDLLONGLINE openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLLONGLINE openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

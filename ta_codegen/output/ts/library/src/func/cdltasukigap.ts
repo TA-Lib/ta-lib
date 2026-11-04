@@ -16,7 +16,7 @@
  *  103126 MF,CC  Write the two gaps as an else-if chain of pre-checks
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -249,7 +249,7 @@ export function cdltasukigap(
   requireLength('CDLTASUKIGAP', 'inHigh', inHigh, guardInLen);
   requireLength('CDLTASUKIGAP', 'inLow', inLow, guardInLen);
   requireLength('CDLTASUKIGAP', 'inClose', inClose, guardInLen);
-  requireLength('CDLTASUKIGAP', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLTASUKIGAP', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -819,7 +819,7 @@ export function cdltasukigapOpenAndFill(
   requireHistoryLength('CDLTASUKIGAP openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDLTASUKIGAP openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDLTASUKIGAP openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDLTASUKIGAP openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLTASUKIGAP openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

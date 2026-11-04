@@ -14,7 +14,7 @@
  *  092926 MF,CC  Store the quotient, then overwrite it, so the loop vectorizes.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -169,7 +169,7 @@ export function ibs(
   requireLength('IBS', 'inHigh', inHigh, guardInLen);
   requireLength('IBS', 'inLow', inLow, guardInLen);
   requireLength('IBS', 'inClose', inClose, guardInLen);
-  requireLength('IBS', 'outReal', outReal, guardOutLen);
+  requireOutput('IBS', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
@@ -531,7 +531,7 @@ export function ibsOpenAndFill(
   const guardOutLen = openFillCount('IBS openAndFill', inHigh.length, ibsLookback(core));
   requireHistoryLength('IBS openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('IBS openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireLength('IBS openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('IBS openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);

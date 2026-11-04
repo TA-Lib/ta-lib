@@ -16,7 +16,7 @@
  *  103126 MF,CC  Pre-check the cheap tests in an outer if, the candle averages inside
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -227,7 +227,7 @@ export function cdlpiercing(
   requireLength('CDLPIERCING', 'inHigh', inHigh, guardInLen);
   requireLength('CDLPIERCING', 'inLow', inLow, guardInLen);
   requireLength('CDLPIERCING', 'inClose', inClose, guardInLen);
-  requireLength('CDLPIERCING', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLPIERCING', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -735,7 +735,7 @@ export function cdlpiercingOpenAndFill(
   requireHistoryLength('CDLPIERCING openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDLPIERCING openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDLPIERCING openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDLPIERCING openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLPIERCING openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

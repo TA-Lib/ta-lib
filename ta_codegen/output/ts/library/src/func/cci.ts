@@ -35,7 +35,7 @@
  *                identical-price window holds a changed sum (#560).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -348,7 +348,7 @@ export function cci(
   requireLength('CCI', 'inHigh', inHigh, guardInLen);
   requireLength('CCI', 'inLow', inLow, guardInLen);
   requireLength('CCI', 'inClose', inClose, guardInLen);
-  requireLength('CCI', 'outReal', outReal, guardOutLen);
+  requireOutput('CCI', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
@@ -1050,7 +1050,7 @@ export function cciOpenAndFill(
   const guardOutLen = openFillCount('CCI openAndFill', inHigh.length, cciLookback(optInTimePeriod, core));
   requireHistoryLength('CCI openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('CCI openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireLength('CCI openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('CCI openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);

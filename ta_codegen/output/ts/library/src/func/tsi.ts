@@ -12,7 +12,7 @@
  *  090426 MF,CC  First version (#360).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
@@ -475,7 +475,7 @@ export function tsi(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('TSI', 'inReal', inReal, guardInLen);
-  requireLength('TSI', 'outReal', outReal, guardOutLen);
+  requireOutput('TSI', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('TSI', RetCode.BAD_PARAM);
@@ -1243,7 +1243,7 @@ export function tsiOpenAndFill(
   requireArgument('TSI openAndFill', 'inReal', inReal);
   requireHistory('TSI openAndFill', inReal.length);
   const guardOutLen = openFillCount('TSI openAndFill', inReal.length, tsiLookback(optInFirstPeriod, optInSecondPeriod, core));
-  requireLength('TSI openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('TSI openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('TSI openAndFill', RetCode.BAD_PARAM);

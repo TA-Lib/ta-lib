@@ -20,7 +20,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -273,7 +273,7 @@ export function cmo(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('CMO', 'inReal', inReal, guardInLen);
-  requireLength('CMO', 'outReal', outReal, guardOutLen);
+  requireOutput('CMO', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('CMO', RetCode.BAD_PARAM);
@@ -722,7 +722,7 @@ export function cmoOpenAndFill(
   requireArgument('CMO openAndFill', 'inReal', inReal);
   requireHistory('CMO openAndFill', inReal.length);
   const guardOutLen = openFillCount('CMO openAndFill', inReal.length, cmoLookback(optInTimePeriod, core));
-  requireLength('CMO openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('CMO openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('CMO openAndFill', RetCode.BAD_PARAM);

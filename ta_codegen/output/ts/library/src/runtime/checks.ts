@@ -172,6 +172,23 @@ export function requireLength(
   }
 }
 
+/**
+ * @internal An output of another element type would store every value rounded,
+ * truncated or wrapped, with no error.
+ */
+export function requireOutput(
+  funcName: string,
+  argName: string,
+  array: Float64Array | Int32Array | null | undefined,
+  required: number,
+  type: typeof Float64Array | typeof Int32Array,
+): void {
+  requireLength(funcName, argName, array, required);
+  if (!(array instanceof type)) {
+    throw new TALibError(RetCode.BAD_PARAM, `${funcName}: ${argName} is not a ${type.name}`);
+  }
+}
+
 /** @internal An absent argument, checked before anything reads its length. */
 export function requireArgument(funcName: string, argName: string, array: unknown): void {
   if (array == null) {

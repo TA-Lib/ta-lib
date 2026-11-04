@@ -13,7 +13,7 @@
  *  100426 MF,CC  Display shift (#500).
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -294,8 +294,8 @@ export function fractal(
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('FRACTAL', 'inHigh', inHigh, guardInLen);
   requireLength('FRACTAL', 'inLow', inLow, guardInLen);
-  requireLength('FRACTAL', 'outSwingHigh', outSwingHigh, guardOutLen);
-  requireLength('FRACTAL', 'outSwingLow', outSwingLow, guardOutLen);
+  requireOutput('FRACTAL', 'outSwingHigh', outSwingHigh, guardOutLen, Int32Array);
+  requireOutput('FRACTAL', 'outSwingLow', outSwingLow, guardOutLen, Int32Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if (overlaps(outSwingHigh, inHighF64) || overlaps(outSwingHigh, inLowF64) || overlaps(outSwingLow, inHighF64) || overlaps(outSwingLow, inLowF64) || overlaps(outSwingHigh, outSwingLow)) {
@@ -859,8 +859,8 @@ export function fractalOpenAndFill(
   requireArgument('FRACTAL openAndFill', 'inLow', inLow);
   const guardOutLen = openFillCount('FRACTAL openAndFill', inHigh.length, fractalLookback(optInLeftBars, optInRightBars, core));
   requireHistoryLength('FRACTAL openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireLength('FRACTAL openAndFill', 'outSwingHigh', outSwingHigh, guardOutLen);
-  requireLength('FRACTAL openAndFill', 'outSwingLow', outSwingLow, guardOutLen);
+  requireOutput('FRACTAL openAndFill', 'outSwingHigh', outSwingHigh, guardOutLen, Int32Array);
+  requireOutput('FRACTAL openAndFill', 'outSwingLow', outSwingLow, guardOutLen, Int32Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if ((outSwingHigh.buffer === inHighF64.buffer && outSwingHigh.byteOffset === inHighF64.byteOffset) || (outSwingHigh.buffer === inLowF64.buffer && outSwingHigh.byteOffset === inLowF64.byteOffset) || (outSwingLow.buffer === inHighF64.buffer && outSwingLow.byteOffset === inHighF64.byteOffset) || (outSwingLow.buffer === inLowF64.buffer && outSwingLow.byteOffset === inLowF64.byteOffset) || (outSwingHigh.buffer === outSwingLow.buffer && outSwingHigh.byteOffset === outSwingLow.byteOffset)) {

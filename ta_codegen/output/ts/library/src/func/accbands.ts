@@ -24,7 +24,7 @@
  *                under it.
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -302,9 +302,9 @@ export function accbands(
   requireLength('ACCBANDS', 'inHigh', inHigh, guardInLen);
   requireLength('ACCBANDS', 'inLow', inLow, guardInLen);
   requireLength('ACCBANDS', 'inClose', inClose, guardInLen);
-  requireLength('ACCBANDS', 'outRealUpperBand', outRealUpperBand, guardOutLen);
-  requireLength('ACCBANDS', 'outRealMiddleBand', outRealMiddleBand, guardOutLen);
-  requireLength('ACCBANDS', 'outRealLowerBand', outRealLowerBand, guardOutLen);
+  requireOutput('ACCBANDS', 'outRealUpperBand', outRealUpperBand, guardOutLen, Float64Array);
+  requireOutput('ACCBANDS', 'outRealMiddleBand', outRealMiddleBand, guardOutLen, Float64Array);
+  requireOutput('ACCBANDS', 'outRealLowerBand', outRealLowerBand, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
@@ -938,9 +938,9 @@ export function accbandsOpenAndFill(
   const guardOutLen = openFillCount('ACCBANDS openAndFill', inHigh.length, accbandsLookback(optInTimePeriod, core));
   requireHistoryLength('ACCBANDS openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('ACCBANDS openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireLength('ACCBANDS openAndFill', 'outRealUpperBand', outRealUpperBand, guardOutLen);
-  requireLength('ACCBANDS openAndFill', 'outRealMiddleBand', outRealMiddleBand, guardOutLen);
-  requireLength('ACCBANDS openAndFill', 'outRealLowerBand', outRealLowerBand, guardOutLen);
+  requireOutput('ACCBANDS openAndFill', 'outRealUpperBand', outRealUpperBand, guardOutLen, Float64Array);
+  requireOutput('ACCBANDS openAndFill', 'outRealMiddleBand', outRealMiddleBand, guardOutLen, Float64Array);
+  requireOutput('ACCBANDS openAndFill', 'outRealLowerBand', outRealLowerBand, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);

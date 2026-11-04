@@ -15,7 +15,7 @@
  *  100526 MF,CC  Rebuild trigger compares magnitudes (#483).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireReal, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -364,7 +364,7 @@ export function rogerssatchell(
   requireLength('ROGERSSATCHELL', 'inHigh', inHigh, guardInLen);
   requireLength('ROGERSSATCHELL', 'inLow', inLow, guardInLen);
   requireLength('ROGERSSATCHELL', 'inClose', inClose, guardInLen);
-  requireLength('ROGERSSATCHELL', 'outReal', outReal, guardOutLen);
+  requireOutput('ROGERSSATCHELL', 'outReal', outReal, guardOutLen, Float64Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -1085,7 +1085,7 @@ export function rogerssatchellOpenAndFill(
   requireHistoryLength('ROGERSSATCHELL openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('ROGERSSATCHELL openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('ROGERSSATCHELL openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('ROGERSSATCHELL openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('ROGERSSATCHELL openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

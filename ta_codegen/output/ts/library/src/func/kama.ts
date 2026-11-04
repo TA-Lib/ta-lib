@@ -30,7 +30,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma, fmaSlow } from '../runtime/fma.ts';
@@ -455,7 +455,7 @@ export function kama(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('KAMA', 'inReal', inReal, guardInLen);
-  requireLength('KAMA', 'outReal', outReal, guardOutLen);
+  requireOutput('KAMA', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('KAMA', RetCode.BAD_PARAM);
@@ -1183,7 +1183,7 @@ export function kamaOpenAndFill(
   requireArgument('KAMA openAndFill', 'inReal', inReal);
   requireHistory('KAMA openAndFill', inReal.length);
   const guardOutLen = openFillCount('KAMA openAndFill', inReal.length, kamaLookback(optInTimePeriod, core));
-  requireLength('KAMA openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('KAMA openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('KAMA openAndFill', RetCode.BAD_PARAM);

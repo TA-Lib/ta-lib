@@ -14,7 +14,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -299,10 +299,10 @@ export function ha(
   requireLength('HA', 'inHigh', inHigh, guardInLen);
   requireLength('HA', 'inLow', inLow, guardInLen);
   requireLength('HA', 'inClose', inClose, guardInLen);
-  requireLength('HA', 'outHAOpen', outHAOpen, guardOutLen);
-  requireLength('HA', 'outHAHigh', outHAHigh, guardOutLen);
-  requireLength('HA', 'outHALow', outHALow, guardOutLen);
-  requireLength('HA', 'outHAClose', outHAClose, guardOutLen);
+  requireOutput('HA', 'outHAOpen', outHAOpen, guardOutLen, Float64Array);
+  requireOutput('HA', 'outHAHigh', outHAHigh, guardOutLen, Float64Array);
+  requireOutput('HA', 'outHALow', outHALow, guardOutLen, Float64Array);
+  requireOutput('HA', 'outHAClose', outHAClose, guardOutLen, Float64Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -896,10 +896,10 @@ export function haOpenAndFill(
   requireHistoryLength('HA openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('HA openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('HA openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('HA openAndFill', 'outHAOpen', outHAOpen, guardOutLen);
-  requireLength('HA openAndFill', 'outHAHigh', outHAHigh, guardOutLen);
-  requireLength('HA openAndFill', 'outHALow', outHALow, guardOutLen);
-  requireLength('HA openAndFill', 'outHAClose', outHAClose, guardOutLen);
+  requireOutput('HA openAndFill', 'outHAOpen', outHAOpen, guardOutLen, Float64Array);
+  requireOutput('HA openAndFill', 'outHAHigh', outHAHigh, guardOutLen, Float64Array);
+  requireOutput('HA openAndFill', 'outHALow', outHALow, guardOutLen, Float64Array);
+  requireOutput('HA openAndFill', 'outHAClose', outHAClose, guardOutLen, Float64Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

@@ -16,7 +16,7 @@
  *  100426 MF,CC   Remove the outInteger comment, which misstated the values
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -232,7 +232,7 @@ export function cdltristar(
   requireLength('CDLTRISTAR', 'inHigh', inHigh, guardInLen);
   requireLength('CDLTRISTAR', 'inLow', inLow, guardInLen);
   requireLength('CDLTRISTAR', 'inClose', inClose, guardInLen);
-  requireLength('CDLTRISTAR', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLTRISTAR', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -769,7 +769,7 @@ export function cdltristarOpenAndFill(
   requireHistoryLength('CDLTRISTAR openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDLTRISTAR openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDLTRISTAR openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDLTRISTAR openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLTRISTAR openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

@@ -16,7 +16,7 @@
  *  103126 MF,CC  Pre-check the cheap tests in an outer if, the candle averages inside
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireReal, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -252,7 +252,7 @@ export function cdldarkcloudcover(
   requireLength('CDLDARKCLOUDCOVER', 'inHigh', inHigh, guardInLen);
   requireLength('CDLDARKCLOUDCOVER', 'inLow', inLow, guardInLen);
   requireLength('CDLDARKCLOUDCOVER', 'inClose', inClose, guardInLen);
-  requireLength('CDLDARKCLOUDCOVER', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLDARKCLOUDCOVER', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -775,7 +775,7 @@ export function cdldarkcloudcoverOpenAndFill(
   requireHistoryLength('CDLDARKCLOUDCOVER openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDLDARKCLOUDCOVER openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDLDARKCLOUDCOVER openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDLDARKCLOUDCOVER openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLDARKCLOUDCOVER openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

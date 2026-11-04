@@ -143,6 +143,27 @@ test('two outputs sharing any memory are TA_BAD_PARAM; apart in one buffer they 
   assert.ok(pairs > 0);
 });
 
+test('an output that is not a Float64Array, or an Int32Array for an integer output, is TA_BAD_PARAM', () => {
+  const data = series(23);
+  let checked = 0;
+  for (const spec of SPECS) {
+    const ins = inputsOf(spec).map((p) => data[p.name]);
+    const opts = sentinels(spec);
+    outputsOf(spec).forEach((o, k) => {
+      const wrongs: unknown[] = o.int32
+        ? [new Float64Array(N), new Uint8Array(N), new Array<number>(N).fill(0)]
+        : [new Float32Array(N), new Int32Array(N), new Array<number>(N).fill(0)];
+      for (const w of wrongs) {
+        const outs: unknown[] = outputsOf(spec).map((p) => fresh(p, N));
+        outs[k] = w;
+        throwsCode(() => call(spec, ins, opts, outs as Arr[]), 'TA_BAD_PARAM', `${spec.name}: ${o.name} as ${(w as object).constructor.name}`);
+        checked++;
+      }
+    });
+  }
+  assert.equal(checked, 3 * SPECS.reduce((n, s) => n + outputsOf(s).length, 0));
+});
+
 test('an output sharing memory with an input it is not is TA_BAD_PARAM, and the input is left as it was', () => {
   const data = series(26);
   let rejected = 0;

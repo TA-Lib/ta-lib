@@ -12,7 +12,7 @@
  *  103126 MF,CC  Creation (#568).
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireReal, streamFailure } from '../runtime/checks.ts';
+import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -463,8 +463,8 @@ export function ce(
   requireLength('CE', 'inHigh', inHigh, guardInLen);
   requireLength('CE', 'inLow', inLow, guardInLen);
   requireLength('CE', 'inClose', inClose, guardInLen);
-  requireLength('CE', 'outRealLong', outRealLong, guardOutLen);
-  requireLength('CE', 'outRealShort', outRealShort, guardOutLen);
+  requireOutput('CE', 'outRealLong', outRealLong, guardOutLen, Float64Array);
+  requireOutput('CE', 'outRealShort', outRealShort, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
@@ -1327,8 +1327,8 @@ export function ceOpenAndFill(
   const guardOutLen = openFillCount('CE openAndFill', inHigh.length, ceLookback(optInTimePeriod, optInMultiplier, core));
   requireHistoryLength('CE openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('CE openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireLength('CE openAndFill', 'outRealLong', outRealLong, guardOutLen);
-  requireLength('CE openAndFill', 'outRealShort', outRealShort, guardOutLen);
+  requireOutput('CE openAndFill', 'outRealLong', outRealLong, guardOutLen, Float64Array);
+  requireOutput('CE openAndFill', 'outRealShort', outRealShort, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);

@@ -16,7 +16,7 @@
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -244,7 +244,7 @@ export function cdlunique3river(
   requireLength('CDLUNIQUE3RIVER', 'inHigh', inHigh, guardInLen);
   requireLength('CDLUNIQUE3RIVER', 'inLow', inLow, guardInLen);
   requireLength('CDLUNIQUE3RIVER', 'inClose', inClose, guardInLen);
-  requireLength('CDLUNIQUE3RIVER', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLUNIQUE3RIVER', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -836,7 +836,7 @@ export function cdlunique3riverOpenAndFill(
   requireHistoryLength('CDLUNIQUE3RIVER openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDLUNIQUE3RIVER openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDLUNIQUE3RIVER openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDLUNIQUE3RIVER openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLUNIQUE3RIVER openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

@@ -15,7 +15,7 @@
  *  102326 MF,CC  #554 rare reset, zero run as a mask, output first.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -238,7 +238,7 @@ export function rvol(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('RVOL', 'inVolume', inVolume, guardInLen);
-  requireLength('RVOL', 'outReal', outReal, guardOutLen);
+  requireOutput('RVOL', 'outReal', outReal, guardOutLen, Float64Array);
   const inVolumeF64 = float64(inVolume);
   if (overlapsPartly(outReal, inVolumeF64)) {
     throw failure('RVOL', RetCode.BAD_PARAM);
@@ -664,7 +664,7 @@ export function rvolOpenAndFill(
   requireArgument('RVOL openAndFill', 'inVolume', inVolume);
   requireHistory('RVOL openAndFill', inVolume.length);
   const guardOutLen = openFillCount('RVOL openAndFill', inVolume.length, rvolLookback(optInTimePeriod, core));
-  requireLength('RVOL openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('RVOL openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inVolumeF64 = float64(inVolume);
   if ((outReal.buffer === inVolumeF64.buffer && outReal.byteOffset === inVolumeF64.byteOffset)) {
     throw streamFailure('RVOL openAndFill', RetCode.BAD_PARAM);

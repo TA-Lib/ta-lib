@@ -14,7 +14,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
@@ -693,8 +693,8 @@ export function htSine(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('HT_SINE', 'inReal', inReal, guardInLen);
-  requireLength('HT_SINE', 'outSine', outSine, guardOutLen);
-  requireLength('HT_SINE', 'outLeadSine', outLeadSine, guardOutLen);
+  requireOutput('HT_SINE', 'outSine', outSine, guardOutLen, Float64Array);
+  requireOutput('HT_SINE', 'outLeadSine', outLeadSine, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outSine, inRealF64) || overlapsPartly(outLeadSine, inRealF64) || overlaps(outSine, outLeadSine)) {
     throw failure('HT_SINE', RetCode.BAD_PARAM);
@@ -2492,8 +2492,8 @@ export function htSineOpenAndFill(
   requireArgument('HT_SINE openAndFill', 'inReal', inReal);
   requireHistory('HT_SINE openAndFill', inReal.length);
   const guardOutLen = openFillCount('HT_SINE openAndFill', inReal.length, htSineLookback(core));
-  requireLength('HT_SINE openAndFill', 'outSine', outSine, guardOutLen);
-  requireLength('HT_SINE openAndFill', 'outLeadSine', outLeadSine, guardOutLen);
+  requireOutput('HT_SINE openAndFill', 'outSine', outSine, guardOutLen, Float64Array);
+  requireOutput('HT_SINE openAndFill', 'outLeadSine', outLeadSine, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outSine.buffer === inRealF64.buffer && outSine.byteOffset === inRealF64.byteOffset) || (outLeadSine.buffer === inRealF64.buffer && outLeadSine.byteOffset === inRealF64.byteOffset) || (outSine.buffer === outLeadSine.buffer && outSine.byteOffset === outLeadSine.byteOffset)) {
     throw streamFailure('HT_SINE openAndFill', RetCode.BAD_PARAM);

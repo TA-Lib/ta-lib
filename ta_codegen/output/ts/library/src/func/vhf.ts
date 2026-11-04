@@ -12,7 +12,7 @@
  *  090426 MF,CC  Initial version (#346).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -222,7 +222,7 @@ export function vhf(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('VHF', 'inReal', inReal, guardInLen);
-  requireLength('VHF', 'outReal', outReal, guardOutLen);
+  requireOutput('VHF', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('VHF', RetCode.BAD_PARAM);
@@ -677,7 +677,7 @@ export function vhfOpenAndFill(
   requireArgument('VHF openAndFill', 'inReal', inReal);
   requireHistory('VHF openAndFill', inReal.length);
   const guardOutLen = openFillCount('VHF openAndFill', inReal.length, vhfLookback(optInTimePeriod, core));
-  requireLength('VHF openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('VHF openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('VHF openAndFill', RetCode.BAD_PARAM);

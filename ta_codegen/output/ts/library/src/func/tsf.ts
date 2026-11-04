@@ -18,7 +18,7 @@
  *                and on the bar a large value leaves the window.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma, fmaSlow } from '../runtime/fma.ts';
@@ -345,7 +345,7 @@ export function tsf(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('TSF', 'inReal', inReal, guardInLen);
-  requireLength('TSF', 'outReal', outReal, guardOutLen);
+  requireOutput('TSF', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('TSF', RetCode.BAD_PARAM);
@@ -1076,7 +1076,7 @@ export function tsfOpenAndFill(
   requireArgument('TSF openAndFill', 'inReal', inReal);
   requireHistory('TSF openAndFill', inReal.length);
   const guardOutLen = openFillCount('TSF openAndFill', inReal.length, tsfLookback(optInTimePeriod, core));
-  requireLength('TSF openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('TSF openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('TSF openAndFill', RetCode.BAD_PARAM);

@@ -22,7 +22,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -486,7 +486,7 @@ export function dx(
   requireLength('DX', 'inHigh', inHigh, guardInLen);
   requireLength('DX', 'inLow', inLow, guardInLen);
   requireLength('DX', 'inClose', inClose, guardInLen);
-  requireLength('DX', 'outReal', outReal, guardOutLen);
+  requireOutput('DX', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
@@ -1270,7 +1270,7 @@ export function dxOpenAndFill(
   const guardOutLen = openFillCount('DX openAndFill', inHigh.length, dxLookback(optInTimePeriod, core));
   requireHistoryLength('DX openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('DX openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireLength('DX openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('DX openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);

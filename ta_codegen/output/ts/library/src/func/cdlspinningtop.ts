@@ -15,7 +15,7 @@
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -209,7 +209,7 @@ export function cdlspinningtop(
   requireLength('CDLSPINNINGTOP', 'inHigh', inHigh, guardInLen);
   requireLength('CDLSPINNINGTOP', 'inLow', inLow, guardInLen);
   requireLength('CDLSPINNINGTOP', 'inClose', inClose, guardInLen);
-  requireLength('CDLSPINNINGTOP', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLSPINNINGTOP', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -666,7 +666,7 @@ export function cdlspinningtopOpenAndFill(
   requireHistoryLength('CDLSPINNINGTOP openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDLSPINNINGTOP openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDLSPINNINGTOP openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDLSPINNINGTOP openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLSPINNINGTOP openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

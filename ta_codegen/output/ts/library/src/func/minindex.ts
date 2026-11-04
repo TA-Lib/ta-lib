@@ -14,7 +14,7 @@
  *  100526 MF,CC A tie names the newest bar from any start (#503)
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -218,7 +218,7 @@ export function minindex(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('MININDEX', 'inReal', inReal, guardInLen);
-  requireLength('MININDEX', 'outInteger', outInteger, guardOutLen);
+  requireOutput('MININDEX', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inRealF64 = float64(inReal);
   if (overlaps(outInteger, inRealF64)) {
     throw failure('MININDEX', RetCode.BAD_PARAM);
@@ -653,7 +653,7 @@ export function minindexOpenAndFill(
   requireArgument('MININDEX openAndFill', 'inReal', inReal);
   requireHistory('MININDEX openAndFill', inReal.length);
   const guardOutLen = openFillCount('MININDEX openAndFill', inReal.length, minindexLookback(optInTimePeriod, core));
-  requireLength('MININDEX openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('MININDEX openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inRealF64 = float64(inReal);
   if ((outInteger.buffer === inRealF64.buffer && outInteger.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('MININDEX openAndFill', RetCode.BAD_PARAM);

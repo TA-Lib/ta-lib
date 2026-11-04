@@ -159,6 +159,23 @@ test('openAndFill refuses an absent output naming it, and an empty one even on a
   assert.ok(empty > SPECS.length, `only ${empty} empty outputs`);
 });
 
+test('openAndFill refuses an output of another element type, naming it', () => {
+  const data = series(43);
+  let checked = 0;
+  for (const s of SPECS) {
+    const opts = dflt(s);
+    const full = history(s, data, N);
+    outputsOf(s).forEach((o, k) => {
+      const outs: unknown[] = outputsOf(s).map((p) => filled(p, N));
+      outs[k] = o.int32 ? new Float64Array(N) : new Float32Array(N);
+      const want = o.int32 ? 'Int32Array' : 'Float64Array';
+      rejects(() => s.fill(...full, ...opts, ...outs), 'TA_BAD_PARAM', `${s.fn}: ${o.name}`, `${s.fn} openAndFill: ${o.name} is not a ${want}`);
+      checked++;
+    });
+  }
+  assert.equal(checked, SPECS.reduce((n, s) => n + outputsOf(s).length, 0));
+});
+
 /** A history claiming `n` bars; only its length is ever read, because the opener refuses it first. */
 function claiming(n: number): ArrayLike<number> {
   return { length: n } as ArrayLike<number>;

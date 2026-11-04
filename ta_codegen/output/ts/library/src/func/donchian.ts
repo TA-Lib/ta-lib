@@ -13,7 +13,7 @@
  *  090326 MF     Drop optInLag; the window ends at the current bar.
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -292,9 +292,9 @@ export function donchian(
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('DONCHIAN', 'inHigh', inHigh, guardInLen);
   requireLength('DONCHIAN', 'inLow', inLow, guardInLen);
-  requireLength('DONCHIAN', 'outRealUpperBand', outRealUpperBand, guardOutLen);
-  requireLength('DONCHIAN', 'outRealMiddleBand', outRealMiddleBand, guardOutLen);
-  requireLength('DONCHIAN', 'outRealLowerBand', outRealLowerBand, guardOutLen);
+  requireOutput('DONCHIAN', 'outRealUpperBand', outRealUpperBand, guardOutLen, Float64Array);
+  requireOutput('DONCHIAN', 'outRealMiddleBand', outRealMiddleBand, guardOutLen, Float64Array);
+  requireOutput('DONCHIAN', 'outRealLowerBand', outRealLowerBand, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if (overlapsPartly(outRealUpperBand, inHighF64) || overlapsPartly(outRealUpperBand, inLowF64) || overlapsPartly(outRealMiddleBand, inHighF64) || overlapsPartly(outRealMiddleBand, inLowF64) || overlapsPartly(outRealLowerBand, inHighF64) || overlapsPartly(outRealLowerBand, inLowF64) || overlaps(outRealUpperBand, outRealMiddleBand) || overlaps(outRealUpperBand, outRealLowerBand) || overlaps(outRealMiddleBand, outRealLowerBand)) {
@@ -921,9 +921,9 @@ export function donchianOpenAndFill(
   requireArgument('DONCHIAN openAndFill', 'inLow', inLow);
   const guardOutLen = openFillCount('DONCHIAN openAndFill', inHigh.length, donchianLookback(optInTimePeriod, core));
   requireHistoryLength('DONCHIAN openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireLength('DONCHIAN openAndFill', 'outRealUpperBand', outRealUpperBand, guardOutLen);
-  requireLength('DONCHIAN openAndFill', 'outRealMiddleBand', outRealMiddleBand, guardOutLen);
-  requireLength('DONCHIAN openAndFill', 'outRealLowerBand', outRealLowerBand, guardOutLen);
+  requireOutput('DONCHIAN openAndFill', 'outRealUpperBand', outRealUpperBand, guardOutLen, Float64Array);
+  requireOutput('DONCHIAN openAndFill', 'outRealMiddleBand', outRealMiddleBand, guardOutLen, Float64Array);
+  requireOutput('DONCHIAN openAndFill', 'outRealLowerBand', outRealLowerBand, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if ((outRealUpperBand.buffer === inHighF64.buffer && outRealUpperBand.byteOffset === inHighF64.byteOffset) || (outRealUpperBand.buffer === inLowF64.buffer && outRealUpperBand.byteOffset === inLowF64.byteOffset) || (outRealMiddleBand.buffer === inHighF64.buffer && outRealMiddleBand.byteOffset === inHighF64.byteOffset) || (outRealMiddleBand.buffer === inLowF64.buffer && outRealMiddleBand.byteOffset === inLowF64.byteOffset) || (outRealLowerBand.buffer === inHighF64.buffer && outRealLowerBand.byteOffset === inHighF64.byteOffset) || (outRealLowerBand.buffer === inLowF64.buffer && outRealLowerBand.byteOffset === inLowF64.byteOffset) || (outRealUpperBand.buffer === outRealMiddleBand.buffer && outRealUpperBand.byteOffset === outRealMiddleBand.byteOffset) || (outRealUpperBand.buffer === outRealLowerBand.buffer && outRealUpperBand.byteOffset === outRealLowerBand.byteOffset) || (outRealMiddleBand.buffer === outRealLowerBand.buffer && outRealMiddleBand.byteOffset === outRealLowerBand.byteOffset)) {

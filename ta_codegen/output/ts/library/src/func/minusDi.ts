@@ -24,7 +24,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -504,7 +504,7 @@ export function minusDi(
   requireLength('MINUS_DI', 'inHigh', inHigh, guardInLen);
   requireLength('MINUS_DI', 'inLow', inLow, guardInLen);
   requireLength('MINUS_DI', 'inClose', inClose, guardInLen);
-  requireLength('MINUS_DI', 'outReal', outReal, guardOutLen);
+  requireOutput('MINUS_DI', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
@@ -1458,7 +1458,7 @@ export function minusDiOpenAndFill(
   const guardOutLen = openFillCount('MINUS_DI openAndFill', inHigh.length, minusDiLookback(optInTimePeriod, core));
   requireHistoryLength('MINUS_DI openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('MINUS_DI openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireLength('MINUS_DI openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('MINUS_DI openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);

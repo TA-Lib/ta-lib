@@ -11,7 +11,7 @@
  *  090807 MF     Initial Version
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -133,7 +133,7 @@ export function cosh(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('COSH', 'inReal', inReal, guardInLen);
-  requireLength('COSH', 'outReal', outReal, guardOutLen);
+  requireOutput('COSH', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('COSH', RetCode.BAD_PARAM);
@@ -408,7 +408,7 @@ export function coshOpenAndFill(
   requireArgument('COSH openAndFill', 'inReal', inReal);
   requireHistory('COSH openAndFill', inReal.length);
   const guardOutLen = openFillCount('COSH openAndFill', inReal.length, coshLookback(core));
-  requireLength('COSH openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('COSH openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('COSH openAndFill', RetCode.BAD_PARAM);

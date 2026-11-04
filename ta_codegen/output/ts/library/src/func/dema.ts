@@ -16,7 +16,7 @@
  *  080926 MF,CC  Explicit no-smoothing copy at a period of 1.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma, fmaSlow } from '../runtime/fma.ts';
@@ -378,7 +378,7 @@ export function dema(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('DEMA', 'inReal', inReal, guardInLen);
-  requireLength('DEMA', 'outReal', outReal, guardOutLen);
+  requireOutput('DEMA', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('DEMA', RetCode.BAD_PARAM);
@@ -922,7 +922,7 @@ export function demaOpenAndFill(
   requireArgument('DEMA openAndFill', 'inReal', inReal);
   requireHistory('DEMA openAndFill', inReal.length);
   const guardOutLen = openFillCount('DEMA openAndFill', inReal.length, demaLookback(optInTimePeriod, core));
-  requireLength('DEMA openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('DEMA openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('DEMA openAndFill', RetCode.BAD_PARAM);

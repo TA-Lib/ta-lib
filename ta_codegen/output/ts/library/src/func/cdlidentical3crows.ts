@@ -16,7 +16,7 @@
  *  103126 MF,CC  Pre-check the cheap tests in an outer if, the candle averages inside
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -257,7 +257,7 @@ export function cdlidentical3crows(
   requireLength('CDLIDENTICAL3CROWS', 'inHigh', inHigh, guardInLen);
   requireLength('CDLIDENTICAL3CROWS', 'inLow', inLow, guardInLen);
   requireLength('CDLIDENTICAL3CROWS', 'inClose', inClose, guardInLen);
-  requireLength('CDLIDENTICAL3CROWS', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLIDENTICAL3CROWS', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -880,7 +880,7 @@ export function cdlidentical3crowsOpenAndFill(
   requireHistoryLength('CDLIDENTICAL3CROWS openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDLIDENTICAL3CROWS openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDLIDENTICAL3CROWS openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDLIDENTICAL3CROWS openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLIDENTICAL3CROWS openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

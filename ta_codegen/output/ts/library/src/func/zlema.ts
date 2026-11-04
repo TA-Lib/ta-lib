@@ -12,7 +12,7 @@
  *  090426 MF,CC  Initial version (#347).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -284,7 +284,7 @@ export function zlema(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('ZLEMA', 'inReal', inReal, guardInLen);
-  requireLength('ZLEMA', 'outReal', outReal, guardOutLen);
+  requireOutput('ZLEMA', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('ZLEMA', RetCode.BAD_PARAM);
@@ -729,7 +729,7 @@ export function zlemaOpenAndFill(
   requireArgument('ZLEMA openAndFill', 'inReal', inReal);
   requireHistory('ZLEMA openAndFill', inReal.length);
   const guardOutLen = openFillCount('ZLEMA openAndFill', inReal.length, zlemaLookback(optInTimePeriod, core));
-  requireLength('ZLEMA openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('ZLEMA openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('ZLEMA openAndFill', RetCode.BAD_PARAM);

@@ -13,7 +13,7 @@
  *  052603 MF   Adapt code to compile with .NET Managed C++
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -206,7 +206,7 @@ export function sma(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('SMA', 'inReal', inReal, guardInLen);
-  requireLength('SMA', 'outReal', outReal, guardOutLen);
+  requireOutput('SMA', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('SMA', RetCode.BAD_PARAM);
@@ -593,7 +593,7 @@ export function smaOpenAndFill(
   requireArgument('SMA openAndFill', 'inReal', inReal);
   requireHistory('SMA openAndFill', inReal.length);
   const guardOutLen = openFillCount('SMA openAndFill', inReal.length, smaLookback(optInTimePeriod, core));
-  requireLength('SMA openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('SMA openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('SMA openAndFill', RetCode.BAD_PARAM);

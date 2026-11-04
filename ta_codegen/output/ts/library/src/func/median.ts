@@ -14,7 +14,7 @@
  *  092226 MF,CC  Binary search above 128 values, one shift per bar (issue #432).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -363,7 +363,7 @@ export function median(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('MEDIAN', 'inReal', inReal, guardInLen);
-  requireLength('MEDIAN', 'outReal', outReal, guardOutLen);
+  requireOutput('MEDIAN', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('MEDIAN', RetCode.BAD_PARAM);
@@ -1053,7 +1053,7 @@ export function medianOpenAndFill(
   requireArgument('MEDIAN openAndFill', 'inReal', inReal);
   requireHistory('MEDIAN openAndFill', inReal.length);
   const guardOutLen = openFillCount('MEDIAN openAndFill', inReal.length, medianLookback(optInTimePeriod, core));
-  requireLength('MEDIAN openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('MEDIAN openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('MEDIAN openAndFill', RetCode.BAD_PARAM);

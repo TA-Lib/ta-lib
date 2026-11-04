@@ -18,7 +18,7 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
@@ -563,7 +563,7 @@ export function pvo(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('PVO', 'inVolume', inVolume, guardInLen);
-  requireLength('PVO', 'outReal', outReal, guardOutLen);
+  requireOutput('PVO', 'outReal', outReal, guardOutLen, Float64Array);
   const inVolumeF64 = float64(inVolume);
   if (overlapsPartly(outReal, inVolumeF64)) {
     throw failure('PVO', RetCode.BAD_PARAM);
@@ -1064,7 +1064,7 @@ export function pvoOpenAndFill(
   requireArgument('PVO openAndFill', 'inVolume', inVolume);
   requireHistory('PVO openAndFill', inVolume.length);
   const guardOutLen = openFillCount('PVO openAndFill', inVolume.length, pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core));
-  requireLength('PVO openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('PVO openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inVolumeF64 = float64(inVolume);
   if ((outReal.buffer === inVolumeF64.buffer && outReal.byteOffset === inVolumeF64.byteOffset)) {
     throw streamFailure('PVO openAndFill', RetCode.BAD_PARAM);

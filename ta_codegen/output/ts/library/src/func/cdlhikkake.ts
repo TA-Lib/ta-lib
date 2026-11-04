@@ -19,7 +19,7 @@
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -267,7 +267,7 @@ export function cdlhikkake(
   requireLength('CDLHIKKAKE', 'inHigh', inHigh, guardInLen);
   requireLength('CDLHIKKAKE', 'inLow', inLow, guardInLen);
   requireLength('CDLHIKKAKE', 'inClose', inClose, guardInLen);
-  requireLength('CDLHIKKAKE', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLHIKKAKE', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -791,7 +791,7 @@ export function cdlhikkakeOpenAndFill(
   requireHistoryLength('CDLHIKKAKE openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDLHIKKAKE openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDLHIKKAKE openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDLHIKKAKE openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLHIKKAKE openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

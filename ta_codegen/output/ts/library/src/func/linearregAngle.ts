@@ -21,7 +21,7 @@
  *                and on the bar a large value leaves the window.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -331,7 +331,7 @@ export function linearregAngle(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('LINEARREG_ANGLE', 'inReal', inReal, guardInLen);
-  requireLength('LINEARREG_ANGLE', 'outReal', outReal, guardOutLen);
+  requireOutput('LINEARREG_ANGLE', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('LINEARREG_ANGLE', RetCode.BAD_PARAM);
@@ -1042,7 +1042,7 @@ export function linearregAngleOpenAndFill(
   requireArgument('LINEARREG_ANGLE openAndFill', 'inReal', inReal);
   requireHistory('LINEARREG_ANGLE openAndFill', inReal.length);
   const guardOutLen = openFillCount('LINEARREG_ANGLE openAndFill', inReal.length, linearregAngleLookback(optInTimePeriod, core));
-  requireLength('LINEARREG_ANGLE openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('LINEARREG_ANGLE openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('LINEARREG_ANGLE openAndFill', RetCode.BAD_PARAM);

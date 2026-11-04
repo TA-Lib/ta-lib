@@ -15,7 +15,7 @@
  *                any instrument quoted small enough to fall under it.
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
@@ -684,8 +684,8 @@ export function smi(
   requireLength('SMI', 'inHigh', inHigh, guardInLen);
   requireLength('SMI', 'inLow', inLow, guardInLen);
   requireLength('SMI', 'inClose', inClose, guardInLen);
-  requireLength('SMI', 'outSMI', outSMI, guardOutLen);
-  requireLength('SMI', 'outSMISignal', outSMISignal, guardOutLen);
+  requireOutput('SMI', 'outSMI', outSMI, guardOutLen, Float64Array);
+  requireOutput('SMI', 'outSMISignal', outSMISignal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
@@ -1940,8 +1940,8 @@ export function smiOpenAndFill(
   const guardOutLen = openFillCount('SMI openAndFill', inHigh.length, smiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
   requireHistoryLength('SMI openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('SMI openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireLength('SMI openAndFill', 'outSMI', outSMI, guardOutLen);
-  requireLength('SMI openAndFill', 'outSMISignal', outSMISignal, guardOutLen);
+  requireOutput('SMI openAndFill', 'outSMI', outSMI, guardOutLen, Float64Array);
+  requireOutput('SMI openAndFill', 'outSMISignal', outSMISignal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);

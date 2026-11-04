@@ -12,7 +12,7 @@
  *  092726 MF,CC  Initial version (#451).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireReal, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -248,7 +248,7 @@ export function si(
   requireLength('SI', 'inHigh', inHigh, guardInLen);
   requireLength('SI', 'inLow', inLow, guardInLen);
   requireLength('SI', 'inClose', inClose, guardInLen);
-  requireLength('SI', 'outReal', outReal, guardOutLen);
+  requireOutput('SI', 'outReal', outReal, guardOutLen, Float64Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -754,7 +754,7 @@ export function siOpenAndFill(
   requireHistoryLength('SI openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('SI openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('SI openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('SI openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('SI openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

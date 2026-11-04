@@ -16,7 +16,7 @@
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -289,7 +289,7 @@ export function cdl3starsinsouth(
   requireLength('CDL3STARSINSOUTH', 'inHigh', inHigh, guardInLen);
   requireLength('CDL3STARSINSOUTH', 'inLow', inLow, guardInLen);
   requireLength('CDL3STARSINSOUTH', 'inClose', inClose, guardInLen);
-  requireLength('CDL3STARSINSOUTH', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDL3STARSINSOUTH', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -1048,7 +1048,7 @@ export function cdl3starsinsouthOpenAndFill(
   requireHistoryLength('CDL3STARSINSOUTH openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDL3STARSINSOUTH openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDL3STARSINSOUTH openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDL3STARSINSOUTH openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDL3STARSINSOUTH openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

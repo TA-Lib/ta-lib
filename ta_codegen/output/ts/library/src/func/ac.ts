@@ -12,7 +12,7 @@
  *  081726 MF,CC  Initial version (#228).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -388,7 +388,7 @@ export function ac(
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('AC', 'inHigh', inHigh, guardInLen);
   requireLength('AC', 'inLow', inLow, guardInLen);
-  requireLength('AC', 'outReal', outReal, guardOutLen);
+  requireOutput('AC', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if (overlapsPartly(outReal, inHighF64) || overlapsPartly(outReal, inLowF64)) {
@@ -1074,7 +1074,7 @@ export function acOpenAndFill(
   requireArgument('AC openAndFill', 'inLow', inLow);
   const guardOutLen = openFillCount('AC openAndFill', inHigh.length, acLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
   requireHistoryLength('AC openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireLength('AC openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('AC openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if ((outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) || (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset)) {

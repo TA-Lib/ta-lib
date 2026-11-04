@@ -13,7 +13,7 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireReal, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -469,7 +469,7 @@ export function percentb(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('PERCENTB', 'inReal', inReal, guardInLen);
-  requireLength('PERCENTB', 'outReal', outReal, guardOutLen);
+  requireOutput('PERCENTB', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('PERCENTB', RetCode.BAD_PARAM);
@@ -969,7 +969,7 @@ export function percentbOpenAndFill(
   requireArgument('PERCENTB openAndFill', 'inReal', inReal);
   requireHistory('PERCENTB openAndFill', inReal.length);
   const guardOutLen = openFillCount('PERCENTB openAndFill', inReal.length, percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core));
-  requireLength('PERCENTB openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('PERCENTB openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('PERCENTB openAndFill', RetCode.BAD_PARAM);

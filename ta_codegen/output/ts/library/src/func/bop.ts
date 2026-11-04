@@ -15,7 +15,7 @@
  *               instrument quoted small enough to fall under it.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -164,7 +164,7 @@ export function bop(
   requireLength('BOP', 'inHigh', inHigh, guardInLen);
   requireLength('BOP', 'inLow', inLow, guardInLen);
   requireLength('BOP', 'inClose', inClose, guardInLen);
-  requireLength('BOP', 'outReal', outReal, guardOutLen);
+  requireOutput('BOP', 'outReal', outReal, guardOutLen, Float64Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -543,7 +543,7 @@ export function bopOpenAndFill(
   requireHistoryLength('BOP openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('BOP openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('BOP openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('BOP openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('BOP openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

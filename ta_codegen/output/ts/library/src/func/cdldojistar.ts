@@ -15,7 +15,7 @@
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -242,7 +242,7 @@ export function cdldojistar(
   requireLength('CDLDOJISTAR', 'inHigh', inHigh, guardInLen);
   requireLength('CDLDOJISTAR', 'inLow', inLow, guardInLen);
   requireLength('CDLDOJISTAR', 'inClose', inClose, guardInLen);
-  requireLength('CDLDOJISTAR', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLDOJISTAR', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -802,7 +802,7 @@ export function cdldojistarOpenAndFill(
   requireHistoryLength('CDLDOJISTAR openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDLDOJISTAR openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDLDOJISTAR openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDLDOJISTAR openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLDOJISTAR openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

@@ -16,7 +16,7 @@
  *  103126 MF,CC  Lead with the colour and gap tests as the one pre-check
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -245,7 +245,7 @@ export function cdlkickingbylength(
   requireLength('CDLKICKINGBYLENGTH', 'inHigh', inHigh, guardInLen);
   requireLength('CDLKICKINGBYLENGTH', 'inLow', inLow, guardInLen);
   requireLength('CDLKICKINGBYLENGTH', 'inClose', inClose, guardInLen);
-  requireLength('CDLKICKINGBYLENGTH', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLKICKINGBYLENGTH', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -839,7 +839,7 @@ export function cdlkickingbylengthOpenAndFill(
   requireHistoryLength('CDLKICKINGBYLENGTH openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDLKICKINGBYLENGTH openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDLKICKINGBYLENGTH openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDLKICKINGBYLENGTH openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLKICKINGBYLENGTH openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

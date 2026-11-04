@@ -16,7 +16,7 @@
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireReal, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -282,7 +282,7 @@ export function cdlmorningstar(
   requireLength('CDLMORNINGSTAR', 'inHigh', inHigh, guardInLen);
   requireLength('CDLMORNINGSTAR', 'inLow', inLow, guardInLen);
   requireLength('CDLMORNINGSTAR', 'inClose', inClose, guardInLen);
-  requireLength('CDLMORNINGSTAR', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLMORNINGSTAR', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -905,7 +905,7 @@ export function cdlmorningstarOpenAndFill(
   requireHistoryLength('CDLMORNINGSTAR openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDLMORNINGSTAR openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDLMORNINGSTAR openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDLMORNINGSTAR openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLMORNINGSTAR openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

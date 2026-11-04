@@ -12,7 +12,7 @@
  *  090426 MF,CC  Initial version (#369).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -208,7 +208,7 @@ export function percentrank(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('PERCENTRANK', 'inReal', inReal, guardInLen);
-  requireLength('PERCENTRANK', 'outReal', outReal, guardOutLen);
+  requireOutput('PERCENTRANK', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('PERCENTRANK', RetCode.BAD_PARAM);
@@ -583,7 +583,7 @@ export function percentrankOpenAndFill(
   requireArgument('PERCENTRANK openAndFill', 'inReal', inReal);
   requireHistory('PERCENTRANK openAndFill', inReal.length);
   const guardOutLen = openFillCount('PERCENTRANK openAndFill', inReal.length, percentrankLookback(optInTimePeriod, core));
-  requireLength('PERCENTRANK openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('PERCENTRANK openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('PERCENTRANK openAndFill', RetCode.BAD_PARAM);

@@ -11,7 +11,7 @@
  *  090526 KL     First version (issue #362).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -394,7 +394,7 @@ export function coppock(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('COPPOCK', 'inReal', inReal, guardInLen);
-  requireLength('COPPOCK', 'outReal', outReal, guardOutLen);
+  requireOutput('COPPOCK', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('COPPOCK', RetCode.BAD_PARAM);
@@ -1131,7 +1131,7 @@ export function coppockOpenAndFill(
   requireArgument('COPPOCK openAndFill', 'inReal', inReal);
   requireHistory('COPPOCK openAndFill', inReal.length);
   const guardOutLen = openFillCount('COPPOCK openAndFill', inReal.length, coppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period, core));
-  requireLength('COPPOCK openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('COPPOCK openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('COPPOCK openAndFill', RetCode.BAD_PARAM);

@@ -15,7 +15,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
@@ -378,7 +378,7 @@ export function adosc(
   requireLength('ADOSC', 'inLow', inLow, guardInLen);
   requireLength('ADOSC', 'inClose', inClose, guardInLen);
   requireLength('ADOSC', 'inVolume', inVolume, guardInLen);
-  requireLength('ADOSC', 'outReal', outReal, guardOutLen);
+  requireOutput('ADOSC', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
@@ -1037,7 +1037,7 @@ export function adoscOpenAndFill(
   requireHistoryLength('ADOSC openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('ADOSC openAndFill', 'inClose', inClose.length, inHigh.length);
   requireHistoryLength('ADOSC openAndFill', 'inVolume', inVolume.length, inHigh.length);
-  requireLength('ADOSC openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('ADOSC openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);

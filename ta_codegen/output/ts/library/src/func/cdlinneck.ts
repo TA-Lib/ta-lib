@@ -16,7 +16,7 @@
  *  103126 MF,CC  Pre-check the cheap tests in an outer if, the candle averages inside
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -239,7 +239,7 @@ export function cdlinneck(
   requireLength('CDLINNECK', 'inHigh', inHigh, guardInLen);
   requireLength('CDLINNECK', 'inLow', inLow, guardInLen);
   requireLength('CDLINNECK', 'inClose', inClose, guardInLen);
-  requireLength('CDLINNECK', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLINNECK', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -804,7 +804,7 @@ export function cdlinneckOpenAndFill(
   requireHistoryLength('CDLINNECK openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDLINNECK openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDLINNECK openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDLINNECK openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLINNECK openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

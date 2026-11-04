@@ -27,7 +27,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireReal, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma, fmaSlow } from '../runtime/fma.ts';
@@ -771,7 +771,7 @@ export function t3(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('T3', 'inReal', inReal, guardInLen);
-  requireLength('T3', 'outReal', outReal, guardOutLen);
+  requireOutput('T3', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('T3', RetCode.BAD_PARAM);
@@ -2008,7 +2008,7 @@ export function t3OpenAndFill(
   requireArgument('T3 openAndFill', 'inReal', inReal);
   requireHistory('T3 openAndFill', inReal.length);
   const guardOutLen = openFillCount('T3 openAndFill', inReal.length, t3Lookback(optInTimePeriod, optInVFactor, core));
-  requireLength('T3 openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('T3 openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('T3 openAndFill', RetCode.BAD_PARAM);

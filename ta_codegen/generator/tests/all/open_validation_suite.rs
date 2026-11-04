@@ -482,7 +482,8 @@ fn ts_public_openers_type_test_then_the_index_pair_then_the_buffers() {
             if fill {
                 let mut last = width.unwrap_or(pair);
                 for out in &func.outputs {
-                    let at_out = find(&format!("requireLength('{f} {verb}', '{0}', {0}, guardOutLen);", out.name));
+                    let ty = if out.param_type == ir::ParamType::Real { "Float64Array" } else { "Int32Array" };
+                    let at_out = find(&format!("requireOutput('{f} {verb}', '{0}', {0}, guardOutLen, {ty});", out.name));
                     assert!(at_out > last, "{f}: `{}` is bounded out of order", out.name);
                     last = at_out;
                 }

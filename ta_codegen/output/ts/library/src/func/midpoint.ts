@@ -16,7 +16,7 @@
  *                approach as MIN/MAX/MINMAX).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -313,7 +313,7 @@ export function midpoint(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('MIDPOINT', 'inReal', inReal, guardInLen);
-  requireLength('MIDPOINT', 'outReal', outReal, guardOutLen);
+  requireOutput('MIDPOINT', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('MIDPOINT', RetCode.BAD_PARAM);
@@ -839,7 +839,7 @@ export function midpointOpenAndFill(
   requireArgument('MIDPOINT openAndFill', 'inReal', inReal);
   requireHistory('MIDPOINT openAndFill', inReal.length);
   const guardOutLen = openFillCount('MIDPOINT openAndFill', inReal.length, midpointLookback(optInTimePeriod, core));
-  requireLength('MIDPOINT openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('MIDPOINT openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('MIDPOINT openAndFill', RetCode.BAD_PARAM);

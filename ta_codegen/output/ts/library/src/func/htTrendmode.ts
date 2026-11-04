@@ -24,7 +24,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
@@ -812,7 +812,7 @@ export function htTrendmode(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('HT_TRENDMODE', 'inReal', inReal, guardInLen);
-  requireLength('HT_TRENDMODE', 'outInteger', outInteger, guardOutLen);
+  requireOutput('HT_TRENDMODE', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inRealF64 = float64(inReal);
   if (overlaps(outInteger, inRealF64)) {
     throw failure('HT_TRENDMODE', RetCode.BAD_PARAM);
@@ -2926,7 +2926,7 @@ export function htTrendmodeOpenAndFill(
   requireArgument('HT_TRENDMODE openAndFill', 'inReal', inReal);
   requireHistory('HT_TRENDMODE openAndFill', inReal.length);
   const guardOutLen = openFillCount('HT_TRENDMODE openAndFill', inReal.length, htTrendmodeLookback(core));
-  requireLength('HT_TRENDMODE openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('HT_TRENDMODE openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inRealF64 = float64(inReal);
   if ((outInteger.buffer === inRealF64.buffer && outInteger.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('HT_TRENDMODE openAndFill', RetCode.BAD_PARAM);

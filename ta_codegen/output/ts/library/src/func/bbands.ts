@@ -35,7 +35,7 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireReal, streamFailure } from '../runtime/checks.ts';
+import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -546,9 +546,9 @@ export function bbands(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('BBANDS', 'inReal', inReal, guardInLen);
-  requireLength('BBANDS', 'outRealUpperBand', outRealUpperBand, guardOutLen);
-  requireLength('BBANDS', 'outRealMiddleBand', outRealMiddleBand, guardOutLen);
-  requireLength('BBANDS', 'outRealLowerBand', outRealLowerBand, guardOutLen);
+  requireOutput('BBANDS', 'outRealUpperBand', outRealUpperBand, guardOutLen, Float64Array);
+  requireOutput('BBANDS', 'outRealMiddleBand', outRealMiddleBand, guardOutLen, Float64Array);
+  requireOutput('BBANDS', 'outRealLowerBand', outRealLowerBand, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outRealUpperBand, inRealF64) || overlapsPartly(outRealMiddleBand, inRealF64) || overlapsPartly(outRealLowerBand, inRealF64) || overlaps(outRealUpperBand, outRealMiddleBand) || overlaps(outRealUpperBand, outRealLowerBand) || overlaps(outRealMiddleBand, outRealLowerBand)) {
     throw failure('BBANDS', RetCode.BAD_PARAM);
@@ -1096,9 +1096,9 @@ export function bbandsOpenAndFill(
   requireArgument('BBANDS openAndFill', 'inReal', inReal);
   requireHistory('BBANDS openAndFill', inReal.length);
   const guardOutLen = openFillCount('BBANDS openAndFill', inReal.length, bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core));
-  requireLength('BBANDS openAndFill', 'outRealUpperBand', outRealUpperBand, guardOutLen);
-  requireLength('BBANDS openAndFill', 'outRealMiddleBand', outRealMiddleBand, guardOutLen);
-  requireLength('BBANDS openAndFill', 'outRealLowerBand', outRealLowerBand, guardOutLen);
+  requireOutput('BBANDS openAndFill', 'outRealUpperBand', outRealUpperBand, guardOutLen, Float64Array);
+  requireOutput('BBANDS openAndFill', 'outRealMiddleBand', outRealMiddleBand, guardOutLen, Float64Array);
+  requireOutput('BBANDS openAndFill', 'outRealLowerBand', outRealLowerBand, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outRealUpperBand.buffer === inRealF64.buffer && outRealUpperBand.byteOffset === inRealF64.byteOffset) || (outRealMiddleBand.buffer === inRealF64.buffer && outRealMiddleBand.byteOffset === inRealF64.byteOffset) || (outRealLowerBand.buffer === inRealF64.buffer && outRealLowerBand.byteOffset === inRealF64.byteOffset) || (outRealUpperBand.buffer === outRealMiddleBand.buffer && outRealUpperBand.byteOffset === outRealMiddleBand.byteOffset) || (outRealUpperBand.buffer === outRealLowerBand.buffer && outRealUpperBand.byteOffset === outRealLowerBand.byteOffset) || (outRealMiddleBand.buffer === outRealLowerBand.buffer && outRealMiddleBand.byteOffset === outRealLowerBand.byteOffset)) {
     throw streamFailure('BBANDS openAndFill', RetCode.BAD_PARAM);

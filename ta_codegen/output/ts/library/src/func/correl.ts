@@ -23,7 +23,7 @@
  *  092226 MF,CC #434 rebuild against each side's peak sum of squares.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -426,7 +426,7 @@ export function correl(
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('CORREL', 'inReal0', inReal0, guardInLen);
   requireLength('CORREL', 'inReal1', inReal1, guardInLen);
-  requireLength('CORREL', 'outReal', outReal, guardOutLen);
+  requireOutput('CORREL', 'outReal', outReal, guardOutLen, Float64Array);
   const inReal0F64 = float64(inReal0);
   const inReal1F64 = float64(inReal1);
   if (overlapsPartly(outReal, inReal0F64) || overlapsPartly(outReal, inReal1F64)) {
@@ -1447,7 +1447,7 @@ export function correlOpenAndFill(
   requireArgument('CORREL openAndFill', 'inReal1', inReal1);
   const guardOutLen = openFillCount('CORREL openAndFill', inReal0.length, correlLookback(optInTimePeriod, core));
   requireHistoryLength('CORREL openAndFill', 'inReal1', inReal1.length, inReal0.length);
-  requireLength('CORREL openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('CORREL openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inReal0F64 = float64(inReal0);
   const inReal1F64 = float64(inReal1);
   if ((outReal.buffer === inReal0F64.buffer && outReal.byteOffset === inReal0F64.byteOffset) || (outReal.buffer === inReal1F64.buffer && outReal.byteOffset === inReal1F64.byteOffset)) {

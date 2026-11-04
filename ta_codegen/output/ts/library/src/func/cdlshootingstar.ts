@@ -16,7 +16,7 @@
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -254,7 +254,7 @@ export function cdlshootingstar(
   requireLength('CDLSHOOTINGSTAR', 'inHigh', inHigh, guardInLen);
   requireLength('CDLSHOOTINGSTAR', 'inLow', inLow, guardInLen);
   requireLength('CDLSHOOTINGSTAR', 'inClose', inClose, guardInLen);
-  requireLength('CDLSHOOTINGSTAR', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLSHOOTINGSTAR', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -866,7 +866,7 @@ export function cdlshootingstarOpenAndFill(
   requireHistoryLength('CDLSHOOTINGSTAR openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDLSHOOTINGSTAR openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDLSHOOTINGSTAR openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDLSHOOTINGSTAR openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLSHOOTINGSTAR openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

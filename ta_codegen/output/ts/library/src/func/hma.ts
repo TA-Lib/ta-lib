@@ -20,7 +20,7 @@
  *                unlikely re-anchors (PR #565).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -534,7 +534,7 @@ export function hma(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('HMA', 'inReal', inReal, guardInLen);
-  requireLength('HMA', 'outReal', outReal, guardOutLen);
+  requireOutput('HMA', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('HMA', RetCode.BAD_PARAM);
@@ -1811,7 +1811,7 @@ export function hmaOpenAndFill(
   requireArgument('HMA openAndFill', 'inReal', inReal);
   requireHistory('HMA openAndFill', inReal.length);
   const guardOutLen = openFillCount('HMA openAndFill', inReal.length, hmaLookback(optInTimePeriod, core));
-  requireLength('HMA openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('HMA openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('HMA openAndFill', RetCode.BAD_PARAM);

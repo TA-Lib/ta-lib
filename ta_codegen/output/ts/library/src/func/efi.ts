@@ -11,7 +11,7 @@
  *  081226 KL   Initial version (#206).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -281,7 +281,7 @@ export function efi(
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('EFI', 'inClose', inClose, guardInLen);
   requireLength('EFI', 'inVolume', inVolume, guardInLen);
-  requireLength('EFI', 'outReal', outReal, guardOutLen);
+  requireOutput('EFI', 'outReal', outReal, guardOutLen, Float64Array);
   const inCloseF64 = float64(inClose);
   const inVolumeF64 = float64(inVolume);
   if (overlapsPartly(outReal, inCloseF64) || overlapsPartly(outReal, inVolumeF64)) {
@@ -817,7 +817,7 @@ export function efiOpenAndFill(
   requireArgument('EFI openAndFill', 'inVolume', inVolume);
   const guardOutLen = openFillCount('EFI openAndFill', inClose.length, efiLookback(optInTimePeriod, core));
   requireHistoryLength('EFI openAndFill', 'inVolume', inVolume.length, inClose.length);
-  requireLength('EFI openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('EFI openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inCloseF64 = float64(inClose);
   const inVolumeF64 = float64(inVolume);
   if ((outReal.buffer === inCloseF64.buffer && outReal.byteOffset === inCloseF64.byteOffset) || (outReal.buffer === inVolumeF64.buffer && outReal.byteOffset === inVolumeF64.byteOffset)) {

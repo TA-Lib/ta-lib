@@ -15,7 +15,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
@@ -522,8 +522,8 @@ export function kvo(
   requireLength('KVO', 'inLow', inLow, guardInLen);
   requireLength('KVO', 'inClose', inClose, guardInLen);
   requireLength('KVO', 'inVolume', inVolume, guardInLen);
-  requireLength('KVO', 'outKVO', outKVO, guardOutLen);
-  requireLength('KVO', 'outKVOSignal', outKVOSignal, guardOutLen);
+  requireOutput('KVO', 'outKVO', outKVO, guardOutLen, Float64Array);
+  requireOutput('KVO', 'outKVOSignal', outKVOSignal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
@@ -1422,8 +1422,8 @@ export function kvoOpenAndFill(
   requireHistoryLength('KVO openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('KVO openAndFill', 'inClose', inClose.length, inHigh.length);
   requireHistoryLength('KVO openAndFill', 'inVolume', inVolume.length, inHigh.length);
-  requireLength('KVO openAndFill', 'outKVO', outKVO, guardOutLen);
-  requireLength('KVO openAndFill', 'outKVOSignal', outKVOSignal, guardOutLen);
+  requireOutput('KVO openAndFill', 'outKVO', outKVO, guardOutLen, Float64Array);
+  requireOutput('KVO openAndFill', 'outKVOSignal', outKVOSignal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);

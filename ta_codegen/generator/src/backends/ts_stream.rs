@@ -1515,7 +1515,7 @@ fn emit_public_open_guards(o: &mut String, em: &Em, verb: &str, with_outputs: bo
     }
     if with_outputs {
         for out in &func.outputs {
-            let _ = writeln!(o, "  requireLength('{n} {verb}', '{0}', {0}, guardOutLen);", out.name);
+            let _ = writeln!(o, "  requireOutput('{n} {verb}', '{0}', {0}, guardOutLen, {1});", out.name, super::ts::array_ts_type(&out.param_type));
         }
     }
 }

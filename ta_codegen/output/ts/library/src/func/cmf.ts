@@ -15,7 +15,7 @@
  *  102326 MF,CC  #554 rare reset, zero run as a mask.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -342,7 +342,7 @@ export function cmf(
   requireLength('CMF', 'inLow', inLow, guardInLen);
   requireLength('CMF', 'inClose', inClose, guardInLen);
   requireLength('CMF', 'inVolume', inVolume, guardInLen);
-  requireLength('CMF', 'outReal', outReal, guardOutLen);
+  requireOutput('CMF', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
@@ -938,7 +938,7 @@ export function cmfOpenAndFill(
   requireHistoryLength('CMF openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('CMF openAndFill', 'inClose', inClose.length, inHigh.length);
   requireHistoryLength('CMF openAndFill', 'inVolume', inVolume.length, inHigh.length);
-  requireLength('CMF openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('CMF openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);

@@ -11,7 +11,7 @@
  *  090807 MF     Initial Version
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -135,7 +135,7 @@ export function add(
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('ADD', 'inReal0', inReal0, guardInLen);
   requireLength('ADD', 'inReal1', inReal1, guardInLen);
-  requireLength('ADD', 'outReal', outReal, guardOutLen);
+  requireOutput('ADD', 'outReal', outReal, guardOutLen, Float64Array);
   const inReal0F64 = float64(inReal0);
   const inReal1F64 = float64(inReal1);
   if (overlapsPartly(outReal, inReal0F64) || overlapsPartly(outReal, inReal1F64)) {
@@ -436,7 +436,7 @@ export function addOpenAndFill(
   requireArgument('ADD openAndFill', 'inReal1', inReal1);
   const guardOutLen = openFillCount('ADD openAndFill', inReal0.length, addLookback(core));
   requireHistoryLength('ADD openAndFill', 'inReal1', inReal1.length, inReal0.length);
-  requireLength('ADD openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('ADD openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inReal0F64 = float64(inReal0);
   const inReal1F64 = float64(inReal1);
   if ((outReal.buffer === inReal0F64.buffer && outReal.byteOffset === inReal0F64.byteOffset) || (outReal.buffer === inReal1F64.buffer && outReal.byteOffset === inReal1F64.byteOffset)) {

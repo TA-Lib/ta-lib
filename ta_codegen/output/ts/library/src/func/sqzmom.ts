@@ -17,7 +17,7 @@
  *  101126 MF,CC  One Keltner centre for both loops (#543).
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireReal, streamFailure } from '../runtime/checks.ts';
+import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -506,8 +506,8 @@ export function sqzmom(
   requireLength('SQZMOM', 'inHigh', inHigh, guardInLen);
   requireLength('SQZMOM', 'inLow', inLow, guardInLen);
   requireLength('SQZMOM', 'inClose', inClose, guardInLen);
-  requireLength('SQZMOM', 'outMomentum', outMomentum, guardOutLen);
-  requireLength('SQZMOM', 'outSqueeze', outSqueeze, guardOutLen);
+  requireOutput('SQZMOM', 'outMomentum', outMomentum, guardOutLen, Float64Array);
+  requireOutput('SQZMOM', 'outSqueeze', outSqueeze, guardOutLen, Int32Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
@@ -1233,8 +1233,8 @@ export function sqzmomOpenAndFill(
   const guardOutLen = openFillCount('SQZMOM openAndFill', inHigh.length, sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core));
   requireHistoryLength('SQZMOM openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('SQZMOM openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireLength('SQZMOM openAndFill', 'outMomentum', outMomentum, guardOutLen);
-  requireLength('SQZMOM openAndFill', 'outSqueeze', outSqueeze, guardOutLen);
+  requireOutput('SQZMOM openAndFill', 'outMomentum', outMomentum, guardOutLen, Float64Array);
+  requireOutput('SQZMOM openAndFill', 'outSqueeze', outSqueeze, guardOutLen, Int32Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);

@@ -16,7 +16,7 @@
  *  080926 MF,CC  Explicit no-smoothing signal at a signal period of 1.
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
@@ -483,9 +483,9 @@ export function macdfix(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('MACDFIX', 'inReal', inReal, guardInLen);
-  requireLength('MACDFIX', 'outMACD', outMACD, guardOutLen);
-  requireLength('MACDFIX', 'outMACDSignal', outMACDSignal, guardOutLen);
-  requireLength('MACDFIX', 'outMACDHist', outMACDHist, guardOutLen);
+  requireOutput('MACDFIX', 'outMACD', outMACD, guardOutLen, Float64Array);
+  requireOutput('MACDFIX', 'outMACDSignal', outMACDSignal, guardOutLen, Float64Array);
+  requireOutput('MACDFIX', 'outMACDHist', outMACDHist, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outMACD, inRealF64) || overlapsPartly(outMACDSignal, inRealF64) || overlapsPartly(outMACDHist, inRealF64) || overlaps(outMACD, outMACDSignal) || overlaps(outMACD, outMACDHist) || overlaps(outMACDSignal, outMACDHist)) {
     throw failure('MACDFIX', RetCode.BAD_PARAM);
@@ -1283,9 +1283,9 @@ export function macdfixOpenAndFill(
   requireArgument('MACDFIX openAndFill', 'inReal', inReal);
   requireHistory('MACDFIX openAndFill', inReal.length);
   const guardOutLen = openFillCount('MACDFIX openAndFill', inReal.length, macdfixLookback(optInSignalPeriod, core));
-  requireLength('MACDFIX openAndFill', 'outMACD', outMACD, guardOutLen);
-  requireLength('MACDFIX openAndFill', 'outMACDSignal', outMACDSignal, guardOutLen);
-  requireLength('MACDFIX openAndFill', 'outMACDHist', outMACDHist, guardOutLen);
+  requireOutput('MACDFIX openAndFill', 'outMACD', outMACD, guardOutLen, Float64Array);
+  requireOutput('MACDFIX openAndFill', 'outMACDSignal', outMACDSignal, guardOutLen, Float64Array);
+  requireOutput('MACDFIX openAndFill', 'outMACDHist', outMACDHist, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outMACD.buffer === inRealF64.buffer && outMACD.byteOffset === inRealF64.byteOffset) || (outMACDSignal.buffer === inRealF64.buffer && outMACDSignal.byteOffset === inRealF64.byteOffset) || (outMACDHist.buffer === inRealF64.buffer && outMACDHist.byteOffset === inRealF64.byteOffset) || (outMACD.buffer === outMACDSignal.buffer && outMACD.byteOffset === outMACDSignal.byteOffset) || (outMACD.buffer === outMACDHist.buffer && outMACD.byteOffset === outMACDHist.byteOffset) || (outMACDSignal.buffer === outMACDHist.buffer && outMACDSignal.byteOffset === outMACDHist.byteOffset)) {
     throw streamFailure('MACDFIX openAndFill', RetCode.BAD_PARAM);

@@ -15,7 +15,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireReal, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma, fmaSlow } from '../runtime/fma.ts';
@@ -352,7 +352,7 @@ export function swakBp(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('SWAK_BP', 'inReal', inReal, guardInLen);
-  requireLength('SWAK_BP', 'outReal', outReal, guardOutLen);
+  requireOutput('SWAK_BP', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('SWAK_BP', RetCode.BAD_PARAM);
@@ -881,7 +881,7 @@ export function swakBpOpenAndFill(
   requireArgument('SWAK_BP openAndFill', 'inReal', inReal);
   requireHistory('SWAK_BP openAndFill', inReal.length);
   const guardOutLen = openFillCount('SWAK_BP openAndFill', inReal.length, swakBpLookback(optInTimePeriod, optInDelta, core));
-  requireLength('SWAK_BP openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('SWAK_BP openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('SWAK_BP openAndFill', RetCode.BAD_PARAM);

@@ -11,7 +11,7 @@
  *  090807 MF     Initial Version
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -133,7 +133,7 @@ export function asin(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('ASIN', 'inReal', inReal, guardInLen);
-  requireLength('ASIN', 'outReal', outReal, guardOutLen);
+  requireOutput('ASIN', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('ASIN', RetCode.BAD_PARAM);
@@ -408,7 +408,7 @@ export function asinOpenAndFill(
   requireArgument('ASIN openAndFill', 'inReal', inReal);
   requireHistory('ASIN openAndFill', inReal.length);
   const guardOutLen = openFillCount('ASIN openAndFill', inReal.length, asinLookback(core));
-  requireLength('ASIN openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('ASIN openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('ASIN openAndFill', RetCode.BAD_PARAM);

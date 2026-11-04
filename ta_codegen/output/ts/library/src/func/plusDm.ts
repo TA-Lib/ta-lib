@@ -17,7 +17,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -356,7 +356,7 @@ export function plusDm(
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('PLUS_DM', 'inHigh', inHigh, guardInLen);
   requireLength('PLUS_DM', 'inLow', inLow, guardInLen);
-  requireLength('PLUS_DM', 'outReal', outReal, guardOutLen);
+  requireOutput('PLUS_DM', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if (overlapsPartly(outReal, inHighF64) || overlapsPartly(outReal, inLowF64)) {
@@ -1046,7 +1046,7 @@ export function plusDmOpenAndFill(
   requireArgument('PLUS_DM openAndFill', 'inLow', inLow);
   const guardOutLen = openFillCount('PLUS_DM openAndFill', inHigh.length, plusDmLookback(optInTimePeriod, core));
   requireHistoryLength('PLUS_DM openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireLength('PLUS_DM openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('PLUS_DM openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if ((outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) || (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset)) {

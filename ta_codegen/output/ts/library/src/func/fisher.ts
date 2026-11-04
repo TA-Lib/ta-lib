@@ -16,7 +16,7 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -354,8 +354,8 @@ export function fisher(
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('FISHER', 'inHigh', inHigh, guardInLen);
   requireLength('FISHER', 'inLow', inLow, guardInLen);
-  requireLength('FISHER', 'outFisher', outFisher, guardOutLen);
-  requireLength('FISHER', 'outTrigger', outTrigger, guardOutLen);
+  requireOutput('FISHER', 'outFisher', outFisher, guardOutLen, Float64Array);
+  requireOutput('FISHER', 'outTrigger', outTrigger, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if (overlapsPartly(outFisher, inHighF64) || overlapsPartly(outFisher, inLowF64) || overlapsPartly(outTrigger, inHighF64) || overlapsPartly(outTrigger, inLowF64) || overlaps(outFisher, outTrigger)) {
@@ -1109,8 +1109,8 @@ export function fisherOpenAndFill(
   requireArgument('FISHER openAndFill', 'inLow', inLow);
   const guardOutLen = openFillCount('FISHER openAndFill', inHigh.length, fisherLookback(optInTimePeriod, core));
   requireHistoryLength('FISHER openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireLength('FISHER openAndFill', 'outFisher', outFisher, guardOutLen);
-  requireLength('FISHER openAndFill', 'outTrigger', outTrigger, guardOutLen);
+  requireOutput('FISHER openAndFill', 'outFisher', outFisher, guardOutLen, Float64Array);
+  requireOutput('FISHER openAndFill', 'outTrigger', outTrigger, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if ((outFisher.buffer === inHighF64.buffer && outFisher.byteOffset === inHighF64.byteOffset) || (outFisher.buffer === inLowF64.buffer && outFisher.byteOffset === inLowF64.byteOffset) || (outTrigger.buffer === inHighF64.buffer && outTrigger.byteOffset === inHighF64.byteOffset) || (outTrigger.buffer === inLowF64.buffer && outTrigger.byteOffset === inLowF64.byteOffset) || (outFisher.buffer === outTrigger.buffer && outFisher.byteOffset === outTrigger.byteOffset)) {

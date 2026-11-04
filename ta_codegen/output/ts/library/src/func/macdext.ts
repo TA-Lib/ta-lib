@@ -17,7 +17,7 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -434,9 +434,9 @@ export function macdext(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('MACDEXT', 'inReal', inReal, guardInLen);
-  requireLength('MACDEXT', 'outMACD', outMACD, guardOutLen);
-  requireLength('MACDEXT', 'outMACDSignal', outMACDSignal, guardOutLen);
-  requireLength('MACDEXT', 'outMACDHist', outMACDHist, guardOutLen);
+  requireOutput('MACDEXT', 'outMACD', outMACD, guardOutLen, Float64Array);
+  requireOutput('MACDEXT', 'outMACDSignal', outMACDSignal, guardOutLen, Float64Array);
+  requireOutput('MACDEXT', 'outMACDHist', outMACDHist, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outMACD, inRealF64) || overlapsPartly(outMACDSignal, inRealF64) || overlapsPartly(outMACDHist, inRealF64) || overlaps(outMACD, outMACDSignal) || overlaps(outMACD, outMACDHist) || overlaps(outMACDSignal, outMACDHist)) {
     throw failure('MACDEXT', RetCode.BAD_PARAM);
@@ -1027,9 +1027,9 @@ export function macdextOpenAndFill(
   requireArgument('MACDEXT openAndFill', 'inReal', inReal);
   requireHistory('MACDEXT openAndFill', inReal.length);
   const guardOutLen = openFillCount('MACDEXT openAndFill', inReal.length, macdextLookback(optInFastPeriod, optInFastMAType as MAType, optInSlowPeriod, optInSlowMAType as MAType, optInSignalPeriod, optInSignalMAType as MAType, core));
-  requireLength('MACDEXT openAndFill', 'outMACD', outMACD, guardOutLen);
-  requireLength('MACDEXT openAndFill', 'outMACDSignal', outMACDSignal, guardOutLen);
-  requireLength('MACDEXT openAndFill', 'outMACDHist', outMACDHist, guardOutLen);
+  requireOutput('MACDEXT openAndFill', 'outMACD', outMACD, guardOutLen, Float64Array);
+  requireOutput('MACDEXT openAndFill', 'outMACDSignal', outMACDSignal, guardOutLen, Float64Array);
+  requireOutput('MACDEXT openAndFill', 'outMACDHist', outMACDHist, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outMACD.buffer === inRealF64.buffer && outMACD.byteOffset === inRealF64.byteOffset) || (outMACDSignal.buffer === inRealF64.buffer && outMACDSignal.byteOffset === inRealF64.byteOffset) || (outMACDHist.buffer === inRealF64.buffer && outMACDHist.byteOffset === inRealF64.byteOffset) || (outMACD.buffer === outMACDSignal.buffer && outMACD.byteOffset === outMACDSignal.byteOffset) || (outMACD.buffer === outMACDHist.buffer && outMACD.byteOffset === outMACDHist.byteOffset) || (outMACDSignal.buffer === outMACDHist.buffer && outMACDSignal.byteOffset === outMACDHist.byteOffset)) {
     throw streamFailure('MACDEXT openAndFill', RetCode.BAD_PARAM);

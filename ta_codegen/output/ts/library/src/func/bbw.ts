@@ -13,7 +13,7 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireReal, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -457,7 +457,7 @@ export function bbw(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('BBW', 'inReal', inReal, guardInLen);
-  requireLength('BBW', 'outReal', outReal, guardOutLen);
+  requireOutput('BBW', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('BBW', RetCode.BAD_PARAM);
@@ -929,7 +929,7 @@ export function bbwOpenAndFill(
   requireArgument('BBW openAndFill', 'inReal', inReal);
   requireHistory('BBW openAndFill', inReal.length);
   const guardOutLen = openFillCount('BBW openAndFill', inReal.length, bbwLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core));
-  requireLength('BBW openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('BBW openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('BBW openAndFill', RetCode.BAD_PARAM);

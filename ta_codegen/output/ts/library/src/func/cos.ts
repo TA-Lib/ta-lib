@@ -11,7 +11,7 @@
  *  090807 MF     Initial Version
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -130,7 +130,7 @@ export function cos(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('COS', 'inReal', inReal, guardInLen);
-  requireLength('COS', 'outReal', outReal, guardOutLen);
+  requireOutput('COS', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('COS', RetCode.BAD_PARAM);
@@ -406,7 +406,7 @@ export function cosOpenAndFill(
   requireArgument('COS openAndFill', 'inReal', inReal);
   requireHistory('COS openAndFill', inReal.length);
   const guardOutLen = openFillCount('COS openAndFill', inReal.length, cosLookback(core));
-  requireLength('COS openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('COS openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('COS openAndFill', RetCode.BAD_PARAM);

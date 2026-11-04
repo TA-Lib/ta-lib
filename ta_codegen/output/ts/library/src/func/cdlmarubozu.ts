@@ -15,7 +15,7 @@
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -229,7 +229,7 @@ export function cdlmarubozu(
   requireLength('CDLMARUBOZU', 'inHigh', inHigh, guardInLen);
   requireLength('CDLMARUBOZU', 'inLow', inLow, guardInLen);
   requireLength('CDLMARUBOZU', 'inClose', inClose, guardInLen);
-  requireLength('CDLMARUBOZU', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLMARUBOZU', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -751,7 +751,7 @@ export function cdlmarubozuOpenAndFill(
   requireHistoryLength('CDLMARUBOZU openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDLMARUBOZU openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDLMARUBOZU openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDLMARUBOZU openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDLMARUBOZU openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

@@ -14,7 +14,7 @@
  *  112605 MF   Fix outBegIdx when startIdx != 0
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
@@ -149,7 +149,7 @@ export function wclprice(
   requireLength('WCLPRICE', 'inHigh', inHigh, guardInLen);
   requireLength('WCLPRICE', 'inLow', inLow, guardInLen);
   requireLength('WCLPRICE', 'inClose', inClose, guardInLen);
-  requireLength('WCLPRICE', 'outReal', outReal, guardOutLen);
+  requireOutput('WCLPRICE', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
@@ -471,7 +471,7 @@ export function wclpriceOpenAndFill(
   const guardOutLen = openFillCount('WCLPRICE openAndFill', inHigh.length, wclpriceLookback(core));
   requireHistoryLength('WCLPRICE openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('WCLPRICE openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireLength('WCLPRICE openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('WCLPRICE openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);

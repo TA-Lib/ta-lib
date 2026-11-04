@@ -11,7 +11,7 @@
  *  081226 KL   Initial version.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -184,7 +184,7 @@ export function marketfi(
   requireLength('MARKETFI', 'inHigh', inHigh, guardInLen);
   requireLength('MARKETFI', 'inLow', inLow, guardInLen);
   requireLength('MARKETFI', 'inVolume', inVolume, guardInLen);
-  requireLength('MARKETFI', 'outReal', outReal, guardOutLen);
+  requireOutput('MARKETFI', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inVolumeF64 = float64(inVolume);
@@ -562,7 +562,7 @@ export function marketfiOpenAndFill(
   const guardOutLen = openFillCount('MARKETFI openAndFill', inHigh.length, marketfiLookback(core));
   requireHistoryLength('MARKETFI openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('MARKETFI openAndFill', 'inVolume', inVolume.length, inHigh.length);
-  requireLength('MARKETFI openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('MARKETFI openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inVolumeF64 = float64(inVolume);

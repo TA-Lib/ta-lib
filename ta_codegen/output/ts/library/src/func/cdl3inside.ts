@@ -16,7 +16,7 @@
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -247,7 +247,7 @@ export function cdl3inside(
   requireLength('CDL3INSIDE', 'inHigh', inHigh, guardInLen);
   requireLength('CDL3INSIDE', 'inLow', inLow, guardInLen);
   requireLength('CDL3INSIDE', 'inClose', inClose, guardInLen);
-  requireLength('CDL3INSIDE', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDL3INSIDE', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -842,7 +842,7 @@ export function cdl3insideOpenAndFill(
   requireHistoryLength('CDL3INSIDE openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDL3INSIDE openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDL3INSIDE openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDL3INSIDE openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDL3INSIDE openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

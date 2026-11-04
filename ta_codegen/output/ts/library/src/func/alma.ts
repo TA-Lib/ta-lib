@@ -16,7 +16,7 @@
  *  092926 MF,CC  First version (issue #475).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireReal, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -321,7 +321,7 @@ export function alma(
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('ALMA', 'inReal', inReal, guardInLen);
-  requireLength('ALMA', 'outReal', outReal, guardOutLen);
+  requireOutput('ALMA', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
     throw failure('ALMA', RetCode.BAD_PARAM);
@@ -827,7 +827,7 @@ export function almaOpenAndFill(
   requireArgument('ALMA openAndFill', 'inReal', inReal);
   requireHistory('ALMA openAndFill', inReal.length);
   const guardOutLen = openFillCount('ALMA openAndFill', inReal.length, almaLookback(optInTimePeriod, optInSigma, optInOffset, core));
-  requireLength('ALMA openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('ALMA openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
     throw streamFailure('ALMA openAndFill', RetCode.BAD_PARAM);

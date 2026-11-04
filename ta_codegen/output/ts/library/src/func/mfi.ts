@@ -29,7 +29,7 @@
  *  102326 MF,CC #554 rare reset.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -358,7 +358,7 @@ export function mfi(
   requireLength('MFI', 'inLow', inLow, guardInLen);
   requireLength('MFI', 'inClose', inClose, guardInLen);
   requireLength('MFI', 'inVolume', inVolume, guardInLen);
-  requireLength('MFI', 'outReal', outReal, guardOutLen);
+  requireOutput('MFI', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
@@ -991,7 +991,7 @@ export function mfiOpenAndFill(
   requireHistoryLength('MFI openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('MFI openAndFill', 'inClose', inClose.length, inHigh.length);
   requireHistoryLength('MFI openAndFill', 'inVolume', inVolume.length, inHigh.length);
-  requireLength('MFI openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('MFI openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);

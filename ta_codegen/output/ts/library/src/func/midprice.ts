@@ -19,7 +19,7 @@
  *                output.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -325,7 +325,7 @@ export function midprice(
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('MIDPRICE', 'inHigh', inHigh, guardInLen);
   requireLength('MIDPRICE', 'inLow', inLow, guardInLen);
-  requireLength('MIDPRICE', 'outReal', outReal, guardOutLen);
+  requireOutput('MIDPRICE', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if (overlapsPartly(outReal, inHighF64) || overlapsPartly(outReal, inLowF64)) {
@@ -888,7 +888,7 @@ export function midpriceOpenAndFill(
   requireArgument('MIDPRICE openAndFill', 'inLow', inLow);
   const guardOutLen = openFillCount('MIDPRICE openAndFill', inHigh.length, midpriceLookback(optInTimePeriod, core));
   requireHistoryLength('MIDPRICE openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireLength('MIDPRICE openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('MIDPRICE openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if ((outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) || (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset)) {

@@ -14,7 +14,7 @@
  *  112605 MF   Fix outBegIdx when startIdx != 0
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -158,7 +158,7 @@ export function avgprice(
   requireLength('AVGPRICE', 'inHigh', inHigh, guardInLen);
   requireLength('AVGPRICE', 'inLow', inLow, guardInLen);
   requireLength('AVGPRICE', 'inClose', inClose, guardInLen);
-  requireLength('AVGPRICE', 'outReal', outReal, guardOutLen);
+  requireOutput('AVGPRICE', 'outReal', outReal, guardOutLen, Float64Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -501,7 +501,7 @@ export function avgpriceOpenAndFill(
   requireHistoryLength('AVGPRICE openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('AVGPRICE openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('AVGPRICE openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('AVGPRICE openAndFill', 'outReal', outReal, guardOutLen);
+  requireOutput('AVGPRICE openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

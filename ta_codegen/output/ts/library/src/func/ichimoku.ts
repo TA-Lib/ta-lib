@@ -14,7 +14,7 @@
  *  101126 MF,CC  Two scratch buffers; Senkou B is written in place (#490).
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -330,10 +330,10 @@ export function ichimoku(
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('ICHIMOKU', 'inHigh', inHigh, guardInLen);
   requireLength('ICHIMOKU', 'inLow', inLow, guardInLen);
-  requireLength('ICHIMOKU', 'outTenkanSen', outTenkanSen, guardOutLen);
-  requireLength('ICHIMOKU', 'outKijunSen', outKijunSen, guardOutLen);
-  requireLength('ICHIMOKU', 'outSenkouSpanA', outSenkouSpanA, guardOutLen);
-  requireLength('ICHIMOKU', 'outSenkouSpanB', outSenkouSpanB, guardOutLen);
+  requireOutput('ICHIMOKU', 'outTenkanSen', outTenkanSen, guardOutLen, Float64Array);
+  requireOutput('ICHIMOKU', 'outKijunSen', outKijunSen, guardOutLen, Float64Array);
+  requireOutput('ICHIMOKU', 'outSenkouSpanA', outSenkouSpanA, guardOutLen, Float64Array);
+  requireOutput('ICHIMOKU', 'outSenkouSpanB', outSenkouSpanB, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if (overlapsPartly(outTenkanSen, inHighF64) || overlapsPartly(outTenkanSen, inLowF64) || overlapsPartly(outKijunSen, inHighF64) || overlapsPartly(outKijunSen, inLowF64) || overlapsPartly(outSenkouSpanA, inHighF64) || overlapsPartly(outSenkouSpanA, inLowF64) || overlapsPartly(outSenkouSpanB, inHighF64) || overlapsPartly(outSenkouSpanB, inLowF64) || overlaps(outTenkanSen, outKijunSen) || overlaps(outTenkanSen, outSenkouSpanA) || overlaps(outTenkanSen, outSenkouSpanB) || overlaps(outKijunSen, outSenkouSpanA) || overlaps(outKijunSen, outSenkouSpanB) || overlaps(outSenkouSpanA, outSenkouSpanB)) {
@@ -857,10 +857,10 @@ export function ichimokuOpenAndFill(
   requireArgument('ICHIMOKU openAndFill', 'inLow', inLow);
   const guardOutLen = openFillCount('ICHIMOKU openAndFill', inHigh.length, ichimokuLookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, core));
   requireHistoryLength('ICHIMOKU openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireLength('ICHIMOKU openAndFill', 'outTenkanSen', outTenkanSen, guardOutLen);
-  requireLength('ICHIMOKU openAndFill', 'outKijunSen', outKijunSen, guardOutLen);
-  requireLength('ICHIMOKU openAndFill', 'outSenkouSpanA', outSenkouSpanA, guardOutLen);
-  requireLength('ICHIMOKU openAndFill', 'outSenkouSpanB', outSenkouSpanB, guardOutLen);
+  requireOutput('ICHIMOKU openAndFill', 'outTenkanSen', outTenkanSen, guardOutLen, Float64Array);
+  requireOutput('ICHIMOKU openAndFill', 'outKijunSen', outKijunSen, guardOutLen, Float64Array);
+  requireOutput('ICHIMOKU openAndFill', 'outSenkouSpanA', outSenkouSpanA, guardOutLen, Float64Array);
+  requireOutput('ICHIMOKU openAndFill', 'outSenkouSpanB', outSenkouSpanB, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if ((outTenkanSen.buffer === inHighF64.buffer && outTenkanSen.byteOffset === inHighF64.byteOffset) || (outTenkanSen.buffer === inLowF64.buffer && outTenkanSen.byteOffset === inLowF64.byteOffset) || (outKijunSen.buffer === inHighF64.buffer && outKijunSen.byteOffset === inHighF64.byteOffset) || (outKijunSen.buffer === inLowF64.buffer && outKijunSen.byteOffset === inLowF64.byteOffset) || (outSenkouSpanA.buffer === inHighF64.buffer && outSenkouSpanA.byteOffset === inHighF64.byteOffset) || (outSenkouSpanA.buffer === inLowF64.buffer && outSenkouSpanA.byteOffset === inLowF64.byteOffset) || (outSenkouSpanB.buffer === inHighF64.buffer && outSenkouSpanB.byteOffset === inHighF64.byteOffset) || (outSenkouSpanB.buffer === inLowF64.buffer && outSenkouSpanB.byteOffset === inLowF64.byteOffset) || (outTenkanSen.buffer === outKijunSen.buffer && outTenkanSen.byteOffset === outKijunSen.byteOffset) || (outTenkanSen.buffer === outSenkouSpanA.buffer && outTenkanSen.byteOffset === outSenkouSpanA.byteOffset) || (outTenkanSen.buffer === outSenkouSpanB.buffer && outTenkanSen.byteOffset === outSenkouSpanB.byteOffset) || (outKijunSen.buffer === outSenkouSpanA.buffer && outKijunSen.byteOffset === outSenkouSpanA.byteOffset) || (outKijunSen.buffer === outSenkouSpanB.buffer && outKijunSen.byteOffset === outSenkouSpanB.byteOffset) || (outSenkouSpanA.buffer === outSenkouSpanB.buffer && outSenkouSpanA.byteOffset === outSenkouSpanB.byteOffset)) {

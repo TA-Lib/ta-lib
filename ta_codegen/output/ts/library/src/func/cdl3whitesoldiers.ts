@@ -16,7 +16,7 @@
  *  103126 MF,CC  Pre-check the cheap tests in an outer if, the candle averages inside
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, streamFailure } from '../runtime/checks.ts';
+import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -298,7 +298,7 @@ export function cdl3whitesoldiers(
   requireLength('CDL3WHITESOLDIERS', 'inHigh', inHigh, guardInLen);
   requireLength('CDL3WHITESOLDIERS', 'inLow', inLow, guardInLen);
   requireLength('CDL3WHITESOLDIERS', 'inClose', inClose, guardInLen);
-  requireLength('CDL3WHITESOLDIERS', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDL3WHITESOLDIERS', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
@@ -1069,7 +1069,7 @@ export function cdl3whitesoldiersOpenAndFill(
   requireHistoryLength('CDL3WHITESOLDIERS openAndFill', 'inHigh', inHigh.length, inOpen.length);
   requireHistoryLength('CDL3WHITESOLDIERS openAndFill', 'inLow', inLow.length, inOpen.length);
   requireHistoryLength('CDL3WHITESOLDIERS openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireLength('CDL3WHITESOLDIERS openAndFill', 'outInteger', outInteger, guardOutLen);
+  requireOutput('CDL3WHITESOLDIERS openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inOpenF64 = float64(inOpen);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);

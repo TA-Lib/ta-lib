@@ -14,7 +14,7 @@
  *  101126 MF,CC  The extension step is a select; the pivot index is derived (#546).
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireReal, streamFailure } from '../runtime/checks.ts';
+import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -346,9 +346,9 @@ export function zigzag(
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
   requireLength('ZIGZAG', 'inHigh', inHigh, guardInLen);
   requireLength('ZIGZAG', 'inLow', inLow, guardInLen);
-  requireLength('ZIGZAG', 'outZigZag', outZigZag, guardOutLen);
-  requireLength('ZIGZAG', 'outTrend', outTrend, guardOutLen);
-  requireLength('ZIGZAG', 'outPivotIdx', outPivotIdx, guardOutLen);
+  requireOutput('ZIGZAG', 'outZigZag', outZigZag, guardOutLen, Float64Array);
+  requireOutput('ZIGZAG', 'outTrend', outTrend, guardOutLen, Int32Array);
+  requireOutput('ZIGZAG', 'outPivotIdx', outPivotIdx, guardOutLen, Int32Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if (overlapsPartly(outZigZag, inHighF64) || overlapsPartly(outZigZag, inLowF64) || overlaps(outTrend, inHighF64) || overlaps(outTrend, inLowF64) || overlaps(outPivotIdx, inHighF64) || overlaps(outPivotIdx, inLowF64) || overlaps(outZigZag, outTrend) || overlaps(outZigZag, outPivotIdx) || overlaps(outTrend, outPivotIdx)) {
@@ -942,9 +942,9 @@ export function zigzagOpenAndFill(
   requireArgument('ZIGZAG openAndFill', 'inLow', inLow);
   const guardOutLen = openFillCount('ZIGZAG openAndFill', inHigh.length, zigzagLookback(optInSensitivity, optInMinTrendLength, core));
   requireHistoryLength('ZIGZAG openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireLength('ZIGZAG openAndFill', 'outZigZag', outZigZag, guardOutLen);
-  requireLength('ZIGZAG openAndFill', 'outTrend', outTrend, guardOutLen);
-  requireLength('ZIGZAG openAndFill', 'outPivotIdx', outPivotIdx, guardOutLen);
+  requireOutput('ZIGZAG openAndFill', 'outZigZag', outZigZag, guardOutLen, Float64Array);
+  requireOutput('ZIGZAG openAndFill', 'outTrend', outTrend, guardOutLen, Int32Array);
+  requireOutput('ZIGZAG openAndFill', 'outPivotIdx', outPivotIdx, guardOutLen, Int32Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   if ((outZigZag.buffer === inHighF64.buffer && outZigZag.byteOffset === inHighF64.byteOffset) || (outZigZag.buffer === inLowF64.buffer && outZigZag.byteOffset === inLowF64.byteOffset) || (outTrend.buffer === inHighF64.buffer && outTrend.byteOffset === inHighF64.byteOffset) || (outTrend.buffer === inLowF64.buffer && outTrend.byteOffset === inLowF64.byteOffset) || (outPivotIdx.buffer === inHighF64.buffer && outPivotIdx.byteOffset === inHighF64.byteOffset) || (outPivotIdx.buffer === inLowF64.buffer && outPivotIdx.byteOffset === inLowF64.byteOffset) || (outZigZag.buffer === outTrend.buffer && outZigZag.byteOffset === outTrend.byteOffset) || (outZigZag.buffer === outPivotIdx.buffer && outZigZag.byteOffset === outPivotIdx.byteOffset) || (outTrend.buffer === outPivotIdx.buffer && outTrend.byteOffset === outPivotIdx.byteOffset)) {

@@ -12,7 +12,7 @@
  *  083126 MF,CC  First version (issue #273).
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireReal, streamFailure } from '../runtime/checks.ts';
+import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -319,9 +319,9 @@ export function kc(
   requireLength('KC', 'inHigh', inHigh, guardInLen);
   requireLength('KC', 'inLow', inLow, guardInLen);
   requireLength('KC', 'inClose', inClose, guardInLen);
-  requireLength('KC', 'outRealUpperBand', outRealUpperBand, guardOutLen);
-  requireLength('KC', 'outRealMiddleBand', outRealMiddleBand, guardOutLen);
-  requireLength('KC', 'outRealLowerBand', outRealLowerBand, guardOutLen);
+  requireOutput('KC', 'outRealUpperBand', outRealUpperBand, guardOutLen, Float64Array);
+  requireOutput('KC', 'outRealMiddleBand', outRealMiddleBand, guardOutLen, Float64Array);
+  requireOutput('KC', 'outRealLowerBand', outRealLowerBand, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
@@ -865,9 +865,9 @@ export function kcOpenAndFill(
   const guardOutLen = openFillCount('KC openAndFill', inHigh.length, kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev, core));
   requireHistoryLength('KC openAndFill', 'inLow', inLow.length, inHigh.length);
   requireHistoryLength('KC openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireLength('KC openAndFill', 'outRealUpperBand', outRealUpperBand, guardOutLen);
-  requireLength('KC openAndFill', 'outRealMiddleBand', outRealMiddleBand, guardOutLen);
-  requireLength('KC openAndFill', 'outRealLowerBand', outRealLowerBand, guardOutLen);
+  requireOutput('KC openAndFill', 'outRealUpperBand', outRealUpperBand, guardOutLen, Float64Array);
+  requireOutput('KC openAndFill', 'outRealMiddleBand', outRealMiddleBand, guardOutLen, Float64Array);
+  requireOutput('KC openAndFill', 'outRealLowerBand', outRealLowerBand, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
