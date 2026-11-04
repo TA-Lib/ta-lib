@@ -217,13 +217,16 @@ def latest_npm_version() -> str:
         print(f"Warning: could not query npm ({error}).")
         return None
     try:
-        live = [v for v, meta in json.loads(body).get("versions", {}).items()
-                if re.fullmatch(r'\d+\.\d+\.\d+', v) and v not in FOREIGN_NPM_VERSIONS
-                and not meta.get("deprecated")]
+        ours = {v: meta for v, meta in json.loads(body).get("versions", {}).items()
+                if re.fullmatch(r'\d+\.\d+\.\d+', v) and v not in FOREIGN_NPM_VERSIONS}
     except Exception as e:
         print(f"Warning: the npm packument is not readable JSON ({e}).")
         return None
+    live = [v for v, meta in ours.items() if not meta.get("deprecated")]
     if not live:
+        if ours:
+            print("Warning: every ta-lib version on npm from this repository is deprecated.")
+            return None
         return NOT_PUBLISHED
     return max(live, key=lambda v: tuple(int(x) for x in v.split('.')))
 

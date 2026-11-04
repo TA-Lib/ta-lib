@@ -33,6 +33,11 @@ class LatestNpmVersion(unittest.TestCase):
     def test_unreachable_registry_is_unknown(self):
         self.assertIsNone(self.lookup((None, None, "timed out")))
 
+    def test_every_one_of_ours_deprecated_is_unknown(self):
+        foreign = {v: {"version": v} for v in ("0.9.0", "0.10.0", "0.11.0")}
+        body = packument({**foreign, "0.8.3": {"deprecated": "broken"}})
+        self.assertIsNone(self.lookup((body, 200, None)))
+
     def test_newest_undeprecated_version_wins(self):
         body = packument({"0.11.0": {}, "0.8.4": {}, "0.8.10": {}, "0.9.1": {"deprecated": "broken"}})
         self.assertEqual(self.lookup((body, 200, None)), "0.8.10")
