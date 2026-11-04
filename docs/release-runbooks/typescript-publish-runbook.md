@@ -39,7 +39,9 @@ can still be undone comes before the one that cannot.
 **Never deprecate our newest version while it is `latest`.** With the earlier package's three
 deprecated as well, npm would then send a bare `npm install ta-lib` to its 0.11.0. A fix waits
 for the next Core release (never above the Core); once `npm view ta-lib dist-tags.latest` names
-it, deprecate the broken version.
+it, deprecate the broken version. Even with ours `latest`, npm skips it for a Node below this
+package's `engines` floor, and a bare `npm install ta-lib` there gets the earlier package's
+0.11.0, which has no floor; its deprecation message points to `ta-lib@latest`.
 
 ## Credentials
 
@@ -144,8 +146,8 @@ release as shipped.
 
 ## Versions 0.9.0, 0.10.0 and 0.11.0
 
-`ta-lib` 0.9.0, 0.10.0 and 0.11.0 on npm belong to an unrelated earlier package that used the
-same name. npm never accepts a version it has already seen, and every backend ships the one
-`VERSION`, so no release carries those three: `scripts/sync.py` and `check_versions` refuse them,
-and the 0.9 line starts at 0.9.1. They are deprecated; leave
-them on the registry: the package has public dependents, so npm refuses to unpublish them.
+`ta-lib` 0.9.0, 0.10.0 and 0.11.0 on npm belong to an earlier package by another author that
+used the same name. npm never accepts a version it has already seen, and every backend ships the
+one `VERSION`, so no release carries those three: `scripts/sync.py` and `check_versions` refuse
+them, and the 0.9 line starts at 0.9.1. They are deprecated; leave them on the registry: the
+package has public dependents, so npm refuses to unpublish them.
