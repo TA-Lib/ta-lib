@@ -263,9 +263,13 @@ export class Cdlxsidegap3methodsStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): Cdlxsidegap3methodsStream {
+    return new Cdlxsidegap3methodsStream(core);
   }
 
   /**
@@ -502,7 +506,7 @@ export function cdlxsidegap3methodsOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): Cdlxsidegap3methodsStream {
-  const sp = new Cdlxsidegap3methodsStream(core);
+  const sp = Cdlxsidegap3methodsStream.of(core);
   const retCode = cdlxsidegap3methodsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -524,7 +528,7 @@ export function cdlxsidegap3methodsOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): Cdlxsidegap3methodsStream {
-  const sp = new Cdlxsidegap3methodsStream(core);
+  const sp = Cdlxsidegap3methodsStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

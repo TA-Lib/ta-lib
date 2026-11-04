@@ -570,7 +570,8 @@ fn emit_handle_class(o: &mut String, em: &Em, fields: &[Field], members: &Member
     o.push_str(&members.decls);
     let _ = writeln!(o, "  /** @internal */\n  outRangeBegIdx: number = 0;");
     let _ = writeln!(o, "  /** @internal */\n  outRangeCount: number = 0;");
-    let _ = writeln!(o, "\n  /** @internal */\n  constructor(core: Core) {{\n    this.core = core;\n  }}");
+    let _ = writeln!(o, "\n  private constructor(core: Core) {{\n    this.core = core;\n  }}");
+    let _ = writeln!(o, "\n  /** @internal */\n  static of(core: Core): {class} {{\n    return new {class}(core);\n  }}");
     let _ = writeln!(
         o,
         "\n{}  outRange(): OutRange {{\n    return new OutRange(this.outRangeBegIdx, this.outRangeCount);\n  }}",
@@ -1469,7 +1470,7 @@ fn emit_open_internal_seam(o: &mut String, em: &Em, merged: bool) {
     sig.push("startIdx: number".to_string());
     sig.extend(opt_sig(func));
     let _ = writeln!(o, "\n/** @internal */\nexport function {base}OpenInternal(\n  {},\n): {class} {{", sig.join(",\n  "));
-    let _ = writeln!(o, "  const sp = new {class}(core);");
+    let _ = writeln!(o, "  const sp = {class}.of(core);");
     let mut args: Vec<String> = vec!["sp".to_string()];
     args.extend(in_fwd.iter().cloned());
     args.push("startIdx".to_string());
@@ -1568,7 +1569,7 @@ fn emit_open_wrappers(o: &mut String, em: &Em, merged: bool) {
         args.extend(func.outputs.iter().map(|out| out.name.clone()));
         let _ = writeln!(o, "  return {base}OpenAndFillInternal(core, {});", args.join(", "));
     } else {
-        let _ = writeln!(o, "  const sp = new {class}(core);");
+        let _ = writeln!(o, "  const sp = {class}.of(core);");
         let _ = writeln!(o, "  const outBegIdx = new MInteger();\n  const outNBElement = new MInteger();");
         let mut fwd: Vec<String> = vec!["sp".to_string()];
         fwd.extend(inputs.iter().map(|i| format!("{i}F64")));
@@ -1597,7 +1598,7 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, em: &Em, merged: bool) {
         sig.push(format!("{}: {}", out.name, arr_ty(out_ctype(func, &out.name))));
     }
     let _ = writeln!(o, "\n/** @internal */\nexport function {base}OpenAndFillInternal(\n  {},\n): {class} {{", sig.join(",\n  "));
-    let _ = writeln!(o, "  const sp = new {class}(core);");
+    let _ = writeln!(o, "  const sp = {class}.of(core);");
     let mut args: Vec<String> = vec!["sp".to_string()];
     args.extend(streaming::input_array_names(func));
     args.push("startIdx".to_string());

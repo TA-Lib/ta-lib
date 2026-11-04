@@ -571,9 +571,13 @@ export class SqzmomStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): SqzmomStream {
+    return new SqzmomStream(core);
   }
 
   /**
@@ -1020,7 +1024,7 @@ export function sqzmomOpenAndFillInternal(
   outMomentum: Float64Array,
   outSqueeze: Int32Array,
 ): SqzmomStream {
-  const sp = new SqzmomStream(core);
+  const sp = SqzmomStream.of(core);
   const retCode = sqzmomOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1047,7 +1051,7 @@ export function sqzmomOpenInternal(
   optInFactorNormal: number,
   optInFactorNarrow: number,
 ): SqzmomStream {
-  const sp = new SqzmomStream(core);
+  const sp = SqzmomStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outMomentum = new Float64Array(1);

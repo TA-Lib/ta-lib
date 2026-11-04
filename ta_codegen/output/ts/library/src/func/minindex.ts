@@ -268,9 +268,13 @@ export class MinindexStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MinindexStream {
+    return new MinindexStream(core);
   }
 
   /**
@@ -533,7 +537,7 @@ export function minindexOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): MinindexStream {
-  const sp = new MinindexStream(core);
+  const sp = MinindexStream.of(core);
   const retCode = minindexOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -553,7 +557,7 @@ export function minindexOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): MinindexStream {
-  const sp = new MinindexStream(core);
+  const sp = MinindexStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

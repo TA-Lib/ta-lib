@@ -226,9 +226,13 @@ export class AvgdevStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): AvgdevStream {
+    return new AvgdevStream(core);
   }
 
   /**
@@ -437,7 +441,7 @@ export function avgdevOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): AvgdevStream {
-  const sp = new AvgdevStream(core);
+  const sp = AvgdevStream.of(core);
   const retCode = avgdevOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -457,7 +461,7 @@ export function avgdevOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): AvgdevStream {
-  const sp = new AvgdevStream(core);
+  const sp = AvgdevStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

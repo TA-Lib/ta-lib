@@ -329,9 +329,13 @@ export class EriStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): EriStream {
+    return new EriStream(core);
   }
 
   /**
@@ -689,7 +693,7 @@ export function eriOpenAndFillInternal(
   outBullPower: Float64Array,
   outBearPower: Float64Array,
 ): EriStream {
-  const sp = new EriStream(core);
+  const sp = EriStream.of(core);
   const retCode = eriOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -711,7 +715,7 @@ export function eriOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): EriStream {
-  const sp = new EriStream(core);
+  const sp = EriStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outBullPower = new Float64Array(1);

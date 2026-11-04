@@ -568,9 +568,13 @@ export class StochStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): StochStream {
+    return new StochStream(core);
   }
 
   /**
@@ -1151,7 +1155,7 @@ export function stochOpenAndFillInternal(
   outSlowK: Float64Array,
   outSlowD: Float64Array,
 ): StochStream {
-  const sp = new StochStream(core);
+  const sp = StochStream.of(core);
   const retCode = stochOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1177,7 +1181,7 @@ export function stochOpenInternal(
   optInSlowD_Period: number,
   optInSlowD_MAType: number,
 ): StochStream {
-  const sp = new StochStream(core);
+  const sp = StochStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outSlowK = new Float64Array(1);

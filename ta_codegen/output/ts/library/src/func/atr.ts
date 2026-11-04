@@ -366,9 +366,13 @@ export class AtrStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): AtrStream {
+    return new AtrStream(core);
   }
 
   /**
@@ -707,7 +711,7 @@ export function atrOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): AtrStream {
-  const sp = new AtrStream(core);
+  const sp = AtrStream.of(core);
   const retCode = atrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -729,7 +733,7 @@ export function atrOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): AtrStream {
-  const sp = new AtrStream(core);
+  const sp = AtrStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

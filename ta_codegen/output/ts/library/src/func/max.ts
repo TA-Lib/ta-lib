@@ -327,9 +327,13 @@ export class MaxStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MaxStream {
+    return new MaxStream(core);
   }
 
   /**
@@ -602,7 +606,7 @@ export function maxOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): MaxStream {
-  const sp = new MaxStream(core);
+  const sp = MaxStream.of(core);
   const retCode = maxOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -622,7 +626,7 @@ export function maxOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): MaxStream {
-  const sp = new MaxStream(core);
+  const sp = MaxStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

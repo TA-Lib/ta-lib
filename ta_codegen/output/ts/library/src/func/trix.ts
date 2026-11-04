@@ -495,9 +495,13 @@ export class TrixStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): TrixStream {
+    return new TrixStream(core);
   }
 
   /**
@@ -1026,7 +1030,7 @@ export function trixOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): TrixStream {
-  const sp = new TrixStream(core);
+  const sp = TrixStream.of(core);
   const retCode = trixOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1046,7 +1050,7 @@ export function trixOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): TrixStream {
-  const sp = new TrixStream(core);
+  const sp = TrixStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

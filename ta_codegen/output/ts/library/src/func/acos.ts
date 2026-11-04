@@ -166,9 +166,13 @@ export class AcosStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): AcosStream {
+    return new AcosStream(core);
   }
 
   /**
@@ -298,7 +302,7 @@ export function acosOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): AcosStream {
-  const sp = new AcosStream(core);
+  const sp = AcosStream.of(core);
   const retCode = acosOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -317,7 +321,7 @@ export function acosOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): AcosStream {
-  const sp = new AcosStream(core);
+  const sp = AcosStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

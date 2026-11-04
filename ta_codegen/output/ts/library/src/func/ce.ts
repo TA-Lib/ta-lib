@@ -536,9 +536,13 @@ export class CeStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CeStream {
+    return new CeStream(core);
   }
 
   /**
@@ -1154,7 +1158,7 @@ export function ceOpenAndFillInternal(
   outRealLong: Float64Array,
   outRealShort: Float64Array,
 ): CeStream {
-  const sp = new CeStream(core);
+  const sp = CeStream.of(core);
   const retCode = ceOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outRealLong, outRealShort, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1177,7 +1181,7 @@ export function ceOpenInternal(
   optInTimePeriod: number,
   optInMultiplier: number,
 ): CeStream {
-  const sp = new CeStream(core);
+  const sp = CeStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outRealLong = new Float64Array(1);

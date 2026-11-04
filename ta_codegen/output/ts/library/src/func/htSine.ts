@@ -834,9 +834,13 @@ export class HtSineStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): HtSineStream {
+    return new HtSineStream(core);
   }
 
   /**
@@ -2375,7 +2379,7 @@ export function htSineOpenAndFillInternal(
   outSine: Float64Array,
   outLeadSine: Float64Array,
 ): HtSineStream {
-  const sp = new HtSineStream(core);
+  const sp = HtSineStream.of(core);
   const retCode = htSineOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outSine, outLeadSine, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -2394,7 +2398,7 @@ export function htSineOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): HtSineStream {
-  const sp = new HtSineStream(core);
+  const sp = HtSineStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outSine = new Float64Array(1);

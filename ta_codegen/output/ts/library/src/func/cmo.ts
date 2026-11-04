@@ -317,9 +317,13 @@ export class CmoStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CmoStream {
+    return new CmoStream(core);
   }
 
   /**
@@ -603,7 +607,7 @@ export function cmoOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): CmoStream {
-  const sp = new CmoStream(core);
+  const sp = CmoStream.of(core);
   const retCode = cmoOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -623,7 +627,7 @@ export function cmoOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): CmoStream {
-  const sp = new CmoStream(core);
+  const sp = CmoStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

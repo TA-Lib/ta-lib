@@ -369,9 +369,13 @@ export class MidpointStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MidpointStream {
+    return new MidpointStream(core);
   }
 
   /**
@@ -719,7 +723,7 @@ export function midpointOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): MidpointStream {
-  const sp = new MidpointStream(core);
+  const sp = MidpointStream.of(core);
   const retCode = midpointOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -739,7 +743,7 @@ export function midpointOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): MidpointStream {
-  const sp = new MidpointStream(core);
+  const sp = MidpointStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

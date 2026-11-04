@@ -330,9 +330,13 @@ export class CdlgapsidesidewhiteStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlgapsidesidewhiteStream {
+    return new CdlgapsidesidewhiteStream(core);
   }
 
   /**
@@ -681,7 +685,7 @@ export function cdlgapsidesidewhiteOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlgapsidesidewhiteStream {
-  const sp = new CdlgapsidesidewhiteStream(core);
+  const sp = CdlgapsidesidewhiteStream.of(core);
   const retCode = cdlgapsidesidewhiteOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -703,7 +707,7 @@ export function cdlgapsidesidewhiteOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlgapsidesidewhiteStream {
-  const sp = new CdlgapsidesidewhiteStream(core);
+  const sp = CdlgapsidesidewhiteStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

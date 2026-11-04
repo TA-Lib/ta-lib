@@ -372,9 +372,13 @@ export class Cdlrisefall3methodsStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): Cdlrisefall3methodsStream {
+    return new Cdlrisefall3methodsStream(core);
   }
 
   /**
@@ -792,7 +796,7 @@ export function cdlrisefall3methodsOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): Cdlrisefall3methodsStream {
-  const sp = new Cdlrisefall3methodsStream(core);
+  const sp = Cdlrisefall3methodsStream.of(core);
   const retCode = cdlrisefall3methodsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -814,7 +818,7 @@ export function cdlrisefall3methodsOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): Cdlrisefall3methodsStream {
-  const sp = new Cdlrisefall3methodsStream(core);
+  const sp = Cdlrisefall3methodsStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

@@ -354,9 +354,13 @@ export class SwakGaussStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): SwakGaussStream {
+    return new SwakGaussStream(core);
   }
 
   /**
@@ -654,7 +658,7 @@ export function swakGaussOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): SwakGaussStream {
-  const sp = new SwakGaussStream(core);
+  const sp = SwakGaussStream.of(core);
   const retCode = swakGaussOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -674,7 +678,7 @@ export function swakGaussOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): SwakGaussStream {
-  const sp = new SwakGaussStream(core);
+  const sp = SwakGaussStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

@@ -373,9 +373,13 @@ export class KcStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): KcStream {
+    return new KcStream(core);
   }
 
   /**
@@ -675,7 +679,7 @@ export function kcOpenAndFillInternal(
   outRealMiddleBand: Float64Array,
   outRealLowerBand: Float64Array,
 ): KcStream {
-  const sp = new KcStream(core);
+  const sp = KcStream.of(core);
   const retCode = kcOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -699,7 +703,7 @@ export function kcOpenInternal(
   optInATRPeriod: number,
   optInNbDev: number,
 ): KcStream {
-  const sp = new KcStream(core);
+  const sp = KcStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outRealUpperBand = new Float64Array(1);

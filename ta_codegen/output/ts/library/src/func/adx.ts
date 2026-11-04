@@ -602,9 +602,13 @@ export class AdxStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): AdxStream {
+    return new AdxStream(core);
   }
 
   /**
@@ -1242,7 +1246,7 @@ export function adxOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): AdxStream {
-  const sp = new AdxStream(core);
+  const sp = AdxStream.of(core);
   const retCode = adxOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1264,7 +1268,7 @@ export function adxOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): AdxStream {
-  const sp = new AdxStream(core);
+  const sp = AdxStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

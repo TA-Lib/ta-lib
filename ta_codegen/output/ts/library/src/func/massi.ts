@@ -477,9 +477,13 @@ export class MassiStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MassiStream {
+    return new MassiStream(core);
   }
 
   /**
@@ -901,7 +905,7 @@ export function massiOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): MassiStream {
-  const sp = new MassiStream(core);
+  const sp = MassiStream.of(core);
   const retCode = massiOpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -923,7 +927,7 @@ export function massiOpenInternal(
   optInFastPeriod: number,
   optInSlowPeriod: number,
 ): MassiStream {
-  const sp = new MassiStream(core);
+  const sp = MassiStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

@@ -489,9 +489,13 @@ export class MaStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MaStream {
+    return new MaStream(core);
   }
 
   /**
@@ -1237,7 +1241,7 @@ export function maOpenInternal(
   optInTimePeriod: number,
   optInMAType: number,
 ): MaStream {
-  const sp = new MaStream(core);
+  const sp = MaStream.of(core);
   const retCode = maOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType);
   if (retCode === RetCode.SUCCESS) {
     return sp;
@@ -1342,7 +1346,7 @@ export function maOpenAndFill(
   const guardOutLen = openFillCount('MA openAndFill', inReal.length, maLookback(optInTimePeriod, optInMAType as MAType, core));
   requireLength('MA openAndFill', 'outReal', outReal, guardOutLen);
   const inRealF64 = float64(inReal);
-  const sp = new MaStream(core);
+  const sp = MaStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const retCode = maOpenAndFillImpl(sp, inRealF64, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
@@ -1368,7 +1372,7 @@ export function maOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): MaStream {
-  const sp = new MaStream(core);
+  const sp = MaStream.of(core);
   const retCode = maOpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;

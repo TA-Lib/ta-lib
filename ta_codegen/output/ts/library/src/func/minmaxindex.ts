@@ -311,9 +311,13 @@ export class MinmaxindexStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MinmaxindexStream {
+    return new MinmaxindexStream(core);
   }
 
   /**
@@ -674,7 +678,7 @@ export function minmaxindexOpenAndFillInternal(
   outMinIdx: Int32Array,
   outMaxIdx: Int32Array,
 ): MinmaxindexStream {
-  const sp = new MinmaxindexStream(core);
+  const sp = MinmaxindexStream.of(core);
   const retCode = minmaxindexOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -694,7 +698,7 @@ export function minmaxindexOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): MinmaxindexStream {
-  const sp = new MinmaxindexStream(core);
+  const sp = MinmaxindexStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outMinIdx = new Int32Array(1);

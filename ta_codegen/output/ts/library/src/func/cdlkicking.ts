@@ -326,9 +326,13 @@ export class CdlkickingStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlkickingStream {
+    return new CdlkickingStream(core);
   }
 
   /**
@@ -682,7 +686,7 @@ export function cdlkickingOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlkickingStream {
-  const sp = new CdlkickingStream(core);
+  const sp = CdlkickingStream.of(core);
   const retCode = cdlkickingOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -704,7 +708,7 @@ export function cdlkickingOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlkickingStream {
-  const sp = new CdlkickingStream(core);
+  const sp = CdlkickingStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

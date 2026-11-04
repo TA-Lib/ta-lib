@@ -304,9 +304,13 @@ export class CdlgravestonedojiStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlgravestonedojiStream {
+    return new CdlgravestonedojiStream(core);
   }
 
   /**
@@ -605,7 +609,7 @@ export function cdlgravestonedojiOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlgravestonedojiStream {
-  const sp = new CdlgravestonedojiStream(core);
+  const sp = CdlgravestonedojiStream.of(core);
   const retCode = cdlgravestonedojiOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -627,7 +631,7 @@ export function cdlgravestonedojiOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlgravestonedojiStream {
-  const sp = new CdlgravestonedojiStream(core);
+  const sp = CdlgravestonedojiStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

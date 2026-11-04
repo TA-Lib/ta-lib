@@ -349,9 +349,13 @@ export class HaStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): HaStream {
+    return new HaStream(core);
   }
 
   /**
@@ -720,7 +724,7 @@ export function haOpenAndFillInternal(
   outHALow: Float64Array,
   outHAClose: Float64Array,
 ): HaStream {
-  const sp = new HaStream(core);
+  const sp = HaStream.of(core);
   const retCode = haOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -742,7 +746,7 @@ export function haOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): HaStream {
-  const sp = new HaStream(core);
+  const sp = HaStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outHAOpen = new Float64Array(1);

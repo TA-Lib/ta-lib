@@ -582,9 +582,13 @@ export class BetaStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): BetaStream {
+    return new BetaStream(core);
   }
 
   /**
@@ -1491,7 +1495,7 @@ export function betaOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): BetaStream {
-  const sp = new BetaStream(core);
+  const sp = BetaStream.of(core);
   const retCode = betaOpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1512,7 +1516,7 @@ export function betaOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): BetaStream {
-  const sp = new BetaStream(core);
+  const sp = BetaStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

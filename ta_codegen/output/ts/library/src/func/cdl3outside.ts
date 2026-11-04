@@ -258,9 +258,13 @@ export class Cdl3outsideStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): Cdl3outsideStream {
+    return new Cdl3outsideStream(core);
   }
 
   /**
@@ -490,7 +494,7 @@ export function cdl3outsideOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): Cdl3outsideStream {
-  const sp = new Cdl3outsideStream(core);
+  const sp = Cdl3outsideStream.of(core);
   const retCode = cdl3outsideOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -512,7 +516,7 @@ export function cdl3outsideOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): Cdl3outsideStream {
-  const sp = new Cdl3outsideStream(core);
+  const sp = Cdl3outsideStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

@@ -317,9 +317,13 @@ export class CdlconcealbabyswallStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlconcealbabyswallStream {
+    return new CdlconcealbabyswallStream(core);
   }
 
   /**
@@ -652,7 +656,7 @@ export function cdlconcealbabyswallOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlconcealbabyswallStream {
-  const sp = new CdlconcealbabyswallStream(core);
+  const sp = CdlconcealbabyswallStream.of(core);
   const retCode = cdlconcealbabyswallOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -674,7 +678,7 @@ export function cdlconcealbabyswallOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlconcealbabyswallStream {
-  const sp = new CdlconcealbabyswallStream(core);
+  const sp = CdlconcealbabyswallStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

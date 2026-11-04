@@ -407,9 +407,13 @@ export class TsfStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): TsfStream {
+    return new TsfStream(core);
   }
 
   /**
@@ -956,7 +960,7 @@ export function tsfOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): TsfStream {
-  const sp = new TsfStream(core);
+  const sp = TsfStream.of(core);
   const retCode = tsfOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -976,7 +980,7 @@ export function tsfOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): TsfStream {
-  const sp = new TsfStream(core);
+  const sp = TsfStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

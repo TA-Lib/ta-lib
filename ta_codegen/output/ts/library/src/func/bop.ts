@@ -201,9 +201,13 @@ export class BopStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): BopStream {
+    return new BopStream(core);
   }
 
   /**
@@ -386,7 +390,7 @@ export function bopOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): BopStream {
-  const sp = new BopStream(core);
+  const sp = BopStream.of(core);
   const retCode = bopOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -408,7 +412,7 @@ export function bopOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): BopStream {
-  const sp = new BopStream(core);
+  const sp = BopStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

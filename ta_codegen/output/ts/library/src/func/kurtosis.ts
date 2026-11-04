@@ -469,9 +469,13 @@ export class KurtosisStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): KurtosisStream {
+    return new KurtosisStream(core);
   }
 
   /**
@@ -1202,7 +1206,7 @@ export function kurtosisOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): KurtosisStream {
-  const sp = new KurtosisStream(core);
+  const sp = KurtosisStream.of(core);
   const retCode = kurtosisOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1222,7 +1226,7 @@ export function kurtosisOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): KurtosisStream {
-  const sp = new KurtosisStream(core);
+  const sp = KurtosisStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

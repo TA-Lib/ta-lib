@@ -517,9 +517,13 @@ export class PercentbStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): PercentbStream {
+    return new PercentbStream(core);
   }
 
   /**
@@ -817,7 +821,7 @@ export function percentbOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): PercentbStream {
-  const sp = new PercentbStream(core);
+  const sp = PercentbStream.of(core);
   const retCode = percentbOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -840,7 +844,7 @@ export function percentbOpenInternal(
   optInNbDevDn: number,
   optInMAType: number,
 ): PercentbStream {
-  const sp = new PercentbStream(core);
+  const sp = PercentbStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

@@ -338,9 +338,13 @@ export class CdlinvertedhammerStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlinvertedhammerStream {
+    return new CdlinvertedhammerStream(core);
   }
 
   /**
@@ -709,7 +713,7 @@ export function cdlinvertedhammerOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlinvertedhammerStream {
-  const sp = new CdlinvertedhammerStream(core);
+  const sp = CdlinvertedhammerStream.of(core);
   const retCode = cdlinvertedhammerOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -731,7 +735,7 @@ export function cdlinvertedhammerOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlinvertedhammerStream {
-  const sp = new CdlinvertedhammerStream(core);
+  const sp = CdlinvertedhammerStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

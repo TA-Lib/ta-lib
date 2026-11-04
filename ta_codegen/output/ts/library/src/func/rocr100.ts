@@ -264,9 +264,13 @@ export class Rocr100Stream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): Rocr100Stream {
+    return new Rocr100Stream(core);
   }
 
   /**
@@ -494,7 +498,7 @@ export function rocr100OpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): Rocr100Stream {
-  const sp = new Rocr100Stream(core);
+  const sp = Rocr100Stream.of(core);
   const retCode = rocr100OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -514,7 +518,7 @@ export function rocr100OpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): Rocr100Stream {
-  const sp = new Rocr100Stream(core);
+  const sp = Rocr100Stream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

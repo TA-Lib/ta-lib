@@ -377,9 +377,13 @@ export class AlmaStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): AlmaStream {
+    return new AlmaStream(core);
   }
 
   /**
@@ -686,7 +690,7 @@ export function almaOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): AlmaStream {
-  const sp = new AlmaStream(core);
+  const sp = AlmaStream.of(core);
   const retCode = almaOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInSigma, optInOffset, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -708,7 +712,7 @@ export function almaOpenInternal(
   optInSigma: number,
   optInOffset: number,
 ): AlmaStream {
-  const sp = new AlmaStream(core);
+  const sp = AlmaStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

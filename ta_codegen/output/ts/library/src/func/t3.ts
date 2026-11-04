@@ -833,9 +833,13 @@ export class T3Stream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): T3Stream {
+    return new T3Stream(core);
   }
 
   /**
@@ -1877,7 +1881,7 @@ export function t3OpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): T3Stream {
-  const sp = new T3Stream(core);
+  const sp = T3Stream.of(core);
   const retCode = t3OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1898,7 +1902,7 @@ export function t3OpenInternal(
   optInTimePeriod: number,
   optInVFactor: number,
 ): T3Stream {
-  const sp = new T3Stream(core);
+  const sp = T3Stream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

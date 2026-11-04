@@ -417,9 +417,13 @@ export class CtiStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CtiStream {
+    return new CtiStream(core);
   }
 
   /**
@@ -1000,7 +1004,7 @@ export function ctiOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): CtiStream {
-  const sp = new CtiStream(core);
+  const sp = CtiStream.of(core);
   const retCode = ctiOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1020,7 +1024,7 @@ export function ctiOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): CtiStream {
-  const sp = new CtiStream(core);
+  const sp = CtiStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

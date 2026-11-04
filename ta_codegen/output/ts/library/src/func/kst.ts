@@ -864,9 +864,13 @@ export class KstStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): KstStream {
+    return new KstStream(core);
   }
 
   /**
@@ -1872,7 +1876,7 @@ export function kstOpenAndFillInternal(
   outKST: Float64Array,
   outKSTSignal: Float64Array,
 ): KstStream {
-  const sp = new KstStream(core);
+  const sp = KstStream.of(core);
   const retCode = kstOpenImpl(sp, inReal, startIdx, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outBegIdx, outNBElement, outKST, outKSTSignal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1900,7 +1904,7 @@ export function kstOpenInternal(
   optInSMA4Period: number,
   optInSignalPeriod: number,
 ): KstStream {
-  const sp = new KstStream(core);
+  const sp = KstStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outKST = new Float64Array(1);

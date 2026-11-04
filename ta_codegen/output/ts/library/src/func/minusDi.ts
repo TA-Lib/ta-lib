@@ -554,9 +554,13 @@ export class MinusDiStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MinusDiStream {
+    return new MinusDiStream(core);
   }
 
   /**
@@ -1305,7 +1309,7 @@ export function minusDiOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): MinusDiStream {
-  const sp = new MinusDiStream(core);
+  const sp = MinusDiStream.of(core);
   const retCode = minusDiOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1327,7 +1331,7 @@ export function minusDiOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): MinusDiStream {
-  const sp = new MinusDiStream(core);
+  const sp = MinusDiStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

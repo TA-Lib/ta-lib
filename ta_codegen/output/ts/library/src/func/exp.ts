@@ -166,9 +166,13 @@ export class ExpStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): ExpStream {
+    return new ExpStream(core);
   }
 
   /**
@@ -298,7 +302,7 @@ export function expOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): ExpStream {
-  const sp = new ExpStream(core);
+  const sp = ExpStream.of(core);
   const retCode = expOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -317,7 +321,7 @@ export function expOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): ExpStream {
-  const sp = new ExpStream(core);
+  const sp = ExpStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

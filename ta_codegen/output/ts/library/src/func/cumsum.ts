@@ -195,9 +195,13 @@ export class CumsumStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CumsumStream {
+    return new CumsumStream(core);
   }
 
   /**
@@ -353,7 +357,7 @@ export function cumsumOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): CumsumStream {
-  const sp = new CumsumStream(core);
+  const sp = CumsumStream.of(core);
   const retCode = cumsumOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -372,7 +376,7 @@ export function cumsumOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): CumsumStream {
-  const sp = new CumsumStream(core);
+  const sp = CumsumStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

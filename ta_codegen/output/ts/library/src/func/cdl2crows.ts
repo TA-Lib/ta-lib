@@ -295,9 +295,13 @@ export class Cdl2crowsStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): Cdl2crowsStream {
+    return new Cdl2crowsStream(core);
   }
 
   /**
@@ -596,7 +600,7 @@ export function cdl2crowsOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): Cdl2crowsStream {
-  const sp = new Cdl2crowsStream(core);
+  const sp = Cdl2crowsStream.of(core);
   const retCode = cdl2crowsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -618,7 +622,7 @@ export function cdl2crowsOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): Cdl2crowsStream {
-  const sp = new Cdl2crowsStream(core);
+  const sp = Cdl2crowsStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

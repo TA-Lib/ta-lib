@@ -164,9 +164,13 @@ export class SqrtStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): SqrtStream {
+    return new SqrtStream(core);
   }
 
   /**
@@ -296,7 +300,7 @@ export function sqrtOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): SqrtStream {
-  const sp = new SqrtStream(core);
+  const sp = SqrtStream.of(core);
   const retCode = sqrtOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -315,7 +319,7 @@ export function sqrtOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): SqrtStream {
-  const sp = new SqrtStream(core);
+  const sp = SqrtStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

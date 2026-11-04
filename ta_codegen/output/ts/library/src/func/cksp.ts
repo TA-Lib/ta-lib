@@ -812,9 +812,13 @@ export class CkspStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CkspStream {
+    return new CkspStream(core);
   }
 
   /**
@@ -1766,7 +1770,7 @@ export function ckspOpenAndFillInternal(
   outHighStop: Float64Array,
   outLowStop: Float64Array,
 ): CkspStream {
-  const sp = new CkspStream(core);
+  const sp = CkspStream.of(core);
   const retCode = ckspOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, optInStopPeriod, outBegIdx, outNBElement, outHighStop, outLowStop, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1790,7 +1794,7 @@ export function ckspOpenInternal(
   optInMultiplier: number,
   optInStopPeriod: number,
 ): CkspStream {
-  const sp = new CkspStream(core);
+  const sp = CkspStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outHighStop = new Float64Array(1);

@@ -374,9 +374,13 @@ export class MinmaxStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MinmaxStream {
+    return new MinmaxStream(core);
   }
 
   /**
@@ -756,7 +760,7 @@ export function minmaxOpenAndFillInternal(
   outMin: Float64Array,
   outMax: Float64Array,
 ): MinmaxStream {
-  const sp = new MinmaxStream(core);
+  const sp = MinmaxStream.of(core);
   const retCode = minmaxOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -776,7 +780,7 @@ export function minmaxOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): MinmaxStream {
-  const sp = new MinmaxStream(core);
+  const sp = MinmaxStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outMin = new Float64Array(1);

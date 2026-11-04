@@ -390,9 +390,13 @@ export class LinearregInterceptStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): LinearregInterceptStream {
+    return new LinearregInterceptStream(core);
   }
 
   /**
@@ -918,7 +922,7 @@ export function linearregInterceptOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): LinearregInterceptStream {
-  const sp = new LinearregInterceptStream(core);
+  const sp = LinearregInterceptStream.of(core);
   const retCode = linearregInterceptOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -938,7 +942,7 @@ export function linearregInterceptOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): LinearregInterceptStream {
-  const sp = new LinearregInterceptStream(core);
+  const sp = LinearregInterceptStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

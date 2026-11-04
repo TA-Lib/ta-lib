@@ -442,9 +442,13 @@ export class FramaStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): FramaStream {
+    return new FramaStream(core);
   }
 
   /**
@@ -946,7 +950,7 @@ export function framaOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): FramaStream {
-  const sp = new FramaStream(core);
+  const sp = FramaStream.of(core);
   const retCode = framaOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -967,7 +971,7 @@ export function framaOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): FramaStream {
-  const sp = new FramaStream(core);
+  const sp = FramaStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

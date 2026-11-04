@@ -314,9 +314,13 @@ export class CdltasukigapStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdltasukigapStream {
+    return new CdltasukigapStream(core);
   }
 
   /**
@@ -661,7 +665,7 @@ export function cdltasukigapOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdltasukigapStream {
-  const sp = new CdltasukigapStream(core);
+  const sp = CdltasukigapStream.of(core);
   const retCode = cdltasukigapOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -683,7 +687,7 @@ export function cdltasukigapOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdltasukigapStream {
-  const sp = new CdltasukigapStream(core);
+  const sp = CdltasukigapStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

@@ -316,9 +316,13 @@ export class CdldarkcloudcoverStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdldarkcloudcoverStream {
+    return new CdldarkcloudcoverStream(core);
   }
 
   /**
@@ -605,7 +609,7 @@ export function cdldarkcloudcoverOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdldarkcloudcoverStream {
-  const sp = new CdldarkcloudcoverStream(core);
+  const sp = CdldarkcloudcoverStream.of(core);
   const retCode = cdldarkcloudcoverOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -628,7 +632,7 @@ export function cdldarkcloudcoverOpenInternal(
   startIdx: number,
   optInPenetration: number,
 ): CdldarkcloudcoverStream {
-  const sp = new CdldarkcloudcoverStream(core);
+  const sp = CdldarkcloudcoverStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

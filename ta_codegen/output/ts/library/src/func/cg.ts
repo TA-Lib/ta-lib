@@ -685,9 +685,13 @@ export class CgStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CgStream {
+    return new CgStream(core);
   }
 
   /**
@@ -1944,7 +1948,7 @@ export function cgOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): CgStream {
-  const sp = new CgStream(core);
+  const sp = CgStream.of(core);
   const retCode = cgOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1964,7 +1968,7 @@ export function cgOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): CgStream {
-  const sp = new CgStream(core);
+  const sp = CgStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

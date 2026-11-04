@@ -228,9 +228,13 @@ export class PviStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): PviStream {
+    return new PviStream(core);
   }
 
   /**
@@ -470,7 +474,7 @@ export function pviOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): PviStream {
-  const sp = new PviStream(core);
+  const sp = PviStream.of(core);
   const retCode = pviOpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -490,7 +494,7 @@ export function pviOpenInternal(
   inVolume: Float64Array,
   startIdx: number,
 ): PviStream {
-  const sp = new PviStream(core);
+  const sp = PviStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

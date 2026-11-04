@@ -384,9 +384,13 @@ export class CdleveningdojistarStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdleveningdojistarStream {
+    return new CdleveningdojistarStream(core);
   }
 
   /**
@@ -794,7 +798,7 @@ export function cdleveningdojistarOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdleveningdojistarStream {
-  const sp = new CdleveningdojistarStream(core);
+  const sp = CdleveningdojistarStream.of(core);
   const retCode = cdleveningdojistarOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -817,7 +821,7 @@ export function cdleveningdojistarOpenInternal(
   startIdx: number,
   optInPenetration: number,
 ): CdleveningdojistarStream {
-  const sp = new CdleveningdojistarStream(core);
+  const sp = CdleveningdojistarStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

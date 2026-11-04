@@ -405,9 +405,13 @@ export class CdlstalledpatternStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlstalledpatternStream {
+    return new CdlstalledpatternStream(core);
   }
 
   /**
@@ -885,7 +889,7 @@ export function cdlstalledpatternOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlstalledpatternStream {
-  const sp = new CdlstalledpatternStream(core);
+  const sp = CdlstalledpatternStream.of(core);
   const retCode = cdlstalledpatternOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -907,7 +911,7 @@ export function cdlstalledpatternOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlstalledpatternStream {
-  const sp = new CdlstalledpatternStream(core);
+  const sp = CdlstalledpatternStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

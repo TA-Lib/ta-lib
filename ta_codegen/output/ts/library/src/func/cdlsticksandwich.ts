@@ -294,9 +294,13 @@ export class CdlsticksandwichStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlsticksandwichStream {
+    return new CdlsticksandwichStream(core);
   }
 
   /**
@@ -585,7 +589,7 @@ export function cdlsticksandwichOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlsticksandwichStream {
-  const sp = new CdlsticksandwichStream(core);
+  const sp = CdlsticksandwichStream.of(core);
   const retCode = cdlsticksandwichOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -607,7 +611,7 @@ export function cdlsticksandwichOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlsticksandwichStream {
-  const sp = new CdlsticksandwichStream(core);
+  const sp = CdlsticksandwichStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

@@ -327,9 +327,13 @@ export class CdlbreakawayStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlbreakawayStream {
+    return new CdlbreakawayStream(core);
   }
 
   /**
@@ -686,7 +690,7 @@ export function cdlbreakawayOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlbreakawayStream {
-  const sp = new CdlbreakawayStream(core);
+  const sp = CdlbreakawayStream.of(core);
   const retCode = cdlbreakawayOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -708,7 +712,7 @@ export function cdlbreakawayOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlbreakawayStream {
-  const sp = new CdlbreakawayStream(core);
+  const sp = CdlbreakawayStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

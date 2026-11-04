@@ -414,9 +414,13 @@ export class Cdl3whitesoldiersStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): Cdl3whitesoldiersStream {
+    return new Cdl3whitesoldiersStream(core);
   }
 
   /**
@@ -911,7 +915,7 @@ export function cdl3whitesoldiersOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): Cdl3whitesoldiersStream {
-  const sp = new Cdl3whitesoldiersStream(core);
+  const sp = Cdl3whitesoldiersStream.of(core);
   const retCode = cdl3whitesoldiersOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -933,7 +937,7 @@ export function cdl3whitesoldiersOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): Cdl3whitesoldiersStream {
-  const sp = new Cdl3whitesoldiersStream(core);
+  const sp = Cdl3whitesoldiersStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

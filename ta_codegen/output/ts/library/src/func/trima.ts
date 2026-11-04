@@ -482,9 +482,13 @@ export class TrimaStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): TrimaStream {
+    return new TrimaStream(core);
   }
 
   /**
@@ -1165,7 +1169,7 @@ export function trimaOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): TrimaStream {
-  const sp = new TrimaStream(core);
+  const sp = TrimaStream.of(core);
   const retCode = trimaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1185,7 +1189,7 @@ export function trimaOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): TrimaStream {
-  const sp = new TrimaStream(core);
+  const sp = TrimaStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

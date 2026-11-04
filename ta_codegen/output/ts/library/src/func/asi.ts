@@ -284,9 +284,13 @@ export class AsiStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): AsiStream {
+    return new AsiStream(core);
   }
 
   /**
@@ -564,7 +568,7 @@ export function asiOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): AsiStream {
-  const sp = new AsiStream(core);
+  const sp = AsiStream.of(core);
   const retCode = asiOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInLimitMove, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -587,7 +591,7 @@ export function asiOpenInternal(
   startIdx: number,
   optInLimitMove: number,
 ): AsiStream {
-  const sp = new AsiStream(core);
+  const sp = AsiStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

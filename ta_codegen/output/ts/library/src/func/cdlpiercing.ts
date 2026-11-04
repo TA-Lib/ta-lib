@@ -288,9 +288,13 @@ export class CdlpiercingStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlpiercingStream {
+    return new CdlpiercingStream(core);
   }
 
   /**
@@ -578,7 +582,7 @@ export function cdlpiercingOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlpiercingStream {
-  const sp = new CdlpiercingStream(core);
+  const sp = CdlpiercingStream.of(core);
   const retCode = cdlpiercingOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -600,7 +604,7 @@ export function cdlpiercingOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlpiercingStream {
-  const sp = new CdlpiercingStream(core);
+  const sp = CdlpiercingStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

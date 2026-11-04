@@ -415,9 +415,13 @@ export class MfiStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MfiStream {
+    return new MfiStream(core);
   }
 
   /**
@@ -824,7 +828,7 @@ export function mfiOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): MfiStream {
-  const sp = new MfiStream(core);
+  const sp = MfiStream.of(core);
   const retCode = mfiOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -847,7 +851,7 @@ export function mfiOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): MfiStream {
-  const sp = new MfiStream(core);
+  const sp = MfiStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

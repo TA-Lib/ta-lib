@@ -346,9 +346,13 @@ export class VwmaStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): VwmaStream {
+    return new VwmaStream(core);
   }
 
   /**
@@ -734,7 +738,7 @@ export function vwmaOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): VwmaStream {
-  const sp = new VwmaStream(core);
+  const sp = VwmaStream.of(core);
   const retCode = vwmaOpenImpl(sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -755,7 +759,7 @@ export function vwmaOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): VwmaStream {
-  const sp = new VwmaStream(core);
+  const sp = VwmaStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

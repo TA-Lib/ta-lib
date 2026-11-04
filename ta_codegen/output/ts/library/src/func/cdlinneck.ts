@@ -316,9 +316,13 @@ export class CdlinneckStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlinneckStream {
+    return new CdlinneckStream(core);
   }
 
   /**
@@ -646,7 +650,7 @@ export function cdlinneckOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlinneckStream {
-  const sp = new CdlinneckStream(core);
+  const sp = CdlinneckStream.of(core);
   const retCode = cdlinneckOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -668,7 +672,7 @@ export function cdlinneckOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlinneckStream {
-  const sp = new CdlinneckStream(core);
+  const sp = CdlinneckStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

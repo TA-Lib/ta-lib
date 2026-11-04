@@ -162,9 +162,13 @@ export class TanhStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): TanhStream {
+    return new TanhStream(core);
   }
 
   /**
@@ -294,7 +298,7 @@ export function tanhOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): TanhStream {
-  const sp = new TanhStream(core);
+  const sp = TanhStream.of(core);
   const retCode = tanhOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -313,7 +317,7 @@ export function tanhOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): TanhStream {
-  const sp = new TanhStream(core);
+  const sp = TanhStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

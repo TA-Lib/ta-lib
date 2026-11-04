@@ -170,7 +170,9 @@ fn every_handle_field_is_public_and_internal() {
         let s = section(&name);
         let class_at = s.find("\nexport class ").expect("a stream class");
         let class = body_of(&s[class_at..], "export class ");
-        let ctor = class.find("\n  /** @internal */\n  constructor(").expect("an @internal constructor");
+        // A constructor stripped as @internal leaves the published class an implicit public `new ()`.
+        let ctor = class.find("\n\n  private constructor(").unwrap_or_else(|| panic!("{name}: no private constructor"));
+        assert!(class.contains("\n  /** @internal */\n  static of(core: Core)"), "{name}: no @internal factory");
         let head = &class[..ctor];
         let lines: Vec<&str> = head.lines().collect();
         for (k, l) in lines.iter().enumerate() {

@@ -166,9 +166,13 @@ export class LnStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): LnStream {
+    return new LnStream(core);
   }
 
   /**
@@ -298,7 +302,7 @@ export function lnOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): LnStream {
-  const sp = new LnStream(core);
+  const sp = LnStream.of(core);
   const retCode = lnOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -317,7 +321,7 @@ export function lnOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): LnStream {
-  const sp = new LnStream(core);
+  const sp = LnStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

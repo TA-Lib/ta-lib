@@ -328,9 +328,13 @@ export class Cdlupsidegap2crowsStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): Cdlupsidegap2crowsStream {
+    return new Cdlupsidegap2crowsStream(core);
   }
 
   /**
@@ -682,7 +686,7 @@ export function cdlupsidegap2crowsOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): Cdlupsidegap2crowsStream {
-  const sp = new Cdlupsidegap2crowsStream(core);
+  const sp = Cdlupsidegap2crowsStream.of(core);
   const retCode = cdlupsidegap2crowsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -704,7 +708,7 @@ export function cdlupsidegap2crowsOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): Cdlupsidegap2crowsStream {
-  const sp = new Cdlupsidegap2crowsStream(core);
+  const sp = Cdlupsidegap2crowsStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

@@ -267,9 +267,13 @@ export class MaxindexStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MaxindexStream {
+    return new MaxindexStream(core);
   }
 
   /**
@@ -532,7 +536,7 @@ export function maxindexOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): MaxindexStream {
-  const sp = new MaxindexStream(core);
+  const sp = MaxindexStream.of(core);
   const retCode = maxindexOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -552,7 +556,7 @@ export function maxindexOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): MaxindexStream {
-  const sp = new MaxindexStream(core);
+  const sp = MaxindexStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

@@ -547,9 +547,13 @@ export class PsoStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): PsoStream {
+    return new PsoStream(core);
   }
 
   /**
@@ -1132,7 +1136,7 @@ export function psoOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): PsoStream {
-  const sp = new PsoStream(core);
+  const sp = PsoStream.of(core);
   const retCode = psoOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInEMAPeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1155,7 +1159,7 @@ export function psoOpenInternal(
   optInFastK_Period: number,
   optInEMAPeriod: number,
 ): PsoStream {
-  const sp = new PsoStream(core);
+  const sp = PsoStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

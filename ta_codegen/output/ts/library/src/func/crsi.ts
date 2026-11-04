@@ -341,9 +341,13 @@ export class CrsiStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CrsiStream {
+    return new CrsiStream(core);
   }
 
   /**
@@ -614,7 +618,7 @@ export function crsiOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): CrsiStream {
-  const sp = new CrsiStream(core);
+  const sp = CrsiStream.of(core);
   const retCode = crsiOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInStreakPeriod, optInRankPeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -636,7 +640,7 @@ export function crsiOpenInternal(
   optInStreakPeriod: number,
   optInRankPeriod: number,
 ): CrsiStream {
-  const sp = new CrsiStream(core);
+  const sp = CrsiStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

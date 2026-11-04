@@ -662,9 +662,13 @@ export class KstextStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): KstextStream {
+    return new KstextStream(core);
   }
 
   /**
@@ -1205,7 +1209,7 @@ export function kstextOpenAndFillInternal(
   outKST: Float64Array,
   outKSTSignal: Float64Array,
 ): KstextStream {
-  const sp = new KstextStream(core);
+  const sp = KstextStream.of(core);
   const retCode = kstextOpenImpl(sp, inReal, startIdx, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outBegIdx, outNBElement, outKST, outKSTSignal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1235,7 +1239,7 @@ export function kstextOpenInternal(
   optInROCMAType: number,
   optInSignalMAType: number,
 ): KstextStream {
-  const sp = new KstextStream(core);
+  const sp = KstextStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outKST = new Float64Array(1);

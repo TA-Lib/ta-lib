@@ -531,9 +531,13 @@ export class TsiStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): TsiStream {
+    return new TsiStream(core);
   }
 
   /**
@@ -1110,7 +1114,7 @@ export function tsiOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): TsiStream {
-  const sp = new TsiStream(core);
+  const sp = TsiStream.of(core);
   const retCode = tsiOpenImpl(sp, inReal, startIdx, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1131,7 +1135,7 @@ export function tsiOpenInternal(
   optInFirstPeriod: number,
   optInSecondPeriod: number,
 ): TsiStream {
-  const sp = new TsiStream(core);
+  const sp = TsiStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

@@ -324,9 +324,13 @@ export class Cdl3linestrikeStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): Cdl3linestrikeStream {
+    return new Cdl3linestrikeStream(core);
   }
 
   /**
@@ -669,7 +673,7 @@ export function cdl3linestrikeOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): Cdl3linestrikeStream {
-  const sp = new Cdl3linestrikeStream(core);
+  const sp = Cdl3linestrikeStream.of(core);
   const retCode = cdl3linestrikeOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -691,7 +695,7 @@ export function cdl3linestrikeOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): Cdl3linestrikeStream {
-  const sp = new Cdl3linestrikeStream(core);
+  const sp = Cdl3linestrikeStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

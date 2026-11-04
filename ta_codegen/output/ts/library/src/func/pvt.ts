@@ -215,9 +215,13 @@ export class PvtStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): PvtStream {
+    return new PvtStream(core);
   }
 
   /**
@@ -394,7 +398,7 @@ export function pvtOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): PvtStream {
-  const sp = new PvtStream(core);
+  const sp = PvtStream.of(core);
   const retCode = pvtOpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -414,7 +418,7 @@ export function pvtOpenInternal(
   inVolume: Float64Array,
   startIdx: number,
 ): PvtStream {
-  const sp = new PvtStream(core);
+  const sp = PvtStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

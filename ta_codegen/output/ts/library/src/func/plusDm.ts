@@ -401,9 +401,13 @@ export class PlusDmStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): PlusDmStream {
+    return new PlusDmStream(core);
   }
 
   /**
@@ -908,7 +912,7 @@ export function plusDmOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): PlusDmStream {
-  const sp = new PlusDmStream(core);
+  const sp = PlusDmStream.of(core);
   const retCode = plusDmOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -929,7 +933,7 @@ export function plusDmOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): PlusDmStream {
-  const sp = new PlusDmStream(core);
+  const sp = PlusDmStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

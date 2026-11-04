@@ -164,9 +164,13 @@ export class AtanStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): AtanStream {
+    return new AtanStream(core);
   }
 
   /**
@@ -297,7 +301,7 @@ export function atanOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): AtanStream {
-  const sp = new AtanStream(core);
+  const sp = AtanStream.of(core);
   const retCode = atanOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -316,7 +320,7 @@ export function atanOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): AtanStream {
-  const sp = new AtanStream(core);
+  const sp = AtanStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

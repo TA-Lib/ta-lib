@@ -384,9 +384,13 @@ export class MidpriceStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MidpriceStream {
+    return new MidpriceStream(core);
   }
 
   /**
@@ -748,7 +752,7 @@ export function midpriceOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): MidpriceStream {
-  const sp = new MidpriceStream(core);
+  const sp = MidpriceStream.of(core);
   const retCode = midpriceOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -769,7 +773,7 @@ export function midpriceOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): MidpriceStream {
-  const sp = new MidpriceStream(core);
+  const sp = MidpriceStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

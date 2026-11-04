@@ -183,9 +183,13 @@ export class MedpriceStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MedpriceStream {
+    return new MedpriceStream(core);
   }
 
   /**
@@ -329,7 +333,7 @@ export function medpriceOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): MedpriceStream {
-  const sp = new MedpriceStream(core);
+  const sp = MedpriceStream.of(core);
   const retCode = medpriceOpenImpl(sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -349,7 +353,7 @@ export function medpriceOpenInternal(
   inLow: Float64Array,
   startIdx: number,
 ): MedpriceStream {
-  const sp = new MedpriceStream(core);
+  const sp = MedpriceStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

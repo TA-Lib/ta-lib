@@ -253,9 +253,13 @@ export class MomStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MomStream {
+    return new MomStream(core);
   }
 
   /**
@@ -467,7 +471,7 @@ export function momOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): MomStream {
-  const sp = new MomStream(core);
+  const sp = MomStream.of(core);
   const retCode = momOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -487,7 +491,7 @@ export function momOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): MomStream {
-  const sp = new MomStream(core);
+  const sp = MomStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

@@ -190,9 +190,13 @@ export class ObvStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): ObvStream {
+    return new ObvStream(core);
   }
 
   /**
@@ -363,7 +367,7 @@ export function obvOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): ObvStream {
-  const sp = new ObvStream(core);
+  const sp = ObvStream.of(core);
   const retCode = obvOpenImpl(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -383,7 +387,7 @@ export function obvOpenInternal(
   inVolume: Float64Array,
   startIdx: number,
 ): ObvStream {
-  const sp = new ObvStream(core);
+  const sp = ObvStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

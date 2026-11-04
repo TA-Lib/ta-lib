@@ -540,9 +540,13 @@ export class DxStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): DxStream {
+    return new DxStream(core);
   }
 
   /**
@@ -1117,7 +1121,7 @@ export function dxOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): DxStream {
-  const sp = new DxStream(core);
+  const sp = DxStream.of(core);
   const retCode = dxOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1139,7 +1143,7 @@ export function dxOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): DxStream {
-  const sp = new DxStream(core);
+  const sp = DxStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

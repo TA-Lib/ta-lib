@@ -521,9 +521,13 @@ export class SarStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): SarStream {
+    return new SarStream(core);
   }
 
   /**
@@ -1310,7 +1314,7 @@ export function sarOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): SarStream {
-  const sp = new SarStream(core);
+  const sp = SarStream.of(core);
   const retCode = sarOpenImpl(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1332,7 +1336,7 @@ export function sarOpenInternal(
   optInAcceleration: number,
   optInMaximum: number,
 ): SarStream {
-  const sp = new SarStream(core);
+  const sp = SarStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

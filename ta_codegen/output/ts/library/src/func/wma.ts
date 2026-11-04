@@ -393,9 +393,13 @@ export class WmaStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): WmaStream {
+    return new WmaStream(core);
   }
 
   /**
@@ -923,7 +927,7 @@ export function wmaOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): WmaStream {
-  const sp = new WmaStream(core);
+  const sp = WmaStream.of(core);
   const retCode = wmaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -943,7 +947,7 @@ export function wmaOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): WmaStream {
-  const sp = new WmaStream(core);
+  const sp = WmaStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

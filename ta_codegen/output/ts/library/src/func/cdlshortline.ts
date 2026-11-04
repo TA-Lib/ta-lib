@@ -289,9 +289,13 @@ export class CdlshortlineStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlshortlineStream {
+    return new CdlshortlineStream(core);
   }
 
   /**
@@ -588,7 +592,7 @@ export function cdlshortlineOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlshortlineStream {
-  const sp = new CdlshortlineStream(core);
+  const sp = CdlshortlineStream.of(core);
   const retCode = cdlshortlineOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -610,7 +614,7 @@ export function cdlshortlineOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlshortlineStream {
-  const sp = new CdlshortlineStream(core);
+  const sp = CdlshortlineStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

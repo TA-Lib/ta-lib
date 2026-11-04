@@ -422,9 +422,13 @@ export class DemaStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): DemaStream {
+    return new DemaStream(core);
   }
 
   /**
@@ -803,7 +807,7 @@ export function demaOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): DemaStream {
-  const sp = new DemaStream(core);
+  const sp = DemaStream.of(core);
   const retCode = demaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -823,7 +827,7 @@ export function demaOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): DemaStream {
-  const sp = new DemaStream(core);
+  const sp = DemaStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

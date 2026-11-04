@@ -174,9 +174,13 @@ export class DivStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): DivStream {
+    return new DivStream(core);
   }
 
   /**
@@ -313,7 +317,7 @@ export function divOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): DivStream {
-  const sp = new DivStream(core);
+  const sp = DivStream.of(core);
   const retCode = divOpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -333,7 +337,7 @@ export function divOpenInternal(
   inReal1: Float64Array,
   startIdx: number,
 ): DivStream {
-  const sp = new DivStream(core);
+  const sp = DivStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

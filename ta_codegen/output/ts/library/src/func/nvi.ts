@@ -229,9 +229,13 @@ export class NviStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): NviStream {
+    return new NviStream(core);
   }
 
   /**
@@ -471,7 +475,7 @@ export function nviOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): NviStream {
-  const sp = new NviStream(core);
+  const sp = NviStream.of(core);
   const retCode = nviOpenImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -491,7 +495,7 @@ export function nviOpenInternal(
   inVolume: Float64Array,
   startIdx: number,
 ): NviStream {
-  const sp = new NviStream(core);
+  const sp = NviStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

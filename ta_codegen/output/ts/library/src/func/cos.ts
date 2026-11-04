@@ -164,9 +164,13 @@ export class CosStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CosStream {
+    return new CosStream(core);
   }
 
   /**
@@ -298,7 +302,7 @@ export function cosOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): CosStream {
-  const sp = new CosStream(core);
+  const sp = CosStream.of(core);
   const retCode = cosOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -317,7 +321,7 @@ export function cosOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): CosStream {
-  const sp = new CosStream(core);
+  const sp = CosStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

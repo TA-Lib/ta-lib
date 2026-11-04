@@ -368,9 +368,13 @@ export class CdlhammerStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlhammerStream {
+    return new CdlhammerStream(core);
   }
 
   /**
@@ -798,7 +802,7 @@ export function cdlhammerOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlhammerStream {
-  const sp = new CdlhammerStream(core);
+  const sp = CdlhammerStream.of(core);
   const retCode = cdlhammerOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -820,7 +824,7 @@ export function cdlhammerOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlhammerStream {
-  const sp = new CdlhammerStream(core);
+  const sp = CdlhammerStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

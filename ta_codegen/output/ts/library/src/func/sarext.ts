@@ -730,9 +730,13 @@ export class SarextStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): SarextStream {
+    return new SarextStream(core);
   }
 
   /**
@@ -1646,7 +1650,7 @@ export function sarextOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): SarextStream {
-  const sp = new SarextStream(core);
+  const sp = SarextStream.of(core);
   const retCode = sarextOpenImpl(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1674,7 +1678,7 @@ export function sarextOpenInternal(
   optInAccelerationShort: number,
   optInAccelerationMaxShort: number,
 ): SarextStream {
-  const sp = new SarextStream(core);
+  const sp = SarextStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

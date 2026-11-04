@@ -320,9 +320,13 @@ export class CdlhikkakeStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlhikkakeStream {
+    return new CdlhikkakeStream(core);
   }
 
   /**
@@ -633,7 +637,7 @@ export function cdlhikkakeOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlhikkakeStream {
-  const sp = new CdlhikkakeStream(core);
+  const sp = CdlhikkakeStream.of(core);
   const retCode = cdlhikkakeOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -655,7 +659,7 @@ export function cdlhikkakeOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlhikkakeStream {
-  const sp = new CdlhikkakeStream(core);
+  const sp = CdlhikkakeStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

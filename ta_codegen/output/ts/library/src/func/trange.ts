@@ -234,9 +234,13 @@ export class TrangeStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): TrangeStream {
+    return new TrangeStream(core);
   }
 
   /**
@@ -469,7 +473,7 @@ export function trangeOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): TrangeStream {
-  const sp = new TrangeStream(core);
+  const sp = TrangeStream.of(core);
   const retCode = trangeOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -490,7 +494,7 @@ export function trangeOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): TrangeStream {
-  const sp = new TrangeStream(core);
+  const sp = TrangeStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

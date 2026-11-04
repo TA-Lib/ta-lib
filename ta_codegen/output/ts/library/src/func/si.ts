@@ -291,9 +291,13 @@ export class SiStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): SiStream {
+    return new SiStream(core);
   }
 
   /**
@@ -584,7 +588,7 @@ export function siOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): SiStream {
-  const sp = new SiStream(core);
+  const sp = SiStream.of(core);
   const retCode = siOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInLimitMove, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -607,7 +611,7 @@ export function siOpenInternal(
   startIdx: number,
   optInLimitMove: number,
 ): SiStream {
-  const sp = new SiStream(core);
+  const sp = SiStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

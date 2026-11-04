@@ -267,9 +267,13 @@ export class McgdStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): McgdStream {
+    return new McgdStream(core);
   }
 
   /**
@@ -482,7 +486,7 @@ export function mcgdOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): McgdStream {
-  const sp = new McgdStream(core);
+  const sp = McgdStream.of(core);
   const retCode = mcgdOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -502,7 +506,7 @@ export function mcgdOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): McgdStream {
-  const sp = new McgdStream(core);
+  const sp = McgdStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

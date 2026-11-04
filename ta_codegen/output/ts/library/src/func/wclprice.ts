@@ -185,9 +185,13 @@ export class WclpriceStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): WclpriceStream {
+    return new WclpriceStream(core);
   }
 
   /**
@@ -330,7 +334,7 @@ export function wclpriceOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): WclpriceStream {
-  const sp = new WclpriceStream(core);
+  const sp = WclpriceStream.of(core);
   const retCode = wclpriceOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -351,7 +355,7 @@ export function wclpriceOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): WclpriceStream {
-  const sp = new WclpriceStream(core);
+  const sp = WclpriceStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

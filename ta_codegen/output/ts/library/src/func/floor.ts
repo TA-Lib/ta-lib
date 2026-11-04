@@ -161,9 +161,13 @@ export class FloorStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): FloorStream {
+    return new FloorStream(core);
   }
 
   /**
@@ -293,7 +297,7 @@ export function floorOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): FloorStream {
-  const sp = new FloorStream(core);
+  const sp = FloorStream.of(core);
   const retCode = floorOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -312,7 +316,7 @@ export function floorOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): FloorStream {
-  const sp = new FloorStream(core);
+  const sp = FloorStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

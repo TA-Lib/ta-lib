@@ -296,9 +296,13 @@ export class SwakHpStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): SwakHpStream {
+    return new SwakHpStream(core);
   }
 
   /**
@@ -548,7 +552,7 @@ export function swakHpOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): SwakHpStream {
-  const sp = new SwakHpStream(core);
+  const sp = SwakHpStream.of(core);
   const retCode = swakHpOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -568,7 +572,7 @@ export function swakHpOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): SwakHpStream {
-  const sp = new SwakHpStream(core);
+  const sp = SwakHpStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

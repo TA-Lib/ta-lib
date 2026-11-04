@@ -263,9 +263,13 @@ export class WadStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): WadStream {
+    return new WadStream(core);
   }
 
   /**
@@ -506,7 +510,7 @@ export function wadOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): WadStream {
-  const sp = new WadStream(core);
+  const sp = WadStream.of(core);
   const retCode = wadOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -527,7 +531,7 @@ export function wadOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): WadStream {
-  const sp = new WadStream(core);
+  const sp = WadStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

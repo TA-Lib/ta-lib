@@ -388,9 +388,13 @@ export class IchimokuStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): IchimokuStream {
+    return new IchimokuStream(core);
   }
 
   /**
@@ -677,7 +681,7 @@ export function ichimokuOpenAndFillInternal(
   outSenkouSpanA: Float64Array,
   outSenkouSpanB: Float64Array,
 ): IchimokuStream {
-  const sp = new IchimokuStream(core);
+  const sp = IchimokuStream.of(core);
   const retCode = ichimokuOpenImpl(sp, inHigh, inLow, startIdx, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, outBegIdx, outNBElement, outTenkanSen, outKijunSen, outSenkouSpanA, outSenkouSpanB, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -700,7 +704,7 @@ export function ichimokuOpenInternal(
   optInKijunPeriod: number,
   optInSenkouBPeriod: number,
 ): IchimokuStream {
-  const sp = new IchimokuStream(core);
+  const sp = IchimokuStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outTenkanSen = new Float64Array(1);

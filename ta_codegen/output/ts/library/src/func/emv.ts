@@ -350,9 +350,13 @@ export class EmvStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): EmvStream {
+    return new EmvStream(core);
   }
 
   /**
@@ -663,7 +667,7 @@ export function emvOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): EmvStream {
-  const sp = new EmvStream(core);
+  const sp = EmvStream.of(core);
   const retCode = emvOpenImpl(sp, inHigh, inLow, inVolume, startIdx, optInTimePeriod, optInVolumeDivisor, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -686,7 +690,7 @@ export function emvOpenInternal(
   optInTimePeriod: number,
   optInVolumeDivisor: number,
 ): EmvStream {
-  const sp = new EmvStream(core);
+  const sp = EmvStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

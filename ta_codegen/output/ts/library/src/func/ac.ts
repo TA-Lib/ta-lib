@@ -455,9 +455,13 @@ export class AcStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): AcStream {
+    return new AcStream(core);
   }
 
   /**
@@ -911,7 +915,7 @@ export function acOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): AcStream {
-  const sp = new AcStream(core);
+  const sp = AcStream.of(core);
   const retCode = acOpenImpl(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -934,7 +938,7 @@ export function acOpenInternal(
   optInSlowPeriod: number,
   optInSignalPeriod: number,
 ): AcStream {
-  const sp = new AcStream(core);
+  const sp = AcStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

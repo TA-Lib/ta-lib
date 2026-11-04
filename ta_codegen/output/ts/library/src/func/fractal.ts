@@ -344,9 +344,13 @@ export class FractalStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): FractalStream {
+    return new FractalStream(core);
   }
 
   /**
@@ -702,7 +706,7 @@ export function fractalOpenAndFillInternal(
   outSwingHigh: Int32Array,
   outSwingLow: Int32Array,
 ): FractalStream {
-  const sp = new FractalStream(core);
+  const sp = FractalStream.of(core);
   const retCode = fractalOpenImpl(sp, inHigh, inLow, startIdx, optInLeftBars, optInRightBars, outBegIdx, outNBElement, outSwingHigh, outSwingLow, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -724,7 +728,7 @@ export function fractalOpenInternal(
   optInLeftBars: number,
   optInRightBars: number,
 ): FractalStream {
-  const sp = new FractalStream(core);
+  const sp = FractalStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outSwingHigh = new Int32Array(1);

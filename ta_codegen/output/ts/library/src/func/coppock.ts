@@ -466,9 +466,13 @@ export class CoppockStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CoppockStream {
+    return new CoppockStream(core);
   }
 
   /**
@@ -992,7 +996,7 @@ export function coppockOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): CoppockStream {
-  const sp = new CoppockStream(core);
+  const sp = CoppockStream.of(core);
   const retCode = coppockOpenImpl(sp, inReal, startIdx, optInWMAPeriod, optInROC1Period, optInROC2Period, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1014,7 +1018,7 @@ export function coppockOpenInternal(
   optInROC1Period: number,
   optInROC2Period: number,
 ): CoppockStream {
-  const sp = new CoppockStream(core);
+  const sp = CoppockStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

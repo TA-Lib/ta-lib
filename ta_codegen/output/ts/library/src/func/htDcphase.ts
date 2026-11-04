@@ -820,9 +820,13 @@ export class HtDcphaseStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): HtDcphaseStream {
+    return new HtDcphaseStream(core);
   }
 
   /**
@@ -2321,7 +2325,7 @@ export function htDcphaseOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): HtDcphaseStream {
-  const sp = new HtDcphaseStream(core);
+  const sp = HtDcphaseStream.of(core);
   const retCode = htDcphaseOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -2340,7 +2344,7 @@ export function htDcphaseOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): HtDcphaseStream {
-  const sp = new HtDcphaseStream(core);
+  const sp = HtDcphaseStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

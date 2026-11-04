@@ -297,9 +297,13 @@ export class CdlhighwaveStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlhighwaveStream {
+    return new CdlhighwaveStream(core);
   }
 
   /**
@@ -596,7 +600,7 @@ export function cdlhighwaveOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlhighwaveStream {
-  const sp = new CdlhighwaveStream(core);
+  const sp = CdlhighwaveStream.of(core);
   const retCode = cdlhighwaveOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -618,7 +622,7 @@ export function cdlhighwaveOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlhighwaveStream {
-  const sp = new CdlhighwaveStream(core);
+  const sp = CdlhighwaveStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

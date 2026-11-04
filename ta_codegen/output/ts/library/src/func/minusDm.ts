@@ -399,9 +399,13 @@ export class MinusDmStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MinusDmStream {
+    return new MinusDmStream(core);
   }
 
   /**
@@ -906,7 +910,7 @@ export function minusDmOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): MinusDmStream {
-  const sp = new MinusDmStream(core);
+  const sp = MinusDmStream.of(core);
   const retCode = minusDmOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -927,7 +931,7 @@ export function minusDmOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): MinusDmStream {
-  const sp = new MinusDmStream(core);
+  const sp = MinusDmStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

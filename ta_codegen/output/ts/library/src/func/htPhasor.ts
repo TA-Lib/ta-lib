@@ -728,9 +728,13 @@ export class HtPhasorStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): HtPhasorStream {
+    return new HtPhasorStream(core);
   }
 
   /**
@@ -1815,7 +1819,7 @@ export function htPhasorOpenAndFillInternal(
   outInPhase: Float64Array,
   outQuadrature: Float64Array,
 ): HtPhasorStream {
-  const sp = new HtPhasorStream(core);
+  const sp = HtPhasorStream.of(core);
   const retCode = htPhasorOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1834,7 +1838,7 @@ export function htPhasorOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): HtPhasorStream {
-  const sp = new HtPhasorStream(core);
+  const sp = HtPhasorStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInPhase = new Float64Array(1);

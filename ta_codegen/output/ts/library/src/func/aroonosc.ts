@@ -325,9 +325,13 @@ export class AroonoscStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): AroonoscStream {
+    return new AroonoscStream(core);
   }
 
   /**
@@ -720,7 +724,7 @@ export function aroonoscOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): AroonoscStream {
-  const sp = new AroonoscStream(core);
+  const sp = AroonoscStream.of(core);
   const retCode = aroonoscOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -741,7 +745,7 @@ export function aroonoscOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): AroonoscStream {
-  const sp = new AroonoscStream(core);
+  const sp = AroonoscStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

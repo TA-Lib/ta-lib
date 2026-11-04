@@ -220,9 +220,13 @@ export class MarketfiStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MarketfiStream {
+    return new MarketfiStream(core);
   }
 
   /**
@@ -420,7 +424,7 @@ export function marketfiOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): MarketfiStream {
-  const sp = new MarketfiStream(core);
+  const sp = MarketfiStream.of(core);
   const retCode = marketfiOpenImpl(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -441,7 +445,7 @@ export function marketfiOpenInternal(
   inVolume: Float64Array,
   startIdx: number,
 ): MarketfiStream {
-  const sp = new MarketfiStream(core);
+  const sp = MarketfiStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

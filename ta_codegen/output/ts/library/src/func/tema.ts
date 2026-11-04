@@ -532,9 +532,13 @@ export class TemaStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): TemaStream {
+    return new TemaStream(core);
   }
 
   /**
@@ -1111,7 +1115,7 @@ export function temaOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): TemaStream {
-  const sp = new TemaStream(core);
+  const sp = TemaStream.of(core);
   const retCode = temaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1131,7 +1135,7 @@ export function temaOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): TemaStream {
-  const sp = new TemaStream(core);
+  const sp = TemaStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

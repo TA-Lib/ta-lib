@@ -422,9 +422,13 @@ export class RogerssatchellStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): RogerssatchellStream {
+    return new RogerssatchellStream(core);
   }
 
   /**
@@ -905,7 +909,7 @@ export function rogerssatchellOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): RogerssatchellStream {
-  const sp = new RogerssatchellStream(core);
+  const sp = RogerssatchellStream.of(core);
   const retCode = rogerssatchellOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInAnnualization, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -929,7 +933,7 @@ export function rogerssatchellOpenInternal(
   optInTimePeriod: number,
   optInAnnualization: number,
 ): RogerssatchellStream {
-  const sp = new RogerssatchellStream(core);
+  const sp = RogerssatchellStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

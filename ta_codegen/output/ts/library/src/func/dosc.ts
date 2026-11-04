@@ -613,9 +613,13 @@ export class DoscStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): DoscStream {
+    return new DoscStream(core);
   }
 
   /**
@@ -1153,7 +1157,7 @@ export function doscOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): DoscStream {
-  const sp = new DoscStream(core);
+  const sp = DoscStream.of(core);
   const retCode = doscOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1176,7 +1180,7 @@ export function doscOpenInternal(
   optInSecondPeriod: number,
   optInSignalPeriod: number,
 ): DoscStream {
-  const sp = new DoscStream(core);
+  const sp = DoscStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

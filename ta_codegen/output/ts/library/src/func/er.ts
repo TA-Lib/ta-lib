@@ -344,9 +344,13 @@ export class ErStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): ErStream {
+    return new ErStream(core);
   }
 
   /**
@@ -705,7 +709,7 @@ export function erOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): ErStream {
-  const sp = new ErStream(core);
+  const sp = ErStream.of(core);
   const retCode = erOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -725,7 +729,7 @@ export function erOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): ErStream {
-  const sp = new ErStream(core);
+  const sp = ErStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

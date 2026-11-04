@@ -285,9 +285,13 @@ export class EmaStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): EmaStream {
+    return new EmaStream(core);
   }
 
   /**
@@ -522,7 +526,7 @@ export function emaOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): EmaStream {
-  const sp = new EmaStream(core);
+  const sp = EmaStream.of(core);
   const retCode = emaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -542,7 +546,7 @@ export function emaOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): EmaStream {
-  const sp = new EmaStream(core);
+  const sp = EmaStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

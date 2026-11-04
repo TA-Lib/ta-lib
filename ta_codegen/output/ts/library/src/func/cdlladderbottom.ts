@@ -306,9 +306,13 @@ export class CdlladderbottomStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlladderbottomStream {
+    return new CdlladderbottomStream(core);
   }
 
   /**
@@ -621,7 +625,7 @@ export function cdlladderbottomOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlladderbottomStream {
-  const sp = new CdlladderbottomStream(core);
+  const sp = CdlladderbottomStream.of(core);
   const retCode = cdlladderbottomOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -643,7 +647,7 @@ export function cdlladderbottomOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlladderbottomStream {
-  const sp = new CdlladderbottomStream(core);
+  const sp = CdlladderbottomStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

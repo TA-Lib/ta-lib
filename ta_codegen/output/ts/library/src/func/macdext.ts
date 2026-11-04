@@ -492,9 +492,13 @@ export class MacdextStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MacdextStream {
+    return new MacdextStream(core);
   }
 
   /**
@@ -832,7 +836,7 @@ export function macdextOpenAndFillInternal(
   outMACDSignal: Float64Array,
   outMACDHist: Float64Array,
 ): MacdextStream {
-  const sp = new MacdextStream(core);
+  const sp = MacdextStream.of(core);
   const retCode = macdextOpenImpl(sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -857,7 +861,7 @@ export function macdextOpenInternal(
   optInSignalPeriod: number,
   optInSignalMAType: number,
 ): MacdextStream {
-  const sp = new MacdextStream(core);
+  const sp = MacdextStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outMACD = new Float64Array(1);

@@ -387,9 +387,13 @@ export class CdlmorningdojistarStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlmorningdojistarStream {
+    return new CdlmorningdojistarStream(core);
   }
 
   /**
@@ -797,7 +801,7 @@ export function cdlmorningdojistarOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlmorningdojistarStream {
-  const sp = new CdlmorningdojistarStream(core);
+  const sp = CdlmorningdojistarStream.of(core);
   const retCode = cdlmorningdojistarOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -820,7 +824,7 @@ export function cdlmorningdojistarOpenInternal(
   startIdx: number,
   optInPenetration: number,
 ): CdlmorningdojistarStream {
-  const sp = new CdlmorningdojistarStream(core);
+  const sp = CdlmorningdojistarStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

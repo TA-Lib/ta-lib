@@ -384,9 +384,13 @@ export class VarStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): VarStream {
+    return new VarStream(core);
   }
 
   /**
@@ -883,7 +887,7 @@ export function varOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): VarStream {
-  const sp = new VarStream(core);
+  const sp = VarStream.of(core);
   const retCode = varOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -904,7 +908,7 @@ export function varOpenInternal(
   optInTimePeriod: number,
   optInNbDev: number,
 ): VarStream {
-  const sp = new VarStream(core);
+  const sp = VarStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

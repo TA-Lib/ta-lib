@@ -543,9 +543,13 @@ export class MacdfixStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MacdfixStream {
+    return new MacdfixStream(core);
   }
 
   /**
@@ -1152,7 +1156,7 @@ export function macdfixOpenAndFillInternal(
   outMACDSignal: Float64Array,
   outMACDHist: Float64Array,
 ): MacdfixStream {
-  const sp = new MacdfixStream(core);
+  const sp = MacdfixStream.of(core);
   const retCode = macdfixOpenImpl(sp, inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1172,7 +1176,7 @@ export function macdfixOpenInternal(
   startIdx: number,
   optInSignalPeriod: number,
 ): MacdfixStream {
-  const sp = new MacdfixStream(core);
+  const sp = MacdfixStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outMACD = new Float64Array(1);

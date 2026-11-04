@@ -511,9 +511,13 @@ export class KamaStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): KamaStream {
+    return new KamaStream(core);
   }
 
   /**
@@ -1064,7 +1068,7 @@ export function kamaOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): KamaStream {
-  const sp = new KamaStream(core);
+  const sp = KamaStream.of(core);
   const retCode = kamaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1084,7 +1088,7 @@ export function kamaOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): KamaStream {
-  const sp = new KamaStream(core);
+  const sp = KamaStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

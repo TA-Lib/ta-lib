@@ -775,9 +775,13 @@ export class SmiStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): SmiStream {
+    return new SmiStream(core);
   }
 
   /**
@@ -1746,7 +1750,7 @@ export function smiOpenAndFillInternal(
   outSMI: Float64Array,
   outSMISignal: Float64Array,
 ): SmiStream {
-  const sp = new SmiStream(core);
+  const sp = SmiStream.of(core);
   const retCode = smiOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1771,7 +1775,7 @@ export function smiOpenInternal(
   optInSlowPeriod: number,
   optInSignalPeriod: number,
 ): SmiStream {
-  const sp = new SmiStream(core);
+  const sp = SmiStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outSMI = new Float64Array(1);

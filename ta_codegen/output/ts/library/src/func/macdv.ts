@@ -870,9 +870,13 @@ export class MacdvStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MacdvStream {
+    return new MacdvStream(core);
   }
 
   /**
@@ -1831,7 +1835,7 @@ export function macdvOpenAndFillInternal(
   outMACDVSignal: Float64Array,
   outMACDVHist: Float64Array,
 ): MacdvStream {
-  const sp = new MacdvStream(core);
+  const sp = MacdvStream.of(core);
   const retCode = macdvOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACDV, outMACDVSignal, outMACDVHist, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1855,7 +1859,7 @@ export function macdvOpenInternal(
   optInSlowPeriod: number,
   optInSignalPeriod: number,
 ): MacdvStream {
-  const sp = new MacdvStream(core);
+  const sp = MacdvStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outMACDV = new Float64Array(1);

@@ -327,9 +327,13 @@ export class CdlharamicrossStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlharamicrossStream {
+    return new CdlharamicrossStream(core);
   }
 
   /**
@@ -687,7 +691,7 @@ export function cdlharamicrossOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlharamicrossStream {
-  const sp = new CdlharamicrossStream(core);
+  const sp = CdlharamicrossStream.of(core);
   const retCode = cdlharamicrossOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -709,7 +713,7 @@ export function cdlharamicrossOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlharamicrossStream {
-  const sp = new CdlharamicrossStream(core);
+  const sp = CdlharamicrossStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

@@ -598,9 +598,13 @@ export class BbandsStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): BbandsStream {
+    return new BbandsStream(core);
   }
 
   /**
@@ -927,7 +931,7 @@ export function bbandsOpenAndFillInternal(
   outRealMiddleBand: Float64Array,
   outRealLowerBand: Float64Array,
 ): BbandsStream {
-  const sp = new BbandsStream(core);
+  const sp = BbandsStream.of(core);
   const retCode = bbandsOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -950,7 +954,7 @@ export function bbandsOpenInternal(
   optInNbDevDn: number,
   optInMAType: number,
 ): BbandsStream {
-  const sp = new BbandsStream(core);
+  const sp = BbandsStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outRealUpperBand = new Float64Array(1);

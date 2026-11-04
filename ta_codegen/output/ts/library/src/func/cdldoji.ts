@@ -258,9 +258,13 @@ export class CdldojiStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdldojiStream {
+    return new CdldojiStream(core);
   }
 
   /**
@@ -505,7 +509,7 @@ export function cdldojiOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdldojiStream {
-  const sp = new CdldojiStream(core);
+  const sp = CdldojiStream.of(core);
   const retCode = cdldojiOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -527,7 +531,7 @@ export function cdldojiOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdldojiStream {
-  const sp = new CdldojiStream(core);
+  const sp = CdldojiStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

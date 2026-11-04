@@ -503,9 +503,13 @@ export class BbwStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): BbwStream {
+    return new BbwStream(core);
   }
 
   /**
@@ -777,7 +781,7 @@ export function bbwOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): BbwStream {
-  const sp = new BbwStream(core);
+  const sp = BbwStream.of(core);
   const retCode = bbwOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -800,7 +804,7 @@ export function bbwOpenInternal(
   optInNbDevDn: number,
   optInMAType: number,
 ): BbwStream {
-  const sp = new BbwStream(core);
+  const sp = BbwStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

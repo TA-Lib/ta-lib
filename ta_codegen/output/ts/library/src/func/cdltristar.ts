@@ -299,9 +299,13 @@ export class CdltristarStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdltristarStream {
+    return new CdltristarStream(core);
   }
 
   /**
@@ -611,7 +615,7 @@ export function cdltristarOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdltristarStream {
-  const sp = new CdltristarStream(core);
+  const sp = CdltristarStream.of(core);
   const retCode = cdltristarOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -633,7 +637,7 @@ export function cdltristarOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdltristarStream {
-  const sp = new CdltristarStream(core);
+  const sp = CdltristarStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

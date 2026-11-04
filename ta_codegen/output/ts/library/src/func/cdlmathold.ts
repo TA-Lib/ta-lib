@@ -396,9 +396,13 @@ export class CdlmatholdStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlmatholdStream {
+    return new CdlmatholdStream(core);
   }
 
   /**
@@ -817,7 +821,7 @@ export function cdlmatholdOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlmatholdStream {
-  const sp = new CdlmatholdStream(core);
+  const sp = CdlmatholdStream.of(core);
   const retCode = cdlmatholdOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -840,7 +844,7 @@ export function cdlmatholdOpenInternal(
   startIdx: number,
   optInPenetration: number,
 ): CdlmatholdStream {
-  const sp = new CdlmatholdStream(core);
+  const sp = CdlmatholdStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

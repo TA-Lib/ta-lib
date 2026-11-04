@@ -503,9 +503,13 @@ export class StochfStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): StochfStream {
+    return new StochfStream(core);
   }
 
   /**
@@ -1053,7 +1057,7 @@ export function stochfOpenAndFillInternal(
   outFastK: Float64Array,
   outFastD: Float64Array,
 ): StochfStream {
-  const sp = new StochfStream(core);
+  const sp = StochfStream.of(core);
   const retCode = stochfOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1077,7 +1081,7 @@ export function stochfOpenInternal(
   optInFastD_Period: number,
   optInFastD_MAType: number,
 ): StochfStream {
-  const sp = new StochfStream(core);
+  const sp = StochfStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outFastK = new Float64Array(1);

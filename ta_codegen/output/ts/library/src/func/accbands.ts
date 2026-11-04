@@ -362,9 +362,13 @@ export class AccbandsStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): AccbandsStream {
+    return new AccbandsStream(core);
   }
 
   /**
@@ -768,7 +772,7 @@ export function accbandsOpenAndFillInternal(
   outRealMiddleBand: Float64Array,
   outRealLowerBand: Float64Array,
 ): AccbandsStream {
-  const sp = new AccbandsStream(core);
+  const sp = AccbandsStream.of(core);
   const retCode = accbandsOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -790,7 +794,7 @@ export function accbandsOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): AccbandsStream {
-  const sp = new AccbandsStream(core);
+  const sp = AccbandsStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outRealUpperBand = new Float64Array(1);

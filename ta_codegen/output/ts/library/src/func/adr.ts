@@ -315,9 +315,13 @@ export class AdrStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): AdrStream {
+    return new AdrStream(core);
   }
 
   /**
@@ -563,7 +567,7 @@ export function adrOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): AdrStream {
-  const sp = new AdrStream(core);
+  const sp = AdrStream.of(core);
   const retCode = adrOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -584,7 +588,7 @@ export function adrOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): AdrStream {
-  const sp = new AdrStream(core);
+  const sp = AdrStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

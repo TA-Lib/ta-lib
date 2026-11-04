@@ -284,9 +284,13 @@ export class DpoStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): DpoStream {
+    return new DpoStream(core);
   }
 
   /**
@@ -542,7 +546,7 @@ export function dpoOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): DpoStream {
-  const sp = new DpoStream(core);
+  const sp = DpoStream.of(core);
   const retCode = dpoOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -562,7 +566,7 @@ export function dpoOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): DpoStream {
-  const sp = new DpoStream(core);
+  const sp = DpoStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

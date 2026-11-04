@@ -343,9 +343,13 @@ export class Cdlidentical3crowsStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): Cdlidentical3crowsStream {
+    return new Cdlidentical3crowsStream(core);
   }
 
   /**
@@ -722,7 +726,7 @@ export function cdlidentical3crowsOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): Cdlidentical3crowsStream {
-  const sp = new Cdlidentical3crowsStream(core);
+  const sp = Cdlidentical3crowsStream.of(core);
   const retCode = cdlidentical3crowsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -744,7 +748,7 @@ export function cdlidentical3crowsOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): Cdlidentical3crowsStream {
-  const sp = new Cdlidentical3crowsStream(core);
+  const sp = Cdlidentical3crowsStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

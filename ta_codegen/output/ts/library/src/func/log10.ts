@@ -166,9 +166,13 @@ export class Log10Stream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): Log10Stream {
+    return new Log10Stream(core);
   }
 
   /**
@@ -298,7 +302,7 @@ export function log10OpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): Log10Stream {
-  const sp = new Log10Stream(core);
+  const sp = Log10Stream.of(core);
   const retCode = log10OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -317,7 +321,7 @@ export function log10OpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): Log10Stream {
-  const sp = new Log10Stream(core);
+  const sp = Log10Stream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

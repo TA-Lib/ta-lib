@@ -499,9 +499,13 @@ export class CorrelStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CorrelStream {
+    return new CorrelStream(core);
   }
 
   /**
@@ -1309,7 +1313,7 @@ export function correlOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): CorrelStream {
-  const sp = new CorrelStream(core);
+  const sp = CorrelStream.of(core);
   const retCode = correlOpenImpl(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1330,7 +1334,7 @@ export function correlOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): CorrelStream {
-  const sp = new CorrelStream(core);
+  const sp = CorrelStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

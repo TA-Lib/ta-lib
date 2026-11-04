@@ -325,9 +325,13 @@ export class CdlharamiStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlharamiStream {
+    return new CdlharamiStream(core);
   }
 
   /**
@@ -688,7 +692,7 @@ export function cdlharamiOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlharamiStream {
-  const sp = new CdlharamiStream(core);
+  const sp = CdlharamiStream.of(core);
   const retCode = cdlharamiOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -710,7 +714,7 @@ export function cdlharamiOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlharamiStream {
-  const sp = new CdlharamiStream(core);
+  const sp = CdlharamiStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

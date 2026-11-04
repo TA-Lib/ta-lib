@@ -594,9 +594,13 @@ export class KvoStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): KvoStream {
+    return new KvoStream(core);
   }
 
   /**
@@ -1225,7 +1229,7 @@ export function kvoOpenAndFillInternal(
   outKVO: Float64Array,
   outKVOSignal: Float64Array,
 ): KvoStream {
-  const sp = new KvoStream(core);
+  const sp = KvoStream.of(core);
   const retCode = kvoOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outKVO, outKVOSignal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1250,7 +1254,7 @@ export function kvoOpenInternal(
   optInSlowPeriod: number,
   optInSignalPeriod: number,
 ): KvoStream {
-  const sp = new KvoStream(core);
+  const sp = KvoStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outKVO = new Float64Array(1);

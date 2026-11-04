@@ -164,9 +164,13 @@ export class TanStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): TanStream {
+    return new TanStream(core);
   }
 
   /**
@@ -296,7 +300,7 @@ export function tanOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): TanStream {
-  const sp = new TanStream(core);
+  const sp = TanStream.of(core);
   const retCode = tanOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -315,7 +319,7 @@ export function tanOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): TanStream {
-  const sp = new TanStream(core);
+  const sp = TanStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

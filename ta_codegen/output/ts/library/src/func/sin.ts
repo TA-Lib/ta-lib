@@ -163,9 +163,13 @@ export class SinStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): SinStream {
+    return new SinStream(core);
   }
 
   /**
@@ -295,7 +299,7 @@ export function sinOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): SinStream {
-  const sp = new SinStream(core);
+  const sp = SinStream.of(core);
   const retCode = sinOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -314,7 +318,7 @@ export function sinOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): SinStream {
-  const sp = new SinStream(core);
+  const sp = SinStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

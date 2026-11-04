@@ -468,9 +468,13 @@ export class SupertrendStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): SupertrendStream {
+    return new SupertrendStream(core);
   }
 
   /**
@@ -976,7 +980,7 @@ export function supertrendOpenAndFillInternal(
   outSupertrend: Float64Array,
   outTrend: Int32Array,
 ): SupertrendStream {
-  const sp = new SupertrendStream(core);
+  const sp = SupertrendStream.of(core);
   const retCode = supertrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -999,7 +1003,7 @@ export function supertrendOpenInternal(
   optInTimePeriod: number,
   optInMultiplier: number,
 ): SupertrendStream {
-  const sp = new SupertrendStream(core);
+  const sp = SupertrendStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outSupertrend = new Float64Array(1);

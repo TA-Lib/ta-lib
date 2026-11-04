@@ -333,9 +333,13 @@ export class CdlrickshawmanStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlrickshawmanStream {
+    return new CdlrickshawmanStream(core);
   }
 
   /**
@@ -701,7 +705,7 @@ export function cdlrickshawmanOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlrickshawmanStream {
-  const sp = new CdlrickshawmanStream(core);
+  const sp = CdlrickshawmanStream.of(core);
   const retCode = cdlrickshawmanOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -723,7 +727,7 @@ export function cdlrickshawmanOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlrickshawmanStream {
-  const sp = new CdlrickshawmanStream(core);
+  const sp = CdlrickshawmanStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

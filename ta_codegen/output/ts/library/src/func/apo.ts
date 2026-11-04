@@ -542,9 +542,13 @@ export class ApoStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): ApoStream {
+    return new ApoStream(core);
   }
 
   /**
@@ -762,7 +766,7 @@ export function apoOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): ApoStream {
-  const sp = new ApoStream(core);
+  const sp = ApoStream.of(core);
   const retCode = apoOpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -784,7 +788,7 @@ export function apoOpenInternal(
   optInSlowPeriod: number,
   optInMAType: number,
 ): ApoStream {
-  const sp = new ApoStream(core);
+  const sp = ApoStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

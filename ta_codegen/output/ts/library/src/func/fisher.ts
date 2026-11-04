@@ -420,9 +420,13 @@ export class FisherStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): FisherStream {
+    return new FisherStream(core);
   }
 
   /**
@@ -964,7 +968,7 @@ export function fisherOpenAndFillInternal(
   outFisher: Float64Array,
   outTrigger: Float64Array,
 ): FisherStream {
-  const sp = new FisherStream(core);
+  const sp = FisherStream.of(core);
   const retCode = fisherOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outFisher, outTrigger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -985,7 +989,7 @@ export function fisherOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): FisherStream {
-  const sp = new FisherStream(core);
+  const sp = FisherStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outFisher = new Float64Array(1);

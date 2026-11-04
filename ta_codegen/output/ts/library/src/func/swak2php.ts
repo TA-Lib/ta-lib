@@ -367,9 +367,13 @@ export class Swak2phpStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): Swak2phpStream {
+    return new Swak2phpStream(core);
   }
 
   /**
@@ -697,7 +701,7 @@ export function swak2phpOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): Swak2phpStream {
-  const sp = new Swak2phpStream(core);
+  const sp = Swak2phpStream.of(core);
   const retCode = swak2phpOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -717,7 +721,7 @@ export function swak2phpOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): Swak2phpStream {
-  const sp = new Swak2phpStream(core);
+  const sp = Swak2phpStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

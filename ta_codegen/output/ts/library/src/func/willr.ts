@@ -425,9 +425,13 @@ export class WillrStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): WillrStream {
+    return new WillrStream(core);
   }
 
   /**
@@ -836,7 +840,7 @@ export function willrOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): WillrStream {
-  const sp = new WillrStream(core);
+  const sp = WillrStream.of(core);
   const retCode = willrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -858,7 +862,7 @@ export function willrOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): WillrStream {
-  const sp = new WillrStream(core);
+  const sp = WillrStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

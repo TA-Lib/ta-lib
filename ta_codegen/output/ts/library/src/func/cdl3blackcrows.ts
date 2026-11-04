@@ -314,9 +314,13 @@ export class Cdl3blackcrowsStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): Cdl3blackcrowsStream {
+    return new Cdl3blackcrowsStream(core);
   }
 
   /**
@@ -649,7 +653,7 @@ export function cdl3blackcrowsOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): Cdl3blackcrowsStream {
-  const sp = new Cdl3blackcrowsStream(core);
+  const sp = Cdl3blackcrowsStream.of(core);
   const retCode = cdl3blackcrowsOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -671,7 +675,7 @@ export function cdl3blackcrowsOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): Cdl3blackcrowsStream {
-  const sp = new Cdl3blackcrowsStream(core);
+  const sp = Cdl3blackcrowsStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

@@ -337,9 +337,13 @@ export class VwapStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): VwapStream {
+    return new VwapStream(core);
   }
 
   /**
@@ -774,7 +778,7 @@ export function vwapOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): VwapStream {
-  const sp = new VwapStream(core);
+  const sp = VwapStream.of(core);
   const retCode = vwapOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -796,7 +800,7 @@ export function vwapOpenInternal(
   inVolume: Float64Array,
   startIdx: number,
 ): VwapStream {
-  const sp = new VwapStream(core);
+  const sp = VwapStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

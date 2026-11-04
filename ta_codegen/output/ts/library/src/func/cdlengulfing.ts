@@ -263,9 +263,13 @@ export class CdlengulfingStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlengulfingStream {
+    return new CdlengulfingStream(core);
   }
 
   /**
@@ -506,7 +510,7 @@ export function cdlengulfingOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlengulfingStream {
-  const sp = new CdlengulfingStream(core);
+  const sp = CdlengulfingStream.of(core);
   const retCode = cdlengulfingOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -528,7 +532,7 @@ export function cdlengulfingOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlengulfingStream {
-  const sp = new CdlengulfingStream(core);
+  const sp = CdlengulfingStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

@@ -174,9 +174,13 @@ export class MultStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MultStream {
+    return new MultStream(core);
   }
 
   /**
@@ -317,7 +321,7 @@ export function multOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): MultStream {
-  const sp = new MultStream(core);
+  const sp = MultStream.of(core);
   const retCode = multOpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -337,7 +341,7 @@ export function multOpenInternal(
   inReal1: Float64Array,
   startIdx: number,
 ): MultStream {
-  const sp = new MultStream(core);
+  const sp = MultStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

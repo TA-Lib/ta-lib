@@ -166,9 +166,13 @@ export class SinhStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): SinhStream {
+    return new SinhStream(core);
   }
 
   /**
@@ -298,7 +302,7 @@ export function sinhOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): SinhStream {
-  const sp = new SinhStream(core);
+  const sp = SinhStream.of(core);
   const retCode = sinhOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -317,7 +321,7 @@ export function sinhOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): SinhStream {
-  const sp = new SinhStream(core);
+  const sp = SinhStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

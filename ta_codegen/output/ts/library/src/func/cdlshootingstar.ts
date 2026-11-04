@@ -338,9 +338,13 @@ export class CdlshootingstarStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlshootingstarStream {
+    return new CdlshootingstarStream(core);
   }
 
   /**
@@ -709,7 +713,7 @@ export function cdlshootingstarOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlshootingstarStream {
-  const sp = new CdlshootingstarStream(core);
+  const sp = CdlshootingstarStream.of(core);
   const retCode = cdlshootingstarOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -731,7 +735,7 @@ export function cdlshootingstarOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlshootingstarStream {
-  const sp = new CdlshootingstarStream(core);
+  const sp = CdlshootingstarStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

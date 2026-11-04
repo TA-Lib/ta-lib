@@ -513,9 +513,13 @@ export class MavpStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MavpStream {
+    return new MavpStream(core);
   }
 
   /**
@@ -935,7 +939,7 @@ export function mavpOpenInternal(
   optInMaxPeriod: number,
   optInMAType: number,
 ): MavpStream {
-  const sp = new MavpStream(core);
+  const sp = MavpStream.of(core);
   const retCode = mavpOpenImpl(sp, inReal, inPeriods, startIdx, optInMinPeriod, optInMaxPeriod, optInMAType);
   if (retCode === RetCode.SUCCESS) {
     return sp;
@@ -1064,7 +1068,7 @@ export function mavpOpenAndFill(
   requireLength('MAVP openAndFill', 'outReal', outReal, guardOutLen);
   const inRealF64 = float64(inReal);
   const inPeriodsF64 = float64(inPeriods);
-  const sp = new MavpStream(core);
+  const sp = MavpStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const retCode = mavpOpenAndFillImpl(sp, inRealF64, inPeriodsF64, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);

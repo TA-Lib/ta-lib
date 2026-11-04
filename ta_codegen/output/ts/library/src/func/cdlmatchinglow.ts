@@ -281,9 +281,13 @@ export class CdlmatchinglowStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlmatchinglowStream {
+    return new CdlmatchinglowStream(core);
   }
 
   /**
@@ -553,7 +557,7 @@ export function cdlmatchinglowOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlmatchinglowStream {
-  const sp = new CdlmatchinglowStream(core);
+  const sp = CdlmatchinglowStream.of(core);
   const retCode = cdlmatchinglowOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -575,7 +579,7 @@ export function cdlmatchinglowOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlmatchinglowStream {
-  const sp = new CdlmatchinglowStream(core);
+  const sp = CdlmatchinglowStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

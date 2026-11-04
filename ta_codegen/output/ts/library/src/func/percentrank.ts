@@ -250,9 +250,13 @@ export class PercentrankStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): PercentrankStream {
+    return new PercentrankStream(core);
   }
 
   /**
@@ -461,7 +465,7 @@ export function percentrankOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): PercentrankStream {
-  const sp = new PercentrankStream(core);
+  const sp = PercentrankStream.of(core);
   const retCode = percentrankOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -481,7 +485,7 @@ export function percentrankOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): PercentrankStream {
-  const sp = new PercentrankStream(core);
+  const sp = PercentrankStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

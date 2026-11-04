@@ -430,9 +430,13 @@ export class SkewStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): SkewStream {
+    return new SkewStream(core);
   }
 
   /**
@@ -1090,7 +1094,7 @@ export function skewOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): SkewStream {
-  const sp = new SkewStream(core);
+  const sp = SkewStream.of(core);
   const retCode = skewOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1110,7 +1114,7 @@ export function skewOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): SkewStream {
-  const sp = new SkewStream(core);
+  const sp = SkewStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

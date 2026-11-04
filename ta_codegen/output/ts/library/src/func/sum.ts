@@ -237,9 +237,13 @@ export class SumStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): SumStream {
+    return new SumStream(core);
   }
 
   /**
@@ -449,7 +453,7 @@ export function sumOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): SumStream {
-  const sp = new SumStream(core);
+  const sp = SumStream.of(core);
   const retCode = sumOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -469,7 +473,7 @@ export function sumOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): SumStream {
-  const sp = new SumStream(core);
+  const sp = SumStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

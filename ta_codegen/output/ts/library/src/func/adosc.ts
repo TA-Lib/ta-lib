@@ -433,9 +433,13 @@ export class AdoscStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): AdoscStream {
+    return new AdoscStream(core);
   }
 
   /**
@@ -860,7 +864,7 @@ export function adoscOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): AdoscStream {
-  const sp = new AdoscStream(core);
+  const sp = AdoscStream.of(core);
   const retCode = adoscOpenImpl(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -884,7 +888,7 @@ export function adoscOpenInternal(
   optInFastPeriod: number,
   optInSlowPeriod: number,
 ): AdoscStream {
-  const sp = new AdoscStream(core);
+  const sp = AdoscStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

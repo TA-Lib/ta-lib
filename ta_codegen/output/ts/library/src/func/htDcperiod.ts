@@ -724,9 +724,13 @@ export class HtDcperiodStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): HtDcperiodStream {
+    return new HtDcperiodStream(core);
   }
 
   /**
@@ -2018,7 +2022,7 @@ export function htDcperiodOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): HtDcperiodStream {
-  const sp = new HtDcperiodStream(core);
+  const sp = HtDcperiodStream.of(core);
   const retCode = htDcperiodOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -2037,7 +2041,7 @@ export function htDcperiodOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): HtDcperiodStream {
-  const sp = new HtDcperiodStream(core);
+  const sp = HtDcperiodStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

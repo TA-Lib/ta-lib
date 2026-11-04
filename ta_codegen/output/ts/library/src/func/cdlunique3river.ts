@@ -326,9 +326,13 @@ export class Cdlunique3riverStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): Cdlunique3riverStream {
+    return new Cdlunique3riverStream(core);
   }
 
   /**
@@ -679,7 +683,7 @@ export function cdlunique3riverOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): Cdlunique3riverStream {
-  const sp = new Cdlunique3riverStream(core);
+  const sp = Cdlunique3riverStream.of(core);
   const retCode = cdlunique3riverOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -701,7 +705,7 @@ export function cdlunique3riverOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): Cdlunique3riverStream {
-  const sp = new Cdlunique3riverStream(core);
+  const sp = Cdlunique3riverStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

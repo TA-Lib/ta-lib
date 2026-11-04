@@ -315,9 +315,13 @@ export class CdlhomingpigeonStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlhomingpigeonStream {
+    return new CdlhomingpigeonStream(core);
   }
 
   /**
@@ -645,7 +649,7 @@ export function cdlhomingpigeonOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlhomingpigeonStream {
-  const sp = new CdlhomingpigeonStream(core);
+  const sp = CdlhomingpigeonStream.of(core);
   const retCode = cdlhomingpigeonOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -667,7 +671,7 @@ export function cdlhomingpigeonOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlhomingpigeonStream {
-  const sp = new CdlhomingpigeonStream(core);
+  const sp = CdlhomingpigeonStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

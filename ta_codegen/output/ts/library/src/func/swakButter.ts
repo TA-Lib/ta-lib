@@ -402,9 +402,13 @@ export class SwakButterStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): SwakButterStream {
+    return new SwakButterStream(core);
   }
 
   /**
@@ -854,7 +858,7 @@ export function swakButterOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): SwakButterStream {
-  const sp = new SwakButterStream(core);
+  const sp = SwakButterStream.of(core);
   const retCode = swakButterOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -874,7 +878,7 @@ export function swakButterOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): SwakButterStream {
-  const sp = new SwakButterStream(core);
+  const sp = SwakButterStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

@@ -343,9 +343,13 @@ export class RsiStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): RsiStream {
+    return new RsiStream(core);
   }
 
   /**
@@ -653,7 +657,7 @@ export function rsiOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): RsiStream {
-  const sp = new RsiStream(core);
+  const sp = RsiStream.of(core);
   const retCode = rsiOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -673,7 +677,7 @@ export function rsiOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): RsiStream {
-  const sp = new RsiStream(core);
+  const sp = RsiStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

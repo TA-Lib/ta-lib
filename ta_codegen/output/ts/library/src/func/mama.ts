@@ -870,9 +870,13 @@ export class MamaStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MamaStream {
+    return new MamaStream(core);
   }
 
   /**
@@ -2175,7 +2179,7 @@ export function mamaOpenAndFillInternal(
   outMAMA: Float64Array,
   outFAMA: Float64Array,
 ): MamaStream {
-  const sp = new MamaStream(core);
+  const sp = MamaStream.of(core);
   const retCode = mamaOpenImpl(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -2196,7 +2200,7 @@ export function mamaOpenInternal(
   optInFastLimit: number,
   optInSlowLimit: number,
 ): MamaStream {
-  const sp = new MamaStream(core);
+  const sp = MamaStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outMAMA = new Float64Array(1);

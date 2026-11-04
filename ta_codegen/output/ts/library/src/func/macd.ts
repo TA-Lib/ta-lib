@@ -647,9 +647,13 @@ export class MacdStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MacdStream {
+    return new MacdStream(core);
   }
 
   /**
@@ -1315,7 +1319,7 @@ export function macdOpenAndFillInternal(
   outMACDSignal: Float64Array,
   outMACDHist: Float64Array,
 ): MacdStream {
-  const sp = new MacdStream(core);
+  const sp = MacdStream.of(core);
   const retCode = macdOpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1337,7 +1341,7 @@ export function macdOpenInternal(
   optInSlowPeriod: number,
   optInSignalPeriod: number,
 ): MacdStream {
-  const sp = new MacdStream(core);
+  const sp = MacdStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outMACD = new Float64Array(1);

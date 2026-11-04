@@ -388,9 +388,13 @@ export class LinearregSlopeStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): LinearregSlopeStream {
+    return new LinearregSlopeStream(core);
   }
 
   /**
@@ -909,7 +913,7 @@ export function linearregSlopeOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): LinearregSlopeStream {
-  const sp = new LinearregSlopeStream(core);
+  const sp = LinearregSlopeStream.of(core);
   const retCode = linearregSlopeOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -929,7 +933,7 @@ export function linearregSlopeOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): LinearregSlopeStream {
-  const sp = new LinearregSlopeStream(core);
+  const sp = LinearregSlopeStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

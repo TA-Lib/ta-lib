@@ -366,9 +366,13 @@ export class StochrsiStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): StochrsiStream {
+    return new StochrsiStream(core);
   }
 
   /**
@@ -654,7 +658,7 @@ export function stochrsiOpenAndFillInternal(
   outFastK: Float64Array,
   outFastD: Float64Array,
 ): StochrsiStream {
-  const sp = new StochrsiStream(core);
+  const sp = StochrsiStream.of(core);
   const retCode = stochrsiOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -677,7 +681,7 @@ export function stochrsiOpenInternal(
   optInFastD_Period: number,
   optInFastD_MAType: number,
 ): StochrsiStream {
-  const sp = new StochrsiStream(core);
+  const sp = StochrsiStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outFastK = new Float64Array(1);

@@ -262,9 +262,13 @@ export class StddevStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): StddevStream {
+    return new StddevStream(core);
   }
 
   /**
@@ -468,7 +472,7 @@ export function stddevOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): StddevStream {
-  const sp = new StddevStream(core);
+  const sp = StddevStream.of(core);
   const retCode = stddevOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -489,7 +493,7 @@ export function stddevOpenInternal(
   optInTimePeriod: number,
   optInNbDev: number,
 ): StddevStream {
-  const sp = new StddevStream(core);
+  const sp = StddevStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

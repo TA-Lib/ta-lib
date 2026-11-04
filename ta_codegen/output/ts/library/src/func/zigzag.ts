@@ -403,9 +403,13 @@ export class ZigzagStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): ZigzagStream {
+    return new ZigzagStream(core);
   }
 
   /**
@@ -778,7 +782,7 @@ export function zigzagOpenAndFillInternal(
   outTrend: Int32Array,
   outPivotIdx: Int32Array,
 ): ZigzagStream {
-  const sp = new ZigzagStream(core);
+  const sp = ZigzagStream.of(core);
   const retCode = zigzagOpenImpl(sp, inHigh, inLow, startIdx, optInSensitivity, optInMinTrendLength, outBegIdx, outNBElement, outZigZag, outTrend, outPivotIdx, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -800,7 +804,7 @@ export function zigzagOpenInternal(
   optInSensitivity: number,
   optInMinTrendLength: number,
 ): ZigzagStream {
-  const sp = new ZigzagStream(core);
+  const sp = ZigzagStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outZigZag = new Float64Array(1);

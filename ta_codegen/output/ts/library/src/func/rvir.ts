@@ -294,9 +294,13 @@ export class RvirStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): RvirStream {
+    return new RvirStream(core);
   }
 
   /**
@@ -516,7 +520,7 @@ export function rvirOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): RvirStream {
-  const sp = new RvirStream(core);
+  const sp = RvirStream.of(core);
   const retCode = rvirOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -538,7 +542,7 @@ export function rvirOpenInternal(
   optInTimePeriod: number,
   optInStdDevPeriod: number,
 ): RvirStream {
-  const sp = new RvirStream(core);
+  const sp = RvirStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

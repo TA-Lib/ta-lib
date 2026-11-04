@@ -167,9 +167,13 @@ export class AsinStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): AsinStream {
+    return new AsinStream(core);
   }
 
   /**
@@ -301,7 +305,7 @@ export function asinOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): AsinStream {
-  const sp = new AsinStream(core);
+  const sp = AsinStream.of(core);
   const retCode = asinOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -320,7 +324,7 @@ export function asinOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): AsinStream {
-  const sp = new AsinStream(core);
+  const sp = AsinStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

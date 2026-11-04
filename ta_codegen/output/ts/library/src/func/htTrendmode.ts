@@ -968,9 +968,13 @@ export class HtTrendmodeStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): HtTrendmodeStream {
+    return new HtTrendmodeStream(core);
   }
 
   /**
@@ -2817,7 +2821,7 @@ export function htTrendmodeOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): HtTrendmodeStream {
-  const sp = new HtTrendmodeStream(core);
+  const sp = HtTrendmodeStream.of(core);
   const retCode = htTrendmodeOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -2836,7 +2840,7 @@ export function htTrendmodeOpenInternal(
   inReal: Float64Array,
   startIdx: number,
 ): HtTrendmodeStream {
-  const sp = new HtTrendmodeStream(core);
+  const sp = HtTrendmodeStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

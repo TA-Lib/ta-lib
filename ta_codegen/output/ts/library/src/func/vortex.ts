@@ -428,9 +428,13 @@ export class VortexStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): VortexStream {
+    return new VortexStream(core);
   }
 
   /**
@@ -1024,7 +1028,7 @@ export function vortexOpenAndFillInternal(
   outPlusVI: Float64Array,
   outMinusVI: Float64Array,
 ): VortexStream {
-  const sp = new VortexStream(core);
+  const sp = VortexStream.of(core);
   const retCode = vortexOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outPlusVI, outMinusVI, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1046,7 +1050,7 @@ export function vortexOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): VortexStream {
-  const sp = new VortexStream(core);
+  const sp = VortexStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outPlusVI = new Float64Array(1);

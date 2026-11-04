@@ -613,9 +613,13 @@ export class PvoStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): PvoStream {
+    return new PvoStream(core);
   }
 
   /**
@@ -923,7 +927,7 @@ export function pvoOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): PvoStream {
-  const sp = new PvoStream(core);
+  const sp = PvoStream.of(core);
   const retCode = pvoOpenImpl(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -945,7 +949,7 @@ export function pvoOpenInternal(
   optInSlowPeriod: number,
   optInMAType: number,
 ): PvoStream {
-  const sp = new PvoStream(core);
+  const sp = PvoStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

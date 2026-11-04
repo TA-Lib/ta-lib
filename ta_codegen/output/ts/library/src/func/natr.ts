@@ -420,9 +420,13 @@ export class NatrStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): NatrStream {
+    return new NatrStream(core);
   }
 
   /**
@@ -825,7 +829,7 @@ export function natrOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): NatrStream {
-  const sp = new NatrStream(core);
+  const sp = NatrStream.of(core);
   const retCode = natrOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -847,7 +851,7 @@ export function natrOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): NatrStream {
-  const sp = new NatrStream(core);
+  const sp = NatrStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

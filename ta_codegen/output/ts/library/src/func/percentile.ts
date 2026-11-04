@@ -991,9 +991,13 @@ export class PercentileStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): PercentileStream {
+    return new PercentileStream(core);
   }
 
   /**
@@ -2348,7 +2352,7 @@ export function percentileOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): PercentileStream {
-  const sp = new PercentileStream(core);
+  const sp = PercentileStream.of(core);
   const retCode = percentileOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInPercentile, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -2369,7 +2373,7 @@ export function percentileOpenInternal(
   optInTimePeriod: number,
   optInPercentile: number,
 ): PercentileStream {
-  const sp = new PercentileStream(core);
+  const sp = PercentileStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

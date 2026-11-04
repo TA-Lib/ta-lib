@@ -323,9 +323,13 @@ export class CdlkickingbylengthStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlkickingbylengthStream {
+    return new CdlkickingbylengthStream(core);
   }
 
   /**
@@ -679,7 +683,7 @@ export function cdlkickingbylengthOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlkickingbylengthStream {
-  const sp = new CdlkickingbylengthStream(core);
+  const sp = CdlkickingbylengthStream.of(core);
   const retCode = cdlkickingbylengthOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -701,7 +705,7 @@ export function cdlkickingbylengthOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlkickingbylengthStream {
-  const sp = new CdlkickingbylengthStream(core);
+  const sp = CdlkickingbylengthStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

@@ -301,9 +301,13 @@ export class CdllongleggeddojiStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdllongleggeddojiStream {
+    return new CdllongleggeddojiStream(core);
   }
 
   /**
@@ -601,7 +605,7 @@ export function cdllongleggeddojiOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdllongleggeddojiStream {
-  const sp = new CdllongleggeddojiStream(core);
+  const sp = CdllongleggeddojiStream.of(core);
   const retCode = cdllongleggeddojiOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -623,7 +627,7 @@ export function cdllongleggeddojiOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdllongleggeddojiStream {
-  const sp = new CdllongleggeddojiStream(core);
+  const sp = CdllongleggeddojiStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

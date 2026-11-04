@@ -385,9 +385,13 @@ export class KdjStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): KdjStream {
+    return new KdjStream(core);
   }
 
   /**
@@ -664,7 +668,7 @@ export function kdjOpenAndFillInternal(
   outD: Float64Array,
   outJ: Float64Array,
 ): KdjStream {
-  const sp = new KdjStream(core);
+  const sp = KdjStream.of(core);
   const retCode = kdjOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outK, outD, outJ, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -690,7 +694,7 @@ export function kdjOpenInternal(
   optInSlowD_Period: number,
   optInSlowD_MAType: number,
 ): KdjStream {
-  const sp = new KdjStream(core);
+  const sp = KdjStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outK = new Float64Array(1);

@@ -195,9 +195,13 @@ export class AvgpriceStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): AvgpriceStream {
+    return new AvgpriceStream(core);
   }
 
   /**
@@ -344,7 +348,7 @@ export function avgpriceOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): AvgpriceStream {
-  const sp = new AvgpriceStream(core);
+  const sp = AvgpriceStream.of(core);
   const retCode = avgpriceOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -366,7 +370,7 @@ export function avgpriceOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): AvgpriceStream {
-  const sp = new AvgpriceStream(core);
+  const sp = AvgpriceStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

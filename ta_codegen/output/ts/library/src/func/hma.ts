@@ -638,9 +638,13 @@ export class HmaStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): HmaStream {
+    return new HmaStream(core);
   }
 
   /**
@@ -1689,7 +1693,7 @@ export function hmaOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): HmaStream {
-  const sp = new HmaStream(core);
+  const sp = HmaStream.of(core);
   const retCode = hmaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1709,7 +1713,7 @@ export function hmaOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): HmaStream {
-  const sp = new HmaStream(core);
+  const sp = HmaStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

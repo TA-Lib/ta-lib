@@ -300,9 +300,13 @@ export class CdlclosingmarubozuStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlclosingmarubozuStream {
+    return new CdlclosingmarubozuStream(core);
   }
 
   /**
@@ -614,7 +618,7 @@ export function cdlclosingmarubozuOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlclosingmarubozuStream {
-  const sp = new CdlclosingmarubozuStream(core);
+  const sp = CdlclosingmarubozuStream.of(core);
   const retCode = cdlclosingmarubozuOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -636,7 +640,7 @@ export function cdlclosingmarubozuOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlclosingmarubozuStream {
-  const sp = new CdlclosingmarubozuStream(core);
+  const sp = CdlclosingmarubozuStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

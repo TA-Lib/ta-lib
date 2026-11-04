@@ -355,9 +355,13 @@ export class DonchianStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): DonchianStream {
+    return new DonchianStream(core);
   }
 
   /**
@@ -765,7 +769,7 @@ export function donchianOpenAndFillInternal(
   outRealMiddleBand: Float64Array,
   outRealLowerBand: Float64Array,
 ): DonchianStream {
-  const sp = new DonchianStream(core);
+  const sp = DonchianStream.of(core);
   const retCode = donchianOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -786,7 +790,7 @@ export function donchianOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): DonchianStream {
-  const sp = new DonchianStream(core);
+  const sp = DonchianStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outRealUpperBand = new Float64Array(1);

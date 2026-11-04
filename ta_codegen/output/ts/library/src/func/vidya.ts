@@ -459,9 +459,13 @@ export class VidyaStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): VidyaStream {
+    return new VidyaStream(core);
   }
 
   /**
@@ -928,7 +932,7 @@ export function vidyaOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): VidyaStream {
-  const sp = new VidyaStream(core);
+  const sp = VidyaStream.of(core);
   const retCode = vidyaOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInCMOPeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -949,7 +953,7 @@ export function vidyaOpenInternal(
   optInTimePeriod: number,
   optInCMOPeriod: number,
 ): VidyaStream {
-  const sp = new VidyaStream(core);
+  const sp = VidyaStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

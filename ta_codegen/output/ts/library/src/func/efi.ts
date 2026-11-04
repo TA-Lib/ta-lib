@@ -326,9 +326,13 @@ export class EfiStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): EfiStream {
+    return new EfiStream(core);
   }
 
   /**
@@ -680,7 +684,7 @@ export function efiOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): EfiStream {
-  const sp = new EfiStream(core);
+  const sp = EfiStream.of(core);
   const retCode = efiOpenImpl(sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -701,7 +705,7 @@ export function efiOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): EfiStream {
-  const sp = new EfiStream(core);
+  const sp = EfiStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

@@ -325,9 +325,13 @@ export class MinStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): MinStream {
+    return new MinStream(core);
   }
 
   /**
@@ -598,7 +602,7 @@ export function minOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): MinStream {
-  const sp = new MinStream(core);
+  const sp = MinStream.of(core);
   const retCode = minOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -618,7 +622,7 @@ export function minOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): MinStream {
-  const sp = new MinStream(core);
+  const sp = MinStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

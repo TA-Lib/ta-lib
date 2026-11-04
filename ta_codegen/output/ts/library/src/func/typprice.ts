@@ -184,9 +184,13 @@ export class TyppriceStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): TyppriceStream {
+    return new TyppriceStream(core);
   }
 
   /**
@@ -329,7 +333,7 @@ export function typpriceOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): TyppriceStream {
-  const sp = new TyppriceStream(core);
+  const sp = TyppriceStream.of(core);
   const retCode = typpriceOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -350,7 +354,7 @@ export function typpriceOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): TyppriceStream {
-  const sp = new TyppriceStream(core);
+  const sp = TyppriceStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

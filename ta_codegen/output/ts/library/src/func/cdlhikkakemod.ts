@@ -371,9 +371,13 @@ export class CdlhikkakemodStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlhikkakemodStream {
+    return new CdlhikkakemodStream(core);
   }
 
   /**
@@ -775,7 +779,7 @@ export function cdlhikkakemodOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlhikkakemodStream {
-  const sp = new CdlhikkakemodStream(core);
+  const sp = CdlhikkakemodStream.of(core);
   const retCode = cdlhikkakemodOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -797,7 +801,7 @@ export function cdlhikkakemodOpenInternal(
   inClose: Float64Array,
   startIdx: number,
 ): CdlhikkakemodStream {
-  const sp = new CdlhikkakemodStream(core);
+  const sp = CdlhikkakemodStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

@@ -895,9 +895,13 @@ export class StcStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): StcStream {
+    return new StcStream(core);
   }
 
   /**
@@ -2073,7 +2077,7 @@ export function stcOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): StcStream {
-  const sp = new StcStream(core);
+  const sp = StcStream.of(core);
   const retCode = stcOpenImpl(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -2095,7 +2099,7 @@ export function stcOpenInternal(
   optInSlowPeriod: number,
   optInCyclePeriod: number,
 ): StcStream {
-  const sp = new StcStream(core);
+  const sp = StcStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);

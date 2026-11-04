@@ -645,9 +645,13 @@ export class WavetrendStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): WavetrendStream {
+    return new WavetrendStream(core);
   }
 
   /**
@@ -1330,7 +1334,7 @@ export function wavetrendOpenAndFillInternal(
   outWT1: Float64Array,
   outWT2: Float64Array,
 ): WavetrendStream {
-  const sp = new WavetrendStream(core);
+  const sp = WavetrendStream.of(core);
   const retCode = wavetrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, outBegIdx, outNBElement, outWT1, outWT2, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -1354,7 +1358,7 @@ export function wavetrendOpenInternal(
   optInAveragePeriod: number,
   optInSignalPeriod: number,
 ): WavetrendStream {
-  const sp = new WavetrendStream(core);
+  const sp = WavetrendStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outWT1 = new Float64Array(1);

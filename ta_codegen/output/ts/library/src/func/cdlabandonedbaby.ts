@@ -396,9 +396,13 @@ export class CdlabandonedbabyStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): CdlabandonedbabyStream {
+    return new CdlabandonedbabyStream(core);
   }
 
   /**
@@ -826,7 +830,7 @@ export function cdlabandonedbabyOpenAndFillInternal(
   outNBElement: MInteger,
   outInteger: Int32Array,
 ): CdlabandonedbabyStream {
-  const sp = new CdlabandonedbabyStream(core);
+  const sp = CdlabandonedbabyStream.of(core);
   const retCode = cdlabandonedbabyOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -849,7 +853,7 @@ export function cdlabandonedbabyOpenInternal(
   startIdx: number,
   optInPenetration: number,
 ): CdlabandonedbabyStream {
-  const sp = new CdlabandonedbabyStream(core);
+  const sp = CdlabandonedbabyStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outInteger = new Int32Array(1);

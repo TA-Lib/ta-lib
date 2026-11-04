@@ -250,9 +250,13 @@ export class SmaStream {
   /** @internal */
   outRangeCount: number = 0;
 
-  /** @internal */
-  constructor(core: Core) {
+  private constructor(core: Core) {
     this.core = core;
+  }
+
+  /** @internal */
+  static of(core: Core): SmaStream {
+    return new SmaStream(core);
   }
 
   /**
@@ -473,7 +477,7 @@ export function smaOpenAndFillInternal(
   outNBElement: MInteger,
   outReal: Float64Array,
 ): SmaStream {
-  const sp = new SmaStream(core);
+  const sp = SmaStream.of(core);
   const retCode = smaOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
   sp.outRangeBegIdx = outBegIdx.value;
   sp.outRangeCount = outNBElement.value;
@@ -493,7 +497,7 @@ export function smaOpenInternal(
   startIdx: number,
   optInTimePeriod: number,
 ): SmaStream {
-  const sp = new SmaStream(core);
+  const sp = SmaStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);
