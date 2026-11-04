@@ -36,11 +36,17 @@ version, not even after `npm unpublish`. `npm deprecate` leaves it installable w
 Anything wrong in a published tarball is fixed only by a new version, so every step below that
 can still be undone comes before the one that cannot.
 
+**Never deprecate our newest version while it is `latest`.** With the earlier package's three
+deprecated as well, npm would then send a bare `npm install ta-lib` to its 0.11.0. A fix waits
+for the next Core release (never above the Core); once `npm view ta-lib dist-tags.latest` names
+it, deprecate the broken version.
+
 ## Credentials
 
 Publish as an owner of the package (`npm owner ls ta-lib`), from your own machine, signed in
 with `npm login`, with two-factor authentication on: `npm publish` asks for the one-time
-password. No CI secret and no token in a file.
+password. No CI secret and no token in a file. The package refuses tokens: its Publishing access
+on npmjs.com reads "Require two-factor authentication and disallow tokens".
 
 **Later: trusted publishing** (GitHub OIDC, with `--provenance`). Its policy names the publish
 workflow by **file name**, so that workflow is written first and this runbook then names it.
