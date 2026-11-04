@@ -139,6 +139,7 @@ release as shipped.
 ## Versions 0.9.0, 0.10.0 and 0.11.0
 
 `ta-lib` 0.9.0, 0.10.0 and 0.11.0 on npm belong to an unrelated earlier package that used the
-same name. npm never accepts a version it has already seen, so this package can never publish
-those three: TP1's version check catches a `VERSION` that lands on one. They are deprecated; leave
+same name. npm never accepts a version it has already seen, and every backend ships the one
+`VERSION`, so no release carries those three: `scripts/sync.py` and `check_versions` refuse them,
+and the 0.9 line starts at 0.9.1. They are deprecated; leave
 them on the registry: the package has public dependents, so npm refuses to unpublish them.

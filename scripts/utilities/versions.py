@@ -9,6 +9,10 @@ from typing import Tuple
 from .common import expand_globs
 from .files import path_join
 
+# The previous holder's versions of the npm name. npm never accepts them again, and
+# every backend ships the one VERSION, so no release of any backend may carry one.
+FOREIGN_NPM_VERSIONS = frozenset({"0.9.0", "0.10.0", "0.11.0"})
+
 def _read_version_info(version_file_path: str, version_pattern: str) -> dict:
     """
     Read a version string from a file.
@@ -684,6 +688,9 @@ def sync_versions(root_dir: str) -> Tuple[bool,str]:
     Touches nothing when they already agree. Return (updated, version).
     """
     version = get_version_string(root_dir)
+    if version in FOREIGN_NPM_VERSIONS:
+        sys.exit(f"Error: VERSION [{version}] is taken on npm by an earlier package; "
+                 f"no backend can release it. Use the next patch.")
     targets = (
         ("ta_version.c", get_version_string_source_code, set_version_string_source_code),
         ("CMakeLists.txt", get_version_string_cmake, set_version_string_cmake),
@@ -719,6 +726,9 @@ def sync_versions(root_dir: str) -> Tuple[bool,str]:
 def check_versions(root_dir: str) -> str:
     # Similar to sync_versions() but only checks if the versions are in sync, do not modify anything.
     version_file = get_version_string(root_dir)
+    if version_file in FOREIGN_NPM_VERSIONS:
+        print(f"Error: VERSION [{version_file}] is taken on npm by an earlier package")
+        return None
     version_c = get_version_string_source_code(root_dir)
     version_cmake = get_version_string_cmake(root_dir)
     version_spec_in = get_version_string_spec_in(root_dir)
