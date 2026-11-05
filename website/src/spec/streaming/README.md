@@ -45,7 +45,7 @@ A bar is counted when it enters the range, by an accepted `Update` or by `Advanc
 | Rule | Condition | Code | Calls | Not checked in |
 |---|---|---|---|---|
 | <a id="ru1"></a>**rU1** | The handle is absent | `TA_BAD_PARAM` | every handle call except Close | Rust, Java, C#, TypeScript: cannot be absent |
-| <a id="ru2"></a>**rU2** | A required output is absent: a C out-pointer, a Java or TypeScript multi-output sink | `TA_BAD_PARAM` | Update, Peek; in C also Value, OutRange, Clone; in Java and TypeScript also value | Rust, C#: value returned |
+| <a id="ru2"></a>**rU2** | A required output is absent: a C out-pointer, a Java multi-output sink | `TA_BAD_PARAM` | Update, Peek; in C also Value, OutRange, Clone; in Java also value | Rust, C#, TypeScript: value returned |
 | <a id="ru3"></a>**rU3** | A bar value is NaN, `+Inf` or `-Inf` | `TA_BAD_PARAM` | Update, Peek | |
 | <a id="ru4"></a>**rU4** | The bar this call would count leaves the index domain: `OutRange`'s `begIdx + count > TA_INDEX_MAX` | `TA_OUT_OF_RANGE_END_INDEX` | Update, Advance | |
 

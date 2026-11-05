@@ -16,13 +16,13 @@ Each streamable function adds two opening functions and a stream class, e.g. `Sm
 
 | Call | When | Does |
 |------|------|------|
-| `<name>Open(history, params)` | once | validate params, consume warm-up history, return a **stream** |
+| `<name>Open(history, options)` | once | validate params, consume warm-up history, return a **stream** |
 | `stream.update(bar)` | once per **closed** bar | commit one bar and answer the new value |
 | `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 
-A single-output function answers with a `number`. A multi-output one writes into a sink you pass and own: see [Multi-input / multi-output](#multi-input-multi-output).
+A single-output function answers with a `number`, a multi-output one with an object holding its outputs: see [Multi-input / multi-output](#multi-input-multi-output).
 
-One more call, `<name>OpenAndFill`, writes array output instead of a single value: see [Array-Fill Open](#array-fill-open) below.
+One more call, `<name>OpenAndFill`, also returns array output: see [Array-Fill Open](#array-fill-open) below.
 
 Additional [utility functions](#utility-calls) are available.
 
@@ -33,9 +33,9 @@ There is no `close`: an unreferenced stream is simply garbage-collected.
 ```ts
 import { smaOpen } from 'ta-lib';
 
-// Seed with warm-up history (>= smaLookback(period) + 1 bars).
+// Seed with warm-up history (>= smaLookback(options) + 1 bars).
 const history = new Float64Array([ /* ...your closing prices... */ ]);
-const s = smaOpen(history, 30);           // value() starts at the last history bar
+const s = smaOpen(history, { timePeriod: 30 });   // value() starts at the last history bar
 
 // Each time a bar closes:
 const v = s.update(newClose);             // throws on a non-finite bar, or past INDEX_MAX
@@ -48,52 +48,50 @@ const provisional = s.peek(formingClose); // state left unchanged
 
 ## Rules
 
-- **Warm-up.** `open` succeeds only if `history.length >= <name>Lookback(params) + 1`: with fewer bars there is no defined value yet. Too little history throws `TALibError` with `code` `'TA_INSUFFICIENT_HISTORY'` (see [Error model](#error-model)). After `open`, the history can be discarded: the stream keeps everything it needs.
+- **Warm-up.** `open` succeeds only if `history.length >= <name>Lookback(options) + 1`: with fewer bars there is no defined value yet. Too little history, an empty one included, throws `TALibError` with `code` `'TA_INSUFFICIENT_HISTORY'` (see [Error model](#error-model)). After `open`, the history can be discarded: the stream keeps everything it needs.
 - **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing: call it as often as the forming bar ticks. `value()` re-reads the last committed value without recomputing.
 - **The unstable period is resolved once, at `open`.** The lookback above is the one of the `Core` the stream is opened on. Under an [Auto level](/api/unstable-period/#auto) it is the Auto lookback, so `open` needs that many bars plus one.
-- **Parameters are fixed at `open`.** Changing a parameter means a new stream. The [unstable period](/api/typescript/#numerical_stability) and [candle settings](/api/typescript/#candle_settings) come from the `Core` passed as the opener's last argument, or `Core.DEFAULT`. Since `Core` is immutable they cannot change underneath a live stream: to stream with different settings, build a new `Core` and open with that.
+- **Parameters are fixed at `open`.** Changing a parameter means a new stream. The [unstable period](/api/typescript/#numerical_stability) and [candle settings](/api/typescript/#candle_settings) come from the `Core` passed as the opener's `core` option, or `Core.DEFAULT`. Since `Core` is immutable they cannot change underneath a live stream: to stream with different settings, build a new `Core` and open with that.
 
 ## Multi-input / multi-output
 
-Inputs and outputs mirror the batch function. A multi-output function writes its outputs into a `<Name>Out`, a plain mutable object with one field per output, in batch output order, that **you** allocate and pass in. Candlestick patterns return a `number`:
+Inputs mirror the batch function: the same positional arrays and price objects at `open`, then one number per input component at `update` and `peek`. A multi-output function returns its outputs in a `<Name>Out`, a plain mutable object with one field per output, named as the batch result's. Candlestick patterns return a `number`:
 
 ```ts
 import { cdldojiOpen, macdOpen, MacdOut } from 'ta-lib';
 
 // MACD: one input, three outputs
-const m = macdOpen(history, 12, 26, 9);
+const m = macdOpen(history, { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 });
+const { outMacd, outMacdSignal, outMacdHist } = m.update(newClose);   // a new MacdOut
+
 const out = new MacdOut();               // allocate once, reuse every bar
-m.update(newClose, out);
-// out.macd, out.macdSignal, out.macdHist
+m.update(newClose, out);                 // fills and returns out
 
 // A candlestick pattern returns a number
-const c = cdldojiOpen(open, high, low, close);
+const c = cdldojiOpen({ open, high, low, close });
 const pattern = c.update(o, h, l, cl);
 ```
 
-Reusing one sink is the point: `update`, `peek` and `value` overwrite its fields rather than allocating a new one. The price is that **its contents are only valid until the next call that writes it**. Copy the fields out if the reading has to outlive the call, or allocate one sink per slot.
+Without a sink, `update`, `peek` and `value` each return a new object. Passing one sink makes them allocation-free: they overwrite its fields and return it. The price is that **its contents are only valid until the next call that writes it**, so a `peek` into the sink `update` filled overwrites it. Copy the fields out if the reading has to outlive the call, or allocate one sink per slot.
 
 ## Array-Fill Open
 
-`open` and `update` each write a single value. One more call writes a full array instead, the same shape the [batch function](/api/typescript/) would produce, while still opening the stream:
+`open` returns the stream alone. One more call also returns the batch result over the history, the same shape the [batch function](/api/typescript/) would produce, while still opening the stream:
 
 | Call | When | Does |
 |------|------|------|
-| `<name>OpenAndFill(..)` | once, instead of `open` | like `open`, but also fills the output for **every** history bar |
+| `<name>OpenAndFill(history, options)` | once, instead of `open` | like `open`, but also returns the output for **every** history bar |
 
 ```ts
 import { smaOpenAndFill } from 'ta-lib';
 
-const warmup = new Float64Array(history.length);
+const { stream, begIdx, values } = smaOpenAndFill(history, { timePeriod: 30 });
 
-const s = smaOpenAndFill(history, 30, warmup);
-const r = s.outRange();                   // the bars it has an output for
-
-// warmup[0 .. r.count - 1] is the SMA over all of history; then stream on:
-const v = s.update(newClose);
+// values[i] is the SMA at history bar begIdx + i; then stream on:
+const v = stream.update(newClose);
 ```
 
-The optional parameters and output arrays are exactly the [batch function](/api/typescript/)'s. The range written is reported on the returned stream as `outRange()`: see [Utility Calls](#utility-calls) below. The output arrays must not share memory with the input or with each other.
+The options, output buffers included, are exactly the [batch function](/api/typescript/#input_type)'s, and the result is the batch result plus `stream`. Its range is the stream's `outRange()`: see [Utility Calls](#utility-calls) below. An output buffer must not share memory with the input or with another buffer.
 
 ## Utility Calls
 
@@ -101,11 +99,11 @@ The optional parameters and output arrays are exactly the [batch function](/api/
 |------|------|------|
 | `stream.value()` / `stream.value(out)` | any time | the value(s) at the last bar the stream counted, without recomputing |
 | `stream.clone()` | any time | an independent fork of the stream, at the same bar |
-| `stream.outRange()` | any time | the bars the stream has an output for: the batch range over the same bars |
+| `stream.outRange()` | any time | the bars the stream has an output for, as an `OutRange` (`begIdx`, `count`, `isEmpty()`): the batch range over the same bars |
 | `stream.advance()` | after a bar you will not feed | advances the range without affecting any other internal state of the stream |
 
 ```ts
-const s = smaOpen(history, 30);
+const s = smaOpen(history, { timePeriod: 30 });
 
 const v = s.value();                // the value at the last bar s counted
 const fork = s.clone();             // independent from here on
@@ -119,10 +117,10 @@ Every rejection is a `TALibError`; branch on its `code`.
 
 | Call | Behaviour |
 |------|-----------|
-| `<name>Open` / `<name>OpenAndFill` | Too little history throws `'TA_INSUFFICIENT_HISTORY'`: catch it to accumulate more bars and retry. Out-of-range parameters throw `'TA_BAD_PARAM'`. |
-| `update` / `peek` | <ul><li>`'TA_BAD_PARAM'` on invalid input such as NaN or ±Inf</li><li>`'TA_OUT_OF_RANGE_END_INDEX'` from `update` (never `peek`) once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses</li></ul>A rejection changes nothing at all: no state, no value, and no range. |
+| `<name>Open` / `<name>OpenAndFill` | Too little history, an empty one included, throws `'TA_INSUFFICIENT_HISTORY'`: catch it to accumulate more bars and retry. Out-of-range parameters throw `'TA_BAD_PARAM'`. |
+| `update` / `peek` | <ul><li>`'TA_BAD_PARAM'` on invalid input such as NaN or ±Inf, or a multi-output sink that is given but is not an object, `null` included</li><li>`'TA_OUT_OF_RANGE_END_INDEX'` from `update` (never `peek`) once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses</li></ul>A rejection changes nothing at all: no state, no value, and no range. |
 | `advance` | `'TA_OUT_OF_RANGE_END_INDEX'` once the range has reached bar `Core.INDEX_MAX`, the last index the batch API addresses. |
-| `value` / `clone` / `outRange` | Never throw, except `value(out)` on a multi-output stream: it throws `'TA_BAD_PARAM'` when `out` is absent or not an object, as `update` and `peek` do. |
+| `value` / `clone` / `outRange` | Never throw, except `value(out)` on a multi-output stream: it rejects the same sink as `update` and `peek` do. |
 
 ## Discovering streamable functions
 

@@ -57,44 +57,9 @@ Package layout under `ta_codegen/output/ts/` (D20):
 - **`tools/`:** the generated server, the fuzz port and a tsconfig that compiles `../library/src`.
 - **No bench package:** `ta_bench` times the server's `timed` path.
 
-## 3. Public API sketch
+## 3. Public API
 
-```ts
-import { sma, smaLookback, macd, smaOpen, macdOpen, MacdOut,
-         ema, CoreBuilder, FuncUnstId, TALibError } from 'ta-lib';
-
-const n = close.length;                         // close: Float64Array (number[] also accepted)
-const out = new Float64Array(n);
-const { begIdx, count } = sma(0, n - 1, close, 20, out);
-// out[k] is the value at bar begIdx + k, for k < count; smaLookback(20) bars are consumed first
-
-const m = new Float64Array(n), s = new Float64Array(n), h = new Float64Array(n);
-macd(0, n - 1, close, 12, 26, 9, m, s, h);
-
-const st = smaOpen(history, 20);                // TALibError 'TA_INSUFFICIENT_HISTORY' if too short
-st.value();                                     // value at the last history bar
-const v = st.update(bar);                       // commits a closed bar
-const p = st.peek(formingBar);                  // commits nothing
-
-const ms = macdOpen(history, 12, 26, 9);
-const mo = new MacdOut();
-ms.update(bar, mo);                             // mo.macd, mo.macdSignal, mo.macdHist
-
-const core = new CoreBuilder().unstablePeriod(FuncUnstId.EMA, 100).build();
-ema(0, n - 1, close, 30, out, core);
-
-try { sma(0, n - 1, close, 0, out); }
-catch (e) { if (e instanceof TALibError && e.code === 'TA_BAD_PARAM') { /* e.retCode */ } }
-```
-
-```ts
-export type RetCodeName = `TA_${Exclude<keyof typeof RetCode, 'SUCCESS'>}`;
-export class TALibError extends Error {
-  override readonly name = 'TALibError';
-  readonly code: RetCodeName;       // the contract; match on this
-  readonly retCode: RetCode;        // same number C, Java and C# report
-}
-```
+[typescript-api-design.md](typescript-api-design.md).
 
 ## 4. Architecture
 

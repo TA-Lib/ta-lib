@@ -26,22 +26,25 @@ line. Node 22.12 or later; any runtime that loads standard ES modules.
 import { sma } from 'ta-lib';
 
 const close = new Float64Array([/* ...your closing prices... */]);
-const out = new Float64Array(close.length);
 
-const { begIdx, count } = sma(0, close.length - 1, close, 30, out);
+const { begIdx, values } = sma(close, { timePeriod: 30 });
 
-// out[0 .. count - 1] holds the SMA; out[k] is input bar begIdx + k.
-for (let k = 0; k < count; k++) console.log(`bar ${begIdx + k} = ${out[k]}`);
+// values[k] is the SMA at input bar begIdx + k.
+for (let k = 0; k < values.length; k++) console.log(`bar ${begIdx + k} = ${values[k]}`);
 ```
 
-Every indicator is a function with the same calling pattern: a `startIdx`/`endIdx` range,
-input arrays, parameters, caller-provided output arrays, and an `OutRange` saying where the
-values start and how many there are. A range that ends inside the lookback is a success with
-no values, not an error.
+Every indicator is a function with the same calling pattern: the input arrays, then one
+optional object holding the parameters, the `startIdx`/`endIdx` range (inclusive; the whole
+input when omitted), a `core` and output buffers. It returns `begIdx` and the values, one
+array per output (`outMacd`, `outMacdSignal`, `outMacdHist` for `macd`). A range that ends
+inside the lookback is a success with no values, not an error. An omitted or `undefined`
+parameter takes its default.
 
 Inputs take any `ArrayLike<number>`: a `Float64Array` is read in place, and any other form,
-`number[]` included, is copied into one first. Outputs are `Float64Array`, or `Int32Array`
-for integer outputs.
+`number[]` included, is copied into one first. A function on several price components takes
+them as one object: `atr({ high, low, close }, { timePeriod: 14 })`. Outputs are
+`Float64Array`, or `Int32Array` for integer outputs. Pass your own buffers (`outReal`,
+`outMacd`, ...) for a call that allocates nothing; the results are views of them.
 
 Invalid arguments throw a `TALibError`; match on its `code`:
 
@@ -49,7 +52,7 @@ Invalid arguments throw a `TALibError`; match on its `code`:
 import { sma, TALibError } from 'ta-lib';
 
 try {
-  sma(0, close.length - 1, close, 0, out);
+  sma(close, { timePeriod: 0 });
 } catch (e) {
   if (e instanceof TALibError && e.code === 'TA_BAD_PARAM') { /* ... */ }
 }
@@ -58,13 +61,13 @@ try {
 ## Configuration
 
 `Core` is immutable. The value-affecting settings, the unstable period and the candlestick
-thresholds, are chosen up front and passed as the last argument:
+thresholds, are chosen up front and passed as the `core` option:
 
 ```ts
 import { CoreBuilder, ema, FuncUnstId } from 'ta-lib';
 
 const core = new CoreBuilder().unstablePeriod(FuncUnstId.EMA, 10).build();
-ema(0, close.length - 1, close, 30, out, core);
+const { begIdx, values } = ema(close, { timePeriod: 30, core });
 ```
 
 ## Live data
@@ -76,11 +79,14 @@ bit-identical to the batch call.
 ```ts
 import { smaOpen } from 'ta-lib';
 
-const s = smaOpen(history, 30);
+const s = smaOpen(history, { timePeriod: 30 });
 
 const v = s.update(newClose);            // a closed bar: commits it
 const provisional = s.peek(formingClose); // the forming bar: commits nothing
 ```
+
+A multi-output stream returns its outputs (`macdOpen(history).update(x).outMacd`); pass a
+`MacdOut` to fill and reuse it instead.
 
 ## Documentation
 

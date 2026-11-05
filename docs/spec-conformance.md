@@ -161,6 +161,16 @@ that can throw costs them nothing.
 [16] Verified that a later valid setter does not clear an earlier latched
 rejection.
 
+### TypeScript caveats
+
+| Rule | Topic | C | Rust | Java | C# | TypeScript |
+|---|---|:---:|:---:|:---:|:---:|:---:|
+| rJ1 | [names](https://ta-lib.org/spec/#rj1) | — | — | — | — |  |
+| rJ2 | [call shape](https://ta-lib.org/spec/#rj2) | — | — | — | — |  |
+| rJ3 | [absent output allocated](https://ta-lib.org/spec/#rj3) | — | — | — | — |  |
+| rJ4 | [lookback options](https://ta-lib.org/spec/#rj4) | — | — | — | — |  |
+| rJ5 | [display-shift order](https://ta-lib.org/spec/#rj5) | — | — | — | — |  |
+
 ## Test coverage
 
 ### Lookback rules
@@ -278,6 +288,17 @@ rP5: `arg_order_suite.rs` holds every committed batch declaration, C's
 `validate_inputs`, `try_inject_parameters` and `validate_outputs`
 (`docs_site.rs`) fail `generate` when a function page's Inputs, Parameters or
 Outputs list differs from the call signature in name or order.
+
+rJ1 to rJ5: `arg_order_suite.rs` holds every public TypeScript batch
+declaration to its inputs, then `options?` (rJ2). `options.test.ts` pins the
+returned views (rJ2), a partly given buffer set (rJ3), one options object
+accepted by every function's batch, lookback, display shift (index first), open
+and fill, and the lookback and display-shift throws (rJ4, rJ5). rJ1:
+`ts_keys_follow_the_naming_rule` (`enums_suite.rs`) holds the naming functions
+to the rule on each word shape; the corpus suites read each key off the
+generated source, so a key's spelling in a function is held only where a test
+hard-codes it (`batchArgs.test.ts`, `publicApi.test.ts`, `metadata.test.ts`,
+`ts_stream_suite.rs`, `scripts/ts_consumer_check`).
 
 rW7: `check_flags` (`parser/yaml.rs`) fails `generate` on a pattern output
 whose flags break its rules, and `validate_output_values` (`docs_site.rs`) on an
