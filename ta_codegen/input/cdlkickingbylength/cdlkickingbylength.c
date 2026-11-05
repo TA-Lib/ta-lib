@@ -14,6 +14,7 @@
  *  011505 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *  103126 MF,CC  Lead with the colour and gap tests as the one pre-check
+ *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  *
  */
 
@@ -33,7 +34,8 @@ TA_RetCode cdlkickingbylength(int startIdx, int endIdx,
 {
    double ShadowVeryShortPeriodTotal[2];
    double BodyLongPeriodTotal[2];
-   int i, outIdx, totIdx, ShadowVeryShortTrailingIdx, BodyLongTrailingIdx, lookbackTotal;
+   double BodyLongPeriodTotalRange0, BodyLongPeriodTotalTrailRange0, BodyLongPeriodTotalRange1, BodyLongPeriodTotalTrailRange1, ShadowVeryShortPeriodTotalRange0, ShadowVeryShortPeriodTotalTrailRange0, ShadowVeryShortPeriodTotalRange1, ShadowVeryShortPeriodTotalTrailRange1;
+   int i, outIdx, ShadowVeryShortTrailingIdx, BodyLongTrailingIdx, lookbackTotal;
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -87,6 +89,10 @@ TA_RetCode cdlkickingbylength(int startIdx, int endIdx,
     * The meaning of "long body" and "very short shadow" is specified with TA_SetCandleSettings
     */
    outIdx = 0;
+   BodyLongPeriodTotalRange1 = ta_candlerange(BodyLong_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]);
+   BodyLongPeriodTotalTrailRange1 = ta_candlerange(BodyLong_rangeType, inOpen[BodyLongTrailingIdx-1], inHigh[BodyLongTrailingIdx-1], inLow[BodyLongTrailingIdx-1], inClose[BodyLongTrailingIdx-1]);
+   ShadowVeryShortPeriodTotalRange1 = ta_candlerange(ShadowVeryShort_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]);
+   ShadowVeryShortPeriodTotalTrailRange1 = ta_candlerange(ShadowVeryShort_rangeType, inOpen[ShadowVeryShortTrailingIdx-1], inHigh[ShadowVeryShortTrailingIdx-1], inLow[ShadowVeryShortTrailingIdx-1], inClose[ShadowVeryShortTrailingIdx-1]);
    do
    {
       if( ta_candlecolor(inClose[i-1], inOpen[i-1]) == -ta_candlecolor(inClose[i], inOpen[i]) &&                                        // opposite candles
@@ -118,12 +124,18 @@ TA_RetCode cdlkickingbylength(int startIdx, int endIdx,
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for (totIdx = 1; totIdx >= 0; --totIdx) {
-         BodyLongPeriodTotal[totIdx] += ta_candlerange(BodyLong_rangeType, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx])
-         - ta_candlerange(BodyLong_rangeType, inOpen[BodyLongTrailingIdx-totIdx], inHigh[BodyLongTrailingIdx-totIdx], inLow[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]);
-         ShadowVeryShortPeriodTotal[totIdx] += ta_candlerange(ShadowVeryShort_rangeType, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx])
-         - ta_candlerange(ShadowVeryShort_rangeType, inOpen[ShadowVeryShortTrailingIdx-totIdx], inHigh[ShadowVeryShortTrailingIdx-totIdx], inLow[ShadowVeryShortTrailingIdx-totIdx], inClose[ShadowVeryShortTrailingIdx-totIdx]);
-      }
+      BodyLongPeriodTotalRange0 = ta_candlerange(BodyLong_rangeType, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+      BodyLongPeriodTotalTrailRange0 = ta_candlerange(BodyLong_rangeType, inOpen[BodyLongTrailingIdx], inHigh[BodyLongTrailingIdx], inLow[BodyLongTrailingIdx], inClose[BodyLongTrailingIdx]);
+      BodyLongPeriodTotal[1] += BodyLongPeriodTotalRange1 - BodyLongPeriodTotalTrailRange1;
+      BodyLongPeriodTotal[0] += BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0;
+      BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+      BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
+      ShadowVeryShortPeriodTotalRange0 = ta_candlerange(ShadowVeryShort_rangeType, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+      ShadowVeryShortPeriodTotalTrailRange0 = ta_candlerange(ShadowVeryShort_rangeType, inOpen[ShadowVeryShortTrailingIdx], inHigh[ShadowVeryShortTrailingIdx], inLow[ShadowVeryShortTrailingIdx], inClose[ShadowVeryShortTrailingIdx]);
+      ShadowVeryShortPeriodTotal[1] += ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1;
+      ShadowVeryShortPeriodTotal[0] += ShadowVeryShortPeriodTotalRange0 - ShadowVeryShortPeriodTotalTrailRange0;
+      ShadowVeryShortPeriodTotalRange1 = ShadowVeryShortPeriodTotalRange0;
+      ShadowVeryShortPeriodTotalTrailRange1 = ShadowVeryShortPeriodTotalTrailRange0;
       i++;
       ShadowVeryShortTrailingIdx++;
       BodyLongTrailingIdx++;

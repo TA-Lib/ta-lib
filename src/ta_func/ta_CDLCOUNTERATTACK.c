@@ -57,6 +57,7 @@
  *  -------------------------------------------------------------------
  *  010605 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  */
 
 TA_LIB_API int TA_CDLCOUNTERATTACK_Lookback( void )
@@ -85,9 +86,12 @@ TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK( int    startIdx,
 {
    double EqualPeriodTotal;
    double BodyLongPeriodTotal[2];
+   double BodyLongPeriodTotalRange0;
+   double BodyLongPeriodTotalTrailRange0;
+   double BodyLongPeriodTotalRange1;
+   double BodyLongPeriodTotalTrailRange1;
    int i;
    int outIdx;
-   int totIdx;
    int EqualTrailingIdx;
    int BodyLongTrailingIdx;
    int lookbackTotal;
@@ -164,6 +168,8 @@ TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK( int    startIdx,
     * The meaning of "equal" and "long" is specified with TA_SetCandleSettings
     */
    outIdx = 0;
+   BodyLongPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1);
+   BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx - 1);
    do
    {
       outInteger[outIdx++] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)((((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i])) & /* opposite candles */
@@ -175,10 +181,12 @@ TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK( int    startIdx,
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
       EqualPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 1) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,EqualTrailingIdx - 1);
-      for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
-      {
-         BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx - totIdx));
-      }
+      BodyLongPeriodTotalRange0 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i);
+      BodyLongPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx);
+      BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (BodyLongPeriodTotalRange1 - BodyLongPeriodTotalTrailRange1);
+      BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0);
+      BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+      BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
       i += 1;
       EqualTrailingIdx += 1;
       BodyLongTrailingIdx += 1;
@@ -218,6 +226,8 @@ TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK( int    startIdx,
     * The meaning of "equal" and "long" is specified with TA_SetCandleSettings
     */
    outIdx = 0;
+   BodyLongPeriodTotalRange1 = TA_CANDLERANGE_OF(BodyLong_rangeType,i - 1);
+   BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx - 1);
    do
    {
       outInteger[outIdx++] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)((((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i])) & /* opposite candles */
@@ -229,10 +239,12 @@ TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK( int    startIdx,
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
       EqualPeriodTotal += TA_CANDLERANGE_OF(Equal_rangeType,i - 1) - TA_CANDLERANGE_OF(Equal_rangeType,EqualTrailingIdx - 1);
-      for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
-      {
-         BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(BodyLong_rangeType,i - totIdx) - TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx - totIdx));
-      }
+      BodyLongPeriodTotalRange0 = TA_CANDLERANGE_OF(BodyLong_rangeType,i);
+      BodyLongPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx);
+      BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (BodyLongPeriodTotalRange1 - BodyLongPeriodTotalTrailRange1);
+      BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0);
+      BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+      BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
       i += 1;
       EqualTrailingIdx += 1;
       BodyLongTrailingIdx += 1;
@@ -256,9 +268,12 @@ TA_RetCode TA_S_CDLCOUNTERATTACK( int    startIdx,
 {
    double EqualPeriodTotal;
    double BodyLongPeriodTotal[2];
+   double BodyLongPeriodTotalRange0;
+   double BodyLongPeriodTotalTrailRange0;
+   double BodyLongPeriodTotalRange1;
+   double BodyLongPeriodTotalTrailRange1;
    int i;
    int outIdx;
-   int totIdx;
    int EqualTrailingIdx;
    int BodyLongTrailingIdx;
    int lookbackTotal;
@@ -320,14 +335,18 @@ TA_RetCode TA_S_CDLCOUNTERATTACK( int    startIdx,
    }
    i = startIdx;
    outIdx = 0;
+   BodyLongPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1);
+   BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx - 1);
    do
    {
       outInteger[outIdx++] = (((((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100) & -(int)(((((double)inClose[i - 1] >= (double)inOpen[i - 1]) != ((double)inClose[i] >= (double)inOpen[i])) & (fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1)) & (fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i)) & ((double)inClose[i] <= (double)inClose[i - 1] + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1)) & ((double)inClose[i] >= (double)inClose[i - 1] - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1)))));
       EqualPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 1) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,EqualTrailingIdx - 1);
-      for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
-      {
-         BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx - totIdx));
-      }
+      BodyLongPeriodTotalRange0 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i);
+      BodyLongPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx);
+      BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (BodyLongPeriodTotalRange1 - BodyLongPeriodTotalTrailRange1);
+      BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0);
+      BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+      BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
       i += 1;
       EqualTrailingIdx += 1;
       BodyLongTrailingIdx += 1;
@@ -358,14 +377,18 @@ TA_RetCode TA_S_CDLCOUNTERATTACK( int    startIdx,
    }
    i = startIdx;
    outIdx = 0;
+   BodyLongPeriodTotalRange1 = TA_CANDLERANGE_OF(BodyLong_rangeType,i - 1);
+   BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx - 1);
    do
    {
       outInteger[outIdx++] = (((((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100) & -(int)(((((double)inClose[i - 1] >= (double)inOpen[i - 1]) != ((double)inClose[i] >= (double)inOpen[i])) & (fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1)) & (fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i)) & ((double)inClose[i] <= (double)inClose[i - 1] + TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1)) & ((double)inClose[i] >= (double)inClose[i - 1] - TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1)))));
       EqualPeriodTotal += TA_CANDLERANGE_OF(Equal_rangeType,i - 1) - TA_CANDLERANGE_OF(Equal_rangeType,EqualTrailingIdx - 1);
-      for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
-      {
-         BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(BodyLong_rangeType,i - totIdx) - TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx - totIdx));
-      }
+      BodyLongPeriodTotalRange0 = TA_CANDLERANGE_OF(BodyLong_rangeType,i);
+      BodyLongPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx);
+      BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (BodyLongPeriodTotalRange1 - BodyLongPeriodTotalTrailRange1);
+      BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0);
+      BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+      BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
       i += 1;
       EqualTrailingIdx += 1;
       BodyLongTrailingIdx += 1;
@@ -386,13 +409,14 @@ struct TA_CDLCOUNTERATTACK_Stream {
    int cur_outInteger;
    double EqualPeriodTotal;
    double BodyLongPeriodTotal[2];
+   double BodyLongPeriodTotalRange1;
+   double BodyLongPeriodTotalTrailRange1;
    double lag1_inOpen;
    double lag1_inHigh;
    double lag1_inLow;
    double lag1_inClose;
    int ringPos_BodyLongTrailingIdx;
    int ringCap_BodyLongTrailingIdx;
-   int ringLag_BodyLongTrailingIdx;
    double *ring_BodyLongTrailingIdx_derived;
    int ringPos_EqualTrailingIdx;
    int ringCap_EqualTrailingIdx;
@@ -412,9 +436,13 @@ static void TA_CDLCOUNTERATTACK_ReleaseImpl( struct TA_CDLCOUNTERATTACK_Stream *
 /* Private function, not in public API. */
 static void TA_CDLCOUNTERATTACK_StepImpl( struct TA_CDLCOUNTERATTACK_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
-   int totIdx;
+   double BodyLongPeriodTotalRange0;
+   double BodyLongPeriodTotalTrailRange0;
 
-   sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+   if( sp->ringCap_BodyLongTrailingIdx == 0 )
+   {
+      sp->ring_BodyLongTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+   }
    sp->ring_EqualTrailingIdx_derived[sp->ringPos_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen,inHigh,inLow,inClose);
    if( ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == -((inClose >= inOpen) ? 1 : -1) && /* opposite candles */
        fabs(sp->lag1_inClose - sp->lag1_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) && /* 1st long */
@@ -431,15 +459,18 @@ static void TA_CDLCOUNTERATTACK_StepImpl( struct TA_CDLCOUNTERATTACK_Stream *sp,
     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
     */
    sp->EqualPeriodTotal += TA_STREAM_CANDLERANGE(Equal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) - sp->ring_EqualTrailingIdx_derived[(sp->ringPos_EqualTrailingIdx + sp->ringCap_EqualTrailingIdx - sp->ringLag_EqualTrailingIdx - 1) % sp->ringCap_EqualTrailingIdx];
-   for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
-   {
-      sp->BodyLongPeriodTotal[totIdx] = sp->BodyLongPeriodTotal[totIdx] + (sp->ring_BodyLongTrailingIdx_derived[(sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - totIdx >= sp->ringCap_BodyLongTrailingIdx) ? sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - totIdx - sp->ringCap_BodyLongTrailingIdx : sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - totIdx] - sp->ring_BodyLongTrailingIdx_derived[(sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - sp->ringLag_BodyLongTrailingIdx - totIdx) % sp->ringCap_BodyLongTrailingIdx]);
-   }
+   BodyLongPeriodTotalRange0 = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+   BodyLongPeriodTotalTrailRange0 = sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx];
+   sp->BodyLongPeriodTotal[1] = sp->BodyLongPeriodTotal[1] + (sp->BodyLongPeriodTotalRange1 - sp->BodyLongPeriodTotalTrailRange1);
+   sp->BodyLongPeriodTotal[0] = sp->BodyLongPeriodTotal[0] + (BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0);
+   sp->BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+   sp->BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
    sp->cur_outInteger = *outInteger;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inHigh = inHigh;
    sp->lag1_inLow = inLow;
    sp->lag1_inClose = inClose;
+   sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
    sp->ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx + 1;
    if( sp->ringPos_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
    {
@@ -468,9 +499,12 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCOUNTERATTACK_OpenBody( struct TA_CDLCOUN
       double Equal_factor = TA_Globals->candleSettings[TA_Equal].factor;
       double EqualPeriodTotal = 0.0;
       double BodyLongPeriodTotal[2] = {0};
+      double BodyLongPeriodTotalRange0;
+      double BodyLongPeriodTotalTrailRange0;
+      double BodyLongPeriodTotalRange1 = 0.0;
+      double BodyLongPeriodTotalTrailRange1 = 0.0;
       int i;
       int outIdx;
-      int totIdx;
       int EqualTrailingIdx;
       int BodyLongTrailingIdx;
       int lookbackTotal;
@@ -522,6 +556,8 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCOUNTERATTACK_OpenBody( struct TA_CDLCOUN
        * The meaning of "equal" and "long" is specified with TA_SetCandleSettings
        */
       outIdx = 0;
+      BodyLongPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1);
+      BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx - 1);
       do
       {
          if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) && /* opposite candles */
@@ -539,10 +575,12 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCOUNTERATTACK_OpenBody( struct TA_CDLCOUN
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
          EqualPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 1) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,EqualTrailingIdx - 1);
-         for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
-         {
-            BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx - totIdx));
-         }
+         BodyLongPeriodTotalRange0 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i);
+         BodyLongPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx);
+         BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (BodyLongPeriodTotalRange1 - BodyLongPeriodTotalTrailRange1);
+         BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0);
+         BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+         BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
          i += 1;
          EqualTrailingIdx += 1;
          BodyLongTrailingIdx += 1;
@@ -557,18 +595,19 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCOUNTERATTACK_OpenBody( struct TA_CDLCOUN
       memset( sp, 0, sizeof(*sp) );
       sp->EqualPeriodTotal = EqualPeriodTotal;
       memcpy( sp->BodyLongPeriodTotal, BodyLongPeriodTotal, sizeof( sp->BodyLongPeriodTotal ) );
-      sp->ringLag_BodyLongTrailingIdx = (int)(i - BodyLongTrailingIdx);
-      sp->ringCap_BodyLongTrailingIdx = sp->ringLag_BodyLongTrailingIdx + 2;
-      if( sp->ringLag_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLCOUNTERATTACK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(221); }
+      sp->BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange1;
+      sp->BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange1;
+      sp->ringCap_BodyLongTrailingIdx = (int)(i - BodyLongTrailingIdx);
+      if( sp->ringCap_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLCOUNTERATTACK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(509); }
       { size_t allocN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
         sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDLCOUNTERATTACK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_BodyLongTrailingIdx_derived[fillJ % sp->ringCap_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
+             sp->ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - sp->ringCap_BodyLongTrailingIdx)] = TA_STREAM_CANDLERANGE(BodyLong,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
         }
       }
-      sp->ringPos_BodyLongTrailingIdx = historyLen % sp->ringCap_BodyLongTrailingIdx;
+      sp->ringPos_BodyLongTrailingIdx = 0;
       sp->ringLag_EqualTrailingIdx = (int)(i - EqualTrailingIdx);
       sp->ringCap_EqualTrailingIdx = sp->ringLag_EqualTrailingIdx + 2;
       if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLCOUNTERATTACK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(222); }
@@ -621,6 +660,8 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCOUNTERATTACK_OpenBody( struct TA_CDLCOUN
        * The meaning of "equal" and "long" is specified with TA_SetCandleSettings
        */
       outIdx = 0;
+      BodyLongPeriodTotalRange1 = TA_CANDLERANGE_OF(BodyLong_rangeType,i - 1);
+      BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx - 1);
       do
       {
          if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) && /* opposite candles */
@@ -638,10 +679,12 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCOUNTERATTACK_OpenBody( struct TA_CDLCOUN
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
          EqualPeriodTotal += TA_CANDLERANGE_OF(Equal_rangeType,i - 1) - TA_CANDLERANGE_OF(Equal_rangeType,EqualTrailingIdx - 1);
-         for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
-         {
-            BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(BodyLong_rangeType,i - totIdx) - TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx - totIdx));
-         }
+         BodyLongPeriodTotalRange0 = TA_CANDLERANGE_OF(BodyLong_rangeType,i);
+         BodyLongPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx);
+         BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (BodyLongPeriodTotalRange1 - BodyLongPeriodTotalTrailRange1);
+         BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0);
+         BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+         BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
          i += 1;
          EqualTrailingIdx += 1;
          BodyLongTrailingIdx += 1;
@@ -656,18 +699,19 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCOUNTERATTACK_OpenBody( struct TA_CDLCOUN
       memset( sp, 0, sizeof(*sp) );
       sp->EqualPeriodTotal = EqualPeriodTotal;
       memcpy( sp->BodyLongPeriodTotal, BodyLongPeriodTotal, sizeof( sp->BodyLongPeriodTotal ) );
-      sp->ringLag_BodyLongTrailingIdx = (int)(i - BodyLongTrailingIdx);
-      sp->ringCap_BodyLongTrailingIdx = sp->ringLag_BodyLongTrailingIdx + 2;
-      if( sp->ringLag_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLCOUNTERATTACK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(221); }
+      sp->BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange1;
+      sp->BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange1;
+      sp->ringCap_BodyLongTrailingIdx = (int)(i - BodyLongTrailingIdx);
+      if( sp->ringCap_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLCOUNTERATTACK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(509); }
       { size_t allocN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
         sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDLCOUNTERATTACK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_BodyLongTrailingIdx_derived[fillJ % sp->ringCap_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
+             sp->ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - sp->ringCap_BodyLongTrailingIdx)] = TA_STREAM_CANDLERANGE(BodyLong,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
         }
       }
-      sp->ringPos_BodyLongTrailingIdx = historyLen % sp->ringCap_BodyLongTrailingIdx;
+      sp->ringPos_BodyLongTrailingIdx = 0;
       sp->ringLag_EqualTrailingIdx = (int)(i - EqualTrailingIdx);
       sp->ringCap_EqualTrailingIdx = sp->ringLag_EqualTrailingIdx + 2;
       if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLCOUNTERATTACK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(222); }

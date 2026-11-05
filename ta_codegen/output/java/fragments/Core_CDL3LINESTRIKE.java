@@ -14,6 +14,7 @@
  *  121104 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
+ *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  */
 
    /**
@@ -61,9 +62,12 @@
                                int outInteger[] )
    {
       double[] NearPeriodTotal = new double[4];
+      double NearPeriodTotalRange2 = 0;
+      double NearPeriodTotalTrailRange2 = 0;
+      double NearPeriodTotalRange3 = 0;
+      double NearPeriodTotalTrailRange3 = 0;
       int i = 0;
       int outIdx = 0;
-      int totIdx = 0;
       int NearTrailingIdx = 0;
       int lookbackTotal = 0;
       int Near_rangeType = this.candleSettings[CandleSettingType.NEAR.ordinal()].rangeType.ordinal();
@@ -112,6 +116,8 @@
        * The meaning of "near" is specified with TA_SetCandleSettings
        */
       outIdx = 0;
+      NearPeriodTotalRange3 = ((Near_rangeType == 0) ? (Math.abs(inClose[i - 3] - inOpen[i - 3])) : ((Near_rangeType == 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((Near_rangeType == 2) ? ((inHigh[i - 3] - (((inClose[i - 3]) >= (inOpen[i - 3])) ? (inClose[i - 3]) : (inOpen[i - 3]))) + ((((inClose[i - 3]) >= (inOpen[i - 3])) ? (inOpen[i - 3]) : (inClose[i - 3])) - inLow[i - 3])) : 0.0)));
+      NearPeriodTotalTrailRange3 = ((Near_rangeType == 0) ? (Math.abs(inClose[NearTrailingIdx - 3] - inOpen[NearTrailingIdx - 3])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 3] - inLow[NearTrailingIdx - 3]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 3] - (((inClose[NearTrailingIdx - 3]) >= (inOpen[NearTrailingIdx - 3])) ? (inClose[NearTrailingIdx - 3]) : (inOpen[NearTrailingIdx - 3]))) + ((((inClose[NearTrailingIdx - 3]) >= (inOpen[NearTrailingIdx - 3])) ? (inOpen[NearTrailingIdx - 3]) : (inClose[NearTrailingIdx - 3])) - inLow[NearTrailingIdx - 3])) : 0.0)));
       do {
          if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) && /* three with same color */
              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) &&
@@ -138,9 +144,12 @@
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
-         for( totIdx = 3; totIdx >= 2; totIdx -= 1 ) {
-            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (((Near_rangeType == 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((Near_rangeType == 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((Near_rangeType == 2) ? ((inHigh[i - totIdx] - (((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inClose[i - totIdx]) : (inOpen[i - totIdx]))) + ((((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inOpen[i - totIdx]) : (inClose[i - totIdx])) - inLow[i - totIdx])) : 0.0))) - ((Near_rangeType == 0) ? (Math.abs(inClose[NearTrailingIdx - totIdx] - inOpen[NearTrailingIdx - totIdx])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - totIdx] - inLow[NearTrailingIdx - totIdx]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - totIdx] - (((inClose[NearTrailingIdx - totIdx]) >= (inOpen[NearTrailingIdx - totIdx])) ? (inClose[NearTrailingIdx - totIdx]) : (inOpen[NearTrailingIdx - totIdx]))) + ((((inClose[NearTrailingIdx - totIdx]) >= (inOpen[NearTrailingIdx - totIdx])) ? (inOpen[NearTrailingIdx - totIdx]) : (inClose[NearTrailingIdx - totIdx])) - inLow[NearTrailingIdx - totIdx])) : 0.0))));
-         }
+         NearPeriodTotalRange2 = ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+         NearPeriodTotalTrailRange2 = ((Near_rangeType == 0) ? (Math.abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])) : 0.0)));
+         NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3);
+         NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+         NearPeriodTotalRange3 = NearPeriodTotalRange2;
+         NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
          i += 1;
          NearTrailingIdx += 1;
       } while( i <= endIdx );
@@ -160,9 +169,12 @@
                                int outInteger[] )
    {
       double[] NearPeriodTotal = new double[4];
+      double NearPeriodTotalRange2 = 0;
+      double NearPeriodTotalTrailRange2 = 0;
+      double NearPeriodTotalRange3 = 0;
+      double NearPeriodTotalTrailRange3 = 0;
       int i = 0;
       int outIdx = 0;
-      int totIdx = 0;
       int NearTrailingIdx = 0;
       int lookbackTotal = 0;
       int Near_rangeType = this.candleSettings[CandleSettingType.NEAR.ordinal()].rangeType.ordinal();
@@ -194,15 +206,20 @@
       }
       i = startIdx;
       outIdx = 0;
+      NearPeriodTotalRange3 = ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 3] - (double)inOpen[i - 3])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 3] - (double)inLow[i - 3]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 3] - ((((double)inClose[i - 3]) >= ((double)inOpen[i - 3])) ? ((double)inClose[i - 3]) : ((double)inOpen[i - 3]))) + (((((double)inClose[i - 3]) >= ((double)inOpen[i - 3])) ? ((double)inOpen[i - 3]) : ((double)inClose[i - 3])) - (double)inLow[i - 3])) : 0.0)));
+      NearPeriodTotalTrailRange3 = ((Near_rangeType == 0) ? (Math.abs((double)inClose[NearTrailingIdx - 3] - (double)inOpen[NearTrailingIdx - 3])) : ((Near_rangeType == 1) ? ((double)inHigh[NearTrailingIdx - 3] - (double)inLow[NearTrailingIdx - 3]) : ((Near_rangeType == 2) ? (((double)inHigh[NearTrailingIdx - 3] - ((((double)inClose[NearTrailingIdx - 3]) >= ((double)inOpen[NearTrailingIdx - 3])) ? ((double)inClose[NearTrailingIdx - 3]) : ((double)inOpen[NearTrailingIdx - 3]))) + (((((double)inClose[NearTrailingIdx - 3]) >= ((double)inOpen[NearTrailingIdx - 3])) ? ((double)inOpen[NearTrailingIdx - 3]) : ((double)inClose[NearTrailingIdx - 3])) - (double)inLow[NearTrailingIdx - 3])) : 0.0)));
       do {
          if( (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : -1) == (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) && (((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? 1 : -1) == (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == -(((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) && (double)inOpen[i - 2] >= Math.min((double)inOpen[i - 3], (double)inClose[i - 3]) - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[3] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 3] - (double)inOpen[i - 3])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 3] - (double)inLow[i - 3]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 3] - ((((double)inClose[i - 3]) >= ((double)inOpen[i - 3])) ? ((double)inClose[i - 3]) : ((double)inOpen[i - 3]))) + (((((double)inClose[i - 3]) >= ((double)inOpen[i - 3])) ? ((double)inOpen[i - 3]) : ((double)inClose[i - 3])) - (double)inLow[i - 3])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && (double)inOpen[i - 2] <= Math.max((double)inOpen[i - 3], (double)inClose[i - 3]) + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[3] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 3] - (double)inOpen[i - 3])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 3] - (double)inLow[i - 3]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 3] - ((((double)inClose[i - 3]) >= ((double)inOpen[i - 3])) ? ((double)inClose[i - 3]) : ((double)inOpen[i - 3]))) + (((((double)inClose[i - 3]) >= ((double)inOpen[i - 3])) ? ((double)inOpen[i - 3]) : ((double)inClose[i - 3])) - (double)inLow[i - 3])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && (double)inOpen[i - 1] >= Math.min((double)inOpen[i - 2], (double)inClose[i - 2]) - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[2] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && (double)inOpen[i - 1] <= Math.max((double)inOpen[i - 2], (double)inClose[i - 2]) + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[2] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && ((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == 1 && (double)inClose[i - 1] > (double)inClose[i - 2] && (double)inClose[i - 2] > (double)inClose[i - 3] && (double)inOpen[i] > (double)inClose[i - 1] && (double)inClose[i] < (double)inOpen[i - 3] || (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) == -1 && (double)inClose[i - 1] < (double)inClose[i - 2] && (double)inClose[i - 2] < (double)inClose[i - 3] && (double)inOpen[i] < (double)inClose[i - 1] && (double)inClose[i] > (double)inOpen[i - 3]) ) {
             outInteger[outIdx++] = (((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 100;
          } else {
             outInteger[outIdx++] = 0;
          }
-         for( totIdx = 3; totIdx >= 2; totIdx -= 1 ) {
-            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (((Near_rangeType == 0) ? (Math.abs((double)inClose[i - totIdx] - (double)inOpen[i - totIdx])) : ((Near_rangeType == 1) ? ((double)inHigh[i - totIdx] - (double)inLow[i - totIdx]) : ((Near_rangeType == 2) ? (((double)inHigh[i - totIdx] - ((((double)inClose[i - totIdx]) >= ((double)inOpen[i - totIdx])) ? ((double)inClose[i - totIdx]) : ((double)inOpen[i - totIdx]))) + (((((double)inClose[i - totIdx]) >= ((double)inOpen[i - totIdx])) ? ((double)inOpen[i - totIdx]) : ((double)inClose[i - totIdx])) - (double)inLow[i - totIdx])) : 0.0))) - ((Near_rangeType == 0) ? (Math.abs((double)inClose[NearTrailingIdx - totIdx] - (double)inOpen[NearTrailingIdx - totIdx])) : ((Near_rangeType == 1) ? ((double)inHigh[NearTrailingIdx - totIdx] - (double)inLow[NearTrailingIdx - totIdx]) : ((Near_rangeType == 2) ? (((double)inHigh[NearTrailingIdx - totIdx] - ((((double)inClose[NearTrailingIdx - totIdx]) >= ((double)inOpen[NearTrailingIdx - totIdx])) ? ((double)inClose[NearTrailingIdx - totIdx]) : ((double)inOpen[NearTrailingIdx - totIdx]))) + (((((double)inClose[NearTrailingIdx - totIdx]) >= ((double)inOpen[NearTrailingIdx - totIdx])) ? ((double)inOpen[NearTrailingIdx - totIdx]) : ((double)inClose[NearTrailingIdx - totIdx])) - (double)inLow[NearTrailingIdx - totIdx])) : 0.0))));
-         }
+         NearPeriodTotalRange2 = ((Near_rangeType == 0) ? (Math.abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)));
+         NearPeriodTotalTrailRange2 = ((Near_rangeType == 0) ? (Math.abs((double)inClose[NearTrailingIdx - 2] - (double)inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? ((double)inHigh[NearTrailingIdx - 2] - (double)inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? (((double)inHigh[NearTrailingIdx - 2] - ((((double)inClose[NearTrailingIdx - 2]) >= ((double)inOpen[NearTrailingIdx - 2])) ? ((double)inClose[NearTrailingIdx - 2]) : ((double)inOpen[NearTrailingIdx - 2]))) + (((((double)inClose[NearTrailingIdx - 2]) >= ((double)inOpen[NearTrailingIdx - 2])) ? ((double)inOpen[NearTrailingIdx - 2]) : ((double)inClose[NearTrailingIdx - 2])) - (double)inLow[NearTrailingIdx - 2])) : 0.0)));
+         NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3);
+         NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+         NearPeriodTotalRange3 = NearPeriodTotalRange2;
+         NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
          i += 1;
          NearTrailingIdx += 1;
       } while( i <= endIdx );
@@ -376,6 +393,8 @@
    public static final class Cdl3linestrikeStream {
       private Core core;
       private double[] NearPeriodTotal;
+      private double NearPeriodTotalRange3;
+      private double NearPeriodTotalTrailRange3;
       private double lag1_inOpen;
       private double lag2_inOpen;
       private double lag3_inOpen;
@@ -438,6 +457,8 @@
       private Cdl3linestrikeStream( Cdl3linestrikeStream other ) {
          this.core = other.core;
          this.NearPeriodTotal = other.NearPeriodTotal.clone();
+         this.NearPeriodTotalRange3 = other.NearPeriodTotalRange3;
+         this.NearPeriodTotalTrailRange3 = other.NearPeriodTotalTrailRange3;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag3_inOpen = other.lag3_inOpen;
@@ -559,7 +580,8 @@
    }
    private void cdl3linestrikeStepImpl( Cdl3linestrikeStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
-      int totIdx = 0;
+      double NearPeriodTotalRange2 = 0.0;
+      double NearPeriodTotalTrailRange2 = 0.0;
       int Near_rangeType = sp.cs_Near_rangeType;
       int Near_avgPeriod = sp.cs_Near_avgPeriod;
       double Near_factor = sp.cs_Near_factor;
@@ -589,9 +611,12 @@
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( totIdx = 3; totIdx >= 2; totIdx -= 1 ) {
-         sp.NearPeriodTotal[totIdx] = sp.NearPeriodTotal[totIdx] + (sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx] - sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx]);
-      }
+      NearPeriodTotalRange2 = ((Near_rangeType == 0) ? (Math.abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((Near_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((Near_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)));
+      NearPeriodTotalTrailRange2 = sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx];
+      sp.NearPeriodTotal[3] = sp.NearPeriodTotal[3] + (sp.NearPeriodTotalRange3 - sp.NearPeriodTotalTrailRange3);
+      sp.NearPeriodTotal[2] = sp.NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+      sp.NearPeriodTotalRange3 = NearPeriodTotalRange2;
+      sp.NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
       sp.lag3_inOpen = sp.lag2_inOpen;
       sp.lag2_inOpen = sp.lag1_inOpen;
       sp.lag1_inOpen = inOpen;
@@ -612,9 +637,12 @@
    private RetCode cdl3linestrikeOpenImpl( Cdl3linestrikeStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] NearPeriodTotal = new double[4];
+      double NearPeriodTotalRange2 = 0;
+      double NearPeriodTotalTrailRange2 = 0;
+      double NearPeriodTotalRange3 = 0;
+      double NearPeriodTotalTrailRange3 = 0;
       int i = 0;
       int outIdx = 0;
-      int totIdx = 0;
       int NearTrailingIdx = 0;
       int lookbackTotal = 0;
       int historyLen = inOpen.length;
@@ -673,6 +701,8 @@
        * The meaning of "near" is specified with TA_SetCandleSettings
        */
       outIdx = 0;
+      NearPeriodTotalRange3 = ((Near_rangeType == 0) ? (Math.abs(inClose[i - 3] - inOpen[i - 3])) : ((Near_rangeType == 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((Near_rangeType == 2) ? ((inHigh[i - 3] - (((inClose[i - 3]) >= (inOpen[i - 3])) ? (inClose[i - 3]) : (inOpen[i - 3]))) + ((((inClose[i - 3]) >= (inOpen[i - 3])) ? (inOpen[i - 3]) : (inClose[i - 3])) - inLow[i - 3])) : 0.0)));
+      NearPeriodTotalTrailRange3 = ((Near_rangeType == 0) ? (Math.abs(inClose[NearTrailingIdx - 3] - inOpen[NearTrailingIdx - 3])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 3] - inLow[NearTrailingIdx - 3]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 3] - (((inClose[NearTrailingIdx - 3]) >= (inOpen[NearTrailingIdx - 3])) ? (inClose[NearTrailingIdx - 3]) : (inOpen[NearTrailingIdx - 3]))) + ((((inClose[NearTrailingIdx - 3]) >= (inOpen[NearTrailingIdx - 3])) ? (inOpen[NearTrailingIdx - 3]) : (inClose[NearTrailingIdx - 3])) - inLow[NearTrailingIdx - 3])) : 0.0)));
       do {
          if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) && /* three with same color */
              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) &&
@@ -699,9 +729,12 @@
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
-         for( totIdx = 3; totIdx >= 2; totIdx -= 1 ) {
-            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (((Near_rangeType == 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((Near_rangeType == 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((Near_rangeType == 2) ? ((inHigh[i - totIdx] - (((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inClose[i - totIdx]) : (inOpen[i - totIdx]))) + ((((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inOpen[i - totIdx]) : (inClose[i - totIdx])) - inLow[i - totIdx])) : 0.0))) - ((Near_rangeType == 0) ? (Math.abs(inClose[NearTrailingIdx - totIdx] - inOpen[NearTrailingIdx - totIdx])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - totIdx] - inLow[NearTrailingIdx - totIdx]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - totIdx] - (((inClose[NearTrailingIdx - totIdx]) >= (inOpen[NearTrailingIdx - totIdx])) ? (inClose[NearTrailingIdx - totIdx]) : (inOpen[NearTrailingIdx - totIdx]))) + ((((inClose[NearTrailingIdx - totIdx]) >= (inOpen[NearTrailingIdx - totIdx])) ? (inOpen[NearTrailingIdx - totIdx]) : (inClose[NearTrailingIdx - totIdx])) - inLow[NearTrailingIdx - totIdx])) : 0.0))));
-         }
+         NearPeriodTotalRange2 = ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+         NearPeriodTotalTrailRange2 = ((Near_rangeType == 0) ? (Math.abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])) : 0.0)));
+         NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3);
+         NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+         NearPeriodTotalRange3 = NearPeriodTotalRange2;
+         NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
          i += 1;
          NearTrailingIdx += 1;
       } while( i <= endIdx );
@@ -710,7 +743,7 @@
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
       int capLag_NearTrailingIdx = i - NearTrailingIdx;
-      int cap_NearTrailingIdx = capLag_NearTrailingIdx + 4;
+      int cap_NearTrailingIdx = capLag_NearTrailingIdx + 3;
       if( capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen ) {
          return RetCode.INTERNAL_ERROR;
       }
@@ -720,6 +753,8 @@
          capRing_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx] = ((Near_rangeType == 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((Near_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Near_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
       }
       sp.NearPeriodTotal = NearPeriodTotal;
+      sp.NearPeriodTotalRange3 = NearPeriodTotalRange3;
+      sp.NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange3;
       sp.lag1_inOpen = inOpen[historyLen - 1];
       sp.lag2_inOpen = inOpen[historyLen - 2];
       sp.lag3_inOpen = inOpen[historyLen - 3];

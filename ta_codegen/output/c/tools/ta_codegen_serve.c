@@ -1388,6 +1388,10 @@ static int sv_steq_TA_CDL3BLACKCROWS( const struct TA_CDL3BLACKCROWS_Stream *a, 
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->range1, b->range1, z) ) { *w = "range1"; return 1; }
+   if( sv_xtier_ne(a->range2, b->range2, z) ) { *w = "range2"; return 1; }
+   if( sv_xtier_ne(a->trailRange1, b->trailRange1, z) ) { *w = "trailRange1"; return 1; }
+   if( sv_xtier_ne(a->trailRange2, b->trailRange2, z) ) { *w = "trailRange2"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag3_inOpen, b->lag3_inOpen, z) ) { *w = "lag3_inOpen"; return 1; }
@@ -1400,7 +1404,6 @@ static int sv_steq_TA_CDL3BLACKCROWS( const struct TA_CDL3BLACKCROWS_Stream *a, 
    if( sv_xtier_ne(a->lag2_inClose, b->lag2_inClose, z) ) { *w = "lag2_inClose"; return 1; }
    if( sv_xtier_ne(a->lag3_inClose, b->lag3_inClose, z) ) { *w = "lag3_inClose"; return 1; }
    if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
-   if( a->ringLag_ShadowVeryShortTrailingIdx != b->ringLag_ShadowVeryShortTrailingIdx ) { *w = "ringLag_ShadowVeryShortTrailingIdx"; return 1; }
    if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
    if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
    {
@@ -1455,6 +1458,8 @@ static int sv_steq_TA_CDL3LINESTRIKE( const struct TA_CDL3LINESTRIKE_Stream *a, 
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 4; k++ ) if( sv_xtier_ne(a->NearPeriodTotal[k], b->NearPeriodTotal[k], z) ) { *w = "NearPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->NearPeriodTotalRange3, b->NearPeriodTotalRange3, z) ) { *w = "NearPeriodTotalRange3"; return 1; }
+   if( sv_xtier_ne(a->NearPeriodTotalTrailRange3, b->NearPeriodTotalTrailRange3, z) ) { *w = "NearPeriodTotalTrailRange3"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag3_inOpen, b->lag3_inOpen, z) ) { *w = "lag3_inOpen"; return 1; }
@@ -1504,6 +1509,8 @@ static int sv_steq_TA_CDL3STARSINSOUTH( const struct TA_CDL3STARSINSOUTH_Stream 
    if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowLongPeriodTotal, b->ShadowLongPeriodTotal, z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
    for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalRange1, b->ShadowVeryShortPeriodTotalRange1, z) ) { *w = "ShadowVeryShortPeriodTotalRange1"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalTrailRange1, b->ShadowVeryShortPeriodTotalTrailRange1, z) ) { *w = "ShadowVeryShortPeriodTotalTrailRange1"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
@@ -1539,7 +1546,6 @@ static int sv_steq_TA_CDL3STARSINSOUTH( const struct TA_CDL3STARSINSOUTH_Stream 
       if( sv_xtier_ne(a->ring_ShadowLongTrailingIdx_derived[ia], b->ring_ShadowLongTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
    }
    if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
-   if( a->ringLag_ShadowVeryShortTrailingIdx != b->ringLag_ShadowVeryShortTrailingIdx ) { *w = "ringLag_ShadowVeryShortTrailingIdx"; return 1; }
    if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
    if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
    {
@@ -1560,6 +1566,14 @@ static int sv_steq_TA_CDL3WHITESOLDIERS( const struct TA_CDL3WHITESOLDIERS_Strea
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->NearPeriodTotal[k], b->NearPeriodTotal[k], z) ) { *w = "NearPeriodTotal"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->FarPeriodTotal[k], b->FarPeriodTotal[k], z) ) { *w = "FarPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalRange1, b->ShadowVeryShortPeriodTotalRange1, z) ) { *w = "ShadowVeryShortPeriodTotalRange1"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalTrailRange1, b->ShadowVeryShortPeriodTotalTrailRange1, z) ) { *w = "ShadowVeryShortPeriodTotalTrailRange1"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalRange2, b->ShadowVeryShortPeriodTotalRange2, z) ) { *w = "ShadowVeryShortPeriodTotalRange2"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalTrailRange2, b->ShadowVeryShortPeriodTotalTrailRange2, z) ) { *w = "ShadowVeryShortPeriodTotalTrailRange2"; return 1; }
+   if( sv_xtier_ne(a->FarPeriodTotalRange2, b->FarPeriodTotalRange2, z) ) { *w = "FarPeriodTotalRange2"; return 1; }
+   if( sv_xtier_ne(a->FarPeriodTotalTrailRange2, b->FarPeriodTotalTrailRange2, z) ) { *w = "FarPeriodTotalTrailRange2"; return 1; }
+   if( sv_xtier_ne(a->NearPeriodTotalRange2, b->NearPeriodTotalRange2, z) ) { *w = "NearPeriodTotalRange2"; return 1; }
+   if( sv_xtier_ne(a->NearPeriodTotalTrailRange2, b->NearPeriodTotalTrailRange2, z) ) { *w = "NearPeriodTotalTrailRange2"; return 1; }
    if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
@@ -1596,7 +1610,6 @@ static int sv_steq_TA_CDL3WHITESOLDIERS( const struct TA_CDL3WHITESOLDIERS_Strea
       if( sv_xtier_ne(a->ring_NearTrailingIdx_derived[ia], b->ring_NearTrailingIdx_derived[ib], z) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
    }
    if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
-   if( a->ringLag_ShadowVeryShortTrailingIdx != b->ringLag_ShadowVeryShortTrailingIdx ) { *w = "ringLag_ShadowVeryShortTrailingIdx"; return 1; }
    if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
    if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
    {
@@ -1664,6 +1677,16 @@ static int sv_steq_TA_CDLADVANCEBLOCK( const struct TA_CDLADVANCEBLOCK_Stream *a
    for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->ShadowLongPeriodTotal[k], b->ShadowLongPeriodTotal[k], z) ) { *w = "ShadowLongPeriodTotal"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->NearPeriodTotal[k], b->NearPeriodTotal[k], z) ) { *w = "NearPeriodTotal"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->FarPeriodTotal[k], b->FarPeriodTotal[k], z) ) { *w = "FarPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowShortPeriodTotalRange1, b->ShadowShortPeriodTotalRange1, z) ) { *w = "ShadowShortPeriodTotalRange1"; return 1; }
+   if( sv_xtier_ne(a->ShadowShortPeriodTotalTrailRange1, b->ShadowShortPeriodTotalTrailRange1, z) ) { *w = "ShadowShortPeriodTotalTrailRange1"; return 1; }
+   if( sv_xtier_ne(a->ShadowShortPeriodTotalRange2, b->ShadowShortPeriodTotalRange2, z) ) { *w = "ShadowShortPeriodTotalRange2"; return 1; }
+   if( sv_xtier_ne(a->ShadowShortPeriodTotalTrailRange2, b->ShadowShortPeriodTotalTrailRange2, z) ) { *w = "ShadowShortPeriodTotalTrailRange2"; return 1; }
+   if( sv_xtier_ne(a->ShadowLongPeriodTotalRange1, b->ShadowLongPeriodTotalRange1, z) ) { *w = "ShadowLongPeriodTotalRange1"; return 1; }
+   if( sv_xtier_ne(a->ShadowLongPeriodTotalTrailRange1, b->ShadowLongPeriodTotalTrailRange1, z) ) { *w = "ShadowLongPeriodTotalTrailRange1"; return 1; }
+   if( sv_xtier_ne(a->FarPeriodTotalRange2, b->FarPeriodTotalRange2, z) ) { *w = "FarPeriodTotalRange2"; return 1; }
+   if( sv_xtier_ne(a->FarPeriodTotalTrailRange2, b->FarPeriodTotalTrailRange2, z) ) { *w = "FarPeriodTotalTrailRange2"; return 1; }
+   if( sv_xtier_ne(a->NearPeriodTotalRange2, b->NearPeriodTotalRange2, z) ) { *w = "NearPeriodTotalRange2"; return 1; }
+   if( sv_xtier_ne(a->NearPeriodTotalTrailRange2, b->NearPeriodTotalTrailRange2, z) ) { *w = "NearPeriodTotalTrailRange2"; return 1; }
    if( sv_xtier_ne(a->BodyLongPeriodTotal, b->BodyLongPeriodTotal, z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
@@ -1701,7 +1724,6 @@ static int sv_steq_TA_CDLADVANCEBLOCK( const struct TA_CDLADVANCEBLOCK_Stream *a
       if( sv_xtier_ne(a->ring_NearTrailingIdx_derived[ia], b->ring_NearTrailingIdx_derived[ib], z) ) { *w = "ring_NearTrailingIdx_derived"; return 1; }
    }
    if( a->ringCap_ShadowLongTrailingIdx != b->ringCap_ShadowLongTrailingIdx ) { *w = "ringCap_ShadowLongTrailingIdx"; return 1; }
-   if( a->ringLag_ShadowLongTrailingIdx != b->ringLag_ShadowLongTrailingIdx ) { *w = "ringLag_ShadowLongTrailingIdx"; return 1; }
    if( (a->ring_ShadowLongTrailingIdx_derived == NULL) != (b->ring_ShadowLongTrailingIdx_derived == NULL) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
    if( a->ring_ShadowLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowLongTrailingIdx; k++ )
    {
@@ -1710,7 +1732,6 @@ static int sv_steq_TA_CDLADVANCEBLOCK( const struct TA_CDLADVANCEBLOCK_Stream *a
       if( sv_xtier_ne(a->ring_ShadowLongTrailingIdx_derived[ia], b->ring_ShadowLongTrailingIdx_derived[ib], z) ) { *w = "ring_ShadowLongTrailingIdx_derived"; return 1; }
    }
    if( a->ringCap_ShadowShortTrailingIdx != b->ringCap_ShadowShortTrailingIdx ) { *w = "ringCap_ShadowShortTrailingIdx"; return 1; }
-   if( a->ringLag_ShadowShortTrailingIdx != b->ringLag_ShadowShortTrailingIdx ) { *w = "ringLag_ShadowShortTrailingIdx"; return 1; }
    if( (a->ring_ShadowShortTrailingIdx_derived == NULL) != (b->ring_ShadowShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowShortTrailingIdx_derived"; return 1; }
    if( a->ring_ShadowShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowShortTrailingIdx; k++ )
    {
@@ -1821,6 +1842,10 @@ static int sv_steq_TA_CDLCONCEALBABYSWALL( const struct TA_CDLCONCEALBABYSWALL_S
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 4; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalRange2, b->ShadowVeryShortPeriodTotalRange2, z) ) { *w = "ShadowVeryShortPeriodTotalRange2"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalTrailRange2, b->ShadowVeryShortPeriodTotalTrailRange2, z) ) { *w = "ShadowVeryShortPeriodTotalTrailRange2"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalRange3, b->ShadowVeryShortPeriodTotalRange3, z) ) { *w = "ShadowVeryShortPeriodTotalRange3"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalTrailRange3, b->ShadowVeryShortPeriodTotalTrailRange3, z) ) { *w = "ShadowVeryShortPeriodTotalTrailRange3"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag3_inOpen, b->lag3_inOpen, z) ) { *w = "lag3_inOpen"; return 1; }
@@ -1854,12 +1879,13 @@ static int sv_steq_TA_CDLCOUNTERATTACK( const struct TA_CDLCOUNTERATTACK_Stream 
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->EqualPeriodTotal, b->EqualPeriodTotal, z) ) { *w = "EqualPeriodTotal"; return 1; }
    for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->BodyLongPeriodTotal[k], b->BodyLongPeriodTotal[k], z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotalRange1, b->BodyLongPeriodTotalRange1, z) ) { *w = "BodyLongPeriodTotalRange1"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotalTrailRange1, b->BodyLongPeriodTotalTrailRange1, z) ) { *w = "BodyLongPeriodTotalTrailRange1"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
    if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
    if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
    if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
-   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
    if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
    if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
    {
@@ -2430,6 +2456,12 @@ static int sv_steq_TA_CDLIDENTICAL3CROWS( const struct TA_CDLIDENTICAL3CROWS_Str
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->EqualPeriodTotal[k], b->EqualPeriodTotal[k], z) ) { *w = "EqualPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalRange1, b->ShadowVeryShortPeriodTotalRange1, z) ) { *w = "ShadowVeryShortPeriodTotalRange1"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalTrailRange1, b->ShadowVeryShortPeriodTotalTrailRange1, z) ) { *w = "ShadowVeryShortPeriodTotalTrailRange1"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalRange2, b->ShadowVeryShortPeriodTotalRange2, z) ) { *w = "ShadowVeryShortPeriodTotalRange2"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalTrailRange2, b->ShadowVeryShortPeriodTotalTrailRange2, z) ) { *w = "ShadowVeryShortPeriodTotalTrailRange2"; return 1; }
+   if( sv_xtier_ne(a->EqualPeriodTotalRange2, b->EqualPeriodTotalRange2, z) ) { *w = "EqualPeriodTotalRange2"; return 1; }
+   if( sv_xtier_ne(a->EqualPeriodTotalTrailRange2, b->EqualPeriodTotalTrailRange2, z) ) { *w = "EqualPeriodTotalTrailRange2"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
@@ -2448,7 +2480,6 @@ static int sv_steq_TA_CDLIDENTICAL3CROWS( const struct TA_CDLIDENTICAL3CROWS_Str
       if( sv_xtier_ne(a->ring_EqualTrailingIdx_derived[ia], b->ring_EqualTrailingIdx_derived[ib], z) ) { *w = "ring_EqualTrailingIdx_derived"; return 1; }
    }
    if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
-   if( a->ringLag_ShadowVeryShortTrailingIdx != b->ringLag_ShadowVeryShortTrailingIdx ) { *w = "ringLag_ShadowVeryShortTrailingIdx"; return 1; }
    if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
    if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
    {
@@ -2541,12 +2572,15 @@ static int sv_steq_TA_CDLKICKING( const struct TA_CDLKICKING_Stream *a, const st
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->BodyLongPeriodTotal[k], b->BodyLongPeriodTotal[k], z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotalRange1, b->BodyLongPeriodTotalRange1, z) ) { *w = "BodyLongPeriodTotalRange1"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotalTrailRange1, b->BodyLongPeriodTotalTrailRange1, z) ) { *w = "BodyLongPeriodTotalTrailRange1"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalRange1, b->ShadowVeryShortPeriodTotalRange1, z) ) { *w = "ShadowVeryShortPeriodTotalRange1"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalTrailRange1, b->ShadowVeryShortPeriodTotalTrailRange1, z) ) { *w = "ShadowVeryShortPeriodTotalTrailRange1"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
    if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
    if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
    if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
-   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
    if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
    if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
    {
@@ -2555,7 +2589,6 @@ static int sv_steq_TA_CDLKICKING( const struct TA_CDLKICKING_Stream *a, const st
       if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
    }
    if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
-   if( a->ringLag_ShadowVeryShortTrailingIdx != b->ringLag_ShadowVeryShortTrailingIdx ) { *w = "ringLag_ShadowVeryShortTrailingIdx"; return 1; }
    if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
    if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
    {
@@ -2575,12 +2608,15 @@ static int sv_steq_TA_CDLKICKINGBYLENGTH( const struct TA_CDLKICKINGBYLENGTH_Str
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal[k], b->ShadowVeryShortPeriodTotal[k], z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->BodyLongPeriodTotal[k], b->BodyLongPeriodTotal[k], z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotalRange1, b->BodyLongPeriodTotalRange1, z) ) { *w = "BodyLongPeriodTotalRange1"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotalTrailRange1, b->BodyLongPeriodTotalTrailRange1, z) ) { *w = "BodyLongPeriodTotalTrailRange1"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalRange1, b->ShadowVeryShortPeriodTotalRange1, z) ) { *w = "ShadowVeryShortPeriodTotalRange1"; return 1; }
+   if( sv_xtier_ne(a->ShadowVeryShortPeriodTotalTrailRange1, b->ShadowVeryShortPeriodTotalTrailRange1, z) ) { *w = "ShadowVeryShortPeriodTotalTrailRange1"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
    if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
    if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
    if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
-   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
    if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
    if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
    {
@@ -2589,7 +2625,6 @@ static int sv_steq_TA_CDLKICKINGBYLENGTH( const struct TA_CDLKICKINGBYLENGTH_Str
       if( sv_xtier_ne(a->ring_BodyLongTrailingIdx_derived[ia], b->ring_BodyLongTrailingIdx_derived[ib], z) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
    }
    if( a->ringCap_ShadowVeryShortTrailingIdx != b->ringCap_ShadowVeryShortTrailingIdx ) { *w = "ringCap_ShadowVeryShortTrailingIdx"; return 1; }
-   if( a->ringLag_ShadowVeryShortTrailingIdx != b->ringLag_ShadowVeryShortTrailingIdx ) { *w = "ringLag_ShadowVeryShortTrailingIdx"; return 1; }
    if( (a->ring_ShadowVeryShortTrailingIdx_derived == NULL) != (b->ring_ShadowVeryShortTrailingIdx_derived == NULL) ) { *w = "ring_ShadowVeryShortTrailingIdx_derived"; return 1; }
    if( a->ring_ShadowVeryShortTrailingIdx_derived ) for( k = 0; k < a->ringCap_ShadowVeryShortTrailingIdx; k++ )
    {
@@ -2747,6 +2782,10 @@ static int sv_steq_TA_CDLMATHOLD( const struct TA_CDLMATHOLD_Stream *a, const st
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    if( sv_xtier_ne(a->optInPenetration, b->optInPenetration, z) ) { *w = "optInPenetration"; return 1; }
    for( k = 0; k < 5; k++ ) if( sv_xtier_ne(a->BodyPeriodTotal[k], b->BodyPeriodTotal[k], z) ) { *w = "BodyPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyPeriodTotalRange2, b->BodyPeriodTotalRange2, z) ) { *w = "BodyPeriodTotalRange2"; return 1; }
+   if( sv_xtier_ne(a->BodyPeriodTotalTrailRange2, b->BodyPeriodTotalTrailRange2, z) ) { *w = "BodyPeriodTotalTrailRange2"; return 1; }
+   if( sv_xtier_ne(a->BodyPeriodTotalRange3, b->BodyPeriodTotalRange3, z) ) { *w = "BodyPeriodTotalRange3"; return 1; }
+   if( sv_xtier_ne(a->BodyPeriodTotalTrailRange3, b->BodyPeriodTotalTrailRange3, z) ) { *w = "BodyPeriodTotalTrailRange3"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag3_inOpen, b->lag3_inOpen, z) ) { *w = "lag3_inOpen"; return 1; }
@@ -2911,12 +2950,13 @@ static int sv_steq_TA_CDLPIERCING( const struct TA_CDLPIERCING_Stream *a, const 
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->BodyLongPeriodTotal[k], b->BodyLongPeriodTotal[k], z) ) { *w = "BodyLongPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotalRange1, b->BodyLongPeriodTotalRange1, z) ) { *w = "BodyLongPeriodTotalRange1"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotalTrailRange1, b->BodyLongPeriodTotalTrailRange1, z) ) { *w = "BodyLongPeriodTotalTrailRange1"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
    if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
    if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
    if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
-   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
    if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
    if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
    {
@@ -2972,6 +3012,10 @@ static int sv_steq_TA_CDLRISEFALL3METHODS( const struct TA_CDLRISEFALL3METHODS_S
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 5; k++ ) if( sv_xtier_ne(a->BodyPeriodTotal[k], b->BodyPeriodTotal[k], z) ) { *w = "BodyPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyPeriodTotalRange2, b->BodyPeriodTotalRange2, z) ) { *w = "BodyPeriodTotalRange2"; return 1; }
+   if( sv_xtier_ne(a->BodyPeriodTotalTrailRange2, b->BodyPeriodTotalTrailRange2, z) ) { *w = "BodyPeriodTotalTrailRange2"; return 1; }
+   if( sv_xtier_ne(a->BodyPeriodTotalRange3, b->BodyPeriodTotalRange3, z) ) { *w = "BodyPeriodTotalRange3"; return 1; }
+   if( sv_xtier_ne(a->BodyPeriodTotalTrailRange3, b->BodyPeriodTotalTrailRange3, z) ) { *w = "BodyPeriodTotalTrailRange3"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag2_inOpen, b->lag2_inOpen, z) ) { *w = "lag2_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag3_inOpen, b->lag3_inOpen, z) ) { *w = "lag3_inOpen"; return 1; }
@@ -3146,6 +3190,10 @@ static int sv_steq_TA_CDLSTALLEDPATTERN( const struct TA_CDLSTALLEDPATTERN_Strea
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->BodyLongPeriodTotal[k], b->BodyLongPeriodTotal[k], z) ) { *w = "BodyLongPeriodTotal"; return 1; }
    for( k = 0; k < 3; k++ ) if( sv_xtier_ne(a->NearPeriodTotal[k], b->NearPeriodTotal[k], z) ) { *w = "NearPeriodTotal"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotalRange2, b->BodyLongPeriodTotalRange2, z) ) { *w = "BodyLongPeriodTotalRange2"; return 1; }
+   if( sv_xtier_ne(a->BodyLongPeriodTotalTrailRange2, b->BodyLongPeriodTotalTrailRange2, z) ) { *w = "BodyLongPeriodTotalTrailRange2"; return 1; }
+   if( sv_xtier_ne(a->NearPeriodTotalRange2, b->NearPeriodTotalRange2, z) ) { *w = "NearPeriodTotalRange2"; return 1; }
+   if( sv_xtier_ne(a->NearPeriodTotalTrailRange2, b->NearPeriodTotalTrailRange2, z) ) { *w = "NearPeriodTotalTrailRange2"; return 1; }
    if( sv_xtier_ne(a->BodyShortPeriodTotal, b->BodyShortPeriodTotal, z) ) { *w = "BodyShortPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->ShadowVeryShortPeriodTotal, b->ShadowVeryShortPeriodTotal, z) ) { *w = "ShadowVeryShortPeriodTotal"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }

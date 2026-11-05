@@ -14,6 +14,7 @@
  *  022705 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
+ *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  *
  */
 
@@ -34,7 +35,8 @@ TA_RetCode cdl3starsinsouth(int startIdx, int endIdx,
 {
    double BodyLongPeriodTotal, BodyShortPeriodTotal, ShadowLongPeriodTotal;
    double ShadowVeryShortPeriodTotal[2];
-   int i, outIdx, totIdx, BodyLongTrailingIdx, BodyShortTrailingIdx, ShadowLongTrailingIdx, ShadowVeryShortTrailingIdx,
+   double ShadowVeryShortPeriodTotalRange0, ShadowVeryShortPeriodTotalTrailRange0, ShadowVeryShortPeriodTotalRange1, ShadowVeryShortPeriodTotalTrailRange1;
+   int i, outIdx, BodyLongTrailingIdx, BodyShortTrailingIdx, ShadowLongTrailingIdx, ShadowVeryShortTrailingIdx,
    lookbackTotal;
 
    /* Identify the minimum number of price bar needed
@@ -102,6 +104,8 @@ TA_RetCode cdl3starsinsouth(int startIdx, int endIdx,
     * The meanings of "long body", "short body", "very short shadow" are specified with TA_SetCandleSettings
     */
    outIdx = 0;
+   ShadowVeryShortPeriodTotalRange1 = ta_candlerange(ShadowVeryShort_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]);
+   ShadowVeryShortPeriodTotalTrailRange1 = ta_candlerange(ShadowVeryShort_rangeType, inOpen[ShadowVeryShortTrailingIdx-1], inHigh[ShadowVeryShortTrailingIdx-1], inLow[ShadowVeryShortTrailingIdx-1], inClose[ShadowVeryShortTrailingIdx-1]);
    do
    {
       if( ta_candlecolor(inClose[i-2], inOpen[i-2]) == -1 &&                                    // 1st black
@@ -140,9 +144,12 @@ TA_RetCode cdl3starsinsouth(int startIdx, int endIdx,
       - ta_candlerange(BodyLong_rangeType, inOpen[BodyLongTrailingIdx-2], inHigh[BodyLongTrailingIdx-2], inLow[BodyLongTrailingIdx-2], inClose[BodyLongTrailingIdx-2]);
       ShadowLongPeriodTotal += ta_candlerange(ShadowLong_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])
       - ta_candlerange(ShadowLong_rangeType, inOpen[ShadowLongTrailingIdx-2], inHigh[ShadowLongTrailingIdx-2], inLow[ShadowLongTrailingIdx-2], inClose[ShadowLongTrailingIdx-2]);
-      for (totIdx = 1; totIdx >= 0; --totIdx)
-         ShadowVeryShortPeriodTotal[totIdx] += ta_candlerange(ShadowVeryShort_rangeType, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx])
-      - ta_candlerange(ShadowVeryShort_rangeType, inOpen[ShadowVeryShortTrailingIdx-totIdx], inHigh[ShadowVeryShortTrailingIdx-totIdx], inLow[ShadowVeryShortTrailingIdx-totIdx], inClose[ShadowVeryShortTrailingIdx-totIdx]);
+      ShadowVeryShortPeriodTotalRange0 = ta_candlerange(ShadowVeryShort_rangeType, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+      ShadowVeryShortPeriodTotalTrailRange0 = ta_candlerange(ShadowVeryShort_rangeType, inOpen[ShadowVeryShortTrailingIdx], inHigh[ShadowVeryShortTrailingIdx], inLow[ShadowVeryShortTrailingIdx], inClose[ShadowVeryShortTrailingIdx]);
+      ShadowVeryShortPeriodTotal[1] += ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1;
+      ShadowVeryShortPeriodTotal[0] += ShadowVeryShortPeriodTotalRange0 - ShadowVeryShortPeriodTotalTrailRange0;
+      ShadowVeryShortPeriodTotalRange1 = ShadowVeryShortPeriodTotalRange0;
+      ShadowVeryShortPeriodTotalTrailRange1 = ShadowVeryShortPeriodTotalTrailRange0;
       BodyShortPeriodTotal += ta_candlerange(BodyShort_rangeType, inOpen[i], inHigh[i], inLow[i], inClose[i])
       - ta_candlerange(BodyShort_rangeType, inOpen[BodyShortTrailingIdx], inHigh[BodyShortTrailingIdx], inLow[BodyShortTrailingIdx], inClose[BodyShortTrailingIdx]);
       i++;

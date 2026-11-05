@@ -58,6 +58,7 @@
  *  022705 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
+ *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  */
 
 TA_LIB_API int TA_CDLCONCEALBABYSWALL_Lookback( void )
@@ -84,9 +85,14 @@ TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL( int    startIdx,
                                               int        outInteger[] )
 {
    double ShadowVeryShortPeriodTotal[4];
+   double ShadowVeryShortPeriodTotalRange1;
+   double ShadowVeryShortPeriodTotalTrailRange1;
+   double ShadowVeryShortPeriodTotalRange2;
+   double ShadowVeryShortPeriodTotalTrailRange2;
+   double ShadowVeryShortPeriodTotalRange3;
+   double ShadowVeryShortPeriodTotalTrailRange3;
    int i;
    int outIdx;
-   int totIdx;
    int ShadowVeryShortTrailingIdx;
    int lookbackTotal;
    int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
@@ -155,6 +161,10 @@ TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL( int    startIdx,
     * The meanings of "very short shadow" are specified with TA_SetCandleSettings
     */
    outIdx = 0;
+   ShadowVeryShortPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2);
+   ShadowVeryShortPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,ShadowVeryShortTrailingIdx - 2);
+   ShadowVeryShortPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 3);
+   ShadowVeryShortPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,ShadowVeryShortTrailingIdx - 3);
    do
    {
       if( (((!(inClose[i - 3] >= inOpen[i - 3])) +      /* 1st black */
@@ -175,10 +185,15 @@ TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL( int    startIdx,
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
-      {
-         ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,ShadowVeryShortTrailingIdx - totIdx));
-      }
+      ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1);
+      ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,ShadowVeryShortTrailingIdx - 1);
+      ShadowVeryShortPeriodTotal[3] = ShadowVeryShortPeriodTotal[3] + (ShadowVeryShortPeriodTotalRange3 - ShadowVeryShortPeriodTotalTrailRange3);
+      ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + (ShadowVeryShortPeriodTotalRange2 - ShadowVeryShortPeriodTotalTrailRange2);
+      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+      ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange2;
+      ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange2;
+      ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+      ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
       i += 1;
       ShadowVeryShortTrailingIdx += 1;
    } while( i <= endIdx );
@@ -213,6 +228,10 @@ TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL( int    startIdx,
     * The meanings of "very short shadow" are specified with TA_SetCandleSettings
     */
    outIdx = 0;
+   ShadowVeryShortPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2);
+   ShadowVeryShortPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - 2);
+   ShadowVeryShortPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 3);
+   ShadowVeryShortPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - 3);
    do
    {
       if( (((!(inClose[i - 3] >= inOpen[i - 3])) +      /* 1st black */
@@ -233,10 +252,15 @@ TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL( int    startIdx,
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
-      {
-         ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - totIdx));
-      }
+      ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 1);
+      ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - 1);
+      ShadowVeryShortPeriodTotal[3] = ShadowVeryShortPeriodTotal[3] + (ShadowVeryShortPeriodTotalRange3 - ShadowVeryShortPeriodTotalTrailRange3);
+      ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + (ShadowVeryShortPeriodTotalRange2 - ShadowVeryShortPeriodTotalTrailRange2);
+      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+      ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange2;
+      ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange2;
+      ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+      ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
       i += 1;
       ShadowVeryShortTrailingIdx += 1;
    } while( i <= endIdx );
@@ -271,6 +295,10 @@ TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL( int    startIdx,
     * The meanings of "very short shadow" are specified with TA_SetCandleSettings
     */
    outIdx = 0;
+   ShadowVeryShortPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2);
+   ShadowVeryShortPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,ShadowVeryShortTrailingIdx - 2);
+   ShadowVeryShortPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 3);
+   ShadowVeryShortPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,ShadowVeryShortTrailingIdx - 3);
    do
    {
       if( (((!(inClose[i - 3] >= inOpen[i - 3])) +      /* 1st black */
@@ -291,10 +319,15 @@ TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL( int    startIdx,
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
-      {
-         ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,ShadowVeryShortTrailingIdx - totIdx));
-      }
+      ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 1);
+      ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,ShadowVeryShortTrailingIdx - 1);
+      ShadowVeryShortPeriodTotal[3] = ShadowVeryShortPeriodTotal[3] + (ShadowVeryShortPeriodTotalRange3 - ShadowVeryShortPeriodTotalTrailRange3);
+      ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + (ShadowVeryShortPeriodTotalRange2 - ShadowVeryShortPeriodTotalTrailRange2);
+      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+      ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange2;
+      ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange2;
+      ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+      ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
       i += 1;
       ShadowVeryShortTrailingIdx += 1;
    } while( i <= endIdx );
@@ -329,6 +362,10 @@ TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL( int    startIdx,
     * The meanings of "very short shadow" are specified with TA_SetCandleSettings
     */
    outIdx = 0;
+   ShadowVeryShortPeriodTotalRange2 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - 2);
+   ShadowVeryShortPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - 2);
+   ShadowVeryShortPeriodTotalRange3 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - 3);
+   ShadowVeryShortPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - 3);
    do
    {
       if( (((!(inClose[i - 3] >= inOpen[i - 3])) +      /* 1st black */
@@ -349,10 +386,15 @@ TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL( int    startIdx,
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
-      {
-         ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - totIdx) - TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - totIdx));
-      }
+      ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - 1);
+      ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - 1);
+      ShadowVeryShortPeriodTotal[3] = ShadowVeryShortPeriodTotal[3] + (ShadowVeryShortPeriodTotalRange3 - ShadowVeryShortPeriodTotalTrailRange3);
+      ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + (ShadowVeryShortPeriodTotalRange2 - ShadowVeryShortPeriodTotalTrailRange2);
+      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+      ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange2;
+      ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange2;
+      ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+      ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
       i += 1;
       ShadowVeryShortTrailingIdx += 1;
    } while( i <= endIdx );
@@ -374,9 +416,14 @@ TA_RetCode TA_S_CDLCONCEALBABYSWALL( int    startIdx,
                                      int        outInteger[] )
 {
    double ShadowVeryShortPeriodTotal[4];
+   double ShadowVeryShortPeriodTotalRange1;
+   double ShadowVeryShortPeriodTotalTrailRange1;
+   double ShadowVeryShortPeriodTotalRange2;
+   double ShadowVeryShortPeriodTotalTrailRange2;
+   double ShadowVeryShortPeriodTotalRange3;
+   double ShadowVeryShortPeriodTotalTrailRange3;
    int i;
    int outIdx;
-   int totIdx;
    int ShadowVeryShortTrailingIdx;
    int lookbackTotal;
    int ShadowVeryShort_rangeType = TA_Globals->candleSettings[TA_ShadowVeryShort].rangeType;
@@ -428,6 +475,10 @@ TA_RetCode TA_S_CDLCONCEALBABYSWALL( int    startIdx,
    }
    i = startIdx;
    outIdx = 0;
+   ShadowVeryShortPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2);
+   ShadowVeryShortPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,ShadowVeryShortTrailingIdx - 2);
+   ShadowVeryShortPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 3);
+   ShadowVeryShortPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,ShadowVeryShortTrailingIdx - 3);
    do
    {
       if( (((!((double)inClose[i - 3] >= (double)inOpen[i - 3])) + (!((double)inClose[i - 2] >= (double)inOpen[i - 2])) + (!((double)inClose[i - 1] >= (double)inOpen[i - 1]))) == 3) )
@@ -437,10 +488,15 @@ TA_RetCode TA_S_CDLCONCEALBABYSWALL( int    startIdx,
       {
          outInteger[outIdx++] = 0;
       }
-      for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
-      {
-         ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,ShadowVeryShortTrailingIdx - totIdx));
-      }
+      ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1);
+      ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,ShadowVeryShortTrailingIdx - 1);
+      ShadowVeryShortPeriodTotal[3] = ShadowVeryShortPeriodTotal[3] + (ShadowVeryShortPeriodTotalRange3 - ShadowVeryShortPeriodTotalTrailRange3);
+      ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + (ShadowVeryShortPeriodTotalRange2 - ShadowVeryShortPeriodTotalTrailRange2);
+      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+      ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange2;
+      ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange2;
+      ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+      ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
       i += 1;
       ShadowVeryShortTrailingIdx += 1;
    } while( i <= endIdx );
@@ -464,6 +520,10 @@ TA_RetCode TA_S_CDLCONCEALBABYSWALL( int    startIdx,
    }
    i = startIdx;
    outIdx = 0;
+   ShadowVeryShortPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2);
+   ShadowVeryShortPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - 2);
+   ShadowVeryShortPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 3);
+   ShadowVeryShortPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - 3);
    do
    {
       if( (((!((double)inClose[i - 3] >= (double)inOpen[i - 3])) + (!((double)inClose[i - 2] >= (double)inOpen[i - 2])) + (!((double)inClose[i - 1] >= (double)inOpen[i - 1]))) == 3) )
@@ -473,10 +533,15 @@ TA_RetCode TA_S_CDLCONCEALBABYSWALL( int    startIdx,
       {
          outInteger[outIdx++] = 0;
       }
-      for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
-      {
-         ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - totIdx));
-      }
+      ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 1);
+      ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - 1);
+      ShadowVeryShortPeriodTotal[3] = ShadowVeryShortPeriodTotal[3] + (ShadowVeryShortPeriodTotalRange3 - ShadowVeryShortPeriodTotalTrailRange3);
+      ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + (ShadowVeryShortPeriodTotalRange2 - ShadowVeryShortPeriodTotalTrailRange2);
+      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+      ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange2;
+      ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange2;
+      ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+      ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
       i += 1;
       ShadowVeryShortTrailingIdx += 1;
    } while( i <= endIdx );
@@ -500,6 +565,10 @@ TA_RetCode TA_S_CDLCONCEALBABYSWALL( int    startIdx,
    }
    i = startIdx;
    outIdx = 0;
+   ShadowVeryShortPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2);
+   ShadowVeryShortPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,ShadowVeryShortTrailingIdx - 2);
+   ShadowVeryShortPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 3);
+   ShadowVeryShortPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,ShadowVeryShortTrailingIdx - 3);
    do
    {
       if( (((!((double)inClose[i - 3] >= (double)inOpen[i - 3])) + (!((double)inClose[i - 2] >= (double)inOpen[i - 2])) + (!((double)inClose[i - 1] >= (double)inOpen[i - 1]))) == 3) )
@@ -509,10 +578,15 @@ TA_RetCode TA_S_CDLCONCEALBABYSWALL( int    startIdx,
       {
          outInteger[outIdx++] = 0;
       }
-      for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
-      {
-         ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,ShadowVeryShortTrailingIdx - totIdx));
-      }
+      ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 1);
+      ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,ShadowVeryShortTrailingIdx - 1);
+      ShadowVeryShortPeriodTotal[3] = ShadowVeryShortPeriodTotal[3] + (ShadowVeryShortPeriodTotalRange3 - ShadowVeryShortPeriodTotalTrailRange3);
+      ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + (ShadowVeryShortPeriodTotalRange2 - ShadowVeryShortPeriodTotalTrailRange2);
+      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+      ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange2;
+      ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange2;
+      ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+      ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
       i += 1;
       ShadowVeryShortTrailingIdx += 1;
    } while( i <= endIdx );
@@ -536,6 +610,10 @@ TA_RetCode TA_S_CDLCONCEALBABYSWALL( int    startIdx,
    }
    i = startIdx;
    outIdx = 0;
+   ShadowVeryShortPeriodTotalRange2 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - 2);
+   ShadowVeryShortPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - 2);
+   ShadowVeryShortPeriodTotalRange3 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - 3);
+   ShadowVeryShortPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - 3);
    do
    {
       if( (((!((double)inClose[i - 3] >= (double)inOpen[i - 3])) + (!((double)inClose[i - 2] >= (double)inOpen[i - 2])) + (!((double)inClose[i - 1] >= (double)inOpen[i - 1]))) == 3) )
@@ -545,10 +623,15 @@ TA_RetCode TA_S_CDLCONCEALBABYSWALL( int    startIdx,
       {
          outInteger[outIdx++] = 0;
       }
-      for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
-      {
-         ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - totIdx) - TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - totIdx));
-      }
+      ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - 1);
+      ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - 1);
+      ShadowVeryShortPeriodTotal[3] = ShadowVeryShortPeriodTotal[3] + (ShadowVeryShortPeriodTotalRange3 - ShadowVeryShortPeriodTotalTrailRange3);
+      ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + (ShadowVeryShortPeriodTotalRange2 - ShadowVeryShortPeriodTotalTrailRange2);
+      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+      ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange2;
+      ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange2;
+      ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+      ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
       i += 1;
       ShadowVeryShortTrailingIdx += 1;
    } while( i <= endIdx );
@@ -567,6 +650,10 @@ struct TA_CDLCONCEALBABYSWALL_Stream {
    /* The value(s) at the last bar the stream counted (see TA_CDLCONCEALBABYSWALL_Value). */
    int cur_outInteger;
    double ShadowVeryShortPeriodTotal[4];
+   double ShadowVeryShortPeriodTotalRange2;
+   double ShadowVeryShortPeriodTotalTrailRange2;
+   double ShadowVeryShortPeriodTotalRange3;
+   double ShadowVeryShortPeriodTotalTrailRange3;
    double lag1_inOpen;
    double lag2_inOpen;
    double lag3_inOpen;
@@ -596,7 +683,8 @@ static void TA_CDLCONCEALBABYSWALL_ReleaseImpl( struct TA_CDLCONCEALBABYSWALL_St
 /* Private function, not in public API. */
 static void TA_CDLCONCEALBABYSWALL_StepImpl( struct TA_CDLCONCEALBABYSWALL_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
-   int totIdx;
+   double ShadowVeryShortPeriodTotalRange1;
+   double ShadowVeryShortPeriodTotalTrailRange1;
 
    sp->ring_ShadowVeryShortTrailingIdx_derived[sp->ringPos_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
    if( ((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : -1) == -1 && /* 1st black */
@@ -626,10 +714,15 @@ static void TA_CDLCONCEALBABYSWALL_StepImpl( struct TA_CDLCONCEALBABYSWALL_Strea
    /* add the current range and subtract the first range: this is done after the pattern recognition
     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
     */
-   for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
-   {
-      sp->ShadowVeryShortPeriodTotal[totIdx] = sp->ShadowVeryShortPeriodTotal[totIdx] + (sp->ring_ShadowVeryShortTrailingIdx_derived[(sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp->ringCap_ShadowVeryShortTrailingIdx) ? sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - totIdx - sp->ringCap_ShadowVeryShortTrailingIdx : sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - totIdx] - sp->ring_ShadowVeryShortTrailingIdx_derived[(sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - sp->ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp->ringCap_ShadowVeryShortTrailingIdx]);
-   }
+   ShadowVeryShortPeriodTotalRange1 = TA_STREAM_CANDLERANGE(ShadowVeryShort,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose);
+   ShadowVeryShortPeriodTotalTrailRange1 = sp->ring_ShadowVeryShortTrailingIdx_derived[(sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - sp->ringLag_ShadowVeryShortTrailingIdx - 1) % sp->ringCap_ShadowVeryShortTrailingIdx];
+   sp->ShadowVeryShortPeriodTotal[3] = sp->ShadowVeryShortPeriodTotal[3] + (sp->ShadowVeryShortPeriodTotalRange3 - sp->ShadowVeryShortPeriodTotalTrailRange3);
+   sp->ShadowVeryShortPeriodTotal[2] = sp->ShadowVeryShortPeriodTotal[2] + (sp->ShadowVeryShortPeriodTotalRange2 - sp->ShadowVeryShortPeriodTotalTrailRange2);
+   sp->ShadowVeryShortPeriodTotal[1] = sp->ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+   sp->ShadowVeryShortPeriodTotalRange3 = sp->ShadowVeryShortPeriodTotalRange2;
+   sp->ShadowVeryShortPeriodTotalTrailRange3 = sp->ShadowVeryShortPeriodTotalTrailRange2;
+   sp->ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+   sp->ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
    sp->cur_outInteger = *outInteger;
    sp->lag3_inOpen = sp->lag2_inOpen;
    sp->lag2_inOpen = sp->lag1_inOpen;
@@ -662,9 +755,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCONCEALBABYSWALL_OpenBody( struct TA_CDLC
       int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;
       double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
       double ShadowVeryShortPeriodTotal[4] = {0};
+      double ShadowVeryShortPeriodTotalRange1;
+      double ShadowVeryShortPeriodTotalTrailRange1;
+      double ShadowVeryShortPeriodTotalRange2 = 0.0;
+      double ShadowVeryShortPeriodTotalTrailRange2 = 0.0;
+      double ShadowVeryShortPeriodTotalRange3 = 0.0;
+      double ShadowVeryShortPeriodTotalTrailRange3 = 0.0;
       int i;
       int outIdx;
-      int totIdx;
       int ShadowVeryShortTrailingIdx;
       int lookbackTotal;
       /* Identify the minimum number of price bar needed
@@ -711,6 +809,10 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCONCEALBABYSWALL_OpenBody( struct TA_CDLC
        * The meanings of "very short shadow" are specified with TA_SetCandleSettings
        */
       outIdx = 0;
+      ShadowVeryShortPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2);
+      ShadowVeryShortPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,ShadowVeryShortTrailingIdx - 2);
+      ShadowVeryShortPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 3);
+      ShadowVeryShortPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,ShadowVeryShortTrailingIdx - 3);
       do
       {
          if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 && /* 1st black */
@@ -740,10 +842,15 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCONCEALBABYSWALL_OpenBody( struct TA_CDLC
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
-         for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
-         {
-            ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,ShadowVeryShortTrailingIdx - totIdx));
-         }
+         ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1);
+         ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,ShadowVeryShortTrailingIdx - 1);
+         ShadowVeryShortPeriodTotal[3] = ShadowVeryShortPeriodTotal[3] + (ShadowVeryShortPeriodTotalRange3 - ShadowVeryShortPeriodTotalTrailRange3);
+         ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + (ShadowVeryShortPeriodTotalRange2 - ShadowVeryShortPeriodTotalTrailRange2);
+         ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+         ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange2;
+         ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange2;
+         ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+         ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
          i += 1;
          ShadowVeryShortTrailingIdx += 1;
       } while( i <= endIdx );
@@ -756,8 +863,12 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCONCEALBABYSWALL_OpenBody( struct TA_CDLC
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       memcpy( sp->ShadowVeryShortPeriodTotal, ShadowVeryShortPeriodTotal, sizeof( sp->ShadowVeryShortPeriodTotal ) );
+      sp->ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange2;
+      sp->ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange2;
+      sp->ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange3;
+      sp->ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange3;
       sp->ringLag_ShadowVeryShortTrailingIdx = (int)(i - ShadowVeryShortTrailingIdx);
-      sp->ringCap_ShadowVeryShortTrailingIdx = sp->ringLag_ShadowVeryShortTrailingIdx + 4;
+      sp->ringCap_ShadowVeryShortTrailingIdx = sp->ringLag_ShadowVeryShortTrailingIdx + 2;
       if( sp->ringLag_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLCONCEALBABYSWALL_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(220); }
       { size_t allocN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
         sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
@@ -812,6 +923,10 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCONCEALBABYSWALL_OpenBody( struct TA_CDLC
        * The meanings of "very short shadow" are specified with TA_SetCandleSettings
        */
       outIdx = 0;
+      ShadowVeryShortPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2);
+      ShadowVeryShortPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - 2);
+      ShadowVeryShortPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 3);
+      ShadowVeryShortPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - 3);
       do
       {
          if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 && /* 1st black */
@@ -841,10 +956,15 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCONCEALBABYSWALL_OpenBody( struct TA_CDLC
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
-         for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
-         {
-            ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - totIdx));
-         }
+         ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 1);
+         ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - 1);
+         ShadowVeryShortPeriodTotal[3] = ShadowVeryShortPeriodTotal[3] + (ShadowVeryShortPeriodTotalRange3 - ShadowVeryShortPeriodTotalTrailRange3);
+         ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + (ShadowVeryShortPeriodTotalRange2 - ShadowVeryShortPeriodTotalTrailRange2);
+         ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+         ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange2;
+         ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange2;
+         ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+         ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
          i += 1;
          ShadowVeryShortTrailingIdx += 1;
       } while( i <= endIdx );
@@ -857,8 +977,12 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCONCEALBABYSWALL_OpenBody( struct TA_CDLC
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       memcpy( sp->ShadowVeryShortPeriodTotal, ShadowVeryShortPeriodTotal, sizeof( sp->ShadowVeryShortPeriodTotal ) );
+      sp->ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange2;
+      sp->ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange2;
+      sp->ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange3;
+      sp->ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange3;
       sp->ringLag_ShadowVeryShortTrailingIdx = (int)(i - ShadowVeryShortTrailingIdx);
-      sp->ringCap_ShadowVeryShortTrailingIdx = sp->ringLag_ShadowVeryShortTrailingIdx + 4;
+      sp->ringCap_ShadowVeryShortTrailingIdx = sp->ringLag_ShadowVeryShortTrailingIdx + 2;
       if( sp->ringLag_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLCONCEALBABYSWALL_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(220); }
       { size_t allocN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
         sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
@@ -913,6 +1037,10 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCONCEALBABYSWALL_OpenBody( struct TA_CDLC
        * The meanings of "very short shadow" are specified with TA_SetCandleSettings
        */
       outIdx = 0;
+      ShadowVeryShortPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2);
+      ShadowVeryShortPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,ShadowVeryShortTrailingIdx - 2);
+      ShadowVeryShortPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 3);
+      ShadowVeryShortPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,ShadowVeryShortTrailingIdx - 3);
       do
       {
          if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 && /* 1st black */
@@ -942,10 +1070,15 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCONCEALBABYSWALL_OpenBody( struct TA_CDLC
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
-         for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
-         {
-            ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,ShadowVeryShortTrailingIdx - totIdx));
-         }
+         ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 1);
+         ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,ShadowVeryShortTrailingIdx - 1);
+         ShadowVeryShortPeriodTotal[3] = ShadowVeryShortPeriodTotal[3] + (ShadowVeryShortPeriodTotalRange3 - ShadowVeryShortPeriodTotalTrailRange3);
+         ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + (ShadowVeryShortPeriodTotalRange2 - ShadowVeryShortPeriodTotalTrailRange2);
+         ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+         ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange2;
+         ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange2;
+         ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+         ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
          i += 1;
          ShadowVeryShortTrailingIdx += 1;
       } while( i <= endIdx );
@@ -958,8 +1091,12 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCONCEALBABYSWALL_OpenBody( struct TA_CDLC
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       memcpy( sp->ShadowVeryShortPeriodTotal, ShadowVeryShortPeriodTotal, sizeof( sp->ShadowVeryShortPeriodTotal ) );
+      sp->ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange2;
+      sp->ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange2;
+      sp->ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange3;
+      sp->ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange3;
       sp->ringLag_ShadowVeryShortTrailingIdx = (int)(i - ShadowVeryShortTrailingIdx);
-      sp->ringCap_ShadowVeryShortTrailingIdx = sp->ringLag_ShadowVeryShortTrailingIdx + 4;
+      sp->ringCap_ShadowVeryShortTrailingIdx = sp->ringLag_ShadowVeryShortTrailingIdx + 2;
       if( sp->ringLag_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLCONCEALBABYSWALL_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(220); }
       { size_t allocN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
         sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
@@ -1014,6 +1151,10 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCONCEALBABYSWALL_OpenBody( struct TA_CDLC
        * The meanings of "very short shadow" are specified with TA_SetCandleSettings
        */
       outIdx = 0;
+      ShadowVeryShortPeriodTotalRange2 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - 2);
+      ShadowVeryShortPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - 2);
+      ShadowVeryShortPeriodTotalRange3 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - 3);
+      ShadowVeryShortPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - 3);
       do
       {
          if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 && /* 1st black */
@@ -1043,10 +1184,15 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCONCEALBABYSWALL_OpenBody( struct TA_CDLC
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
-         for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
-         {
-            ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - totIdx) - TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - totIdx));
-         }
+         ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - 1);
+         ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - 1);
+         ShadowVeryShortPeriodTotal[3] = ShadowVeryShortPeriodTotal[3] + (ShadowVeryShortPeriodTotalRange3 - ShadowVeryShortPeriodTotalTrailRange3);
+         ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + (ShadowVeryShortPeriodTotalRange2 - ShadowVeryShortPeriodTotalTrailRange2);
+         ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+         ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange2;
+         ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange2;
+         ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+         ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
          i += 1;
          ShadowVeryShortTrailingIdx += 1;
       } while( i <= endIdx );
@@ -1059,8 +1205,12 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCONCEALBABYSWALL_OpenBody( struct TA_CDLC
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       memcpy( sp->ShadowVeryShortPeriodTotal, ShadowVeryShortPeriodTotal, sizeof( sp->ShadowVeryShortPeriodTotal ) );
+      sp->ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange2;
+      sp->ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange2;
+      sp->ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange3;
+      sp->ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange3;
       sp->ringLag_ShadowVeryShortTrailingIdx = (int)(i - ShadowVeryShortTrailingIdx);
-      sp->ringCap_ShadowVeryShortTrailingIdx = sp->ringLag_ShadowVeryShortTrailingIdx + 4;
+      sp->ringCap_ShadowVeryShortTrailingIdx = sp->ringLag_ShadowVeryShortTrailingIdx + 2;
       if( sp->ringLag_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLCONCEALBABYSWALL_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(220); }
       { size_t allocN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
         sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );

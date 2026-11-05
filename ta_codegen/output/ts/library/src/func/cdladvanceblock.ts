@@ -14,6 +14,7 @@
  *  120404 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
+ *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  */
 
 import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
@@ -57,10 +58,27 @@ export function cdladvanceblockImpl(
   const ShadowLongPeriodTotal = new Float64Array(2);
   const NearPeriodTotal = new Float64Array(3);
   const FarPeriodTotal = new Float64Array(3);
+  let ShadowShortPeriodTotalRange0 = 0;
+  let ShadowShortPeriodTotalTrailRange0 = 0;
+  let ShadowShortPeriodTotalRange1 = 0;
+  let ShadowShortPeriodTotalTrailRange1 = 0;
+  let ShadowShortPeriodTotalRange2 = 0;
+  let ShadowShortPeriodTotalTrailRange2 = 0;
+  let ShadowLongPeriodTotalRange0 = 0;
+  let ShadowLongPeriodTotalTrailRange0 = 0;
+  let ShadowLongPeriodTotalRange1 = 0;
+  let ShadowLongPeriodTotalTrailRange1 = 0;
+  let FarPeriodTotalRange1 = 0;
+  let FarPeriodTotalTrailRange1 = 0;
+  let FarPeriodTotalRange2 = 0;
+  let FarPeriodTotalTrailRange2 = 0;
+  let NearPeriodTotalRange1 = 0;
+  let NearPeriodTotalTrailRange1 = 0;
+  let NearPeriodTotalRange2 = 0;
+  let NearPeriodTotalTrailRange2 = 0;
   let BodyLongPeriodTotal = 0;
   let i = 0;
   let outIdx = 0;
-  let totIdx = 0;
   let BodyLongTrailingIdx = 0;
   let ShadowShortTrailingIdx = 0;
   let ShadowLongTrailingIdx = 0;
@@ -164,6 +182,16 @@ export function cdladvanceblockImpl(
    * The meanings of "long body", "short shadow", "far" and "near" are specified with TA_SetCandleSettings
    */
   outIdx = 0;
+  ShadowShortPeriodTotalRange1 = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowShort_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowShort_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+  ShadowShortPeriodTotalTrailRange1 = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[ShadowShortTrailingIdx - 1] - inOpen[ShadowShortTrailingIdx - 1])) : ((ShadowShort_rangeType === 1) ? (inHigh[ShadowShortTrailingIdx - 1] - inLow[ShadowShortTrailingIdx - 1]) : ((ShadowShort_rangeType === 2) ? ((inHigh[ShadowShortTrailingIdx - 1] - (((inClose[ShadowShortTrailingIdx - 1]) >= (inOpen[ShadowShortTrailingIdx - 1])) ? (inClose[ShadowShortTrailingIdx - 1]) : (inOpen[ShadowShortTrailingIdx - 1]))) + ((((inClose[ShadowShortTrailingIdx - 1]) >= (inOpen[ShadowShortTrailingIdx - 1])) ? (inOpen[ShadowShortTrailingIdx - 1]) : (inClose[ShadowShortTrailingIdx - 1])) - inLow[ShadowShortTrailingIdx - 1])) : 0.0)));
+  ShadowShortPeriodTotalRange2 = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((ShadowShort_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((ShadowShort_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+  ShadowShortPeriodTotalTrailRange2 = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[ShadowShortTrailingIdx - 2] - inOpen[ShadowShortTrailingIdx - 2])) : ((ShadowShort_rangeType === 1) ? (inHigh[ShadowShortTrailingIdx - 2] - inLow[ShadowShortTrailingIdx - 2]) : ((ShadowShort_rangeType === 2) ? ((inHigh[ShadowShortTrailingIdx - 2] - (((inClose[ShadowShortTrailingIdx - 2]) >= (inOpen[ShadowShortTrailingIdx - 2])) ? (inClose[ShadowShortTrailingIdx - 2]) : (inOpen[ShadowShortTrailingIdx - 2]))) + ((((inClose[ShadowShortTrailingIdx - 2]) >= (inOpen[ShadowShortTrailingIdx - 2])) ? (inOpen[ShadowShortTrailingIdx - 2]) : (inClose[ShadowShortTrailingIdx - 2])) - inLow[ShadowShortTrailingIdx - 2])) : 0.0)));
+  ShadowLongPeriodTotalRange1 = ((ShadowLong_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowLong_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowLong_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+  ShadowLongPeriodTotalTrailRange1 = ((ShadowLong_rangeType === 0) ? (Math.abs(inClose[ShadowLongTrailingIdx - 1] - inOpen[ShadowLongTrailingIdx - 1])) : ((ShadowLong_rangeType === 1) ? (inHigh[ShadowLongTrailingIdx - 1] - inLow[ShadowLongTrailingIdx - 1]) : ((ShadowLong_rangeType === 2) ? ((inHigh[ShadowLongTrailingIdx - 1] - (((inClose[ShadowLongTrailingIdx - 1]) >= (inOpen[ShadowLongTrailingIdx - 1])) ? (inClose[ShadowLongTrailingIdx - 1]) : (inOpen[ShadowLongTrailingIdx - 1]))) + ((((inClose[ShadowLongTrailingIdx - 1]) >= (inOpen[ShadowLongTrailingIdx - 1])) ? (inOpen[ShadowLongTrailingIdx - 1]) : (inClose[ShadowLongTrailingIdx - 1])) - inLow[ShadowLongTrailingIdx - 1])) : 0.0)));
+  FarPeriodTotalRange2 = ((Far_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Far_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Far_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+  FarPeriodTotalTrailRange2 = ((Far_rangeType === 0) ? (Math.abs(inClose[FarTrailingIdx - 2] - inOpen[FarTrailingIdx - 2])) : ((Far_rangeType === 1) ? (inHigh[FarTrailingIdx - 2] - inLow[FarTrailingIdx - 2]) : ((Far_rangeType === 2) ? ((inHigh[FarTrailingIdx - 2] - (((inClose[FarTrailingIdx - 2]) >= (inOpen[FarTrailingIdx - 2])) ? (inClose[FarTrailingIdx - 2]) : (inOpen[FarTrailingIdx - 2]))) + ((((inClose[FarTrailingIdx - 2]) >= (inOpen[FarTrailingIdx - 2])) ? (inOpen[FarTrailingIdx - 2]) : (inClose[FarTrailingIdx - 2])) - inLow[FarTrailingIdx - 2])) : 0.0)));
+  NearPeriodTotalRange2 = ((Near_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+  NearPeriodTotalTrailRange2 = ((Near_rangeType === 0) ? (Math.abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType === 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType === 2) ? ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])) : 0.0)));
   do {
     if (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) === 1 && /* 1st white */
         ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) === 1 && /* 2nd white */
@@ -193,16 +221,33 @@ export function cdladvanceblockImpl(
     /* add the current range and subtract the first range: this is done after the pattern recognition
      * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
      */
-    for (totIdx = 2; totIdx >= 0; totIdx -= 1) {
-      ShadowShortPeriodTotal[totIdx] = ShadowShortPeriodTotal[totIdx] + (((ShadowShort_rangeType === 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((ShadowShort_rangeType === 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((ShadowShort_rangeType === 2) ? ((inHigh[i - totIdx] - (((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inClose[i - totIdx]) : (inOpen[i - totIdx]))) + ((((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inOpen[i - totIdx]) : (inClose[i - totIdx])) - inLow[i - totIdx])) : 0.0))) - ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[ShadowShortTrailingIdx - totIdx] - inOpen[ShadowShortTrailingIdx - totIdx])) : ((ShadowShort_rangeType === 1) ? (inHigh[ShadowShortTrailingIdx - totIdx] - inLow[ShadowShortTrailingIdx - totIdx]) : ((ShadowShort_rangeType === 2) ? ((inHigh[ShadowShortTrailingIdx - totIdx] - (((inClose[ShadowShortTrailingIdx - totIdx]) >= (inOpen[ShadowShortTrailingIdx - totIdx])) ? (inClose[ShadowShortTrailingIdx - totIdx]) : (inOpen[ShadowShortTrailingIdx - totIdx]))) + ((((inClose[ShadowShortTrailingIdx - totIdx]) >= (inOpen[ShadowShortTrailingIdx - totIdx])) ? (inOpen[ShadowShortTrailingIdx - totIdx]) : (inClose[ShadowShortTrailingIdx - totIdx])) - inLow[ShadowShortTrailingIdx - totIdx])) : 0.0))));
-    }
-    for (totIdx = 1; totIdx >= 0; totIdx -= 1) {
-      ShadowLongPeriodTotal[totIdx] = ShadowLongPeriodTotal[totIdx] + (((ShadowLong_rangeType === 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((ShadowLong_rangeType === 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((ShadowLong_rangeType === 2) ? ((inHigh[i - totIdx] - (((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inClose[i - totIdx]) : (inOpen[i - totIdx]))) + ((((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inOpen[i - totIdx]) : (inClose[i - totIdx])) - inLow[i - totIdx])) : 0.0))) - ((ShadowLong_rangeType === 0) ? (Math.abs(inClose[ShadowLongTrailingIdx - totIdx] - inOpen[ShadowLongTrailingIdx - totIdx])) : ((ShadowLong_rangeType === 1) ? (inHigh[ShadowLongTrailingIdx - totIdx] - inLow[ShadowLongTrailingIdx - totIdx]) : ((ShadowLong_rangeType === 2) ? ((inHigh[ShadowLongTrailingIdx - totIdx] - (((inClose[ShadowLongTrailingIdx - totIdx]) >= (inOpen[ShadowLongTrailingIdx - totIdx])) ? (inClose[ShadowLongTrailingIdx - totIdx]) : (inOpen[ShadowLongTrailingIdx - totIdx]))) + ((((inClose[ShadowLongTrailingIdx - totIdx]) >= (inOpen[ShadowLongTrailingIdx - totIdx])) ? (inOpen[ShadowLongTrailingIdx - totIdx]) : (inClose[ShadowLongTrailingIdx - totIdx])) - inLow[ShadowLongTrailingIdx - totIdx])) : 0.0))));
-    }
-    for (totIdx = 2; totIdx >= 1; totIdx -= 1) {
-      FarPeriodTotal[totIdx] = FarPeriodTotal[totIdx] + (((Far_rangeType === 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((Far_rangeType === 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((Far_rangeType === 2) ? ((inHigh[i - totIdx] - (((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inClose[i - totIdx]) : (inOpen[i - totIdx]))) + ((((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inOpen[i - totIdx]) : (inClose[i - totIdx])) - inLow[i - totIdx])) : 0.0))) - ((Far_rangeType === 0) ? (Math.abs(inClose[FarTrailingIdx - totIdx] - inOpen[FarTrailingIdx - totIdx])) : ((Far_rangeType === 1) ? (inHigh[FarTrailingIdx - totIdx] - inLow[FarTrailingIdx - totIdx]) : ((Far_rangeType === 2) ? ((inHigh[FarTrailingIdx - totIdx] - (((inClose[FarTrailingIdx - totIdx]) >= (inOpen[FarTrailingIdx - totIdx])) ? (inClose[FarTrailingIdx - totIdx]) : (inOpen[FarTrailingIdx - totIdx]))) + ((((inClose[FarTrailingIdx - totIdx]) >= (inOpen[FarTrailingIdx - totIdx])) ? (inOpen[FarTrailingIdx - totIdx]) : (inClose[FarTrailingIdx - totIdx])) - inLow[FarTrailingIdx - totIdx])) : 0.0))));
-      NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (((Near_rangeType === 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((Near_rangeType === 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((Near_rangeType === 2) ? ((inHigh[i - totIdx] - (((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inClose[i - totIdx]) : (inOpen[i - totIdx]))) + ((((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inOpen[i - totIdx]) : (inClose[i - totIdx])) - inLow[i - totIdx])) : 0.0))) - ((Near_rangeType === 0) ? (Math.abs(inClose[NearTrailingIdx - totIdx] - inOpen[NearTrailingIdx - totIdx])) : ((Near_rangeType === 1) ? (inHigh[NearTrailingIdx - totIdx] - inLow[NearTrailingIdx - totIdx]) : ((Near_rangeType === 2) ? ((inHigh[NearTrailingIdx - totIdx] - (((inClose[NearTrailingIdx - totIdx]) >= (inOpen[NearTrailingIdx - totIdx])) ? (inClose[NearTrailingIdx - totIdx]) : (inOpen[NearTrailingIdx - totIdx]))) + ((((inClose[NearTrailingIdx - totIdx]) >= (inOpen[NearTrailingIdx - totIdx])) ? (inOpen[NearTrailingIdx - totIdx]) : (inClose[NearTrailingIdx - totIdx])) - inLow[NearTrailingIdx - totIdx])) : 0.0))));
-    }
+    ShadowShortPeriodTotalRange0 = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowShort_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((ShadowShort_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+    ShadowShortPeriodTotalTrailRange0 = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[ShadowShortTrailingIdx] - inOpen[ShadowShortTrailingIdx])) : ((ShadowShort_rangeType === 1) ? (inHigh[ShadowShortTrailingIdx] - inLow[ShadowShortTrailingIdx]) : ((ShadowShort_rangeType === 2) ? ((inHigh[ShadowShortTrailingIdx] - (((inClose[ShadowShortTrailingIdx]) >= (inOpen[ShadowShortTrailingIdx])) ? (inClose[ShadowShortTrailingIdx]) : (inOpen[ShadowShortTrailingIdx]))) + ((((inClose[ShadowShortTrailingIdx]) >= (inOpen[ShadowShortTrailingIdx])) ? (inOpen[ShadowShortTrailingIdx]) : (inClose[ShadowShortTrailingIdx])) - inLow[ShadowShortTrailingIdx])) : 0.0)));
+    ShadowShortPeriodTotal[2] = ShadowShortPeriodTotal[2] + (ShadowShortPeriodTotalRange2 - ShadowShortPeriodTotalTrailRange2);
+    ShadowShortPeriodTotal[1] = ShadowShortPeriodTotal[1] + (ShadowShortPeriodTotalRange1 - ShadowShortPeriodTotalTrailRange1);
+    ShadowShortPeriodTotal[0] = ShadowShortPeriodTotal[0] + (ShadowShortPeriodTotalRange0 - ShadowShortPeriodTotalTrailRange0);
+    ShadowShortPeriodTotalRange2 = ShadowShortPeriodTotalRange1;
+    ShadowShortPeriodTotalTrailRange2 = ShadowShortPeriodTotalTrailRange1;
+    ShadowShortPeriodTotalRange1 = ShadowShortPeriodTotalRange0;
+    ShadowShortPeriodTotalTrailRange1 = ShadowShortPeriodTotalTrailRange0;
+    ShadowLongPeriodTotalRange0 = ((ShadowLong_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowLong_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((ShadowLong_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+    ShadowLongPeriodTotalTrailRange0 = ((ShadowLong_rangeType === 0) ? (Math.abs(inClose[ShadowLongTrailingIdx] - inOpen[ShadowLongTrailingIdx])) : ((ShadowLong_rangeType === 1) ? (inHigh[ShadowLongTrailingIdx] - inLow[ShadowLongTrailingIdx]) : ((ShadowLong_rangeType === 2) ? ((inHigh[ShadowLongTrailingIdx] - (((inClose[ShadowLongTrailingIdx]) >= (inOpen[ShadowLongTrailingIdx])) ? (inClose[ShadowLongTrailingIdx]) : (inOpen[ShadowLongTrailingIdx]))) + ((((inClose[ShadowLongTrailingIdx]) >= (inOpen[ShadowLongTrailingIdx])) ? (inOpen[ShadowLongTrailingIdx]) : (inClose[ShadowLongTrailingIdx])) - inLow[ShadowLongTrailingIdx])) : 0.0)));
+    ShadowLongPeriodTotal[1] = ShadowLongPeriodTotal[1] + (ShadowLongPeriodTotalRange1 - ShadowLongPeriodTotalTrailRange1);
+    ShadowLongPeriodTotal[0] = ShadowLongPeriodTotal[0] + (ShadowLongPeriodTotalRange0 - ShadowLongPeriodTotalTrailRange0);
+    ShadowLongPeriodTotalRange1 = ShadowLongPeriodTotalRange0;
+    ShadowLongPeriodTotalTrailRange1 = ShadowLongPeriodTotalTrailRange0;
+    FarPeriodTotalRange1 = ((Far_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Far_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Far_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+    FarPeriodTotalTrailRange1 = ((Far_rangeType === 0) ? (Math.abs(inClose[FarTrailingIdx - 1] - inOpen[FarTrailingIdx - 1])) : ((Far_rangeType === 1) ? (inHigh[FarTrailingIdx - 1] - inLow[FarTrailingIdx - 1]) : ((Far_rangeType === 2) ? ((inHigh[FarTrailingIdx - 1] - (((inClose[FarTrailingIdx - 1]) >= (inOpen[FarTrailingIdx - 1])) ? (inClose[FarTrailingIdx - 1]) : (inOpen[FarTrailingIdx - 1]))) + ((((inClose[FarTrailingIdx - 1]) >= (inOpen[FarTrailingIdx - 1])) ? (inOpen[FarTrailingIdx - 1]) : (inClose[FarTrailingIdx - 1])) - inLow[FarTrailingIdx - 1])) : 0.0)));
+    FarPeriodTotal[2] = FarPeriodTotal[2] + (FarPeriodTotalRange2 - FarPeriodTotalTrailRange2);
+    FarPeriodTotal[1] = FarPeriodTotal[1] + (FarPeriodTotalRange1 - FarPeriodTotalTrailRange1);
+    FarPeriodTotalRange2 = FarPeriodTotalRange1;
+    FarPeriodTotalTrailRange2 = FarPeriodTotalTrailRange1;
+    NearPeriodTotalRange1 = ((Near_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+    NearPeriodTotalTrailRange1 = ((Near_rangeType === 0) ? (Math.abs(inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1])) : ((Near_rangeType === 1) ? (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]) : ((Near_rangeType === 2) ? ((inHigh[NearTrailingIdx - 1] - (((inClose[NearTrailingIdx - 1]) >= (inOpen[NearTrailingIdx - 1])) ? (inClose[NearTrailingIdx - 1]) : (inOpen[NearTrailingIdx - 1]))) + ((((inClose[NearTrailingIdx - 1]) >= (inOpen[NearTrailingIdx - 1])) ? (inOpen[NearTrailingIdx - 1]) : (inClose[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])) : 0.0)));
+    NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+    NearPeriodTotal[1] = NearPeriodTotal[1] + (NearPeriodTotalRange1 - NearPeriodTotalTrailRange1);
+    NearPeriodTotalRange2 = NearPeriodTotalRange1;
+    NearPeriodTotalTrailRange2 = NearPeriodTotalTrailRange1;
     BodyLongPeriodTotal += ((BodyLong_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0))) - ((BodyLong_rangeType === 0) ? (Math.abs(inClose[BodyLongTrailingIdx - 2] - inOpen[BodyLongTrailingIdx - 2])) : ((BodyLong_rangeType === 1) ? (inHigh[BodyLongTrailingIdx - 2] - inLow[BodyLongTrailingIdx - 2]) : ((BodyLong_rangeType === 2) ? ((inHigh[BodyLongTrailingIdx - 2] - (((inClose[BodyLongTrailingIdx - 2]) >= (inOpen[BodyLongTrailingIdx - 2])) ? (inClose[BodyLongTrailingIdx - 2]) : (inOpen[BodyLongTrailingIdx - 2]))) + ((((inClose[BodyLongTrailingIdx - 2]) >= (inOpen[BodyLongTrailingIdx - 2])) ? (inOpen[BodyLongTrailingIdx - 2]) : (inClose[BodyLongTrailingIdx - 2])) - inLow[BodyLongTrailingIdx - 2])) : 0.0)));
     i += 1;
     ShadowShortTrailingIdx += 1;
@@ -441,6 +486,26 @@ export class CdladvanceblockStream {
   /** @internal */
   FarPeriodTotal: Float64Array = new Float64Array(3);
   /** @internal */
+  ShadowShortPeriodTotalRange1: number = 0;
+  /** @internal */
+  ShadowShortPeriodTotalTrailRange1: number = 0;
+  /** @internal */
+  ShadowShortPeriodTotalRange2: number = 0;
+  /** @internal */
+  ShadowShortPeriodTotalTrailRange2: number = 0;
+  /** @internal */
+  ShadowLongPeriodTotalRange1: number = 0;
+  /** @internal */
+  ShadowLongPeriodTotalTrailRange1: number = 0;
+  /** @internal */
+  FarPeriodTotalRange2: number = 0;
+  /** @internal */
+  FarPeriodTotalTrailRange2: number = 0;
+  /** @internal */
+  NearPeriodTotalRange2: number = 0;
+  /** @internal */
+  NearPeriodTotalTrailRange2: number = 0;
+  /** @internal */
   BodyLongPeriodTotal: number = 0;
   /** @internal */
   lag1_inOpen: number = 0;
@@ -469,35 +534,31 @@ export class CdladvanceblockStream {
   /** @internal */
   ringPos_FarTrailingIdx: number = 0;
   /** @internal */
-  ringCap_FarTrailingIdx: number = 3;
+  ringCap_FarTrailingIdx: number = 2;
   /** @internal */
   ringLag_FarTrailingIdx: number = 0;
   /** @internal */
-  ring_FarTrailingIdx_derived: Float64Array = new Float64Array(3);
+  ring_FarTrailingIdx_derived: Float64Array = new Float64Array(2);
   /** @internal */
   ringPos_NearTrailingIdx: number = 0;
   /** @internal */
-  ringCap_NearTrailingIdx: number = 3;
+  ringCap_NearTrailingIdx: number = 2;
   /** @internal */
   ringLag_NearTrailingIdx: number = 0;
   /** @internal */
-  ring_NearTrailingIdx_derived: Float64Array = new Float64Array(3);
+  ring_NearTrailingIdx_derived: Float64Array = new Float64Array(2);
   /** @internal */
   ringPos_ShadowLongTrailingIdx: number = 0;
   /** @internal */
-  ringCap_ShadowLongTrailingIdx: number = 3;
+  ringCap_ShadowLongTrailingIdx: number = 0;
   /** @internal */
-  ringLag_ShadowLongTrailingIdx: number = 0;
-  /** @internal */
-  ring_ShadowLongTrailingIdx_derived: Float64Array = new Float64Array(3);
+  ring_ShadowLongTrailingIdx_derived: Float64Array = new Float64Array(1);
   /** @internal */
   ringPos_ShadowShortTrailingIdx: number = 0;
   /** @internal */
-  ringCap_ShadowShortTrailingIdx: number = 3;
+  ringCap_ShadowShortTrailingIdx: number = 0;
   /** @internal */
-  ringLag_ShadowShortTrailingIdx: number = 0;
-  /** @internal */
-  ring_ShadowShortTrailingIdx_derived: Float64Array = new Float64Array(3);
+  ring_ShadowShortTrailingIdx_derived: Float64Array = new Float64Array(1);
   /** @internal */
   cs_BodyLong_rangeType: number = 0;
   /** @internal */
@@ -668,6 +729,16 @@ export class CdladvanceblockStream {
     c.ShadowLongPeriodTotal = this.ShadowLongPeriodTotal.slice();
     c.NearPeriodTotal = this.NearPeriodTotal.slice();
     c.FarPeriodTotal = this.FarPeriodTotal.slice();
+    c.ShadowShortPeriodTotalRange1 = this.ShadowShortPeriodTotalRange1;
+    c.ShadowShortPeriodTotalTrailRange1 = this.ShadowShortPeriodTotalTrailRange1;
+    c.ShadowShortPeriodTotalRange2 = this.ShadowShortPeriodTotalRange2;
+    c.ShadowShortPeriodTotalTrailRange2 = this.ShadowShortPeriodTotalTrailRange2;
+    c.ShadowLongPeriodTotalRange1 = this.ShadowLongPeriodTotalRange1;
+    c.ShadowLongPeriodTotalTrailRange1 = this.ShadowLongPeriodTotalTrailRange1;
+    c.FarPeriodTotalRange2 = this.FarPeriodTotalRange2;
+    c.FarPeriodTotalTrailRange2 = this.FarPeriodTotalTrailRange2;
+    c.NearPeriodTotalRange2 = this.NearPeriodTotalRange2;
+    c.NearPeriodTotalTrailRange2 = this.NearPeriodTotalTrailRange2;
     c.BodyLongPeriodTotal = this.BodyLongPeriodTotal;
     c.lag1_inOpen = this.lag1_inOpen;
     c.lag2_inOpen = this.lag2_inOpen;
@@ -691,11 +762,9 @@ export class CdladvanceblockStream {
     c.ring_NearTrailingIdx_derived = this.ring_NearTrailingIdx_derived.slice();
     c.ringPos_ShadowLongTrailingIdx = this.ringPos_ShadowLongTrailingIdx;
     c.ringCap_ShadowLongTrailingIdx = this.ringCap_ShadowLongTrailingIdx;
-    c.ringLag_ShadowLongTrailingIdx = this.ringLag_ShadowLongTrailingIdx;
     c.ring_ShadowLongTrailingIdx_derived = this.ring_ShadowLongTrailingIdx_derived.slice();
     c.ringPos_ShadowShortTrailingIdx = this.ringPos_ShadowShortTrailingIdx;
     c.ringCap_ShadowShortTrailingIdx = this.ringCap_ShadowShortTrailingIdx;
-    c.ringLag_ShadowShortTrailingIdx = this.ringLag_ShadowShortTrailingIdx;
     c.ring_ShadowShortTrailingIdx_derived = this.ring_ShadowShortTrailingIdx_derived.slice();
     c.cs_BodyLong_rangeType = this.cs_BodyLong_rangeType;
     c.cs_BodyLong_avgPeriod = this.cs_BodyLong_avgPeriod;
@@ -720,7 +789,14 @@ export class CdladvanceblockStream {
 }
 
 function cdladvanceblockStepImpl(sp: CdladvanceblockStream, inOpen: number, inHigh: number, inLow: number, inClose: number): void {
-  let totIdx = 0;
+  let ShadowShortPeriodTotalRange0 = 0;
+  let ShadowShortPeriodTotalTrailRange0 = 0;
+  let ShadowLongPeriodTotalRange0 = 0;
+  let ShadowLongPeriodTotalTrailRange0 = 0;
+  let FarPeriodTotalRange1 = 0;
+  let FarPeriodTotalTrailRange1 = 0;
+  let NearPeriodTotalRange1 = 0;
+  let NearPeriodTotalTrailRange1 = 0;
   const BodyLong_rangeType = sp.cs_BodyLong_rangeType;
   const BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
   const BodyLong_factor = sp.cs_BodyLong_factor;
@@ -739,8 +815,12 @@ function cdladvanceblockStepImpl(sp: CdladvanceblockStream, inOpen: number, inHi
   sp.ring_BodyLongTrailingIdx_derived[sp.ringPos_BodyLongTrailingIdx] = ((BodyLong_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((BodyLong_rangeType === 1) ? (inHigh - inLow) : ((BodyLong_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
   sp.ring_FarTrailingIdx_derived[sp.ringPos_FarTrailingIdx] = ((Far_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((Far_rangeType === 1) ? (inHigh - inLow) : ((Far_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
   sp.ring_NearTrailingIdx_derived[sp.ringPos_NearTrailingIdx] = ((Near_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((Near_rangeType === 1) ? (inHigh - inLow) : ((Near_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-  sp.ring_ShadowLongTrailingIdx_derived[sp.ringPos_ShadowLongTrailingIdx] = ((ShadowLong_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType === 1) ? (inHigh - inLow) : ((ShadowLong_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
-  sp.ring_ShadowShortTrailingIdx_derived[sp.ringPos_ShadowShortTrailingIdx] = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType === 1) ? (inHigh - inLow) : ((ShadowShort_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+  if (sp.ringCap_ShadowLongTrailingIdx === 0) {
+    sp.ring_ShadowLongTrailingIdx_derived[0] = ((ShadowLong_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType === 1) ? (inHigh - inLow) : ((ShadowLong_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+  }
+  if (sp.ringCap_ShadowShortTrailingIdx === 0) {
+    sp.ring_ShadowShortTrailingIdx_derived[0] = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType === 1) ? (inHigh - inLow) : ((ShadowShort_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+  }
   if (((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) === 1 && /* 1st white */
       ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) === 1 && /* 2nd white */
       ((inClose >= inOpen) ? 1 : -1) === 1 &&                 /* 3rd white */
@@ -769,16 +849,33 @@ function cdladvanceblockStepImpl(sp: CdladvanceblockStream, inOpen: number, inHi
   /* add the current range and subtract the first range: this is done after the pattern recognition
    * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
    */
-  for (totIdx = 2; totIdx >= 0; totIdx -= 1) {
-    sp.ShadowShortPeriodTotal[totIdx] = sp.ShadowShortPeriodTotal[totIdx] + (sp.ring_ShadowShortTrailingIdx_derived[(sp.ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx >= sp.ringCap_ShadowShortTrailingIdx) ? sp.ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx - sp.ringCap_ShadowShortTrailingIdx : sp.ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - totIdx] - sp.ring_ShadowShortTrailingIdx_derived[(((sp.ringPos_ShadowShortTrailingIdx + sp.ringCap_ShadowShortTrailingIdx - sp.ringLag_ShadowShortTrailingIdx - totIdx) % sp.ringCap_ShadowShortTrailingIdx) | 0)]);
-  }
-  for (totIdx = 1; totIdx >= 0; totIdx -= 1) {
-    sp.ShadowLongPeriodTotal[totIdx] = sp.ShadowLongPeriodTotal[totIdx] + (sp.ring_ShadowLongTrailingIdx_derived[(sp.ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx >= sp.ringCap_ShadowLongTrailingIdx) ? sp.ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx - sp.ringCap_ShadowLongTrailingIdx : sp.ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - totIdx] - sp.ring_ShadowLongTrailingIdx_derived[(((sp.ringPos_ShadowLongTrailingIdx + sp.ringCap_ShadowLongTrailingIdx - sp.ringLag_ShadowLongTrailingIdx - totIdx) % sp.ringCap_ShadowLongTrailingIdx) | 0)]);
-  }
-  for (totIdx = 2; totIdx >= 1; totIdx -= 1) {
-    sp.FarPeriodTotal[totIdx] = sp.FarPeriodTotal[totIdx] + (sp.ring_FarTrailingIdx_derived[(sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx >= sp.ringCap_FarTrailingIdx) ? sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx - sp.ringCap_FarTrailingIdx : sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - totIdx] - sp.ring_FarTrailingIdx_derived[(((sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.ringLag_FarTrailingIdx - totIdx) % sp.ringCap_FarTrailingIdx) | 0)]);
-    sp.NearPeriodTotal[totIdx] = sp.NearPeriodTotal[totIdx] + (sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx >= sp.ringCap_NearTrailingIdx) ? sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx - sp.ringCap_NearTrailingIdx : sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - totIdx] - sp.ring_NearTrailingIdx_derived[(((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - totIdx) % sp.ringCap_NearTrailingIdx) | 0)]);
-  }
+  ShadowShortPeriodTotalRange0 = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType === 1) ? (inHigh - inLow) : ((ShadowShort_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+  ShadowShortPeriodTotalTrailRange0 = sp.ring_ShadowShortTrailingIdx_derived[sp.ringPos_ShadowShortTrailingIdx];
+  sp.ShadowShortPeriodTotal[2] = sp.ShadowShortPeriodTotal[2] + (sp.ShadowShortPeriodTotalRange2 - sp.ShadowShortPeriodTotalTrailRange2);
+  sp.ShadowShortPeriodTotal[1] = sp.ShadowShortPeriodTotal[1] + (sp.ShadowShortPeriodTotalRange1 - sp.ShadowShortPeriodTotalTrailRange1);
+  sp.ShadowShortPeriodTotal[0] = sp.ShadowShortPeriodTotal[0] + (ShadowShortPeriodTotalRange0 - ShadowShortPeriodTotalTrailRange0);
+  sp.ShadowShortPeriodTotalRange2 = sp.ShadowShortPeriodTotalRange1;
+  sp.ShadowShortPeriodTotalTrailRange2 = sp.ShadowShortPeriodTotalTrailRange1;
+  sp.ShadowShortPeriodTotalRange1 = ShadowShortPeriodTotalRange0;
+  sp.ShadowShortPeriodTotalTrailRange1 = ShadowShortPeriodTotalTrailRange0;
+  ShadowLongPeriodTotalRange0 = ((ShadowLong_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType === 1) ? (inHigh - inLow) : ((ShadowLong_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
+  ShadowLongPeriodTotalTrailRange0 = sp.ring_ShadowLongTrailingIdx_derived[sp.ringPos_ShadowLongTrailingIdx];
+  sp.ShadowLongPeriodTotal[1] = sp.ShadowLongPeriodTotal[1] + (sp.ShadowLongPeriodTotalRange1 - sp.ShadowLongPeriodTotalTrailRange1);
+  sp.ShadowLongPeriodTotal[0] = sp.ShadowLongPeriodTotal[0] + (ShadowLongPeriodTotalRange0 - ShadowLongPeriodTotalTrailRange0);
+  sp.ShadowLongPeriodTotalRange1 = ShadowLongPeriodTotalRange0;
+  sp.ShadowLongPeriodTotalTrailRange1 = ShadowLongPeriodTotalTrailRange0;
+  FarPeriodTotalRange1 = ((Far_rangeType === 0) ? (Math.abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((Far_rangeType === 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((Far_rangeType === 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)));
+  FarPeriodTotalTrailRange1 = sp.ring_FarTrailingIdx_derived[(((sp.ringPos_FarTrailingIdx + sp.ringCap_FarTrailingIdx - sp.ringLag_FarTrailingIdx - 1) % sp.ringCap_FarTrailingIdx) | 0)];
+  sp.FarPeriodTotal[2] = sp.FarPeriodTotal[2] + (sp.FarPeriodTotalRange2 - sp.FarPeriodTotalTrailRange2);
+  sp.FarPeriodTotal[1] = sp.FarPeriodTotal[1] + (FarPeriodTotalRange1 - FarPeriodTotalTrailRange1);
+  sp.FarPeriodTotalRange2 = FarPeriodTotalRange1;
+  sp.FarPeriodTotalTrailRange2 = FarPeriodTotalTrailRange1;
+  NearPeriodTotalRange1 = ((Near_rangeType === 0) ? (Math.abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((Near_rangeType === 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((Near_rangeType === 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)));
+  NearPeriodTotalTrailRange1 = sp.ring_NearTrailingIdx_derived[(((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx) | 0)];
+  sp.NearPeriodTotal[2] = sp.NearPeriodTotal[2] + (sp.NearPeriodTotalRange2 - sp.NearPeriodTotalTrailRange2);
+  sp.NearPeriodTotal[1] = sp.NearPeriodTotal[1] + (NearPeriodTotalRange1 - NearPeriodTotalTrailRange1);
+  sp.NearPeriodTotalRange2 = NearPeriodTotalRange1;
+  sp.NearPeriodTotalTrailRange2 = NearPeriodTotalTrailRange1;
   sp.BodyLongPeriodTotal += ((BodyLong_rangeType === 0) ? (Math.abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyLong_rangeType === 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyLong_rangeType === 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0))) - sp.ring_BodyLongTrailingIdx_derived[(((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 2) % sp.ringCap_BodyLongTrailingIdx) | 0)];
   sp.lag2_inOpen = sp.lag1_inOpen;
   sp.lag1_inOpen = inOpen;
@@ -800,10 +897,12 @@ function cdladvanceblockStepImpl(sp: CdladvanceblockStream, inOpen: number, inHi
   if (sp.ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx) {
     sp.ringPos_NearTrailingIdx = 0;
   }
+  sp.ring_ShadowLongTrailingIdx_derived[sp.ringPos_ShadowLongTrailingIdx] = ((ShadowLong_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowLong_rangeType === 1) ? (inHigh - inLow) : ((ShadowLong_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
   sp.ringPos_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx + 1;
   if (sp.ringPos_ShadowLongTrailingIdx >= sp.ringCap_ShadowLongTrailingIdx) {
     sp.ringPos_ShadowLongTrailingIdx = 0;
   }
+  sp.ring_ShadowShortTrailingIdx_derived[sp.ringPos_ShadowShortTrailingIdx] = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose - inOpen)) : ((ShadowShort_rangeType === 1) ? (inHigh - inLow) : ((ShadowShort_rangeType === 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
   sp.ringPos_ShadowShortTrailingIdx = sp.ringPos_ShadowShortTrailingIdx + 1;
   if (sp.ringPos_ShadowShortTrailingIdx >= sp.ringCap_ShadowShortTrailingIdx) {
     sp.ringPos_ShadowShortTrailingIdx = 0;
@@ -827,10 +926,27 @@ function cdladvanceblockOpenImpl(
   const ShadowLongPeriodTotal = new Float64Array(2);
   const NearPeriodTotal = new Float64Array(3);
   const FarPeriodTotal = new Float64Array(3);
+  let ShadowShortPeriodTotalRange0 = 0;
+  let ShadowShortPeriodTotalTrailRange0 = 0;
+  let ShadowShortPeriodTotalRange1 = 0;
+  let ShadowShortPeriodTotalTrailRange1 = 0;
+  let ShadowShortPeriodTotalRange2 = 0;
+  let ShadowShortPeriodTotalTrailRange2 = 0;
+  let ShadowLongPeriodTotalRange0 = 0;
+  let ShadowLongPeriodTotalTrailRange0 = 0;
+  let ShadowLongPeriodTotalRange1 = 0;
+  let ShadowLongPeriodTotalTrailRange1 = 0;
+  let FarPeriodTotalRange1 = 0;
+  let FarPeriodTotalTrailRange1 = 0;
+  let FarPeriodTotalRange2 = 0;
+  let FarPeriodTotalTrailRange2 = 0;
+  let NearPeriodTotalRange1 = 0;
+  let NearPeriodTotalTrailRange1 = 0;
+  let NearPeriodTotalRange2 = 0;
+  let NearPeriodTotalTrailRange2 = 0;
   let BodyLongPeriodTotal = 0;
   let i = 0;
   let outIdx = 0;
-  let totIdx = 0;
   let BodyLongTrailingIdx = 0;
   let ShadowShortTrailingIdx = 0;
   let ShadowLongTrailingIdx = 0;
@@ -944,6 +1060,16 @@ function cdladvanceblockOpenImpl(
    * The meanings of "long body", "short shadow", "far" and "near" are specified with TA_SetCandleSettings
    */
   outIdx = 0;
+  ShadowShortPeriodTotalRange1 = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowShort_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowShort_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+  ShadowShortPeriodTotalTrailRange1 = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[ShadowShortTrailingIdx - 1] - inOpen[ShadowShortTrailingIdx - 1])) : ((ShadowShort_rangeType === 1) ? (inHigh[ShadowShortTrailingIdx - 1] - inLow[ShadowShortTrailingIdx - 1]) : ((ShadowShort_rangeType === 2) ? ((inHigh[ShadowShortTrailingIdx - 1] - (((inClose[ShadowShortTrailingIdx - 1]) >= (inOpen[ShadowShortTrailingIdx - 1])) ? (inClose[ShadowShortTrailingIdx - 1]) : (inOpen[ShadowShortTrailingIdx - 1]))) + ((((inClose[ShadowShortTrailingIdx - 1]) >= (inOpen[ShadowShortTrailingIdx - 1])) ? (inOpen[ShadowShortTrailingIdx - 1]) : (inClose[ShadowShortTrailingIdx - 1])) - inLow[ShadowShortTrailingIdx - 1])) : 0.0)));
+  ShadowShortPeriodTotalRange2 = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((ShadowShort_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((ShadowShort_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+  ShadowShortPeriodTotalTrailRange2 = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[ShadowShortTrailingIdx - 2] - inOpen[ShadowShortTrailingIdx - 2])) : ((ShadowShort_rangeType === 1) ? (inHigh[ShadowShortTrailingIdx - 2] - inLow[ShadowShortTrailingIdx - 2]) : ((ShadowShort_rangeType === 2) ? ((inHigh[ShadowShortTrailingIdx - 2] - (((inClose[ShadowShortTrailingIdx - 2]) >= (inOpen[ShadowShortTrailingIdx - 2])) ? (inClose[ShadowShortTrailingIdx - 2]) : (inOpen[ShadowShortTrailingIdx - 2]))) + ((((inClose[ShadowShortTrailingIdx - 2]) >= (inOpen[ShadowShortTrailingIdx - 2])) ? (inOpen[ShadowShortTrailingIdx - 2]) : (inClose[ShadowShortTrailingIdx - 2])) - inLow[ShadowShortTrailingIdx - 2])) : 0.0)));
+  ShadowLongPeriodTotalRange1 = ((ShadowLong_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowLong_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowLong_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+  ShadowLongPeriodTotalTrailRange1 = ((ShadowLong_rangeType === 0) ? (Math.abs(inClose[ShadowLongTrailingIdx - 1] - inOpen[ShadowLongTrailingIdx - 1])) : ((ShadowLong_rangeType === 1) ? (inHigh[ShadowLongTrailingIdx - 1] - inLow[ShadowLongTrailingIdx - 1]) : ((ShadowLong_rangeType === 2) ? ((inHigh[ShadowLongTrailingIdx - 1] - (((inClose[ShadowLongTrailingIdx - 1]) >= (inOpen[ShadowLongTrailingIdx - 1])) ? (inClose[ShadowLongTrailingIdx - 1]) : (inOpen[ShadowLongTrailingIdx - 1]))) + ((((inClose[ShadowLongTrailingIdx - 1]) >= (inOpen[ShadowLongTrailingIdx - 1])) ? (inOpen[ShadowLongTrailingIdx - 1]) : (inClose[ShadowLongTrailingIdx - 1])) - inLow[ShadowLongTrailingIdx - 1])) : 0.0)));
+  FarPeriodTotalRange2 = ((Far_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Far_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Far_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+  FarPeriodTotalTrailRange2 = ((Far_rangeType === 0) ? (Math.abs(inClose[FarTrailingIdx - 2] - inOpen[FarTrailingIdx - 2])) : ((Far_rangeType === 1) ? (inHigh[FarTrailingIdx - 2] - inLow[FarTrailingIdx - 2]) : ((Far_rangeType === 2) ? ((inHigh[FarTrailingIdx - 2] - (((inClose[FarTrailingIdx - 2]) >= (inOpen[FarTrailingIdx - 2])) ? (inClose[FarTrailingIdx - 2]) : (inOpen[FarTrailingIdx - 2]))) + ((((inClose[FarTrailingIdx - 2]) >= (inOpen[FarTrailingIdx - 2])) ? (inOpen[FarTrailingIdx - 2]) : (inClose[FarTrailingIdx - 2])) - inLow[FarTrailingIdx - 2])) : 0.0)));
+  NearPeriodTotalRange2 = ((Near_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+  NearPeriodTotalTrailRange2 = ((Near_rangeType === 0) ? (Math.abs(inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2])) : ((Near_rangeType === 1) ? (inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2]) : ((Near_rangeType === 2) ? ((inHigh[NearTrailingIdx - 2] - (((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inClose[NearTrailingIdx - 2]) : (inOpen[NearTrailingIdx - 2]))) + ((((inClose[NearTrailingIdx - 2]) >= (inOpen[NearTrailingIdx - 2])) ? (inOpen[NearTrailingIdx - 2]) : (inClose[NearTrailingIdx - 2])) - inLow[NearTrailingIdx - 2])) : 0.0)));
   do {
     if (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) === 1 && /* 1st white */
         ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) === 1 && /* 2nd white */
@@ -973,16 +1099,33 @@ function cdladvanceblockOpenImpl(
     /* add the current range and subtract the first range: this is done after the pattern recognition
      * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
      */
-    for (totIdx = 2; totIdx >= 0; totIdx -= 1) {
-      ShadowShortPeriodTotal[totIdx] = ShadowShortPeriodTotal[totIdx] + (((ShadowShort_rangeType === 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((ShadowShort_rangeType === 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((ShadowShort_rangeType === 2) ? ((inHigh[i - totIdx] - (((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inClose[i - totIdx]) : (inOpen[i - totIdx]))) + ((((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inOpen[i - totIdx]) : (inClose[i - totIdx])) - inLow[i - totIdx])) : 0.0))) - ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[ShadowShortTrailingIdx - totIdx] - inOpen[ShadowShortTrailingIdx - totIdx])) : ((ShadowShort_rangeType === 1) ? (inHigh[ShadowShortTrailingIdx - totIdx] - inLow[ShadowShortTrailingIdx - totIdx]) : ((ShadowShort_rangeType === 2) ? ((inHigh[ShadowShortTrailingIdx - totIdx] - (((inClose[ShadowShortTrailingIdx - totIdx]) >= (inOpen[ShadowShortTrailingIdx - totIdx])) ? (inClose[ShadowShortTrailingIdx - totIdx]) : (inOpen[ShadowShortTrailingIdx - totIdx]))) + ((((inClose[ShadowShortTrailingIdx - totIdx]) >= (inOpen[ShadowShortTrailingIdx - totIdx])) ? (inOpen[ShadowShortTrailingIdx - totIdx]) : (inClose[ShadowShortTrailingIdx - totIdx])) - inLow[ShadowShortTrailingIdx - totIdx])) : 0.0))));
-    }
-    for (totIdx = 1; totIdx >= 0; totIdx -= 1) {
-      ShadowLongPeriodTotal[totIdx] = ShadowLongPeriodTotal[totIdx] + (((ShadowLong_rangeType === 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((ShadowLong_rangeType === 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((ShadowLong_rangeType === 2) ? ((inHigh[i - totIdx] - (((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inClose[i - totIdx]) : (inOpen[i - totIdx]))) + ((((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inOpen[i - totIdx]) : (inClose[i - totIdx])) - inLow[i - totIdx])) : 0.0))) - ((ShadowLong_rangeType === 0) ? (Math.abs(inClose[ShadowLongTrailingIdx - totIdx] - inOpen[ShadowLongTrailingIdx - totIdx])) : ((ShadowLong_rangeType === 1) ? (inHigh[ShadowLongTrailingIdx - totIdx] - inLow[ShadowLongTrailingIdx - totIdx]) : ((ShadowLong_rangeType === 2) ? ((inHigh[ShadowLongTrailingIdx - totIdx] - (((inClose[ShadowLongTrailingIdx - totIdx]) >= (inOpen[ShadowLongTrailingIdx - totIdx])) ? (inClose[ShadowLongTrailingIdx - totIdx]) : (inOpen[ShadowLongTrailingIdx - totIdx]))) + ((((inClose[ShadowLongTrailingIdx - totIdx]) >= (inOpen[ShadowLongTrailingIdx - totIdx])) ? (inOpen[ShadowLongTrailingIdx - totIdx]) : (inClose[ShadowLongTrailingIdx - totIdx])) - inLow[ShadowLongTrailingIdx - totIdx])) : 0.0))));
-    }
-    for (totIdx = 2; totIdx >= 1; totIdx -= 1) {
-      FarPeriodTotal[totIdx] = FarPeriodTotal[totIdx] + (((Far_rangeType === 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((Far_rangeType === 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((Far_rangeType === 2) ? ((inHigh[i - totIdx] - (((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inClose[i - totIdx]) : (inOpen[i - totIdx]))) + ((((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inOpen[i - totIdx]) : (inClose[i - totIdx])) - inLow[i - totIdx])) : 0.0))) - ((Far_rangeType === 0) ? (Math.abs(inClose[FarTrailingIdx - totIdx] - inOpen[FarTrailingIdx - totIdx])) : ((Far_rangeType === 1) ? (inHigh[FarTrailingIdx - totIdx] - inLow[FarTrailingIdx - totIdx]) : ((Far_rangeType === 2) ? ((inHigh[FarTrailingIdx - totIdx] - (((inClose[FarTrailingIdx - totIdx]) >= (inOpen[FarTrailingIdx - totIdx])) ? (inClose[FarTrailingIdx - totIdx]) : (inOpen[FarTrailingIdx - totIdx]))) + ((((inClose[FarTrailingIdx - totIdx]) >= (inOpen[FarTrailingIdx - totIdx])) ? (inOpen[FarTrailingIdx - totIdx]) : (inClose[FarTrailingIdx - totIdx])) - inLow[FarTrailingIdx - totIdx])) : 0.0))));
-      NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (((Near_rangeType === 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((Near_rangeType === 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((Near_rangeType === 2) ? ((inHigh[i - totIdx] - (((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inClose[i - totIdx]) : (inOpen[i - totIdx]))) + ((((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inOpen[i - totIdx]) : (inClose[i - totIdx])) - inLow[i - totIdx])) : 0.0))) - ((Near_rangeType === 0) ? (Math.abs(inClose[NearTrailingIdx - totIdx] - inOpen[NearTrailingIdx - totIdx])) : ((Near_rangeType === 1) ? (inHigh[NearTrailingIdx - totIdx] - inLow[NearTrailingIdx - totIdx]) : ((Near_rangeType === 2) ? ((inHigh[NearTrailingIdx - totIdx] - (((inClose[NearTrailingIdx - totIdx]) >= (inOpen[NearTrailingIdx - totIdx])) ? (inClose[NearTrailingIdx - totIdx]) : (inOpen[NearTrailingIdx - totIdx]))) + ((((inClose[NearTrailingIdx - totIdx]) >= (inOpen[NearTrailingIdx - totIdx])) ? (inOpen[NearTrailingIdx - totIdx]) : (inClose[NearTrailingIdx - totIdx])) - inLow[NearTrailingIdx - totIdx])) : 0.0))));
-    }
+    ShadowShortPeriodTotalRange0 = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowShort_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((ShadowShort_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+    ShadowShortPeriodTotalTrailRange0 = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[ShadowShortTrailingIdx] - inOpen[ShadowShortTrailingIdx])) : ((ShadowShort_rangeType === 1) ? (inHigh[ShadowShortTrailingIdx] - inLow[ShadowShortTrailingIdx]) : ((ShadowShort_rangeType === 2) ? ((inHigh[ShadowShortTrailingIdx] - (((inClose[ShadowShortTrailingIdx]) >= (inOpen[ShadowShortTrailingIdx])) ? (inClose[ShadowShortTrailingIdx]) : (inOpen[ShadowShortTrailingIdx]))) + ((((inClose[ShadowShortTrailingIdx]) >= (inOpen[ShadowShortTrailingIdx])) ? (inOpen[ShadowShortTrailingIdx]) : (inClose[ShadowShortTrailingIdx])) - inLow[ShadowShortTrailingIdx])) : 0.0)));
+    ShadowShortPeriodTotal[2] = ShadowShortPeriodTotal[2] + (ShadowShortPeriodTotalRange2 - ShadowShortPeriodTotalTrailRange2);
+    ShadowShortPeriodTotal[1] = ShadowShortPeriodTotal[1] + (ShadowShortPeriodTotalRange1 - ShadowShortPeriodTotalTrailRange1);
+    ShadowShortPeriodTotal[0] = ShadowShortPeriodTotal[0] + (ShadowShortPeriodTotalRange0 - ShadowShortPeriodTotalTrailRange0);
+    ShadowShortPeriodTotalRange2 = ShadowShortPeriodTotalRange1;
+    ShadowShortPeriodTotalTrailRange2 = ShadowShortPeriodTotalTrailRange1;
+    ShadowShortPeriodTotalRange1 = ShadowShortPeriodTotalRange0;
+    ShadowShortPeriodTotalTrailRange1 = ShadowShortPeriodTotalTrailRange0;
+    ShadowLongPeriodTotalRange0 = ((ShadowLong_rangeType === 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((ShadowLong_rangeType === 1) ? (inHigh[i] - inLow[i]) : ((ShadowLong_rangeType === 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+    ShadowLongPeriodTotalTrailRange0 = ((ShadowLong_rangeType === 0) ? (Math.abs(inClose[ShadowLongTrailingIdx] - inOpen[ShadowLongTrailingIdx])) : ((ShadowLong_rangeType === 1) ? (inHigh[ShadowLongTrailingIdx] - inLow[ShadowLongTrailingIdx]) : ((ShadowLong_rangeType === 2) ? ((inHigh[ShadowLongTrailingIdx] - (((inClose[ShadowLongTrailingIdx]) >= (inOpen[ShadowLongTrailingIdx])) ? (inClose[ShadowLongTrailingIdx]) : (inOpen[ShadowLongTrailingIdx]))) + ((((inClose[ShadowLongTrailingIdx]) >= (inOpen[ShadowLongTrailingIdx])) ? (inOpen[ShadowLongTrailingIdx]) : (inClose[ShadowLongTrailingIdx])) - inLow[ShadowLongTrailingIdx])) : 0.0)));
+    ShadowLongPeriodTotal[1] = ShadowLongPeriodTotal[1] + (ShadowLongPeriodTotalRange1 - ShadowLongPeriodTotalTrailRange1);
+    ShadowLongPeriodTotal[0] = ShadowLongPeriodTotal[0] + (ShadowLongPeriodTotalRange0 - ShadowLongPeriodTotalTrailRange0);
+    ShadowLongPeriodTotalRange1 = ShadowLongPeriodTotalRange0;
+    ShadowLongPeriodTotalTrailRange1 = ShadowLongPeriodTotalTrailRange0;
+    FarPeriodTotalRange1 = ((Far_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Far_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Far_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+    FarPeriodTotalTrailRange1 = ((Far_rangeType === 0) ? (Math.abs(inClose[FarTrailingIdx - 1] - inOpen[FarTrailingIdx - 1])) : ((Far_rangeType === 1) ? (inHigh[FarTrailingIdx - 1] - inLow[FarTrailingIdx - 1]) : ((Far_rangeType === 2) ? ((inHigh[FarTrailingIdx - 1] - (((inClose[FarTrailingIdx - 1]) >= (inOpen[FarTrailingIdx - 1])) ? (inClose[FarTrailingIdx - 1]) : (inOpen[FarTrailingIdx - 1]))) + ((((inClose[FarTrailingIdx - 1]) >= (inOpen[FarTrailingIdx - 1])) ? (inOpen[FarTrailingIdx - 1]) : (inClose[FarTrailingIdx - 1])) - inLow[FarTrailingIdx - 1])) : 0.0)));
+    FarPeriodTotal[2] = FarPeriodTotal[2] + (FarPeriodTotalRange2 - FarPeriodTotalTrailRange2);
+    FarPeriodTotal[1] = FarPeriodTotal[1] + (FarPeriodTotalRange1 - FarPeriodTotalTrailRange1);
+    FarPeriodTotalRange2 = FarPeriodTotalRange1;
+    FarPeriodTotalTrailRange2 = FarPeriodTotalTrailRange1;
+    NearPeriodTotalRange1 = ((Near_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+    NearPeriodTotalTrailRange1 = ((Near_rangeType === 0) ? (Math.abs(inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1])) : ((Near_rangeType === 1) ? (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]) : ((Near_rangeType === 2) ? ((inHigh[NearTrailingIdx - 1] - (((inClose[NearTrailingIdx - 1]) >= (inOpen[NearTrailingIdx - 1])) ? (inClose[NearTrailingIdx - 1]) : (inOpen[NearTrailingIdx - 1]))) + ((((inClose[NearTrailingIdx - 1]) >= (inOpen[NearTrailingIdx - 1])) ? (inOpen[NearTrailingIdx - 1]) : (inClose[NearTrailingIdx - 1])) - inLow[NearTrailingIdx - 1])) : 0.0)));
+    NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+    NearPeriodTotal[1] = NearPeriodTotal[1] + (NearPeriodTotalRange1 - NearPeriodTotalTrailRange1);
+    NearPeriodTotalRange2 = NearPeriodTotalRange1;
+    NearPeriodTotalTrailRange2 = NearPeriodTotalTrailRange1;
     BodyLongPeriodTotal += ((BodyLong_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0))) - ((BodyLong_rangeType === 0) ? (Math.abs(inClose[BodyLongTrailingIdx - 2] - inOpen[BodyLongTrailingIdx - 2])) : ((BodyLong_rangeType === 1) ? (inHigh[BodyLongTrailingIdx - 2] - inLow[BodyLongTrailingIdx - 2]) : ((BodyLong_rangeType === 2) ? ((inHigh[BodyLongTrailingIdx - 2] - (((inClose[BodyLongTrailingIdx - 2]) >= (inOpen[BodyLongTrailingIdx - 2])) ? (inClose[BodyLongTrailingIdx - 2]) : (inOpen[BodyLongTrailingIdx - 2]))) + ((((inClose[BodyLongTrailingIdx - 2]) >= (inOpen[BodyLongTrailingIdx - 2])) ? (inOpen[BodyLongTrailingIdx - 2]) : (inClose[BodyLongTrailingIdx - 2])) - inLow[BodyLongTrailingIdx - 2])) : 0.0)));
     i += 1;
     ShadowShortTrailingIdx += 1;
@@ -1005,7 +1148,7 @@ function cdladvanceblockOpenImpl(
     capRing_BodyLongTrailingIdx_derived[fillJ % cap_BodyLongTrailingIdx] = ((BodyLong_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyLong_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyLong_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
   }
   const capLag_FarTrailingIdx = i - FarTrailingIdx;
-  const cap_FarTrailingIdx = capLag_FarTrailingIdx + 3;
+  const cap_FarTrailingIdx = capLag_FarTrailingIdx + 2;
   if (capLag_FarTrailingIdx < 0 || cap_FarTrailingIdx > historyLen) {
     return RetCode.INTERNAL_ERROR;
   }
@@ -1015,7 +1158,7 @@ function cdladvanceblockOpenImpl(
     capRing_FarTrailingIdx_derived[fillJ % cap_FarTrailingIdx] = ((Far_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((Far_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Far_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
   }
   const capLag_NearTrailingIdx = i - NearTrailingIdx;
-  const cap_NearTrailingIdx = capLag_NearTrailingIdx + 3;
+  const cap_NearTrailingIdx = capLag_NearTrailingIdx + 2;
   if (capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen) {
     return RetCode.INTERNAL_ERROR;
   }
@@ -1024,30 +1167,38 @@ function cdladvanceblockOpenImpl(
   for (let fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++) {
     capRing_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx] = ((Near_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((Near_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Near_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
   }
-  const capLag_ShadowLongTrailingIdx = i - ShadowLongTrailingIdx;
-  const cap_ShadowLongTrailingIdx = capLag_ShadowLongTrailingIdx + 3;
-  if (capLag_ShadowLongTrailingIdx < 0 || cap_ShadowLongTrailingIdx > historyLen) {
+  const cap_ShadowLongTrailingIdx = i - ShadowLongTrailingIdx;
+  if (cap_ShadowLongTrailingIdx < 0 || cap_ShadowLongTrailingIdx > historyLen) {
     return RetCode.INTERNAL_ERROR;
   }
   const allocN_ShadowLongTrailingIdx = cap_ShadowLongTrailingIdx > 0 ? cap_ShadowLongTrailingIdx : 1;
   const capRing_ShadowLongTrailingIdx_derived = new Float64Array(allocN_ShadowLongTrailingIdx);
   for (let fillJ = historyLen - cap_ShadowLongTrailingIdx; fillJ < historyLen; fillJ++) {
-    capRing_ShadowLongTrailingIdx_derived[fillJ % cap_ShadowLongTrailingIdx] = ((ShadowLong_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((ShadowLong_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((ShadowLong_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+    capRing_ShadowLongTrailingIdx_derived[fillJ - (historyLen - cap_ShadowLongTrailingIdx)] = ((ShadowLong_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((ShadowLong_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((ShadowLong_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
   }
-  const capLag_ShadowShortTrailingIdx = i - ShadowShortTrailingIdx;
-  const cap_ShadowShortTrailingIdx = capLag_ShadowShortTrailingIdx + 3;
-  if (capLag_ShadowShortTrailingIdx < 0 || cap_ShadowShortTrailingIdx > historyLen) {
+  const cap_ShadowShortTrailingIdx = i - ShadowShortTrailingIdx;
+  if (cap_ShadowShortTrailingIdx < 0 || cap_ShadowShortTrailingIdx > historyLen) {
     return RetCode.INTERNAL_ERROR;
   }
   const allocN_ShadowShortTrailingIdx = cap_ShadowShortTrailingIdx > 0 ? cap_ShadowShortTrailingIdx : 1;
   const capRing_ShadowShortTrailingIdx_derived = new Float64Array(allocN_ShadowShortTrailingIdx);
   for (let fillJ = historyLen - cap_ShadowShortTrailingIdx; fillJ < historyLen; fillJ++) {
-    capRing_ShadowShortTrailingIdx_derived[fillJ % cap_ShadowShortTrailingIdx] = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((ShadowShort_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((ShadowShort_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+    capRing_ShadowShortTrailingIdx_derived[fillJ - (historyLen - cap_ShadowShortTrailingIdx)] = ((ShadowShort_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((ShadowShort_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((ShadowShort_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
   }
   sp.ShadowShortPeriodTotal = ShadowShortPeriodTotal;
   sp.ShadowLongPeriodTotal = ShadowLongPeriodTotal;
   sp.NearPeriodTotal = NearPeriodTotal;
   sp.FarPeriodTotal = FarPeriodTotal;
+  sp.ShadowShortPeriodTotalRange1 = ShadowShortPeriodTotalRange1;
+  sp.ShadowShortPeriodTotalTrailRange1 = ShadowShortPeriodTotalTrailRange1;
+  sp.ShadowShortPeriodTotalRange2 = ShadowShortPeriodTotalRange2;
+  sp.ShadowShortPeriodTotalTrailRange2 = ShadowShortPeriodTotalTrailRange2;
+  sp.ShadowLongPeriodTotalRange1 = ShadowLongPeriodTotalRange1;
+  sp.ShadowLongPeriodTotalTrailRange1 = ShadowLongPeriodTotalTrailRange1;
+  sp.FarPeriodTotalRange2 = FarPeriodTotalRange2;
+  sp.FarPeriodTotalTrailRange2 = FarPeriodTotalTrailRange2;
+  sp.NearPeriodTotalRange2 = NearPeriodTotalRange2;
+  sp.NearPeriodTotalTrailRange2 = NearPeriodTotalTrailRange2;
   sp.BodyLongPeriodTotal = BodyLongPeriodTotal;
   sp.lag1_inOpen = inOpen[historyLen - 1];
   sp.lag2_inOpen = inOpen[historyLen - 2];
@@ -1069,13 +1220,11 @@ function cdladvanceblockOpenImpl(
   sp.ringCap_NearTrailingIdx = cap_NearTrailingIdx;
   sp.ringLag_NearTrailingIdx = capLag_NearTrailingIdx;
   sp.ring_NearTrailingIdx_derived = capRing_NearTrailingIdx_derived;
-  sp.ringPos_ShadowLongTrailingIdx = historyLen % cap_ShadowLongTrailingIdx;
+  sp.ringPos_ShadowLongTrailingIdx = 0;
   sp.ringCap_ShadowLongTrailingIdx = cap_ShadowLongTrailingIdx;
-  sp.ringLag_ShadowLongTrailingIdx = capLag_ShadowLongTrailingIdx;
   sp.ring_ShadowLongTrailingIdx_derived = capRing_ShadowLongTrailingIdx_derived;
-  sp.ringPos_ShadowShortTrailingIdx = historyLen % cap_ShadowShortTrailingIdx;
+  sp.ringPos_ShadowShortTrailingIdx = 0;
   sp.ringCap_ShadowShortTrailingIdx = cap_ShadowShortTrailingIdx;
-  sp.ringLag_ShadowShortTrailingIdx = capLag_ShadowShortTrailingIdx;
   sp.ring_ShadowShortTrailingIdx_derived = capRing_ShadowShortTrailingIdx_derived;
   sp.cs_BodyLong_rangeType = BodyLong_rangeType;
   sp.cs_BodyLong_avgPeriod = BodyLong_avgPeriod;

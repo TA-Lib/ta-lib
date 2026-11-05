@@ -14,6 +14,7 @@
  *  022705 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
+ *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  *
  */
 
@@ -31,7 +32,8 @@ TA_RetCode cdlconcealbabyswall(int startIdx, int endIdx,
    int outInteger[])
 {
    double ShadowVeryShortPeriodTotal[4];
-   int i, outIdx, totIdx, ShadowVeryShortTrailingIdx, lookbackTotal;
+   double ShadowVeryShortPeriodTotalRange1, ShadowVeryShortPeriodTotalTrailRange1, ShadowVeryShortPeriodTotalRange2, ShadowVeryShortPeriodTotalTrailRange2, ShadowVeryShortPeriodTotalRange3, ShadowVeryShortPeriodTotalTrailRange3;
+   int i, outIdx, ShadowVeryShortTrailingIdx, lookbackTotal;
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -80,6 +82,10 @@ TA_RetCode cdlconcealbabyswall(int startIdx, int endIdx,
     */
    outIdx = 0;
 
+   ShadowVeryShortPeriodTotalRange2 = ta_candlerange(ShadowVeryShort_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]);
+   ShadowVeryShortPeriodTotalTrailRange2 = ta_candlerange(ShadowVeryShort_rangeType, inOpen[ShadowVeryShortTrailingIdx-2], inHigh[ShadowVeryShortTrailingIdx-2], inLow[ShadowVeryShortTrailingIdx-2], inClose[ShadowVeryShortTrailingIdx-2]);
+   ShadowVeryShortPeriodTotalRange3 = ta_candlerange(ShadowVeryShort_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3]);
+   ShadowVeryShortPeriodTotalTrailRange3 = ta_candlerange(ShadowVeryShort_rangeType, inOpen[ShadowVeryShortTrailingIdx-3], inHigh[ShadowVeryShortTrailingIdx-3], inLow[ShadowVeryShortTrailingIdx-3], inClose[ShadowVeryShortTrailingIdx-3]);
    do
    {
       if( ta_candlecolor(inClose[i-3], inOpen[i-3]) == -1 &&                                    // 1st black
@@ -112,9 +118,15 @@ TA_RetCode cdlconcealbabyswall(int startIdx, int endIdx,
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for (totIdx = 3; totIdx >= 1; --totIdx)
-         ShadowVeryShortPeriodTotal[totIdx] += ta_candlerange(ShadowVeryShort_rangeType, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx])
-      - ta_candlerange(ShadowVeryShort_rangeType, inOpen[ShadowVeryShortTrailingIdx-totIdx], inHigh[ShadowVeryShortTrailingIdx-totIdx], inLow[ShadowVeryShortTrailingIdx-totIdx], inClose[ShadowVeryShortTrailingIdx-totIdx]);
+      ShadowVeryShortPeriodTotalRange1 = ta_candlerange(ShadowVeryShort_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]);
+      ShadowVeryShortPeriodTotalTrailRange1 = ta_candlerange(ShadowVeryShort_rangeType, inOpen[ShadowVeryShortTrailingIdx-1], inHigh[ShadowVeryShortTrailingIdx-1], inLow[ShadowVeryShortTrailingIdx-1], inClose[ShadowVeryShortTrailingIdx-1]);
+      ShadowVeryShortPeriodTotal[3] += ShadowVeryShortPeriodTotalRange3 - ShadowVeryShortPeriodTotalTrailRange3;
+      ShadowVeryShortPeriodTotal[2] += ShadowVeryShortPeriodTotalRange2 - ShadowVeryShortPeriodTotalTrailRange2;
+      ShadowVeryShortPeriodTotal[1] += ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1;
+      ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange2;
+      ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange2;
+      ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+      ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
       i++;
       ShadowVeryShortTrailingIdx++;
    } while( i <= endIdx );

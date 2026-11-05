@@ -13,6 +13,7 @@
  *  -------------------------------------------------------------------
  *  010605 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
+ *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  *
  */
 
@@ -32,7 +33,8 @@ TA_RetCode cdlcounterattack(int startIdx, int endIdx,
 {
    double EqualPeriodTotal;
    double BodyLongPeriodTotal[2];
-   int i, outIdx, totIdx, EqualTrailingIdx, BodyLongTrailingIdx, lookbackTotal;
+   double BodyLongPeriodTotalRange0, BodyLongPeriodTotalTrailRange0, BodyLongPeriodTotalRange1, BodyLongPeriodTotalTrailRange1;
+   int i, outIdx, EqualTrailingIdx, BodyLongTrailingIdx, lookbackTotal;
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -83,6 +85,8 @@ TA_RetCode cdlcounterattack(int startIdx, int endIdx,
     * The meaning of "equal" and "long" is specified with TA_SetCandleSettings
     */
    outIdx = 0;
+   BodyLongPeriodTotalRange1 = ta_candlerange(BodyLong_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]);
+   BodyLongPeriodTotalTrailRange1 = ta_candlerange(BodyLong_rangeType, inOpen[BodyLongTrailingIdx-1], inHigh[BodyLongTrailingIdx-1], inLow[BodyLongTrailingIdx-1], inClose[BodyLongTrailingIdx-1]);
    do
    {
       if( ta_candlecolor(inClose[i-1], inOpen[i-1]) == -ta_candlecolor(inClose[i], inOpen[i]) &&                                        // opposite candles
@@ -101,9 +105,12 @@ TA_RetCode cdlcounterattack(int startIdx, int endIdx,
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
       EqualPeriodTotal += ta_candlerange(Equal_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]) - ta_candlerange(Equal_rangeType, inOpen[EqualTrailingIdx-1], inHigh[EqualTrailingIdx-1], inLow[EqualTrailingIdx-1], inClose[EqualTrailingIdx-1]);
-      for (totIdx = 1; totIdx >= 0; --totIdx)
-         BodyLongPeriodTotal[totIdx] += ta_candlerange(BodyLong_rangeType, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx])
-      - ta_candlerange(BodyLong_rangeType, inOpen[BodyLongTrailingIdx-totIdx], inHigh[BodyLongTrailingIdx-totIdx], inLow[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]);
+      BodyLongPeriodTotalRange0 = ta_candlerange(BodyLong_rangeType, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+      BodyLongPeriodTotalTrailRange0 = ta_candlerange(BodyLong_rangeType, inOpen[BodyLongTrailingIdx], inHigh[BodyLongTrailingIdx], inLow[BodyLongTrailingIdx], inClose[BodyLongTrailingIdx]);
+      BodyLongPeriodTotal[1] += BodyLongPeriodTotalRange1 - BodyLongPeriodTotalTrailRange1;
+      BodyLongPeriodTotal[0] += BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0;
+      BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+      BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
       i++;
       EqualTrailingIdx++;
       BodyLongTrailingIdx++;

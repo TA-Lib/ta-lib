@@ -156,13 +156,31 @@ fn scalar_sink_replaces_last_value_locals() {
     );
 }
 
+/// The transcribed body of a strided opener: `<N>_OpenImpl` holds only the
+/// argument checks and hands the rest to a fill frame (stride 1) and a sink
+/// frame (stride 0), each inlining this one body.
+fn open_body(src: &str, n: &str) -> String {
+    for (frame, stride) in [("OpenFillFrame", "1"), ("OpenSinkFrame", "0")] {
+        let body = body_of(src, &format!("TA_{n}_{frame}("));
+        assert!(
+            body.contains(&format!("TA_{n}_OpenBody(")) && body.contains(&format!(", {stride} );")),
+            "TA_{n}_{frame} must run the shared body at stride {stride}:\n{body}"
+        );
+    }
+    body_of(src, &format!("TA_{n}_OpenBody("))
+}
+
 #[test]
 fn output_writes_are_stride_scaled() {
     let src = stream_c("cdlhammer");
-    let core = strip_comments(&body_of(&src, "TA_CDLHAMMER_OpenImpl("));
+    let core = strip_comments(&open_body(&src, "CDLHAMMER"));
     assert!(
         core.contains("outInteger[outIdx++ * outStride] = 100;"),
         "per-bar output writes scale by outStride, got:\n{core}"
+    );
+    assert!(
+        !core.contains("outInteger[outIdx++] ="),
+        "a per-bar output write ignores outStride:\n{core}"
     );
 }
 
@@ -403,7 +421,7 @@ fn composed_copy_out_is_stride_guarded() {
     // final values there). Scalar mode keeps the owned history-sized scratch
     // and takes its last element.
     let src = stream_c("adxr");
-    let core = body_of(&src, "TA_ADXR_OpenImpl(");
+    let core = open_body(&src, "ADXR");
     assert!(
         core.contains("if( outStride ) sc_outReal = outReal;"),
         "fill mode aliases the scratch onto the caller's array:\n{core}"

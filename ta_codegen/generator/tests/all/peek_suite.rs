@@ -946,8 +946,12 @@ fn a_fused_per_bar_tier_carries_the_fma_multiversion_attribute() {
         if let (Some(at), Some(body)) = (src.find(&open), body_of(&src, &open)) {
             opens += 1;
             let framed_tier = ta_codegen_lib::backends::c_stream::open_takes_fma_frames(&func);
-            one_path_opens += usize::from(body.contains("fma(") && !framed_tier);
-            let fuses = body.contains("fma(") && framed_tier;
+            // An open not behind FMA frames keeps only its checks in `_OpenImpl`
+            // and its numerics in `_OpenBody`; either one fusing is the open fusing.
+            let open_fuses = body.contains("fma(")
+                || body_of(&src, &format!(" TA_{upper}_OpenBody(")).is_some_and(|b| b.contains("fma("));
+            one_path_opens += usize::from(open_fuses && !framed_tier);
+            let fuses = open_fuses && framed_tier;
             let line = &src[src[..at].rfind('\n').map_or(0, |i| i + 1)..at];
             let inlined = line.starts_with("static TA_FMA_STEP_INLINE ");
             // The definition, then one call per frame: the two around the

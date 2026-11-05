@@ -58,6 +58,7 @@
  *  121104 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
+ *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  */
 
 TA_LIB_API int TA_CDL3LINESTRIKE_Lookback( void )
@@ -84,9 +85,12 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
                                          int        outInteger[] )
 {
    double NearPeriodTotal[4];
+   double NearPeriodTotalRange2;
+   double NearPeriodTotalTrailRange2;
+   double NearPeriodTotalRange3;
+   double NearPeriodTotalTrailRange3;
    int i;
    int outIdx;
-   int totIdx;
    int NearTrailingIdx;
    int lookbackTotal;
    int Near_rangeType = TA_Globals->candleSettings[TA_Near].rangeType;
@@ -153,6 +157,8 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
     * The meaning of "near" is specified with TA_SetCandleSettings
     */
    outIdx = 0;
+   NearPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 3);
+   NearPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - 3);
    do
    {
       if( ((((inClose[i - 3] >= inOpen[i - 3]) == (inClose[i - 2] >= inOpen[i - 2])) + /* three with same color */
@@ -175,10 +181,12 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
-      {
-         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - totIdx));
-      }
+      NearPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2);
+      NearPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - 2);
+      NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3);
+      NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+      NearPeriodTotalRange3 = NearPeriodTotalRange2;
+      NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
       i += 1;
       NearTrailingIdx += 1;
    } while( i <= endIdx );
@@ -211,6 +219,8 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
     * The meaning of "near" is specified with TA_SetCandleSettings
     */
    outIdx = 0;
+   NearPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 3);
+   NearPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - 3);
    do
    {
       if( ((((inClose[i - 3] >= inOpen[i - 3]) == (inClose[i - 2] >= inOpen[i - 2])) + /* three with same color */
@@ -233,10 +243,12 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
-      {
-         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - totIdx));
-      }
+      NearPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2);
+      NearPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - 2);
+      NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3);
+      NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+      NearPeriodTotalRange3 = NearPeriodTotalRange2;
+      NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
       i += 1;
       NearTrailingIdx += 1;
    } while( i <= endIdx );
@@ -269,6 +281,8 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
     * The meaning of "near" is specified with TA_SetCandleSettings
     */
    outIdx = 0;
+   NearPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 3);
+   NearPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - 3);
    do
    {
       if( ((((inClose[i - 3] >= inOpen[i - 3]) == (inClose[i - 2] >= inOpen[i - 2])) + /* three with same color */
@@ -291,10 +305,12 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
-      {
-         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - totIdx));
-      }
+      NearPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2);
+      NearPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - 2);
+      NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3);
+      NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+      NearPeriodTotalRange3 = NearPeriodTotalRange2;
+      NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
       i += 1;
       NearTrailingIdx += 1;
    } while( i <= endIdx );
@@ -327,6 +343,8 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
     * The meaning of "near" is specified with TA_SetCandleSettings
     */
    outIdx = 0;
+   NearPeriodTotalRange3 = TA_CANDLERANGE_OF(Near_rangeType,i - 3);
+   NearPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(Near_rangeType,NearTrailingIdx - 3);
    do
    {
       if( ((((inClose[i - 3] >= inOpen[i - 3]) == (inClose[i - 2] >= inOpen[i - 2])) + /* three with same color */
@@ -349,10 +367,12 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
-      {
-         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(Near_rangeType,i - totIdx) - TA_CANDLERANGE_OF(Near_rangeType,NearTrailingIdx - totIdx));
-      }
+      NearPeriodTotalRange2 = TA_CANDLERANGE_OF(Near_rangeType,i - 2);
+      NearPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(Near_rangeType,NearTrailingIdx - 2);
+      NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3);
+      NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+      NearPeriodTotalRange3 = NearPeriodTotalRange2;
+      NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
       i += 1;
       NearTrailingIdx += 1;
    } while( i <= endIdx );
@@ -374,9 +394,12 @@ TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
                                 int        outInteger[] )
 {
    double NearPeriodTotal[4];
+   double NearPeriodTotalRange2;
+   double NearPeriodTotalTrailRange2;
+   double NearPeriodTotalRange3;
+   double NearPeriodTotalTrailRange3;
    int i;
    int outIdx;
-   int totIdx;
    int NearTrailingIdx;
    int lookbackTotal;
    int Near_rangeType = TA_Globals->candleSettings[TA_Near].rangeType;
@@ -426,6 +449,8 @@ TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
    }
    i = startIdx;
    outIdx = 0;
+   NearPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 3);
+   NearPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - 3);
    do
    {
       if( (((((double)inClose[i - 3] >= (double)inOpen[i - 3]) == ((double)inClose[i - 2] >= (double)inOpen[i - 2])) + (((double)inClose[i - 2] >= (double)inOpen[i - 2]) == ((double)inClose[i - 1] >= (double)inOpen[i - 1])) + (((double)inClose[i] >= (double)inOpen[i]) != ((double)inClose[i - 1] >= (double)inOpen[i - 1]))) == 3) )
@@ -435,10 +460,12 @@ TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
       {
          outInteger[outIdx++] = 0;
       }
-      for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
-      {
-         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - totIdx));
-      }
+      NearPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2);
+      NearPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - 2);
+      NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3);
+      NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+      NearPeriodTotalRange3 = NearPeriodTotalRange2;
+      NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
       i += 1;
       NearTrailingIdx += 1;
    } while( i <= endIdx );
@@ -460,6 +487,8 @@ TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
    }
    i = startIdx;
    outIdx = 0;
+   NearPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 3);
+   NearPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - 3);
    do
    {
       if( (((((double)inClose[i - 3] >= (double)inOpen[i - 3]) == ((double)inClose[i - 2] >= (double)inOpen[i - 2])) + (((double)inClose[i - 2] >= (double)inOpen[i - 2]) == ((double)inClose[i - 1] >= (double)inOpen[i - 1])) + (((double)inClose[i] >= (double)inOpen[i]) != ((double)inClose[i - 1] >= (double)inOpen[i - 1]))) == 3) )
@@ -469,10 +498,12 @@ TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
       {
          outInteger[outIdx++] = 0;
       }
-      for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
-      {
-         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - totIdx));
-      }
+      NearPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2);
+      NearPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - 2);
+      NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3);
+      NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+      NearPeriodTotalRange3 = NearPeriodTotalRange2;
+      NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
       i += 1;
       NearTrailingIdx += 1;
    } while( i <= endIdx );
@@ -494,6 +525,8 @@ TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
    }
    i = startIdx;
    outIdx = 0;
+   NearPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 3);
+   NearPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - 3);
    do
    {
       if( (((((double)inClose[i - 3] >= (double)inOpen[i - 3]) == ((double)inClose[i - 2] >= (double)inOpen[i - 2])) + (((double)inClose[i - 2] >= (double)inOpen[i - 2]) == ((double)inClose[i - 1] >= (double)inOpen[i - 1])) + (((double)inClose[i] >= (double)inOpen[i]) != ((double)inClose[i - 1] >= (double)inOpen[i - 1]))) == 3) )
@@ -503,10 +536,12 @@ TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
       {
          outInteger[outIdx++] = 0;
       }
-      for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
-      {
-         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - totIdx));
-      }
+      NearPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2);
+      NearPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - 2);
+      NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3);
+      NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+      NearPeriodTotalRange3 = NearPeriodTotalRange2;
+      NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
       i += 1;
       NearTrailingIdx += 1;
    } while( i <= endIdx );
@@ -528,6 +563,8 @@ TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
    }
    i = startIdx;
    outIdx = 0;
+   NearPeriodTotalRange3 = TA_CANDLERANGE_OF(Near_rangeType,i - 3);
+   NearPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(Near_rangeType,NearTrailingIdx - 3);
    do
    {
       if( (((((double)inClose[i - 3] >= (double)inOpen[i - 3]) == ((double)inClose[i - 2] >= (double)inOpen[i - 2])) + (((double)inClose[i - 2] >= (double)inOpen[i - 2]) == ((double)inClose[i - 1] >= (double)inOpen[i - 1])) + (((double)inClose[i] >= (double)inOpen[i]) != ((double)inClose[i - 1] >= (double)inOpen[i - 1]))) == 3) )
@@ -537,10 +574,12 @@ TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
       {
          outInteger[outIdx++] = 0;
       }
-      for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
-      {
-         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(Near_rangeType,i - totIdx) - TA_CANDLERANGE_OF(Near_rangeType,NearTrailingIdx - totIdx));
-      }
+      NearPeriodTotalRange2 = TA_CANDLERANGE_OF(Near_rangeType,i - 2);
+      NearPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(Near_rangeType,NearTrailingIdx - 2);
+      NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3);
+      NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+      NearPeriodTotalRange3 = NearPeriodTotalRange2;
+      NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
       i += 1;
       NearTrailingIdx += 1;
    } while( i <= endIdx );
@@ -559,6 +598,8 @@ struct TA_CDL3LINESTRIKE_Stream {
    /* The value(s) at the last bar the stream counted (see TA_CDL3LINESTRIKE_Value). */
    int cur_outInteger;
    double NearPeriodTotal[4];
+   double NearPeriodTotalRange3;
+   double NearPeriodTotalTrailRange3;
    double lag1_inOpen;
    double lag2_inOpen;
    double lag3_inOpen;
@@ -588,7 +629,8 @@ static void TA_CDL3LINESTRIKE_ReleaseImpl( struct TA_CDL3LINESTRIKE_Stream *sp )
 /* Private function, not in public API. */
 static void TA_CDL3LINESTRIKE_StepImpl( struct TA_CDL3LINESTRIKE_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
-   int totIdx;
+   double NearPeriodTotalRange2;
+   double NearPeriodTotalTrailRange2;
 
    sp->ring_NearTrailingIdx_derived[sp->ringPos_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen,inHigh,inLow,inClose);
    if( ((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : -1) == ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : -1) && /* three with same color */
@@ -622,10 +664,12 @@ static void TA_CDL3LINESTRIKE_StepImpl( struct TA_CDL3LINESTRIKE_Stream *sp, dou
    /* add the current range and subtract the first range: this is done after the pattern recognition
     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
     */
-   for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
-   {
-      sp->NearPeriodTotal[totIdx] = sp->NearPeriodTotal[totIdx] + (sp->ring_NearTrailingIdx_derived[(sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - totIdx >= sp->ringCap_NearTrailingIdx) ? sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - totIdx - sp->ringCap_NearTrailingIdx : sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - totIdx] - sp->ring_NearTrailingIdx_derived[(sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - sp->ringLag_NearTrailingIdx - totIdx) % sp->ringCap_NearTrailingIdx]);
-   }
+   NearPeriodTotalRange2 = TA_STREAM_CANDLERANGE(Near,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose);
+   NearPeriodTotalTrailRange2 = sp->ring_NearTrailingIdx_derived[(sp->ringPos_NearTrailingIdx + sp->ringCap_NearTrailingIdx - sp->ringLag_NearTrailingIdx - 2) % sp->ringCap_NearTrailingIdx];
+   sp->NearPeriodTotal[3] = sp->NearPeriodTotal[3] + (sp->NearPeriodTotalRange3 - sp->NearPeriodTotalTrailRange3);
+   sp->NearPeriodTotal[2] = sp->NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+   sp->NearPeriodTotalRange3 = NearPeriodTotalRange2;
+   sp->NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
    sp->cur_outInteger = *outInteger;
    sp->lag3_inOpen = sp->lag2_inOpen;
    sp->lag2_inOpen = sp->lag1_inOpen;
@@ -658,9 +702,12 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
       int Near_avgPeriod = TA_Globals->candleSettings[TA_Near].avgPeriod;
       double Near_factor = TA_Globals->candleSettings[TA_Near].factor;
       double NearPeriodTotal[4] = {0};
+      double NearPeriodTotalRange2;
+      double NearPeriodTotalTrailRange2;
+      double NearPeriodTotalRange3 = 0.0;
+      double NearPeriodTotalTrailRange3 = 0.0;
       int i;
       int outIdx;
-      int totIdx;
       int NearTrailingIdx;
       int lookbackTotal;
       /* Identify the minimum number of price bar needed
@@ -705,6 +752,8 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
        * The meaning of "near" is specified with TA_SetCandleSettings
        */
       outIdx = 0;
+      NearPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 3);
+      NearPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - 3);
       do
       {
          if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) && /* three with same color */
@@ -738,10 +787,12 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
-         for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
-         {
-            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - totIdx));
-         }
+         NearPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2);
+         NearPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - 2);
+         NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3);
+         NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+         NearPeriodTotalRange3 = NearPeriodTotalRange2;
+         NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
          i += 1;
          NearTrailingIdx += 1;
       } while( i <= endIdx );
@@ -754,8 +805,10 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       memcpy( sp->NearPeriodTotal, NearPeriodTotal, sizeof( sp->NearPeriodTotal ) );
+      sp->NearPeriodTotalRange3 = NearPeriodTotalRange3;
+      sp->NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange3;
       sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
-      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 4;
+      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 3;
       if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDL3LINESTRIKE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(198); }
       { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
         sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
@@ -808,6 +861,8 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
        * The meaning of "near" is specified with TA_SetCandleSettings
        */
       outIdx = 0;
+      NearPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 3);
+      NearPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - 3);
       do
       {
          if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) && /* three with same color */
@@ -841,10 +896,12 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
-         for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
-         {
-            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - totIdx));
-         }
+         NearPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2);
+         NearPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - 2);
+         NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3);
+         NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+         NearPeriodTotalRange3 = NearPeriodTotalRange2;
+         NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
          i += 1;
          NearTrailingIdx += 1;
       } while( i <= endIdx );
@@ -857,8 +914,10 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       memcpy( sp->NearPeriodTotal, NearPeriodTotal, sizeof( sp->NearPeriodTotal ) );
+      sp->NearPeriodTotalRange3 = NearPeriodTotalRange3;
+      sp->NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange3;
       sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
-      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 4;
+      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 3;
       if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDL3LINESTRIKE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(198); }
       { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
         sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
@@ -911,6 +970,8 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
        * The meaning of "near" is specified with TA_SetCandleSettings
        */
       outIdx = 0;
+      NearPeriodTotalRange3 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 3);
+      NearPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - 3);
       do
       {
          if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) && /* three with same color */
@@ -944,10 +1005,12 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
-         for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
-         {
-            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - totIdx));
-         }
+         NearPeriodTotalRange2 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2);
+         NearPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - 2);
+         NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3);
+         NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+         NearPeriodTotalRange3 = NearPeriodTotalRange2;
+         NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
          i += 1;
          NearTrailingIdx += 1;
       } while( i <= endIdx );
@@ -960,8 +1023,10 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       memcpy( sp->NearPeriodTotal, NearPeriodTotal, sizeof( sp->NearPeriodTotal ) );
+      sp->NearPeriodTotalRange3 = NearPeriodTotalRange3;
+      sp->NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange3;
       sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
-      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 4;
+      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 3;
       if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDL3LINESTRIKE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(198); }
       { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
         sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
@@ -1014,6 +1079,8 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
        * The meaning of "near" is specified with TA_SetCandleSettings
        */
       outIdx = 0;
+      NearPeriodTotalRange3 = TA_CANDLERANGE_OF(Near_rangeType,i - 3);
+      NearPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(Near_rangeType,NearTrailingIdx - 3);
       do
       {
          if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) && /* three with same color */
@@ -1047,10 +1114,12 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
-         for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
-         {
-            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(Near_rangeType,i - totIdx) - TA_CANDLERANGE_OF(Near_rangeType,NearTrailingIdx - totIdx));
-         }
+         NearPeriodTotalRange2 = TA_CANDLERANGE_OF(Near_rangeType,i - 2);
+         NearPeriodTotalTrailRange2 = TA_CANDLERANGE_OF(Near_rangeType,NearTrailingIdx - 2);
+         NearPeriodTotal[3] = NearPeriodTotal[3] + (NearPeriodTotalRange3 - NearPeriodTotalTrailRange3);
+         NearPeriodTotal[2] = NearPeriodTotal[2] + (NearPeriodTotalRange2 - NearPeriodTotalTrailRange2);
+         NearPeriodTotalRange3 = NearPeriodTotalRange2;
+         NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
          i += 1;
          NearTrailingIdx += 1;
       } while( i <= endIdx );
@@ -1063,8 +1132,10 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       memcpy( sp->NearPeriodTotal, NearPeriodTotal, sizeof( sp->NearPeriodTotal ) );
+      sp->NearPeriodTotalRange3 = NearPeriodTotalRange3;
+      sp->NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange3;
       sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
-      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 4;
+      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 3;
       if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDL3LINESTRIKE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(198); }
       { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
         sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );

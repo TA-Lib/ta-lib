@@ -18,7 +18,7 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 504
+next: 516
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
@@ -38,33 +38,33 @@ sites:
   CCI.cbsize.circBuffer: 193
   CCI.circbuf.circBuffer: 192
   CDL2CROWS.ringcap.BodyLongTrailingIdx: 194
-  CDL3BLACKCROWS.ringlag.ShadowVeryShortTrailingIdx: 195
+  CDL3BLACKCROWS.ringcap.ShadowVeryShortTrailingIdx: 504
   CDL3INSIDE.ringcap.BodyLongTrailingIdx: 196
   CDL3INSIDE.ringcap.BodyShortTrailingIdx: 197
   CDL3LINESTRIKE.ringlag.NearTrailingIdx: 198
   CDL3STARSINSOUTH.ringcap.BodyShortTrailingIdx: 200
+  CDL3STARSINSOUTH.ringcap.ShadowVeryShortTrailingIdx: 505
   CDL3STARSINSOUTH.ringlag.BodyLongTrailingIdx: 199
   CDL3STARSINSOUTH.ringlag.ShadowLongTrailingIdx: 201
-  CDL3STARSINSOUTH.ringlag.ShadowVeryShortTrailingIdx: 202
   CDL3WHITESOLDIERS.ringcap.BodyShortTrailingIdx: 203
+  CDL3WHITESOLDIERS.ringcap.ShadowVeryShortTrailingIdx: 506
   CDL3WHITESOLDIERS.ringlag.FarTrailingIdx: 204
   CDL3WHITESOLDIERS.ringlag.NearTrailingIdx: 205
-  CDL3WHITESOLDIERS.ringlag.ShadowVeryShortTrailingIdx: 206
   CDLABANDONEDBABY.ringcap.BodyDojiTrailingIdx: 207
   CDLABANDONEDBABY.ringcap.BodyLongTrailingIdx: 208
   CDLABANDONEDBABY.ringcap.BodyShortTrailingIdx: 209
+  CDLADVANCEBLOCK.ringcap.ShadowLongTrailingIdx: 507
+  CDLADVANCEBLOCK.ringcap.ShadowShortTrailingIdx: 508
   CDLADVANCEBLOCK.ringlag.BodyLongTrailingIdx: 210
   CDLADVANCEBLOCK.ringlag.FarTrailingIdx: 211
   CDLADVANCEBLOCK.ringlag.NearTrailingIdx: 212
-  CDLADVANCEBLOCK.ringlag.ShadowLongTrailingIdx: 213
-  CDLADVANCEBLOCK.ringlag.ShadowShortTrailingIdx: 214
   CDLBELTHOLD.ringcap.BodyLongTrailingIdx: 215
   CDLBELTHOLD.ringcap.ShadowVeryShortTrailingIdx: 216
   CDLBREAKAWAY.ringlag.BodyLongTrailingIdx: 217
   CDLCLOSINGMARUBOZU.ringcap.BodyLongTrailingIdx: 218
   CDLCLOSINGMARUBOZU.ringcap.ShadowVeryShortTrailingIdx: 219
   CDLCONCEALBABYSWALL.ringlag.ShadowVeryShortTrailingIdx: 220
-  CDLCOUNTERATTACK.ringlag.BodyLongTrailingIdx: 221
+  CDLCOUNTERATTACK.ringcap.BodyLongTrailingIdx: 509
   CDLCOUNTERATTACK.ringlag.EqualTrailingIdx: 222
   CDLDARKCLOUDCOVER.ringlag.BodyLongTrailingIdx: 223
   CDLDOJI.ringcap.BodyDojiTrailingIdx: 224
@@ -98,17 +98,17 @@ sites:
   CDLHIKKAKEMOD.ringlag.NearTrailingIdx: 252
   CDLHOMINGPIGEON.ringcap.BodyShortTrailingIdx: 254
   CDLHOMINGPIGEON.ringlag.BodyLongTrailingIdx: 253
+  CDLIDENTICAL3CROWS.ringcap.ShadowVeryShortTrailingIdx: 510
   CDLIDENTICAL3CROWS.ringlag.EqualTrailingIdx: 255
-  CDLIDENTICAL3CROWS.ringlag.ShadowVeryShortTrailingIdx: 256
   CDLINNECK.ringlag.BodyLongTrailingIdx: 257
   CDLINNECK.ringlag.EqualTrailingIdx: 258
   CDLINVERTEDHAMMER.ringcap.BodyTrailingIdx: 259
   CDLINVERTEDHAMMER.ringcap.ShadowLongTrailingIdx: 260
   CDLINVERTEDHAMMER.ringcap.ShadowVeryShortTrailingIdx: 261
-  CDLKICKING.ringlag.BodyLongTrailingIdx: 262
-  CDLKICKING.ringlag.ShadowVeryShortTrailingIdx: 263
-  CDLKICKINGBYLENGTH.ringlag.BodyLongTrailingIdx: 264
-  CDLKICKINGBYLENGTH.ringlag.ShadowVeryShortTrailingIdx: 265
+  CDLKICKING.ringcap.BodyLongTrailingIdx: 511
+  CDLKICKING.ringcap.ShadowVeryShortTrailingIdx: 512
+  CDLKICKINGBYLENGTH.ringcap.BodyLongTrailingIdx: 513
+  CDLKICKINGBYLENGTH.ringcap.ShadowVeryShortTrailingIdx: 514
   CDLLADDERBOTTOM.ringlag.ShadowVeryShortTrailingIdx: 266
   CDLLONGLEGGEDDOJI.ringcap.BodyDojiTrailingIdx: 267
   CDLLONGLEGGEDDOJI.ringcap.ShadowLongTrailingIdx: 268
@@ -126,7 +126,7 @@ sites:
   CDLMORNINGSTAR.ringlag.BodyShortTrailingIdx: 280
   CDLONNECK.ringlag.BodyLongTrailingIdx: 281
   CDLONNECK.ringlag.EqualTrailingIdx: 282
-  CDLPIERCING.ringlag.BodyLongTrailingIdx: 283
+  CDLPIERCING.ringcap.BodyLongTrailingIdx: 515
   CDLRICKSHAWMAN.ringcap.BodyDojiTrailingIdx: 284
   CDLRICKSHAWMAN.ringcap.NearTrailingIdx: 285
   CDLRICKSHAWMAN.ringcap.ShadowLongTrailingIdx: 286

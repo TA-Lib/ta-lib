@@ -337,7 +337,7 @@ fn cdl3blackcrows_var_offset_ring_window_and_array_state() {
     // in[ShadowVeryShortTrailingIdx - totIdx] with for(totIdx=2; totIdx>=0;):
     // ring back = counter max (2), and the per-candle totals carry as
     // fixed-size array state.
-    let f = load("cdl3blackcrows");
+    let f = crate::common::load_rescan_fixture("cdl3blackcrows").0;
     let m = streaming::analyze(&f).expect("CDL3BLACKCROWS analyzes");
     let r = m
         .rings()
@@ -359,7 +359,7 @@ fn cdl3blackcrows_window_folds_into_its_ring() {
     // #229 last tranche: `in*[i - totIdx]` is read only through
     // ta_candlerange(ShadowVeryShort, ...) — the exact value the ShadowVeryShort
     // ring already stores — so the window keeps NO buffer of its own.
-    let f = load("cdl3blackcrows");
+    let f = crate::common::load_rescan_fixture("cdl3blackcrows").0;
     let m = streaming::analyze(&f).expect("CDL3BLACKCROWS analyzes");
     assert!(
         m.windows().is_empty(),
@@ -418,8 +418,9 @@ fn cdladvanceblock_merges_window_bounds_to_widest() {
     // widest literal bound instead of rejecting. Since #229 dropped the window
     // buffer the bound is observable on the rings it sizes: every ring read at
     // `[<Setting>TrailingIdx - totIdx]` gets back = cap - 1 = 2, which is also
-    // what makes the ring deep enough to serve the window read.
-    let f = load("cdladvanceblock");
+    // what makes the ring deep enough to serve the window read. Over the
+    // pre-carry fixture: the shipped input no longer has the window.
+    let f = crate::common::load_rescan_fixture("cdladvanceblock").0;
     let m = streaming::analyze(&f).expect("CDLADVANCEBLOCK analyzes");
     for setting in ["ShadowShort", "ShadowLong", "Near", "Far"] {
         let v = format!("{setting}TrailingIdx");
@@ -436,10 +437,10 @@ fn cdladvanceblock_merges_window_bounds_to_widest() {
 fn cdladvanceblock_window_folds_per_setting() {
     // One window counter, FOUR candle settings read through it, each routed to
     // its own ring — the case that made a single shared "derived" slot name
-    // insufficient. `ta_CDLADVANCEBLOCK.c:186` also holds a window read and a
-    // ring read of the same Near setting in ONE statement, so the two folds
-    // must be told apart by index form rather than by shape.
-    let f = load("cdladvanceblock");
+    // insufficient. The fixture also holds a window read and a ring read of
+    // the same Near setting in ONE statement, so the two folds must be told
+    // apart by index form rather than by shape.
+    let f = crate::common::load_rescan_fixture("cdladvanceblock").0;
     let m = streaming::analyze(&f).expect("CDLADVANCEBLOCK analyzes");
     assert!(m.windows().is_empty(), "the totIdx window is served by rings");
     let reads = read_arrays(&m);

@@ -54,6 +54,18 @@ pub fn load_synth(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
     )
 }
 
+/// A shipped function's YAML over the pre-carry source in
+/// `tests/all/fixtures/rescan_window/`: the `for (totIdx...)` rescan window
+/// the streaming analyzer folds into its candle-range rings (#229). No shipped
+/// input keeps that shape, so these copies are what pins the fold.
+pub fn load_rescan_fixture(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let mut func = parser::yaml::parse_yaml(&root.join(format!("../../ta_codegen/input/{name}/{name}.yaml")));
+    let src = root.join(format!("tests/all/fixtures/rescan_window/{name}.c"));
+    parser::c_source::wire_parsed_source(&mut func, &parser::c_source::parse_c_source(&src));
+    (func, load_enums())
+}
+
 pub fn load_from(base: &Path, name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
     let yaml_path = base.join(format!("{}/{}.yaml", name, name));
     let c_path = base.join(format!("{}/{}.c", name, name));

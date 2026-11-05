@@ -58,6 +58,7 @@
  *  011505 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *  103126 MF,CC  Lead with the colour and gap tests as the one pre-check
+ *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  */
 
 TA_LIB_API int TA_CDLKICKINGBYLENGTH_Lookback( void )
@@ -86,9 +87,16 @@ TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH( int    startIdx,
 {
    double ShadowVeryShortPeriodTotal[2];
    double BodyLongPeriodTotal[2];
+   double BodyLongPeriodTotalRange0;
+   double BodyLongPeriodTotalTrailRange0;
+   double BodyLongPeriodTotalRange1;
+   double BodyLongPeriodTotalTrailRange1;
+   double ShadowVeryShortPeriodTotalRange0;
+   double ShadowVeryShortPeriodTotalTrailRange0;
+   double ShadowVeryShortPeriodTotalRange1;
+   double ShadowVeryShortPeriodTotalTrailRange1;
    int i;
    int outIdx;
-   int totIdx;
    int ShadowVeryShortTrailingIdx;
    int BodyLongTrailingIdx;
    int lookbackTotal;
@@ -168,6 +176,10 @@ TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH( int    startIdx,
     * The meaning of "long body" and "very short shadow" is specified with TA_SetCandleSettings
     */
    outIdx = 0;
+   BodyLongPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1);
+   BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx - 1);
+   ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 1);
+   ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - 1);
    do
    {
       if( ((((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i])) + /* opposite candles */
@@ -184,11 +196,18 @@ TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH( int    startIdx,
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
-      {
-         BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx - totIdx));
-         ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - totIdx));
-      }
+      BodyLongPeriodTotalRange0 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i);
+      BodyLongPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx);
+      BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (BodyLongPeriodTotalRange1 - BodyLongPeriodTotalTrailRange1);
+      BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0);
+      BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+      BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
+      ShadowVeryShortPeriodTotalRange0 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i);
+      ShadowVeryShortPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx);
+      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+      ShadowVeryShortPeriodTotal[0] = ShadowVeryShortPeriodTotal[0] + (ShadowVeryShortPeriodTotalRange0 - ShadowVeryShortPeriodTotalTrailRange0);
+      ShadowVeryShortPeriodTotalRange1 = ShadowVeryShortPeriodTotalRange0;
+      ShadowVeryShortPeriodTotalTrailRange1 = ShadowVeryShortPeriodTotalTrailRange0;
       i += 1;
       ShadowVeryShortTrailingIdx += 1;
       BodyLongTrailingIdx += 1;
@@ -231,6 +250,10 @@ TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH( int    startIdx,
     * The meaning of "long body" and "very short shadow" is specified with TA_SetCandleSettings
     */
    outIdx = 0;
+   BodyLongPeriodTotalRange1 = TA_CANDLERANGE_OF(BodyLong_rangeType,i - 1);
+   BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx - 1);
+   ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - 1);
+   ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - 1);
    do
    {
       if( ((((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i])) + /* opposite candles */
@@ -247,11 +270,18 @@ TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH( int    startIdx,
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
-      {
-         BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(BodyLong_rangeType,i - totIdx) - TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx - totIdx));
-         ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - totIdx) - TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - totIdx));
-      }
+      BodyLongPeriodTotalRange0 = TA_CANDLERANGE_OF(BodyLong_rangeType,i);
+      BodyLongPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx);
+      BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (BodyLongPeriodTotalRange1 - BodyLongPeriodTotalTrailRange1);
+      BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0);
+      BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+      BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
+      ShadowVeryShortPeriodTotalRange0 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i);
+      ShadowVeryShortPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx);
+      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+      ShadowVeryShortPeriodTotal[0] = ShadowVeryShortPeriodTotal[0] + (ShadowVeryShortPeriodTotalRange0 - ShadowVeryShortPeriodTotalTrailRange0);
+      ShadowVeryShortPeriodTotalRange1 = ShadowVeryShortPeriodTotalRange0;
+      ShadowVeryShortPeriodTotalTrailRange1 = ShadowVeryShortPeriodTotalTrailRange0;
       i += 1;
       ShadowVeryShortTrailingIdx += 1;
       BodyLongTrailingIdx += 1;
@@ -275,9 +305,16 @@ TA_RetCode TA_S_CDLKICKINGBYLENGTH( int    startIdx,
 {
    double ShadowVeryShortPeriodTotal[2];
    double BodyLongPeriodTotal[2];
+   double BodyLongPeriodTotalRange0;
+   double BodyLongPeriodTotalTrailRange0;
+   double BodyLongPeriodTotalRange1;
+   double BodyLongPeriodTotalTrailRange1;
+   double ShadowVeryShortPeriodTotalRange0;
+   double ShadowVeryShortPeriodTotalTrailRange0;
+   double ShadowVeryShortPeriodTotalRange1;
+   double ShadowVeryShortPeriodTotalTrailRange1;
    int i;
    int outIdx;
-   int totIdx;
    int ShadowVeryShortTrailingIdx;
    int BodyLongTrailingIdx;
    int lookbackTotal;
@@ -341,6 +378,10 @@ TA_RetCode TA_S_CDLKICKINGBYLENGTH( int    startIdx,
    }
    i = startIdx;
    outIdx = 0;
+   BodyLongPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1);
+   BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx - 1);
+   ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 1);
+   ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - 1);
    do
    {
       if( (((((double)inClose[i - 1] >= (double)inOpen[i - 1]) != ((double)inClose[i] >= (double)inOpen[i])) + ((((!((double)inClose[i - 1] >= (double)inOpen[i - 1])) & ((double)inLow[i] > (double)inHigh[i - 1])) | (((double)inClose[i - 1] >= (double)inOpen[i - 1]) & ((double)inHigh[i] < (double)inLow[i - 1]))))) == 2) )
@@ -350,11 +391,18 @@ TA_RetCode TA_S_CDLKICKINGBYLENGTH( int    startIdx,
       {
          outInteger[outIdx++] = 0;
       }
-      for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
-      {
-         BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx - totIdx));
-         ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - totIdx));
-      }
+      BodyLongPeriodTotalRange0 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i);
+      BodyLongPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx);
+      BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (BodyLongPeriodTotalRange1 - BodyLongPeriodTotalTrailRange1);
+      BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0);
+      BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+      BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
+      ShadowVeryShortPeriodTotalRange0 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i);
+      ShadowVeryShortPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx);
+      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+      ShadowVeryShortPeriodTotal[0] = ShadowVeryShortPeriodTotal[0] + (ShadowVeryShortPeriodTotalRange0 - ShadowVeryShortPeriodTotalTrailRange0);
+      ShadowVeryShortPeriodTotalRange1 = ShadowVeryShortPeriodTotalRange0;
+      ShadowVeryShortPeriodTotalTrailRange1 = ShadowVeryShortPeriodTotalTrailRange0;
       i += 1;
       ShadowVeryShortTrailingIdx += 1;
       BodyLongTrailingIdx += 1;
@@ -387,6 +435,10 @@ TA_RetCode TA_S_CDLKICKINGBYLENGTH( int    startIdx,
    }
    i = startIdx;
    outIdx = 0;
+   BodyLongPeriodTotalRange1 = TA_CANDLERANGE_OF(BodyLong_rangeType,i - 1);
+   BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx - 1);
+   ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - 1);
+   ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - 1);
    do
    {
       if( (((((double)inClose[i - 1] >= (double)inOpen[i - 1]) != ((double)inClose[i] >= (double)inOpen[i])) + ((((!((double)inClose[i - 1] >= (double)inOpen[i - 1])) & ((double)inLow[i] > (double)inHigh[i - 1])) | (((double)inClose[i - 1] >= (double)inOpen[i - 1]) & ((double)inHigh[i] < (double)inLow[i - 1]))))) == 2) )
@@ -396,11 +448,18 @@ TA_RetCode TA_S_CDLKICKINGBYLENGTH( int    startIdx,
       {
          outInteger[outIdx++] = 0;
       }
-      for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
-      {
-         BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(BodyLong_rangeType,i - totIdx) - TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx - totIdx));
-         ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - totIdx) - TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - totIdx));
-      }
+      BodyLongPeriodTotalRange0 = TA_CANDLERANGE_OF(BodyLong_rangeType,i);
+      BodyLongPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx);
+      BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (BodyLongPeriodTotalRange1 - BodyLongPeriodTotalTrailRange1);
+      BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0);
+      BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+      BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
+      ShadowVeryShortPeriodTotalRange0 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i);
+      ShadowVeryShortPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx);
+      ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+      ShadowVeryShortPeriodTotal[0] = ShadowVeryShortPeriodTotal[0] + (ShadowVeryShortPeriodTotalRange0 - ShadowVeryShortPeriodTotalTrailRange0);
+      ShadowVeryShortPeriodTotalRange1 = ShadowVeryShortPeriodTotalRange0;
+      ShadowVeryShortPeriodTotalTrailRange1 = ShadowVeryShortPeriodTotalTrailRange0;
       i += 1;
       ShadowVeryShortTrailingIdx += 1;
       BodyLongTrailingIdx += 1;
@@ -421,17 +480,19 @@ struct TA_CDLKICKINGBYLENGTH_Stream {
    int cur_outInteger;
    double ShadowVeryShortPeriodTotal[2];
    double BodyLongPeriodTotal[2];
+   double BodyLongPeriodTotalRange1;
+   double BodyLongPeriodTotalTrailRange1;
+   double ShadowVeryShortPeriodTotalRange1;
+   double ShadowVeryShortPeriodTotalTrailRange1;
    double lag1_inOpen;
    double lag1_inHigh;
    double lag1_inLow;
    double lag1_inClose;
    int ringPos_BodyLongTrailingIdx;
    int ringCap_BodyLongTrailingIdx;
-   int ringLag_BodyLongTrailingIdx;
    double *ring_BodyLongTrailingIdx_derived;
    int ringPos_ShadowVeryShortTrailingIdx;
    int ringCap_ShadowVeryShortTrailingIdx;
-   int ringLag_ShadowVeryShortTrailingIdx;
    double *ring_ShadowVeryShortTrailingIdx_derived;
 };
 
@@ -447,10 +508,19 @@ static void TA_CDLKICKINGBYLENGTH_ReleaseImpl( struct TA_CDLKICKINGBYLENGTH_Stre
 /* Private function, not in public API. */
 static void TA_CDLKICKINGBYLENGTH_StepImpl( struct TA_CDLKICKINGBYLENGTH_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
-   int totIdx;
+   double BodyLongPeriodTotalRange0;
+   double BodyLongPeriodTotalTrailRange0;
+   double ShadowVeryShortPeriodTotalRange0;
+   double ShadowVeryShortPeriodTotalTrailRange0;
 
-   sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
-   sp->ring_ShadowVeryShortTrailingIdx_derived[sp->ringPos_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+   if( sp->ringCap_BodyLongTrailingIdx == 0 )
+   {
+      sp->ring_BodyLongTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+   }
+   if( sp->ringCap_ShadowVeryShortTrailingIdx == 0 )
+   {
+      sp->ring_ShadowVeryShortTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+   }
    if( ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == -((inClose >= inOpen) ? 1 : -1) && /* opposite candles */
        ((((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : -1) == -1 && /* gap */
          ((inLow > sp->lag1_inHigh) ? 1 : 0)) ||
@@ -476,21 +546,30 @@ static void TA_CDLKICKINGBYLENGTH_StepImpl( struct TA_CDLKICKINGBYLENGTH_Stream 
    /* add the current range and subtract the first range: this is done after the pattern recognition
     * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
     */
-   for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
-   {
-      sp->BodyLongPeriodTotal[totIdx] = sp->BodyLongPeriodTotal[totIdx] + (sp->ring_BodyLongTrailingIdx_derived[(sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - totIdx >= sp->ringCap_BodyLongTrailingIdx) ? sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - totIdx - sp->ringCap_BodyLongTrailingIdx : sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - totIdx] - sp->ring_BodyLongTrailingIdx_derived[(sp->ringPos_BodyLongTrailingIdx + sp->ringCap_BodyLongTrailingIdx - sp->ringLag_BodyLongTrailingIdx - totIdx) % sp->ringCap_BodyLongTrailingIdx]);
-      sp->ShadowVeryShortPeriodTotal[totIdx] = sp->ShadowVeryShortPeriodTotal[totIdx] + (sp->ring_ShadowVeryShortTrailingIdx_derived[(sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp->ringCap_ShadowVeryShortTrailingIdx) ? sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - totIdx - sp->ringCap_ShadowVeryShortTrailingIdx : sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - totIdx] - sp->ring_ShadowVeryShortTrailingIdx_derived[(sp->ringPos_ShadowVeryShortTrailingIdx + sp->ringCap_ShadowVeryShortTrailingIdx - sp->ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp->ringCap_ShadowVeryShortTrailingIdx]);
-   }
+   BodyLongPeriodTotalRange0 = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
+   BodyLongPeriodTotalTrailRange0 = sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx];
+   sp->BodyLongPeriodTotal[1] = sp->BodyLongPeriodTotal[1] + (sp->BodyLongPeriodTotalRange1 - sp->BodyLongPeriodTotalTrailRange1);
+   sp->BodyLongPeriodTotal[0] = sp->BodyLongPeriodTotal[0] + (BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0);
+   sp->BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+   sp->BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
+   ShadowVeryShortPeriodTotalRange0 = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
+   ShadowVeryShortPeriodTotalTrailRange0 = sp->ring_ShadowVeryShortTrailingIdx_derived[sp->ringPos_ShadowVeryShortTrailingIdx];
+   sp->ShadowVeryShortPeriodTotal[1] = sp->ShadowVeryShortPeriodTotal[1] + (sp->ShadowVeryShortPeriodTotalRange1 - sp->ShadowVeryShortPeriodTotalTrailRange1);
+   sp->ShadowVeryShortPeriodTotal[0] = sp->ShadowVeryShortPeriodTotal[0] + (ShadowVeryShortPeriodTotalRange0 - ShadowVeryShortPeriodTotalTrailRange0);
+   sp->ShadowVeryShortPeriodTotalRange1 = ShadowVeryShortPeriodTotalRange0;
+   sp->ShadowVeryShortPeriodTotalTrailRange1 = ShadowVeryShortPeriodTotalTrailRange0;
    sp->cur_outInteger = *outInteger;
    sp->lag1_inOpen = inOpen;
    sp->lag1_inHigh = inHigh;
    sp->lag1_inLow = inLow;
    sp->lag1_inClose = inClose;
+   sp->ring_BodyLongTrailingIdx_derived[sp->ringPos_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
    sp->ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx + 1;
    if( sp->ringPos_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
    {
       sp->ringPos_BodyLongTrailingIdx = 0;
    }
+   sp->ring_ShadowVeryShortTrailingIdx_derived[sp->ringPos_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen,inHigh,inLow,inClose);
    sp->ringPos_ShadowVeryShortTrailingIdx = sp->ringPos_ShadowVeryShortTrailingIdx + 1;
    if( sp->ringPos_ShadowVeryShortTrailingIdx >= sp->ringCap_ShadowVeryShortTrailingIdx )
    {
@@ -514,9 +593,16 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLKICKINGBYLENGTH_OpenBody( struct TA_CDLKI
       double ShadowVeryShort_factor = TA_Globals->candleSettings[TA_ShadowVeryShort].factor;
       double ShadowVeryShortPeriodTotal[2] = {0};
       double BodyLongPeriodTotal[2] = {0};
+      double BodyLongPeriodTotalRange0;
+      double BodyLongPeriodTotalTrailRange0;
+      double BodyLongPeriodTotalRange1 = 0.0;
+      double BodyLongPeriodTotalTrailRange1 = 0.0;
+      double ShadowVeryShortPeriodTotalRange0;
+      double ShadowVeryShortPeriodTotalTrailRange0;
+      double ShadowVeryShortPeriodTotalRange1 = 0.0;
+      double ShadowVeryShortPeriodTotalTrailRange1 = 0.0;
       int i;
       int outIdx;
-      int totIdx;
       int ShadowVeryShortTrailingIdx;
       int BodyLongTrailingIdx;
       int lookbackTotal;
@@ -571,6 +657,10 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLKICKINGBYLENGTH_OpenBody( struct TA_CDLKI
        * The meaning of "long body" and "very short shadow" is specified with TA_SetCandleSettings
        */
       outIdx = 0;
+      BodyLongPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1);
+      BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx - 1);
+      ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 1);
+      ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - 1);
       do
       {
          if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) && /* opposite candles */
@@ -598,11 +688,18 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLKICKINGBYLENGTH_OpenBody( struct TA_CDLKI
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
-         for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
-         {
-            BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx - totIdx));
-            ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - totIdx));
-         }
+         BodyLongPeriodTotalRange0 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,i);
+         BodyLongPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx);
+         BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (BodyLongPeriodTotalRange1 - BodyLongPeriodTotalTrailRange1);
+         BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0);
+         BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+         BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
+         ShadowVeryShortPeriodTotalRange0 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,i);
+         ShadowVeryShortPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx);
+         ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+         ShadowVeryShortPeriodTotal[0] = ShadowVeryShortPeriodTotal[0] + (ShadowVeryShortPeriodTotalRange0 - ShadowVeryShortPeriodTotalTrailRange0);
+         ShadowVeryShortPeriodTotalRange1 = ShadowVeryShortPeriodTotalRange0;
+         ShadowVeryShortPeriodTotalTrailRange1 = ShadowVeryShortPeriodTotalTrailRange0;
          i += 1;
          ShadowVeryShortTrailingIdx += 1;
          BodyLongTrailingIdx += 1;
@@ -617,30 +714,32 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLKICKINGBYLENGTH_OpenBody( struct TA_CDLKI
       memset( sp, 0, sizeof(*sp) );
       memcpy( sp->ShadowVeryShortPeriodTotal, ShadowVeryShortPeriodTotal, sizeof( sp->ShadowVeryShortPeriodTotal ) );
       memcpy( sp->BodyLongPeriodTotal, BodyLongPeriodTotal, sizeof( sp->BodyLongPeriodTotal ) );
-      sp->ringLag_BodyLongTrailingIdx = (int)(i - BodyLongTrailingIdx);
-      sp->ringCap_BodyLongTrailingIdx = sp->ringLag_BodyLongTrailingIdx + 2;
-      if( sp->ringLag_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLKICKINGBYLENGTH_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(264); }
+      sp->BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange1;
+      sp->BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange1;
+      sp->ShadowVeryShortPeriodTotalRange1 = ShadowVeryShortPeriodTotalRange1;
+      sp->ShadowVeryShortPeriodTotalTrailRange1 = ShadowVeryShortPeriodTotalTrailRange1;
+      sp->ringCap_BodyLongTrailingIdx = (int)(i - BodyLongTrailingIdx);
+      if( sp->ringCap_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLKICKINGBYLENGTH_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(513); }
       { size_t allocN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
         sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDLKICKINGBYLENGTH_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_BodyLongTrailingIdx_derived[fillJ % sp->ringCap_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
+             sp->ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - sp->ringCap_BodyLongTrailingIdx)] = TA_STREAM_CANDLERANGE(BodyLong,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
         }
       }
-      sp->ringPos_BodyLongTrailingIdx = historyLen % sp->ringCap_BodyLongTrailingIdx;
-      sp->ringLag_ShadowVeryShortTrailingIdx = (int)(i - ShadowVeryShortTrailingIdx);
-      sp->ringCap_ShadowVeryShortTrailingIdx = sp->ringLag_ShadowVeryShortTrailingIdx + 2;
-      if( sp->ringLag_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLKICKINGBYLENGTH_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(265); }
+      sp->ringPos_BodyLongTrailingIdx = 0;
+      sp->ringCap_ShadowVeryShortTrailingIdx = (int)(i - ShadowVeryShortTrailingIdx);
+      if( sp->ringCap_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLKICKINGBYLENGTH_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(514); }
       { size_t allocN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
         sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDLKICKINGBYLENGTH_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_ShadowVeryShortTrailingIdx_derived[fillJ % sp->ringCap_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
+             sp->ring_ShadowVeryShortTrailingIdx_derived[fillJ - (historyLen - sp->ringCap_ShadowVeryShortTrailingIdx)] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
         }
       }
-      sp->ringPos_ShadowVeryShortTrailingIdx = historyLen % sp->ringCap_ShadowVeryShortTrailingIdx;
+      sp->ringPos_ShadowVeryShortTrailingIdx = 0;
       sp->lag1_inOpen = inOpen[historyLen - 1];
       sp->lag1_inHigh = inHigh[historyLen - 1];
       sp->lag1_inLow = inLow[historyLen - 1];
@@ -684,6 +783,10 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLKICKINGBYLENGTH_OpenBody( struct TA_CDLKI
        * The meaning of "long body" and "very short shadow" is specified with TA_SetCandleSettings
        */
       outIdx = 0;
+      BodyLongPeriodTotalRange1 = TA_CANDLERANGE_OF(BodyLong_rangeType,i - 1);
+      BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx - 1);
+      ShadowVeryShortPeriodTotalRange1 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - 1);
+      ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - 1);
       do
       {
          if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) && /* opposite candles */
@@ -711,11 +814,18 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLKICKINGBYLENGTH_OpenBody( struct TA_CDLKI
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
-         for( totIdx = 1; totIdx >= 0; totIdx -= 1 )
-         {
-            BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(BodyLong_rangeType,i - totIdx) - TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx - totIdx));
-            ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i - totIdx) - TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - totIdx));
-         }
+         BodyLongPeriodTotalRange0 = TA_CANDLERANGE_OF(BodyLong_rangeType,i);
+         BodyLongPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx);
+         BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + (BodyLongPeriodTotalRange1 - BodyLongPeriodTotalTrailRange1);
+         BodyLongPeriodTotal[0] = BodyLongPeriodTotal[0] + (BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0);
+         BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
+         BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
+         ShadowVeryShortPeriodTotalRange0 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i);
+         ShadowVeryShortPeriodTotalTrailRange0 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx);
+         ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+         ShadowVeryShortPeriodTotal[0] = ShadowVeryShortPeriodTotal[0] + (ShadowVeryShortPeriodTotalRange0 - ShadowVeryShortPeriodTotalTrailRange0);
+         ShadowVeryShortPeriodTotalRange1 = ShadowVeryShortPeriodTotalRange0;
+         ShadowVeryShortPeriodTotalTrailRange1 = ShadowVeryShortPeriodTotalTrailRange0;
          i += 1;
          ShadowVeryShortTrailingIdx += 1;
          BodyLongTrailingIdx += 1;
@@ -730,30 +840,32 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLKICKINGBYLENGTH_OpenBody( struct TA_CDLKI
       memset( sp, 0, sizeof(*sp) );
       memcpy( sp->ShadowVeryShortPeriodTotal, ShadowVeryShortPeriodTotal, sizeof( sp->ShadowVeryShortPeriodTotal ) );
       memcpy( sp->BodyLongPeriodTotal, BodyLongPeriodTotal, sizeof( sp->BodyLongPeriodTotal ) );
-      sp->ringLag_BodyLongTrailingIdx = (int)(i - BodyLongTrailingIdx);
-      sp->ringCap_BodyLongTrailingIdx = sp->ringLag_BodyLongTrailingIdx + 2;
-      if( sp->ringLag_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLKICKINGBYLENGTH_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(264); }
+      sp->BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange1;
+      sp->BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange1;
+      sp->ShadowVeryShortPeriodTotalRange1 = ShadowVeryShortPeriodTotalRange1;
+      sp->ShadowVeryShortPeriodTotalTrailRange1 = ShadowVeryShortPeriodTotalTrailRange1;
+      sp->ringCap_BodyLongTrailingIdx = (int)(i - BodyLongTrailingIdx);
+      if( sp->ringCap_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLKICKINGBYLENGTH_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(513); }
       { size_t allocN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
         sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDLKICKINGBYLENGTH_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_BodyLongTrailingIdx_derived[fillJ % sp->ringCap_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
+             sp->ring_BodyLongTrailingIdx_derived[fillJ - (historyLen - sp->ringCap_BodyLongTrailingIdx)] = TA_STREAM_CANDLERANGE(BodyLong,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
         }
       }
-      sp->ringPos_BodyLongTrailingIdx = historyLen % sp->ringCap_BodyLongTrailingIdx;
-      sp->ringLag_ShadowVeryShortTrailingIdx = (int)(i - ShadowVeryShortTrailingIdx);
-      sp->ringCap_ShadowVeryShortTrailingIdx = sp->ringLag_ShadowVeryShortTrailingIdx + 2;
-      if( sp->ringLag_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLKICKINGBYLENGTH_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(265); }
+      sp->ringPos_BodyLongTrailingIdx = 0;
+      sp->ringCap_ShadowVeryShortTrailingIdx = (int)(i - ShadowVeryShortTrailingIdx);
+      if( sp->ringCap_ShadowVeryShortTrailingIdx < 0 || sp->ringCap_ShadowVeryShortTrailingIdx > historyLen ) { TA_CDLKICKINGBYLENGTH_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(514); }
       { size_t allocN = (size_t)(sp->ringCap_ShadowVeryShortTrailingIdx > 0 ? sp->ringCap_ShadowVeryShortTrailingIdx : 1);
         sp->ring_ShadowVeryShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_ShadowVeryShortTrailingIdx_derived ) { TA_CDLKICKINGBYLENGTH_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
         { int fillJ;
           for( fillJ = historyLen - sp->ringCap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_ShadowVeryShortTrailingIdx_derived[fillJ % sp->ringCap_ShadowVeryShortTrailingIdx] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
+             sp->ring_ShadowVeryShortTrailingIdx_derived[fillJ - (historyLen - sp->ringCap_ShadowVeryShortTrailingIdx)] = TA_STREAM_CANDLERANGE(ShadowVeryShort,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
         }
       }
-      sp->ringPos_ShadowVeryShortTrailingIdx = historyLen % sp->ringCap_ShadowVeryShortTrailingIdx;
+      sp->ringPos_ShadowVeryShortTrailingIdx = 0;
       sp->lag1_inOpen = inOpen[historyLen - 1];
       sp->lag1_inHigh = inHigh[historyLen - 1];
       sp->lag1_inLow = inLow[historyLen - 1];

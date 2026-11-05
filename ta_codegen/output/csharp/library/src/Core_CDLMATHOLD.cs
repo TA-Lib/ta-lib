@@ -58,6 +58,7 @@ public partial class Core
     *  022005 AC     Creation
     *  100426 MF,CC  Remove the outInteger comment, which misstated the values
     *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
+    *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
     */
    /// <summary>
    /// Number of leading input bars <c>Cdlmathold</c> consumes before it can
@@ -125,9 +126,14 @@ public partial class Core
       outBegIdx = 0;
       outNBElement = 0;
       double[] BodyPeriodTotal = new double[5];
+      double BodyPeriodTotalRange1 = 0;
+      double BodyPeriodTotalTrailRange1 = 0;
+      double BodyPeriodTotalRange2 = 0;
+      double BodyPeriodTotalTrailRange2 = 0;
+      double BodyPeriodTotalRange3 = 0;
+      double BodyPeriodTotalTrailRange3 = 0;
       int i = 0;
       int outIdx = 0;
-      int totIdx = 0;
       int BodyShortTrailingIdx = 0;
       int BodyLongTrailingIdx = 0;
       int lookbackTotal = 0;
@@ -204,6 +210,10 @@ public partial class Core
        * to specify how much the reaction days should be "higher than the reaction days of the rising three methods")
        */
       outIdx = 0;
+      BodyPeriodTotalRange2 = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyShort_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyShort_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+      BodyPeriodTotalTrailRange2 = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[BodyShortTrailingIdx - 2] - inOpen[BodyShortTrailingIdx - 2])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyShortTrailingIdx - 2] - inLow[BodyShortTrailingIdx - 2]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyShortTrailingIdx - 2] - (((inClose[BodyShortTrailingIdx - 2]) >= (inOpen[BodyShortTrailingIdx - 2])) ? (inClose[BodyShortTrailingIdx - 2]) : (inOpen[BodyShortTrailingIdx - 2]))) + ((((inClose[BodyShortTrailingIdx - 2]) >= (inOpen[BodyShortTrailingIdx - 2])) ? (inOpen[BodyShortTrailingIdx - 2]) : (inClose[BodyShortTrailingIdx - 2])) - inLow[BodyShortTrailingIdx - 2])) : 0.0)));
+      BodyPeriodTotalRange3 = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i - 3] - inOpen[i - 3])) : ((BodyShort_rangeType == 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((BodyShort_rangeType == 2) ? ((inHigh[i - 3] - (((inClose[i - 3]) >= (inOpen[i - 3])) ? (inClose[i - 3]) : (inOpen[i - 3]))) + ((((inClose[i - 3]) >= (inOpen[i - 3])) ? (inOpen[i - 3]) : (inClose[i - 3])) - inLow[i - 3])) : 0.0)));
+      BodyPeriodTotalTrailRange3 = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[BodyShortTrailingIdx - 3] - inOpen[BodyShortTrailingIdx - 3])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyShortTrailingIdx - 3] - inLow[BodyShortTrailingIdx - 3]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyShortTrailingIdx - 3] - (((inClose[BodyShortTrailingIdx - 3]) >= (inOpen[BodyShortTrailingIdx - 3])) ? (inClose[BodyShortTrailingIdx - 3]) : (inOpen[BodyShortTrailingIdx - 3]))) + ((((inClose[BodyShortTrailingIdx - 3]) >= (inOpen[BodyShortTrailingIdx - 3])) ? (inOpen[BodyShortTrailingIdx - 3]) : (inClose[BodyShortTrailingIdx - 3])) - inLow[BodyShortTrailingIdx - 3])) : 0.0)));
       do {
          if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == 1 &&     /* white, black, 2 black or white, white */
              ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
@@ -230,9 +240,15 @@ public partial class Core
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
          BodyPeriodTotal[4] = BodyPeriodTotal[4] + (((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - 4] - inOpen[i - 4])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 4] - inLow[i - 4]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 4] - (((inClose[i - 4]) >= (inOpen[i - 4])) ? (inClose[i - 4]) : (inOpen[i - 4]))) + ((((inClose[i - 4]) >= (inOpen[i - 4])) ? (inOpen[i - 4]) : (inClose[i - 4])) - inLow[i - 4])) : 0.0))) - ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[BodyLongTrailingIdx - 4] - inOpen[BodyLongTrailingIdx - 4])) : ((BodyLong_rangeType == 1) ? (inHigh[BodyLongTrailingIdx - 4] - inLow[BodyLongTrailingIdx - 4]) : ((BodyLong_rangeType == 2) ? ((inHigh[BodyLongTrailingIdx - 4] - (((inClose[BodyLongTrailingIdx - 4]) >= (inOpen[BodyLongTrailingIdx - 4])) ? (inClose[BodyLongTrailingIdx - 4]) : (inOpen[BodyLongTrailingIdx - 4]))) + ((((inClose[BodyLongTrailingIdx - 4]) >= (inOpen[BodyLongTrailingIdx - 4])) ? (inOpen[BodyLongTrailingIdx - 4]) : (inClose[BodyLongTrailingIdx - 4])) - inLow[BodyLongTrailingIdx - 4])) : 0.0))));
-         for( totIdx = 3; totIdx >= 1; totIdx -= 1 ) {
-            BodyPeriodTotal[totIdx] = BodyPeriodTotal[totIdx] + (((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((BodyShort_rangeType == 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((BodyShort_rangeType == 2) ? ((inHigh[i - totIdx] - (((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inClose[i - totIdx]) : (inOpen[i - totIdx]))) + ((((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inOpen[i - totIdx]) : (inClose[i - totIdx])) - inLow[i - totIdx])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[BodyShortTrailingIdx - totIdx] - inOpen[BodyShortTrailingIdx - totIdx])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyShortTrailingIdx - totIdx] - inLow[BodyShortTrailingIdx - totIdx]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyShortTrailingIdx - totIdx] - (((inClose[BodyShortTrailingIdx - totIdx]) >= (inOpen[BodyShortTrailingIdx - totIdx])) ? (inClose[BodyShortTrailingIdx - totIdx]) : (inOpen[BodyShortTrailingIdx - totIdx]))) + ((((inClose[BodyShortTrailingIdx - totIdx]) >= (inOpen[BodyShortTrailingIdx - totIdx])) ? (inOpen[BodyShortTrailingIdx - totIdx]) : (inClose[BodyShortTrailingIdx - totIdx])) - inLow[BodyShortTrailingIdx - totIdx])) : 0.0))));
-         }
+         BodyPeriodTotalRange1 = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyShort_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+         BodyPeriodTotalTrailRange1 = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[BodyShortTrailingIdx - 1] - inOpen[BodyShortTrailingIdx - 1])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyShortTrailingIdx - 1] - inLow[BodyShortTrailingIdx - 1]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyShortTrailingIdx - 1] - (((inClose[BodyShortTrailingIdx - 1]) >= (inOpen[BodyShortTrailingIdx - 1])) ? (inClose[BodyShortTrailingIdx - 1]) : (inOpen[BodyShortTrailingIdx - 1]))) + ((((inClose[BodyShortTrailingIdx - 1]) >= (inOpen[BodyShortTrailingIdx - 1])) ? (inOpen[BodyShortTrailingIdx - 1]) : (inClose[BodyShortTrailingIdx - 1])) - inLow[BodyShortTrailingIdx - 1])) : 0.0)));
+         BodyPeriodTotal[3] = BodyPeriodTotal[3] + (BodyPeriodTotalRange3 - BodyPeriodTotalTrailRange3);
+         BodyPeriodTotal[2] = BodyPeriodTotal[2] + (BodyPeriodTotalRange2 - BodyPeriodTotalTrailRange2);
+         BodyPeriodTotal[1] = BodyPeriodTotal[1] + (BodyPeriodTotalRange1 - BodyPeriodTotalTrailRange1);
+         BodyPeriodTotalRange3 = BodyPeriodTotalRange2;
+         BodyPeriodTotalTrailRange3 = BodyPeriodTotalTrailRange2;
+         BodyPeriodTotalRange2 = BodyPeriodTotalRange1;
+         BodyPeriodTotalTrailRange2 = BodyPeriodTotalTrailRange1;
          i += 1;
          BodyShortTrailingIdx += 1;
          BodyLongTrailingIdx += 1;
@@ -256,9 +272,14 @@ public partial class Core
       outBegIdx = 0;
       outNBElement = 0;
       double[] BodyPeriodTotal = new double[5];
+      double BodyPeriodTotalRange1 = 0;
+      double BodyPeriodTotalTrailRange1 = 0;
+      double BodyPeriodTotalRange2 = 0;
+      double BodyPeriodTotalTrailRange2 = 0;
+      double BodyPeriodTotalRange3 = 0;
+      double BodyPeriodTotalTrailRange3 = 0;
       int i = 0;
       int outIdx = 0;
-      int totIdx = 0;
       int BodyShortTrailingIdx = 0;
       int BodyLongTrailingIdx = 0;
       int lookbackTotal = 0;
@@ -312,6 +333,10 @@ public partial class Core
       }
       i = startIdx;
       outIdx = 0;
+      BodyPeriodTotalRange2 = ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)));
+      BodyPeriodTotalTrailRange2 = ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[BodyShortTrailingIdx - 2] - (double)inOpen[BodyShortTrailingIdx - 2])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[BodyShortTrailingIdx - 2] - (double)inLow[BodyShortTrailingIdx - 2]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[BodyShortTrailingIdx - 2] - ((((double)inClose[BodyShortTrailingIdx - 2]) >= ((double)inOpen[BodyShortTrailingIdx - 2])) ? ((double)inClose[BodyShortTrailingIdx - 2]) : ((double)inOpen[BodyShortTrailingIdx - 2]))) + (((((double)inClose[BodyShortTrailingIdx - 2]) >= ((double)inOpen[BodyShortTrailingIdx - 2])) ? ((double)inOpen[BodyShortTrailingIdx - 2]) : ((double)inClose[BodyShortTrailingIdx - 2])) - (double)inLow[BodyShortTrailingIdx - 2])) : 0.0)));
+      BodyPeriodTotalRange3 = ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 3] - (double)inOpen[i - 3])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i - 3] - (double)inLow[i - 3]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i - 3] - ((((double)inClose[i - 3]) >= ((double)inOpen[i - 3])) ? ((double)inClose[i - 3]) : ((double)inOpen[i - 3]))) + (((((double)inClose[i - 3]) >= ((double)inOpen[i - 3])) ? ((double)inOpen[i - 3]) : ((double)inClose[i - 3])) - (double)inLow[i - 3])) : 0.0)));
+      BodyPeriodTotalTrailRange3 = ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[BodyShortTrailingIdx - 3] - (double)inOpen[BodyShortTrailingIdx - 3])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[BodyShortTrailingIdx - 3] - (double)inLow[BodyShortTrailingIdx - 3]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[BodyShortTrailingIdx - 3] - ((((double)inClose[BodyShortTrailingIdx - 3]) >= ((double)inOpen[BodyShortTrailingIdx - 3])) ? ((double)inClose[BodyShortTrailingIdx - 3]) : ((double)inOpen[BodyShortTrailingIdx - 3]))) + (((((double)inClose[BodyShortTrailingIdx - 3]) >= ((double)inOpen[BodyShortTrailingIdx - 3])) ? ((double)inOpen[BodyShortTrailingIdx - 3]) : ((double)inClose[BodyShortTrailingIdx - 3])) - (double)inLow[BodyShortTrailingIdx - 3])) : 0.0)));
       do {
          if( (((double)inClose[i - 4] >= (double)inOpen[i - 4]) ? 1 : -1) == 1 && (((double)inClose[i - 3] >= (double)inOpen[i - 3]) ? 1 : -1) == -1 && (((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) == 1 && (MinLt((double)inOpen[i - 3], (double)inClose[i - 3]) > MaxGt((double)inOpen[i - 4], (double)inClose[i - 4])) && MinLt((double)inOpen[i - 2], (double)inClose[i - 2]) < (double)inClose[i - 4] && MinLt((double)inOpen[i - 1], (double)inClose[i - 1]) < (double)inClose[i - 4] && MinLt((double)inOpen[i - 2], (double)inClose[i - 2]) > (double)inClose[i - 4] - Math.Abs((double)inClose[i - 4] - (double)inOpen[i - 4]) * optInPenetration && MinLt((double)inOpen[i - 1], (double)inClose[i - 1]) > (double)inClose[i - 4] - Math.Abs((double)inClose[i - 4] - (double)inOpen[i - 4]) * optInPenetration && MaxGt((double)inClose[i - 2], (double)inOpen[i - 2]) < (double)inOpen[i - 3] && MaxGt((double)inClose[i - 1], (double)inOpen[i - 1]) < MaxGt((double)inClose[i - 2], (double)inOpen[i - 2]) && (double)inOpen[i] > (double)inClose[i - 1] && (double)inClose[i] > MaxGt(MaxGt((double)inHigh[i - 3], (double)inHigh[i - 2]), (double)inHigh[i - 1]) && Math.Abs((double)inClose[i - 4] - (double)inOpen[i - 4]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyPeriodTotal[4] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 4] - (double)inOpen[i - 4])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 4] - (double)inLow[i - 4]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 4] - ((((double)inClose[i - 4]) >= ((double)inOpen[i - 4])) ? ((double)inClose[i - 4]) : ((double)inOpen[i - 4]))) + (((((double)inClose[i - 4]) >= ((double)inOpen[i - 4])) ? ((double)inOpen[i - 4]) : ((double)inClose[i - 4])) - (double)inLow[i - 4])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i - 3] - (double)inOpen[i - 3]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal[3] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 3] - (double)inOpen[i - 3])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i - 3] - (double)inLow[i - 3]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i - 3] - ((((double)inClose[i - 3]) >= ((double)inOpen[i - 3])) ? ((double)inClose[i - 3]) : ((double)inOpen[i - 3]))) + (((((double)inClose[i - 3]) >= ((double)inOpen[i - 3])) ? ((double)inOpen[i - 3]) : ((double)inClose[i - 3])) - (double)inLow[i - 3])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal[2] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 2] - (double)inOpen[i - 2])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i - 2] - (double)inLow[i - 2]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i - 2] - ((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inClose[i - 2]) : ((double)inOpen[i - 2]))) + (((((double)inClose[i - 2]) >= ((double)inOpen[i - 2])) ? ((double)inOpen[i - 2]) : ((double)inClose[i - 2])) - (double)inLow[i - 2])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal[1] / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) ) {
             outInteger[outIdx++] = 100;
@@ -319,9 +344,15 @@ public partial class Core
             outInteger[outIdx++] = 0;
          }
          BodyPeriodTotal[4] = BodyPeriodTotal[4] + (((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[i - 4] - (double)inOpen[i - 4])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[i - 4] - (double)inLow[i - 4]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[i - 4] - ((((double)inClose[i - 4]) >= ((double)inOpen[i - 4])) ? ((double)inClose[i - 4]) : ((double)inOpen[i - 4]))) + (((((double)inClose[i - 4]) >= ((double)inOpen[i - 4])) ? ((double)inOpen[i - 4]) : ((double)inClose[i - 4])) - (double)inLow[i - 4])) : 0.0))) - ((BodyLong_rangeType == 0) ? (Math.Abs((double)inClose[BodyLongTrailingIdx - 4] - (double)inOpen[BodyLongTrailingIdx - 4])) : ((BodyLong_rangeType == 1) ? ((double)inHigh[BodyLongTrailingIdx - 4] - (double)inLow[BodyLongTrailingIdx - 4]) : ((BodyLong_rangeType == 2) ? (((double)inHigh[BodyLongTrailingIdx - 4] - ((((double)inClose[BodyLongTrailingIdx - 4]) >= ((double)inOpen[BodyLongTrailingIdx - 4])) ? ((double)inClose[BodyLongTrailingIdx - 4]) : ((double)inOpen[BodyLongTrailingIdx - 4]))) + (((((double)inClose[BodyLongTrailingIdx - 4]) >= ((double)inOpen[BodyLongTrailingIdx - 4])) ? ((double)inOpen[BodyLongTrailingIdx - 4]) : ((double)inClose[BodyLongTrailingIdx - 4])) - (double)inLow[BodyLongTrailingIdx - 4])) : 0.0))));
-         for( totIdx = 3; totIdx >= 1; totIdx -= 1 ) {
-            BodyPeriodTotal[totIdx] = BodyPeriodTotal[totIdx] + (((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i - totIdx] - (double)inOpen[i - totIdx])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i - totIdx] - (double)inLow[i - totIdx]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i - totIdx] - ((((double)inClose[i - totIdx]) >= ((double)inOpen[i - totIdx])) ? ((double)inClose[i - totIdx]) : ((double)inOpen[i - totIdx]))) + (((((double)inClose[i - totIdx]) >= ((double)inOpen[i - totIdx])) ? ((double)inOpen[i - totIdx]) : ((double)inClose[i - totIdx])) - (double)inLow[i - totIdx])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[BodyShortTrailingIdx - totIdx] - (double)inOpen[BodyShortTrailingIdx - totIdx])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[BodyShortTrailingIdx - totIdx] - (double)inLow[BodyShortTrailingIdx - totIdx]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[BodyShortTrailingIdx - totIdx] - ((((double)inClose[BodyShortTrailingIdx - totIdx]) >= ((double)inOpen[BodyShortTrailingIdx - totIdx])) ? ((double)inClose[BodyShortTrailingIdx - totIdx]) : ((double)inOpen[BodyShortTrailingIdx - totIdx]))) + (((((double)inClose[BodyShortTrailingIdx - totIdx]) >= ((double)inOpen[BodyShortTrailingIdx - totIdx])) ? ((double)inOpen[BodyShortTrailingIdx - totIdx]) : ((double)inClose[BodyShortTrailingIdx - totIdx])) - (double)inLow[BodyShortTrailingIdx - totIdx])) : 0.0))));
-         }
+         BodyPeriodTotalRange1 = ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[i - 1] - (double)inOpen[i - 1])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[i - 1] - (double)inLow[i - 1]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[i - 1] - ((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inClose[i - 1]) : ((double)inOpen[i - 1]))) + (((((double)inClose[i - 1]) >= ((double)inOpen[i - 1])) ? ((double)inOpen[i - 1]) : ((double)inClose[i - 1])) - (double)inLow[i - 1])) : 0.0)));
+         BodyPeriodTotalTrailRange1 = ((BodyShort_rangeType == 0) ? (Math.Abs((double)inClose[BodyShortTrailingIdx - 1] - (double)inOpen[BodyShortTrailingIdx - 1])) : ((BodyShort_rangeType == 1) ? ((double)inHigh[BodyShortTrailingIdx - 1] - (double)inLow[BodyShortTrailingIdx - 1]) : ((BodyShort_rangeType == 2) ? (((double)inHigh[BodyShortTrailingIdx - 1] - ((((double)inClose[BodyShortTrailingIdx - 1]) >= ((double)inOpen[BodyShortTrailingIdx - 1])) ? ((double)inClose[BodyShortTrailingIdx - 1]) : ((double)inOpen[BodyShortTrailingIdx - 1]))) + (((((double)inClose[BodyShortTrailingIdx - 1]) >= ((double)inOpen[BodyShortTrailingIdx - 1])) ? ((double)inOpen[BodyShortTrailingIdx - 1]) : ((double)inClose[BodyShortTrailingIdx - 1])) - (double)inLow[BodyShortTrailingIdx - 1])) : 0.0)));
+         BodyPeriodTotal[3] = BodyPeriodTotal[3] + (BodyPeriodTotalRange3 - BodyPeriodTotalTrailRange3);
+         BodyPeriodTotal[2] = BodyPeriodTotal[2] + (BodyPeriodTotalRange2 - BodyPeriodTotalTrailRange2);
+         BodyPeriodTotal[1] = BodyPeriodTotal[1] + (BodyPeriodTotalRange1 - BodyPeriodTotalTrailRange1);
+         BodyPeriodTotalRange3 = BodyPeriodTotalRange2;
+         BodyPeriodTotalTrailRange3 = BodyPeriodTotalTrailRange2;
+         BodyPeriodTotalRange2 = BodyPeriodTotalRange1;
+         BodyPeriodTotalTrailRange2 = BodyPeriodTotalTrailRange1;
          i += 1;
          BodyShortTrailingIdx += 1;
          BodyLongTrailingIdx += 1;
@@ -541,6 +572,10 @@ public partial class Core
       internal Core core;
       internal double optInPenetration;
       internal double[] BodyPeriodTotal = [];
+      internal double BodyPeriodTotalRange2;
+      internal double BodyPeriodTotalTrailRange2;
+      internal double BodyPeriodTotalRange3;
+      internal double BodyPeriodTotalTrailRange3;
       internal double lag1_inOpen;
       internal double lag2_inOpen;
       internal double lag3_inOpen;
@@ -616,6 +651,10 @@ public partial class Core
          this.optInPenetration = other.optInPenetration;
          this.BodyPeriodTotal = new double[other.BodyPeriodTotal.Length];
          Array.Copy( other.BodyPeriodTotal, this.BodyPeriodTotal, other.BodyPeriodTotal.Length );
+         this.BodyPeriodTotalRange2 = other.BodyPeriodTotalRange2;
+         this.BodyPeriodTotalTrailRange2 = other.BodyPeriodTotalTrailRange2;
+         this.BodyPeriodTotalRange3 = other.BodyPeriodTotalRange3;
+         this.BodyPeriodTotalTrailRange3 = other.BodyPeriodTotalTrailRange3;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
          this.lag3_inOpen = other.lag3_inOpen;
@@ -753,7 +792,8 @@ public partial class Core
 
    private void CdlmatholdStepImpl( CdlmatholdStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
-      int totIdx = 0;
+      double BodyPeriodTotalRange1 = 0.0;
+      double BodyPeriodTotalTrailRange1 = 0.0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
       double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -787,9 +827,15 @@ public partial class Core
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
       sp.BodyPeriodTotal[4] = sp.BodyPeriodTotal[4] + (((BodyLong_rangeType == 0) ? (Math.Abs(sp.lag4_inClose - sp.lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag4_inHigh - sp.lag4_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag4_inHigh - (((sp.lag4_inClose) >= (sp.lag4_inOpen)) ? (sp.lag4_inClose) : (sp.lag4_inOpen))) + ((((sp.lag4_inClose) >= (sp.lag4_inOpen)) ? (sp.lag4_inOpen) : (sp.lag4_inClose)) - sp.lag4_inLow)) : 0.0))) - sp.ring_BodyLongTrailingIdx_derived[(sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 4) % sp.ringCap_BodyLongTrailingIdx]);
-      for( totIdx = 3; totIdx >= 1; totIdx -= 1 ) {
-         sp.BodyPeriodTotal[totIdx] = sp.BodyPeriodTotal[totIdx] + (sp.ring_BodyShortTrailingIdx_derived[(sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx >= sp.ringCap_BodyShortTrailingIdx) ? sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx - sp.ringCap_BodyShortTrailingIdx : sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - totIdx] - sp.ring_BodyShortTrailingIdx_derived[(sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx - totIdx) % sp.ringCap_BodyShortTrailingIdx]);
-      }
+      BodyPeriodTotalRange1 = ((BodyShort_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((BodyShort_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((BodyShort_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)));
+      BodyPeriodTotalTrailRange1 = sp.ring_BodyShortTrailingIdx_derived[(sp.ringPos_BodyShortTrailingIdx + sp.ringCap_BodyShortTrailingIdx - sp.ringLag_BodyShortTrailingIdx - 1) % sp.ringCap_BodyShortTrailingIdx];
+      sp.BodyPeriodTotal[3] = sp.BodyPeriodTotal[3] + (sp.BodyPeriodTotalRange3 - sp.BodyPeriodTotalTrailRange3);
+      sp.BodyPeriodTotal[2] = sp.BodyPeriodTotal[2] + (sp.BodyPeriodTotalRange2 - sp.BodyPeriodTotalTrailRange2);
+      sp.BodyPeriodTotal[1] = sp.BodyPeriodTotal[1] + (BodyPeriodTotalRange1 - BodyPeriodTotalTrailRange1);
+      sp.BodyPeriodTotalRange3 = sp.BodyPeriodTotalRange2;
+      sp.BodyPeriodTotalTrailRange3 = sp.BodyPeriodTotalTrailRange2;
+      sp.BodyPeriodTotalRange2 = BodyPeriodTotalRange1;
+      sp.BodyPeriodTotalTrailRange2 = BodyPeriodTotalTrailRange1;
       sp.lag4_inOpen = sp.lag3_inOpen;
       sp.lag3_inOpen = sp.lag2_inOpen;
       sp.lag2_inOpen = sp.lag1_inOpen;
@@ -821,9 +867,14 @@ public partial class Core
       outBegIdx = 0;
       outNBElement = 0;
       double[] BodyPeriodTotal = new double[5];
+      double BodyPeriodTotalRange1 = 0;
+      double BodyPeriodTotalTrailRange1 = 0;
+      double BodyPeriodTotalRange2 = 0;
+      double BodyPeriodTotalTrailRange2 = 0;
+      double BodyPeriodTotalRange3 = 0;
+      double BodyPeriodTotalTrailRange3 = 0;
       int i = 0;
       int outIdx = 0;
-      int totIdx = 0;
       int BodyShortTrailingIdx = 0;
       int BodyLongTrailingIdx = 0;
       int lookbackTotal = 0;
@@ -907,6 +958,10 @@ public partial class Core
        * to specify how much the reaction days should be "higher than the reaction days of the rising three methods")
        */
       outIdx = 0;
+      BodyPeriodTotalRange2 = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyShort_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyShort_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+      BodyPeriodTotalTrailRange2 = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[BodyShortTrailingIdx - 2] - inOpen[BodyShortTrailingIdx - 2])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyShortTrailingIdx - 2] - inLow[BodyShortTrailingIdx - 2]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyShortTrailingIdx - 2] - (((inClose[BodyShortTrailingIdx - 2]) >= (inOpen[BodyShortTrailingIdx - 2])) ? (inClose[BodyShortTrailingIdx - 2]) : (inOpen[BodyShortTrailingIdx - 2]))) + ((((inClose[BodyShortTrailingIdx - 2]) >= (inOpen[BodyShortTrailingIdx - 2])) ? (inOpen[BodyShortTrailingIdx - 2]) : (inClose[BodyShortTrailingIdx - 2])) - inLow[BodyShortTrailingIdx - 2])) : 0.0)));
+      BodyPeriodTotalRange3 = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i - 3] - inOpen[i - 3])) : ((BodyShort_rangeType == 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((BodyShort_rangeType == 2) ? ((inHigh[i - 3] - (((inClose[i - 3]) >= (inOpen[i - 3])) ? (inClose[i - 3]) : (inOpen[i - 3]))) + ((((inClose[i - 3]) >= (inOpen[i - 3])) ? (inOpen[i - 3]) : (inClose[i - 3])) - inLow[i - 3])) : 0.0)));
+      BodyPeriodTotalTrailRange3 = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[BodyShortTrailingIdx - 3] - inOpen[BodyShortTrailingIdx - 3])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyShortTrailingIdx - 3] - inLow[BodyShortTrailingIdx - 3]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyShortTrailingIdx - 3] - (((inClose[BodyShortTrailingIdx - 3]) >= (inOpen[BodyShortTrailingIdx - 3])) ? (inClose[BodyShortTrailingIdx - 3]) : (inOpen[BodyShortTrailingIdx - 3]))) + ((((inClose[BodyShortTrailingIdx - 3]) >= (inOpen[BodyShortTrailingIdx - 3])) ? (inOpen[BodyShortTrailingIdx - 3]) : (inClose[BodyShortTrailingIdx - 3])) - inLow[BodyShortTrailingIdx - 3])) : 0.0)));
       do {
          if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == 1 &&     /* white, black, 2 black or white, white */
              ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
@@ -933,9 +988,15 @@ public partial class Core
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
          BodyPeriodTotal[4] = BodyPeriodTotal[4] + (((BodyLong_rangeType == 0) ? (Math.Abs(inClose[i - 4] - inOpen[i - 4])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 4] - inLow[i - 4]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 4] - (((inClose[i - 4]) >= (inOpen[i - 4])) ? (inClose[i - 4]) : (inOpen[i - 4]))) + ((((inClose[i - 4]) >= (inOpen[i - 4])) ? (inOpen[i - 4]) : (inClose[i - 4])) - inLow[i - 4])) : 0.0))) - ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[BodyLongTrailingIdx - 4] - inOpen[BodyLongTrailingIdx - 4])) : ((BodyLong_rangeType == 1) ? (inHigh[BodyLongTrailingIdx - 4] - inLow[BodyLongTrailingIdx - 4]) : ((BodyLong_rangeType == 2) ? ((inHigh[BodyLongTrailingIdx - 4] - (((inClose[BodyLongTrailingIdx - 4]) >= (inOpen[BodyLongTrailingIdx - 4])) ? (inClose[BodyLongTrailingIdx - 4]) : (inOpen[BodyLongTrailingIdx - 4]))) + ((((inClose[BodyLongTrailingIdx - 4]) >= (inOpen[BodyLongTrailingIdx - 4])) ? (inOpen[BodyLongTrailingIdx - 4]) : (inClose[BodyLongTrailingIdx - 4])) - inLow[BodyLongTrailingIdx - 4])) : 0.0))));
-         for( totIdx = 3; totIdx >= 1; totIdx -= 1 ) {
-            BodyPeriodTotal[totIdx] = BodyPeriodTotal[totIdx] + (((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((BodyShort_rangeType == 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((BodyShort_rangeType == 2) ? ((inHigh[i - totIdx] - (((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inClose[i - totIdx]) : (inOpen[i - totIdx]))) + ((((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inOpen[i - totIdx]) : (inClose[i - totIdx])) - inLow[i - totIdx])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[BodyShortTrailingIdx - totIdx] - inOpen[BodyShortTrailingIdx - totIdx])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyShortTrailingIdx - totIdx] - inLow[BodyShortTrailingIdx - totIdx]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyShortTrailingIdx - totIdx] - (((inClose[BodyShortTrailingIdx - totIdx]) >= (inOpen[BodyShortTrailingIdx - totIdx])) ? (inClose[BodyShortTrailingIdx - totIdx]) : (inOpen[BodyShortTrailingIdx - totIdx]))) + ((((inClose[BodyShortTrailingIdx - totIdx]) >= (inOpen[BodyShortTrailingIdx - totIdx])) ? (inOpen[BodyShortTrailingIdx - totIdx]) : (inClose[BodyShortTrailingIdx - totIdx])) - inLow[BodyShortTrailingIdx - totIdx])) : 0.0))));
-         }
+         BodyPeriodTotalRange1 = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyShort_rangeType == 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+         BodyPeriodTotalTrailRange1 = ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[BodyShortTrailingIdx - 1] - inOpen[BodyShortTrailingIdx - 1])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyShortTrailingIdx - 1] - inLow[BodyShortTrailingIdx - 1]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyShortTrailingIdx - 1] - (((inClose[BodyShortTrailingIdx - 1]) >= (inOpen[BodyShortTrailingIdx - 1])) ? (inClose[BodyShortTrailingIdx - 1]) : (inOpen[BodyShortTrailingIdx - 1]))) + ((((inClose[BodyShortTrailingIdx - 1]) >= (inOpen[BodyShortTrailingIdx - 1])) ? (inOpen[BodyShortTrailingIdx - 1]) : (inClose[BodyShortTrailingIdx - 1])) - inLow[BodyShortTrailingIdx - 1])) : 0.0)));
+         BodyPeriodTotal[3] = BodyPeriodTotal[3] + (BodyPeriodTotalRange3 - BodyPeriodTotalTrailRange3);
+         BodyPeriodTotal[2] = BodyPeriodTotal[2] + (BodyPeriodTotalRange2 - BodyPeriodTotalTrailRange2);
+         BodyPeriodTotal[1] = BodyPeriodTotal[1] + (BodyPeriodTotalRange1 - BodyPeriodTotalTrailRange1);
+         BodyPeriodTotalRange3 = BodyPeriodTotalRange2;
+         BodyPeriodTotalTrailRange3 = BodyPeriodTotalTrailRange2;
+         BodyPeriodTotalRange2 = BodyPeriodTotalRange1;
+         BodyPeriodTotalTrailRange2 = BodyPeriodTotalTrailRange1;
          i += 1;
          BodyShortTrailingIdx += 1;
          BodyLongTrailingIdx += 1;
@@ -955,7 +1016,7 @@ public partial class Core
          capRing_BodyLongTrailingIdx_derived[fillJ % cap_BodyLongTrailingIdx] = ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyLong_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyLong_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
       }
       int capLag_BodyShortTrailingIdx = i - BodyShortTrailingIdx;
-      int cap_BodyShortTrailingIdx = capLag_BodyShortTrailingIdx + 4;
+      int cap_BodyShortTrailingIdx = capLag_BodyShortTrailingIdx + 2;
       if( capLag_BodyShortTrailingIdx < 0 || cap_BodyShortTrailingIdx > historyLen ) {
          return RetCode.InternalError;
       }
@@ -966,6 +1027,10 @@ public partial class Core
       }
       sp.optInPenetration = optInPenetration;
       sp.BodyPeriodTotal = BodyPeriodTotal;
+      sp.BodyPeriodTotalRange2 = BodyPeriodTotalRange2;
+      sp.BodyPeriodTotalTrailRange2 = BodyPeriodTotalTrailRange2;
+      sp.BodyPeriodTotalRange3 = BodyPeriodTotalRange3;
+      sp.BodyPeriodTotalTrailRange3 = BodyPeriodTotalTrailRange3;
       sp.lag1_inOpen = inOpen[historyLen - 1];
       sp.lag2_inOpen = inOpen[historyLen - 2];
       sp.lag3_inOpen = inOpen[historyLen - 3];

@@ -14,6 +14,7 @@
  *  022005 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
+ *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  *
  */
 
@@ -33,7 +34,8 @@ TA_RetCode cdlmathold(int startIdx, int endIdx,
    int outInteger[])
 {
    double BodyPeriodTotal[5];
-   int i, outIdx, totIdx, BodyShortTrailingIdx, BodyLongTrailingIdx, lookbackTotal;
+   double BodyPeriodTotalRange1, BodyPeriodTotalTrailRange1, BodyPeriodTotalRange2, BodyPeriodTotalTrailRange2, BodyPeriodTotalRange3, BodyPeriodTotalTrailRange3;
+   int i, outIdx, BodyShortTrailingIdx, BodyLongTrailingIdx, lookbackTotal;
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -95,6 +97,10 @@ TA_RetCode cdlmathold(int startIdx, int endIdx,
     * to specify how much the reaction days should be "higher than the reaction days of the rising three methods")
     */
    outIdx = 0;
+   BodyPeriodTotalRange2 = ta_candlerange(BodyShort_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]);
+   BodyPeriodTotalTrailRange2 = ta_candlerange(BodyShort_rangeType, inOpen[BodyShortTrailingIdx-2], inHigh[BodyShortTrailingIdx-2], inLow[BodyShortTrailingIdx-2], inClose[BodyShortTrailingIdx-2]);
+   BodyPeriodTotalRange3 = ta_candlerange(BodyShort_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3]);
+   BodyPeriodTotalTrailRange3 = ta_candlerange(BodyShort_rangeType, inOpen[BodyShortTrailingIdx-3], inHigh[BodyShortTrailingIdx-3], inLow[BodyShortTrailingIdx-3], inClose[BodyShortTrailingIdx-3]);
    do
    {
       if( // white, black, 2 black or white, white
@@ -136,9 +142,15 @@ TA_RetCode cdlmathold(int startIdx, int endIdx,
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
       BodyPeriodTotal[4] += ta_candlerange(BodyLong_rangeType, inOpen[i-4], inHigh[i-4], inLow[i-4], inClose[i-4]) - ta_candlerange(BodyLong_rangeType, inOpen[BodyLongTrailingIdx-4], inHigh[BodyLongTrailingIdx-4], inLow[BodyLongTrailingIdx-4], inClose[BodyLongTrailingIdx-4]);
-      for (totIdx = 3; totIdx >= 1; --totIdx)
-         BodyPeriodTotal[totIdx] += ta_candlerange(BodyShort_rangeType, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx])
-      - ta_candlerange(BodyShort_rangeType, inOpen[BodyShortTrailingIdx-totIdx], inHigh[BodyShortTrailingIdx-totIdx], inLow[BodyShortTrailingIdx-totIdx], inClose[BodyShortTrailingIdx-totIdx]);
+      BodyPeriodTotalRange1 = ta_candlerange(BodyShort_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]);
+      BodyPeriodTotalTrailRange1 = ta_candlerange(BodyShort_rangeType, inOpen[BodyShortTrailingIdx-1], inHigh[BodyShortTrailingIdx-1], inLow[BodyShortTrailingIdx-1], inClose[BodyShortTrailingIdx-1]);
+      BodyPeriodTotal[3] += BodyPeriodTotalRange3 - BodyPeriodTotalTrailRange3;
+      BodyPeriodTotal[2] += BodyPeriodTotalRange2 - BodyPeriodTotalTrailRange2;
+      BodyPeriodTotal[1] += BodyPeriodTotalRange1 - BodyPeriodTotalTrailRange1;
+      BodyPeriodTotalRange3 = BodyPeriodTotalRange2;
+      BodyPeriodTotalTrailRange3 = BodyPeriodTotalTrailRange2;
+      BodyPeriodTotalRange2 = BodyPeriodTotalRange1;
+      BodyPeriodTotalTrailRange2 = BodyPeriodTotalTrailRange1;
       i++;
       BodyShortTrailingIdx++;
       BodyLongTrailingIdx++;

@@ -14,6 +14,7 @@
  *  121104 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
+ *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  *
  */
 
@@ -31,7 +32,8 @@ TA_RetCode cdl3linestrike(int startIdx, int endIdx,
    int outInteger[])
 {
    double NearPeriodTotal[4];
-   int i, outIdx, totIdx, NearTrailingIdx, lookbackTotal;
+   double NearPeriodTotalRange2, NearPeriodTotalTrailRange2, NearPeriodTotalRange3, NearPeriodTotalTrailRange3;
+   int i, outIdx, NearTrailingIdx, lookbackTotal;
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -77,6 +79,8 @@ TA_RetCode cdl3linestrike(int startIdx, int endIdx,
     * The meaning of "near" is specified with TA_SetCandleSettings
     */
    outIdx = 0;
+   NearPeriodTotalRange3 = ta_candlerange(Near_rangeType, inOpen[i-3], inHigh[i-3], inLow[i-3], inClose[i-3]);
+   NearPeriodTotalTrailRange3 = ta_candlerange(Near_rangeType, inOpen[NearTrailingIdx-3], inHigh[NearTrailingIdx-3], inLow[NearTrailingIdx-3], inClose[NearTrailingIdx-3]);
    do
    {
       if( ta_candlecolor(inClose[i-3], inOpen[i-3]) == ta_candlecolor(inClose[i-2], inOpen[i-2]) &&                                   // three with same color
@@ -117,9 +121,12 @@ TA_RetCode cdl3linestrike(int startIdx, int endIdx,
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      for (totIdx = 3; totIdx >= 2; --totIdx)
-         NearPeriodTotal[totIdx] += ta_candlerange(Near_rangeType, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx])
-      - ta_candlerange(Near_rangeType, inOpen[NearTrailingIdx-totIdx], inHigh[NearTrailingIdx-totIdx], inLow[NearTrailingIdx-totIdx], inClose[NearTrailingIdx-totIdx]);
+      NearPeriodTotalRange2 = ta_candlerange(Near_rangeType, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]);
+      NearPeriodTotalTrailRange2 = ta_candlerange(Near_rangeType, inOpen[NearTrailingIdx-2], inHigh[NearTrailingIdx-2], inLow[NearTrailingIdx-2], inClose[NearTrailingIdx-2]);
+      NearPeriodTotal[3] += NearPeriodTotalRange3 - NearPeriodTotalTrailRange3;
+      NearPeriodTotal[2] += NearPeriodTotalRange2 - NearPeriodTotalTrailRange2;
+      NearPeriodTotalRange3 = NearPeriodTotalRange2;
+      NearPeriodTotalTrailRange3 = NearPeriodTotalTrailRange2;
       i++;
       NearTrailingIdx++;
    } while( i <= endIdx );

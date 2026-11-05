@@ -14,6 +14,7 @@
  *  022705 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
+ *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  */
 
 import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
@@ -50,9 +51,14 @@ export function cdlconcealbabyswallImpl(
   outInteger: Int32Array,
 ): RetCode {
   const ShadowVeryShortPeriodTotal = new Float64Array(4);
+  let ShadowVeryShortPeriodTotalRange1 = 0;
+  let ShadowVeryShortPeriodTotalTrailRange1 = 0;
+  let ShadowVeryShortPeriodTotalRange2 = 0;
+  let ShadowVeryShortPeriodTotalTrailRange2 = 0;
+  let ShadowVeryShortPeriodTotalRange3 = 0;
+  let ShadowVeryShortPeriodTotalTrailRange3 = 0;
   let i = 0;
   let outIdx = 0;
-  let totIdx = 0;
   let ShadowVeryShortTrailingIdx = 0;
   let lookbackTotal = 0;
   const ShadowVeryShort_rangeType: number = core.candleSettings[CandleSettingType.SHADOW_VERY_SHORT].rangeType;
@@ -103,6 +109,10 @@ export function cdlconcealbabyswallImpl(
    * The meanings of "very short shadow" are specified with TA_SetCandleSettings
    */
   outIdx = 0;
+  ShadowVeryShortPeriodTotalRange2 = ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+  ShadowVeryShortPeriodTotalTrailRange2 = ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[ShadowVeryShortTrailingIdx - 2] - inOpen[ShadowVeryShortTrailingIdx - 2])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[ShadowVeryShortTrailingIdx - 2] - inLow[ShadowVeryShortTrailingIdx - 2]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[ShadowVeryShortTrailingIdx - 2] - (((inClose[ShadowVeryShortTrailingIdx - 2]) >= (inOpen[ShadowVeryShortTrailingIdx - 2])) ? (inClose[ShadowVeryShortTrailingIdx - 2]) : (inOpen[ShadowVeryShortTrailingIdx - 2]))) + ((((inClose[ShadowVeryShortTrailingIdx - 2]) >= (inOpen[ShadowVeryShortTrailingIdx - 2])) ? (inOpen[ShadowVeryShortTrailingIdx - 2]) : (inClose[ShadowVeryShortTrailingIdx - 2])) - inLow[ShadowVeryShortTrailingIdx - 2])) : 0.0)));
+  ShadowVeryShortPeriodTotalRange3 = ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[i - 3] - inOpen[i - 3])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[i - 3] - (((inClose[i - 3]) >= (inOpen[i - 3])) ? (inClose[i - 3]) : (inOpen[i - 3]))) + ((((inClose[i - 3]) >= (inOpen[i - 3])) ? (inOpen[i - 3]) : (inClose[i - 3])) - inLow[i - 3])) : 0.0)));
+  ShadowVeryShortPeriodTotalTrailRange3 = ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[ShadowVeryShortTrailingIdx - 3] - inOpen[ShadowVeryShortTrailingIdx - 3])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[ShadowVeryShortTrailingIdx - 3] - inLow[ShadowVeryShortTrailingIdx - 3]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[ShadowVeryShortTrailingIdx - 3] - (((inClose[ShadowVeryShortTrailingIdx - 3]) >= (inOpen[ShadowVeryShortTrailingIdx - 3])) ? (inClose[ShadowVeryShortTrailingIdx - 3]) : (inOpen[ShadowVeryShortTrailingIdx - 3]))) + ((((inClose[ShadowVeryShortTrailingIdx - 3]) >= (inOpen[ShadowVeryShortTrailingIdx - 3])) ? (inOpen[ShadowVeryShortTrailingIdx - 3]) : (inClose[ShadowVeryShortTrailingIdx - 3])) - inLow[ShadowVeryShortTrailingIdx - 3])) : 0.0)));
   do {
     if (((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) === -1 && /* 1st black */
         ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) === -1 && /* 2nd black */
@@ -125,9 +135,15 @@ export function cdlconcealbabyswallImpl(
     /* add the current range and subtract the first range: this is done after the pattern recognition
      * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
      */
-    for (totIdx = 3; totIdx >= 1; totIdx -= 1) {
-      ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[i - totIdx] - (((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inClose[i - totIdx]) : (inOpen[i - totIdx]))) + ((((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inOpen[i - totIdx]) : (inClose[i - totIdx])) - inLow[i - totIdx])) : 0.0))) - ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[ShadowVeryShortTrailingIdx - totIdx] - inOpen[ShadowVeryShortTrailingIdx - totIdx])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[ShadowVeryShortTrailingIdx - totIdx] - inLow[ShadowVeryShortTrailingIdx - totIdx]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[ShadowVeryShortTrailingIdx - totIdx] - (((inClose[ShadowVeryShortTrailingIdx - totIdx]) >= (inOpen[ShadowVeryShortTrailingIdx - totIdx])) ? (inClose[ShadowVeryShortTrailingIdx - totIdx]) : (inOpen[ShadowVeryShortTrailingIdx - totIdx]))) + ((((inClose[ShadowVeryShortTrailingIdx - totIdx]) >= (inOpen[ShadowVeryShortTrailingIdx - totIdx])) ? (inOpen[ShadowVeryShortTrailingIdx - totIdx]) : (inClose[ShadowVeryShortTrailingIdx - totIdx])) - inLow[ShadowVeryShortTrailingIdx - totIdx])) : 0.0))));
-    }
+    ShadowVeryShortPeriodTotalRange1 = ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+    ShadowVeryShortPeriodTotalTrailRange1 = ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[ShadowVeryShortTrailingIdx - 1] - inOpen[ShadowVeryShortTrailingIdx - 1])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[ShadowVeryShortTrailingIdx - 1] - inLow[ShadowVeryShortTrailingIdx - 1]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[ShadowVeryShortTrailingIdx - 1] - (((inClose[ShadowVeryShortTrailingIdx - 1]) >= (inOpen[ShadowVeryShortTrailingIdx - 1])) ? (inClose[ShadowVeryShortTrailingIdx - 1]) : (inOpen[ShadowVeryShortTrailingIdx - 1]))) + ((((inClose[ShadowVeryShortTrailingIdx - 1]) >= (inOpen[ShadowVeryShortTrailingIdx - 1])) ? (inOpen[ShadowVeryShortTrailingIdx - 1]) : (inClose[ShadowVeryShortTrailingIdx - 1])) - inLow[ShadowVeryShortTrailingIdx - 1])) : 0.0)));
+    ShadowVeryShortPeriodTotal[3] = ShadowVeryShortPeriodTotal[3] + (ShadowVeryShortPeriodTotalRange3 - ShadowVeryShortPeriodTotalTrailRange3);
+    ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + (ShadowVeryShortPeriodTotalRange2 - ShadowVeryShortPeriodTotalTrailRange2);
+    ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+    ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange2;
+    ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange2;
+    ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+    ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
     i += 1;
     ShadowVeryShortTrailingIdx += 1;
   } while (i <= endIdx);
@@ -355,6 +371,14 @@ export class CdlconcealbabyswallStream {
   /** @internal */
   ShadowVeryShortPeriodTotal: Float64Array = new Float64Array(4);
   /** @internal */
+  ShadowVeryShortPeriodTotalRange2: number = 0;
+  /** @internal */
+  ShadowVeryShortPeriodTotalTrailRange2: number = 0;
+  /** @internal */
+  ShadowVeryShortPeriodTotalRange3: number = 0;
+  /** @internal */
+  ShadowVeryShortPeriodTotalTrailRange3: number = 0;
+  /** @internal */
   lag1_inOpen: number = 0;
   /** @internal */
   lag2_inOpen: number = 0;
@@ -381,11 +405,11 @@ export class CdlconcealbabyswallStream {
   /** @internal */
   ringPos_ShadowVeryShortTrailingIdx: number = 0;
   /** @internal */
-  ringCap_ShadowVeryShortTrailingIdx: number = 4;
+  ringCap_ShadowVeryShortTrailingIdx: number = 2;
   /** @internal */
   ringLag_ShadowVeryShortTrailingIdx: number = 0;
   /** @internal */
-  ring_ShadowVeryShortTrailingIdx_derived: Float64Array = new Float64Array(4);
+  ring_ShadowVeryShortTrailingIdx_derived: Float64Array = new Float64Array(2);
   /** @internal */
   cs_ShadowVeryShort_rangeType: number = 0;
   /** @internal */
@@ -510,6 +534,10 @@ export class CdlconcealbabyswallStream {
   clone(): CdlconcealbabyswallStream {
     const c = new CdlconcealbabyswallStream(this.core);
     c.ShadowVeryShortPeriodTotal = this.ShadowVeryShortPeriodTotal.slice();
+    c.ShadowVeryShortPeriodTotalRange2 = this.ShadowVeryShortPeriodTotalRange2;
+    c.ShadowVeryShortPeriodTotalTrailRange2 = this.ShadowVeryShortPeriodTotalTrailRange2;
+    c.ShadowVeryShortPeriodTotalRange3 = this.ShadowVeryShortPeriodTotalRange3;
+    c.ShadowVeryShortPeriodTotalTrailRange3 = this.ShadowVeryShortPeriodTotalTrailRange3;
     c.lag1_inOpen = this.lag1_inOpen;
     c.lag2_inOpen = this.lag2_inOpen;
     c.lag3_inOpen = this.lag3_inOpen;
@@ -537,7 +565,8 @@ export class CdlconcealbabyswallStream {
 }
 
 function cdlconcealbabyswallStepImpl(sp: CdlconcealbabyswallStream, inOpen: number, inHigh: number, inLow: number, inClose: number): void {
-  let totIdx = 0;
+  let ShadowVeryShortPeriodTotalRange1 = 0;
+  let ShadowVeryShortPeriodTotalTrailRange1 = 0;
   const ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
   const ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
   const ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
@@ -563,9 +592,15 @@ function cdlconcealbabyswallStepImpl(sp: CdlconcealbabyswallStream, inOpen: numb
   /* add the current range and subtract the first range: this is done after the pattern recognition
    * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
    */
-  for (totIdx = 3; totIdx >= 1; totIdx -= 1) {
-    sp.ShadowVeryShortPeriodTotal[totIdx] = sp.ShadowVeryShortPeriodTotal[totIdx] + (sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx >= sp.ringCap_ShadowVeryShortTrailingIdx) ? sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx - sp.ringCap_ShadowVeryShortTrailingIdx : sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - totIdx] - sp.ring_ShadowVeryShortTrailingIdx_derived[(((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - totIdx) % sp.ringCap_ShadowVeryShortTrailingIdx) | 0)]);
-  }
+  ShadowVeryShortPeriodTotalRange1 = ((ShadowVeryShort_rangeType === 0) ? (Math.abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((ShadowVeryShort_rangeType === 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((ShadowVeryShort_rangeType === 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)));
+  ShadowVeryShortPeriodTotalTrailRange1 = sp.ring_ShadowVeryShortTrailingIdx_derived[(((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) | 0)];
+  sp.ShadowVeryShortPeriodTotal[3] = sp.ShadowVeryShortPeriodTotal[3] + (sp.ShadowVeryShortPeriodTotalRange3 - sp.ShadowVeryShortPeriodTotalTrailRange3);
+  sp.ShadowVeryShortPeriodTotal[2] = sp.ShadowVeryShortPeriodTotal[2] + (sp.ShadowVeryShortPeriodTotalRange2 - sp.ShadowVeryShortPeriodTotalTrailRange2);
+  sp.ShadowVeryShortPeriodTotal[1] = sp.ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+  sp.ShadowVeryShortPeriodTotalRange3 = sp.ShadowVeryShortPeriodTotalRange2;
+  sp.ShadowVeryShortPeriodTotalTrailRange3 = sp.ShadowVeryShortPeriodTotalTrailRange2;
+  sp.ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+  sp.ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
   sp.lag3_inOpen = sp.lag2_inOpen;
   sp.lag2_inOpen = sp.lag1_inOpen;
   sp.lag1_inOpen = inOpen;
@@ -598,9 +633,14 @@ function cdlconcealbabyswallOpenImpl(
 ): RetCode {
   const core = sp.core;
   const ShadowVeryShortPeriodTotal = new Float64Array(4);
+  let ShadowVeryShortPeriodTotalRange1 = 0;
+  let ShadowVeryShortPeriodTotalTrailRange1 = 0;
+  let ShadowVeryShortPeriodTotalRange2 = 0;
+  let ShadowVeryShortPeriodTotalTrailRange2 = 0;
+  let ShadowVeryShortPeriodTotalRange3 = 0;
+  let ShadowVeryShortPeriodTotalTrailRange3 = 0;
   let i = 0;
   let outIdx = 0;
-  let totIdx = 0;
   let ShadowVeryShortTrailingIdx = 0;
   let lookbackTotal = 0;
   const historyLen = inOpen.length;
@@ -661,6 +701,10 @@ function cdlconcealbabyswallOpenImpl(
    * The meanings of "very short shadow" are specified with TA_SetCandleSettings
    */
   outIdx = 0;
+  ShadowVeryShortPeriodTotalRange2 = ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)));
+  ShadowVeryShortPeriodTotalTrailRange2 = ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[ShadowVeryShortTrailingIdx - 2] - inOpen[ShadowVeryShortTrailingIdx - 2])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[ShadowVeryShortTrailingIdx - 2] - inLow[ShadowVeryShortTrailingIdx - 2]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[ShadowVeryShortTrailingIdx - 2] - (((inClose[ShadowVeryShortTrailingIdx - 2]) >= (inOpen[ShadowVeryShortTrailingIdx - 2])) ? (inClose[ShadowVeryShortTrailingIdx - 2]) : (inOpen[ShadowVeryShortTrailingIdx - 2]))) + ((((inClose[ShadowVeryShortTrailingIdx - 2]) >= (inOpen[ShadowVeryShortTrailingIdx - 2])) ? (inOpen[ShadowVeryShortTrailingIdx - 2]) : (inClose[ShadowVeryShortTrailingIdx - 2])) - inLow[ShadowVeryShortTrailingIdx - 2])) : 0.0)));
+  ShadowVeryShortPeriodTotalRange3 = ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[i - 3] - inOpen[i - 3])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[i - 3] - (((inClose[i - 3]) >= (inOpen[i - 3])) ? (inClose[i - 3]) : (inOpen[i - 3]))) + ((((inClose[i - 3]) >= (inOpen[i - 3])) ? (inOpen[i - 3]) : (inClose[i - 3])) - inLow[i - 3])) : 0.0)));
+  ShadowVeryShortPeriodTotalTrailRange3 = ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[ShadowVeryShortTrailingIdx - 3] - inOpen[ShadowVeryShortTrailingIdx - 3])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[ShadowVeryShortTrailingIdx - 3] - inLow[ShadowVeryShortTrailingIdx - 3]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[ShadowVeryShortTrailingIdx - 3] - (((inClose[ShadowVeryShortTrailingIdx - 3]) >= (inOpen[ShadowVeryShortTrailingIdx - 3])) ? (inClose[ShadowVeryShortTrailingIdx - 3]) : (inOpen[ShadowVeryShortTrailingIdx - 3]))) + ((((inClose[ShadowVeryShortTrailingIdx - 3]) >= (inOpen[ShadowVeryShortTrailingIdx - 3])) ? (inOpen[ShadowVeryShortTrailingIdx - 3]) : (inClose[ShadowVeryShortTrailingIdx - 3])) - inLow[ShadowVeryShortTrailingIdx - 3])) : 0.0)));
   do {
     if (((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) === -1 && /* 1st black */
         ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) === -1 && /* 2nd black */
@@ -683,9 +727,15 @@ function cdlconcealbabyswallOpenImpl(
     /* add the current range and subtract the first range: this is done after the pattern recognition
      * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
      */
-    for (totIdx = 3; totIdx >= 1; totIdx -= 1) {
-      ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[i - totIdx] - (((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inClose[i - totIdx]) : (inOpen[i - totIdx]))) + ((((inClose[i - totIdx]) >= (inOpen[i - totIdx])) ? (inOpen[i - totIdx]) : (inClose[i - totIdx])) - inLow[i - totIdx])) : 0.0))) - ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[ShadowVeryShortTrailingIdx - totIdx] - inOpen[ShadowVeryShortTrailingIdx - totIdx])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[ShadowVeryShortTrailingIdx - totIdx] - inLow[ShadowVeryShortTrailingIdx - totIdx]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[ShadowVeryShortTrailingIdx - totIdx] - (((inClose[ShadowVeryShortTrailingIdx - totIdx]) >= (inOpen[ShadowVeryShortTrailingIdx - totIdx])) ? (inClose[ShadowVeryShortTrailingIdx - totIdx]) : (inOpen[ShadowVeryShortTrailingIdx - totIdx]))) + ((((inClose[ShadowVeryShortTrailingIdx - totIdx]) >= (inOpen[ShadowVeryShortTrailingIdx - totIdx])) ? (inOpen[ShadowVeryShortTrailingIdx - totIdx]) : (inClose[ShadowVeryShortTrailingIdx - totIdx])) - inLow[ShadowVeryShortTrailingIdx - totIdx])) : 0.0))));
-    }
+    ShadowVeryShortPeriodTotalRange1 = ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[i - 1] - (((inClose[i - 1]) >= (inOpen[i - 1])) ? (inClose[i - 1]) : (inOpen[i - 1]))) + ((((inClose[i - 1]) >= (inOpen[i - 1])) ? (inOpen[i - 1]) : (inClose[i - 1])) - inLow[i - 1])) : 0.0)));
+    ShadowVeryShortPeriodTotalTrailRange1 = ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[ShadowVeryShortTrailingIdx - 1] - inOpen[ShadowVeryShortTrailingIdx - 1])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[ShadowVeryShortTrailingIdx - 1] - inLow[ShadowVeryShortTrailingIdx - 1]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[ShadowVeryShortTrailingIdx - 1] - (((inClose[ShadowVeryShortTrailingIdx - 1]) >= (inOpen[ShadowVeryShortTrailingIdx - 1])) ? (inClose[ShadowVeryShortTrailingIdx - 1]) : (inOpen[ShadowVeryShortTrailingIdx - 1]))) + ((((inClose[ShadowVeryShortTrailingIdx - 1]) >= (inOpen[ShadowVeryShortTrailingIdx - 1])) ? (inOpen[ShadowVeryShortTrailingIdx - 1]) : (inClose[ShadowVeryShortTrailingIdx - 1])) - inLow[ShadowVeryShortTrailingIdx - 1])) : 0.0)));
+    ShadowVeryShortPeriodTotal[3] = ShadowVeryShortPeriodTotal[3] + (ShadowVeryShortPeriodTotalRange3 - ShadowVeryShortPeriodTotalTrailRange3);
+    ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + (ShadowVeryShortPeriodTotalRange2 - ShadowVeryShortPeriodTotalTrailRange2);
+    ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + (ShadowVeryShortPeriodTotalRange1 - ShadowVeryShortPeriodTotalTrailRange1);
+    ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange2;
+    ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange2;
+    ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange1;
+    ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange1;
     i += 1;
     ShadowVeryShortTrailingIdx += 1;
   } while (i <= endIdx);
@@ -693,7 +743,7 @@ function cdlconcealbabyswallOpenImpl(
   outNBElement.value = outIdx;
   outBegIdx.value = startIdx;
   const capLag_ShadowVeryShortTrailingIdx = i - ShadowVeryShortTrailingIdx;
-  const cap_ShadowVeryShortTrailingIdx = capLag_ShadowVeryShortTrailingIdx + 4;
+  const cap_ShadowVeryShortTrailingIdx = capLag_ShadowVeryShortTrailingIdx + 2;
   if (capLag_ShadowVeryShortTrailingIdx < 0 || cap_ShadowVeryShortTrailingIdx > historyLen) {
     return RetCode.INTERNAL_ERROR;
   }
@@ -703,6 +753,10 @@ function cdlconcealbabyswallOpenImpl(
     capRing_ShadowVeryShortTrailingIdx_derived[fillJ % cap_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType === 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((ShadowVeryShort_rangeType === 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((ShadowVeryShort_rangeType === 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
   }
   sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
+  sp.ShadowVeryShortPeriodTotalRange2 = ShadowVeryShortPeriodTotalRange2;
+  sp.ShadowVeryShortPeriodTotalTrailRange2 = ShadowVeryShortPeriodTotalTrailRange2;
+  sp.ShadowVeryShortPeriodTotalRange3 = ShadowVeryShortPeriodTotalRange3;
+  sp.ShadowVeryShortPeriodTotalTrailRange3 = ShadowVeryShortPeriodTotalTrailRange3;
   sp.lag1_inOpen = inOpen[historyLen - 1];
   sp.lag2_inOpen = inOpen[historyLen - 2];
   sp.lag3_inOpen = inOpen[historyLen - 3];
