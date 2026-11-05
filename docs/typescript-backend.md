@@ -80,19 +80,3 @@ Measured on intel-1 and amd-1 (2026-11-02), every function, batch, TypeScript ti
 
 - Median 150% to 240% slower than C at 2000 and 100k bars; 65% to 135% slower than Java.
 - Software `fma` (D9) is the dominant cost: every function more than 400% slower than Java runs it on a loop-carried chain. T3 is the worst, 1669% slower than Java on intel-1 at 100k bars (3,160,190 ns vs 178,671 ns).
-
-## 6. First publish
-
-The first publish is by hand from the owner's npm account with 2FA; trusted publishing with `--provenance` is a later choice (Ruled, owner, 2026-11-01). No backend publishes above the latest Core release, so it is 0.8.3; from the next Core release npm follows `VERSION` (Ruled, owner, 2026-11-03). The previous holder's 0.9.0, 0.10.0 and 0.11.0 are deprecated, never unpublished: the package has public dependents. Until the first publish, no website page carries an unpinned `npm install ta-lib` line: `sync-website.py --check` skips an unpublished backend, so such a line passes and installs the previous holder's 0.11.0. The publish runbook applies, with these differences:
-
-- TP1 runs in a scratch worktree detached at a green main commit where `git grep -q typesVersions -- ta_codegen/output/ts/library/package.json` and `git grep -q 'export interface SmaOptions' -- ta_codegen/output/ts/library/src/func/sma.ts` succeed. Set `VERSION` to 0.8.3, run `build.py generate`, check that `git status --porcelain` lists only `VERSION` and the three generated manifests (two `Cargo.toml`, `package.json`), and commit them locally; never push that commit. The package gate then runs without `--allow-dirty`, which would also pack any stray edit. The package embeds no version outside `package.json`, so the tarball is the main commit's code.
-- After TP4, deprecate the three by exact version, never a bare `ta-lib`:
-  ```bash
-  for v in 0.9.0 0.10.0 0.11.0; do npm deprecate "ta-lib@$v" "An earlier package by another author. The official TA-Lib library: npm install ta-lib@latest"; done
-  for v in 0.8.3 0.9.0 0.10.0 0.11.0; do echo "$v: $(npm view "ta-lib@$v" deprecated)"; done
-  ```
-  0.8.3 must print nothing and each of the other three the message: a mistyped one-time password fails one iteration and the loop goes on.
-- Then refuse tokens: `npm access set mfa=publish ta-lib`. The package's Settings page on npmjs.com must show Publishing access as "Require two-factor authentication and disallow tokens"; without it any write token on the account can publish.
-- TP5 runs in that worktree. TP6 tags the main commit, the local commit's parent, `ts-v0.8.3`.
-- Then, on dev, the website commit: drop the "Not yet released" banner from both TypeScript API pages, replace 2.0's build-from-source text with `npm install ta-lib@0.8.3`, and in the README add TypeScript to "Native in ... languages" and a row to the install table. `sync.py` does none of it: it only rewrites an `npm install ta-lib@X.Y.Z` line that exists, and `sync-website.py --check` passes while none does. Then `merge.py`, whose push to main deploys the site.
-- The release note: a TypeScript section in the `v0.8.3` GitHub release, thanking Christopher Supnig ([supnig.com](https://www.supnig.com)) for the npm name.
