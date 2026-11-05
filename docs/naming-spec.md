@@ -45,18 +45,20 @@ UpperCamel for both, TypeScript as Java with free functions in place of methods.
 | opener | `TA_SMA_Open` | `sma_open` | `smaOpen` | `SmaOpen` | `smaOpen` |
 | filling opener | `TA_SMA_OpenAndFill` | `sma_open_and_fill` | `smaOpenAndFill` | `SmaOpenAndFill` | `smaOpenAndFill` |
 | open seams (not public) | `TA_SMA_OpenImpl`, `TA_SMA_StepImpl`, `TA_SMA_ReleaseImpl` | `sma_open_impl`, `sma_step_impl` | `smaOpenImpl`, `smaOpenInternal`, `smaStepImpl` | `SmaOpenImpl`, `SmaOpenInternal`, `SmaStepImpl` | `smaOpenImpl`, `smaOpenInternal`, `smaStepImpl` |
+| positional tier (not public) | the public signature | the public signature | the public signature | the public signature | `smaPositional`, `smaLookbackPositional`, `smaDisplayShiftPositional`, `smaOpenPositional`, `smaOpenAndFillPositional` |
 | handle type | `TA_SMA_Stream` | `SmaStream` | `Core.SmaStream` | `Core.SmaStream` | `SmaStream` |
 | handle methods | `TA_SMA_Update`, `_Peek`, `_Value`, `_OutRange`, `_Advance`, `_Clone`, `_Close` | `update`, `peek`, `value`, `out_range`, `advance`, derived `Clone` | `update`, `peek`, `value`, `outRange`, `advance`, `clone` | `Update`, `Peek`, `Advance`, `Clone`; properties `Value`, `OutRange` | `update`, `peek`, `value`, `outRange`, `advance`, `clone` |
-| multi-output carrier | out-parameters | `(f64, f64, f64)` | `AccbandsOut` (`realUpperBand`) | `AccbandsValue` (`RealUpperBand`) | `AccbandsOut` (`realUpperBand`) |
+| multi-output carrier | out-parameters | `(f64, f64, f64)` | `AccbandsOut` (`realUpperBand`) | `AccbandsValue` (`RealUpperBand`) | `AccbandsOut` (`outUpperBand`) |
 
 The carrier row looks inconsistent and is not. **The suffix names the construct,
-not the function**: `<N>Out` is a caller-owned object the call writes into,
-`<N>Value` is an immutable value the call returns. The shapes differ by design
+not the function**: `<N>Out` is a mutable object the call writes into (in
+TypeScript the caller's, when passed, or a new one), `<N>Value` is an immutable
+value the call returns. The shapes differ by design
 (#310): Java's sink is mutable, has no `equals`/`hashCode`, and is valid only
 until the next call, while C#'s is a `readonly record struct` the caller may
 keep, compare and key on.
 
-Only Java and TypeScript need the sink: a returned object allocates on the heap
+Only Java and TypeScript offer the sink: a returned object allocates on the heap
 there, while C#'s struct and Rust's tuple do not.
 
 ## 3. Shared types
@@ -162,9 +164,9 @@ Out of scope here: C# models the parameter domains as a record hierarchy
 | surface | C (frozen) | Rust | Java | C# | TypeScript |
 |---|---|---|---|---|---|
 | index range | `startIdx`, `endIdx` | `startIdx`, `endIdx` (E1) | same | same | same |
-| inputs | `inReal`, `inHigh`, `inClose` | same (E1) | same | same | same |
-| parameters | `optInTimePeriod` | same (E1) | same | same | same |
-| outputs | `outReal`, `outInteger`, `outBegIdx`, `outNBElement` | `outReal` (E1) | same | same | same |
+| inputs | `inReal`, `inHigh`, `inClose` | same (E1) | same | same | `real`, `real0`, `prices` (E6) |
+| parameters | `optInTimePeriod` | same (E1) | same | same | `timePeriod` (E6) |
+| outputs | `outReal`, `outInteger`, `outBegIdx`, `outNBElement` | `outReal` (E1) | same | same | `values`, `outMacdSignal`, `begIdx` (E6) |
 
 ## 9. Package identity
 
@@ -181,7 +183,8 @@ Out of scope here: C# models the parameter domains as a record hierarchy
 These keep a spelling their backend would not choose. Each is load-bearing;
 none is inherited by default.
 
-- **E1. Parameter names are verbatim C in every backend.** They are metadata,
+- **E1. Parameter names are verbatim C in every backend**, TypeScript's options
+  object and positional inputs aside (E6). They are metadata,
   not only identifiers: `OptInputInfo::param_name` carries `optInTimePeriod` and
   documents itself as "the parameter's name in the generated signature", and the
   XML description publishes the same strings. Renaming them per backend makes
@@ -199,10 +202,19 @@ none is inherited by default.
   `_Internal` is a `startIdx`-anchored variant of an entry point, `Open` /
   `OpenAndFill` / `Update` / `Peek` / `Value` / `OutRange` / `Advance` are the
   streaming verbs. Backends recase these; none of them invents a synonym.
+  TypeScript adds `Positional`, the C-shaped checked tier behind its options
+  object: the metadata API and cross-calls use it, since a body calls by
+  position.
 - **E5. A two-letter acronym keeps both capitals in identifiers**, so `MAType`
   and `TALib` in every backend, as `IOException` does in both standard
   libraries. Canonical function names are not covered: they fold by section 1,
   which is why the `MA` and `HA` functions are `Ma` and `Ha`.
+- **E6. TypeScript names its options keys and batch results by
+  [rJ1](../website/src/spec/README.md#rj1), and its positional inputs without
+  C's `in` (`real`, `real0`, `periods`; a price input is `prices`)**, in every
+  call that takes the options object: one options object reads best with
+  camelCase keys. Its metadata and stream `update` and `peek` keep C's names
+  (E1).
 
 Also deliberate, and cheaper to state than to re-litigate: file names track the
 canonical name (`src/ta_func/ta_SMA.c`, `Core_SMA.cs`, `sma.rs`, `sma.ts`) and are not part

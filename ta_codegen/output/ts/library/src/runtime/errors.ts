@@ -67,7 +67,7 @@ export const RetCode = Object.freeze({
   /**
    * A stream opener was given `lookback` bars or fewer: the one recoverable
    * condition. A batch range that ends before the lookback is not an error but
-   * an empty {@link OutRange}.
+   * an empty result.
    */
   INSUFFICIENT_HISTORY: 17,
   INTERNAL_ERROR: 5000,

@@ -212,7 +212,8 @@ params. No generic `<T: TaFloat>`, no `f32` variants.
 | `pub(crate) fn <n>_impl(...) -> RetCode` | The body. Keeps C's shape — a code plus `&mut outBegIdx` / `&mut outNBElement` — because that is what the transcribed bodies are written against, and it is where the FMA dispatch sits. Not a cross-call target |
 | `fn <n>_private(...)` | Only where the definition declares one; extra pre-computed params, no validation prologue. No shipped indicator declares one — the construct is carried by the `SYNTH4` gate fixture |
 
-Cross-indicator calls target the **public** wrapper, as in C, Java, C# and TS. `?` is
+Cross-indicator calls target the **public** wrapper, as in C, Java and C# (in TS,
+its checked positional form `<n>Positional`). `?` is
 unavailable at those sites (the caller returns a bare `RetCode`), so
 `render_cross_indicator_call` drops the two out-meta arguments, binds the
 returned range with a `match`, assigns both out-params from it, and sets

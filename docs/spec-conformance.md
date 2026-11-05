@@ -121,7 +121,7 @@ tier emits nothing.
 |---|---|:---:|:---:|:---:|:---:|:---:|
 | rU1 | [absent handle](https://ta-lib.org/spec/streaming/#ru1) | ✅ | — | — | — | — |
 | rU4 | [index ceiling](https://ta-lib.org/spec/streaming/#ru4) | ✅ | ✅ | ✅ | ✅ |  |
-| rU2 | [absent output](https://ta-lib.org/spec/streaming/#ru2) | ✅ | — | ✅ | — |  |
+| rU2 | [absent output](https://ta-lib.org/spec/streaming/#ru2) | ✅ | — | ✅ | — | — |
 | rU3 | [non-finite bar](https://ta-lib.org/spec/streaming/#ru3) | ✅ | ✅ | ✅ | ✅ |  |
 
 ### Stream release

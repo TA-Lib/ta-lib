@@ -91,7 +91,7 @@ const { stream, begIdx, values } = smaOpenAndFill(history, { timePeriod: 30 });
 const v = stream.update(newClose);
 ```
 
-The options, output buffers included, are exactly the [batch function](/api/typescript/#input_type)'s, and the result is the batch result plus `stream`. Its range is the stream's `outRange()`: see [Utility Calls](#utility-calls) below. An output buffer must not share memory with the input or with another buffer.
+It takes the [batch function](/api/typescript/#input_type)'s options, output buffers included, and ignores `startIdx` and `endIdx`; the result is the batch result plus `stream`. Its range is the stream's `outRange()`: see [Utility Calls](#utility-calls) below. An output buffer must not share memory with the input or with another buffer.
 
 ## Utility Calls
 

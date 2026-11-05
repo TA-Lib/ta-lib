@@ -41,20 +41,20 @@ inside the lookback is a success with no values, not an error. An omitted or `un
 parameter takes its default.
 
 Inputs take any `ArrayLike<number>`: a `Float64Array` is read in place, and any other form,
-`number[]` included, is copied into one first. A function on several price components takes
-them as one object: `atr({ high, low, close }, { timePeriod: 14 })`. Outputs are
+`number[]` included, is copied into one first. The components of a price input are one
+object: `atr({ high, low, close }, { timePeriod: 14 })`. Outputs are
 `Float64Array`, or `Int32Array` for integer outputs. Pass your own buffers (`outReal`,
-`outMacd`, ...) for a call that allocates nothing; the results are views of them.
+`outMacd`, ...) so the call allocates no output; the results are views of them.
 
 Invalid arguments throw a `TALibError`; match on its `code`:
 
 ```ts
-import { sma, TALibError } from 'ta-lib';
+import { sma, type TALibError } from 'ta-lib';
 
 try {
   sma(close, { timePeriod: 0 });
 } catch (e) {
-  if (e instanceof TALibError && e.code === 'TA_BAD_PARAM') { /* ... */ }
+  if ((e as TALibError)?.code === 'TA_BAD_PARAM') { /* ... */ }
 }
 ```
 

@@ -1,28 +1,28 @@
 # TypeScript API design
 
-**Status:** the public API of the `ta-lib` npm package before its first publish. Values and validation stay those of the C library; the call shape becomes TypeScript's. Rows marked Ruled are the owner's (2026-11-04); Proposed rows stand unless he reopens them. Where TypeScript departs from a rule, the [spec](../website/src/spec/README.md#typescript) states it as a TypeScript Caveat (`rJ`); section 9 records what would avoid each. Nothing is published until this design is built.
+**Status:** the public API of the `ta-lib` npm package, unreleased. Values and validation are the C library's; the call shape is TypeScript's. Rows marked Ruled are the owner's (2026-11-04); Adopted rows stand unless he reopens them. Where TypeScript departs from a rule, the [spec](../website/src/spec/README.md#typescript) states it as a TypeScript Caveat (`rJ`); section 9 records what would avoid each.
 
 ## 1. Decisions
 
 | # | Decision | Status |
 |---|---|---|
 | A1 | No npm publish until this design is built | Ruled (owner, 2026-11-04) |
-| A2 | One call form: the input arrays, then one optional object; the C-shaped signature goes, with no second form | Ruled (owner, 2026-11-04) |
+| A2 | One call form: the input arrays, then one optional object, and no second form | Ruled (owner, 2026-11-04) |
 | A3 | The object holds the parameters, `startIdx`, `endIdx` and `core`, all optional | Ruled (owner, 2026-11-04) |
 | A4 | Multi-output names keep `out`, in camelCase: `outMacd`, `outMacdSignal`, `outMacdHist` | Ruled (owner, 2026-11-04) |
 | A5 | A single output is returned as `values` | Ruled (owner, 2026-11-04) |
-| A6 | An omitted range is the whole input; `endIdx` stays inclusive | Proposed |
-| A7 | Caller buffers go in the same object as `out*` keys; the result returns views of them | Proposed |
-| A8 | Each output buffer is optional on its own; a missing one is allocated | Proposed |
-| A9 | An omitted or `undefined` parameter takes its default; the sentinels still work | Proposed |
-| A10 | Lookback keeps -1 and display shift `INT_MIN`, each a named constant | Proposed |
-| A11 | Lookback, display shift, open and openAndFill take the same object | Proposed |
-| A12 | Functions on price series take one `{ open, high, low, close, volume, openInterest }` object | Proposed |
-| A13 | Output names drop C's type word: `outRealUpperBand` is `outUpperBand` | Proposed |
-| A14 | Multi-output streams return their outputs; the sink becomes optional | Proposed |
-| A15 | Errors stay exceptions; `RetCode` stays exported | Proposed |
-| A16 | Empty history is `TA_INSUFFICIENT_HISTORY` in all five backends | Proposed |
-| A17 | C leftovers leave the public types; function names keep the shared rule | Proposed |
+| A6 | An omitted range is the whole input; `endIdx` is inclusive | Adopted |
+| A7 | Caller buffers go in the same object as `out*` keys; the result returns views of them | Adopted |
+| A8 | Each output buffer is optional on its own; a missing one is allocated | Adopted |
+| A9 | An omitted or `undefined` parameter takes its default, as a sentinel does | Adopted |
+| A10 | A rejected lookback is -1 and a rejected display shift `INT_MIN`, each a named constant | Adopted |
+| A11 | Lookback, display shift, open and openAndFill take the same object | Adopted |
+| A12 | Functions on price series take one `{ open, high, low, close, volume, openInterest }` object | Adopted |
+| A13 | Output names drop C's type word: `outRealUpperBand` is `outUpperBand` | Adopted |
+| A14 | Multi-output streams return their outputs; the sink is optional | Adopted |
+| A15 | Errors are exceptions; `RetCode` is exported | Adopted |
+| A16 | An empty history is `TA_INSUFFICIENT_HISTORY` in all five backends | Adopted |
+| A17 | No C leftovers in the public types; function names keep the shared rule | Adopted |
 
 ## 2. Batch call
 
@@ -38,13 +38,13 @@ mavp(closes, periods, { minPeriod: 2, maxPeriod: 30 })
 ```
 
 - **Inputs.** The positional arguments are the function's inputs as the Abstract API lists them: a price input is one object holding the components it reads, keyed `open`, `high`, `low`, `close`, `volume`, `openInterest` (the metadata API's `PriceInput` shape), and any other input is an `ArrayLike<number>`. So `obv(closes, { volume })`, and swapped price arrays cannot compile. Positional names drop C's `in` (`real`, `real0`, `periods`); a price input is `prices`.
-- **Parameter keys.** C's name without `optIn`, first letter lowercased: `timePeriod`, `nbDevUp`, `maType`, `fastPeriod`.
+- **Parameter keys.** C's name without `optIn`, in camelCase by the word split of [rJ1](../website/src/spec/README.md#rj1): `timePeriod`, `nbDevUp`, `maType`, `fastDMaType`.
 - **Range.** `startIdx` defaults to 0 and `endIdx` to the last bar of the first input. `endIdx` is inclusive, as in every TA-Lib API; the TSDoc says so because `slice` is not. Bars before `startIdx` are still read as warm-up, which slicing the input would lose.
 - **`core`** defaults to `Core.DEFAULT`.
 - **First fault.** What only TypeScript has comes first: that a price object exists and that `options` is an object; then, for a batch call with `endIdx` omitted, each series present and non-empty, because the default reads their lengths; then `core`. Every backend's order follows: the range first, and in an opener an empty history ahead of an absent leg. [rE1](../website/src/spec/errors/README.md#re1) leaves the order of several faults open.
 - **`core`** that is not a `Core` is `TA_BAD_PARAM` at every entry point; lookback and display shift throw for it and for options that are not an object, and answer a rejected parameter with their invalid constant.
 - **Function names** keep the rule every backend shares (`cdlengulfing`, `stochrsi`, `var_`).
-- **Speed.** The timed benchmark request calls the body, not this function, so benchmarks do not move. Allocation is what a caller could lose, and A7 keeps it at zero.
+- **Speed.** The timed benchmark request calls the body, so the options object is on no measured path. A caller who passes every buffer allocates no output (A7).
 
 ## 3. Results
 
@@ -64,13 +64,13 @@ const { begIdx, values } = cdldoji({ open, high, low, close });         // Int32
 ```ts
 const buf = new Float64Array(closes.length);
 const r = sma(closes, { timePeriod: 20, outReal: buf });   // r.values: a view of buf, no copy
-macd(closes, { outMacd: a, outMacdSignal: b, outMacdHist: c });   // zero allocation
+macd(closes, { outMacd: a, outMacdSignal: b, outMacdHist: c });   // no output allocated
 macd(closes, { outMacd: a });                               // the other two are allocated
 ```
 
 - A buffer key is the output's result name; a single output's key is `outReal` or `outInteger`.
 - Each returned output is `buf.subarray(0, count)`: the same memory, trimmed to the values written. The buffer holds the values from index 0; what lies past them is as rW3 and rW6 say.
-- Each buffer is optional on its own. A given buffer is checked as today: too short, the wrong element type, or sharing memory with another output is `TA_BAD_PARAM`; an output may still be its input (rW6).
+- Each buffer is optional on its own. A given buffer that is too short, has the wrong element type, or shares memory with another output is `TA_BAD_PARAM`; an output may be its input (rW6), but not overlap it partly.
 
 ## 5. Defaults, sentinels, constants
 
@@ -80,7 +80,7 @@ sma(closes, { timePeriod: undefined })              // the same
 sma(closes, { timePeriod: Core.INTEGER_DEFAULT })   // the same, as in C, Java, C#
 ```
 
-- The wrapper maps `undefined` to the sentinel and the existing check does the rest. Keys are declared `timePeriod?: number | undefined` for `exactOptionalPropertyTypes`.
+- `undefined` maps to the sentinel, which the range check takes as the default. Keys are declared `timePeriod?: number | undefined` for `exactOptionalPropertyTypes`.
 - Lookback answers `Core.LOOKBACK_INVALID` (-1) and display shift `Core.DISPLAY_SHIFT_INVALID` (`INT_MIN`) for rejected parameters: the values of C, Java and C#, named.
 
 ## 6. Lookback, display shift, openers
@@ -94,7 +94,7 @@ const { stream, begIdx, values } = smaOpenAndFill(history, { timePeriod: 20 });
 ```
 
 - Each takes the batch call's options type and ignores the keys it has no use for, so one object serves every call.
-- openAndFill returns the stream with the batch result over the history, under the buffer rules of section 4.
+- openAndFill returns the stream with the batch result over the history. Its buffers follow section 4, except that an output shares no memory with an input, and each holds `historyLen - lookback` values.
 
 ## 7. Streams
 
@@ -106,14 +106,14 @@ m.update(101.5, sink);                                 // fills and returns sink
 
 - `update`, `peek` and `value` of a multi-output stream take an optional sink and return it, or a new object. Sink fields carry the result names (`outMacd`); a fresh sink starts at `NaN`.
 - `peek` into the sink `update` filled overwrites it.
-- Single-output streams are unchanged, and `update` and `peek` still take one number per input component, as in every backend.
+- A single-output stream returns a `number`. `update` and `peek` take one number per input component, as in every backend.
 
 ## 8. Errors and C leftovers
 
 - A rejected call throws `TALibError`; `code` is C's name as a string and `retCode` C's number, compared against the exported `RetCode`.
-- **Empty history** (A16): every backend's opener answers `historyLen < 1` with `TA_INSUFFICIENT_HISTORY` ([rS7](../website/src/spec/streaming/README.md#rs7)), still ahead of every presence check. A spec change, not a TypeScript exception.
-- **Messages** name the parameter, its value and its range (`SMA: timePeriod must be in 2..100000, got 0`); overlap gets its own (`MACD: outMacd and outMacdSignal share memory`). Messages are not API.
-- **Leftovers removed:** `FuncUnstId.UNUSED_*`; `ALL` and `ALL_CANDLE_SETTINGS` where a parameter only throws on them; hover text in C terms ("The `TA_MAType_EMA` moving average" becomes "Exponential moving average").
+- **Empty history** (A16): every backend's opener answers `historyLen < 1` with `TA_INSUFFICIENT_HISTORY` ([rS7](../website/src/spec/streaming/README.md#rs7)), ahead of a check on any input after the first. This is the spec's rule, not a TypeScript Caveat.
+- **Messages** name the parameter, its value and its range (`SMA: timePeriod must be in 1..100000, got 0`); overlap gets its own (`MACD: outMacd and outMacdSignal share memory`). Messages are not API.
+- **No C leftovers:** no `FuncUnstId.UNUSED_*`; no `ALL` or `ALL_CANDLE_SETTINGS` where a parameter only throws on them; hover text in plain terms ("Exponential moving average", not "The `TA_MAType_EMA` moving average").
 
 ## 9. Spec caveats
 
@@ -139,17 +139,10 @@ The spec's [TypeScript Caveats](../website/src/spec/README.md#typescript) state 
 | `Core.create({ unstablePeriods, candleSettings })` beside the builder | |
 | Display shift by output name | |
 | `TALibError` fields `funcName`, `argName`; `ErrorOptions` with `cause` | |
-| Output type check that survives a second realm (`instanceof` today) | |
+| Output type check that survives a second realm (the check is `instanceof`) | |
 | TSDoc: `{@link}` instead of site URLs, ranges of real parameters | |
 | `export { var_ as var }` for namespace imports | |
-| Stream internals non-enumerable | `console.log(stream)` dumps the ring today |
+| Stream internals non-enumerable | `console.log(stream)` dumps the ring |
 | An async-iterable adapter for streams | |
 | A `ta-lib/math` subpath for the math transforms (`max`, `sum`, `sqrt`) | Auto-import noise from the root |
 
-## 11. What the refactor touches
-
-- Generator: the TypeScript batch and stream emitters, and the package `.d.ts` review of every key and output name.
-- Hand-written runtime (`library/src/runtime/`) and suites (`library/test/`).
-- The TypeScript JSON-RPC server, which calls the public tier on the correctness path.
-- Every backend's opener for A16, and the spec rows it moves.
-- Site pages: `/api/typescript/`, its stream page, the spec's TypeScript Caveats and per-language cells, and the package README.

@@ -91,8 +91,8 @@ As an example, let's walk through `SMA`, a function to calculate a moving averag
 All TA functions use the same calling pattern, divided into four groups:
 
 <ul>
-<li><span class="ta-arg-in">The input arrays come first. Typically, these are the "price" data. In this example there is only one input. A function that reads several price components takes them as one object, keyed <code>open</code>, <code>high</code>, <code>low</code>, <code>close</code>, <code>volume</code> and <code>openInterest</code>: <code>atr({ high, low, close })</code>, <code>obv(close, { volume })</code>.</span></li>
-<li><span class="ta-arg-opt">The parameters are keys of the options object, named as in C without <code>optIn</code>: <code>timePeriod</code>, <code>nbDevUp</code>, <code>maType</code>. They give finer control specific to each function. A key you omit, or set to <code>undefined</code>, takes its default; <code>Core.INTEGER_DEFAULT</code>, <code>Core.REAL_DEFAULT</code> and <code>MAType.DEFAULT</code> select it too.</span></li>
+<li><span class="ta-arg-in">The input arrays come first. Typically, these are the "price" data. In this example there is only one input. The components of a price input are one object, keyed <code>open</code>, <code>high</code>, <code>low</code>, <code>close</code>, <code>volume</code> and <code>openInterest</code>: <code>atr({ high, low, close })</code>, <code>obv(close, { volume })</code>.</span></li>
+<li><span class="ta-arg-opt">The parameters are keys of the options object, named as in C without <code>optIn</code> and in camelCase (<a href="/spec/#rj1">rJ1</a>): <code>timePeriod</code>, <code>nbDevUp</code>, <code>maType</code>, <code>fastDMaType</code>. They give finer control specific to each function. A key you omit, or set to <code>undefined</code>, takes its default; <code>Core.INTEGER_DEFAULT</code>, <code>Core.REAL_DEFAULT</code> and <code>MAType.DEFAULT</code> select it too.</span></li>
 <li><span class="ta-arg-range">The output is calculated only for the range from startIdx to endIdx, zero-based and inclusive indices into the input arrays. Omitted, the range is the whole input. Bars before startIdx are still read as warm-up, which slicing the input would lose.</span></li>
 <li><span class="ta-arg-out">Output buffers are optional, one key per output (outReal here): see <a href="#input_type">4.4</a>. Without them, each output is allocated.</span></li>
 </ul>
@@ -117,7 +117,7 @@ The result says what was produced. Even though the whole series was requested, a
 
 If you do not provide enough data to calculate even one value, the call still succeeds: `begIdx` is 0 and `values` is empty.
 
-A function with several outputs returns one array per output, each named after its C output in camelCase and all of the same length:
+A function with several outputs returns one array per output, each named after its C output in camelCase without C's type word (<code>outRealUpperBand</code> is <code>outUpperBand</code>), and all of the same length:
 
 ```ts
 import { macd } from 'ta-lib';
@@ -127,7 +127,7 @@ const { begIdx, outMacd, outMacdSignal, outMacdHist } = macd(close);
 
 ### 3.2 Output Size and Lookback {#output_size}
 
-A buffer you pass must hold the values the call writes: the input length always suffices, and the lookback gives the exact count (see the [three sizing methods](/api/#output_size)):
+A buffer you pass must hold the values the call writes, and at least one element: the input length always suffices, and the lookback gives the exact count (see the [three sizing methods](/api/#output_size)):
 
 ```ts
 import { smaLookback } from 'ta-lib';
@@ -151,7 +151,7 @@ Rejected parameters, or an index that names no output, give `Core.DISPLAY_SHIFT_
 
 ### 3.4 Errors {#retcode}
 
-Misuse throws a `TALibError` rather than returning a return code. Its `code` names the condition with C's spelling; branch on it. Its `retCode` is C's number for the same code.
+Misuse throws a `TALibError` rather than returning a return code. Its `code` names the condition with C's spelling; branch on it rather than on `instanceof`, which fails across two copies of the package. Its `retCode` is C's number for the same code.
 
 | Mistake | `code` |
 |---|---|
@@ -160,19 +160,21 @@ Misuse throws a `TALibError` rather than returning a return code. Its `code` nam
 | Parameter outside its documented range | `'TA_BAD_PARAM'` |
 | An index or integer parameter that is not a 32-bit integer, such as `14.5`, or a real parameter that is not a number, such as `'0.02'` | `'TA_BAD_PARAM'` |
 | Options that are not an object | `'TA_BAD_PARAM'` |
-| Two output buffers sharing memory | `'TA_BAD_PARAM'` |
+| Two output buffers sharing memory, or a buffer partly overlapping a `Float64Array` input | `'TA_BAD_PARAM'` |
+| A `core` that is not a `Core` | `'TA_BAD_PARAM'` |
 | An input too short for the range requested, including an `endIdx` past its end, or a buffer too short for the values written | `'TA_BAD_PARAM'` |
 | An absent or empty input, or an empty buffer | `'TA_BAD_PARAM'` |
 | A buffer that is not a `Float64Array`, or not an `Int32Array` for an integer output | `'TA_BAD_PARAM'` |
 
 ```ts
-import { sma, TALibError } from 'ta-lib';
+import { sma, type TALibError } from 'ta-lib';
 
 try {
   sma(close, { timePeriod: 0 });
 } catch (e) {
-  if (e instanceof TALibError && e.code === 'TA_BAD_PARAM') {
-    // e.retCode is 2, as C's TA_BAD_PARAM
+  const err = e as TALibError;
+  if (err?.code === 'TA_BAD_PARAM') {
+    // err.retCode is 2, as C's TA_BAD_PARAM
   }
 }
 ```
@@ -224,7 +226,7 @@ const { values } = sma(close, { timePeriod: 30, outReal: buf });   // values: a 
 
 A single output's key is `outReal` or `outInteger`; a multi-output function's keys are its result names (`outMacd`, `outMacdSignal`, `outMacdHist`). Each buffer is optional on its own: an omitted one is allocated. A buffer is written from index 0, sized as in [3.2](#output_size), and must not share memory with another buffer.
 
-You can pass the same `Float64Array` as an input and as an output buffer to compute in place. Avoid a partial overlap: its result is [unspecified](/spec/inputs-outputs/#no-overlap).
+You can pass the same `Float64Array` as an input and as an output buffer to compute in place. A buffer that overlaps a `Float64Array` input only partly is `'TA_BAD_PARAM'`; any other input is copied first.
 
 ### 4.5 Index Range {#index_range}
 

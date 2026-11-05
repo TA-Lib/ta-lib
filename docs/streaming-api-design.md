@@ -50,8 +50,8 @@ apart. The `INDEX_MAX` ceiling is what makes it fallible: C's returns a
 `void` and throw.
 
 Multi-output functions produce one value per output per update: an out-pointer
-each in C, a tuple in Rust, a caller-owned sink in Java and TypeScript, a
-`readonly record struct` in C#.
+each in C, a tuple in Rust, a caller-owned sink in Java, a `<N>Out` in TypeScript
+(filled into the caller's sink when one is passed), a `readonly record struct` in C#.
 
 ## Peek commits nothing, and copies nothing that grows
 
@@ -226,11 +226,10 @@ MacdValue m = macd.Update(bar);                 // readonly record struct
 ```
 
 ```ts
-const s = smaOpen(history, 14, core);           // free function; core optional
+const s = smaOpen(history, { timePeriod: 14, core });   // free function; options optional
 const v = s.update(bar);
 const t = s.clone();
-const mv = new MacdOut();                       // caller-owned sink, as Java
-m.update(bar, mv);
+const mv = m.update(bar);                       // a new MacdOut, or fills a passed sink
 ```
 
 Shape rules that are not visible in those lines:
@@ -247,8 +246,8 @@ Shape rules that are not visible in those lines:
   `"<NAME> peek:"`. https://ta-lib.org/spec/streaming/ is the rule-by-rule
   source.
 - TypeScript handles are classes exported from the function's own module
-  (`SmaStream` from `sma.ts`), opened by free functions that take the `Core`
-  last and optional. Every rejection throws `TALibError`, whose `code` names it.
+  (`SmaStream` from `sma.ts`), opened by free functions that take the batch
+  call's options object, `core` included. Every rejection throws `TALibError`, whose `code` names it.
   The state fields are public and tagged `@internal`: the module-local step and
   open frames must reach them, which neither `private` nor `#private` allows.
 - `value()` re-reads the value(s) at the last bar the stream counted, without

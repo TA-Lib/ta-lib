@@ -46,9 +46,10 @@
  */
 
 /**
- * Where a batch call's output starts in input coordinates, and how many values
- * it wrote: output element `k` is the value at input bar `begIdx + k`, for
- * `k < count`. Nothing past `count` is written and nothing is padded.
+ * Where an output starts in input coordinates, and how many values it holds:
+ * output element `k` is the value at input bar `begIdx + k`, for `k < count`.
+ * Nothing past `count` is written and nothing is padded. A stream's
+ * `outRange()` and the metadata API's `call` return one.
  *
  * A `count` of 0 is a success: the range ended before the lookback.
  */

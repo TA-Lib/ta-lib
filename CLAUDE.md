@@ -95,7 +95,12 @@ validates array lengths and throws on a rejection, and `<N>_Impl` — the
 transcribed numerics, package-private in Java, `internal` in C#, and in
 TypeScript exported from its module, tagged `@internal` and left out of the
 package barrel, keeping C's `RetCode` + out-param shape. There is no third,
-catch-and-convert tier.
+catch-and-convert tier. TypeScript's public tier has two signatures: the exported
+function maps its options object onto `<n>Positional` (`@internal`), which holds
+the checks in C's argument order and is what the metadata API and cross-calls
+call. TypeScript adds that one word to the vocabulary below: there, each public
+entry point is its `Positional` function behind that wrapper, so the aliasing
+guard sits in `<n>OpenAndFillPositional`.
 
 **Two suffixes, one meaning each:**
 

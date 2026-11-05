@@ -117,11 +117,11 @@ you published:
 npm view ta-lib dist-tags.latest           # must print VERSION
 cd <empty dir> && npm init -y
 npm_config_cache=<another empty dir> npm install ta-lib@<version>
-node --input-type=module -e "import { sma } from 'ta-lib'; console.log(sma(0, 2, [1, 2, 3], 2, new Float64Array(2)))"
-node -e "console.log(require('ta-lib').smaLookback(30))"
+node --input-type=module -e "import { sma } from 'ta-lib'; console.log(sma([1, 2, 3], { timePeriod: 2 }))"
+node -e "console.log(require('ta-lib').smaLookback({ timePeriod: 30 }))"
 ```
 
-The two `node` lines print `OutRange { begIdx: 1, count: 2 }` and `29`. A `latest` other than
+The two `node` lines print `{ begIdx: 1, values: Float64Array(2) [ 1.5, 2.5 ] }` and `29`. A `latest` other than
 `VERSION` sends a bare `npm install ta-lib` to another version: fix it with
 `npm dist-tag add ta-lib@<version> latest`. A `404` right after the
 publish is registry lag: retry in a minute.
