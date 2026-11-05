@@ -534,7 +534,7 @@ static TA_RetCode TA_MACDEXT_StepImpl( struct TA_MACDEXT_Stream *sp, double inRe
    return TA_SUCCESS;
 }
 
-static TA_RetCode TA_MACDEXT_OpenImpl( struct TA_MACDEXT_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
+static TA_OPEN_INLINE TA_RetCode TA_MACDEXT_OpenBody( struct TA_MACDEXT_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
 {
    struct TA_MACDEXT_Stream *sp;
    int endIdx;
@@ -547,41 +547,6 @@ static TA_RetCode TA_MACDEXT_OpenImpl( struct TA_MACDEXT_Stream **stream, const 
    TA_MA_Stream *sub0;
    TA_MA_Stream *sub1;
    TA_MA_Stream *sub2;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inReal || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
-   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
-      optInFastPeriod = 12;
-   else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInFastMAType == TA_INTEGER_DEFAULT || optInFastMAType == TA_MAType_DEFAULT )
-      optInFastMAType = 0;
-   else if( (int)optInFastMAType < TA_MATYPE_MIN || (int)optInFastMAType > TA_MATYPE_MAX )
-      return TA_BAD_PARAM;
-   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
-      optInSlowPeriod = 26;
-   else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInSlowMAType == TA_INTEGER_DEFAULT || optInSlowMAType == TA_MAType_DEFAULT )
-      optInSlowMAType = 0;
-   else if( (int)optInSlowMAType < TA_MATYPE_MIN || (int)optInSlowMAType > TA_MATYPE_MAX )
-      return TA_BAD_PARAM;
-   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
-      optInSignalPeriod = 9;
-   else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInSignalMAType == TA_INTEGER_DEFAULT || optInSignalMAType == TA_MAType_DEFAULT )
-      optInSignalMAType = 0;
-   else if( (int)optInSignalMAType < TA_MATYPE_MIN || (int)optInSignalMAType > TA_MATYPE_MAX )
-      return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_INSUFFICIENT_HISTORY;
-   }
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
@@ -810,6 +775,66 @@ static TA_RetCode TA_MACDEXT_OpenImpl( struct TA_MACDEXT_Stream **stream, const 
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+static TA_OPEN_BODY TA_RetCode TA_MACDEXT_OpenFillFrame( struct TA_MACDEXT_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+{
+   return TA_MACDEXT_OpenBody( stream, inReal, startIdx, historyLen, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1 );
+}
+
+static TA_OPEN_BODY TA_RetCode TA_MACDEXT_OpenSinkFrame( struct TA_MACDEXT_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+{
+   double sink_outMACD = 0;
+   double sink_outMACDSignal = 0;
+   double sink_outMACDHist = 0;
+   TA_RetCode retCode = TA_MACDEXT_OpenBody( stream, inReal, startIdx, historyLen, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, &sink_outMACD, &sink_outMACDSignal, &sink_outMACDHist, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      if( outMACD ) *outMACD = sink_outMACD;
+      if( outMACDSignal ) *outMACDSignal = sink_outMACDSignal;
+      if( outMACDHist ) *outMACDHist = sink_outMACDHist;
+   }
+   return retCode;
+}
+
+static TA_RetCode TA_MACDEXT_OpenImpl( struct TA_MACDEXT_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inReal || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
+   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
+      optInFastPeriod = 12;
+   else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInFastMAType == TA_INTEGER_DEFAULT || optInFastMAType == TA_MAType_DEFAULT )
+      optInFastMAType = 0;
+   else if( (int)optInFastMAType < TA_MATYPE_MIN || (int)optInFastMAType > TA_MATYPE_MAX )
+      return TA_BAD_PARAM;
+   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
+      optInSlowPeriod = 26;
+   else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSlowMAType == TA_INTEGER_DEFAULT || optInSlowMAType == TA_MAType_DEFAULT )
+      optInSlowMAType = 0;
+   else if( (int)optInSlowMAType < TA_MATYPE_MIN || (int)optInSlowMAType > TA_MATYPE_MAX )
+      return TA_BAD_PARAM;
+   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
+      optInSignalPeriod = 9;
+   else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSignalMAType == TA_INTEGER_DEFAULT || optInSignalMAType == TA_MAType_DEFAULT )
+      optInSignalMAType = 0;
+   else if( (int)optInSignalMAType < TA_MATYPE_MIN || (int)optInSignalMAType > TA_MATYPE_MAX )
+      return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
+
+   return outStride ? TA_MACDEXT_OpenFillFrame( stream, inReal, startIdx, historyLen, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist ) : TA_MACDEXT_OpenSinkFrame( stream, inReal, startIdx, historyLen, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist );
 }
 
 /* Private function, not in public API. */

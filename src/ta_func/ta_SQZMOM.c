@@ -808,7 +808,7 @@ static TA_RetCode TA_SQZMOM_StepImpl( struct TA_SQZMOM_Stream *sp, double inHigh
    return TA_SUCCESS;
 }
 
-static TA_RetCode TA_SQZMOM_OpenImpl( struct TA_SQZMOM_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int *outBegIdx, int *outNBElement, double outMomentum[], int outSqueeze[], int outStride )
+static TA_OPEN_INLINE TA_RetCode TA_SQZMOM_OpenBody( struct TA_SQZMOM_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int *outBegIdx, int *outNBElement, double outMomentum[], int outSqueeze[], int outStride )
 {
    struct TA_SQZMOM_Stream *sp;
    int endIdx;
@@ -825,41 +825,6 @@ static TA_RetCode TA_SQZMOM_OpenImpl( struct TA_SQZMOM_Stream **stream, const do
    TA_SMA_Stream *sub4;
    TA_STDDEV_Stream *sub5;
    TA_LINEARREG_Stream *sub6;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inHigh || !inLow || !inClose || !outMomentum || !outSqueeze ) return TA_BAD_PARAM;
-   if( (int)optInBBPeriod == TA_INTEGER_DEFAULT )
-      optInBBPeriod = 20;
-   else if( (int)optInBBPeriod < 2 || (int)optInBBPeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( optInNbDev == TA_REAL_DEFAULT )
-      optInNbDev = 2;
-   else if( !(optInNbDev >= 0e0 && optInNbDev <= TA_REAL_MAX) )
-      return TA_BAD_PARAM;
-   if( (int)optInKCPeriod == TA_INTEGER_DEFAULT )
-      optInKCPeriod = 20;
-   else if( (int)optInKCPeriod < 2 || (int)optInKCPeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( optInFactorWide == TA_REAL_DEFAULT )
-      optInFactorWide = 2;
-   else if( !(optInFactorWide >= 0e0 && optInFactorWide <= TA_REAL_MAX) )
-      return TA_BAD_PARAM;
-   if( optInFactorNormal == TA_REAL_DEFAULT )
-      optInFactorNormal = 1.5;
-   else if( !(optInFactorNormal >= 0e0 && optInFactorNormal <= TA_REAL_MAX) )
-      return TA_BAD_PARAM;
-   if( optInFactorNarrow == TA_REAL_DEFAULT )
-      optInFactorNarrow = 1;
-   else if( !(optInFactorNarrow >= 0e0 && optInFactorNarrow <= TA_REAL_MAX) )
-      return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_INSUFFICIENT_HISTORY;
-   }
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
@@ -1284,6 +1249,64 @@ static TA_RetCode TA_SQZMOM_OpenImpl( struct TA_SQZMOM_Stream **stream, const do
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+static TA_OPEN_BODY TA_RetCode TA_SQZMOM_OpenFillFrame( struct TA_SQZMOM_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int *outBegIdx, int *outNBElement, double outMomentum[], int outSqueeze[] )
+{
+   return TA_SQZMOM_OpenBody( stream, inHigh, inLow, inClose, startIdx, historyLen, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze, 1 );
+}
+
+static TA_OPEN_BODY TA_RetCode TA_SQZMOM_OpenSinkFrame( struct TA_SQZMOM_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int *outBegIdx, int *outNBElement, double outMomentum[], int outSqueeze[] )
+{
+   double sink_outMomentum = 0;
+   int sink_outSqueeze = 0;
+   TA_RetCode retCode = TA_SQZMOM_OpenBody( stream, inHigh, inLow, inClose, startIdx, historyLen, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, &sink_outMomentum, &sink_outSqueeze, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      if( outMomentum ) *outMomentum = sink_outMomentum;
+      if( outSqueeze ) *outSqueeze = sink_outSqueeze;
+   }
+   return retCode;
+}
+
+static TA_RetCode TA_SQZMOM_OpenImpl( struct TA_SQZMOM_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow, int *outBegIdx, int *outNBElement, double outMomentum[], int outSqueeze[], int outStride )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inHigh || !inLow || !inClose || !outMomentum || !outSqueeze ) return TA_BAD_PARAM;
+   if( (int)optInBBPeriod == TA_INTEGER_DEFAULT )
+      optInBBPeriod = 20;
+   else if( (int)optInBBPeriod < 2 || (int)optInBBPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( optInNbDev == TA_REAL_DEFAULT )
+      optInNbDev = 2;
+   else if( !(optInNbDev >= 0e0 && optInNbDev <= TA_REAL_MAX) )
+      return TA_BAD_PARAM;
+   if( (int)optInKCPeriod == TA_INTEGER_DEFAULT )
+      optInKCPeriod = 20;
+   else if( (int)optInKCPeriod < 2 || (int)optInKCPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( optInFactorWide == TA_REAL_DEFAULT )
+      optInFactorWide = 2;
+   else if( !(optInFactorWide >= 0e0 && optInFactorWide <= TA_REAL_MAX) )
+      return TA_BAD_PARAM;
+   if( optInFactorNormal == TA_REAL_DEFAULT )
+      optInFactorNormal = 1.5;
+   else if( !(optInFactorNormal >= 0e0 && optInFactorNormal <= TA_REAL_MAX) )
+      return TA_BAD_PARAM;
+   if( optInFactorNarrow == TA_REAL_DEFAULT )
+      optInFactorNarrow = 1;
+   else if( !(optInFactorNarrow >= 0e0 && optInFactorNarrow <= TA_REAL_MAX) )
+      return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
+
+   return outStride ? TA_SQZMOM_OpenFillFrame( stream, inHigh, inLow, inClose, startIdx, historyLen, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze ) : TA_SQZMOM_OpenSinkFrame( stream, inHigh, inLow, inClose, startIdx, historyLen, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze );
 }
 
 /* Private function, not in public API. */

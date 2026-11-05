@@ -644,7 +644,7 @@ static void TA_COPPOCK_StepImpl( struct TA_COPPOCK_Stream *sp, double inReal, do
    sp->periodSub = periodSub;
 }
 
-static TA_RetCode TA_COPPOCK_OpenImpl( struct TA_COPPOCK_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInWMAPeriod, int optInROC1Period, int optInROC2Period, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_OPEN_INLINE TA_RetCode TA_COPPOCK_OpenBody( struct TA_COPPOCK_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInWMAPeriod, int optInROC1Period, int optInROC2Period, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_COPPOCK_Stream *sp;
    double local_sRing[50];
@@ -652,29 +652,6 @@ static TA_RetCode TA_COPPOCK_OpenImpl( struct TA_COPPOCK_Stream **stream, const 
    int sRing_Idx;
    int maxIdx_sRing;
    int endIdx;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inReal || !outReal ) return TA_BAD_PARAM;
-   if( (int)optInWMAPeriod == TA_INTEGER_DEFAULT )
-      optInWMAPeriod = 10;
-   else if( (int)optInWMAPeriod < 1 || (int)optInWMAPeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInROC1Period == TA_INTEGER_DEFAULT )
-      optInROC1Period = 11;
-   else if( (int)optInROC1Period < 1 || (int)optInROC1Period > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInROC2Period == TA_INTEGER_DEFAULT )
-      optInROC2Period = 14;
-   else if( (int)optInROC2Period < 1 || (int)optInROC2Period > 100000 )
-      return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_INSUFFICIENT_HISTORY;
-   }
 
    endIdx = historyLen - 1;
 
@@ -918,6 +895,50 @@ static TA_RetCode TA_COPPOCK_OpenImpl( struct TA_COPPOCK_Stream **stream, const 
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+static TA_OPEN_BODY TA_RetCode TA_COPPOCK_OpenFillFrame( struct TA_COPPOCK_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInWMAPeriod, int optInROC1Period, int optInROC2Period, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   return TA_COPPOCK_OpenBody( stream, inReal, startIdx, historyLen, optInWMAPeriod, optInROC1Period, optInROC2Period, outBegIdx, outNBElement, outReal, 1 );
+}
+
+static TA_OPEN_BODY TA_RetCode TA_COPPOCK_OpenSinkFrame( struct TA_COPPOCK_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInWMAPeriod, int optInROC1Period, int optInROC2Period, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   double sink_outReal = 0;
+   TA_RetCode retCode = TA_COPPOCK_OpenBody( stream, inReal, startIdx, historyLen, optInWMAPeriod, optInROC1Period, optInROC2Period, outBegIdx, outNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      if( outReal ) *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
+static TA_RetCode TA_COPPOCK_OpenImpl( struct TA_COPPOCK_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInWMAPeriod, int optInROC1Period, int optInROC2Period, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( (int)optInWMAPeriod == TA_INTEGER_DEFAULT )
+      optInWMAPeriod = 10;
+   else if( (int)optInWMAPeriod < 1 || (int)optInWMAPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInROC1Period == TA_INTEGER_DEFAULT )
+      optInROC1Period = 11;
+   else if( (int)optInROC1Period < 1 || (int)optInROC1Period > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInROC2Period == TA_INTEGER_DEFAULT )
+      optInROC2Period = 14;
+   else if( (int)optInROC2Period < 1 || (int)optInROC2Period > 100000 )
+      return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
+
+   return outStride ? TA_COPPOCK_OpenFillFrame( stream, inReal, startIdx, historyLen, optInWMAPeriod, optInROC1Period, optInROC2Period, outBegIdx, outNBElement, outReal ) : TA_COPPOCK_OpenSinkFrame( stream, inReal, startIdx, historyLen, optInWMAPeriod, optInROC1Period, optInROC2Period, outBegIdx, outNBElement, outReal );
 }
 
 /* Private function, not in public API. */

@@ -450,25 +450,10 @@ static void TA_DONCHIAN_StepImpl( struct TA_DONCHIAN_Stream *sp, double inHigh, 
    sp->highest = highest;
 }
 
-static TA_RetCode TA_DONCHIAN_OpenImpl( struct TA_DONCHIAN_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[], int outStride )
+static TA_OPEN_INLINE TA_RetCode TA_DONCHIAN_OpenBody( struct TA_DONCHIAN_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[], int outStride )
 {
    struct TA_DONCHIAN_Stream *sp;
    int endIdx;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inHigh || !inLow || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
-      optInTimePeriod = 20;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_INSUFFICIENT_HISTORY;
-   }
 
    endIdx = historyLen - 1;
 
@@ -625,6 +610,46 @@ static TA_RetCode TA_DONCHIAN_OpenImpl( struct TA_DONCHIAN_Stream **stream, cons
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+static TA_OPEN_BODY TA_RetCode TA_DONCHIAN_OpenFillFrame( struct TA_DONCHIAN_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   return TA_DONCHIAN_OpenBody( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1 );
+}
+
+static TA_OPEN_BODY TA_RetCode TA_DONCHIAN_OpenSinkFrame( struct TA_DONCHIAN_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   double sink_outRealUpperBand = 0;
+   double sink_outRealMiddleBand = 0;
+   double sink_outRealLowerBand = 0;
+   TA_RetCode retCode = TA_DONCHIAN_OpenBody( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, &sink_outRealUpperBand, &sink_outRealMiddleBand, &sink_outRealLowerBand, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      if( outRealUpperBand ) *outRealUpperBand = sink_outRealUpperBand;
+      if( outRealMiddleBand ) *outRealMiddleBand = sink_outRealMiddleBand;
+      if( outRealLowerBand ) *outRealLowerBand = sink_outRealLowerBand;
+   }
+   return retCode;
+}
+
+static TA_RetCode TA_DONCHIAN_OpenImpl( struct TA_DONCHIAN_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[], int outStride )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inHigh || !inLow || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+      optInTimePeriod = 20;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
+
+   return outStride ? TA_DONCHIAN_OpenFillFrame( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand ) : TA_DONCHIAN_OpenSinkFrame( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
 }
 
 /* Private function, not in public API. */

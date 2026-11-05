@@ -417,29 +417,10 @@ static void TA_ZIGZAG_StepImpl( struct TA_ZIGZAG_Stream *sp, double inHigh, doub
    sp->cur_outPivotIdx = *outPivotIdx;
 }
 
-static TA_RetCode TA_ZIGZAG_OpenImpl( struct TA_ZIGZAG_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double optInSensitivity, int optInMinTrendLength, int *outBegIdx, int *outNBElement, double outZigZag[], int outTrend[], int outPivotIdx[], int outStride )
+static TA_OPEN_INLINE TA_RetCode TA_ZIGZAG_OpenBody( struct TA_ZIGZAG_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double optInSensitivity, int optInMinTrendLength, int *outBegIdx, int *outNBElement, double outZigZag[], int outTrend[], int outPivotIdx[], int outStride )
 {
    struct TA_ZIGZAG_Stream *sp;
    int endIdx;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inHigh || !inLow || !outZigZag || !outTrend || !outPivotIdx ) return TA_BAD_PARAM;
-   if( optInSensitivity == TA_REAL_DEFAULT )
-      optInSensitivity = 5;
-   else if( !(optInSensitivity >= 0e0 && optInSensitivity <= 1e2) )
-      return TA_BAD_PARAM;
-   if( (int)optInMinTrendLength == TA_INTEGER_DEFAULT )
-      optInMinTrendLength = 1;
-   else if( (int)optInMinTrendLength < 1 || (int)optInMinTrendLength > 100000 )
-      return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_INSUFFICIENT_HISTORY;
-   }
 
    endIdx = historyLen - 1;
 
@@ -560,6 +541,50 @@ static TA_RetCode TA_ZIGZAG_OpenImpl( struct TA_ZIGZAG_Stream **stream, const do
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+static TA_OPEN_BODY TA_RetCode TA_ZIGZAG_OpenFillFrame( struct TA_ZIGZAG_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double optInSensitivity, int optInMinTrendLength, int *outBegIdx, int *outNBElement, double outZigZag[], int outTrend[], int outPivotIdx[] )
+{
+   return TA_ZIGZAG_OpenBody( stream, inHigh, inLow, startIdx, historyLen, optInSensitivity, optInMinTrendLength, outBegIdx, outNBElement, outZigZag, outTrend, outPivotIdx, 1 );
+}
+
+static TA_OPEN_BODY TA_RetCode TA_ZIGZAG_OpenSinkFrame( struct TA_ZIGZAG_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double optInSensitivity, int optInMinTrendLength, int *outBegIdx, int *outNBElement, double outZigZag[], int outTrend[], int outPivotIdx[] )
+{
+   double sink_outZigZag = 0;
+   int sink_outTrend = 0;
+   int sink_outPivotIdx = 0;
+   TA_RetCode retCode = TA_ZIGZAG_OpenBody( stream, inHigh, inLow, startIdx, historyLen, optInSensitivity, optInMinTrendLength, outBegIdx, outNBElement, &sink_outZigZag, &sink_outTrend, &sink_outPivotIdx, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      if( outZigZag ) *outZigZag = sink_outZigZag;
+      if( outTrend ) *outTrend = sink_outTrend;
+      if( outPivotIdx ) *outPivotIdx = sink_outPivotIdx;
+   }
+   return retCode;
+}
+
+static TA_RetCode TA_ZIGZAG_OpenImpl( struct TA_ZIGZAG_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double optInSensitivity, int optInMinTrendLength, int *outBegIdx, int *outNBElement, double outZigZag[], int outTrend[], int outPivotIdx[], int outStride )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inHigh || !inLow || !outZigZag || !outTrend || !outPivotIdx ) return TA_BAD_PARAM;
+   if( optInSensitivity == TA_REAL_DEFAULT )
+      optInSensitivity = 5;
+   else if( !(optInSensitivity >= 0e0 && optInSensitivity <= 1e2) )
+      return TA_BAD_PARAM;
+   if( (int)optInMinTrendLength == TA_INTEGER_DEFAULT )
+      optInMinTrendLength = 1;
+   else if( (int)optInMinTrendLength < 1 || (int)optInMinTrendLength > 100000 )
+      return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
+
+   return outStride ? TA_ZIGZAG_OpenFillFrame( stream, inHigh, inLow, startIdx, historyLen, optInSensitivity, optInMinTrendLength, outBegIdx, outNBElement, outZigZag, outTrend, outPivotIdx ) : TA_ZIGZAG_OpenSinkFrame( stream, inHigh, inLow, startIdx, historyLen, optInSensitivity, optInMinTrendLength, outBegIdx, outNBElement, outZigZag, outTrend, outPivotIdx );
 }
 
 /* Private function, not in public API. */

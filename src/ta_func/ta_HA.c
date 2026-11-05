@@ -435,21 +435,10 @@ static void TA_HA_StepImpl( struct TA_HA_Stream *sp, double inOpen, double inHig
    sp->haClose = haClose;
 }
 
-static TA_RetCode TA_HA_OpenImpl( struct TA_HA_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outHAOpen[], double outHAHigh[], double outHALow[], double outHAClose[], int outStride )
+static TA_OPEN_INLINE TA_RetCode TA_HA_OpenBody( struct TA_HA_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outHAOpen[], double outHAHigh[], double outHALow[], double outHAClose[], int outStride )
 {
    struct TA_HA_Stream *sp;
    int endIdx;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inOpen || !inHigh || !inLow || !inClose || !outHAOpen || !outHAHigh || !outHALow || !outHAClose ) return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_INSUFFICIENT_HISTORY;
-   }
 
    endIdx = historyLen - 1;
 
@@ -586,6 +575,44 @@ static TA_RetCode TA_HA_OpenImpl( struct TA_HA_Stream **stream, const double inO
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+static TA_OPEN_BODY TA_RetCode TA_HA_OpenFillFrame( struct TA_HA_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outHAOpen[], double outHAHigh[], double outHALow[], double outHAClose[] )
+{
+   return TA_HA_OpenBody( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose, 1 );
+}
+
+static TA_OPEN_BODY TA_RetCode TA_HA_OpenSinkFrame( struct TA_HA_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outHAOpen[], double outHAHigh[], double outHALow[], double outHAClose[] )
+{
+   double sink_outHAOpen = 0;
+   double sink_outHAHigh = 0;
+   double sink_outHALow = 0;
+   double sink_outHAClose = 0;
+   TA_RetCode retCode = TA_HA_OpenBody( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, &sink_outHAOpen, &sink_outHAHigh, &sink_outHALow, &sink_outHAClose, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      if( outHAOpen ) *outHAOpen = sink_outHAOpen;
+      if( outHAHigh ) *outHAHigh = sink_outHAHigh;
+      if( outHALow ) *outHALow = sink_outHALow;
+      if( outHAClose ) *outHAClose = sink_outHAClose;
+   }
+   return retCode;
+}
+
+static TA_RetCode TA_HA_OpenImpl( struct TA_HA_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outHAOpen[], double outHAHigh[], double outHALow[], double outHAClose[], int outStride )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outHAOpen || !outHAHigh || !outHALow || !outHAClose ) return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
+
+   return outStride ? TA_HA_OpenFillFrame( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose ) : TA_HA_OpenSinkFrame( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose );
 }
 
 /* Private function, not in public API. */

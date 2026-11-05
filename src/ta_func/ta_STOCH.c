@@ -718,7 +718,7 @@ static TA_RetCode TA_STOCH_StepImpl( struct TA_STOCH_Stream *sp, double inHigh, 
    return TA_SUCCESS;
 }
 
-static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, int *outBegIdx, int *outNBElement, double outSlowK[], double outSlowD[], int outStride )
+static TA_OPEN_INLINE TA_RetCode TA_STOCH_OpenBody( struct TA_STOCH_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, int *outBegIdx, int *outNBElement, double outSlowK[], double outSlowD[], int outStride )
 {
    struct TA_STOCH_Stream *sp;
    int endIdx;
@@ -730,37 +730,6 @@ static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const doub
    double *sc_outSlowD;
    TA_MA_Stream *sub0;
    TA_MA_Stream *sub1;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inHigh || !inLow || !inClose || !outSlowK || !outSlowD ) return TA_BAD_PARAM;
-   if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
-      optInFastK_Period = 5;
-   else if( (int)optInFastK_Period < 1 || (int)optInFastK_Period > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInSlowK_Period == TA_INTEGER_DEFAULT )
-      optInSlowK_Period = 3;
-   else if( (int)optInSlowK_Period < 1 || (int)optInSlowK_Period > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInSlowK_MAType == TA_INTEGER_DEFAULT || optInSlowK_MAType == TA_MAType_DEFAULT )
-      optInSlowK_MAType = 0;
-   else if( (int)optInSlowK_MAType < TA_MATYPE_MIN || (int)optInSlowK_MAType > TA_MATYPE_MAX )
-      return TA_BAD_PARAM;
-   if( (int)optInSlowD_Period == TA_INTEGER_DEFAULT )
-      optInSlowD_Period = 3;
-   else if( (int)optInSlowD_Period < 1 || (int)optInSlowD_Period > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInSlowD_MAType == TA_INTEGER_DEFAULT || optInSlowD_MAType == TA_MAType_DEFAULT )
-      optInSlowD_MAType = 0;
-   else if( (int)optInSlowD_MAType < TA_MATYPE_MIN || (int)optInSlowD_MAType > TA_MATYPE_MAX )
-      return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_INSUFFICIENT_HISTORY;
-   }
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
@@ -1094,6 +1063,60 @@ static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const doub
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+static TA_OPEN_BODY TA_RetCode TA_STOCH_OpenFillFrame( struct TA_STOCH_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, int *outBegIdx, int *outNBElement, double outSlowK[], double outSlowD[] )
+{
+   return TA_STOCH_OpenBody( stream, inHigh, inLow, inClose, startIdx, historyLen, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD, 1 );
+}
+
+static TA_OPEN_BODY TA_RetCode TA_STOCH_OpenSinkFrame( struct TA_STOCH_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, int *outBegIdx, int *outNBElement, double outSlowK[], double outSlowD[] )
+{
+   double sink_outSlowK = 0;
+   double sink_outSlowD = 0;
+   TA_RetCode retCode = TA_STOCH_OpenBody( stream, inHigh, inLow, inClose, startIdx, historyLen, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, &sink_outSlowK, &sink_outSlowD, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      if( outSlowK ) *outSlowK = sink_outSlowK;
+      if( outSlowD ) *outSlowD = sink_outSlowD;
+   }
+   return retCode;
+}
+
+static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, int *outBegIdx, int *outNBElement, double outSlowK[], double outSlowD[], int outStride )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inHigh || !inLow || !inClose || !outSlowK || !outSlowD ) return TA_BAD_PARAM;
+   if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
+      optInFastK_Period = 5;
+   else if( (int)optInFastK_Period < 1 || (int)optInFastK_Period > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSlowK_Period == TA_INTEGER_DEFAULT )
+      optInSlowK_Period = 3;
+   else if( (int)optInSlowK_Period < 1 || (int)optInSlowK_Period > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSlowK_MAType == TA_INTEGER_DEFAULT || optInSlowK_MAType == TA_MAType_DEFAULT )
+      optInSlowK_MAType = 0;
+   else if( (int)optInSlowK_MAType < TA_MATYPE_MIN || (int)optInSlowK_MAType > TA_MATYPE_MAX )
+      return TA_BAD_PARAM;
+   if( (int)optInSlowD_Period == TA_INTEGER_DEFAULT )
+      optInSlowD_Period = 3;
+   else if( (int)optInSlowD_Period < 1 || (int)optInSlowD_Period > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSlowD_MAType == TA_INTEGER_DEFAULT || optInSlowD_MAType == TA_MAType_DEFAULT )
+      optInSlowD_MAType = 0;
+   else if( (int)optInSlowD_MAType < TA_MATYPE_MIN || (int)optInSlowD_MAType > TA_MATYPE_MAX )
+      return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
+
+   return outStride ? TA_STOCH_OpenFillFrame( stream, inHigh, inLow, inClose, startIdx, historyLen, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD ) : TA_STOCH_OpenSinkFrame( stream, inHigh, inLow, inClose, startIdx, historyLen, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD );
 }
 
 /* Private function, not in public API. */

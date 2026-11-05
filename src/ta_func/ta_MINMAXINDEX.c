@@ -404,25 +404,10 @@ static void TA_MINMAXINDEX_StepImpl( struct TA_MINMAXINDEX_Stream *sp, double in
    sp->cur_outMaxIdx = *outMaxIdx;
 }
 
-static TA_RetCode TA_MINMAXINDEX_OpenImpl( struct TA_MINMAXINDEX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, int outMinIdx[], int outMaxIdx[], int outStride )
+static TA_OPEN_INLINE TA_RetCode TA_MINMAXINDEX_OpenBody( struct TA_MINMAXINDEX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, int outMinIdx[], int outMaxIdx[], int outStride )
 {
    struct TA_MINMAXINDEX_Stream *sp;
    int endIdx;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inReal || !outMinIdx || !outMaxIdx ) return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
-      optInTimePeriod = 30;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_INSUFFICIENT_HISTORY;
-   }
 
    endIdx = historyLen - 1;
 
@@ -556,6 +541,44 @@ static TA_RetCode TA_MINMAXINDEX_OpenImpl( struct TA_MINMAXINDEX_Stream **stream
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+static TA_OPEN_BODY TA_RetCode TA_MINMAXINDEX_OpenFillFrame( struct TA_MINMAXINDEX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, int outMinIdx[], int outMaxIdx[] )
+{
+   return TA_MINMAXINDEX_OpenBody( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1 );
+}
+
+static TA_OPEN_BODY TA_RetCode TA_MINMAXINDEX_OpenSinkFrame( struct TA_MINMAXINDEX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, int outMinIdx[], int outMaxIdx[] )
+{
+   int sink_outMinIdx = 0;
+   int sink_outMaxIdx = 0;
+   TA_RetCode retCode = TA_MINMAXINDEX_OpenBody( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, &sink_outMinIdx, &sink_outMaxIdx, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      if( outMinIdx ) *outMinIdx = sink_outMinIdx;
+      if( outMaxIdx ) *outMaxIdx = sink_outMaxIdx;
+   }
+   return retCode;
+}
+
+static TA_RetCode TA_MINMAXINDEX_OpenImpl( struct TA_MINMAXINDEX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, int outMinIdx[], int outMaxIdx[], int outStride )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inReal || !outMinIdx || !outMaxIdx ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+      optInTimePeriod = 30;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
+
+   return outStride ? TA_MINMAXINDEX_OpenFillFrame( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx ) : TA_MINMAXINDEX_OpenSinkFrame( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx );
 }
 
 /* Private function, not in public API. */

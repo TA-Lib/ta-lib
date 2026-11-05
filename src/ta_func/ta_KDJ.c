@@ -302,7 +302,7 @@ static TA_RetCode TA_KDJ_StepImpl( struct TA_KDJ_Stream *sp, double inHigh, doub
    return TA_SUCCESS;
 }
 
-static TA_RetCode TA_KDJ_OpenImpl( struct TA_KDJ_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, int *outBegIdx, int *outNBElement, double outK[], double outD[], double outJ[], int outStride )
+static TA_OPEN_INLINE TA_RetCode TA_KDJ_OpenBody( struct TA_KDJ_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, int *outBegIdx, int *outNBElement, double outK[], double outD[], double outJ[], int outStride )
 {
    struct TA_KDJ_Stream *sp;
    int endIdx;
@@ -313,37 +313,6 @@ static TA_RetCode TA_KDJ_OpenImpl( struct TA_KDJ_Stream **stream, const double i
    double *sc_outD;
    double *sc_outJ;
    TA_STOCH_Stream *sub0;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inHigh || !inLow || !inClose || !outK || !outD || !outJ ) return TA_BAD_PARAM;
-   if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
-      optInFastK_Period = 9;
-   else if( (int)optInFastK_Period < 1 || (int)optInFastK_Period > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInSlowK_Period == TA_INTEGER_DEFAULT )
-      optInSlowK_Period = 3;
-   else if( (int)optInSlowK_Period < 1 || (int)optInSlowK_Period > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInSlowK_MAType == TA_INTEGER_DEFAULT || optInSlowK_MAType == TA_MAType_DEFAULT )
-      optInSlowK_MAType = 13;
-   else if( (int)optInSlowK_MAType < TA_MATYPE_MIN || (int)optInSlowK_MAType > TA_MATYPE_MAX )
-      return TA_BAD_PARAM;
-   if( (int)optInSlowD_Period == TA_INTEGER_DEFAULT )
-      optInSlowD_Period = 3;
-   else if( (int)optInSlowD_Period < 1 || (int)optInSlowD_Period > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInSlowD_MAType == TA_INTEGER_DEFAULT || optInSlowD_MAType == TA_MAType_DEFAULT )
-      optInSlowD_MAType = 13;
-   else if( (int)optInSlowD_MAType < TA_MATYPE_MIN || (int)optInSlowD_MAType > TA_MATYPE_MAX )
-      return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_INSUFFICIENT_HISTORY;
-   }
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
@@ -439,6 +408,62 @@ static TA_RetCode TA_KDJ_OpenImpl( struct TA_KDJ_Stream **stream, const double i
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+static TA_OPEN_BODY TA_RetCode TA_KDJ_OpenFillFrame( struct TA_KDJ_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, int *outBegIdx, int *outNBElement, double outK[], double outD[], double outJ[] )
+{
+   return TA_KDJ_OpenBody( stream, inHigh, inLow, inClose, startIdx, historyLen, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outK, outD, outJ, 1 );
+}
+
+static TA_OPEN_BODY TA_RetCode TA_KDJ_OpenSinkFrame( struct TA_KDJ_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, int *outBegIdx, int *outNBElement, double outK[], double outD[], double outJ[] )
+{
+   double sink_outK = 0;
+   double sink_outD = 0;
+   double sink_outJ = 0;
+   TA_RetCode retCode = TA_KDJ_OpenBody( stream, inHigh, inLow, inClose, startIdx, historyLen, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, &sink_outK, &sink_outD, &sink_outJ, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      if( outK ) *outK = sink_outK;
+      if( outD ) *outD = sink_outD;
+      if( outJ ) *outJ = sink_outJ;
+   }
+   return retCode;
+}
+
+static TA_RetCode TA_KDJ_OpenImpl( struct TA_KDJ_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, int *outBegIdx, int *outNBElement, double outK[], double outD[], double outJ[], int outStride )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inHigh || !inLow || !inClose || !outK || !outD || !outJ ) return TA_BAD_PARAM;
+   if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
+      optInFastK_Period = 9;
+   else if( (int)optInFastK_Period < 1 || (int)optInFastK_Period > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSlowK_Period == TA_INTEGER_DEFAULT )
+      optInSlowK_Period = 3;
+   else if( (int)optInSlowK_Period < 1 || (int)optInSlowK_Period > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSlowK_MAType == TA_INTEGER_DEFAULT || optInSlowK_MAType == TA_MAType_DEFAULT )
+      optInSlowK_MAType = 13;
+   else if( (int)optInSlowK_MAType < TA_MATYPE_MIN || (int)optInSlowK_MAType > TA_MATYPE_MAX )
+      return TA_BAD_PARAM;
+   if( (int)optInSlowD_Period == TA_INTEGER_DEFAULT )
+      optInSlowD_Period = 3;
+   else if( (int)optInSlowD_Period < 1 || (int)optInSlowD_Period > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSlowD_MAType == TA_INTEGER_DEFAULT || optInSlowD_MAType == TA_MAType_DEFAULT )
+      optInSlowD_MAType = 13;
+   else if( (int)optInSlowD_MAType < TA_MATYPE_MIN || (int)optInSlowD_MAType > TA_MATYPE_MAX )
+      return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
+
+   return outStride ? TA_KDJ_OpenFillFrame( stream, inHigh, inLow, inClose, startIdx, historyLen, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outK, outD, outJ ) : TA_KDJ_OpenSinkFrame( stream, inHigh, inLow, inClose, startIdx, historyLen, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outK, outD, outJ );
 }
 
 /* Private function, not in public API. */

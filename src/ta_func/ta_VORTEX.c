@@ -610,25 +610,10 @@ static void TA_VORTEX_StepImpl( struct TA_VORTEX_Stream *sp, double inHigh, doub
    }
 }
 
-static TA_RetCode TA_VORTEX_OpenImpl( struct TA_VORTEX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outPlusVI[], double outMinusVI[], int outStride )
+static TA_OPEN_INLINE TA_RetCode TA_VORTEX_OpenBody( struct TA_VORTEX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outPlusVI[], double outMinusVI[], int outStride )
 {
    struct TA_VORTEX_Stream *sp;
    int endIdx;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inHigh || !inLow || !inClose || !outPlusVI || !outMinusVI ) return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
-      optInTimePeriod = 14;
-   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_INSUFFICIENT_HISTORY;
-   }
 
    endIdx = historyLen - 1;
 
@@ -856,6 +841,44 @@ static TA_RetCode TA_VORTEX_OpenImpl( struct TA_VORTEX_Stream **stream, const do
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+static TA_OPEN_BODY TA_RetCode TA_VORTEX_OpenFillFrame( struct TA_VORTEX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outPlusVI[], double outMinusVI[] )
+{
+   return TA_VORTEX_OpenBody( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outPlusVI, outMinusVI, 1 );
+}
+
+static TA_OPEN_BODY TA_RetCode TA_VORTEX_OpenSinkFrame( struct TA_VORTEX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outPlusVI[], double outMinusVI[] )
+{
+   double sink_outPlusVI = 0;
+   double sink_outMinusVI = 0;
+   TA_RetCode retCode = TA_VORTEX_OpenBody( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, &sink_outPlusVI, &sink_outMinusVI, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      if( outPlusVI ) *outPlusVI = sink_outPlusVI;
+      if( outMinusVI ) *outMinusVI = sink_outMinusVI;
+   }
+   return retCode;
+}
+
+static TA_RetCode TA_VORTEX_OpenImpl( struct TA_VORTEX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outPlusVI[], double outMinusVI[], int outStride )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inHigh || !inLow || !inClose || !outPlusVI || !outMinusVI ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
+
+   return outStride ? TA_VORTEX_OpenFillFrame( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outPlusVI, outMinusVI ) : TA_VORTEX_OpenSinkFrame( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outPlusVI, outMinusVI );
 }
 
 /* Private function, not in public API. */

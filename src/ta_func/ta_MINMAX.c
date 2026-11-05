@@ -637,25 +637,10 @@ static void TA_MINMAX_StepImpl( struct TA_MINMAX_Stream *sp, double inReal, doub
    sp->lowest = lowest;
 }
 
-static TA_RetCode TA_MINMAX_OpenImpl( struct TA_MINMAX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outMin[], double outMax[], int outStride )
+static TA_OPEN_INLINE TA_RetCode TA_MINMAX_OpenBody( struct TA_MINMAX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outMin[], double outMax[], int outStride )
 {
    struct TA_MINMAX_Stream *sp;
    int endIdx;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inReal || !outMin || !outMax ) return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
-      optInTimePeriod = 30;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_INSUFFICIENT_HISTORY;
-   }
 
    endIdx = historyLen - 1;
 
@@ -806,6 +791,44 @@ static TA_RetCode TA_MINMAX_OpenImpl( struct TA_MINMAX_Stream **stream, const do
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+static TA_OPEN_BODY TA_RetCode TA_MINMAX_OpenFillFrame( struct TA_MINMAX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outMin[], double outMax[] )
+{
+   return TA_MINMAX_OpenBody( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax, 1 );
+}
+
+static TA_OPEN_BODY TA_RetCode TA_MINMAX_OpenSinkFrame( struct TA_MINMAX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outMin[], double outMax[] )
+{
+   double sink_outMin = 0;
+   double sink_outMax = 0;
+   TA_RetCode retCode = TA_MINMAX_OpenBody( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, &sink_outMin, &sink_outMax, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      if( outMin ) *outMin = sink_outMin;
+      if( outMax ) *outMax = sink_outMax;
+   }
+   return retCode;
+}
+
+static TA_RetCode TA_MINMAX_OpenImpl( struct TA_MINMAX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outMin[], double outMax[], int outStride )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inReal || !outMin || !outMax ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+      optInTimePeriod = 30;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
+
+   return outStride ? TA_MINMAX_OpenFillFrame( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax ) : TA_MINMAX_OpenSinkFrame( stream, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax );
 }
 
 /* Private function, not in public API. */

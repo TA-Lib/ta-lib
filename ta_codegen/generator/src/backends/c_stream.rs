@@ -1195,8 +1195,66 @@ pub fn generate(
     emit_clone(&mut o, func, &plan, enums);
 
     mark_fma_multiversion(&mut o, func);
+    split_open_body(&mut o, func);
 
     o
+}
+
+/// Every strided `_OpenImpl` not already behind FMA frames keeps only its
+/// argument checks and calls one of two never-inlined frames, each with the
+/// body inlined at a constant stride. The loop's code then depends on the body
+/// and that stride alone: sharing a function with the checks, an edit to them
+/// reshuffles the loop's registers. The sink frame owns its sinks, which is what
+/// lets the compiler drop a stateless loop that only the last bar survives.
+/// A body without `outStride` hand-rolls one per entry point and is left alone.
+fn split_open_body(o: &mut String, func: &FuncDef) {
+    let n = uname(func);
+    let sig = format!("static TA_RetCode TA_{n}_OpenImpl(");
+    let Some(line) = def_line(o, &sig) else {
+        return;
+    };
+    let params_from = line + sig.len();
+    let params_to = params_from + o[params_from..].find(" )\n").expect("an `_OpenImpl` signature closes its line");
+    let params = o[params_from..params_to].trim().to_string();
+    let Some(framed) = params.strip_suffix(", int outStride") else {
+        return;
+    };
+    let open_brace = params_to + " )\n{\n".len();
+    assert_eq!(&o[params_to..open_brace], " )\n{\n", "{n}: `_OpenImpl` body does not open on its own line");
+    let end = line + o[line..].find("\n}\n").expect("a definition closes") + 3;
+    let decls_end = open_brace + o[open_brace..end].find("\n\n").expect("declarations end at a blank line") + 1;
+    let split = "   endIdx = historyLen - 1;\n";
+    let body_at = decls_end + o[decls_end..end].find(split).unwrap_or_else(|| panic!("{n}: no `{split}` after the checks"));
+    let checks = o[decls_end + 1..body_at].trim_end().to_string();
+    let decls = &o[open_brace..decls_end];
+    let rest = &o[body_at..end];
+
+    let list: Vec<&str> = framed.split(", ").collect();
+    let after_meta = list.iter().position(|p| *p == "int *outNBElement").expect("an `_OpenImpl` takes outNBElement") + 1;
+    let names: Vec<&str> = list.iter().map(|p| p.rsplit([' ', '*']).next().unwrap_or(p).trim_end_matches("[]")).collect();
+    let mut sinks = String::new();
+    let mut copies = String::new();
+    let mut sink_args = Vec::new();
+    for (i, p) in list.iter().enumerate() {
+        if i >= after_meta {
+            let ty = p.split(' ').next().expect("a typed parameter");
+            let nm = names[i];
+            let _ = writeln!(sinks, "   {ty} sink_{nm} = 0;");
+            let _ = writeln!(copies, "      if( {nm} ) *{nm} = sink_{nm};");
+            sink_args.push(format!("&sink_{nm}"));
+        } else {
+            sink_args.push(names[i].to_string());
+        }
+    }
+    let args = names.join(", ");
+    let sink_args = sink_args.join(", ");
+    let text = format!(
+        "static TA_OPEN_INLINE TA_RetCode TA_{n}_OpenBody( {params} )\n{{\n{decls}\n{rest}\n\
+         static TA_OPEN_BODY TA_RetCode TA_{n}_OpenFillFrame( {framed} )\n{{\n   return TA_{n}_OpenBody( {args}, 1 );\n}}\n\n\
+         static TA_OPEN_BODY TA_RetCode TA_{n}_OpenSinkFrame( {framed} )\n{{\n{sinks}   TA_RetCode retCode = TA_{n}_OpenBody( {sink_args}, 0 );\n   if( retCode == TA_SUCCESS )\n   {{\n{copies}   }}\n   return retCode;\n}}\n\n\
+         static TA_RetCode TA_{n}_OpenImpl( {params} )\n{{\n{checks}\n\n   return outStride ? TA_{n}_OpenFillFrame( {args} ) : TA_{n}_OpenSinkFrame( {args} );\n}}\n"
+    );
+    o.replace_range(line..end, &text);
 }
 
 /// FMA runtime CPU dispatch for `Peek`, `Update` and the open tier.

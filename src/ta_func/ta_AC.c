@@ -538,7 +538,7 @@ static void TA_AC_StepImpl( struct TA_AC_Stream *sp, double inHigh, double inLow
    }
 }
 
-static TA_RetCode TA_AC_OpenImpl( struct TA_AC_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_OPEN_INLINE TA_RetCode TA_AC_OpenBody( struct TA_AC_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_AC_Stream *sp;
    double local_oscBuffer[32];
@@ -546,29 +546,6 @@ static TA_RetCode TA_AC_OpenImpl( struct TA_AC_Stream **stream, const double inH
    int oscBuffer_Idx;
    int maxIdx_oscBuffer;
    int endIdx;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
-   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
-      optInFastPeriod = 5;
-   else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
-      optInSlowPeriod = 34;
-   else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
-      optInSignalPeriod = 5;
-   else if( (int)optInSignalPeriod < 2 || (int)optInSignalPeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_INSUFFICIENT_HISTORY;
-   }
 
    endIdx = historyLen - 1;
 
@@ -789,6 +766,50 @@ static TA_RetCode TA_AC_OpenImpl( struct TA_AC_Stream **stream, const double inH
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+static TA_OPEN_BODY TA_RetCode TA_AC_OpenFillFrame( struct TA_AC_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   return TA_AC_OpenBody( stream, inHigh, inLow, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal, 1 );
+}
+
+static TA_OPEN_BODY TA_RetCode TA_AC_OpenSinkFrame( struct TA_AC_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   double sink_outReal = 0;
+   TA_RetCode retCode = TA_AC_OpenBody( stream, inHigh, inLow, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      if( outReal ) *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
+static TA_RetCode TA_AC_OpenImpl( struct TA_AC_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
+      optInFastPeriod = 5;
+   else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
+      optInSlowPeriod = 34;
+   else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
+      optInSignalPeriod = 5;
+   else if( (int)optInSignalPeriod < 2 || (int)optInSignalPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
+
+   return outStride ? TA_AC_OpenFillFrame( stream, inHigh, inLow, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal ) : TA_AC_OpenSinkFrame( stream, inHigh, inLow, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal );
 }
 
 /* Private function, not in public API. */

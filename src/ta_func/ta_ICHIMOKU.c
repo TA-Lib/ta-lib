@@ -418,7 +418,7 @@ static TA_RetCode TA_ICHIMOKU_StepImpl( struct TA_ICHIMOKU_Stream *sp, double in
    return TA_SUCCESS;
 }
 
-static TA_RetCode TA_ICHIMOKU_OpenImpl( struct TA_ICHIMOKU_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod, int *outBegIdx, int *outNBElement, double outTenkanSen[], double outKijunSen[], double outSenkouSpanA[], double outSenkouSpanB[], int outStride )
+static TA_OPEN_INLINE TA_RetCode TA_ICHIMOKU_OpenBody( struct TA_ICHIMOKU_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod, int *outBegIdx, int *outNBElement, double outTenkanSen[], double outKijunSen[], double outSenkouSpanA[], double outSenkouSpanB[], int outStride )
 {
    struct TA_ICHIMOKU_Stream *sp;
    int endIdx;
@@ -433,29 +433,6 @@ static TA_RetCode TA_ICHIMOKU_OpenImpl( struct TA_ICHIMOKU_Stream **stream, cons
    TA_MIDPRICE_Stream *sub1;
    TA_MIDPRICE_Stream *sub2;
    TA_MEDPRICE_Stream *sub3;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inHigh || !inLow || !outTenkanSen || !outKijunSen || !outSenkouSpanA || !outSenkouSpanB ) return TA_BAD_PARAM;
-   if( (int)optInTenkanPeriod == TA_INTEGER_DEFAULT )
-      optInTenkanPeriod = 9;
-   else if( (int)optInTenkanPeriod < 2 || (int)optInTenkanPeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInKijunPeriod == TA_INTEGER_DEFAULT )
-      optInKijunPeriod = 26;
-   else if( (int)optInKijunPeriod < 2 || (int)optInKijunPeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInSenkouBPeriod == TA_INTEGER_DEFAULT )
-      optInSenkouBPeriod = 52;
-   else if( (int)optInSenkouBPeriod < 2 || (int)optInSenkouBPeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_INSUFFICIENT_HISTORY;
-   }
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
@@ -652,6 +629,56 @@ static TA_RetCode TA_ICHIMOKU_OpenImpl( struct TA_ICHIMOKU_Stream **stream, cons
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+static TA_OPEN_BODY TA_RetCode TA_ICHIMOKU_OpenFillFrame( struct TA_ICHIMOKU_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod, int *outBegIdx, int *outNBElement, double outTenkanSen[], double outKijunSen[], double outSenkouSpanA[], double outSenkouSpanB[] )
+{
+   return TA_ICHIMOKU_OpenBody( stream, inHigh, inLow, startIdx, historyLen, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, outBegIdx, outNBElement, outTenkanSen, outKijunSen, outSenkouSpanA, outSenkouSpanB, 1 );
+}
+
+static TA_OPEN_BODY TA_RetCode TA_ICHIMOKU_OpenSinkFrame( struct TA_ICHIMOKU_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod, int *outBegIdx, int *outNBElement, double outTenkanSen[], double outKijunSen[], double outSenkouSpanA[], double outSenkouSpanB[] )
+{
+   double sink_outTenkanSen = 0;
+   double sink_outKijunSen = 0;
+   double sink_outSenkouSpanA = 0;
+   double sink_outSenkouSpanB = 0;
+   TA_RetCode retCode = TA_ICHIMOKU_OpenBody( stream, inHigh, inLow, startIdx, historyLen, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, outBegIdx, outNBElement, &sink_outTenkanSen, &sink_outKijunSen, &sink_outSenkouSpanA, &sink_outSenkouSpanB, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      if( outTenkanSen ) *outTenkanSen = sink_outTenkanSen;
+      if( outKijunSen ) *outKijunSen = sink_outKijunSen;
+      if( outSenkouSpanA ) *outSenkouSpanA = sink_outSenkouSpanA;
+      if( outSenkouSpanB ) *outSenkouSpanB = sink_outSenkouSpanB;
+   }
+   return retCode;
+}
+
+static TA_RetCode TA_ICHIMOKU_OpenImpl( struct TA_ICHIMOKU_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod, int *outBegIdx, int *outNBElement, double outTenkanSen[], double outKijunSen[], double outSenkouSpanA[], double outSenkouSpanB[], int outStride )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inHigh || !inLow || !outTenkanSen || !outKijunSen || !outSenkouSpanA || !outSenkouSpanB ) return TA_BAD_PARAM;
+   if( (int)optInTenkanPeriod == TA_INTEGER_DEFAULT )
+      optInTenkanPeriod = 9;
+   else if( (int)optInTenkanPeriod < 2 || (int)optInTenkanPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInKijunPeriod == TA_INTEGER_DEFAULT )
+      optInKijunPeriod = 26;
+   else if( (int)optInKijunPeriod < 2 || (int)optInKijunPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInSenkouBPeriod == TA_INTEGER_DEFAULT )
+      optInSenkouBPeriod = 52;
+   else if( (int)optInSenkouBPeriod < 2 || (int)optInSenkouBPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
+
+   return outStride ? TA_ICHIMOKU_OpenFillFrame( stream, inHigh, inLow, startIdx, historyLen, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, outBegIdx, outNBElement, outTenkanSen, outKijunSen, outSenkouSpanA, outSenkouSpanB ) : TA_ICHIMOKU_OpenSinkFrame( stream, inHigh, inLow, startIdx, historyLen, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, outBegIdx, outNBElement, outTenkanSen, outKijunSen, outSenkouSpanA, outSenkouSpanB );
 }
 
 /* Private function, not in public API. */

@@ -141,21 +141,10 @@ static void TA_ATAN_StepImpl( struct TA_ATAN_Stream *sp, double inReal, double *
    sp->cur_outReal = *outReal;
 }
 
-static TA_RetCode TA_ATAN_OpenImpl( struct TA_ATAN_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_OPEN_INLINE TA_RetCode TA_ATAN_OpenBody( struct TA_ATAN_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_ATAN_Stream *sp;
    int endIdx;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inReal || !outReal ) return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_INSUFFICIENT_HISTORY;
-   }
 
    endIdx = historyLen - 1;
 
@@ -177,6 +166,38 @@ static TA_RetCode TA_ATAN_OpenImpl( struct TA_ATAN_Stream **stream, const double
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+static TA_OPEN_BODY TA_RetCode TA_ATAN_OpenFillFrame( struct TA_ATAN_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   return TA_ATAN_OpenBody( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
+}
+
+static TA_OPEN_BODY TA_RetCode TA_ATAN_OpenSinkFrame( struct TA_ATAN_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   double sink_outReal = 0;
+   TA_RetCode retCode = TA_ATAN_OpenBody( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      if( outReal ) *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
+static TA_RetCode TA_ATAN_OpenImpl( struct TA_ATAN_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
+
+   return outStride ? TA_ATAN_OpenFillFrame( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outReal ) : TA_ATAN_OpenSinkFrame( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outReal );
 }
 
 /* Private function, not in public API. */

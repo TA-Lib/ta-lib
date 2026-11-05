@@ -42,6 +42,28 @@
    #define TA_FMA_AVAILABLE 0
 #endif
 
+/* The open tier's two frames, each with the body inlined at a constant stride,
+ * kept out of line and out of interprocedural analysis so their code depends
+ * only on that body: a fact the argument checks prove, inlined or propagated,
+ * reshuffles the whole loop. */
+#if defined( __GNUC__ )
+   #if defined( __has_attribute )
+      #if __has_attribute( noipa )
+         #define TA_OPEN_BODY __attribute__((noipa))
+      #endif
+   #endif
+   #ifndef TA_OPEN_BODY
+      #define TA_OPEN_BODY __attribute__((noinline))
+   #endif
+   #define TA_OPEN_INLINE __inline__ __attribute__((always_inline))
+#elif defined( _MSC_VER )
+   #define TA_OPEN_BODY __declspec(noinline)
+   #define TA_OPEN_INLINE __forceinline
+#else
+   #define TA_OPEN_BODY
+   #define TA_OPEN_INLINE
+#endif
+
 /* Provides an equivalent to standard "math.h" functions. */
 #define std_floor floor
 #define std_ceil  ceil

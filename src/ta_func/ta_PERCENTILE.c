@@ -2286,7 +2286,7 @@ static void TA_PERCENTILE_StepImpl( struct TA_PERCENTILE_Stream *sp, double inRe
    sp->pendOld = pendOld;
 }
 
-static TA_RetCode TA_PERCENTILE_OpenImpl( struct TA_PERCENTILE_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInPercentile, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_OPEN_INLINE TA_RetCode TA_PERCENTILE_OpenBody( struct TA_PERCENTILE_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInPercentile, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_PERCENTILE_Stream *sp;
    double local_ring[100];
@@ -2298,25 +2298,6 @@ static TA_RetCode TA_PERCENTILE_OpenImpl( struct TA_PERCENTILE_Stream **stream, 
    int sorted_Idx;
    int maxIdx_sorted;
    int endIdx;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inReal || !outReal ) return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
-      optInTimePeriod = 100;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
-      return TA_BAD_PARAM;
-   if( optInPercentile == TA_REAL_DEFAULT )
-      optInPercentile = 50;
-   else if( !(optInPercentile >= 0e0 && optInPercentile <= 1e2) )
-      return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_INSUFFICIENT_HISTORY;
-   }
 
    endIdx = historyLen - 1;
 
@@ -3189,6 +3170,46 @@ static TA_RetCode TA_PERCENTILE_OpenImpl( struct TA_PERCENTILE_Stream **stream, 
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+static TA_OPEN_BODY TA_RetCode TA_PERCENTILE_OpenFillFrame( struct TA_PERCENTILE_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInPercentile, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   return TA_PERCENTILE_OpenBody( stream, inReal, startIdx, historyLen, optInTimePeriod, optInPercentile, outBegIdx, outNBElement, outReal, 1 );
+}
+
+static TA_OPEN_BODY TA_RetCode TA_PERCENTILE_OpenSinkFrame( struct TA_PERCENTILE_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInPercentile, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   double sink_outReal = 0;
+   TA_RetCode retCode = TA_PERCENTILE_OpenBody( stream, inReal, startIdx, historyLen, optInTimePeriod, optInPercentile, outBegIdx, outNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      if( outReal ) *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
+static TA_RetCode TA_PERCENTILE_OpenImpl( struct TA_PERCENTILE_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInPercentile, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+      optInTimePeriod = 100;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
+      return TA_BAD_PARAM;
+   if( optInPercentile == TA_REAL_DEFAULT )
+      optInPercentile = 50;
+   else if( !(optInPercentile >= 0e0 && optInPercentile <= 1e2) )
+      return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
+
+   return outStride ? TA_PERCENTILE_OpenFillFrame( stream, inReal, startIdx, historyLen, optInTimePeriod, optInPercentile, outBegIdx, outNBElement, outReal ) : TA_PERCENTILE_OpenSinkFrame( stream, inReal, startIdx, historyLen, optInTimePeriod, optInPercentile, outBegIdx, outNBElement, outReal );
 }
 
 /* Private function, not in public API. */

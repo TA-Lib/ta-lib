@@ -308,7 +308,7 @@ static TA_RetCode TA_RVIR_StepImpl( struct TA_RVIR_Stream *sp, double inHigh, do
    return TA_SUCCESS;
 }
 
-static TA_RetCode TA_RVIR_OpenImpl( struct TA_RVIR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int optInStdDevPeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_OPEN_INLINE TA_RetCode TA_RVIR_OpenBody( struct TA_RVIR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int optInStdDevPeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_RVIR_Stream *sp;
    int endIdx;
@@ -318,25 +318,6 @@ static TA_RetCode TA_RVIR_OpenImpl( struct TA_RVIR_Stream **stream, const double
    double *sc_outReal;
    TA_RVI_Stream *sub0;
    TA_RVI_Stream *sub1;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
-      optInTimePeriod = 14;
-   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInStdDevPeriod == TA_INTEGER_DEFAULT )
-      optInStdDevPeriod = 10;
-   else if( (int)optInStdDevPeriod < 2 || (int)optInStdDevPeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_INSUFFICIENT_HISTORY;
-   }
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
@@ -474,6 +455,46 @@ static TA_RetCode TA_RVIR_OpenImpl( struct TA_RVIR_Stream **stream, const double
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+static TA_OPEN_BODY TA_RetCode TA_RVIR_OpenFillFrame( struct TA_RVIR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int optInStdDevPeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   return TA_RVIR_OpenBody( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal, 1 );
+}
+
+static TA_OPEN_BODY TA_RetCode TA_RVIR_OpenSinkFrame( struct TA_RVIR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int optInStdDevPeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   double sink_outReal = 0;
+   TA_RetCode retCode = TA_RVIR_OpenBody( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      if( outReal ) *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
+static TA_RetCode TA_RVIR_OpenImpl( struct TA_RVIR_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int optInStdDevPeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+      optInTimePeriod = 14;
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInStdDevPeriod == TA_INTEGER_DEFAULT )
+      optInStdDevPeriod = 10;
+   else if( (int)optInStdDevPeriod < 2 || (int)optInStdDevPeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
+
+   return outStride ? TA_RVIR_OpenFillFrame( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal ) : TA_RVIR_OpenSinkFrame( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal );
 }
 
 /* Private function, not in public API. */
