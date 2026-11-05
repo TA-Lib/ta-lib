@@ -436,7 +436,6 @@ fn finite_bar_check(func: &FuncDef, indent: &str, fail: &str) -> String {
 /// bit for bit (#180).
 fn index_pair_guards() -> &'static str {
     concat!(
-        "   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;\n",
         "   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;\n"
     )
 }

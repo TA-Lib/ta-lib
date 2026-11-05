@@ -546,7 +546,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_LINEARREG_OpenImpl( struct TA_LINEARREG_
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
@@ -822,7 +821,6 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Open( TA_LINEARREG_Stream **stream, const dou
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    return TA_FMA_AVAILABLE ? TA_LINEARREG_OpenSinkFma( stream, inReal, 0, historyLen, optInTimePeriod, outReal ) : TA_LINEARREG_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
@@ -832,7 +830,6 @@ TA_LIB_API TA_RetCode TA_LINEARREG_OpenAndFill( TA_LINEARREG_Stream **stream, co
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;

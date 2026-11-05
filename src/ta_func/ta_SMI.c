@@ -915,7 +915,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_SMI_OpenImpl( struct TA_SMI_Stream **str
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outSMI || !outSMISignal ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
@@ -1353,7 +1352,6 @@ TA_LIB_API TA_RetCode TA_SMI_Open( TA_SMI_Stream **stream, const double inHigh[]
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outSMI || !outSMISignal ) return TA_BAD_PARAM;
    return TA_FMA_AVAILABLE ? TA_SMI_OpenSinkFma( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outSMI, outSMISignal ) : TA_SMI_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outSMI, outSMISignal );
@@ -1363,7 +1361,6 @@ TA_LIB_API TA_RetCode TA_SMI_OpenAndFill( TA_SMI_Stream **stream, const double i
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outSMI || !outSMISignal ) return TA_BAD_PARAM;
    if( (const void *)outSMI == (const void *)inHigh || (const void *)outSMI == (const void *)inLow || (const void *)outSMI == (const void *)inClose || (const void *)outSMISignal == (const void *)inHigh || (const void *)outSMISignal == (const void *)inLow || (const void *)outSMISignal == (const void *)inClose || (const void *)outSMI == (const void *)outSMISignal ) return TA_BAD_PARAM;

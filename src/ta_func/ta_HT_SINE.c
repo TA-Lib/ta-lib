@@ -1257,7 +1257,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_HT_SINE_OpenImpl( struct TA_HT_SINE_Stre
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outSine || !outLeadSine ) return TA_BAD_PARAM;
    if( startIdx > historyLen - 1 )
@@ -1815,7 +1814,6 @@ TA_LIB_API TA_RetCode TA_HT_SINE_Open( TA_HT_SINE_Stream **stream, const double 
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outSine || !outLeadSine ) return TA_BAD_PARAM;
    return TA_FMA_AVAILABLE ? TA_HT_SINE_OpenSinkFma( stream, inReal, 0, historyLen, outSine, outLeadSine ) : TA_HT_SINE_OpenInternal( stream, inReal, 0, historyLen, outSine, outLeadSine );
@@ -1825,7 +1823,6 @@ TA_LIB_API TA_RetCode TA_HT_SINE_OpenAndFill( TA_HT_SINE_Stream **stream, const 
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outBegIdx || !outNBElement || !outSine || !outLeadSine ) return TA_BAD_PARAM;
    if( (const void *)outSine == (const void *)inReal || (const void *)outLeadSine == (const void *)inReal || (const void *)outSine == (const void *)outLeadSine ) return TA_BAD_PARAM;

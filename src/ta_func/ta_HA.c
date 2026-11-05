@@ -442,7 +442,6 @@ static TA_RetCode TA_HA_OpenImpl( struct TA_HA_Stream **stream, const double inO
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outHAOpen || !outHAHigh || !outHALow || !outHAClose ) return TA_BAD_PARAM;
    if( startIdx > historyLen - 1 )
@@ -614,7 +613,6 @@ TA_LIB_API TA_RetCode TA_HA_Open( TA_HA_Stream **stream, const double inOpen[], 
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outHAOpen || !outHAHigh || !outHALow || !outHAClose ) return TA_BAD_PARAM;
    return TA_HA_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outHAOpen, outHAHigh, outHALow, outHAClose );
@@ -624,7 +622,6 @@ TA_LIB_API TA_RetCode TA_HA_OpenAndFill( TA_HA_Stream **stream, const double inO
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outHAOpen || !outHAHigh || !outHALow || !outHAClose ) return TA_BAD_PARAM;
    if( (const void *)outHAOpen == (const void *)inOpen || (const void *)outHAOpen == (const void *)inHigh || (const void *)outHAOpen == (const void *)inLow || (const void *)outHAOpen == (const void *)inClose || (const void *)outHAHigh == (const void *)inOpen || (const void *)outHAHigh == (const void *)inHigh || (const void *)outHAHigh == (const void *)inLow || (const void *)outHAHigh == (const void *)inClose || (const void *)outHALow == (const void *)inOpen || (const void *)outHALow == (const void *)inHigh || (const void *)outHALow == (const void *)inLow || (const void *)outHALow == (const void *)inClose || (const void *)outHAClose == (const void *)inOpen || (const void *)outHAClose == (const void *)inHigh || (const void *)outHAClose == (const void *)inLow || (const void *)outHAClose == (const void *)inClose || (const void *)outHAOpen == (const void *)outHAHigh || (const void *)outHAOpen == (const void *)outHALow || (const void *)outHAOpen == (const void *)outHAClose || (const void *)outHAHigh == (const void *)outHALow || (const void *)outHAHigh == (const void *)outHAClose || (const void *)outHALow == (const void *)outHAClose ) return TA_BAD_PARAM;

@@ -1004,7 +1004,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_HT_PHASOR_OpenImpl( struct TA_HT_PHASOR_
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outInPhase || !outQuadrature ) return TA_BAD_PARAM;
    if( startIdx > historyLen - 1 )
@@ -1467,7 +1466,6 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_Open( TA_HT_PHASOR_Stream **stream, const dou
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outInPhase || !outQuadrature ) return TA_BAD_PARAM;
    return TA_FMA_AVAILABLE ? TA_HT_PHASOR_OpenSinkFma( stream, inReal, 0, historyLen, outInPhase, outQuadrature ) : TA_HT_PHASOR_OpenInternal( stream, inReal, 0, historyLen, outInPhase, outQuadrature );
@@ -1477,7 +1475,6 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_OpenAndFill( TA_HT_PHASOR_Stream **stream, co
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outBegIdx || !outNBElement || !outInPhase || !outQuadrature ) return TA_BAD_PARAM;
    if( (const void *)outInPhase == (const void *)inReal || (const void *)outQuadrature == (const void *)inReal || (const void *)outInPhase == (const void *)outQuadrature ) return TA_BAD_PARAM;

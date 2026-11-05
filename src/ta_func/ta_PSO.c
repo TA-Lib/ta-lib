@@ -820,7 +820,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PSO_OpenImpl( struct TA_PSO_Stream **str
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
    if( (int)optInFastK_Period == TA_INTEGER_DEFAULT )
@@ -1174,7 +1173,6 @@ TA_LIB_API TA_RetCode TA_PSO_Open( TA_PSO_Stream **stream, const double inHigh[]
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
    return TA_FMA_AVAILABLE ? TA_PSO_OpenSinkFma( stream, inHigh, inLow, inClose, 0, historyLen, optInFastK_Period, optInEMAPeriod, outReal ) : TA_PSO_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInFastK_Period, optInEMAPeriod, outReal );
@@ -1184,7 +1182,6 @@ TA_LIB_API TA_RetCode TA_PSO_OpenAndFill( TA_PSO_Stream **stream, const double i
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;

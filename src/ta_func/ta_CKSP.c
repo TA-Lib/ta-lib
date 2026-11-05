@@ -1398,7 +1398,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_CKSP_OpenImpl( struct TA_CKSP_Stream **s
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outHighStop || !outLowStop ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
@@ -2016,7 +2015,6 @@ TA_LIB_API TA_RetCode TA_CKSP_Open( TA_CKSP_Stream **stream, const double inHigh
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outHighStop || !outLowStop ) return TA_BAD_PARAM;
    return TA_FMA_AVAILABLE ? TA_CKSP_OpenSinkFma( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInMultiplier, optInStopPeriod, outHighStop, outLowStop ) : TA_CKSP_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInMultiplier, optInStopPeriod, outHighStop, outLowStop );
@@ -2026,7 +2024,6 @@ TA_LIB_API TA_RetCode TA_CKSP_OpenAndFill( TA_CKSP_Stream **stream, const double
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outHighStop || !outLowStop ) return TA_BAD_PARAM;
    if( (const void *)outHighStop == (const void *)inHigh || (const void *)outHighStop == (const void *)inLow || (const void *)outHighStop == (const void *)inClose || (const void *)outLowStop == (const void *)inHigh || (const void *)outLowStop == (const void *)inLow || (const void *)outLowStop == (const void *)inClose || (const void *)outHighStop == (const void *)outLowStop ) return TA_BAD_PARAM;

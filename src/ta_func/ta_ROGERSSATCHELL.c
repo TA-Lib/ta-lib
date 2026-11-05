@@ -593,7 +593,6 @@ static TA_RetCode TA_ROGERSSATCHELL_OpenImpl( struct TA_ROGERSSATCHELL_Stream **
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
@@ -828,7 +827,6 @@ TA_LIB_API TA_RetCode TA_ROGERSSATCHELL_Open( TA_ROGERSSATCHELL_Stream **stream,
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
    return TA_ROGERSSATCHELL_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInAnnualization, outReal );
@@ -838,7 +836,6 @@ TA_LIB_API TA_RetCode TA_ROGERSSATCHELL_OpenAndFill( TA_ROGERSSATCHELL_Stream **
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inOpen || (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;

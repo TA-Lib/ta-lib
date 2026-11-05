@@ -207,7 +207,6 @@ static TA_RetCode TA_OBV_OpenImpl( struct TA_OBV_Stream **stream, const double i
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !inVolume || !outReal ) return TA_BAD_PARAM;
    if( startIdx > historyLen - 1 )
@@ -277,7 +276,6 @@ TA_LIB_API TA_RetCode TA_OBV_Open( TA_OBV_Stream **stream, const double inReal[]
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !inVolume || !outReal ) return TA_BAD_PARAM;
    return TA_OBV_OpenInternal( stream, inReal, inVolume, 0, historyLen, outReal );
@@ -287,7 +285,6 @@ TA_LIB_API TA_RetCode TA_OBV_OpenAndFill( TA_OBV_Stream **stream, const double i
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !inVolume || !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inReal || (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;

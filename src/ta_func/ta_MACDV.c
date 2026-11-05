@@ -964,7 +964,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_MACDV_OpenImpl( struct TA_MACDV_Stream *
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outMACDV || !outMACDVSignal || !outMACDVHist ) return TA_BAD_PARAM;
    if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
@@ -1433,7 +1432,6 @@ TA_LIB_API TA_RetCode TA_MACDV_Open( TA_MACDV_Stream **stream, const double inHi
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outMACDV || !outMACDVSignal || !outMACDVHist ) return TA_BAD_PARAM;
    return TA_FMA_AVAILABLE ? TA_MACDV_OpenSinkFma( stream, inHigh, inLow, inClose, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACDV, outMACDVSignal, outMACDVHist ) : TA_MACDV_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACDV, outMACDVSignal, outMACDVHist );
@@ -1443,7 +1441,6 @@ TA_LIB_API TA_RetCode TA_MACDV_OpenAndFill( TA_MACDV_Stream **stream, const doub
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outMACDV || !outMACDVSignal || !outMACDVHist ) return TA_BAD_PARAM;
    if( (const void *)outMACDV == (const void *)inHigh || (const void *)outMACDV == (const void *)inLow || (const void *)outMACDV == (const void *)inClose || (const void *)outMACDVSignal == (const void *)inHigh || (const void *)outMACDVSignal == (const void *)inLow || (const void *)outMACDVSignal == (const void *)inClose || (const void *)outMACDVHist == (const void *)inHigh || (const void *)outMACDVHist == (const void *)inLow || (const void *)outMACDVHist == (const void *)inClose || (const void *)outMACDV == (const void *)outMACDVSignal || (const void *)outMACDV == (const void *)outMACDVHist || (const void *)outMACDVSignal == (const void *)outMACDVHist ) return TA_BAD_PARAM;

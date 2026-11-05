@@ -477,12 +477,12 @@ static ErrorNumber testStreamShortHistory( void )
 
       for( i = 0; i < 8; i++ )
       {
+         TA_RetCode want = (i >= 3 && i <= 5) ? TA_BAD_PARAM : TA_INSUFFICIENT_HISTORY;
          rc = cases[i].rc;
-         if( rc != TA_INSUFFICIENT_HISTORY )
+         if( rc != want )
          {
-            printf( "\nFailed: %s returned %d, expected "
-                    "TA_INSUFFICIENT_HISTORY (%d)\n",
-                    cases[i].name, (int)rc, (int)TA_INSUFFICIENT_HISTORY );
+            printf( "\nFailed: %s returned %d, expected %d\n",
+                    cases[i].name, (int)rc, (int)want );
             return TA_STREAM_EMPTY_HISTORY_WRONG_CODE;
          }
          shEmpty++;

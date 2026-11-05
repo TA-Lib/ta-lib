@@ -828,7 +828,6 @@ static TA_RetCode TA_SQZMOM_OpenImpl( struct TA_SQZMOM_Stream **stream, const do
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outMomentum || !outSqueeze ) return TA_BAD_PARAM;
    if( (int)optInBBPeriod == TA_INTEGER_DEFAULT )
@@ -1308,7 +1307,6 @@ TA_LIB_API TA_RetCode TA_SQZMOM_Open( TA_SQZMOM_Stream **stream, const double in
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outMomentum || !outSqueeze ) return TA_BAD_PARAM;
    return TA_SQZMOM_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outMomentum, outSqueeze );
@@ -1318,7 +1316,6 @@ TA_LIB_API TA_RetCode TA_SQZMOM_OpenAndFill( TA_SQZMOM_Stream **stream, const do
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outMomentum || !outSqueeze ) return TA_BAD_PARAM;
    if( (const void *)outMomentum == (const void *)inHigh || (const void *)outMomentum == (const void *)inLow || (const void *)outMomentum == (const void *)inClose || (const void *)outSqueeze == (const void *)inHigh || (const void *)outSqueeze == (const void *)inLow || (const void *)outSqueeze == (const void *)inClose || (const void *)outMomentum == (const void *)outSqueeze ) return TA_BAD_PARAM;

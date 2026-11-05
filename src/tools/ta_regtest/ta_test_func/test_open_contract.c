@@ -153,7 +153,6 @@ typedef struct {
    int     nbCountLeaked;     /* rejections whose range pair is not the expected one */
    long    nbShortHistoryZeroed; /* too-short histories that reported an empty range */
    long    nbParamRangeKept;  /* refused parameters whose range pair was kept */
-   long    nbRangeKept;       /* other rejections whose range pair was kept */
    int     nbFunc;
    int     nbReported;
 } OcCtx;
@@ -314,15 +313,14 @@ static void oc_judge_reject( OcCtx *c, const TA_StreamEntry *e, int minParams,
                              int nbElement, int hasOutMeta )
 {
    int slot;
-   int zeroed = rc == TA_INSUFFICIENT_HISTORY && historyLen > 0;
+   int zeroed = rc == TA_INSUFFICIENT_HISTORY;
 
    c->nbRejectChecked++;
    if( minParams ) c->nbMinParamRejects++;
 
-   /* A too-short history reports an empty range, so a caller that skips the
-    * return code sees nothing was output. Every other rejection leaves the pair
-    * as the caller had it, an empty history included: it is refused ahead of
-    * the pair's own presence check. */
+   /* A too-short history, an empty one included, reports an empty range, so a
+    * caller that skips the return code sees nothing was output. Every other
+    * rejection leaves the pair as the caller had it. */
    if( hasOutMeta )
    {
       int want = zeroed ? 0 : OC_SENT_IDX;
@@ -340,8 +338,6 @@ static void oc_judge_reject( OcCtx *c, const TA_StreamEntry *e, int minParams,
          c->nbShortHistoryZeroed++;
       else if( rc == TA_BAD_PARAM )
          c->nbParamRangeKept++;
-      else
-         c->nbRangeKept++;
    }
 
    slot = oc_first_moved( c, e );
@@ -633,11 +629,11 @@ ErrorNumber test_func_open_contract( TA_History *history )
                  wantControls );
          return TA_OPEN_CONTRACT_VACUOUS;
       }
-      if( ctx.nbShortHistoryZeroed == 0 || ctx.nbParamRangeKept == 0 || ctx.nbRangeKept == 0 )
+      if( ctx.nbShortHistoryZeroed == 0 || ctx.nbParamRangeKept == 0 )
       {
          printf( "\nFail: open-contract sweep judged the range pair of %ld too-short"
-                 " histories, %ld refused parameters and %ld other rejections.\n",
-                 ctx.nbShortHistoryZeroed, ctx.nbParamRangeKept, ctx.nbRangeKept );
+                 " histories and %ld refused parameters.\n",
+                 ctx.nbShortHistoryZeroed, ctx.nbParamRangeKept );
          return TA_OPEN_CONTRACT_VACUOUS;
       }
    }

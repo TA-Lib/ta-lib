@@ -845,7 +845,6 @@ static TA_RetCode TA_PVO_OpenImpl( struct TA_PVO_Stream **stream, const double i
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inVolume || !outReal ) return TA_BAD_PARAM;
    if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
@@ -1065,7 +1064,6 @@ TA_LIB_API TA_RetCode TA_PVO_Open( TA_PVO_Stream **stream, const double inVolume
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inVolume || !outReal ) return TA_BAD_PARAM;
    return TA_PVO_OpenInternal( stream, inVolume, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInMAType, outReal );
@@ -1075,7 +1073,6 @@ TA_LIB_API TA_RetCode TA_PVO_OpenAndFill( TA_PVO_Stream **stream, const double i
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inVolume || !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;

@@ -1504,7 +1504,6 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_HT_TRENDMODE_OpenImpl( struct TA_HT_TREN
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outInteger ) return TA_BAD_PARAM;
    if( startIdx > historyLen - 1 )
@@ -2159,7 +2158,6 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Open( TA_HT_TRENDMODE_Stream **stream, con
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outInteger ) return TA_BAD_PARAM;
    return TA_FMA_AVAILABLE ? TA_HT_TRENDMODE_OpenSinkFma( stream, inReal, 0, historyLen, outInteger ) : TA_HT_TRENDMODE_OpenInternal( stream, inReal, 0, historyLen, outInteger );
@@ -2169,7 +2167,6 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_OpenAndFill( TA_HT_TRENDMODE_Stream **stre
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
-   if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outBegIdx || !outNBElement || !outInteger ) return TA_BAD_PARAM;
    if( (const void *)outInteger == (const void *)inReal ) return TA_BAD_PARAM;
