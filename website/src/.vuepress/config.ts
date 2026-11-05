@@ -18,6 +18,8 @@ export default defineUserConfig({
     ["link", { rel: "icon", type: "image/png", sizes: "16x16", href: "/favicon-16x16.png" }],
     ["link", { rel: "icon", href: "/favicon.ico" }],
     ["link", { rel: "apple-touch-icon", href: "/apple-touch-icon.png" }],
+    // Search Console ownership proof: removing it un-verifies the property.
+    ["meta", { name: "google-site-verification", content: "P9nTm4jIQwtIAT5Qt0uTUXXbMBgmZhAj17YiYQbIex8" }],
   ],
 
   // ta_codegen writes the generated function pages directly into src/functions
