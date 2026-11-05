@@ -1,4 +1,4 @@
-//! The TypeScript integer-semantics gate (docs/typescript-backend.md section 5).
+//! The TypeScript integer-semantics gate (docs/typescript-backend.md, numerical semantics).
 //! JS has no `int`, so every place C's integer arithmetic differs from float
 //! arithmetic must carry `| 0`, and a missed or extra one changes values with
 //! no error. The verdict is the emitter's own type pass, so a wrong verdict is
