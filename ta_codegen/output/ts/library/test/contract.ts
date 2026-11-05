@@ -112,6 +112,28 @@ export function rejects(fn: () => unknown, code: string, what: string, message?:
   return e;
 }
 
+/**
+ * `e` names parameter `k` of `s` by its options key, the value `v` it was given
+ * and its accepted values: the registry's bounds, read back as numbers, or the
+ * enum it must be.
+ */
+export function assertNamesRange(s: Named, k: number, entry: string, v: number, e: TALibError, what: string): void {
+  const p = optsOf(s)[k];
+  const head = `${entry}: ${p.key} must be `;
+  const tail = `, got ${String(v)}`;
+  assert.ok(e.message.startsWith(head) && e.message.endsWith(tail), `${what}: "${e.message}" does not name ${p.key} and ${String(v)}`);
+  const accepted = e.message.slice(head.length, -tail.length);
+  if (p.kind === 'enum') {
+    assert.equal(accepted, 'a MAType', what);
+    return;
+  }
+  const o = s.info.optInputs[k] as { min: number; max: number };
+  const m = /^in (\S+)\.\.(\S+)$/.exec(accepted);
+  assert.ok(m !== null, `${what}: "${accepted}" is not a range`);
+  assert.deepEqual([Number(m[1]), Number(m[2])], [o.min, o.max], `${what}: the bounds of "${accepted}"`);
+  if (p.kind === 'int') assert.equal(accepted, `in ${o.min}..${o.max}`, what);
+}
+
 /** An in-int32 value outside the parameter's domain, so the int32 test passes and the range test fails. */
 export function outOfDomain(s: Named, k: number): number {
   const p = optsOf(s)[k];

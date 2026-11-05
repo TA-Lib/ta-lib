@@ -152,13 +152,15 @@ impl Registry {
         // the composed path. C# needs no change of name at all: its two tiers are
         // overloads, and dropping the two `out int` arguments selects the public
         // one.
+        // TypeScript's public function takes an options object, so a body calls
+        // its C-shaped `<n>Positional` tier, which carries the same checks.
         if self.contains(func_name) {
             let name = self.name_of(func_name);
             return match lang {
                 Lang::Rust => snake_words(&name),
                 Lang::Java => camel_words(&name),
                 Lang::CSharp => pascal_words(&name),
-                Lang::Ts => crate::backends::ts::func_ident(&name),
+                Lang::Ts => crate::backends::ts::ts_names(&name).positional,
                 Lang::C => format!("TA_{name}"),
             };
         }
@@ -187,6 +189,7 @@ impl Registry {
         match lang {
             Lang::C => format!("TA_{name}_{}", capitalize(&suffix)),
             Lang::Rust => format!("{}_{}", snake_words(&name), suffix.to_lowercase()),
+            Lang::Ts if suffix.eq_ignore_ascii_case("lookback") => crate::backends::ts::ts_names(&name).lookback_positional,
             Lang::Java | Lang::Ts => format!("{}{}", camel_words(&name), capitalize(&suffix)),
             Lang::CSharp => format!("{}{}", pascal_words(&name), capitalize(&suffix)),
         }

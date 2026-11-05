@@ -14,27 +14,14 @@
  *  101126 MF,CC  The extension step is a select; the pivot index is derived (#546).
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link zigzag} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInSensitivity - Minimum move away from the current extreme that
- *   reverses the leg, in percent (default 5; range 0 to 100; `Core.REAL_DEFAULT`
- *   selects the default).
- * @param optInMinTrendLength - Minimum number of bars between two pivots (default
- *   1; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function zigzagLookback(optInSensitivity: number, optInMinTrendLength: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function zigzagLookbackPositional(optInSensitivity: number, optInMinTrendLength: number, _core: Core = Core.DEFAULT): number {
   if (typeof optInSensitivity !== 'number') {
     return -1;
   }
@@ -62,25 +49,9 @@ export function zigzagLookback(optInSensitivity: number, optInMinTrendLength: nu
   return optInMinTrendLength;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link zigzag}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInSensitivity - Minimum move away from the current extreme that
- *   reverses the leg, in percent (default 5; range 0 to 100; `Core.REAL_DEFAULT`
- *   selects the default).
- * @param optInMinTrendLength - Minimum number of bars between two pivots (default
- *   1; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function zigzagDisplayShift(optInSensitivity: number, optInMinTrendLength: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (zigzagLookback(optInSensitivity, optInMinTrendLength, core) < 0) {
+/** @internal */
+export function zigzagDisplayShiftPositional(optInSensitivity: number, optInMinTrendLength: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (zigzagLookbackPositional(optInSensitivity, optInMinTrendLength, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 3) {
@@ -134,7 +105,7 @@ export function zigzagImpl(
   if ((outZigZag.buffer === outTrend.buffer && outZigZag.byteOffset === outTrend.byteOffset) || (outZigZag.buffer === outPivotIdx.buffer && outZigZag.byteOffset === outPivotIdx.byteOffset) || (outTrend.buffer === outPivotIdx.buffer && outTrend.byteOffset === outPivotIdx.byteOffset)) {
     return RetCode.BAD_PARAM;
   }
-  lookbackTotal = zigzagLookback(optInSensitivity, optInMinTrendLength, core);
+  lookbackTotal = zigzagLookbackPositional(optInSensitivity, optInMinTrendLength, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -212,6 +183,188 @@ export function zigzagImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['sensitivity', Core.REAL_DEFAULT, 0e0, 1e2, 'in 0..100'], ['minTrendLength', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000']] as const;
+
+/** @internal */
+export function zigzagPositional(
+  startIdx: number,
+  endIdx: number,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  optInSensitivity: number,
+  optInMinTrendLength: number,
+  outZigZag: Float64Array,
+  outTrend: Int32Array,
+  outPivotIdx: Int32Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('ZIGZAG', 'startIdx', startIdx);
+  endIdx = requireInt32('ZIGZAG', 'endIdx', endIdx);
+  optInSensitivity = requireReal('ZIGZAG', 'sensitivity', optInSensitivity);
+  optInMinTrendLength = requireInt32('ZIGZAG', 'minTrendLength', optInMinTrendLength);
+  requireIndexRange('ZIGZAG', startIdx, endIdx);
+  const guardLookback = zigzagLookbackPositional(optInSensitivity, optInMinTrendLength, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('ZIGZAG', PARAM_RANGES, optInSensitivity, optInMinTrendLength);
+  }
+  const guardStart = clampedStart('ZIGZAG', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('ZIGZAG', 'prices.high', inHigh, guardInLen);
+  requireLength('ZIGZAG', 'prices.low', inLow, guardInLen);
+  requireOutput('ZIGZAG', 'outZigZag', outZigZag, guardOutLen, Float64Array);
+  requireOutput('ZIGZAG', 'outTrend', outTrend, guardOutLen, Int32Array);
+  requireOutput('ZIGZAG', 'outPivotIdx', outPivotIdx, guardOutLen, Int32Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  if (overlapsPartly(outZigZag, inHighF64)) {
+    throw sharedMemory('ZIGZAG', 'outZigZag', 'prices.high');
+  }
+  if (overlapsPartly(outZigZag, inLowF64)) {
+    throw sharedMemory('ZIGZAG', 'outZigZag', 'prices.low');
+  }
+  if (overlaps(outTrend, inHighF64)) {
+    throw sharedMemory('ZIGZAG', 'outTrend', 'prices.high');
+  }
+  if (overlaps(outTrend, inLowF64)) {
+    throw sharedMemory('ZIGZAG', 'outTrend', 'prices.low');
+  }
+  if (overlaps(outPivotIdx, inHighF64)) {
+    throw sharedMemory('ZIGZAG', 'outPivotIdx', 'prices.high');
+  }
+  if (overlaps(outPivotIdx, inLowF64)) {
+    throw sharedMemory('ZIGZAG', 'outPivotIdx', 'prices.low');
+  }
+  if (overlaps(outZigZag, outTrend)) {
+    throw sharedMemory('ZIGZAG', 'outZigZag', 'outTrend');
+  }
+  if (overlaps(outZigZag, outPivotIdx)) {
+    throw sharedMemory('ZIGZAG', 'outZigZag', 'outPivotIdx');
+  }
+  if (overlaps(outTrend, outPivotIdx)) {
+    throw sharedMemory('ZIGZAG', 'outTrend', 'outPivotIdx');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = zigzagImpl(core, startIdx, endIdx, inHighF64, inLowF64, optInSensitivity, optInMinTrendLength, outBegIdx, outNBElement, outZigZag, outTrend, outPivotIdx);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('ZIGZAG', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link zigzag}, {@link zigzagLookback}, {@link zigzagDisplayShift},
+ * {@link zigzagOpen} and {@link zigzagOpenAndFill}. Every key is optional: an
+ * omitted or `undefined` key takes its default, and a call ignores the keys it has
+ * no use for.
+ */
+export interface ZigzagOptions {
+  /**
+   * Minimum move away from the current extreme that reverses the leg, in percent
+   * (default 5; range 0 to 100; `Core.REAL_DEFAULT` selects the default).
+   */
+  sensitivity?: number | undefined;
+  /**
+   * Minimum number of bars between two pivots (default 1; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  minTrendLength?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outZigZag`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outZigZag?: Float64Array | undefined;
+  /**
+   * Buffer for `outTrend`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input.
+   */
+  outTrend?: Int32Array | undefined;
+  /**
+   * Buffer for `outPivotIdx`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input.
+   */
+  outPivotIdx?: Int32Array | undefined;
+}
+
+/** What {@link zigzag} returns, and {@link zigzagOpenAndFill} with its stream. */
+export interface ZigzagResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Price of the swing extreme currently being tracked. `outZigZag[k]` is the value
+   * at input bar `begIdx + k`.
+   */
+  outZigZag: Float64Array;
+  /**
+   * +1 while the leg is up, -1 while it is down. `outTrend[k]` is the value at input
+   * bar `begIdx + k`.
+   */
+  outTrend: Int32Array;
+  /**
+   * Absolute index, into the input, of the bar that extreme sits on.
+   * `outPivotIdx[k]` is the value at input bar `begIdx + k`.
+   */
+  outPivotIdx: Int32Array;
+}
+
+/**
+ * Number of leading input bars {@link zigzag} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link ZigzagOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function zigzagLookback(options?: ZigzagOptions): number {
+  const o = optionsOf('ZIGZAG lookback', options);
+  return zigzagLookbackPositional(orDefault(o.sensitivity, Core.REAL_DEFAULT), orDefault(o.minTrendLength, Core.INTEGER_DEFAULT), coreOf('ZIGZAG lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link zigzag}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link ZigzagOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function zigzagDisplayShift(outputIdx: number, options?: ZigzagOptions): number {
+  const o = optionsOf('ZIGZAG displayShift', options);
+  return zigzagDisplayShiftPositional(orDefault(o.sensitivity, Core.REAL_DEFAULT), orDefault(o.minTrendLength, Core.INTEGER_DEFAULT), outputIdx, coreOf('ZIGZAG displayShift', o.core));
+}
+
 /**
  * The percent-filter swing line. A leg runs from the last confirmed pivot to the
  * most extreme price since it, and it reverses only when price moves at least
@@ -268,37 +421,25 @@ export function zigzagImpl(
  * - The value at a bar depends on where the caller started, through the seed; the
  *   function is `path_dependent` for that reason, as SAR and SUPERTREND are.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link zigzagLookback} is a success with
- * `count` 0.
+ * `outZigZag[k]` is the value at input bar `begIdx + k`; every output is exactly
+ * as long as the number of values written, and nothing is padded. A range that
+ * ends before {@link zigzagLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param optInSensitivity - Minimum move away from the current extreme that
- *   reverses the leg, in percent (default 5; range 0 to 100; `Core.REAL_DEFAULT`
- *   selects the default).
- * @param optInMinTrendLength - Minimum number of bars between two pivots (default
- *   1; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outZigZag - Price of the swing extreme currently being tracked. Must hold
- *   the values produced and never be empty; the input length always suffices.
- * @param outTrend - +1 while the leg is up, -1 while it is down. Must hold the
- *   values produced and never be empty; the input length always suffices.
- * @param outPivotIdx - Absolute index, into the input, of the bar that extreme
- *   sits on. Must hold the values produced and never be empty; the input length
- *   always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `high`: High
+ *   price of each bar. `low`: Low price of each bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link ZigzagOptions}.
+ * @returns `begIdx` and the values; see {@link ZigzagResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   real parameter that is not a number, a parameter outside its range, an array too
- *   short for the range, an empty output, two outputs sharing memory or an output
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a real parameter that is not a
+ *   number, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
+ *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
+ *   anything is written.
  *
  * @example
  * ```ts
@@ -308,59 +449,37 @@ export function zigzagImpl(
  *   101 + 10 * Math.sin(0.1 * i));
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
  *   99 + 10 * Math.sin(0.1 * i));
- * const zigZag = new Float64Array(high.length);
- * const trend = new Int32Array(high.length);
- * const pivotIdx = new Int32Array(high.length);
- * const { begIdx, count } = zigzag(
- *   0, high.length - 1,
- *   high, low,
- *   5, 1,
- *   zigZag, trend, pivotIdx,
- * );
- * // zigZag[k] is the value at bar begIdx + k, for k < count
+ * const {
+ *   begIdx,
+ *   outZigZag,
+ *   outTrend,
+ *   outPivotIdx,
+ * } = zigzag({ high, low }, { sensitivity: 5, minTrendLength: 1 });
+ * // outZigZag[k] is the value at bar begIdx + k
  * ```
  * @see [`sar`](https://ta-lib.org/functions/sar)
  * @see [`supertrend`](https://ta-lib.org/functions/supertrend)
  * @see [`minmaxindex`](https://ta-lib.org/functions/minmaxindex)
  * @see [`midprice`](https://ta-lib.org/functions/midprice)
  */
-export function zigzag(
-  startIdx: number,
-  endIdx: number,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  optInSensitivity: number,
-  optInMinTrendLength: number,
-  outZigZag: Float64Array,
-  outTrend: Int32Array,
-  outPivotIdx: Int32Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('ZIGZAG', 'startIdx', startIdx);
-  endIdx = requireInt32('ZIGZAG', 'endIdx', endIdx);
-  optInSensitivity = requireReal('ZIGZAG', 'optInSensitivity', optInSensitivity);
-  optInMinTrendLength = requireInt32('ZIGZAG', 'optInMinTrendLength', optInMinTrendLength);
-  requireIndexRange('ZIGZAG', startIdx, endIdx);
-  const guardStart = clampedStart('ZIGZAG', startIdx, zigzagLookback(optInSensitivity, optInMinTrendLength, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('ZIGZAG', 'inHigh', inHigh, guardInLen);
-  requireLength('ZIGZAG', 'inLow', inLow, guardInLen);
-  requireOutput('ZIGZAG', 'outZigZag', outZigZag, guardOutLen, Float64Array);
-  requireOutput('ZIGZAG', 'outTrend', outTrend, guardOutLen, Int32Array);
-  requireOutput('ZIGZAG', 'outPivotIdx', outPivotIdx, guardOutLen, Int32Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  if (overlapsPartly(outZigZag, inHighF64) || overlapsPartly(outZigZag, inLowF64) || overlaps(outTrend, inHighF64) || overlaps(outTrend, inLowF64) || overlaps(outPivotIdx, inHighF64) || overlaps(outPivotIdx, inLowF64) || overlaps(outZigZag, outTrend) || overlaps(outZigZag, outPivotIdx) || overlaps(outTrend, outPivotIdx)) {
-    throw failure('ZIGZAG', RetCode.BAD_PARAM);
+export function zigzag(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: ZigzagOptions): ZigzagResult {
+  requireArgument('ZIGZAG', 'prices', prices);
+  const o = optionsOf('ZIGZAG', options);
+  if (o.endIdx === undefined) {
+    requireSeries('ZIGZAG', 'prices.high', prices.high);
+    requireSeries('ZIGZAG', 'prices.low', prices.low);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = zigzagImpl(core, startIdx, endIdx, inHighF64, inLowF64, optInSensitivity, optInMinTrendLength, outBegIdx, outNBElement, outZigZag, outTrend, outPivotIdx);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('ZIGZAG', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInSensitivity = orDefault(o.sensitivity, Core.REAL_DEFAULT);
+  const optInMinTrendLength = orDefault(o.minTrendLength, Core.INTEGER_DEFAULT);
+  const core = coreOf('ZIGZAG', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.high.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, zigzagLookbackPositional(optInSensitivity, optInMinTrendLength, core), prices.high, prices.low);
+  const outZigZag = o.outZigZag === undefined ? new Float64Array(capacity) : o.outZigZag;
+  const outTrend = o.outTrend === undefined ? new Int32Array(capacity) : o.outTrend;
+  const outPivotIdx = o.outPivotIdx === undefined ? new Int32Array(capacity) : o.outPivotIdx;
+  const range = zigzagPositional(startIdx, endIdx, prices.high, prices.low, optInSensitivity, optInMinTrendLength, outZigZag, outTrend, outPivotIdx, core);
+  return { begIdx: range.begIdx, outZigZag: outZigZag.subarray(0, range.count), outTrend: outTrend.subarray(0, range.count), outPivotIdx: outPivotIdx.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -436,20 +555,22 @@ export class ZigzagStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inHigh - The bar's `inHigh` value: High price of each bar.
    * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link ZigzagOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, out: ZigzagOut): void {
+  update(inHigh: number, inLow: number, out?: ZigzagOut): ZigzagOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('ZIGZAG update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('ZIGZAG update', 'ZigzagOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
@@ -457,23 +578,28 @@ export class ZigzagStream {
     }
     zigzagStepImpl(this, inHigh, inLow);
     this.outRangeCount++;
-    out.zigZag = this.cur_outZigZag;
-    out.trend = this.cur_outTrend;
-    out.pivotIdx = this.cur_outPivotIdx;
+    if (out === undefined) {
+      out = new ZigzagOut();
+    }
+    out.outZigZag = this.cur_outZigZag;
+    out.outTrend = this.cur_outTrend;
+    out.outPivotIdx = this.cur_outPivotIdx;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inHigh - The bar's `inHigh` value: High price of each bar.
    * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link ZigzagOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, out: ZigzagOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inHigh: number, inLow: number, out?: ZigzagOut): ZigzagOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('ZIGZAG peek', 'ZigzagOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
@@ -527,23 +653,33 @@ export class ZigzagStream {
     cur_outZigZag = pivot;
     cur_outTrend = trend;
     cur_outPivotIdx = barIdx - barsSincePivot;
-    out.zigZag = cur_outZigZag;
-    out.trend = cur_outTrend;
-    out.pivotIdx = cur_outPivotIdx;
+    if (out === undefined) {
+      out = new ZigzagOut();
+    }
+    out.outZigZag = cur_outZigZag;
+    out.outTrend = cur_outTrend;
+    out.outPivotIdx = cur_outPivotIdx;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link ZigzagOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: ZigzagOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: ZigzagOut): ZigzagOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('ZIGZAG value', 'ZigzagOut');
     }
-    out.zigZag = this.cur_outZigZag;
-    out.trend = this.cur_outTrend;
-    out.pivotIdx = this.cur_outPivotIdx;
+    if (out === undefined) {
+      out = new ZigzagOut();
+    }
+    out.outZigZag = this.cur_outZigZag;
+    out.outTrend = this.cur_outTrend;
+    out.outPivotIdx = this.cur_outPivotIdx;
+    return out;
   }
 
   /**
@@ -572,16 +708,17 @@ export class ZigzagStream {
 }
 
 /**
- * The outputs of one ZIGZAG bar, written into an object the caller owns and
- * reuses: valid until the next call that writes it.
+ * The outputs of one ZIGZAG bar, as `update`, `peek` and `value` return them.
+ * Passed back to one of them, it is filled and returned again, with no allocation;
+ * it holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class ZigzagOut {
   /** Price of the swing extreme currently being tracked. */
-  zigZag: number = 0;
+  outZigZag: number = NaN;
   /** +1 while the leg is up, -1 while it is down. */
-  trend: number = 0;
+  outTrend: number = NaN;
   /** Absolute index, into the input, of the bar that extreme sits on. */
-  pivotIdx: number = 0;
+  outPivotIdx: number = NaN;
 }
 
 function zigzagStepImpl(sp: ZigzagStream, inHigh: number, inLow: number): void {
@@ -679,7 +816,7 @@ function zigzagOpenImpl(
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
   }
-  lookbackTotal = zigzagLookback(optInSensitivity, optInMinTrendLength, core);
+  lookbackTotal = zigzagLookbackPositional(optInSensitivity, optInMinTrendLength, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -790,7 +927,10 @@ export function zigzagOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('ZIGZAG openAndFill', inHigh.length, startIdx, zigzagLookback(optInSensitivity, optInMinTrendLength, core));
+    throw insufficientHistory('ZIGZAG openAndFill', inHigh.length, startIdx, zigzagLookbackPositional(optInSensitivity, optInMinTrendLength, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && zigzagLookbackPositional(optInSensitivity, optInMinTrendLength, core) < 0) {
+    throw rejectedParams('ZIGZAG openAndFill', PARAM_RANGES, optInSensitivity, optInMinTrendLength);
   }
   throw streamFailure('ZIGZAG openAndFill', retCode);
 }
@@ -817,114 +957,33 @@ export function zigzagOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('ZIGZAG open', inHigh.length, startIdx, zigzagLookback(optInSensitivity, optInMinTrendLength, core));
+    throw insufficientHistory('ZIGZAG open', inHigh.length, startIdx, zigzagLookbackPositional(optInSensitivity, optInMinTrendLength, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && zigzagLookbackPositional(optInSensitivity, optInMinTrendLength, core) < 0) {
+    throw rejectedParams('ZIGZAG open', PARAM_RANGES, optInSensitivity, optInMinTrendLength);
   }
   throw streamFailure('ZIGZAG open', retCode);
 }
 
-/**
- * Opens a live ZIGZAG stream over the warm-up history: `value()` starts at the
- * last history bar, bit-identical to {@link zigzag} there.
- *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param optInSensitivity - Minimum move away from the current extreme that
- *   reverses the leg, in percent (default 5; range 0 to 100; `Core.REAL_DEFAULT`
- *   selects the default).
- * @param optInMinTrendLength - Minimum number of bars between two pivots (default
- *   1; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `zigzagLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range or histories of different lengths.
- *
- * @example
- * ```ts
- * import { ZigzagOut, zigzagOpen } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const stream = zigzagOpen(high, low, 5, 1);
- * const peeked = new ZigzagOut();
- * const updated = new ZigzagOut();
- * stream.peek(101.4, 99.1, peeked); // a forming bar: commits nothing
- * stream.update(101.4, 99.1, updated); // the bar closes
- * ```
- */
-export function zigzagOpen(
+/** @internal */
+export function zigzagOpenPositional(
   inHigh: ArrayLike<number>,
   inLow: ArrayLike<number>,
   optInSensitivity: number,
   optInMinTrendLength: number,
   core: Core = Core.DEFAULT,
 ): ZigzagStream {
-  optInSensitivity = requireReal('ZIGZAG open', 'optInSensitivity', optInSensitivity);
-  optInMinTrendLength = requireInt32('ZIGZAG open', 'optInMinTrendLength', optInMinTrendLength);
-  requireArgument('ZIGZAG open', 'inHigh', inHigh);
+  optInSensitivity = requireReal('ZIGZAG open', 'sensitivity', optInSensitivity);
+  optInMinTrendLength = requireInt32('ZIGZAG open', 'minTrendLength', optInMinTrendLength);
+  requireArgument('ZIGZAG open', 'prices.high', inHigh);
   requireHistory('ZIGZAG open', inHigh.length);
-  requireArgument('ZIGZAG open', 'inLow', inLow);
-  requireHistoryLength('ZIGZAG open', 'inLow', inLow.length, inHigh.length);
+  requireArgument('ZIGZAG open', 'prices.low', inLow);
+  requireHistoryLength('ZIGZAG open', 'prices.low', inLow.length, inHigh.length);
   return zigzagOpenInternal(core, float64(inHigh), float64(inLow), 0, optInSensitivity, optInMinTrendLength);
 }
 
-/**
- * {@link zigzagOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link zigzag}. The range written is the stream's
- * `outRange()`.
- *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param optInSensitivity - Minimum move away from the current extreme that
- *   reverses the leg, in percent (default 5; range 0 to 100; `Core.REAL_DEFAULT`
- *   selects the default).
- * @param optInMinTrendLength - Minimum number of bars between two pivots (default
- *   1; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outZigZag - Price of the swing extreme currently being tracked. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param outTrend - +1 while the leg is up, -1 while it is down. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param outPivotIdx - Absolute index, into the input, of the bar that extreme
- *   sits on. Must hold `historyLen - lookback` values and share no memory with an
- *   input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `zigzagLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range, histories of different lengths or an
- *   output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { zigzagOpenAndFill } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const zigZag = new Float64Array(high.length);
- * const trend = new Int32Array(high.length);
- * const pivotIdx = new Int32Array(high.length);
- * const stream = zigzagOpenAndFill(high, low, 5, 1, zigZag, trend, pivotIdx);
- * const { begIdx, count } = stream.outRange();
- * // zigZag[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function zigzagOpenAndFill(
+/** @internal */
+export function zigzagOpenAndFillPositional(
   inHigh: ArrayLike<number>,
   inLow: ArrayLike<number>,
   optInSensitivity: number,
@@ -934,23 +993,165 @@ export function zigzagOpenAndFill(
   outPivotIdx: Int32Array,
   core: Core = Core.DEFAULT,
 ): ZigzagStream {
-  optInSensitivity = requireReal('ZIGZAG openAndFill', 'optInSensitivity', optInSensitivity);
-  optInMinTrendLength = requireInt32('ZIGZAG openAndFill', 'optInMinTrendLength', optInMinTrendLength);
-  requireArgument('ZIGZAG openAndFill', 'inHigh', inHigh);
+  optInSensitivity = requireReal('ZIGZAG openAndFill', 'sensitivity', optInSensitivity);
+  optInMinTrendLength = requireInt32('ZIGZAG openAndFill', 'minTrendLength', optInMinTrendLength);
+  requireArgument('ZIGZAG openAndFill', 'prices.high', inHigh);
   requireHistory('ZIGZAG openAndFill', inHigh.length);
-  requireArgument('ZIGZAG openAndFill', 'inLow', inLow);
-  const guardOutLen = openFillCount('ZIGZAG openAndFill', inHigh.length, zigzagLookback(optInSensitivity, optInMinTrendLength, core));
-  requireHistoryLength('ZIGZAG openAndFill', 'inLow', inLow.length, inHigh.length);
+  requireArgument('ZIGZAG openAndFill', 'prices.low', inLow);
+  const guardLookback = zigzagLookbackPositional(optInSensitivity, optInMinTrendLength, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('ZIGZAG openAndFill', PARAM_RANGES, optInSensitivity, optInMinTrendLength);
+  }
+  const guardOutLen = openFillCount('ZIGZAG openAndFill', inHigh.length, guardLookback);
+  requireHistoryLength('ZIGZAG openAndFill', 'prices.low', inLow.length, inHigh.length);
   requireOutput('ZIGZAG openAndFill', 'outZigZag', outZigZag, guardOutLen, Float64Array);
   requireOutput('ZIGZAG openAndFill', 'outTrend', outTrend, guardOutLen, Int32Array);
   requireOutput('ZIGZAG openAndFill', 'outPivotIdx', outPivotIdx, guardOutLen, Int32Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
-  if ((outZigZag.buffer === inHighF64.buffer && outZigZag.byteOffset === inHighF64.byteOffset) || (outZigZag.buffer === inLowF64.buffer && outZigZag.byteOffset === inLowF64.byteOffset) || (outTrend.buffer === inHighF64.buffer && outTrend.byteOffset === inHighF64.byteOffset) || (outTrend.buffer === inLowF64.buffer && outTrend.byteOffset === inLowF64.byteOffset) || (outPivotIdx.buffer === inHighF64.buffer && outPivotIdx.byteOffset === inHighF64.byteOffset) || (outPivotIdx.buffer === inLowF64.buffer && outPivotIdx.byteOffset === inLowF64.byteOffset) || (outZigZag.buffer === outTrend.buffer && outZigZag.byteOffset === outTrend.byteOffset) || (outZigZag.buffer === outPivotIdx.buffer && outZigZag.byteOffset === outPivotIdx.byteOffset) || (outTrend.buffer === outPivotIdx.buffer && outTrend.byteOffset === outPivotIdx.byteOffset)) {
-    throw streamFailure('ZIGZAG openAndFill', RetCode.BAD_PARAM);
+  if (outZigZag.buffer === inHighF64.buffer && outZigZag.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outZigZag', 'prices.high');
   }
-  if (guardOutLen > 0 && (overlaps(outZigZag, inHighF64) || overlaps(outZigZag, inLowF64) || overlaps(outTrend, inHighF64) || overlaps(outTrend, inLowF64) || overlaps(outPivotIdx, inHighF64) || overlaps(outPivotIdx, inLowF64) || overlaps(outZigZag, outTrend) || overlaps(outZigZag, outPivotIdx) || overlaps(outTrend, outPivotIdx))) {
-    throw streamFailure('ZIGZAG openAndFill', RetCode.BAD_PARAM);
+  if (outZigZag.buffer === inLowF64.buffer && outZigZag.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outZigZag', 'prices.low');
+  }
+  if (outTrend.buffer === inHighF64.buffer && outTrend.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outTrend', 'prices.high');
+  }
+  if (outTrend.buffer === inLowF64.buffer && outTrend.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outTrend', 'prices.low');
+  }
+  if (outPivotIdx.buffer === inHighF64.buffer && outPivotIdx.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outPivotIdx', 'prices.high');
+  }
+  if (outPivotIdx.buffer === inLowF64.buffer && outPivotIdx.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outPivotIdx', 'prices.low');
+  }
+  if (outZigZag.buffer === outTrend.buffer && outZigZag.byteOffset === outTrend.byteOffset) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outZigZag', 'outTrend');
+  }
+  if (outZigZag.buffer === outPivotIdx.buffer && outZigZag.byteOffset === outPivotIdx.byteOffset) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outZigZag', 'outPivotIdx');
+  }
+  if (outTrend.buffer === outPivotIdx.buffer && outTrend.byteOffset === outPivotIdx.byteOffset) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outTrend', 'outPivotIdx');
+  }
+  if (guardOutLen > 0 && overlaps(outZigZag, inHighF64)) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outZigZag', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outZigZag, inLowF64)) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outZigZag', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outTrend, inHighF64)) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outTrend', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outTrend, inLowF64)) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outTrend', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outPivotIdx, inHighF64)) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outPivotIdx', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outPivotIdx, inLowF64)) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outPivotIdx', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outZigZag, outTrend)) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outZigZag', 'outTrend');
+  }
+  if (guardOutLen > 0 && overlaps(outZigZag, outPivotIdx)) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outZigZag', 'outPivotIdx');
+  }
+  if (guardOutLen > 0 && overlaps(outTrend, outPivotIdx)) {
+    throw sharedMemory('ZIGZAG openAndFill', 'outTrend', 'outPivotIdx');
   }
   return zigzagOpenAndFillInternal(core, inHighF64, inLowF64, 0, optInSensitivity, optInMinTrendLength, new MInteger(), new MInteger(), outZigZag, outTrend, outPivotIdx);
+}
+
+/**
+ * Opens a live ZIGZAG stream over the warm-up history: `value()` starts at the
+ * last history bar, bit-identical to {@link zigzag} there.
+ *
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link ZigzagOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `zigzagLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a real parameter that is not a
+ *   number, a parameter outside its range or histories of different lengths.
+ *
+ * @example
+ * ```ts
+ * import { zigzagOpen } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const stream = zigzagOpen({ high, low }, { sensitivity: 5, minTrendLength: 1 });
+ * const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
+ * const updated = stream.update(101.4, 99.1); // the bar closes
+ * ```
+ */
+export function zigzagOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: ZigzagOptions): ZigzagStream {
+  requireArgument('ZIGZAG open', 'prices', prices);
+  const o = optionsOf('ZIGZAG open', options);
+  const optInSensitivity = orDefault(o.sensitivity, Core.REAL_DEFAULT);
+  const optInMinTrendLength = orDefault(o.minTrendLength, Core.INTEGER_DEFAULT);
+  const core = coreOf('ZIGZAG open', o.core);
+  return zigzagOpenPositional(prices.high, prices.low, optInSensitivity, optInMinTrendLength, core);
+}
+
+/**
+ * {@link zigzagOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link zigzag}.
+ *
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link ZigzagOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link zigzag} returns them; the range is the
+ *   stream's `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `zigzagLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a real parameter that is not a
+ *   number, a parameter outside its range, histories of different lengths or a
+ *   buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
+ *
+ * @example
+ * ```ts
+ * import { zigzagOpenAndFill } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const {
+ *   stream,
+ *   begIdx,
+ *   outZigZag,
+ *   outTrend,
+ *   outPivotIdx,
+ * } = zigzagOpenAndFill({ high, low }, { sensitivity: 5, minTrendLength: 1 });
+ * // outZigZag[k] is the value at bar begIdx + k
+ * ```
+ */
+export function zigzagOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: ZigzagOptions): ZigzagResult & { stream: ZigzagStream } {
+  requireArgument('ZIGZAG openAndFill', 'prices', prices);
+  const o = optionsOf('ZIGZAG openAndFill', options);
+  const optInSensitivity = orDefault(o.sensitivity, Core.REAL_DEFAULT);
+  const optInMinTrendLength = orDefault(o.minTrendLength, Core.INTEGER_DEFAULT);
+  const core = coreOf('ZIGZAG openAndFill', o.core);
+  const capacity = fillCapacity(zigzagLookbackPositional(optInSensitivity, optInMinTrendLength, core), prices.high, prices.low);
+  const outZigZag = o.outZigZag === undefined ? new Float64Array(capacity) : o.outZigZag;
+  const outTrend = o.outTrend === undefined ? new Int32Array(capacity) : o.outTrend;
+  const outPivotIdx = o.outPivotIdx === undefined ? new Int32Array(capacity) : o.outPivotIdx;
+  const stream = zigzagOpenAndFillPositional(prices.high, prices.low, optInSensitivity, optInMinTrendLength, outZigZag, outTrend, outPivotIdx, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outZigZag: outZigZag.subarray(0, range.count), outTrend: outTrend.subarray(0, range.count), outPivotIdx: outPivotIdx.subarray(0, range.count) };
 }

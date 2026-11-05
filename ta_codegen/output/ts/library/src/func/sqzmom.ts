@@ -17,39 +17,19 @@
  *  101126 MF,CC  One Keltner centre for both loops (#543).
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { LinearregStream, linearreg, linearregLookback, linearregOpenAndFillInternal } from './linearreg.ts';
-import { MidpriceStream, midprice, midpriceLookback, midpriceOpenAndFillInternal } from './midprice.ts';
-import { SmaStream, sma, smaLookback, smaOpenAndFillInternal, smaOpenInternal } from './sma.ts';
-import { StddevStream, stddev, stddevLookback, stddevOpenAndFillInternal } from './stddev.ts';
-import { TrangeStream, trange, trangeLookback, trangeOpenAndFillInternal } from './trange.ts';
+import { LinearregStream, linearregLookbackPositional, linearregOpenAndFillInternal, linearregPositional } from './linearreg.ts';
+import { MidpriceStream, midpriceLookbackPositional, midpriceOpenAndFillInternal, midpricePositional } from './midprice.ts';
+import { SmaStream, smaLookbackPositional, smaOpenAndFillInternal, smaOpenInternal, smaPositional } from './sma.ts';
+import { StddevStream, stddevLookbackPositional, stddevOpenAndFillInternal, stddevPositional } from './stddev.ts';
+import { TrangeStream, trangeLookbackPositional, trangeOpenAndFillInternal, trangePositional } from './trange.ts';
 
-/**
- * Number of leading input bars {@link sqzmom} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInBBPeriod - Number of bars in the Bollinger Band window (default 20;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDev - Number of standard deviations the Bollinger Bands are placed
- *   at (default 2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInKCPeriod - Number of bars in the Keltner Channel, the true-range
- *   mean and the regression (default 20; range 2 to 100000; `Core.INTEGER_DEFAULT`
- *   selects the default).
- * @param optInFactorWide - Keltner width, in true-range means, of the widest
- *   channel (default 2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInFactorNormal - Keltner width of the classic channel (default 1.5;
- *   minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInFactorNarrow - Keltner width of the tightest channel (default 1;
- *   minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function sqzmomLookback(optInBBPeriod: number, optInNbDev: number, optInKCPeriod: number, optInFactorWide: number, optInFactorNormal: number, optInFactorNarrow: number, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function sqzmomLookbackPositional(optInBBPeriod: number, optInNbDev: number, optInKCPeriod: number, optInFactorWide: number, optInFactorNormal: number, optInFactorNarrow: number, core: Core = Core.DEFAULT): number {
   if ((optInBBPeriod | 0) !== optInBBPeriod) {
     return -1;
   }
@@ -118,49 +98,25 @@ export function sqzmomLookback(optInBBPeriod: number, optInNbDev: number, optInK
    * which is where pandas, ta4j and trading-signals put their first value.
    * The factors scale a band that already exists, so they do not enter.
    */
-  lookbackTotal = smaLookback(optInBBPeriod, core);
-  leg = stddevLookback(optInBBPeriod, 1.0, core);
+  lookbackTotal = smaLookbackPositional(optInBBPeriod, core);
+  leg = stddevLookbackPositional(optInBBPeriod, 1.0, core);
   if (leg > lookbackTotal) {
     lookbackTotal = leg;
   }
-  leg = trangeLookback(core) + smaLookback(optInKCPeriod, core);
+  leg = trangeLookbackPositional(core) + smaLookbackPositional(optInKCPeriod, core);
   if (leg > lookbackTotal) {
     lookbackTotal = leg;
   }
-  leg = midpriceLookback(optInKCPeriod, core) + linearregLookback(optInKCPeriod, core);
+  leg = midpriceLookbackPositional(optInKCPeriod, core) + linearregLookbackPositional(optInKCPeriod, core);
   if (leg > lookbackTotal) {
     lookbackTotal = leg;
   }
   return lookbackTotal;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link sqzmom}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInBBPeriod - Number of bars in the Bollinger Band window (default 20;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDev - Number of standard deviations the Bollinger Bands are placed
- *   at (default 2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInKCPeriod - Number of bars in the Keltner Channel, the true-range
- *   mean and the regression (default 20; range 2 to 100000; `Core.INTEGER_DEFAULT`
- *   selects the default).
- * @param optInFactorWide - Keltner width, in true-range means, of the widest
- *   channel (default 2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInFactorNormal - Keltner width of the classic channel (default 1.5;
- *   minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInFactorNarrow - Keltner width of the tightest channel (default 1;
- *   minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function sqzmomDisplayShift(optInBBPeriod: number, optInNbDev: number, optInKCPeriod: number, optInFactorWide: number, optInFactorNormal: number, optInFactorNarrow: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core) < 0) {
+/** @internal */
+export function sqzmomDisplayShiftPositional(optInBBPeriod: number, optInNbDev: number, optInKCPeriod: number, optInFactorWide: number, optInFactorNormal: number, optInFactorNarrow: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (sqzmomLookbackPositional(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 2) {
@@ -272,7 +228,7 @@ export function sqzmomImpl(
   if (optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal) {
     return RetCode.BAD_PARAM;
   }
-  lookbackTotal = sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core);
+  lookbackTotal = sqzmomLookbackPositional(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core);
   if (lookbackTotal > endIdx) {
     outBegIdx.value = 0;
     outNBElement.value = 0;
@@ -287,7 +243,7 @@ export function sqzmomImpl(
     return RetCode.SUCCESS;
   }
   n = endIdx - startIdx + 1;
-  stageLookback = linearregLookback(optInKCPeriod, core);
+  stageLookback = linearregLookbackPositional(optInKCPeriod, core);
   stageIdx = startIdx - stageLookback;
   stageLen = n + stageLookback;
   tempDev = new Float64Array(stageLen);
@@ -298,10 +254,10 @@ export function sqzmomImpl(
   /* The momentum anchor: the Donchian midpoint and the Keltner centre, averaged.
    * midprice is bit-identical to donchian's middle band.
    */
-  const _xr0 = midprice(stageIdx, endIdx, inHigh, inLow, optInKCPeriod, tempDev, core);
+  const _xr0 = midpricePositional(stageIdx, endIdx, inHigh, inLow, optInKCPeriod, tempDev, core);
   outBegIdx.value = _xr0.begIdx;
   outNBElement.value = _xr0.count;
-  const _xr1 = sma(stageIdx, endIdx, inClose, optInKCPeriod, tempKCM, core);
+  const _xr1 = smaPositional(stageIdx, endIdx, inClose, optInKCPeriod, tempKCM, core);
   tempBegIdx.value = _xr1.begIdx;
   kcmNb.value = _xr1.count;
   /* DEV, over the staged range. The close is read at the index midprice
@@ -315,16 +271,16 @@ export function sqzmomImpl(
    * trange's own lookback is 1, and stageIdx is at least 1 because the
    * compression chain alone puts lookbackTotal at k or more.
    */
-  const _xr2 = trange(stageIdx, endIdx, inHigh, inLow, inClose, tempWork, core);
+  const _xr2 = trangePositional(stageIdx, endIdx, inHigh, inLow, inClose, tempWork, core);
   tempBegIdx.value = _xr2.begIdx;
   tempNbElement.value = _xr2.count;
-  const _xr3 = sma(0, stageLen - 1, tempWork, optInKCPeriod, tempWork, core);
+  const _xr3 = smaPositional(0, stageLen - 1, tempWork, optInKCPeriod, tempWork, core);
   tempBegIdx.value = _xr3.begIdx;
   tempNbElement.value = _xr3.count;
-  const _xr4 = sma(startIdx, endIdx, inClose, optInBBPeriod, tempMid, core);
+  const _xr4 = smaPositional(startIdx, endIdx, inClose, optInBBPeriod, tempMid, core);
   tempBegIdx.value = _xr4.begIdx;
   tempNbElement.value = _xr4.count;
-  const _xr5 = stddev(startIdx, endIdx, inClose, optInBBPeriod, 1.0, tempSD, core);
+  const _xr5 = stddevPositional(startIdx, endIdx, inClose, optInBBPeriod, 1.0, tempSD, core);
   tempBegIdx.value = _xr5.begIdx;
   sdNb.value = _xr5.count;
   /* The centre is staged one regression window early; the shift puts it on
@@ -339,7 +295,7 @@ export function sqzmomImpl(
    * The regression window closes on the first output bar, so entering it at 0 of
    * the staged range puts its first fitted value on startIdx.
    */
-  const _xr6 = linearreg(0, stageLen - 1, tempDev, optInKCPeriod, outMomentum, core);
+  const _xr6 = linearregPositional(0, stageLen - 1, tempDev, optInKCPeriod, outMomentum, core);
   tempBegIdx.value = _xr6.begIdx;
   tempNbElement.value = _xr6.count;
   /* The ordinal. Every comparison is strict: a band exactly on a channel
@@ -371,6 +327,199 @@ export function sqzmomImpl(
   outBegIdx.value = startIdx;
   outNBElement.value = n;
   return RetCode.SUCCESS;
+}
+
+const PARAM_RANGES = [['bbPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['nbDev', Core.REAL_DEFAULT, 0e0, Core.REAL_MAX, 'in 0..3e37'], ['kcPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['factorWide', Core.REAL_DEFAULT, 0e0, Core.REAL_MAX, 'in 0..3e37'], ['factorNormal', Core.REAL_DEFAULT, 0e0, Core.REAL_MAX, 'in 0..3e37'], ['factorNarrow', Core.REAL_DEFAULT, 0e0, Core.REAL_MAX, 'in 0..3e37']] as const;
+
+/** @internal */
+export function sqzmomPositional(
+  startIdx: number,
+  endIdx: number,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInBBPeriod: number,
+  optInNbDev: number,
+  optInKCPeriod: number,
+  optInFactorWide: number,
+  optInFactorNormal: number,
+  optInFactorNarrow: number,
+  outMomentum: Float64Array,
+  outSqueeze: Int32Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('SQZMOM', 'startIdx', startIdx);
+  endIdx = requireInt32('SQZMOM', 'endIdx', endIdx);
+  optInBBPeriod = requireInt32('SQZMOM', 'bbPeriod', optInBBPeriod);
+  optInNbDev = requireReal('SQZMOM', 'nbDev', optInNbDev);
+  optInKCPeriod = requireInt32('SQZMOM', 'kcPeriod', optInKCPeriod);
+  optInFactorWide = requireReal('SQZMOM', 'factorWide', optInFactorWide);
+  optInFactorNormal = requireReal('SQZMOM', 'factorNormal', optInFactorNormal);
+  optInFactorNarrow = requireReal('SQZMOM', 'factorNarrow', optInFactorNarrow);
+  requireIndexRange('SQZMOM', startIdx, endIdx);
+  const guardLookback = sqzmomLookbackPositional(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('SQZMOM', PARAM_RANGES, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
+  }
+  const guardStart = clampedStart('SQZMOM', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('SQZMOM', 'prices.high', inHigh, guardInLen);
+  requireLength('SQZMOM', 'prices.low', inLow, guardInLen);
+  requireLength('SQZMOM', 'prices.close', inClose, guardInLen);
+  requireOutput('SQZMOM', 'outMomentum', outMomentum, guardOutLen, Float64Array);
+  requireOutput('SQZMOM', 'outSqueeze', outSqueeze, guardOutLen, Int32Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (overlapsPartly(outMomentum, inHighF64)) {
+    throw sharedMemory('SQZMOM', 'outMomentum', 'prices.high');
+  }
+  if (overlapsPartly(outMomentum, inLowF64)) {
+    throw sharedMemory('SQZMOM', 'outMomentum', 'prices.low');
+  }
+  if (overlapsPartly(outMomentum, inCloseF64)) {
+    throw sharedMemory('SQZMOM', 'outMomentum', 'prices.close');
+  }
+  if (overlaps(outSqueeze, inHighF64)) {
+    throw sharedMemory('SQZMOM', 'outSqueeze', 'prices.high');
+  }
+  if (overlaps(outSqueeze, inLowF64)) {
+    throw sharedMemory('SQZMOM', 'outSqueeze', 'prices.low');
+  }
+  if (overlaps(outSqueeze, inCloseF64)) {
+    throw sharedMemory('SQZMOM', 'outSqueeze', 'prices.close');
+  }
+  if (overlaps(outMomentum, outSqueeze)) {
+    throw sharedMemory('SQZMOM', 'outMomentum', 'outSqueeze');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = sqzmomImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('SQZMOM', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link sqzmom}, {@link sqzmomLookback}, {@link sqzmomDisplayShift},
+ * {@link sqzmomOpen} and {@link sqzmomOpenAndFill}. Every key is optional: an
+ * omitted or `undefined` key takes its default, and a call ignores the keys it has
+ * no use for.
+ */
+export interface SqzmomOptions {
+  /**
+   * Number of bars in the Bollinger Band window (default 20; range 2 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  bbPeriod?: number | undefined;
+  /**
+   * Number of standard deviations the Bollinger Bands are placed at (default 2;
+   * minimum 0; `Core.REAL_DEFAULT` selects the default).
+   */
+  nbDev?: number | undefined;
+  /**
+   * Number of bars in the Keltner Channel, the true-range mean and the regression
+   * (default 20; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
+   */
+  kcPeriod?: number | undefined;
+  /**
+   * Keltner width, in true-range means, of the widest channel (default 2; minimum 0;
+   * `Core.REAL_DEFAULT` selects the default).
+   */
+  factorWide?: number | undefined;
+  /**
+   * Keltner width of the classic channel (default 1.5; minimum 0;
+   * `Core.REAL_DEFAULT` selects the default).
+   */
+  factorNormal?: number | undefined;
+  /**
+   * Keltner width of the tightest channel (default 1; minimum 0; `Core.REAL_DEFAULT`
+   * selects the default).
+   */
+  factorNarrow?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outMomentum`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outMomentum?: Float64Array | undefined;
+  /**
+   * Buffer for `outSqueeze`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input.
+   */
+  outSqueeze?: Int32Array | undefined;
+}
+
+/** What {@link sqzmom} returns, and {@link sqzmomOpenAndFill} with its stream. */
+export interface SqzmomResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Linear regression of the close against the Donchian/SMA anchor. `outMomentum[k]`
+   * is the value at input bar `begIdx + k`.
+   */
+  outMomentum: Float64Array;
+  /**
+   * Compression level: 3 narrow, 2 normal, 1 wide, -1 released, 0 otherwise.
+   * `outSqueeze[k]` is the value at input bar `begIdx + k`.
+   */
+  outSqueeze: Int32Array;
+}
+
+/**
+ * Number of leading input bars {@link sqzmom} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link SqzmomOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function sqzmomLookback(options?: SqzmomOptions): number {
+  const o = optionsOf('SQZMOM lookback', options);
+  return sqzmomLookbackPositional(orDefault(o.bbPeriod, Core.INTEGER_DEFAULT), orDefault(o.nbDev, Core.REAL_DEFAULT), orDefault(o.kcPeriod, Core.INTEGER_DEFAULT), orDefault(o.factorWide, Core.REAL_DEFAULT), orDefault(o.factorNormal, Core.REAL_DEFAULT), orDefault(o.factorNarrow, Core.REAL_DEFAULT), coreOf('SQZMOM lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link sqzmom}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link SqzmomOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function sqzmomDisplayShift(outputIdx: number, options?: SqzmomOptions): number {
+  const o = optionsOf('SQZMOM displayShift', options);
+  return sqzmomDisplayShiftPositional(orDefault(o.bbPeriod, Core.INTEGER_DEFAULT), orDefault(o.nbDev, Core.REAL_DEFAULT), orDefault(o.kcPeriod, Core.INTEGER_DEFAULT), orDefault(o.factorWide, Core.REAL_DEFAULT), orDefault(o.factorNormal, Core.REAL_DEFAULT), orDefault(o.factorNarrow, Core.REAL_DEFAULT), outputIdx, coreOf('SQZMOM displayShift', o.core));
 }
 
 /**
@@ -409,45 +558,26 @@ export function sqzmomImpl(
  *   withheld until both do. pandas emits the earlier momentum; a capture compared
  *   against it must start at the later bar.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link sqzmomLookback} is a success with
- * `count` 0.
+ * `outMomentum[k]` is the value at input bar `begIdx + k`; every output is exactly
+ * as long as the number of values written, and nothing is padded. A range that
+ * ends before {@link sqzmomLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param inClose - Closing price of each bar.
- * @param optInBBPeriod - Number of bars in the Bollinger Band window (default 20;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDev - Number of standard deviations the Bollinger Bands are placed
- *   at (default 2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInKCPeriod - Number of bars in the Keltner Channel, the true-range
- *   mean and the regression (default 20; range 2 to 100000; `Core.INTEGER_DEFAULT`
- *   selects the default).
- * @param optInFactorWide - Keltner width, in true-range means, of the widest
- *   channel (default 2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInFactorNormal - Keltner width of the classic channel (default 1.5;
- *   minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInFactorNarrow - Keltner width of the tightest channel (default 1;
- *   minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param outMomentum - Linear regression of the close against the Donchian/SMA
- *   anchor. Must hold the values produced and never be empty; the input length
- *   always suffices.
- * @param outSqueeze - Compression level: 3 narrow, 2 normal, 1 wide, -1 released,
- *   0 otherwise. Must hold the values produced and never be empty; the input length
- *   always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `high`: High
+ *   price of each bar. `low`: Low price of each bar. `close`: Closing price of each
+ *   bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link SqzmomOptions}.
+ * @returns `begIdx` and the values; see {@link SqzmomResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   real parameter that is not a number, a parameter outside its range, an array too
- *   short for the range, an empty output, two outputs sharing memory or an output
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a real parameter that is not a
+ *   number, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
+ *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
+ *   anything is written.
  *
  * @example
  * ```ts
@@ -459,15 +589,15 @@ export function sqzmomImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const momentum = new Float64Array(high.length);
- * const squeeze = new Int32Array(high.length);
- * const { begIdx, count } = sqzmom(
- *   0, high.length - 1,
- *   high, low, close,
- *   20, 2, 20, 2, 1.5, 1,
- *   momentum, squeeze,
- * );
- * // momentum[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, outMomentum, outSqueeze } = sqzmom({ high, low, close }, {
+ *   bbPeriod: 20,
+ *   nbDev: 2,
+ *   kcPeriod: 20,
+ *   factorWide: 2,
+ *   factorNormal: 1.5,
+ *   factorNarrow: 1,
+ * });
+ * // outMomentum[k] is the value at bar begIdx + k
  * ```
  * @see [`bbands`](https://ta-lib.org/functions/bbands)
  * @see [`kc`](https://ta-lib.org/functions/kc)
@@ -475,52 +605,28 @@ export function sqzmomImpl(
  * @see [`midprice`](https://ta-lib.org/functions/midprice)
  * @see [`linearreg`](https://ta-lib.org/functions/linearreg)
  */
-export function sqzmom(
-  startIdx: number,
-  endIdx: number,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInBBPeriod: number,
-  optInNbDev: number,
-  optInKCPeriod: number,
-  optInFactorWide: number,
-  optInFactorNormal: number,
-  optInFactorNarrow: number,
-  outMomentum: Float64Array,
-  outSqueeze: Int32Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('SQZMOM', 'startIdx', startIdx);
-  endIdx = requireInt32('SQZMOM', 'endIdx', endIdx);
-  optInBBPeriod = requireInt32('SQZMOM', 'optInBBPeriod', optInBBPeriod);
-  optInNbDev = requireReal('SQZMOM', 'optInNbDev', optInNbDev);
-  optInKCPeriod = requireInt32('SQZMOM', 'optInKCPeriod', optInKCPeriod);
-  optInFactorWide = requireReal('SQZMOM', 'optInFactorWide', optInFactorWide);
-  optInFactorNormal = requireReal('SQZMOM', 'optInFactorNormal', optInFactorNormal);
-  optInFactorNarrow = requireReal('SQZMOM', 'optInFactorNarrow', optInFactorNarrow);
-  requireIndexRange('SQZMOM', startIdx, endIdx);
-  const guardStart = clampedStart('SQZMOM', startIdx, sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('SQZMOM', 'inHigh', inHigh, guardInLen);
-  requireLength('SQZMOM', 'inLow', inLow, guardInLen);
-  requireLength('SQZMOM', 'inClose', inClose, guardInLen);
-  requireOutput('SQZMOM', 'outMomentum', outMomentum, guardOutLen, Float64Array);
-  requireOutput('SQZMOM', 'outSqueeze', outSqueeze, guardOutLen, Int32Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if (overlapsPartly(outMomentum, inHighF64) || overlapsPartly(outMomentum, inLowF64) || overlapsPartly(outMomentum, inCloseF64) || overlaps(outSqueeze, inHighF64) || overlaps(outSqueeze, inLowF64) || overlaps(outSqueeze, inCloseF64) || overlaps(outMomentum, outSqueeze)) {
-    throw failure('SQZMOM', RetCode.BAD_PARAM);
+export function sqzmom(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: SqzmomOptions): SqzmomResult {
+  requireArgument('SQZMOM', 'prices', prices);
+  const o = optionsOf('SQZMOM', options);
+  if (o.endIdx === undefined) {
+    requireSeries('SQZMOM', 'prices.high', prices.high);
+    requireSeries('SQZMOM', 'prices.low', prices.low);
+    requireSeries('SQZMOM', 'prices.close', prices.close);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = sqzmomImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outBegIdx, outNBElement, outMomentum, outSqueeze);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('SQZMOM', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInBBPeriod = orDefault(o.bbPeriod, Core.INTEGER_DEFAULT);
+  const optInNbDev = orDefault(o.nbDev, Core.REAL_DEFAULT);
+  const optInKCPeriod = orDefault(o.kcPeriod, Core.INTEGER_DEFAULT);
+  const optInFactorWide = orDefault(o.factorWide, Core.REAL_DEFAULT);
+  const optInFactorNormal = orDefault(o.factorNormal, Core.REAL_DEFAULT);
+  const optInFactorNarrow = orDefault(o.factorNarrow, Core.REAL_DEFAULT);
+  const core = coreOf('SQZMOM', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.high.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, sqzmomLookbackPositional(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core), prices.high, prices.low, prices.close);
+  const outMomentum = o.outMomentum === undefined ? new Float64Array(capacity) : o.outMomentum;
+  const outSqueeze = o.outSqueeze === undefined ? new Int32Array(capacity) : o.outSqueeze;
+  const range = sqzmomPositional(startIdx, endIdx, prices.high, prices.low, prices.close, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outMomentum, outSqueeze, core);
+  return { begIdx: range.begIdx, outMomentum: outMomentum.subarray(0, range.count), outSqueeze: outSqueeze.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -604,21 +710,23 @@ export class SqzmomStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inHigh - The bar's `inHigh` value: High price of each bar.
    * @param inLow - The bar's `inLow` value: Low price of each bar.
    * @param inClose - The bar's `inClose` value: Closing price of each bar.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link SqzmomOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out: SqzmomOut): void {
+  update(inHigh: number, inLow: number, inClose: number, out?: SqzmomOut): SqzmomOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('SQZMOM update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('SQZMOM update', 'SqzmomOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
@@ -626,23 +734,28 @@ export class SqzmomStream {
     }
     sqzmomStepImpl(this, inHigh, inLow, inClose);
     this.outRangeCount++;
-    out.momentum = this.cur_outMomentum;
-    out.squeeze = this.cur_outSqueeze;
+    if (out === undefined) {
+      out = new SqzmomOut();
+    }
+    out.outMomentum = this.cur_outMomentum;
+    out.outSqueeze = this.cur_outSqueeze;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inHigh - The bar's `inHigh` value: High price of each bar.
    * @param inLow - The bar's `inLow` value: Low price of each bar.
    * @param inClose - The bar's `inClose` value: Closing price of each bar.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link SqzmomOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out: SqzmomOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inHigh: number, inLow: number, inClose: number, out?: SqzmomOut): SqzmomOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('SQZMOM peek', 'SqzmomOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
@@ -685,21 +798,31 @@ export class SqzmomStream {
     } else {
       cur_outSqueeze = 0;
     }
-    out.momentum = cur_outMomentum;
-    out.squeeze = cur_outSqueeze;
+    if (out === undefined) {
+      out = new SqzmomOut();
+    }
+    out.outMomentum = cur_outMomentum;
+    out.outSqueeze = cur_outSqueeze;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link SqzmomOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: SqzmomOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: SqzmomOut): SqzmomOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('SQZMOM value', 'SqzmomOut');
     }
-    out.momentum = this.cur_outMomentum;
-    out.squeeze = this.cur_outSqueeze;
+    if (out === undefined) {
+      out = new SqzmomOut();
+    }
+    out.outMomentum = this.cur_outMomentum;
+    out.outSqueeze = this.cur_outSqueeze;
+    return out;
   }
 
   /**
@@ -732,14 +855,15 @@ export class SqzmomStream {
 }
 
 /**
- * The outputs of one SQZMOM bar, written into an object the caller owns and
- * reuses: valid until the next call that writes it.
+ * The outputs of one SQZMOM bar, as `update`, `peek` and `value` return them.
+ * Passed back to one of them, it is filled and returned again, with no allocation;
+ * it holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class SqzmomOut {
   /** Linear regression of the close against the Donchian/SMA anchor. */
-  momentum: number = 0;
+  outMomentum: number = NaN;
   /** Compression level: 3 narrow, 2 normal, 1 wide, -1 released, 0 otherwise. */
-  squeeze: number = 0;
+  outSqueeze: number = NaN;
 }
 
 function sqzmomStepImpl(sp: SqzmomStream, inHigh: number, inLow: number, inClose: number): void {
@@ -869,7 +993,7 @@ function sqzmomOpenImpl(
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
   }
-  if (historyLen < sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core) + 1) {
+  if (historyLen < sqzmomLookbackPositional(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core) + 1) {
     return RetCode.INSUFFICIENT_HISTORY;
   }
   const sc_outMomentum = outStride === 1 ? outMomentum : new Float64Array(historyLen);
@@ -898,7 +1022,7 @@ function sqzmomOpenImpl(
   if (optInFactorNormal > optInFactorWide || optInFactorNarrow > optInFactorNormal) {
     return RetCode.BAD_PARAM;
   }
-  lookbackTotal = sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core);
+  lookbackTotal = sqzmomLookbackPositional(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core);
   if (lookbackTotal > endIdx) {
     outBegIdx.value = 0;
     outNBElement.value = 0;
@@ -913,7 +1037,7 @@ function sqzmomOpenImpl(
     return RetCode.INSUFFICIENT_HISTORY;
   }
   n = endIdx - startIdx + 1;
-  stageLookback = linearregLookback(optInKCPeriod, core);
+  stageLookback = linearregLookbackPositional(optInKCPeriod, core);
   stageIdx = startIdx - stageLookback;
   stageLen = n + stageLookback;
   tempDev = new Float64Array(stageLen);
@@ -939,7 +1063,7 @@ function sqzmomOpenImpl(
    */
   const sub2 = trangeOpenAndFillInternal(core, inHigh, inLow, inClose, stageIdx, tempBegIdx, tempNbElement, tempWork);
   const sub3 = smaOpenInternal(core, tempWork.slice(0, (stageLen - 1) + 1), 0, optInKCPeriod);
-  const _xr0 = sma(0, stageLen - 1, tempWork, optInKCPeriod, tempWork, core);
+  const _xr0 = smaPositional(0, stageLen - 1, tempWork, optInKCPeriod, tempWork, core);
   tempBegIdx.value = _xr0.begIdx;
   tempNbElement.value = _xr0.count;
   const sub4 = smaOpenAndFillInternal(core, inClose, startIdx, optInBBPeriod, tempBegIdx, tempNbElement, tempMid);
@@ -1032,7 +1156,10 @@ export function sqzmomOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('SQZMOM openAndFill', inHigh.length, startIdx, sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core));
+    throw insufficientHistory('SQZMOM openAndFill', inHigh.length, startIdx, sqzmomLookbackPositional(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && sqzmomLookbackPositional(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core) < 0) {
+    throw rejectedParams('SQZMOM openAndFill', PARAM_RANGES, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
   }
   throw streamFailure('SQZMOM openAndFill', retCode);
 }
@@ -1063,60 +1190,16 @@ export function sqzmomOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('SQZMOM open', inHigh.length, startIdx, sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core));
+    throw insufficientHistory('SQZMOM open', inHigh.length, startIdx, sqzmomLookbackPositional(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && sqzmomLookbackPositional(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core) < 0) {
+    throw rejectedParams('SQZMOM open', PARAM_RANGES, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
   }
   throw streamFailure('SQZMOM open', retCode);
 }
 
-/**
- * Opens a live SQZMOM stream over the warm-up history: `value()` starts at the
- * last history bar, bit-identical to {@link sqzmom} there.
- *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Closing price of each bar. Every history has
- *   the same length.
- * @param optInBBPeriod - Number of bars in the Bollinger Band window (default 20;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDev - Number of standard deviations the Bollinger Bands are placed
- *   at (default 2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInKCPeriod - Number of bars in the Keltner Channel, the true-range
- *   mean and the regression (default 20; range 2 to 100000; `Core.INTEGER_DEFAULT`
- *   selects the default).
- * @param optInFactorWide - Keltner width, in true-range means, of the widest
- *   channel (default 2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInFactorNormal - Keltner width of the classic channel (default 1.5;
- *   minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInFactorNarrow - Keltner width of the tightest channel (default 1;
- *   minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `sqzmomLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range or histories of different lengths.
- *
- * @example
- * ```ts
- * import { SqzmomOut, sqzmomOpen } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = sqzmomOpen(high, low, close, 20, 2, 20, 2, 1.5, 1);
- * const peeked = new SqzmomOut();
- * const updated = new SqzmomOut();
- * stream.peek(101.4, 99.1, 100.9, peeked); // a forming bar: commits nothing
- * stream.update(101.4, 99.1, 100.9, updated); // the bar closes
- * ```
- */
-export function sqzmomOpen(
+/** @internal */
+export function sqzmomOpenPositional(
   inHigh: ArrayLike<number>,
   inLow: ArrayLike<number>,
   inClose: ArrayLike<number>,
@@ -1128,84 +1211,23 @@ export function sqzmomOpen(
   optInFactorNarrow: number,
   core: Core = Core.DEFAULT,
 ): SqzmomStream {
-  optInBBPeriod = requireInt32('SQZMOM open', 'optInBBPeriod', optInBBPeriod);
-  optInNbDev = requireReal('SQZMOM open', 'optInNbDev', optInNbDev);
-  optInKCPeriod = requireInt32('SQZMOM open', 'optInKCPeriod', optInKCPeriod);
-  optInFactorWide = requireReal('SQZMOM open', 'optInFactorWide', optInFactorWide);
-  optInFactorNormal = requireReal('SQZMOM open', 'optInFactorNormal', optInFactorNormal);
-  optInFactorNarrow = requireReal('SQZMOM open', 'optInFactorNarrow', optInFactorNarrow);
-  requireArgument('SQZMOM open', 'inHigh', inHigh);
+  optInBBPeriod = requireInt32('SQZMOM open', 'bbPeriod', optInBBPeriod);
+  optInNbDev = requireReal('SQZMOM open', 'nbDev', optInNbDev);
+  optInKCPeriod = requireInt32('SQZMOM open', 'kcPeriod', optInKCPeriod);
+  optInFactorWide = requireReal('SQZMOM open', 'factorWide', optInFactorWide);
+  optInFactorNormal = requireReal('SQZMOM open', 'factorNormal', optInFactorNormal);
+  optInFactorNarrow = requireReal('SQZMOM open', 'factorNarrow', optInFactorNarrow);
+  requireArgument('SQZMOM open', 'prices.high', inHigh);
   requireHistory('SQZMOM open', inHigh.length);
-  requireArgument('SQZMOM open', 'inLow', inLow);
-  requireArgument('SQZMOM open', 'inClose', inClose);
-  requireHistoryLength('SQZMOM open', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('SQZMOM open', 'inClose', inClose.length, inHigh.length);
+  requireArgument('SQZMOM open', 'prices.low', inLow);
+  requireArgument('SQZMOM open', 'prices.close', inClose);
+  requireHistoryLength('SQZMOM open', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('SQZMOM open', 'prices.close', inClose.length, inHigh.length);
   return sqzmomOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), 0, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
 }
 
-/**
- * {@link sqzmomOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link sqzmom}. The range written is the stream's
- * `outRange()`.
- *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Closing price of each bar. Every history has
- *   the same length.
- * @param optInBBPeriod - Number of bars in the Bollinger Band window (default 20;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDev - Number of standard deviations the Bollinger Bands are placed
- *   at (default 2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInKCPeriod - Number of bars in the Keltner Channel, the true-range
- *   mean and the regression (default 20; range 2 to 100000; `Core.INTEGER_DEFAULT`
- *   selects the default).
- * @param optInFactorWide - Keltner width, in true-range means, of the widest
- *   channel (default 2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInFactorNormal - Keltner width of the classic channel (default 1.5;
- *   minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInFactorNarrow - Keltner width of the tightest channel (default 1;
- *   minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param outMomentum - Linear regression of the close against the Donchian/SMA
- *   anchor. Must hold `historyLen - lookback` values and share no memory with an
- *   input or another output.
- * @param outSqueeze - Compression level: 3 narrow, 2 normal, 1 wide, -1 released,
- *   0 otherwise. Must hold `historyLen - lookback` values and share no memory with
- *   an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `sqzmomLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range, histories of different lengths or an
- *   output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { sqzmomOpenAndFill } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const momentum = new Float64Array(high.length);
- * const squeeze = new Int32Array(high.length);
- * const stream = sqzmomOpenAndFill(
- *   high, low, close,
- *   20, 2, 20, 2, 1.5, 1,
- *   momentum, squeeze,
- * );
- * const { begIdx, count } = stream.outRange();
- * // momentum[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function sqzmomOpenAndFill(
+/** @internal */
+export function sqzmomOpenAndFillPositional(
   inHigh: ArrayLike<number>,
   inLow: ArrayLike<number>,
   inClose: ArrayLike<number>,
@@ -1219,29 +1241,185 @@ export function sqzmomOpenAndFill(
   outSqueeze: Int32Array,
   core: Core = Core.DEFAULT,
 ): SqzmomStream {
-  optInBBPeriod = requireInt32('SQZMOM openAndFill', 'optInBBPeriod', optInBBPeriod);
-  optInNbDev = requireReal('SQZMOM openAndFill', 'optInNbDev', optInNbDev);
-  optInKCPeriod = requireInt32('SQZMOM openAndFill', 'optInKCPeriod', optInKCPeriod);
-  optInFactorWide = requireReal('SQZMOM openAndFill', 'optInFactorWide', optInFactorWide);
-  optInFactorNormal = requireReal('SQZMOM openAndFill', 'optInFactorNormal', optInFactorNormal);
-  optInFactorNarrow = requireReal('SQZMOM openAndFill', 'optInFactorNarrow', optInFactorNarrow);
-  requireArgument('SQZMOM openAndFill', 'inHigh', inHigh);
+  optInBBPeriod = requireInt32('SQZMOM openAndFill', 'bbPeriod', optInBBPeriod);
+  optInNbDev = requireReal('SQZMOM openAndFill', 'nbDev', optInNbDev);
+  optInKCPeriod = requireInt32('SQZMOM openAndFill', 'kcPeriod', optInKCPeriod);
+  optInFactorWide = requireReal('SQZMOM openAndFill', 'factorWide', optInFactorWide);
+  optInFactorNormal = requireReal('SQZMOM openAndFill', 'factorNormal', optInFactorNormal);
+  optInFactorNarrow = requireReal('SQZMOM openAndFill', 'factorNarrow', optInFactorNarrow);
+  requireArgument('SQZMOM openAndFill', 'prices.high', inHigh);
   requireHistory('SQZMOM openAndFill', inHigh.length);
-  requireArgument('SQZMOM openAndFill', 'inLow', inLow);
-  requireArgument('SQZMOM openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('SQZMOM openAndFill', inHigh.length, sqzmomLookback(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core));
-  requireHistoryLength('SQZMOM openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('SQZMOM openAndFill', 'inClose', inClose.length, inHigh.length);
+  requireArgument('SQZMOM openAndFill', 'prices.low', inLow);
+  requireArgument('SQZMOM openAndFill', 'prices.close', inClose);
+  const guardLookback = sqzmomLookbackPositional(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('SQZMOM openAndFill', PARAM_RANGES, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow);
+  }
+  const guardOutLen = openFillCount('SQZMOM openAndFill', inHigh.length, guardLookback);
+  requireHistoryLength('SQZMOM openAndFill', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('SQZMOM openAndFill', 'prices.close', inClose.length, inHigh.length);
   requireOutput('SQZMOM openAndFill', 'outMomentum', outMomentum, guardOutLen, Float64Array);
   requireOutput('SQZMOM openAndFill', 'outSqueeze', outSqueeze, guardOutLen, Int32Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
-  if ((outMomentum.buffer === inHighF64.buffer && outMomentum.byteOffset === inHighF64.byteOffset) || (outMomentum.buffer === inLowF64.buffer && outMomentum.byteOffset === inLowF64.byteOffset) || (outMomentum.buffer === inCloseF64.buffer && outMomentum.byteOffset === inCloseF64.byteOffset) || (outSqueeze.buffer === inHighF64.buffer && outSqueeze.byteOffset === inHighF64.byteOffset) || (outSqueeze.buffer === inLowF64.buffer && outSqueeze.byteOffset === inLowF64.byteOffset) || (outSqueeze.buffer === inCloseF64.buffer && outSqueeze.byteOffset === inCloseF64.byteOffset) || (outMomentum.buffer === outSqueeze.buffer && outMomentum.byteOffset === outSqueeze.byteOffset)) {
-    throw streamFailure('SQZMOM openAndFill', RetCode.BAD_PARAM);
+  if (outMomentum.buffer === inHighF64.buffer && outMomentum.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('SQZMOM openAndFill', 'outMomentum', 'prices.high');
   }
-  if (guardOutLen > 0 && (overlaps(outMomentum, inHighF64) || overlaps(outMomentum, inLowF64) || overlaps(outMomentum, inCloseF64) || overlaps(outSqueeze, inHighF64) || overlaps(outSqueeze, inLowF64) || overlaps(outSqueeze, inCloseF64) || overlaps(outMomentum, outSqueeze))) {
-    throw streamFailure('SQZMOM openAndFill', RetCode.BAD_PARAM);
+  if (outMomentum.buffer === inLowF64.buffer && outMomentum.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('SQZMOM openAndFill', 'outMomentum', 'prices.low');
+  }
+  if (outMomentum.buffer === inCloseF64.buffer && outMomentum.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('SQZMOM openAndFill', 'outMomentum', 'prices.close');
+  }
+  if (outSqueeze.buffer === inHighF64.buffer && outSqueeze.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('SQZMOM openAndFill', 'outSqueeze', 'prices.high');
+  }
+  if (outSqueeze.buffer === inLowF64.buffer && outSqueeze.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('SQZMOM openAndFill', 'outSqueeze', 'prices.low');
+  }
+  if (outSqueeze.buffer === inCloseF64.buffer && outSqueeze.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('SQZMOM openAndFill', 'outSqueeze', 'prices.close');
+  }
+  if (outMomentum.buffer === outSqueeze.buffer && outMomentum.byteOffset === outSqueeze.byteOffset) {
+    throw sharedMemory('SQZMOM openAndFill', 'outMomentum', 'outSqueeze');
+  }
+  if (guardOutLen > 0 && overlaps(outMomentum, inHighF64)) {
+    throw sharedMemory('SQZMOM openAndFill', 'outMomentum', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outMomentum, inLowF64)) {
+    throw sharedMemory('SQZMOM openAndFill', 'outMomentum', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outMomentum, inCloseF64)) {
+    throw sharedMemory('SQZMOM openAndFill', 'outMomentum', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outSqueeze, inHighF64)) {
+    throw sharedMemory('SQZMOM openAndFill', 'outSqueeze', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outSqueeze, inLowF64)) {
+    throw sharedMemory('SQZMOM openAndFill', 'outSqueeze', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outSqueeze, inCloseF64)) {
+    throw sharedMemory('SQZMOM openAndFill', 'outSqueeze', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outMomentum, outSqueeze)) {
+    throw sharedMemory('SQZMOM openAndFill', 'outMomentum', 'outSqueeze');
   }
   return sqzmomOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, 0, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, new MInteger(), new MInteger(), outMomentum, outSqueeze);
+}
+
+/**
+ * Opens a live SQZMOM stream over the warm-up history: `value()` starts at the
+ * last history bar, bit-identical to {@link sqzmom} there.
+ *
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Closing price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link SqzmomOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `sqzmomLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a real parameter that is not a
+ *   number, a parameter outside its range or histories of different lengths.
+ *
+ * @example
+ * ```ts
+ * import { sqzmomOpen } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const close = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const stream = sqzmomOpen({ high, low, close }, {
+ *   bbPeriod: 20,
+ *   nbDev: 2,
+ *   kcPeriod: 20,
+ *   factorWide: 2,
+ *   factorNormal: 1.5,
+ *   factorNarrow: 1,
+ * });
+ * const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
+ * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
+ * ```
+ */
+export function sqzmomOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: SqzmomOptions): SqzmomStream {
+  requireArgument('SQZMOM open', 'prices', prices);
+  const o = optionsOf('SQZMOM open', options);
+  const optInBBPeriod = orDefault(o.bbPeriod, Core.INTEGER_DEFAULT);
+  const optInNbDev = orDefault(o.nbDev, Core.REAL_DEFAULT);
+  const optInKCPeriod = orDefault(o.kcPeriod, Core.INTEGER_DEFAULT);
+  const optInFactorWide = orDefault(o.factorWide, Core.REAL_DEFAULT);
+  const optInFactorNormal = orDefault(o.factorNormal, Core.REAL_DEFAULT);
+  const optInFactorNarrow = orDefault(o.factorNarrow, Core.REAL_DEFAULT);
+  const core = coreOf('SQZMOM open', o.core);
+  return sqzmomOpenPositional(prices.high, prices.low, prices.close, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core);
+}
+
+/**
+ * {@link sqzmomOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link sqzmom}.
+ *
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Closing price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link SqzmomOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link sqzmom} returns them; the range is the
+ *   stream's `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `sqzmomLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a real parameter that is not a
+ *   number, a parameter outside its range, histories of different lengths or a
+ *   buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
+ *
+ * @example
+ * ```ts
+ * import { sqzmomOpenAndFill } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const close = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const {
+ *   stream,
+ *   begIdx,
+ *   outMomentum,
+ *   outSqueeze,
+ * } = sqzmomOpenAndFill({ high, low, close }, {
+ *   bbPeriod: 20,
+ *   nbDev: 2,
+ *   kcPeriod: 20,
+ *   factorWide: 2,
+ *   factorNormal: 1.5,
+ *   factorNarrow: 1,
+ * });
+ * // outMomentum[k] is the value at bar begIdx + k
+ * ```
+ */
+export function sqzmomOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: SqzmomOptions): SqzmomResult & { stream: SqzmomStream } {
+  requireArgument('SQZMOM openAndFill', 'prices', prices);
+  const o = optionsOf('SQZMOM openAndFill', options);
+  const optInBBPeriod = orDefault(o.bbPeriod, Core.INTEGER_DEFAULT);
+  const optInNbDev = orDefault(o.nbDev, Core.REAL_DEFAULT);
+  const optInKCPeriod = orDefault(o.kcPeriod, Core.INTEGER_DEFAULT);
+  const optInFactorWide = orDefault(o.factorWide, Core.REAL_DEFAULT);
+  const optInFactorNormal = orDefault(o.factorNormal, Core.REAL_DEFAULT);
+  const optInFactorNarrow = orDefault(o.factorNarrow, Core.REAL_DEFAULT);
+  const core = coreOf('SQZMOM openAndFill', o.core);
+  const capacity = fillCapacity(sqzmomLookbackPositional(optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, core), prices.high, prices.low, prices.close);
+  const outMomentum = o.outMomentum === undefined ? new Float64Array(capacity) : o.outMomentum;
+  const outSqueeze = o.outSqueeze === undefined ? new Int32Array(capacity) : o.outSqueeze;
+  const stream = sqzmomOpenAndFillPositional(prices.high, prices.low, prices.close, optInBBPeriod, optInNbDev, optInKCPeriod, optInFactorWide, optInFactorNormal, optInFactorNarrow, outMomentum, outSqueeze, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outMomentum: outMomentum.subarray(0, range.count), outSqueeze: outSqueeze.subarray(0, range.count) };
 }

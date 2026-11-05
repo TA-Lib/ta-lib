@@ -25,41 +25,28 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { AlmaStream, alma, almaLookback, almaOpenAndFill, almaOpenAndFillInternal, almaOpenInternal, almaPeekTape, almaStepTape, almaTapeDetach } from './alma.ts';
-import { DemaStream, dema, demaLookback, demaOpenAndFill, demaOpenAndFillInternal, demaOpenInternal, demaPeekTape, demaStepTape, demaTapeDetach } from './dema.ts';
-import { EmaStream, ema, emaLookback, emaOpenAndFill, emaOpenAndFillInternal, emaOpenInternal, emaPeekTape, emaStepTape, emaTapeDetach } from './ema.ts';
-import { HmaStream, hma, hmaLookback, hmaOpenAndFill, hmaOpenAndFillInternal, hmaOpenInternal, hmaPeekTape, hmaStepTape, hmaTapeDetach } from './hma.ts';
-import { KamaStream, kama, kamaLookback, kamaOpenAndFill, kamaOpenAndFillInternal, kamaOpenInternal, kamaPeekTape, kamaStepTape, kamaTapeDetach } from './kama.ts';
-import { MamaOut, MamaStream, mama, mamaLookback, mamaOpenAndFill, mamaOpenAndFillInternal, mamaOpenInternal, mamaPeekTape, mamaStepTape, mamaTapeDetach } from './mama.ts';
-import { RmaStream, rma, rmaLookback, rmaOpenAndFill, rmaOpenAndFillInternal, rmaOpenInternal, rmaPeekTape, rmaStepTape, rmaTapeDetach } from './rma.ts';
-import { SmaStream, sma, smaLookback, smaOpenAndFill, smaOpenAndFillInternal, smaOpenInternal, smaPeekTape, smaStepTape, smaTapeDetach } from './sma.ts';
-import { T3Stream, t3, t3Lookback, t3OpenAndFill, t3OpenAndFillInternal, t3OpenInternal, t3PeekTape, t3StepTape, t3TapeDetach } from './t3.ts';
-import { TemaStream, tema, temaLookback, temaOpenAndFill, temaOpenAndFillInternal, temaOpenInternal, temaPeekTape, temaStepTape, temaTapeDetach } from './tema.ts';
-import { TrimaStream, trima, trimaLookback, trimaOpenAndFill, trimaOpenAndFillInternal, trimaOpenInternal, trimaPeekTape, trimaStepTape, trimaTapeDetach } from './trima.ts';
-import { VidyaStream, vidya, vidyaLookback, vidyaOpenAndFill, vidyaOpenAndFillInternal, vidyaOpenInternal, vidyaPeekTape, vidyaStepTape, vidyaTapeDetach } from './vidya.ts';
-import { WmaStream, wma, wmaLookback, wmaOpenAndFill, wmaOpenAndFillInternal, wmaOpenInternal, wmaPeekTape, wmaStepTape, wmaTapeDetach } from './wma.ts';
-import { ZlemaStream, zlema, zlemaLookback, zlemaOpenAndFill, zlemaOpenAndFillInternal, zlemaOpenInternal, zlemaPeekTape, zlemaStepTape, zlemaTapeDetach } from './zlema.ts';
+import { AlmaStream, almaLookbackPositional, almaOpenAndFillInternal, almaOpenAndFillPositional, almaOpenInternal, almaPeekTape, almaPositional, almaStepTape, almaTapeDetach } from './alma.ts';
+import { DemaStream, demaLookbackPositional, demaOpenAndFillInternal, demaOpenAndFillPositional, demaOpenInternal, demaPeekTape, demaPositional, demaStepTape, demaTapeDetach } from './dema.ts';
+import { EmaStream, emaLookbackPositional, emaOpenAndFillInternal, emaOpenAndFillPositional, emaOpenInternal, emaPeekTape, emaPositional, emaStepTape, emaTapeDetach } from './ema.ts';
+import { HmaStream, hmaLookbackPositional, hmaOpenAndFillInternal, hmaOpenAndFillPositional, hmaOpenInternal, hmaPeekTape, hmaPositional, hmaStepTape, hmaTapeDetach } from './hma.ts';
+import { KamaStream, kamaLookbackPositional, kamaOpenAndFillInternal, kamaOpenAndFillPositional, kamaOpenInternal, kamaPeekTape, kamaPositional, kamaStepTape, kamaTapeDetach } from './kama.ts';
+import { MamaOut, MamaStream, mamaLookbackPositional, mamaOpenAndFillInternal, mamaOpenAndFillPositional, mamaOpenInternal, mamaPeekTape, mamaPositional, mamaStepTape, mamaTapeDetach } from './mama.ts';
+import { RmaStream, rmaLookbackPositional, rmaOpenAndFillInternal, rmaOpenAndFillPositional, rmaOpenInternal, rmaPeekTape, rmaPositional, rmaStepTape, rmaTapeDetach } from './rma.ts';
+import { SmaStream, smaLookbackPositional, smaOpenAndFillInternal, smaOpenAndFillPositional, smaOpenInternal, smaPeekTape, smaPositional, smaStepTape, smaTapeDetach } from './sma.ts';
+import { T3Stream, t3LookbackPositional, t3OpenAndFillInternal, t3OpenAndFillPositional, t3OpenInternal, t3PeekTape, t3Positional, t3StepTape, t3TapeDetach } from './t3.ts';
+import { TemaStream, temaLookbackPositional, temaOpenAndFillInternal, temaOpenAndFillPositional, temaOpenInternal, temaPeekTape, temaPositional, temaStepTape, temaTapeDetach } from './tema.ts';
+import { TrimaStream, trimaLookbackPositional, trimaOpenAndFillInternal, trimaOpenAndFillPositional, trimaOpenInternal, trimaPeekTape, trimaPositional, trimaStepTape, trimaTapeDetach } from './trima.ts';
+import { VidyaStream, vidyaLookbackPositional, vidyaOpenAndFillInternal, vidyaOpenAndFillPositional, vidyaOpenInternal, vidyaPeekTape, vidyaPositional, vidyaStepTape, vidyaTapeDetach } from './vidya.ts';
+import { WmaStream, wmaLookbackPositional, wmaOpenAndFillInternal, wmaOpenAndFillPositional, wmaOpenInternal, wmaPeekTape, wmaPositional, wmaStepTape, wmaTapeDetach } from './wma.ts';
+import { ZlemaStream, zlemaLookbackPositional, zlemaOpenAndFillInternal, zlemaOpenAndFillPositional, zlemaOpenInternal, zlemaPeekTape, zlemaPositional, zlemaStepTape, zlemaTapeDetach } from './zlema.ts';
 
-/**
- * Number of leading input bars {@link ma} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInTimePeriod - Averaging window length (default 30; range 1 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Which moving-average algorithm to dispatch to (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function maLookback(optInTimePeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function maLookbackPositional(optInTimePeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -82,59 +69,59 @@ export function maLookback(optInTimePeriod: number, optInMAType: MAType | typeof
   }
   switch (optInMAType) {
     case MAType.SMA: {
-      retValue = smaLookback(optInTimePeriod, core);
+      retValue = smaLookbackPositional(optInTimePeriod, core);
       break;
     }
     case MAType.EMA: {
-      retValue = emaLookback(optInTimePeriod, core);
+      retValue = emaLookbackPositional(optInTimePeriod, core);
       break;
     }
     case MAType.WMA: {
-      retValue = wmaLookback(optInTimePeriod, core);
+      retValue = wmaLookbackPositional(optInTimePeriod, core);
       break;
     }
     case MAType.DEMA: {
-      retValue = demaLookback(optInTimePeriod, core);
+      retValue = demaLookbackPositional(optInTimePeriod, core);
       break;
     }
     case MAType.TEMA: {
-      retValue = temaLookback(optInTimePeriod, core);
+      retValue = temaLookbackPositional(optInTimePeriod, core);
       break;
     }
     case MAType.TRIMA: {
-      retValue = trimaLookback(optInTimePeriod, core);
+      retValue = trimaLookbackPositional(optInTimePeriod, core);
       break;
     }
     case MAType.KAMA: {
-      retValue = kamaLookback(optInTimePeriod, core);
+      retValue = kamaLookbackPositional(optInTimePeriod, core);
       break;
     }
     case MAType.MAMA: {
-      retValue = mamaLookback(0.5, 0.05, core);
+      retValue = mamaLookbackPositional(0.5, 0.05, core);
       break;
     }
     case MAType.T3: {
-      retValue = t3Lookback(optInTimePeriod, 0.7, core);
+      retValue = t3LookbackPositional(optInTimePeriod, 0.7, core);
       break;
     }
     case MAType.HMA: {
-      retValue = hmaLookback(optInTimePeriod, core);
+      retValue = hmaLookbackPositional(optInTimePeriod, core);
       break;
     }
     case MAType.ZLEMA: {
-      retValue = zlemaLookback(optInTimePeriod, core);
+      retValue = zlemaLookbackPositional(optInTimePeriod, core);
       break;
     }
     case MAType.RMA: {
-      retValue = rmaLookback(optInTimePeriod, core);
+      retValue = rmaLookbackPositional(optInTimePeriod, core);
       break;
     }
     case MAType.VIDYA: {
-      retValue = vidyaLookback(optInTimePeriod, (((((3 * optInTimePeriod) | 0) + 2) / 4) | 0), core);
+      retValue = vidyaLookbackPositional(optInTimePeriod, (((((3 * optInTimePeriod) | 0) + 2) / 4) | 0), core);
       break;
     }
     case MAType.ALMA: {
-      retValue = almaLookback(optInTimePeriod, 6.0, 0.85, core);
+      retValue = almaLookbackPositional(optInTimePeriod, 6.0, 0.85, core);
       break;
     }
     default: {
@@ -145,26 +132,9 @@ export function maLookback(optInTimePeriod: number, optInMAType: MAType | typeof
   return retValue;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link ma}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Averaging window length (default 30; range 1 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Which moving-average algorithm to dispatch to (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function maDisplayShift(optInTimePeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (maLookback(optInTimePeriod, optInMAType, core) < 0) {
+/** @internal */
+export function maDisplayShiftPositional(optInTimePeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (maLookbackPositional(optInTimePeriod, optInMAType, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -231,7 +201,7 @@ export function maImpl(
    * the switch and still answers TA_BAD_PARAM. The identity path below is out
    * of the guard's reach for the same reason - its lookback is 0.
    */
-  if (maLookback(optInTimePeriod, (optInMAType as MAType), core) > endIdx) {
+  if (maLookbackPositional(optInTimePeriod, (optInMAType as MAType), core) > endIdx) {
     outBegIdx.value = 0;
     outNBElement.value = 0;
     return RetCode.SUCCESS;
@@ -251,49 +221,49 @@ export function maImpl(
   /* Simply forward the job to the corresponding TA function. */
   switch (optInMAType) {
     case MAType.SMA: {
-      const _xr0 = sma(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
+      const _xr0 = smaPositional(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = _xr0.begIdx;
       outNBElement.value = _xr0.count;
       retCode = RetCode.SUCCESS;
       break;
     }
     case MAType.EMA: {
-      const _xr1 = ema(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
+      const _xr1 = emaPositional(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = _xr1.begIdx;
       outNBElement.value = _xr1.count;
       retCode = RetCode.SUCCESS;
       break;
     }
     case MAType.WMA: {
-      const _xr2 = wma(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
+      const _xr2 = wmaPositional(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = _xr2.begIdx;
       outNBElement.value = _xr2.count;
       retCode = RetCode.SUCCESS;
       break;
     }
     case MAType.DEMA: {
-      const _xr3 = dema(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
+      const _xr3 = demaPositional(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = _xr3.begIdx;
       outNBElement.value = _xr3.count;
       retCode = RetCode.SUCCESS;
       break;
     }
     case MAType.TEMA: {
-      const _xr4 = tema(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
+      const _xr4 = temaPositional(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = _xr4.begIdx;
       outNBElement.value = _xr4.count;
       retCode = RetCode.SUCCESS;
       break;
     }
     case MAType.TRIMA: {
-      const _xr5 = trima(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
+      const _xr5 = trimaPositional(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = _xr5.begIdx;
       outNBElement.value = _xr5.count;
       retCode = RetCode.SUCCESS;
       break;
     }
     case MAType.KAMA: {
-      const _xr6 = kama(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
+      const _xr6 = kamaPositional(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = _xr6.begIdx;
       outNBElement.value = _xr6.count;
       retCode = RetCode.SUCCESS;
@@ -302,35 +272,35 @@ export function maImpl(
     case MAType.MAMA: {
       /* The optInTimePeriod is ignored. */
       famaScratch = new Float64Array(endIdx - startIdx + 1);
-      const _xr7 = mama(startIdx, endIdx, inReal, 0.5, 0.05, outReal, famaScratch, core);
+      const _xr7 = mamaPositional(startIdx, endIdx, inReal, 0.5, 0.05, outReal, famaScratch, core);
       outBegIdx.value = _xr7.begIdx;
       outNBElement.value = _xr7.count;
       retCode = RetCode.SUCCESS;
       break;
     }
     case MAType.T3: {
-      const _xr8 = t3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outReal, core);
+      const _xr8 = t3Positional(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outReal, core);
       outBegIdx.value = _xr8.begIdx;
       outNBElement.value = _xr8.count;
       retCode = RetCode.SUCCESS;
       break;
     }
     case MAType.HMA: {
-      const _xr9 = hma(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
+      const _xr9 = hmaPositional(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = _xr9.begIdx;
       outNBElement.value = _xr9.count;
       retCode = RetCode.SUCCESS;
       break;
     }
     case MAType.ZLEMA: {
-      const _xr10 = zlema(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
+      const _xr10 = zlemaPositional(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = _xr10.begIdx;
       outNBElement.value = _xr10.count;
       retCode = RetCode.SUCCESS;
       break;
     }
     case MAType.RMA: {
-      const _xr11 = rma(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
+      const _xr11 = rmaPositional(startIdx, endIdx, inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = _xr11.begIdx;
       outNBElement.value = _xr11.count;
       retCode = RetCode.SUCCESS;
@@ -340,14 +310,14 @@ export function maImpl(
       /* The one period is the EMA length; the CMO period is round(3n/4),
        * Chande's 12:9 ratio.
        */
-      const _xr12 = vidya(startIdx, endIdx, inReal, optInTimePeriod, (((((3 * optInTimePeriod) | 0) + 2) / 4) | 0), outReal, core);
+      const _xr12 = vidyaPositional(startIdx, endIdx, inReal, optInTimePeriod, (((((3 * optInTimePeriod) | 0) + 2) / 4) | 0), outReal, core);
       outBegIdx.value = _xr12.begIdx;
       outNBElement.value = _xr12.count;
       retCode = RetCode.SUCCESS;
       break;
     }
     case MAType.ALMA: {
-      const _xr13 = alma(startIdx, endIdx, inReal, optInTimePeriod, 6.0, 0.85, outReal, core);
+      const _xr13 = almaPositional(startIdx, endIdx, inReal, optInTimePeriod, 6.0, 0.85, outReal, core);
       outBegIdx.value = _xr13.begIdx;
       outNBElement.value = _xr13.count;
       retCode = RetCode.SUCCESS;
@@ -359,6 +329,135 @@ export function maImpl(
     }
   }
   return retCode;
+}
+
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['maType', Core.INTEGER_DEFAULT, MATypes.Min, MATypes.Max, 'a MAType']] as const;
+
+/** @internal */
+export function maPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('MA', 'startIdx', startIdx);
+  endIdx = requireInt32('MA', 'endIdx', endIdx);
+  optInTimePeriod = requireInt32('MA', 'timePeriod', optInTimePeriod);
+  optInMAType = requireInt32('MA', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireIndexRange('MA', startIdx, endIdx);
+  const guardLookback = maLookbackPositional(optInTimePeriod, optInMAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('MA', PARAM_RANGES, optInTimePeriod, optInMAType);
+  }
+  const guardStart = clampedStart('MA', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('MA', 'real', inReal, guardInLen);
+  requireOutput('MA', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outReal, inRealF64)) {
+    throw sharedMemory('MA', 'outReal', 'real');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = maImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('MA', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link ma}, {@link maLookback}, {@link maDisplayShift},
+ * {@link maOpen} and {@link maOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface MaOptions {
+  /**
+   * Averaging window length (default 30; range 1 to 100000; `Core.INTEGER_DEFAULT`
+   * selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * Which moving-average algorithm to dispatch to (default `MAType.SMA`; values:
+   * 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
+   * 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
+   * `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
+   */
+  maType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link ma} returns, and {@link maOpenAndFill} with its stream. */
+export interface MaResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Selected moving average of the input. `values[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link ma} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MaOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function maLookback(options?: MaOptions): number {
+  const o = optionsOf('MA lookback', options);
+  return maLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), coreOf('MA lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link ma}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MaOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function maDisplayShift(outputIdx: number, options?: MaOptions): number {
+  const o = optionsOf('MA displayShift', options);
+  return maDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), outputIdx, coreOf('MA displayShift', o.core));
 }
 
 /**
@@ -379,30 +478,23 @@ export function maImpl(
  *   passed to — SMA here, EMA for APO, PPO and PVO. Every function that takes an
  *   MAType parameter accepts it.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link maLookback} is a success with `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link maLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Series to average.
- * @param optInTimePeriod - Averaging window length (default 30; range 1 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Which moving-average algorithm to dispatch to (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outReal - Selected moving average of the input. Must hold the values
- *   produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Series to average.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link MaOptions}.
+ * @returns `begIdx` and the values; see {@link MaResult}. Each output is a view of
+ *   its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output
- *   or an output sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -410,9 +502,8 @@ export function maImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const { begIdx, count } = ma(0, data.length - 1, data, 30, MAType.SMA, out);
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = ma(data, { timePeriod: 30, maType: MAType.SMA });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`sma`](https://ta-lib.org/functions/sma)
  * @see [`ema`](https://ta-lib.org/functions/ema)
@@ -429,36 +520,20 @@ export function maImpl(
  * @see [`vidya`](https://ta-lib.org/functions/vidya)
  * @see [`alma`](https://ta-lib.org/functions/alma)
  */
-export function ma(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('MA', 'startIdx', startIdx);
-  endIdx = requireInt32('MA', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('MA', 'optInTimePeriod', optInTimePeriod);
-  optInMAType = requireInt32('MA', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireIndexRange('MA', startIdx, endIdx);
-  const guardStart = clampedStart('MA', startIdx, maLookback(optInTimePeriod, optInMAType, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('MA', 'inReal', inReal, guardInLen);
-  requireOutput('MA', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outReal, inRealF64)) {
-    throw failure('MA', RetCode.BAD_PARAM);
+export function ma(real: ArrayLike<number>, options?: MaOptions): MaResult {
+  const o = optionsOf('MA', options);
+  if (o.endIdx === undefined) {
+    requireSeries('MA', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = maImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('MA', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('MA', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, maLookbackPositional(optInTimePeriod, optInMAType, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = maPositional(startIdx, endIdx, real, optInTimePeriod, optInMAType, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -583,7 +658,7 @@ export class MaStream {
       case 7: {
         const subValue = (scratchMamaOut ??= new MamaOut());
         (sub as MamaStream).peek(inReal, subValue);
-        return subValue.mama;
+        return subValue.outMama;
       }
       case 8: {
         return (sub as T3Stream).peek(inReal);
@@ -669,7 +744,7 @@ function maStepImpl(sp: MaStream, inReal: number): void {
     case 7: {
       const subOut = (scratchMamaOut ??= new MamaOut());
       (sub as MamaStream).update(inReal, subOut);
-      sp.cur_outReal = subOut.mama;
+      sp.cur_outReal = subOut.outMama;
       return;
     }
     case 8: {
@@ -726,11 +801,11 @@ function maOpenImpl(
   } else if (optInMAType < MATypes.Min || optInMAType > MATypes.Max) {
     return RetCode.BAD_PARAM;
   }
-  if (historyLen < maLookback(optInTimePeriod, optInMAType as MAType, core) + 1) {
+  if (historyLen < maLookbackPositional(optInTimePeriod, optInMAType as MAType, core) + 1) {
     return RetCode.INSUFFICIENT_HISTORY;
   }
   if (optInTimePeriod === 1 || optInMAType === MAType.DISABLED) {
-    if (historyLen < maLookback(optInTimePeriod, optInMAType as MAType, core) + 1) {
+    if (historyLen < maLookbackPositional(optInTimePeriod, optInMAType as MAType, core) + 1) {
       return RetCode.INSUFFICIENT_HISTORY;
     }
     sp.optInTimePeriod = optInTimePeriod;
@@ -738,7 +813,7 @@ function maOpenImpl(
     sp.sub = null;
     sp.arm = -1;
     sp.cur_outReal = inReal[historyLen - 1];
-    let fillLb = maLookback(optInTimePeriod, optInMAType as MAType, core);
+    let fillLb = maLookbackPositional(optInTimePeriod, optInMAType as MAType, core);
     if (startIdx > fillLb) {
       fillLb = startIdx;
     }
@@ -914,21 +989,21 @@ function maOpenAndFillImpl(
   if ((outReal.buffer === inReal.buffer && outReal.byteOffset === inReal.byteOffset)) {
     return RetCode.BAD_PARAM;
   }
-  if (historyLen > maLookback(optInTimePeriod, optInMAType as MAType, core) && (overlaps(outReal, inReal))) {
+  if (historyLen > maLookbackPositional(optInTimePeriod, optInMAType as MAType, core) && (overlaps(outReal, inReal))) {
     return RetCode.BAD_PARAM;
   }
-  if (historyLen < maLookback(optInTimePeriod, optInMAType as MAType, core) + 1) {
+  if (historyLen < maLookbackPositional(optInTimePeriod, optInMAType as MAType, core) + 1) {
     return RetCode.INSUFFICIENT_HISTORY;
   }
   if (optInTimePeriod === 1 || optInMAType === MAType.DISABLED) {
-    if (historyLen < maLookback(optInTimePeriod, optInMAType as MAType, core) + 1) {
+    if (historyLen < maLookbackPositional(optInTimePeriod, optInMAType as MAType, core) + 1) {
       return RetCode.INSUFFICIENT_HISTORY;
     }
     sp.optInTimePeriod = optInTimePeriod;
     sp.optInMAType = optInMAType;
     sp.sub = null;
     sp.arm = -1;
-    let fillLb = maLookback(optInTimePeriod, optInMAType as MAType, core);
+    let fillLb = maLookbackPositional(optInTimePeriod, optInMAType as MAType, core);
     outBegIdx.value = fillLb;
     outNBElement.value = historyLen - fillLb;
     for (let fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++) {
@@ -939,7 +1014,7 @@ function maOpenAndFillImpl(
   }
   switch (optInMAType) {
     case MAType.SMA: {
-      const sub = smaOpenAndFill(inReal, optInTimePeriod, outReal, core);
+      const sub = smaOpenAndFillPositional(inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = sub.outRangeBegIdx;
       outNBElement.value = sub.outRangeCount;
       sp.sub = sub;
@@ -948,7 +1023,7 @@ function maOpenAndFillImpl(
       break;
     }
     case MAType.EMA: {
-      const sub = emaOpenAndFill(inReal, optInTimePeriod, outReal, core);
+      const sub = emaOpenAndFillPositional(inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = sub.outRangeBegIdx;
       outNBElement.value = sub.outRangeCount;
       sp.sub = sub;
@@ -957,7 +1032,7 @@ function maOpenAndFillImpl(
       break;
     }
     case MAType.WMA: {
-      const sub = wmaOpenAndFill(inReal, optInTimePeriod, outReal, core);
+      const sub = wmaOpenAndFillPositional(inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = sub.outRangeBegIdx;
       outNBElement.value = sub.outRangeCount;
       sp.sub = sub;
@@ -966,7 +1041,7 @@ function maOpenAndFillImpl(
       break;
     }
     case MAType.DEMA: {
-      const sub = demaOpenAndFill(inReal, optInTimePeriod, outReal, core);
+      const sub = demaOpenAndFillPositional(inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = sub.outRangeBegIdx;
       outNBElement.value = sub.outRangeCount;
       sp.sub = sub;
@@ -975,7 +1050,7 @@ function maOpenAndFillImpl(
       break;
     }
     case MAType.TEMA: {
-      const sub = temaOpenAndFill(inReal, optInTimePeriod, outReal, core);
+      const sub = temaOpenAndFillPositional(inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = sub.outRangeBegIdx;
       outNBElement.value = sub.outRangeCount;
       sp.sub = sub;
@@ -984,7 +1059,7 @@ function maOpenAndFillImpl(
       break;
     }
     case MAType.TRIMA: {
-      const sub = trimaOpenAndFill(inReal, optInTimePeriod, outReal, core);
+      const sub = trimaOpenAndFillPositional(inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = sub.outRangeBegIdx;
       outNBElement.value = sub.outRangeCount;
       sp.sub = sub;
@@ -993,7 +1068,7 @@ function maOpenAndFillImpl(
       break;
     }
     case MAType.KAMA: {
-      const sub = kamaOpenAndFill(inReal, optInTimePeriod, outReal, core);
+      const sub = kamaOpenAndFillPositional(inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = sub.outRangeBegIdx;
       outNBElement.value = sub.outRangeCount;
       sp.sub = sub;
@@ -1002,7 +1077,7 @@ function maOpenAndFillImpl(
       break;
     }
     case MAType.MAMA: {
-      const sub = mamaOpenAndFill(inReal, 0.5, 0.05, outReal, new Float64Array(historyLen), core);
+      const sub = mamaOpenAndFillPositional(inReal, 0.5, 0.05, outReal, new Float64Array(historyLen), core);
       outBegIdx.value = sub.outRangeBegIdx;
       outNBElement.value = sub.outRangeCount;
       sp.sub = sub;
@@ -1011,7 +1086,7 @@ function maOpenAndFillImpl(
       break;
     }
     case MAType.T3: {
-      const sub = t3OpenAndFill(inReal, optInTimePeriod, 0.7, outReal, core);
+      const sub = t3OpenAndFillPositional(inReal, optInTimePeriod, 0.7, outReal, core);
       outBegIdx.value = sub.outRangeBegIdx;
       outNBElement.value = sub.outRangeCount;
       sp.sub = sub;
@@ -1020,7 +1095,7 @@ function maOpenAndFillImpl(
       break;
     }
     case MAType.HMA: {
-      const sub = hmaOpenAndFill(inReal, optInTimePeriod, outReal, core);
+      const sub = hmaOpenAndFillPositional(inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = sub.outRangeBegIdx;
       outNBElement.value = sub.outRangeCount;
       sp.sub = sub;
@@ -1029,7 +1104,7 @@ function maOpenAndFillImpl(
       break;
     }
     case MAType.ZLEMA: {
-      const sub = zlemaOpenAndFill(inReal, optInTimePeriod, outReal, core);
+      const sub = zlemaOpenAndFillPositional(inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = sub.outRangeBegIdx;
       outNBElement.value = sub.outRangeCount;
       sp.sub = sub;
@@ -1038,7 +1113,7 @@ function maOpenAndFillImpl(
       break;
     }
     case MAType.RMA: {
-      const sub = rmaOpenAndFill(inReal, optInTimePeriod, outReal, core);
+      const sub = rmaOpenAndFillPositional(inReal, optInTimePeriod, outReal, core);
       outBegIdx.value = sub.outRangeBegIdx;
       outNBElement.value = sub.outRangeCount;
       sp.sub = sub;
@@ -1047,7 +1122,7 @@ function maOpenAndFillImpl(
       break;
     }
     case MAType.VIDYA: {
-      const sub = vidyaOpenAndFill(inReal, optInTimePeriod, (((((3 * optInTimePeriod) | 0) + 2) / 4) | 0), outReal, core);
+      const sub = vidyaOpenAndFillPositional(inReal, optInTimePeriod, (((((3 * optInTimePeriod) | 0) + 2) / 4) | 0), outReal, core);
       outBegIdx.value = sub.outRangeBegIdx;
       outNBElement.value = sub.outRangeCount;
       sp.sub = sub;
@@ -1056,7 +1131,7 @@ function maOpenAndFillImpl(
       break;
     }
     case MAType.ALMA: {
-      const sub = almaOpenAndFill(inReal, optInTimePeriod, 6.0, 0.85, outReal, core);
+      const sub = almaOpenAndFillPositional(inReal, optInTimePeriod, 6.0, 0.85, outReal, core);
       outBegIdx.value = sub.outRangeBegIdx;
       outNBElement.value = sub.outRangeCount;
       sp.sub = sub;
@@ -1100,18 +1175,18 @@ function maOpenAndFillInternalImpl(
   } else if (optInMAType < MATypes.Min || optInMAType > MATypes.Max) {
     return RetCode.BAD_PARAM;
   }
-  if (historyLen < maLookback(optInTimePeriod, optInMAType as MAType, core) + 1) {
+  if (historyLen < maLookbackPositional(optInTimePeriod, optInMAType as MAType, core) + 1) {
     return RetCode.INSUFFICIENT_HISTORY;
   }
   if (optInTimePeriod === 1 || optInMAType === MAType.DISABLED) {
-    if (historyLen < maLookback(optInTimePeriod, optInMAType as MAType, core) + 1) {
+    if (historyLen < maLookbackPositional(optInTimePeriod, optInMAType as MAType, core) + 1) {
       return RetCode.INSUFFICIENT_HISTORY;
     }
     sp.optInTimePeriod = optInTimePeriod;
     sp.optInMAType = optInMAType;
     sp.sub = null;
     sp.arm = -1;
-    let fillLb = maLookback(optInTimePeriod, optInMAType as MAType, core);
+    let fillLb = maLookbackPositional(optInTimePeriod, optInMAType as MAType, core);
     if (startIdx > fillLb) {
       fillLb = startIdx;
     }
@@ -1247,104 +1322,53 @@ export function maOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MA open', inReal.length, startIdx, maLookback(optInTimePeriod, optInMAType as MAType, core));
+    throw insufficientHistory('MA open', inReal.length, startIdx, maLookbackPositional(optInTimePeriod, optInMAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && maLookbackPositional(optInTimePeriod, optInMAType as MAType, core) < 0) {
+    throw rejectedParams('MA open', PARAM_RANGES, optInTimePeriod, optInMAType);
   }
   throw streamFailure('MA open', retCode);
 }
 
-/**
- * Opens a live MA stream over the warm-up history: `value()` starts at the last
- * history bar, bit-identical to {@link ma} there.
- *
- * @param inReal - Warm-up history. Series to average.
- * @param optInTimePeriod - Averaging window length (default 30; range 1 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Which moving-average algorithm to dispatch to (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `maLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   an integer parameter that is not an int32 or a parameter outside its range.
- *
- * @example
- * ```ts
- * import { MAType, maOpen } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const stream = maOpen(data, 30, MAType.SMA);
- * const peeked = stream.peek(100.9); // a forming bar: commits nothing
- * const updated = stream.update(100.9); // the bar closes
- * ```
- */
-export function maOpen(
+/** @internal */
+export function maOpenPositional(
   inReal: ArrayLike<number>,
   optInTimePeriod: number,
   optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
   core: Core = Core.DEFAULT,
 ): MaStream {
-  optInTimePeriod = requireInt32('MA open', 'optInTimePeriod', optInTimePeriod);
-  optInMAType = requireInt32('MA open', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('MA open', 'inReal', inReal);
+  optInTimePeriod = requireInt32('MA open', 'timePeriod', optInTimePeriod);
+  optInMAType = requireInt32('MA open', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('MA open', 'real', inReal);
   requireHistory('MA open', inReal.length);
   return maOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInMAType);
 }
 
-/**
- * {@link maOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link ma}. The range written is the stream's
- * `outRange()`.
- *
- * @param inReal - Warm-up history. Series to average.
- * @param optInTimePeriod - Averaging window length (default 30; range 1 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Which moving-average algorithm to dispatch to (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outReal - Selected moving average of the input. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `maLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   an integer parameter that is not an int32, a parameter outside its range or an
- *   output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { MAType, maOpenAndFill } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const stream = maOpenAndFill(data, 30, MAType.SMA, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function maOpenAndFill(
+/** @internal */
+export function maOpenAndFillPositional(
   inReal: ArrayLike<number>,
   optInTimePeriod: number,
   optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
   outReal: Float64Array,
   core: Core = Core.DEFAULT,
 ): MaStream {
-  optInTimePeriod = requireInt32('MA openAndFill', 'optInTimePeriod', optInTimePeriod);
-  optInMAType = requireInt32('MA openAndFill', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('MA openAndFill', 'inReal', inReal);
+  optInTimePeriod = requireInt32('MA openAndFill', 'timePeriod', optInTimePeriod);
+  optInMAType = requireInt32('MA openAndFill', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('MA openAndFill', 'real', inReal);
   requireHistory('MA openAndFill', inReal.length);
-  const guardOutLen = openFillCount('MA openAndFill', inReal.length, maLookback(optInTimePeriod, optInMAType as MAType, core));
+  const guardLookback = maLookbackPositional(optInTimePeriod, optInMAType as MAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('MA openAndFill', PARAM_RANGES, optInTimePeriod, optInMAType);
+  }
+  const guardOutLen = openFillCount('MA openAndFill', inReal.length, guardLookback);
   requireOutput('MA openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
+  if (outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('MA openAndFill', 'outReal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inRealF64)) {
+    throw sharedMemory('MA openAndFill', 'outReal', 'real');
+  }
   const sp = MaStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
@@ -1355,9 +1379,87 @@ export function maOpenAndFill(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MA openAndFill', inReal.length, 0, maLookback(optInTimePeriod, optInMAType as MAType, core));
+    throw insufficientHistory('MA openAndFill', inReal.length, 0, maLookbackPositional(optInTimePeriod, optInMAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && maLookbackPositional(optInTimePeriod, optInMAType as MAType, core) < 0) {
+    throw rejectedParams('MA openAndFill', PARAM_RANGES, optInTimePeriod, optInMAType);
   }
   throw streamFailure('MA openAndFill', retCode);
+}
+
+/**
+ * Opens a live MA stream over the warm-up history: `value()` starts at the last
+ * history bar, bit-identical to {@link ma} there.
+ *
+ * @param real - Warm-up history. Series to average.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MaOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `maLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   an integer parameter that is not an int32 or a parameter outside its range.
+ *
+ * @example
+ * ```ts
+ * import { MAType, maOpen } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const stream = maOpen(data, { timePeriod: 30, maType: MAType.SMA });
+ * const peeked = stream.peek(100.9); // a forming bar: commits nothing
+ * const updated = stream.update(100.9); // the bar closes
+ * ```
+ */
+export function maOpen(real: ArrayLike<number>, options?: MaOptions): MaStream {
+  const o = optionsOf('MA open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('MA open', o.core);
+  return maOpenPositional(real, optInTimePeriod, optInMAType, core);
+}
+
+/**
+ * {@link maOpen} that also computes the outputs over the whole history in the same
+ * pass, bit-identically to {@link ma}.
+ *
+ * @param real - Warm-up history. Series to average.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link MaOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link ma} returns them; the range is the stream's
+ *   `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `maLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   an integer parameter that is not an int32, a parameter outside its range or a
+ *   buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
+ *
+ * @example
+ * ```ts
+ * import { MAType, maOpenAndFill } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const { stream, begIdx, values } = maOpenAndFill(data, {
+ *   timePeriod: 30,
+ *   maType: MAType.SMA,
+ * });
+ * // values[k] is the value at bar begIdx + k
+ * ```
+ */
+export function maOpenAndFill(real: ArrayLike<number>, options?: MaOptions): MaResult & { stream: MaStream } {
+  const o = optionsOf('MA openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('MA openAndFill', o.core);
+  const capacity = fillCapacity(maLookbackPositional(optInTimePeriod, optInMAType, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = maOpenAndFillPositional(real, optInTimePeriod, optInMAType, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /** @internal */
@@ -1379,7 +1481,10 @@ export function maOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MA openAndFill', inReal.length, startIdx, maLookback(optInTimePeriod, optInMAType as MAType, core));
+    throw insufficientHistory('MA openAndFill', inReal.length, startIdx, maLookbackPositional(optInTimePeriod, optInMAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && maLookbackPositional(optInTimePeriod, optInMAType as MAType, core) < 0) {
+    throw rejectedParams('MA openAndFill', PARAM_RANGES, optInTimePeriod, optInMAType);
   }
   throw streamFailure('MA openAndFill', retCode);
 }
@@ -1484,7 +1589,7 @@ export function maPeekTape(sp: MaStream, tape: Float64Array, tapeBase: number, t
     case 7: {
       const subValue = (scratchMamaOut ??= new MamaOut());
       mamaPeekTape(sp.sub as MamaStream, tape, tapeBase, tapeMask, inReal, subValue);
-      return subValue.mama;
+      return subValue.outMama;
     }
     case 8: {
       return t3PeekTape(sp.sub as T3Stream, tape, tapeBase, tapeMask, inReal);

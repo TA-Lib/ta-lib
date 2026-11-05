@@ -51,7 +51,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { type Arr, L, N, series } from './corpus.ts';
+import { type Arr, N, series } from './corpus.ts';
 import { bytes, type Named, namedSpecs } from './contract.ts';
 import { Core, MAType } from '../src/index.ts';
 import { type FuncInfo, FunctionDescription, Functions, InputType, OptInputType, OutputType, type ParamHolder } from '../src/metadata/index.ts';
@@ -164,8 +164,7 @@ test('the holder call, lookback and display shift take each parameter from its o
     assert.equal(r.begIdx, lb, `${f.name}: holder lookback vs outBegIdx`);
     assert.deepEqual({ ...typed(s, opts, viaTyped) }, { ...r }, `${f.name}: holder range vs the typed range`);
     viaHolder.forEach((x, k) => assert.deepEqual(bytes(x, r.count), bytes(viaTyped[k], r.count), `${f.name}: output ${k}`));
-    const shift = L[`${s.name}DisplayShift`] as (...a: unknown[]) => number;
-    for (let k = 0; k <= f.outputs.length; k++) assert.equal(h.displayShift(k), shift(...opts, k), `${f.name}: display shift ${k}`);
+    for (let k = 0; k <= f.outputs.length; k++) assert.equal(h.displayShift(k), s.shift(...opts, k), `${f.name}: display shift ${k}`);
     assert.equal(h.displayShift(f.outputs.length), -2147483648, `${f.name}: an index past the outputs`);
     compared++;
   }

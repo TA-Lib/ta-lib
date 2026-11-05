@@ -12,26 +12,14 @@
  *  090426 MF,CC  Initial version (#369).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link percentrank} consumes before its first
- * value: the index of the first bar with a value when the whole series is
- * requested.
- *
- * @param optInTimePeriod - Number of preceding values the current value is ranked
- *   against (default 100; range 2 to 10000; `Core.INTEGER_DEFAULT` selects the
- *   default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function percentrankLookback(optInTimePeriod: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function percentrankLookbackPositional(optInTimePeriod: number, _core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -43,23 +31,9 @@ export function percentrankLookback(optInTimePeriod: number, core: Core = Core.D
   return optInTimePeriod;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link percentrank}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Number of preceding values the current value is ranked
- *   against (default 100; range 2 to 10000; `Core.INTEGER_DEFAULT` selects the
- *   default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function percentrankDisplayShift(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (percentrankLookback(optInTimePeriod, core) < 0) {
+/** @internal */
+export function percentrankDisplayShiftPositional(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (percentrankLookbackPositional(optInTimePeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -98,7 +72,7 @@ export function percentrankImpl(
   }
   outBegIdx.value = 0;
   outNBElement.value = 0;
-  lookbackTotal = percentrankLookback(optInTimePeriod, core);
+  lookbackTotal = percentrankLookbackPositional(optInTimePeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -124,6 +98,130 @@ export function percentrankImpl(
   outBegIdx.value = startIdx;
   outNBElement.value = outIdx;
   return RetCode.SUCCESS;
+}
+
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 2, 10000, 'in 2..10000']] as const;
+
+/** @internal */
+export function percentrankPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('PERCENTRANK', 'startIdx', startIdx);
+  endIdx = requireInt32('PERCENTRANK', 'endIdx', endIdx);
+  optInTimePeriod = requireInt32('PERCENTRANK', 'timePeriod', optInTimePeriod);
+  requireIndexRange('PERCENTRANK', startIdx, endIdx);
+  const guardLookback = percentrankLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('PERCENTRANK', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardStart = clampedStart('PERCENTRANK', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('PERCENTRANK', 'real', inReal, guardInLen);
+  requireOutput('PERCENTRANK', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outReal, inRealF64)) {
+    throw sharedMemory('PERCENTRANK', 'outReal', 'real');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = percentrankImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('PERCENTRANK', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link percentrank}, {@link percentrankLookback},
+ * {@link percentrankDisplayShift}, {@link percentrankOpen} and
+ * {@link percentrankOpenAndFill}. Every key is optional: an omitted or `undefined`
+ * key takes its default, and a call ignores the keys it has no use for.
+ */
+export interface PercentrankOptions {
+  /**
+   * Number of preceding values the current value is ranked against (default 100;
+   * range 2 to 10000; `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/**
+ * What {@link percentrank} returns, and {@link percentrankOpenAndFill} with its
+ * stream.
+ */
+export interface PercentrankResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Percentage of the preceding window strictly below the current value, 0 to 100.
+   * `values[k]` is the value at input bar `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link percentrank} consumes before its first
+ * value: the index of the first bar with a value when the whole series is
+ * requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PercentrankOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function percentrankLookback(options?: PercentrankOptions): number {
+  const o = optionsOf('PERCENTRANK lookback', options);
+  return percentrankLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('PERCENTRANK lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link percentrank}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PercentrankOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function percentrankDisplayShift(outputIdx: number, options?: PercentrankOptions): number {
+  const o = optionsOf('PERCENTRANK displayShift', options);
+  return percentrankDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('PERCENTRANK displayShift', o.core));
 }
 
 /**
@@ -154,29 +252,23 @@ export function percentrankImpl(
  *   it silently lowers the rank instead of propagating: the output stays finite
  *   and no error is reported.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link percentrankLookback} is a success
- * with `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link percentrankLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Source price/value series.
- * @param optInTimePeriod - Number of preceding values the current value is ranked
- *   against (default 100; range 2 to 10000; `Core.INTEGER_DEFAULT` selects the
- *   default).
- * @param outReal - Percentage of the preceding window strictly below the current
- *   value, 0 to 100. Must hold the values produced and never be empty; the input
- *   length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Source price/value series.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link PercentrankOptions}.
+ * @returns `begIdx` and the values; see {@link PercentrankResult}. Each output is
+ *   a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output
- *   or an output sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -184,42 +276,26 @@ export function percentrankImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const { begIdx, count } = percentrank(0, data.length - 1, data, 100, out);
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = percentrank(data, { timePeriod: 100 });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  * @see [`willr`](https://ta-lib.org/functions/willr)
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
  */
-export function percentrank(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('PERCENTRANK', 'startIdx', startIdx);
-  endIdx = requireInt32('PERCENTRANK', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('PERCENTRANK', 'optInTimePeriod', optInTimePeriod);
-  requireIndexRange('PERCENTRANK', startIdx, endIdx);
-  const guardStart = clampedStart('PERCENTRANK', startIdx, percentrankLookback(optInTimePeriod, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('PERCENTRANK', 'inReal', inReal, guardInLen);
-  requireOutput('PERCENTRANK', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outReal, inRealF64)) {
-    throw failure('PERCENTRANK', RetCode.BAD_PARAM);
+export function percentrank(real: ArrayLike<number>, options?: PercentrankOptions): PercentrankResult {
+  const o = optionsOf('PERCENTRANK', options);
+  if (o.endIdx === undefined) {
+    requireSeries('PERCENTRANK', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = percentrankImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('PERCENTRANK', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('PERCENTRANK', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, percentrankLookbackPositional(optInTimePeriod, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = percentrankPositional(startIdx, endIdx, real, optInTimePeriod, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -417,7 +493,7 @@ function percentrankOpenImpl(
   }
   outBegIdx.value = 0;
   outNBElement.value = 0;
-  lookbackTotal = percentrankLookback(optInTimePeriod, core);
+  lookbackTotal = percentrankLookbackPositional(optInTimePeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -473,7 +549,10 @@ export function percentrankOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('PERCENTRANK openAndFill', inReal.length, startIdx, percentrankLookback(optInTimePeriod, core));
+    throw insufficientHistory('PERCENTRANK openAndFill', inReal.length, startIdx, percentrankLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && percentrankLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('PERCENTRANK openAndFill', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('PERCENTRANK openAndFill', retCode);
 }
@@ -496,26 +575,65 @@ export function percentrankOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('PERCENTRANK open', inReal.length, startIdx, percentrankLookback(optInTimePeriod, core));
+    throw insufficientHistory('PERCENTRANK open', inReal.length, startIdx, percentrankLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && percentrankLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('PERCENTRANK open', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('PERCENTRANK open', retCode);
+}
+
+/** @internal */
+export function percentrankOpenPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  core: Core = Core.DEFAULT,
+): PercentrankStream {
+  optInTimePeriod = requireInt32('PERCENTRANK open', 'timePeriod', optInTimePeriod);
+  requireArgument('PERCENTRANK open', 'real', inReal);
+  requireHistory('PERCENTRANK open', inReal.length);
+  return percentrankOpenInternal(core, float64(inReal), 0, optInTimePeriod);
+}
+
+/** @internal */
+export function percentrankOpenAndFillPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): PercentrankStream {
+  optInTimePeriod = requireInt32('PERCENTRANK openAndFill', 'timePeriod', optInTimePeriod);
+  requireArgument('PERCENTRANK openAndFill', 'real', inReal);
+  requireHistory('PERCENTRANK openAndFill', inReal.length);
+  const guardLookback = percentrankLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('PERCENTRANK openAndFill', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardOutLen = openFillCount('PERCENTRANK openAndFill', inReal.length, guardLookback);
+  requireOutput('PERCENTRANK openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('PERCENTRANK openAndFill', 'outReal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inRealF64)) {
+    throw sharedMemory('PERCENTRANK openAndFill', 'outReal', 'real');
+  }
+  return percentrankOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live PERCENTRANK stream over the warm-up history: `value()` starts at
  * the last history bar, bit-identical to {@link percentrank} there.
  *
- * @param inReal - Warm-up history. Source price/value series.
- * @param optInTimePeriod - Number of preceding values the current value is ranked
- *   against (default 100; range 2 to 10000; `Core.INTEGER_DEFAULT` selects the
- *   default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param real - Warm-up history. Source price/value series.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PercentrankOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `percentrankLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for an integer parameter that is not an int32 or a parameter
- *   outside its range.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input, an integer parameter that is not an int32 or a
+ *   parameter outside its range.
  *
  * @example
  * ```ts
@@ -523,43 +641,35 @@ export function percentrankOpenInternal(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = percentrankOpen(data, 100);
+ * const stream = percentrankOpen(data, { timePeriod: 100 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
  */
-export function percentrankOpen(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  core: Core = Core.DEFAULT,
-): PercentrankStream {
-  optInTimePeriod = requireInt32('PERCENTRANK open', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('PERCENTRANK open', 'inReal', inReal);
-  requireHistory('PERCENTRANK open', inReal.length);
-  return percentrankOpenInternal(core, float64(inReal), 0, optInTimePeriod);
+export function percentrankOpen(real: ArrayLike<number>, options?: PercentrankOptions): PercentrankStream {
+  const o = optionsOf('PERCENTRANK open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('PERCENTRANK open', o.core);
+  return percentrankOpenPositional(real, optInTimePeriod, core);
 }
 
 /**
- * {@link percentrankOpen} that also fills the outputs over the whole history in
- * the same pass, bit-identically to {@link percentrank}. The range written is the
- * stream's `outRange()`.
+ * {@link percentrankOpen} that also computes the outputs over the whole history in
+ * the same pass, bit-identically to {@link percentrank}.
  *
- * @param inReal - Warm-up history. Source price/value series.
- * @param optInTimePeriod - Number of preceding values the current value is ranked
- *   against (default 100; range 2 to 10000; `Core.INTEGER_DEFAULT` selects the
- *   default).
- * @param outReal - Percentage of the preceding window strictly below the current
- *   value, 0 to 100. Must hold `historyLen - lookback` values and share no memory
- *   with an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param real - Warm-up history. Source price/value series.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link PercentrankOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link percentrank} returns them; the range is the
+ *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `percentrankLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for an integer parameter that is not an int32, a parameter
- *   outside its range or an output too short or starting where another output or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another output or a `Float64Array` input.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input, an integer parameter that is not an int32, a parameter
+ *   outside its range or a buffer too short, of the wrong type or starting where
+ *   another buffer or a `Float64Array` input starts, or, on a history long enough to
+ *   open, one sharing memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -567,29 +677,19 @@ export function percentrankOpen(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const stream = percentrankOpenAndFill(data, 100, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = percentrankOpenAndFill(data, {
+ *   timePeriod: 100,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function percentrankOpenAndFill(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): PercentrankStream {
-  optInTimePeriod = requireInt32('PERCENTRANK openAndFill', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('PERCENTRANK openAndFill', 'inReal', inReal);
-  requireHistory('PERCENTRANK openAndFill', inReal.length);
-  const guardOutLen = openFillCount('PERCENTRANK openAndFill', inReal.length, percentrankLookback(optInTimePeriod, core));
-  requireOutput('PERCENTRANK openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
-    throw streamFailure('PERCENTRANK openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inRealF64))) {
-    throw streamFailure('PERCENTRANK openAndFill', RetCode.BAD_PARAM);
-  }
-  return percentrankOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outReal);
+export function percentrankOpenAndFill(real: ArrayLike<number>, options?: PercentrankOptions): PercentrankResult & { stream: PercentrankStream } {
+  const o = optionsOf('PERCENTRANK openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('PERCENTRANK openAndFill', o.core);
+  const capacity = fillCapacity(percentrankLookbackPositional(optInTimePeriod, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = percentrankOpenAndFillPositional(real, optInTimePeriod, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

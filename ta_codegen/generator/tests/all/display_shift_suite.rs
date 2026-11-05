@@ -117,7 +117,7 @@ fn an_unflagged_output_is_answered_before_the_body() {
         ("Rust", &out.rust, "fn synth24_display_shift("),
         ("Java", &out.java, "int synth24DisplayShift("),
         ("C#", &csharp, "int Synth24DisplayShift("),
-        ("TS", &ts_module(&func), "function synth24DisplayShift("),
+        ("TS", &ts_module(&func), "function synth24DisplayShiftPositional("),
     ] {
         let q = query(lang, text, decl);
         let guard = q.find("outputIdx == 0").or_else(|| q.find("outputIdx === 0")).unwrap_or_else(|| panic!("{lang}: no guard:\n{q}"));
@@ -145,7 +145,7 @@ fn the_query_asks_its_own_lookback_in_every_backend() {
         ("Rust", &out.rust, "fn frama_display_shift(", "self.frama_lookback("),
         ("Java", &out.java, "int framaDisplayShift(", "framaLookback("),
         ("C#", &csharp, "int FramaDisplayShift(", "FramaLookback("),
-        ("TS", &ts_module(&func), "function framaDisplayShift(", "framaLookback("),
+        ("TS", &ts_module(&func), "function framaDisplayShiftPositional(", "framaLookbackPositional("),
     ] {
         let body = query(lang, text, decl);
         assert!(body.contains(call), "{lang}: the display shift does not call `{call}`:\n{body}");

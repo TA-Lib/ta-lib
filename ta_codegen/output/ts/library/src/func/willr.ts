@@ -18,24 +18,14 @@
  *               the pre-scaled divisor left the documented [-100,0] bound.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link willr} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInTimePeriod - Lookback bars for the high/low range (default 14; range
- *   2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function willrLookback(optInTimePeriod: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function willrLookbackPositional(optInTimePeriod: number, _core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -47,22 +37,9 @@ export function willrLookback(optInTimePeriod: number, core: Core = Core.DEFAULT
   return optInTimePeriod - 1;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link willr}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Lookback bars for the high/low range (default 14; range
- *   2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function willrDisplayShift(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (willrLookback(optInTimePeriod, core) < 0) {
+/** @internal */
+export function willrDisplayShiftPositional(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (willrLookbackPositional(optInTimePeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -292,58 +269,10 @@ export function willrImpl(
   return RetCode.SUCCESS;
 }
 
-/**
- * Williams' %R momentum oscillator over a rolling period, bounded in \[-100, 0].
- * Measures where the current close sits relative to the high-low range of the last
- * N bars. Near 0 = close at period high (overbought); near -100 = close at period
- * low (oversold).
- *
- * Formula and more info at
- * [ta-lib.org/functions/willr](https://ta-lib.org/functions/willr).
- *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link willrLookback} is a success with
- * `count` 0.
- *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param inClose - Close price of each bar.
- * @param optInTimePeriod - Lookback bars for the high/low range (default 14; range
- *   2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Williams' %R value in \[-100, 0]. Must hold the values produced
- *   and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output
- *   or an output sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
- *
- * @example
- * ```ts
- * import { willr } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Float64Array(high.length);
- * const { begIdx, count } = willr(0, high.length - 1, high, low, close, 14, out);
- * // out[k] is the value at bar begIdx + k, for k < count
- * ```
- * @see [`stoch`](https://ta-lib.org/functions/stoch)
- * @see [`stochf`](https://ta-lib.org/functions/stochf)
- * @see [`minmax`](https://ta-lib.org/functions/minmax)
- */
-export function willr(
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000']] as const;
+
+/** @internal */
+export function willrPositional(
   startIdx: number,
   endIdx: number,
   inHigh: ArrayLike<number>,
@@ -355,20 +284,30 @@ export function willr(
 ): OutRange {
   startIdx = requireInt32('WILLR', 'startIdx', startIdx);
   endIdx = requireInt32('WILLR', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('WILLR', 'optInTimePeriod', optInTimePeriod);
+  optInTimePeriod = requireInt32('WILLR', 'timePeriod', optInTimePeriod);
   requireIndexRange('WILLR', startIdx, endIdx);
-  const guardStart = clampedStart('WILLR', startIdx, willrLookback(optInTimePeriod, core));
+  const guardLookback = willrLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('WILLR', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardStart = clampedStart('WILLR', startIdx, guardLookback);
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('WILLR', 'inHigh', inHigh, guardInLen);
-  requireLength('WILLR', 'inLow', inLow, guardInLen);
-  requireLength('WILLR', 'inClose', inClose, guardInLen);
+  requireLength('WILLR', 'prices.high', inHigh, guardInLen);
+  requireLength('WILLR', 'prices.low', inLow, guardInLen);
+  requireLength('WILLR', 'prices.close', inClose, guardInLen);
   requireOutput('WILLR', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
-  if (overlapsPartly(outReal, inHighF64) || overlapsPartly(outReal, inLowF64) || overlapsPartly(outReal, inCloseF64)) {
-    throw failure('WILLR', RetCode.BAD_PARAM);
+  if (overlapsPartly(outReal, inHighF64)) {
+    throw sharedMemory('WILLR', 'outReal', 'prices.high');
+  }
+  if (overlapsPartly(outReal, inLowF64)) {
+    throw sharedMemory('WILLR', 'outReal', 'prices.low');
+  }
+  if (overlapsPartly(outReal, inCloseF64)) {
+    throw sharedMemory('WILLR', 'outReal', 'prices.close');
   }
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
@@ -377,6 +316,153 @@ export function willr(
     throw failure('WILLR', retCode);
   }
   return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link willr}, {@link willrLookback}, {@link willrDisplayShift},
+ * {@link willrOpen} and {@link willrOpenAndFill}. Every key is optional: an
+ * omitted or `undefined` key takes its default, and a call ignores the keys it has
+ * no use for.
+ */
+export interface WillrOptions {
+  /**
+   * Lookback bars for the high/low range (default 14; range 2 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link willr} returns, and {@link willrOpenAndFill} with its stream. */
+export interface WillrResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Williams' %R value in \[-100, 0]. `values[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link willr} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link WillrOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function willrLookback(options?: WillrOptions): number {
+  const o = optionsOf('WILLR lookback', options);
+  return willrLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('WILLR lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link willr}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link WillrOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function willrDisplayShift(outputIdx: number, options?: WillrOptions): number {
+  const o = optionsOf('WILLR displayShift', options);
+  return willrDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('WILLR displayShift', o.core));
+}
+
+/**
+ * Williams' %R momentum oscillator over a rolling period, bounded in \[-100, 0].
+ * Measures where the current close sits relative to the high-low range of the last
+ * N bars. Near 0 = close at period high (overbought); near -100 = close at period
+ * low (oversold).
+ *
+ * Formula and more info at
+ * [ta-lib.org/functions/willr](https://ta-lib.org/functions/willr).
+ *
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link willrLookback} is a success with empty outputs.
+ *
+ * @param prices - One series per price component, all of one length. `high`: High
+ *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
+ *   bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link WillrOptions}.
+ * @returns `begIdx` and the values; see {@link WillrResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
+ * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
+ *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
+ *
+ * @example
+ * ```ts
+ * import { willr } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const close = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const { begIdx, values } = willr({ high, low, close }, { timePeriod: 14 });
+ * // values[k] is the value at bar begIdx + k
+ * ```
+ * @see [`stoch`](https://ta-lib.org/functions/stoch)
+ * @see [`stochf`](https://ta-lib.org/functions/stochf)
+ * @see [`minmax`](https://ta-lib.org/functions/minmax)
+ */
+export function willr(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: WillrOptions): WillrResult {
+  requireArgument('WILLR', 'prices', prices);
+  const o = optionsOf('WILLR', options);
+  if (o.endIdx === undefined) {
+    requireSeries('WILLR', 'prices.high', prices.high);
+    requireSeries('WILLR', 'prices.low', prices.low);
+    requireSeries('WILLR', 'prices.close', prices.close);
+  }
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('WILLR', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.high.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, willrLookbackPositional(optInTimePeriod, core), prices.high, prices.low, prices.close);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = willrPositional(startIdx, endIdx, prices.high, prices.low, prices.close, optInTimePeriod, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -848,7 +934,10 @@ export function willrOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('WILLR openAndFill', inHigh.length, startIdx, willrLookback(optInTimePeriod, core));
+    throw insufficientHistory('WILLR openAndFill', inHigh.length, startIdx, willrLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && willrLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('WILLR openAndFill', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('WILLR openAndFill', retCode);
 }
@@ -873,30 +962,93 @@ export function willrOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('WILLR open', inHigh.length, startIdx, willrLookback(optInTimePeriod, core));
+    throw insufficientHistory('WILLR open', inHigh.length, startIdx, willrLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && willrLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('WILLR open', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('WILLR open', retCode);
+}
+
+/** @internal */
+export function willrOpenPositional(
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInTimePeriod: number,
+  core: Core = Core.DEFAULT,
+): WillrStream {
+  optInTimePeriod = requireInt32('WILLR open', 'timePeriod', optInTimePeriod);
+  requireArgument('WILLR open', 'prices.high', inHigh);
+  requireHistory('WILLR open', inHigh.length);
+  requireArgument('WILLR open', 'prices.low', inLow);
+  requireArgument('WILLR open', 'prices.close', inClose);
+  requireHistoryLength('WILLR open', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('WILLR open', 'prices.close', inClose.length, inHigh.length);
+  return willrOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), 0, optInTimePeriod);
+}
+
+/** @internal */
+export function willrOpenAndFillPositional(
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInTimePeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): WillrStream {
+  optInTimePeriod = requireInt32('WILLR openAndFill', 'timePeriod', optInTimePeriod);
+  requireArgument('WILLR openAndFill', 'prices.high', inHigh);
+  requireHistory('WILLR openAndFill', inHigh.length);
+  requireArgument('WILLR openAndFill', 'prices.low', inLow);
+  requireArgument('WILLR openAndFill', 'prices.close', inClose);
+  const guardLookback = willrLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('WILLR openAndFill', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardOutLen = openFillCount('WILLR openAndFill', inHigh.length, guardLookback);
+  requireHistoryLength('WILLR openAndFill', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('WILLR openAndFill', 'prices.close', inClose.length, inHigh.length);
+  requireOutput('WILLR openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('WILLR openAndFill', 'outReal', 'prices.high');
+  }
+  if (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('WILLR openAndFill', 'outReal', 'prices.low');
+  }
+  if (outReal.buffer === inCloseF64.buffer && outReal.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('WILLR openAndFill', 'outReal', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inHighF64)) {
+    throw sharedMemory('WILLR openAndFill', 'outReal', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inLowF64)) {
+    throw sharedMemory('WILLR openAndFill', 'outReal', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inCloseF64)) {
+    throw sharedMemory('WILLR openAndFill', 'outReal', 'prices.close');
+  }
+  return willrOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live WILLR stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link willr} there.
  *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param optInTimePeriod - Lookback bars for the high/low range (default 14; range
- *   2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link WillrOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `willrLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range or
- *   histories of different lengths.
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range
+ *   or histories of different lengths.
  *
  * @example
  * ```ts
@@ -908,53 +1060,39 @@ export function willrOpenInternal(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = willrOpen(high, low, close, 14);
+ * const stream = willrOpen({ high, low, close }, { timePeriod: 14 });
  * const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function willrOpen(
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInTimePeriod: number,
-  core: Core = Core.DEFAULT,
-): WillrStream {
-  optInTimePeriod = requireInt32('WILLR open', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('WILLR open', 'inHigh', inHigh);
-  requireHistory('WILLR open', inHigh.length);
-  requireArgument('WILLR open', 'inLow', inLow);
-  requireArgument('WILLR open', 'inClose', inClose);
-  requireHistoryLength('WILLR open', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('WILLR open', 'inClose', inClose.length, inHigh.length);
-  return willrOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), 0, optInTimePeriod);
+export function willrOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: WillrOptions): WillrStream {
+  requireArgument('WILLR open', 'prices', prices);
+  const o = optionsOf('WILLR open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('WILLR open', o.core);
+  return willrOpenPositional(prices.high, prices.low, prices.close, optInTimePeriod, core);
 }
 
 /**
- * {@link willrOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link willr}. The range written is the stream's
- * `outRange()`.
+ * {@link willrOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link willr}.
  *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param optInTimePeriod - Lookback bars for the high/low range (default 14; range
- *   2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Williams' %R value in \[-100, 0]. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link WillrOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link willr} returns them; the range is the stream's
+ *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `willrLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range,
- *   histories of different lengths or an output too short or starting where another
- *   output or a `Float64Array` input starts, or, on a history long enough to open,
- *   one sharing memory with another output or a `Float64Array` input.
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -966,37 +1104,20 @@ export function willrOpen(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Float64Array(high.length);
- * const stream = willrOpenAndFill(high, low, close, 14, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = willrOpenAndFill({ high, low, close }, {
+ *   timePeriod: 14,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function willrOpenAndFill(
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInTimePeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): WillrStream {
-  optInTimePeriod = requireInt32('WILLR openAndFill', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('WILLR openAndFill', 'inHigh', inHigh);
-  requireHistory('WILLR openAndFill', inHigh.length);
-  requireArgument('WILLR openAndFill', 'inLow', inLow);
-  requireArgument('WILLR openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('WILLR openAndFill', inHigh.length, willrLookback(optInTimePeriod, core));
-  requireHistoryLength('WILLR openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('WILLR openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireOutput('WILLR openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if ((outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) || (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset) || (outReal.buffer === inCloseF64.buffer && outReal.byteOffset === inCloseF64.byteOffset)) {
-    throw streamFailure('WILLR openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inHighF64) || overlaps(outReal, inLowF64) || overlaps(outReal, inCloseF64))) {
-    throw streamFailure('WILLR openAndFill', RetCode.BAD_PARAM);
-  }
-  return willrOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outReal);
+export function willrOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: WillrOptions): WillrResult & { stream: WillrStream } {
+  requireArgument('WILLR openAndFill', 'prices', prices);
+  const o = optionsOf('WILLR openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('WILLR openAndFill', o.core);
+  const capacity = fillCapacity(willrLookbackPositional(optInTimePeriod, core), prices.high, prices.low, prices.close);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = willrOpenAndFillPositional(prices.high, prices.low, prices.close, optInTimePeriod, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

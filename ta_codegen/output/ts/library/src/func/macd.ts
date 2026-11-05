@@ -19,29 +19,16 @@
  *  080926 MF,CC  Explicit no-smoothing signal at a signal period of 1.
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { emaLookback } from './ema.ts';
+import { emaLookbackPositional } from './ema.ts';
 
-/**
- * Number of leading input bars {@link macd} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInFastPeriod - Period of the fast EMA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow EMA (default 26; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Smoothing period of the signal line (default 9; range
- *   1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function macdLookback(optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function macdLookbackPositional(optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, core: Core = Core.DEFAULT): number {
   if ((optInFastPeriod | 0) !== optInFastPeriod) {
     return -1;
   }
@@ -81,29 +68,12 @@ export function macdLookback(optInFastPeriod: number, optInSlowPeriod: number, o
     optInSlowPeriod = optInFastPeriod;
     optInFastPeriod = tempInteger;
   }
-  return emaLookback(optInSlowPeriod, core) + emaLookback(optInSignalPeriod, core);
+  return emaLookbackPositional(optInSlowPeriod, core) + emaLookbackPositional(optInSignalPeriod, core);
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link macd}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInFastPeriod - Period of the fast EMA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow EMA (default 26; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Smoothing period of the signal line (default 9; range
- *   1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function macdDisplayShift(optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (macdLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core) < 0) {
+/** @internal */
+export function macdDisplayShiftPositional(optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (macdLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 3) {
@@ -214,11 +184,11 @@ export function macdImpl(
   if (signalBeta < 0.5) {
     signalBeta = 1.0 - signalK;
   }
-  lookbackSignal = emaLookback(optInSignalPeriod, core);
+  lookbackSignal = emaLookbackPositional(optInSignalPeriod, core);
   /* Move up the start index if there is not
    * enough initial data.
    */
-  lookbackSlow = emaLookback(optInSlowPeriod, core);
+  lookbackSlow = emaLookbackPositional(optInSlowPeriod, core);
   lookbackTotal = lookbackSignal + lookbackSlow;
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
@@ -263,7 +233,7 @@ export function macdImpl(
     tempReal += inReal[today++];
   }
   prevSlow = tempReal / optInSlowPeriod;
-  fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod, core));
+  fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookbackPositional(optInFastPeriod, core));
   prevFast = 0.0;
   i = optInFastPeriod;
   while (i-- > 0) {
@@ -494,6 +464,176 @@ export function macdImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['fastPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['slowPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['signalPeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000']] as const;
+
+/** @internal */
+export function macdPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInFastPeriod: number,
+  optInSlowPeriod: number,
+  optInSignalPeriod: number,
+  outMACD: Float64Array,
+  outMACDSignal: Float64Array,
+  outMACDHist: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('MACD', 'startIdx', startIdx);
+  endIdx = requireInt32('MACD', 'endIdx', endIdx);
+  optInFastPeriod = requireInt32('MACD', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('MACD', 'slowPeriod', optInSlowPeriod);
+  optInSignalPeriod = requireInt32('MACD', 'signalPeriod', optInSignalPeriod);
+  requireIndexRange('MACD', startIdx, endIdx);
+  const guardLookback = macdLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('MACD', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+  }
+  const guardStart = clampedStart('MACD', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('MACD', 'real', inReal, guardInLen);
+  requireOutput('MACD', 'outMacd', outMACD, guardOutLen, Float64Array);
+  requireOutput('MACD', 'outMacdSignal', outMACDSignal, guardOutLen, Float64Array);
+  requireOutput('MACD', 'outMacdHist', outMACDHist, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outMACD, inRealF64)) {
+    throw sharedMemory('MACD', 'outMacd', 'real');
+  }
+  if (overlapsPartly(outMACDSignal, inRealF64)) {
+    throw sharedMemory('MACD', 'outMacdSignal', 'real');
+  }
+  if (overlapsPartly(outMACDHist, inRealF64)) {
+    throw sharedMemory('MACD', 'outMacdHist', 'real');
+  }
+  if (overlaps(outMACD, outMACDSignal)) {
+    throw sharedMemory('MACD', 'outMacd', 'outMacdSignal');
+  }
+  if (overlaps(outMACD, outMACDHist)) {
+    throw sharedMemory('MACD', 'outMacd', 'outMacdHist');
+  }
+  if (overlaps(outMACDSignal, outMACDHist)) {
+    throw sharedMemory('MACD', 'outMacdSignal', 'outMacdHist');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = macdImpl(core, startIdx, endIdx, inRealF64, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('MACD', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link macd}, {@link macdLookback}, {@link macdDisplayShift},
+ * {@link macdOpen} and {@link macdOpenAndFill}. Every key is optional: an omitted
+ * or `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface MacdOptions {
+  /**
+   * Period of the fast EMA (default 12; range 2 to 100000; `Core.INTEGER_DEFAULT`
+   * selects the default).
+   */
+  fastPeriod?: number | undefined;
+  /**
+   * Period of the slow EMA (default 26; range 2 to 100000; `Core.INTEGER_DEFAULT`
+   * selects the default).
+   */
+  slowPeriod?: number | undefined;
+  /**
+   * Smoothing period of the signal line (default 9; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  signalPeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outMacd`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outMacd?: Float64Array | undefined;
+  /**
+   * Buffer for `outMacdSignal`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outMacdSignal?: Float64Array | undefined;
+  /**
+   * Buffer for `outMacdHist`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outMacdHist?: Float64Array | undefined;
+}
+
+/** What {@link macd} returns, and {@link macdOpenAndFill} with its stream. */
+export interface MacdResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /** Fast EMA minus slow EMA. `outMacd[k]` is the value at input bar `begIdx + k`. */
+  outMacd: Float64Array;
+  /** EMA of the MACD line. `outMacdSignal[k]` is the value at input bar `begIdx + k`. */
+  outMacdSignal: Float64Array;
+  /** MACD minus signal line. `outMacdHist[k]` is the value at input bar `begIdx + k`. */
+  outMacdHist: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link macd} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MacdOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function macdLookback(options?: MacdOptions): number {
+  const o = optionsOf('MACD lookback', options);
+  return macdLookbackPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), coreOf('MACD lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link macd}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MacdOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function macdDisplayShift(outputIdx: number, options?: MacdOptions): number {
+  const o = optionsOf('MACD displayShift', options);
+  return macdDisplayShiftPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('MACD displayShift', o.core));
+}
+
 /**
  * Moving Average Convergence/Divergence: the difference between a fast and a slow
  * EMA of the input, plus an EMA-smoothed signal line and their histogram. MACD
@@ -509,35 +649,23 @@ export function macdImpl(
  *   MACD line and the histogram is zero. Before 0.6.5 this parameter value
  *   produced misaligned output (issues #48/#59).
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link macdLookback} is a success with
- * `count` 0.
+ * `outMacd[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link macdLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Input series (typically close)
- * @param optInFastPeriod - Period of the fast EMA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow EMA (default 26; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Smoothing period of the signal line (default 9; range
- *   1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outMACD - Fast EMA minus slow EMA. Must hold the values produced and
- *   never be empty; the input length always suffices.
- * @param outMACDSignal - EMA of the MACD line. Must hold the values produced and
- *   never be empty; the input length always suffices.
- * @param outMACDHist - MACD minus signal line. Must hold the values produced and
- *   never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Input series (typically close)
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link MacdOptions}.
+ * @returns `begIdx` and the values; see {@link MacdResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output,
- *   two outputs sharing memory or an output sharing memory with a `Float64Array`
- *   input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -545,58 +673,36 @@ export function macdImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const macdOut = new Float64Array(data.length);
- * const macdSignal = new Float64Array(data.length);
- * const macdHist = new Float64Array(data.length);
- * const { begIdx, count } = macd(
- *   0, data.length - 1,
- *   data,
- *   12, 26, 9,
- *   macdOut, macdSignal, macdHist,
- * );
- * // macdOut[k] is the value at bar begIdx + k, for k < count
+ * const {
+ *   begIdx,
+ *   outMacd,
+ *   outMacdSignal,
+ *   outMacdHist,
+ * } = macd(data, { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 });
+ * // outMacd[k] is the value at bar begIdx + k
  * ```
  * @see [`macdext`](https://ta-lib.org/functions/macdext)
  * @see [`macdfix`](https://ta-lib.org/functions/macdfix)
  * @see [`ema`](https://ta-lib.org/functions/ema)
  * @see [`apo`](https://ta-lib.org/functions/apo)
  */
-export function macd(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInFastPeriod: number,
-  optInSlowPeriod: number,
-  optInSignalPeriod: number,
-  outMACD: Float64Array,
-  outMACDSignal: Float64Array,
-  outMACDHist: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('MACD', 'startIdx', startIdx);
-  endIdx = requireInt32('MACD', 'endIdx', endIdx);
-  optInFastPeriod = requireInt32('MACD', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('MACD', 'optInSlowPeriod', optInSlowPeriod);
-  optInSignalPeriod = requireInt32('MACD', 'optInSignalPeriod', optInSignalPeriod);
-  requireIndexRange('MACD', startIdx, endIdx);
-  const guardStart = clampedStart('MACD', startIdx, macdLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('MACD', 'inReal', inReal, guardInLen);
-  requireOutput('MACD', 'outMACD', outMACD, guardOutLen, Float64Array);
-  requireOutput('MACD', 'outMACDSignal', outMACDSignal, guardOutLen, Float64Array);
-  requireOutput('MACD', 'outMACDHist', outMACDHist, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outMACD, inRealF64) || overlapsPartly(outMACDSignal, inRealF64) || overlapsPartly(outMACDHist, inRealF64) || overlaps(outMACD, outMACDSignal) || overlaps(outMACD, outMACDHist) || overlaps(outMACDSignal, outMACDHist)) {
-    throw failure('MACD', RetCode.BAD_PARAM);
+export function macd(real: ArrayLike<number>, options?: MacdOptions): MacdResult {
+  const o = optionsOf('MACD', options);
+  if (o.endIdx === undefined) {
+    requireSeries('MACD', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = macdImpl(core, startIdx, endIdx, inRealF64, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('MACD', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('MACD', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, macdLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core), real);
+  const outMACD = o.outMacd === undefined ? new Float64Array(capacity) : o.outMacd;
+  const outMACDSignal = o.outMacdSignal === undefined ? new Float64Array(capacity) : o.outMacdSignal;
+  const outMACDHist = o.outMacdHist === undefined ? new Float64Array(capacity) : o.outMacdHist;
+  const range = macdPositional(startIdx, endIdx, real, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist, core);
+  return { begIdx: range.begIdx, outMacd: outMACD.subarray(0, range.count), outMacdSignal: outMACDSignal.subarray(0, range.count), outMacdHist: outMACDHist.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -680,19 +786,21 @@ export class MacdStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inReal - The bar's `inReal` value: Input series (typically close)
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MacdOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out: MacdOut): void {
+  update(inReal: number, out?: MacdOut): MacdOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('MACD update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACD update', 'MacdOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -700,22 +808,27 @@ export class MacdStream {
     }
     macdStepImpl(this, inReal);
     this.outRangeCount++;
-    out.macd = this.cur_outMACD;
-    out.macdSignal = this.cur_outMACDSignal;
-    out.macdHist = this.cur_outMACDHist;
+    if (out === undefined) {
+      out = new MacdOut();
+    }
+    out.outMacd = this.cur_outMACD;
+    out.outMacdSignal = this.cur_outMACDSignal;
+    out.outMacdHist = this.cur_outMACDHist;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inReal - The bar's `inReal` value: Input series (typically close)
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MacdOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number, out: MacdOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inReal: number, out?: MacdOut): MacdOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACD peek', 'MacdOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -784,23 +897,33 @@ export class MacdStream {
     cur_outMACD = macdValue;
     cur_outMACDSignal = prevSignal;
     cur_outMACDHist = macdValue - prevSignal;
-    out.macd = cur_outMACD;
-    out.macdSignal = cur_outMACDSignal;
-    out.macdHist = cur_outMACDHist;
+    if (out === undefined) {
+      out = new MacdOut();
+    }
+    out.outMacd = cur_outMACD;
+    out.outMacdSignal = cur_outMACDSignal;
+    out.outMacdHist = cur_outMACDHist;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MacdOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: MacdOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: MacdOut): MacdOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACD value', 'MacdOut');
     }
-    out.macd = this.cur_outMACD;
-    out.macdSignal = this.cur_outMACDSignal;
-    out.macdHist = this.cur_outMACDHist;
+    if (out === undefined) {
+      out = new MacdOut();
+    }
+    out.outMacd = this.cur_outMACD;
+    out.outMacdSignal = this.cur_outMACDSignal;
+    out.outMacdHist = this.cur_outMACDHist;
+    return out;
   }
 
   /**
@@ -833,16 +956,17 @@ export class MacdStream {
 }
 
 /**
- * The outputs of one MACD bar, written into an object the caller owns and reuses:
- * valid until the next call that writes it.
+ * The outputs of one MACD bar, as `update`, `peek` and `value` return them. Passed
+ * back to one of them, it is filled and returned again, with no allocation; it
+ * holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class MacdOut {
   /** Fast EMA minus slow EMA. */
-  macd: number = 0;
+  outMacd: number = NaN;
   /** EMA of the MACD line. */
-  macdSignal: number = 0;
+  outMacdSignal: number = NaN;
   /** MACD minus signal line. */
-  macdHist: number = 0;
+  outMacdHist: number = NaN;
 }
 
 function macdStepImpl(sp: MacdStream, inReal: number): void {
@@ -1010,11 +1134,11 @@ function macdOpenImpl(
   if (signalBeta < 0.5) {
     signalBeta = 1.0 - signalK;
   }
-  lookbackSignal = emaLookback(optInSignalPeriod, core);
+  lookbackSignal = emaLookbackPositional(optInSignalPeriod, core);
   /* Move up the start index if there is not
    * enough initial data.
    */
-  lookbackSlow = emaLookback(optInSlowPeriod, core);
+  lookbackSlow = emaLookbackPositional(optInSlowPeriod, core);
   lookbackTotal = lookbackSignal + lookbackSlow;
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
@@ -1059,7 +1183,7 @@ function macdOpenImpl(
     tempReal += inReal[today++];
   }
   prevSlow = tempReal / optInSlowPeriod;
-  fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod, core));
+  fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookbackPositional(optInFastPeriod, core));
   prevFast = 0.0;
   i = optInFastPeriod;
   while (i-- > 0) {
@@ -1327,7 +1451,10 @@ export function macdOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MACD openAndFill', inReal.length, startIdx, macdLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
+    throw insufficientHistory('MACD openAndFill', inReal.length, startIdx, macdLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && macdLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core) < 0) {
+    throw rejectedParams('MACD openAndFill', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
   }
   throw streamFailure('MACD openAndFill', retCode);
 }
@@ -1354,100 +1481,32 @@ export function macdOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MACD open', inReal.length, startIdx, macdLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
+    throw insufficientHistory('MACD open', inReal.length, startIdx, macdLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && macdLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core) < 0) {
+    throw rejectedParams('MACD open', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
   }
   throw streamFailure('MACD open', retCode);
 }
 
-/**
- * Opens a live MACD stream over the warm-up history: `value()` starts at the last
- * history bar, bit-identical to {@link macd} there.
- *
- * @param inReal - Warm-up history. Input series (typically close)
- * @param optInFastPeriod - Period of the fast EMA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow EMA (default 26; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Smoothing period of the signal line (default 9; range
- *   1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `macdLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   an integer parameter that is not an int32 or a parameter outside its range.
- *
- * @example
- * ```ts
- * import { MacdOut, macdOpen } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const stream = macdOpen(data, 12, 26, 9);
- * const peeked = new MacdOut();
- * const updated = new MacdOut();
- * stream.peek(100.9, peeked); // a forming bar: commits nothing
- * stream.update(100.9, updated); // the bar closes
- * ```
- */
-export function macdOpen(
+/** @internal */
+export function macdOpenPositional(
   inReal: ArrayLike<number>,
   optInFastPeriod: number,
   optInSlowPeriod: number,
   optInSignalPeriod: number,
   core: Core = Core.DEFAULT,
 ): MacdStream {
-  optInFastPeriod = requireInt32('MACD open', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('MACD open', 'optInSlowPeriod', optInSlowPeriod);
-  optInSignalPeriod = requireInt32('MACD open', 'optInSignalPeriod', optInSignalPeriod);
-  requireArgument('MACD open', 'inReal', inReal);
+  optInFastPeriod = requireInt32('MACD open', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('MACD open', 'slowPeriod', optInSlowPeriod);
+  optInSignalPeriod = requireInt32('MACD open', 'signalPeriod', optInSignalPeriod);
+  requireArgument('MACD open', 'real', inReal);
   requireHistory('MACD open', inReal.length);
   return macdOpenInternal(core, float64(inReal), 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
 }
 
-/**
- * {@link macdOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link macd}. The range written is the stream's
- * `outRange()`.
- *
- * @param inReal - Warm-up history. Input series (typically close)
- * @param optInFastPeriod - Period of the fast EMA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow EMA (default 26; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Smoothing period of the signal line (default 9; range
- *   1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outMACD - Fast EMA minus slow EMA. Must hold `historyLen - lookback`
- *   values and share no memory with an input or another output.
- * @param outMACDSignal - EMA of the MACD line. Must hold `historyLen - lookback`
- *   values and share no memory with an input or another output.
- * @param outMACDHist - MACD minus signal line. Must hold `historyLen - lookback`
- *   values and share no memory with an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `macdLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   an integer parameter that is not an int32, a parameter outside its range or an
- *   output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { macdOpenAndFill } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const macdOut = new Float64Array(data.length);
- * const macdSignal = new Float64Array(data.length);
- * const macdHist = new Float64Array(data.length);
- * const stream = macdOpenAndFill(data, 12, 26, 9, macdOut, macdSignal, macdHist);
- * const { begIdx, count } = stream.outRange();
- * // macdOut[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function macdOpenAndFill(
+/** @internal */
+export function macdOpenAndFillPositional(
   inReal: ArrayLike<number>,
   optInFastPeriod: number,
   optInSlowPeriod: number,
@@ -1457,21 +1516,141 @@ export function macdOpenAndFill(
   outMACDHist: Float64Array,
   core: Core = Core.DEFAULT,
 ): MacdStream {
-  optInFastPeriod = requireInt32('MACD openAndFill', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('MACD openAndFill', 'optInSlowPeriod', optInSlowPeriod);
-  optInSignalPeriod = requireInt32('MACD openAndFill', 'optInSignalPeriod', optInSignalPeriod);
-  requireArgument('MACD openAndFill', 'inReal', inReal);
+  optInFastPeriod = requireInt32('MACD openAndFill', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('MACD openAndFill', 'slowPeriod', optInSlowPeriod);
+  optInSignalPeriod = requireInt32('MACD openAndFill', 'signalPeriod', optInSignalPeriod);
+  requireArgument('MACD openAndFill', 'real', inReal);
   requireHistory('MACD openAndFill', inReal.length);
-  const guardOutLen = openFillCount('MACD openAndFill', inReal.length, macdLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
-  requireOutput('MACD openAndFill', 'outMACD', outMACD, guardOutLen, Float64Array);
-  requireOutput('MACD openAndFill', 'outMACDSignal', outMACDSignal, guardOutLen, Float64Array);
-  requireOutput('MACD openAndFill', 'outMACDHist', outMACDHist, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outMACD.buffer === inRealF64.buffer && outMACD.byteOffset === inRealF64.byteOffset) || (outMACDSignal.buffer === inRealF64.buffer && outMACDSignal.byteOffset === inRealF64.byteOffset) || (outMACDHist.buffer === inRealF64.buffer && outMACDHist.byteOffset === inRealF64.byteOffset) || (outMACD.buffer === outMACDSignal.buffer && outMACD.byteOffset === outMACDSignal.byteOffset) || (outMACD.buffer === outMACDHist.buffer && outMACD.byteOffset === outMACDHist.byteOffset) || (outMACDSignal.buffer === outMACDHist.buffer && outMACDSignal.byteOffset === outMACDHist.byteOffset)) {
-    throw streamFailure('MACD openAndFill', RetCode.BAD_PARAM);
+  const guardLookback = macdLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('MACD openAndFill', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
   }
-  if (guardOutLen > 0 && (overlaps(outMACD, inRealF64) || overlaps(outMACDSignal, inRealF64) || overlaps(outMACDHist, inRealF64) || overlaps(outMACD, outMACDSignal) || overlaps(outMACD, outMACDHist) || overlaps(outMACDSignal, outMACDHist))) {
-    throw streamFailure('MACD openAndFill', RetCode.BAD_PARAM);
+  const guardOutLen = openFillCount('MACD openAndFill', inReal.length, guardLookback);
+  requireOutput('MACD openAndFill', 'outMacd', outMACD, guardOutLen, Float64Array);
+  requireOutput('MACD openAndFill', 'outMacdSignal', outMACDSignal, guardOutLen, Float64Array);
+  requireOutput('MACD openAndFill', 'outMacdHist', outMACDHist, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outMACD.buffer === inRealF64.buffer && outMACD.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('MACD openAndFill', 'outMacd', 'real');
+  }
+  if (outMACDSignal.buffer === inRealF64.buffer && outMACDSignal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('MACD openAndFill', 'outMacdSignal', 'real');
+  }
+  if (outMACDHist.buffer === inRealF64.buffer && outMACDHist.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('MACD openAndFill', 'outMacdHist', 'real');
+  }
+  if (outMACD.buffer === outMACDSignal.buffer && outMACD.byteOffset === outMACDSignal.byteOffset) {
+    throw sharedMemory('MACD openAndFill', 'outMacd', 'outMacdSignal');
+  }
+  if (outMACD.buffer === outMACDHist.buffer && outMACD.byteOffset === outMACDHist.byteOffset) {
+    throw sharedMemory('MACD openAndFill', 'outMacd', 'outMacdHist');
+  }
+  if (outMACDSignal.buffer === outMACDHist.buffer && outMACDSignal.byteOffset === outMACDHist.byteOffset) {
+    throw sharedMemory('MACD openAndFill', 'outMacdSignal', 'outMacdHist');
+  }
+  if (guardOutLen > 0 && overlaps(outMACD, inRealF64)) {
+    throw sharedMemory('MACD openAndFill', 'outMacd', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDSignal, inRealF64)) {
+    throw sharedMemory('MACD openAndFill', 'outMacdSignal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDHist, inRealF64)) {
+    throw sharedMemory('MACD openAndFill', 'outMacdHist', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outMACD, outMACDSignal)) {
+    throw sharedMemory('MACD openAndFill', 'outMacd', 'outMacdSignal');
+  }
+  if (guardOutLen > 0 && overlaps(outMACD, outMACDHist)) {
+    throw sharedMemory('MACD openAndFill', 'outMacd', 'outMacdHist');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDSignal, outMACDHist)) {
+    throw sharedMemory('MACD openAndFill', 'outMacdSignal', 'outMacdHist');
   }
   return macdOpenAndFillInternal(core, inRealF64, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, new MInteger(), new MInteger(), outMACD, outMACDSignal, outMACDHist);
+}
+
+/**
+ * Opens a live MACD stream over the warm-up history: `value()` starts at the last
+ * history bar, bit-identical to {@link macd} there.
+ *
+ * @param real - Warm-up history. Input series (typically close)
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MacdOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `macdLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   an integer parameter that is not an int32 or a parameter outside its range.
+ *
+ * @example
+ * ```ts
+ * import { macdOpen } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const stream = macdOpen(data, {
+ *   fastPeriod: 12,
+ *   slowPeriod: 26,
+ *   signalPeriod: 9,
+ * });
+ * const peeked = stream.peek(100.9); // a forming bar: commits nothing
+ * const updated = stream.update(100.9); // the bar closes
+ * ```
+ */
+export function macdOpen(real: ArrayLike<number>, options?: MacdOptions): MacdStream {
+  const o = optionsOf('MACD open', options);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('MACD open', o.core);
+  return macdOpenPositional(real, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+}
+
+/**
+ * {@link macdOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link macd}.
+ *
+ * @param real - Warm-up history. Input series (typically close)
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link MacdOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link macd} returns them; the range is the stream's
+ *   `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `macdLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   an integer parameter that is not an int32, a parameter outside its range or a
+ *   buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
+ *
+ * @example
+ * ```ts
+ * import { macdOpenAndFill } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const {
+ *   stream,
+ *   begIdx,
+ *   outMacd,
+ *   outMacdSignal,
+ *   outMacdHist,
+ * } = macdOpenAndFill(data, { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 });
+ * // outMacd[k] is the value at bar begIdx + k
+ * ```
+ */
+export function macdOpenAndFill(real: ArrayLike<number>, options?: MacdOptions): MacdResult & { stream: MacdStream } {
+  const o = optionsOf('MACD openAndFill', options);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('MACD openAndFill', o.core);
+  const capacity = fillCapacity(macdLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core), real);
+  const outMACD = o.outMacd === undefined ? new Float64Array(capacity) : o.outMacd;
+  const outMACDSignal = o.outMacdSignal === undefined ? new Float64Array(capacity) : o.outMacdSignal;
+  const outMACDHist = o.outMacdHist === undefined ? new Float64Array(capacity) : o.outMacdHist;
+  const stream = macdOpenAndFillPositional(real, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outMacd: outMACD.subarray(0, range.count), outMacdSignal: outMACDSignal.subarray(0, range.count), outMacdHist: outMACDHist.subarray(0, range.count) };
 }

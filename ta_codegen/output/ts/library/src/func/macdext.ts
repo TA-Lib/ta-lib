@@ -17,41 +17,16 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { MaStream, ma, maLookback, maOpenAndFillInternal } from './ma.ts';
-import { macd } from './macd.ts';
+import { MaStream, maLookbackPositional, maOpenAndFillInternal, maPositional } from './ma.ts';
+import { macdPositional } from './macd.ts';
 
-/**
- * Number of leading input bars {@link macdext} consumes before its first value:
- * the index of the first bar with a value when the whole series is requested.
- *
- * @param optInFastPeriod - Period of the fast MA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastMAType - MA type for the fast MA (default `MAType.SMA`; values:
- *   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
- *   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow MA (default 26; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowMAType - MA type for the slow MA (default `MAType.SMA`; values:
- *   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
- *   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSignalPeriod - Period of the signal-line MA (default 9; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalMAType - MA type for the signal line (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function macdextLookback(optInFastPeriod: number, optInFastMAType: MAType | typeof Core.INTEGER_DEFAULT, optInSlowPeriod: number, optInSlowMAType: MAType | typeof Core.INTEGER_DEFAULT, optInSignalPeriod: number, optInSignalMAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function macdextLookbackPositional(optInFastPeriod: number, optInFastMAType: MAType | typeof Core.INTEGER_DEFAULT, optInSlowPeriod: number, optInSlowMAType: MAType | typeof Core.INTEGER_DEFAULT, optInSignalPeriod: number, optInSignalMAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
   if ((optInFastPeriod | 0) !== optInFastPeriod) {
     return -1;
   }
@@ -103,47 +78,18 @@ export function macdextLookback(optInFastPeriod: number, optInFastMAType: MAType
   let tempInteger = 0;
   let lookbackLargest = 0;
   /* Find the MA with the largest lookback */
-  lookbackLargest = maLookback(optInFastPeriod, (optInFastMAType as MAType), core);
-  tempInteger = maLookback(optInSlowPeriod, (optInSlowMAType as MAType), core);
+  lookbackLargest = maLookbackPositional(optInFastPeriod, (optInFastMAType as MAType), core);
+  tempInteger = maLookbackPositional(optInSlowPeriod, (optInSlowMAType as MAType), core);
   if (tempInteger > lookbackLargest) {
     lookbackLargest = tempInteger;
   }
   /* Add to the largest MA lookback the signal line lookback */
-  return lookbackLargest + maLookback(optInSignalPeriod, (optInSignalMAType as MAType), core);
+  return lookbackLargest + maLookbackPositional(optInSignalPeriod, (optInSignalMAType as MAType), core);
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link macdext}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInFastPeriod - Period of the fast MA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastMAType - MA type for the fast MA (default `MAType.SMA`; values:
- *   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
- *   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow MA (default 26; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowMAType - MA type for the slow MA (default `MAType.SMA`; values:
- *   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
- *   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSignalPeriod - Period of the signal-line MA (default 9; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalMAType - MA type for the signal line (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function macdextDisplayShift(optInFastPeriod: number, optInFastMAType: MAType | typeof Core.INTEGER_DEFAULT, optInSlowPeriod: number, optInSlowMAType: MAType | typeof Core.INTEGER_DEFAULT, optInSignalPeriod: number, optInSignalMAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (macdextLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, core) < 0) {
+/** @internal */
+export function macdextDisplayShiftPositional(optInFastPeriod: number, optInFastMAType: MAType | typeof Core.INTEGER_DEFAULT, optInSlowPeriod: number, optInSlowMAType: MAType | typeof Core.INTEGER_DEFAULT, optInSignalPeriod: number, optInSignalMAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (macdextLookbackPositional(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 3) {
@@ -234,7 +180,7 @@ export function macdextImpl(
      * block to the composed path (issue #181). Keep the comment INSIDE the
      * block: above it, the stream inherits it and reads as if it delegated.
      */
-    const _xr0 = macd(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist, core);
+    const _xr0 = macdPositional(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist, core);
     outBegIdx.value = _xr0.begIdx;
     outNBElement.value = _xr0.count;
     return RetCode.SUCCESS;
@@ -253,13 +199,13 @@ export function macdextImpl(
     optInFastMAType = tempMAType;
   }
   /* Find the MA with the largest lookback */
-  lookbackLargest = maLookback(optInFastPeriod, (optInFastMAType as MAType), core);
-  tempInteger = maLookback(optInSlowPeriod, (optInSlowMAType as MAType), core);
+  lookbackLargest = maLookbackPositional(optInFastPeriod, (optInFastMAType as MAType), core);
+  tempInteger = maLookbackPositional(optInSlowPeriod, (optInSlowMAType as MAType), core);
   if (tempInteger > lookbackLargest) {
     lookbackLargest = tempInteger;
   }
   /* Add the lookback needed for the signal line */
-  lookbackSignal = maLookback(optInSignalPeriod, (optInSignalMAType as MAType), core);
+  lookbackSignal = maLookbackPositional(optInSignalPeriod, (optInSignalMAType as MAType), core);
   lookbackTotal = lookbackSignal + lookbackLargest;
   /* Move up the start index if there is not
    * enough initial data.
@@ -285,11 +231,11 @@ export function macdextImpl(
    * will start at the requested 'startIdx'.
    */
   tempInteger = startIdx - lookbackSignal;
-  const _xr1 = ma(tempInteger, endIdx, inReal, optInSlowPeriod, (optInSlowMAType as MAType), slowMABuffer, core);
+  const _xr1 = maPositional(tempInteger, endIdx, inReal, optInSlowPeriod, (optInSlowMAType as MAType), slowMABuffer, core);
   outBegIdx1.value = _xr1.begIdx;
   outNbElement1.value = _xr1.count;
   /* Calculate the fast MA. */
-  const _xr2 = ma(tempInteger, endIdx, inReal, optInFastPeriod, (optInFastMAType as MAType), fastMABuffer, core);
+  const _xr2 = maPositional(tempInteger, endIdx, inReal, optInFastPeriod, (optInFastMAType as MAType), fastMABuffer, core);
   outBegIdx2.value = _xr2.begIdx;
   outNbElement2.value = _xr2.count;
   /* Parano tests. Will be removed eventually. */
@@ -306,7 +252,7 @@ export function macdextImpl(
    */
   outMACD.set(fastMABuffer.subarray(lookbackSignal, lookbackSignal + (endIdx - startIdx + 1)), 0);
   /* Calculate the signal/trigger line. */
-  const _xr3 = ma(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, (optInSignalMAType as MAType), outMACDSignal, core);
+  const _xr3 = maPositional(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, (optInSignalMAType as MAType), outMACDSignal, core);
   outBegIdx2.value = _xr3.begIdx;
   outNbElement2.value = _xr3.count;
   /* Calculate the histogram. */
@@ -317,6 +263,212 @@ export function macdextImpl(
   outBegIdx.value = startIdx;
   outNBElement.value = outNbElement2.value;
   return RetCode.SUCCESS;
+}
+
+const PARAM_RANGES = [['fastPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['fastMaType', Core.INTEGER_DEFAULT, MATypes.Min, MATypes.Max, 'a MAType'], ['slowPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['slowMaType', Core.INTEGER_DEFAULT, MATypes.Min, MATypes.Max, 'a MAType'], ['signalPeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['signalMaType', Core.INTEGER_DEFAULT, MATypes.Min, MATypes.Max, 'a MAType']] as const;
+
+/** @internal */
+export function macdextPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInFastPeriod: number,
+  optInFastMAType: MAType | typeof Core.INTEGER_DEFAULT,
+  optInSlowPeriod: number,
+  optInSlowMAType: MAType | typeof Core.INTEGER_DEFAULT,
+  optInSignalPeriod: number,
+  optInSignalMAType: MAType | typeof Core.INTEGER_DEFAULT,
+  outMACD: Float64Array,
+  outMACDSignal: Float64Array,
+  outMACDHist: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('MACDEXT', 'startIdx', startIdx);
+  endIdx = requireInt32('MACDEXT', 'endIdx', endIdx);
+  optInFastPeriod = requireInt32('MACDEXT', 'fastPeriod', optInFastPeriod);
+  optInFastMAType = requireInt32('MACDEXT', 'fastMaType', optInFastMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  optInSlowPeriod = requireInt32('MACDEXT', 'slowPeriod', optInSlowPeriod);
+  optInSlowMAType = requireInt32('MACDEXT', 'slowMaType', optInSlowMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  optInSignalPeriod = requireInt32('MACDEXT', 'signalPeriod', optInSignalPeriod);
+  optInSignalMAType = requireInt32('MACDEXT', 'signalMaType', optInSignalMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireIndexRange('MACDEXT', startIdx, endIdx);
+  const guardLookback = macdextLookbackPositional(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('MACDEXT', PARAM_RANGES, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
+  }
+  const guardStart = clampedStart('MACDEXT', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('MACDEXT', 'real', inReal, guardInLen);
+  requireOutput('MACDEXT', 'outMacd', outMACD, guardOutLen, Float64Array);
+  requireOutput('MACDEXT', 'outMacdSignal', outMACDSignal, guardOutLen, Float64Array);
+  requireOutput('MACDEXT', 'outMacdHist', outMACDHist, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outMACD, inRealF64)) {
+    throw sharedMemory('MACDEXT', 'outMacd', 'real');
+  }
+  if (overlapsPartly(outMACDSignal, inRealF64)) {
+    throw sharedMemory('MACDEXT', 'outMacdSignal', 'real');
+  }
+  if (overlapsPartly(outMACDHist, inRealF64)) {
+    throw sharedMemory('MACDEXT', 'outMacdHist', 'real');
+  }
+  if (overlaps(outMACD, outMACDSignal)) {
+    throw sharedMemory('MACDEXT', 'outMacd', 'outMacdSignal');
+  }
+  if (overlaps(outMACD, outMACDHist)) {
+    throw sharedMemory('MACDEXT', 'outMacd', 'outMacdHist');
+  }
+  if (overlaps(outMACDSignal, outMACDHist)) {
+    throw sharedMemory('MACDEXT', 'outMacdSignal', 'outMacdHist');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = macdextImpl(core, startIdx, endIdx, inRealF64, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('MACDEXT', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link macdext}, {@link macdextLookback},
+ * {@link macdextDisplayShift}, {@link macdextOpen} and {@link macdextOpenAndFill}.
+ * Every key is optional: an omitted or `undefined` key takes its default, and a
+ * call ignores the keys it has no use for.
+ */
+export interface MacdextOptions {
+  /**
+   * Period of the fast MA (default 12; range 2 to 100000; `Core.INTEGER_DEFAULT`
+   * selects the default).
+   */
+  fastPeriod?: number | undefined;
+  /**
+   * MA type for the fast MA (default `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA,
+   * 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+   * 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT`
+   * selects the default).
+   */
+  fastMaType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
+  /**
+   * Period of the slow MA (default 26; range 2 to 100000; `Core.INTEGER_DEFAULT`
+   * selects the default).
+   */
+  slowPeriod?: number | undefined;
+  /**
+   * MA type for the slow MA (default `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA,
+   * 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+   * 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT`
+   * selects the default).
+   */
+  slowMaType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
+  /**
+   * Period of the signal-line MA (default 9; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  signalPeriod?: number | undefined;
+  /**
+   * MA type for the signal line (default `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA,
+   * 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+   * 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT`
+   * selects the default).
+   */
+  signalMaType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outMacd`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outMacd?: Float64Array | undefined;
+  /**
+   * Buffer for `outMacdSignal`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outMacdSignal?: Float64Array | undefined;
+  /**
+   * Buffer for `outMacdHist`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outMacdHist?: Float64Array | undefined;
+}
+
+/** What {@link macdext} returns, and {@link macdextOpenAndFill} with its stream. */
+export interface MacdextResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * MACD line: fast MA minus slow MA. `outMacd[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  outMacd: Float64Array;
+  /**
+   * Signal line: MA of the MACD line. `outMacdSignal[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  outMacdSignal: Float64Array;
+  /**
+   * Histogram: MACD minus signal. `outMacdHist[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  outMacdHist: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link macdext} consumes before its first value:
+ * the index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MacdextOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function macdextLookback(options?: MacdextOptions): number {
+  const o = optionsOf('MACDEXT lookback', options);
+  return macdextLookbackPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.fastMaType, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowMaType, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), orDefault(o.signalMaType, Core.INTEGER_DEFAULT), coreOf('MACDEXT lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link macdext}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MacdextOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function macdextDisplayShift(outputIdx: number, options?: MacdextOptions): number {
+  const o = optionsOf('MACDEXT displayShift', options);
+  return macdextDisplayShiftPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.fastMaType, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowMaType, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), orDefault(o.signalMaType, Core.INTEGER_DEFAULT), outputIdx, coreOf('MACDEXT displayShift', o.core));
 }
 
 /**
@@ -340,47 +492,23 @@ export function macdextImpl(
  *   identical and MACD, Signal, and Hist are all zero at every bar. Select MAMA
  *   for only one side to get a meaningful spread.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link macdextLookback} is a success with
- * `count` 0.
+ * `outMacd[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link macdextLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Source series.
- * @param optInFastPeriod - Period of the fast MA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastMAType - MA type for the fast MA (default `MAType.SMA`; values:
- *   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
- *   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow MA (default 26; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowMAType - MA type for the slow MA (default `MAType.SMA`; values:
- *   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
- *   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSignalPeriod - Period of the signal-line MA (default 9; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalMAType - MA type for the signal line (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outMACD - MACD line: fast MA minus slow MA. Must hold the values produced
- *   and never be empty; the input length always suffices.
- * @param outMACDSignal - Signal line: MA of the MACD line. Must hold the values
- *   produced and never be empty; the input length always suffices.
- * @param outMACDHist - Histogram: MACD minus signal. Must hold the values produced
- *   and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Source series.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link MacdextOptions}.
+ * @returns `begIdx` and the values; see {@link MacdextResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output,
- *   two outputs sharing memory or an output sharing memory with a `Float64Array`
- *   input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -388,16 +516,20 @@ export function macdextImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const macd = new Float64Array(data.length);
- * const macdSignal = new Float64Array(data.length);
- * const macdHist = new Float64Array(data.length);
- * const { begIdx, count } = macdext(
- *   0, data.length - 1,
- *   data,
- *   12, MAType.SMA, 26, MAType.SMA, 9, MAType.SMA,
- *   macd, macdSignal, macdHist,
- * );
- * // macd[k] is the value at bar begIdx + k, for k < count
+ * const {
+ *   begIdx,
+ *   outMacd,
+ *   outMacdSignal,
+ *   outMacdHist,
+ * } = macdext(data, {
+ *   fastPeriod: 12,
+ *   fastMaType: MAType.SMA,
+ *   slowPeriod: 26,
+ *   slowMaType: MAType.SMA,
+ *   signalPeriod: 9,
+ *   signalMaType: MAType.SMA,
+ * });
+ * // outMacd[k] is the value at bar begIdx + k
  * ```
  * @see [`macd`](https://ta-lib.org/functions/macd)
  * @see [`macdfix`](https://ta-lib.org/functions/macdfix)
@@ -406,48 +538,26 @@ export function macdextImpl(
  * @see [`apo`](https://ta-lib.org/functions/apo)
  * @see [`ppo`](https://ta-lib.org/functions/ppo)
  */
-export function macdext(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInFastPeriod: number,
-  optInFastMAType: MAType | typeof Core.INTEGER_DEFAULT,
-  optInSlowPeriod: number,
-  optInSlowMAType: MAType | typeof Core.INTEGER_DEFAULT,
-  optInSignalPeriod: number,
-  optInSignalMAType: MAType | typeof Core.INTEGER_DEFAULT,
-  outMACD: Float64Array,
-  outMACDSignal: Float64Array,
-  outMACDHist: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('MACDEXT', 'startIdx', startIdx);
-  endIdx = requireInt32('MACDEXT', 'endIdx', endIdx);
-  optInFastPeriod = requireInt32('MACDEXT', 'optInFastPeriod', optInFastPeriod);
-  optInFastMAType = requireInt32('MACDEXT', 'optInFastMAType', optInFastMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  optInSlowPeriod = requireInt32('MACDEXT', 'optInSlowPeriod', optInSlowPeriod);
-  optInSlowMAType = requireInt32('MACDEXT', 'optInSlowMAType', optInSlowMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  optInSignalPeriod = requireInt32('MACDEXT', 'optInSignalPeriod', optInSignalPeriod);
-  optInSignalMAType = requireInt32('MACDEXT', 'optInSignalMAType', optInSignalMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireIndexRange('MACDEXT', startIdx, endIdx);
-  const guardStart = clampedStart('MACDEXT', startIdx, macdextLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('MACDEXT', 'inReal', inReal, guardInLen);
-  requireOutput('MACDEXT', 'outMACD', outMACD, guardOutLen, Float64Array);
-  requireOutput('MACDEXT', 'outMACDSignal', outMACDSignal, guardOutLen, Float64Array);
-  requireOutput('MACDEXT', 'outMACDHist', outMACDHist, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outMACD, inRealF64) || overlapsPartly(outMACDSignal, inRealF64) || overlapsPartly(outMACDHist, inRealF64) || overlaps(outMACD, outMACDSignal) || overlaps(outMACD, outMACDHist) || overlaps(outMACDSignal, outMACDHist)) {
-    throw failure('MACDEXT', RetCode.BAD_PARAM);
+export function macdext(real: ArrayLike<number>, options?: MacdextOptions): MacdextResult {
+  const o = optionsOf('MACDEXT', options);
+  if (o.endIdx === undefined) {
+    requireSeries('MACDEXT', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = macdextImpl(core, startIdx, endIdx, inRealF64, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('MACDEXT', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInFastMAType = orDefault(o.fastMaType, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowMAType = orDefault(o.slowMaType, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const optInSignalMAType = orDefault(o.signalMaType, Core.INTEGER_DEFAULT);
+  const core = coreOf('MACDEXT', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, macdextLookbackPositional(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, core), real);
+  const outMACD = o.outMacd === undefined ? new Float64Array(capacity) : o.outMacd;
+  const outMACDSignal = o.outMacdSignal === undefined ? new Float64Array(capacity) : o.outMacdSignal;
+  const outMACDHist = o.outMacdHist === undefined ? new Float64Array(capacity) : o.outMacdHist;
+  const range = macdextPositional(startIdx, endIdx, real, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outMACD, outMACDSignal, outMACDHist, core);
+  return { begIdx: range.begIdx, outMacd: outMACD.subarray(0, range.count), outMacdSignal: outMACDSignal.subarray(0, range.count), outMacdHist: outMACDHist.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -525,19 +635,21 @@ export class MacdextStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inReal - The bar's `inReal` value: Source series.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MacdextOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out: MacdextOut): void {
+  update(inReal: number, out?: MacdextOut): MacdextOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('MACDEXT update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACDEXT update', 'MacdextOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -545,22 +657,27 @@ export class MacdextStream {
     }
     macdextStepImpl(this, inReal);
     this.outRangeCount++;
-    out.macd = this.cur_outMACD;
-    out.macdSignal = this.cur_outMACDSignal;
-    out.macdHist = this.cur_outMACDHist;
+    if (out === undefined) {
+      out = new MacdextOut();
+    }
+    out.outMacd = this.cur_outMACD;
+    out.outMacdSignal = this.cur_outMACDSignal;
+    out.outMacdHist = this.cur_outMACDHist;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inReal - The bar's `inReal` value: Source series.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MacdextOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number, out: MacdextOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inReal: number, out?: MacdextOut): MacdextOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACDEXT peek', 'MacdextOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -578,23 +695,33 @@ export class MacdextStream {
     cur_outMACDSignal = sp.sub2.peek(cur_fastMABuffer);
     cur_outMACDHist = cur_fastMABuffer - cur_outMACDSignal;
     cur_outMACD = cur_fastMABuffer;
-    out.macd = cur_outMACD;
-    out.macdSignal = cur_outMACDSignal;
-    out.macdHist = cur_outMACDHist;
+    if (out === undefined) {
+      out = new MacdextOut();
+    }
+    out.outMacd = cur_outMACD;
+    out.outMacdSignal = cur_outMACDSignal;
+    out.outMacdHist = cur_outMACDHist;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MacdextOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: MacdextOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: MacdextOut): MacdextOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACDEXT value', 'MacdextOut');
     }
-    out.macd = this.cur_outMACD;
-    out.macdSignal = this.cur_outMACDSignal;
-    out.macdHist = this.cur_outMACDHist;
+    if (out === undefined) {
+      out = new MacdextOut();
+    }
+    out.outMacd = this.cur_outMACD;
+    out.outMacdSignal = this.cur_outMACDSignal;
+    out.outMacdHist = this.cur_outMACDHist;
+    return out;
   }
 
   /**
@@ -624,16 +751,17 @@ export class MacdextStream {
 }
 
 /**
- * The outputs of one MACDEXT bar, written into an object the caller owns and
- * reuses: valid until the next call that writes it.
+ * The outputs of one MACDEXT bar, as `update`, `peek` and `value` return them.
+ * Passed back to one of them, it is filled and returned again, with no allocation;
+ * it holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class MacdextOut {
   /** MACD line: fast MA minus slow MA. */
-  macd: number = 0;
+  outMacd: number = NaN;
   /** Signal line: MA of the MACD line. */
-  macdSignal: number = 0;
+  outMacdSignal: number = NaN;
   /** Histogram: MACD minus signal. */
-  macdHist: number = 0;
+  outMacdHist: number = NaN;
 }
 
 function macdextStepImpl(sp: MacdextStream, inReal: number): void {
@@ -724,7 +852,7 @@ function macdextOpenImpl(
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
   }
-  if (historyLen < macdextLookback(optInFastPeriod, optInFastMAType as MAType, optInSlowPeriod, optInSlowMAType as MAType, optInSignalPeriod, optInSignalMAType as MAType, core) + 1) {
+  if (historyLen < macdextLookbackPositional(optInFastPeriod, optInFastMAType as MAType, optInSlowPeriod, optInSlowMAType as MAType, optInSignalPeriod, optInSignalMAType as MAType, core) + 1) {
     return RetCode.INSUFFICIENT_HISTORY;
   }
   const sc_outMACD = outStride === 1 ? outMACD : new Float64Array(historyLen);
@@ -744,13 +872,13 @@ function macdextOpenImpl(
     optInFastMAType = tempMAType;
   }
   /* Find the MA with the largest lookback */
-  lookbackLargest = maLookback(optInFastPeriod, (optInFastMAType as MAType), core);
-  tempInteger = maLookback(optInSlowPeriod, (optInSlowMAType as MAType), core);
+  lookbackLargest = maLookbackPositional(optInFastPeriod, (optInFastMAType as MAType), core);
+  tempInteger = maLookbackPositional(optInSlowPeriod, (optInSlowMAType as MAType), core);
   if (tempInteger > lookbackLargest) {
     lookbackLargest = tempInteger;
   }
   /* Add the lookback needed for the signal line */
-  lookbackSignal = maLookback(optInSignalPeriod, (optInSignalMAType as MAType), core);
+  lookbackSignal = maLookbackPositional(optInSignalPeriod, (optInSignalMAType as MAType), core);
   lookbackTotal = lookbackSignal + lookbackLargest;
   /* Move up the start index if there is not
    * enough initial data.
@@ -844,7 +972,10 @@ export function macdextOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MACDEXT openAndFill', inReal.length, startIdx, macdextLookback(optInFastPeriod, optInFastMAType as MAType, optInSlowPeriod, optInSlowMAType as MAType, optInSignalPeriod, optInSignalMAType as MAType, core));
+    throw insufficientHistory('MACDEXT openAndFill', inReal.length, startIdx, macdextLookbackPositional(optInFastPeriod, optInFastMAType as MAType, optInSlowPeriod, optInSlowMAType as MAType, optInSignalPeriod, optInSignalMAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && macdextLookbackPositional(optInFastPeriod, optInFastMAType as MAType, optInSlowPeriod, optInSlowMAType as MAType, optInSignalPeriod, optInSignalMAType as MAType, core) < 0) {
+    throw rejectedParams('MACDEXT openAndFill', PARAM_RANGES, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
   }
   throw streamFailure('MACDEXT openAndFill', retCode);
 }
@@ -874,55 +1005,16 @@ export function macdextOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MACDEXT open', inReal.length, startIdx, macdextLookback(optInFastPeriod, optInFastMAType as MAType, optInSlowPeriod, optInSlowMAType as MAType, optInSignalPeriod, optInSignalMAType as MAType, core));
+    throw insufficientHistory('MACDEXT open', inReal.length, startIdx, macdextLookbackPositional(optInFastPeriod, optInFastMAType as MAType, optInSlowPeriod, optInSlowMAType as MAType, optInSignalPeriod, optInSignalMAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && macdextLookbackPositional(optInFastPeriod, optInFastMAType as MAType, optInSlowPeriod, optInSlowMAType as MAType, optInSignalPeriod, optInSignalMAType as MAType, core) < 0) {
+    throw rejectedParams('MACDEXT open', PARAM_RANGES, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
   }
   throw streamFailure('MACDEXT open', retCode);
 }
 
-/**
- * Opens a live MACDEXT stream over the warm-up history: `value()` starts at the
- * last history bar, bit-identical to {@link macdext} there.
- *
- * @param inReal - Warm-up history. Source series.
- * @param optInFastPeriod - Period of the fast MA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastMAType - MA type for the fast MA (default `MAType.SMA`; values:
- *   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
- *   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow MA (default 26; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowMAType - MA type for the slow MA (default `MAType.SMA`; values:
- *   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
- *   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSignalPeriod - Period of the signal-line MA (default 9; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalMAType - MA type for the signal line (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `macdextLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32 or a parameter outside its range.
- *
- * @example
- * ```ts
- * import { MAType, MacdextOut, macdextOpen } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const stream = macdextOpen(data, 12, MAType.SMA, 26, MAType.SMA, 9, MAType.SMA);
- * const peeked = new MacdextOut();
- * const updated = new MacdextOut();
- * stream.peek(100.9, peeked); // a forming bar: commits nothing
- * stream.update(100.9, updated); // the bar closes
- * ```
- */
-export function macdextOpen(
+/** @internal */
+export function macdextOpenPositional(
   inReal: ArrayLike<number>,
   optInFastPeriod: number,
   optInFastMAType: MAType | typeof Core.INTEGER_DEFAULT,
@@ -932,79 +1024,19 @@ export function macdextOpen(
   optInSignalMAType: MAType | typeof Core.INTEGER_DEFAULT,
   core: Core = Core.DEFAULT,
 ): MacdextStream {
-  optInFastPeriod = requireInt32('MACDEXT open', 'optInFastPeriod', optInFastPeriod);
-  optInFastMAType = requireInt32('MACDEXT open', 'optInFastMAType', optInFastMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  optInSlowPeriod = requireInt32('MACDEXT open', 'optInSlowPeriod', optInSlowPeriod);
-  optInSlowMAType = requireInt32('MACDEXT open', 'optInSlowMAType', optInSlowMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  optInSignalPeriod = requireInt32('MACDEXT open', 'optInSignalPeriod', optInSignalPeriod);
-  optInSignalMAType = requireInt32('MACDEXT open', 'optInSignalMAType', optInSignalMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('MACDEXT open', 'inReal', inReal);
+  optInFastPeriod = requireInt32('MACDEXT open', 'fastPeriod', optInFastPeriod);
+  optInFastMAType = requireInt32('MACDEXT open', 'fastMaType', optInFastMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  optInSlowPeriod = requireInt32('MACDEXT open', 'slowPeriod', optInSlowPeriod);
+  optInSlowMAType = requireInt32('MACDEXT open', 'slowMaType', optInSlowMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  optInSignalPeriod = requireInt32('MACDEXT open', 'signalPeriod', optInSignalPeriod);
+  optInSignalMAType = requireInt32('MACDEXT open', 'signalMaType', optInSignalMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('MACDEXT open', 'real', inReal);
   requireHistory('MACDEXT open', inReal.length);
   return macdextOpenInternal(core, float64(inReal), 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
 }
 
-/**
- * {@link macdextOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link macdext}. The range written is the stream's
- * `outRange()`.
- *
- * @param inReal - Warm-up history. Source series.
- * @param optInFastPeriod - Period of the fast MA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastMAType - MA type for the fast MA (default `MAType.SMA`; values:
- *   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
- *   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow MA (default 26; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowMAType - MA type for the slow MA (default `MAType.SMA`; values:
- *   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
- *   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSignalPeriod - Period of the signal-line MA (default 9; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalMAType - MA type for the signal line (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outMACD - MACD line: fast MA minus slow MA. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param outMACDSignal - Signal line: MA of the MACD line. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param outMACDHist - Histogram: MACD minus signal. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `macdextLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range or
- *   an output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { MAType, macdextOpenAndFill } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const macd = new Float64Array(data.length);
- * const macdSignal = new Float64Array(data.length);
- * const macdHist = new Float64Array(data.length);
- * const stream = macdextOpenAndFill(
- *   data,
- *   12, MAType.SMA, 26, MAType.SMA, 9, MAType.SMA,
- *   macd, macdSignal, macdHist,
- * );
- * const { begIdx, count } = stream.outRange();
- * // macd[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function macdextOpenAndFill(
+/** @internal */
+export function macdextOpenAndFillPositional(
   inReal: ArrayLike<number>,
   optInFastPeriod: number,
   optInFastMAType: MAType | typeof Core.INTEGER_DEFAULT,
@@ -1017,24 +1049,161 @@ export function macdextOpenAndFill(
   outMACDHist: Float64Array,
   core: Core = Core.DEFAULT,
 ): MacdextStream {
-  optInFastPeriod = requireInt32('MACDEXT openAndFill', 'optInFastPeriod', optInFastPeriod);
-  optInFastMAType = requireInt32('MACDEXT openAndFill', 'optInFastMAType', optInFastMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  optInSlowPeriod = requireInt32('MACDEXT openAndFill', 'optInSlowPeriod', optInSlowPeriod);
-  optInSlowMAType = requireInt32('MACDEXT openAndFill', 'optInSlowMAType', optInSlowMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  optInSignalPeriod = requireInt32('MACDEXT openAndFill', 'optInSignalPeriod', optInSignalPeriod);
-  optInSignalMAType = requireInt32('MACDEXT openAndFill', 'optInSignalMAType', optInSignalMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('MACDEXT openAndFill', 'inReal', inReal);
+  optInFastPeriod = requireInt32('MACDEXT openAndFill', 'fastPeriod', optInFastPeriod);
+  optInFastMAType = requireInt32('MACDEXT openAndFill', 'fastMaType', optInFastMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  optInSlowPeriod = requireInt32('MACDEXT openAndFill', 'slowPeriod', optInSlowPeriod);
+  optInSlowMAType = requireInt32('MACDEXT openAndFill', 'slowMaType', optInSlowMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  optInSignalPeriod = requireInt32('MACDEXT openAndFill', 'signalPeriod', optInSignalPeriod);
+  optInSignalMAType = requireInt32('MACDEXT openAndFill', 'signalMaType', optInSignalMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('MACDEXT openAndFill', 'real', inReal);
   requireHistory('MACDEXT openAndFill', inReal.length);
-  const guardOutLen = openFillCount('MACDEXT openAndFill', inReal.length, macdextLookback(optInFastPeriod, optInFastMAType as MAType, optInSlowPeriod, optInSlowMAType as MAType, optInSignalPeriod, optInSignalMAType as MAType, core));
-  requireOutput('MACDEXT openAndFill', 'outMACD', outMACD, guardOutLen, Float64Array);
-  requireOutput('MACDEXT openAndFill', 'outMACDSignal', outMACDSignal, guardOutLen, Float64Array);
-  requireOutput('MACDEXT openAndFill', 'outMACDHist', outMACDHist, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outMACD.buffer === inRealF64.buffer && outMACD.byteOffset === inRealF64.byteOffset) || (outMACDSignal.buffer === inRealF64.buffer && outMACDSignal.byteOffset === inRealF64.byteOffset) || (outMACDHist.buffer === inRealF64.buffer && outMACDHist.byteOffset === inRealF64.byteOffset) || (outMACD.buffer === outMACDSignal.buffer && outMACD.byteOffset === outMACDSignal.byteOffset) || (outMACD.buffer === outMACDHist.buffer && outMACD.byteOffset === outMACDHist.byteOffset) || (outMACDSignal.buffer === outMACDHist.buffer && outMACDSignal.byteOffset === outMACDHist.byteOffset)) {
-    throw streamFailure('MACDEXT openAndFill', RetCode.BAD_PARAM);
+  const guardLookback = macdextLookbackPositional(optInFastPeriod, optInFastMAType as MAType, optInSlowPeriod, optInSlowMAType as MAType, optInSignalPeriod, optInSignalMAType as MAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('MACDEXT openAndFill', PARAM_RANGES, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
   }
-  if (guardOutLen > 0 && (overlaps(outMACD, inRealF64) || overlaps(outMACDSignal, inRealF64) || overlaps(outMACDHist, inRealF64) || overlaps(outMACD, outMACDSignal) || overlaps(outMACD, outMACDHist) || overlaps(outMACDSignal, outMACDHist))) {
-    throw streamFailure('MACDEXT openAndFill', RetCode.BAD_PARAM);
+  const guardOutLen = openFillCount('MACDEXT openAndFill', inReal.length, guardLookback);
+  requireOutput('MACDEXT openAndFill', 'outMacd', outMACD, guardOutLen, Float64Array);
+  requireOutput('MACDEXT openAndFill', 'outMacdSignal', outMACDSignal, guardOutLen, Float64Array);
+  requireOutput('MACDEXT openAndFill', 'outMacdHist', outMACDHist, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outMACD.buffer === inRealF64.buffer && outMACD.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('MACDEXT openAndFill', 'outMacd', 'real');
+  }
+  if (outMACDSignal.buffer === inRealF64.buffer && outMACDSignal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('MACDEXT openAndFill', 'outMacdSignal', 'real');
+  }
+  if (outMACDHist.buffer === inRealF64.buffer && outMACDHist.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('MACDEXT openAndFill', 'outMacdHist', 'real');
+  }
+  if (outMACD.buffer === outMACDSignal.buffer && outMACD.byteOffset === outMACDSignal.byteOffset) {
+    throw sharedMemory('MACDEXT openAndFill', 'outMacd', 'outMacdSignal');
+  }
+  if (outMACD.buffer === outMACDHist.buffer && outMACD.byteOffset === outMACDHist.byteOffset) {
+    throw sharedMemory('MACDEXT openAndFill', 'outMacd', 'outMacdHist');
+  }
+  if (outMACDSignal.buffer === outMACDHist.buffer && outMACDSignal.byteOffset === outMACDHist.byteOffset) {
+    throw sharedMemory('MACDEXT openAndFill', 'outMacdSignal', 'outMacdHist');
+  }
+  if (guardOutLen > 0 && overlaps(outMACD, inRealF64)) {
+    throw sharedMemory('MACDEXT openAndFill', 'outMacd', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDSignal, inRealF64)) {
+    throw sharedMemory('MACDEXT openAndFill', 'outMacdSignal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDHist, inRealF64)) {
+    throw sharedMemory('MACDEXT openAndFill', 'outMacdHist', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outMACD, outMACDSignal)) {
+    throw sharedMemory('MACDEXT openAndFill', 'outMacd', 'outMacdSignal');
+  }
+  if (guardOutLen > 0 && overlaps(outMACD, outMACDHist)) {
+    throw sharedMemory('MACDEXT openAndFill', 'outMacd', 'outMacdHist');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDSignal, outMACDHist)) {
+    throw sharedMemory('MACDEXT openAndFill', 'outMacdSignal', 'outMacdHist');
   }
   return macdextOpenAndFillInternal(core, inRealF64, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, new MInteger(), new MInteger(), outMACD, outMACDSignal, outMACDHist);
+}
+
+/**
+ * Opens a live MACDEXT stream over the warm-up history: `value()` starts at the
+ * last history bar, bit-identical to {@link macdext} there.
+ *
+ * @param real - Warm-up history. Source series.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MacdextOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `macdextLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32 or a parameter outside its
+ *   range.
+ *
+ * @example
+ * ```ts
+ * import { MAType, macdextOpen } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const stream = macdextOpen(data, {
+ *   fastPeriod: 12,
+ *   fastMaType: MAType.SMA,
+ *   slowPeriod: 26,
+ *   slowMaType: MAType.SMA,
+ *   signalPeriod: 9,
+ *   signalMaType: MAType.SMA,
+ * });
+ * const peeked = stream.peek(100.9); // a forming bar: commits nothing
+ * const updated = stream.update(100.9); // the bar closes
+ * ```
+ */
+export function macdextOpen(real: ArrayLike<number>, options?: MacdextOptions): MacdextStream {
+  const o = optionsOf('MACDEXT open', options);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInFastMAType = orDefault(o.fastMaType, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowMAType = orDefault(o.slowMaType, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const optInSignalMAType = orDefault(o.signalMaType, Core.INTEGER_DEFAULT);
+  const core = coreOf('MACDEXT open', o.core);
+  return macdextOpenPositional(real, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, core);
+}
+
+/**
+ * {@link macdextOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link macdext}.
+ *
+ * @param real - Warm-up history. Source series.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link MacdextOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link macdext} returns them; the range is the
+ *   stream's `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `macdextLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range
+ *   or a buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
+ *
+ * @example
+ * ```ts
+ * import { MAType, macdextOpenAndFill } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const {
+ *   stream,
+ *   begIdx,
+ *   outMacd,
+ *   outMacdSignal,
+ *   outMacdHist,
+ * } = macdextOpenAndFill(data, {
+ *   fastPeriod: 12,
+ *   fastMaType: MAType.SMA,
+ *   slowPeriod: 26,
+ *   slowMaType: MAType.SMA,
+ *   signalPeriod: 9,
+ *   signalMaType: MAType.SMA,
+ * });
+ * // outMacd[k] is the value at bar begIdx + k
+ * ```
+ */
+export function macdextOpenAndFill(real: ArrayLike<number>, options?: MacdextOptions): MacdextResult & { stream: MacdextStream } {
+  const o = optionsOf('MACDEXT openAndFill', options);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInFastMAType = orDefault(o.fastMaType, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowMAType = orDefault(o.slowMaType, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const optInSignalMAType = orDefault(o.signalMaType, Core.INTEGER_DEFAULT);
+  const core = coreOf('MACDEXT openAndFill', o.core);
+  const capacity = fillCapacity(macdextLookbackPositional(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, core), real);
+  const outMACD = o.outMacd === undefined ? new Float64Array(capacity) : o.outMacd;
+  const outMACDSignal = o.outMacdSignal === undefined ? new Float64Array(capacity) : o.outMacdSignal;
+  const outMACDHist = o.outMacdHist === undefined ? new Float64Array(capacity) : o.outMacdHist;
+  const stream = macdextOpenAndFillPositional(real, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outMACD, outMACDSignal, outMACDHist, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outMacd: outMACD.subarray(0, range.count), outMacdSignal: outMACDSignal.subarray(0, range.count), outMacdHist: outMACDHist.subarray(0, range.count) };
 }

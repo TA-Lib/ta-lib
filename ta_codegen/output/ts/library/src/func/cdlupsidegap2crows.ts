@@ -16,41 +16,21 @@
  *  103126 MF,CC  Pre-check the cheap tests in an outer if, the candle averages inside
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link cdlupsidegap2crows} consumes before its
- * first value: the index of the first bar with a value when the whole series is
- * requested.
- *
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function cdlupsidegap2crowsLookback(core: Core = Core.DEFAULT): number {
+/** @internal */
+export function cdlupsidegap2crowsLookbackPositional(core: Core = Core.DEFAULT): number {
   const BodyLong_avgPeriod = core.candleSettings[CandleSettingType.BODY_LONG].avgPeriod;
   const BodyShort_avgPeriod = core.candleSettings[CandleSettingType.BODY_SHORT].avgPeriod;
   return (BodyShort_avgPeriod > BodyLong_avgPeriod ? BodyShort_avgPeriod : BodyLong_avgPeriod) + 2;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link cdlupsidegap2crows}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function cdlupsidegap2crowsDisplayShift(outputIdx: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function cdlupsidegap2crowsDisplayShiftPositional(outputIdx: number, _core: Core = Core.DEFAULT): number {
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
     return -2147483648;
   }
@@ -92,7 +72,7 @@ export function cdlupsidegap2crowsImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = cdlupsidegap2crowsLookback(core);
+  lookbackTotal = cdlupsidegap2crowsLookbackPositional(core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -162,6 +142,135 @@ export function cdlupsidegap2crowsImpl(
   return RetCode.SUCCESS;
 }
 
+/** @internal */
+export function cdlupsidegap2crowsPositional(
+  startIdx: number,
+  endIdx: number,
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outInteger: Int32Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('CDLUPSIDEGAP2CROWS', 'startIdx', startIdx);
+  endIdx = requireInt32('CDLUPSIDEGAP2CROWS', 'endIdx', endIdx);
+  requireIndexRange('CDLUPSIDEGAP2CROWS', startIdx, endIdx);
+  const guardStart = clampedStart('CDLUPSIDEGAP2CROWS', startIdx, cdlupsidegap2crowsLookbackPositional(core));
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('CDLUPSIDEGAP2CROWS', 'prices.open', inOpen, guardInLen);
+  requireLength('CDLUPSIDEGAP2CROWS', 'prices.high', inHigh, guardInLen);
+  requireLength('CDLUPSIDEGAP2CROWS', 'prices.low', inLow, guardInLen);
+  requireLength('CDLUPSIDEGAP2CROWS', 'prices.close', inClose, guardInLen);
+  requireOutput('CDLUPSIDEGAP2CROWS', 'outInteger', outInteger, guardOutLen, Int32Array);
+  const inOpenF64 = float64(inOpen);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (overlaps(outInteger, inOpenF64)) {
+    throw sharedMemory('CDLUPSIDEGAP2CROWS', 'outInteger', 'prices.open');
+  }
+  if (overlaps(outInteger, inHighF64)) {
+    throw sharedMemory('CDLUPSIDEGAP2CROWS', 'outInteger', 'prices.high');
+  }
+  if (overlaps(outInteger, inLowF64)) {
+    throw sharedMemory('CDLUPSIDEGAP2CROWS', 'outInteger', 'prices.low');
+  }
+  if (overlaps(outInteger, inCloseF64)) {
+    throw sharedMemory('CDLUPSIDEGAP2CROWS', 'outInteger', 'prices.close');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = cdlupsidegap2crowsImpl(core, startIdx, endIdx, inOpenF64, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outInteger);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('CDLUPSIDEGAP2CROWS', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link cdlupsidegap2crows}, {@link cdlupsidegap2crowsLookback},
+ * {@link cdlupsidegap2crowsDisplayShift}, {@link cdlupsidegap2crowsOpen} and
+ * {@link cdlupsidegap2crowsOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface Cdlupsidegap2crowsOptions {
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input.
+   */
+  outInteger?: Int32Array | undefined;
+}
+
+/**
+ * What {@link cdlupsidegap2crows} returns, and
+ * {@link cdlupsidegap2crowsOpenAndFill} with its stream.
+ */
+export interface Cdlupsidegap2crowsResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * -100 on a pattern bar, 0 otherwise. Bearish-only: this pattern never emits +100.
+   * `values[k]` is the value at input bar `begIdx + k`.
+   */
+  values: Int32Array;
+}
+
+/**
+ * Number of leading input bars {@link cdlupsidegap2crows} consumes before its
+ * first value: the index of the first bar with a value when the whole series is
+ * requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link Cdlupsidegap2crowsOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function cdlupsidegap2crowsLookback(options?: Cdlupsidegap2crowsOptions): number {
+  const o = optionsOf('CDLUPSIDEGAP2CROWS lookback', options);
+  return cdlupsidegap2crowsLookbackPositional(coreOf('CDLUPSIDEGAP2CROWS lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link cdlupsidegap2crows}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link Cdlupsidegap2crowsOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function cdlupsidegap2crowsDisplayShift(outputIdx: number, options?: Cdlupsidegap2crowsOptions): number {
+  const o = optionsOf('CDLUPSIDEGAP2CROWS displayShift', options);
+  return cdlupsidegap2crowsDisplayShiftPositional(outputIdx, coreOf('CDLUPSIDEGAP2CROWS displayShift', o.core));
+}
+
 /**
  * A three-candle bearish reversal pattern: a long white candle, then a small black
  * candle gapping up (a gap between the real bodies), then a black candle that
@@ -180,28 +289,24 @@ export function cdlupsidegap2crowsImpl(
  *   work "the price move is often lousy."
  *   ([thepatternsite.com](https://www.thepatternsite.com/UpGapTwoCrows.html))
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link cdlupsidegap2crowsLookback} is a
- * success with `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link cdlupsidegap2crowsLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inOpen - Open price of each bar.
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param inClose - Close price of each bar.
- * @param outInteger - -100 on a pattern bar, 0 otherwise. Bearish-only: this
- *   pattern never emits +100. Must hold the values produced and never be empty; the
- *   input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `open`: Open
+ *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
+ *   `close`: Close price of each bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link Cdlupsidegap2crowsOptions}.
+ * @returns `begIdx` and the values; see {@link Cdlupsidegap2crowsResult}. Each
+ *   output is a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, an
- *   array too short for the range, an empty output or an output sharing memory with
- *   a `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an input too short for the range, a buffer that is empty, too short or of
+ *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -215,52 +320,28 @@ export function cdlupsidegap2crowsImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Int32Array(open.length);
- * const { begIdx, count } = cdlupsidegap2crows(
- *   0, open.length - 1,
- *   open, high, low, close,
- *   out,
- * );
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = cdlupsidegap2crows({ open, high, low, close });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`cdl2crows`](https://ta-lib.org/functions/cdl2crows)
  * @see [`cdlgapsidesidewhite`](https://ta-lib.org/functions/cdlgapsidesidewhite)
  */
-export function cdlupsidegap2crows(
-  startIdx: number,
-  endIdx: number,
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outInteger: Int32Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('CDLUPSIDEGAP2CROWS', 'startIdx', startIdx);
-  endIdx = requireInt32('CDLUPSIDEGAP2CROWS', 'endIdx', endIdx);
-  requireIndexRange('CDLUPSIDEGAP2CROWS', startIdx, endIdx);
-  const guardStart = clampedStart('CDLUPSIDEGAP2CROWS', startIdx, cdlupsidegap2crowsLookback(core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('CDLUPSIDEGAP2CROWS', 'inOpen', inOpen, guardInLen);
-  requireLength('CDLUPSIDEGAP2CROWS', 'inHigh', inHigh, guardInLen);
-  requireLength('CDLUPSIDEGAP2CROWS', 'inLow', inLow, guardInLen);
-  requireLength('CDLUPSIDEGAP2CROWS', 'inClose', inClose, guardInLen);
-  requireOutput('CDLUPSIDEGAP2CROWS', 'outInteger', outInteger, guardOutLen, Int32Array);
-  const inOpenF64 = float64(inOpen);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if (overlaps(outInteger, inOpenF64) || overlaps(outInteger, inHighF64) || overlaps(outInteger, inLowF64) || overlaps(outInteger, inCloseF64)) {
-    throw failure('CDLUPSIDEGAP2CROWS', RetCode.BAD_PARAM);
+export function cdlupsidegap2crows(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdlupsidegap2crowsOptions): Cdlupsidegap2crowsResult {
+  requireArgument('CDLUPSIDEGAP2CROWS', 'prices', prices);
+  const o = optionsOf('CDLUPSIDEGAP2CROWS', options);
+  if (o.endIdx === undefined) {
+    requireSeries('CDLUPSIDEGAP2CROWS', 'prices.open', prices.open);
+    requireSeries('CDLUPSIDEGAP2CROWS', 'prices.high', prices.high);
+    requireSeries('CDLUPSIDEGAP2CROWS', 'prices.low', prices.low);
+    requireSeries('CDLUPSIDEGAP2CROWS', 'prices.close', prices.close);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = cdlupsidegap2crowsImpl(core, startIdx, endIdx, inOpenF64, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outInteger);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('CDLUPSIDEGAP2CROWS', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const core = coreOf('CDLUPSIDEGAP2CROWS', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.open.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, cdlupsidegap2crowsLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
+  const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;
+  const range = cdlupsidegap2crowsPositional(startIdx, endIdx, prices.open, prices.high, prices.low, prices.close, outInteger, core);
+  return { begIdx: range.begIdx, values: outInteger.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -563,7 +644,7 @@ function cdlupsidegap2crowsOpenImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = cdlupsidegap2crowsLookback(core);
+  lookbackTotal = cdlupsidegap2crowsLookbackPositional(core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -694,7 +775,7 @@ export function cdlupsidegap2crowsOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('CDLUPSIDEGAP2CROWS openAndFill', inOpen.length, startIdx, cdlupsidegap2crowsLookback(core));
+    throw insufficientHistory('CDLUPSIDEGAP2CROWS openAndFill', inOpen.length, startIdx, cdlupsidegap2crowsLookbackPositional(core));
   }
   throw streamFailure('CDLUPSIDEGAP2CROWS openAndFill', retCode);
 }
@@ -719,9 +800,78 @@ export function cdlupsidegap2crowsOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('CDLUPSIDEGAP2CROWS open', inOpen.length, startIdx, cdlupsidegap2crowsLookback(core));
+    throw insufficientHistory('CDLUPSIDEGAP2CROWS open', inOpen.length, startIdx, cdlupsidegap2crowsLookbackPositional(core));
   }
   throw streamFailure('CDLUPSIDEGAP2CROWS open', retCode);
+}
+
+/** @internal */
+export function cdlupsidegap2crowsOpenPositional(
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  core: Core = Core.DEFAULT,
+): Cdlupsidegap2crowsStream {
+  requireArgument('CDLUPSIDEGAP2CROWS open', 'prices.open', inOpen);
+  requireHistory('CDLUPSIDEGAP2CROWS open', inOpen.length);
+  requireArgument('CDLUPSIDEGAP2CROWS open', 'prices.high', inHigh);
+  requireArgument('CDLUPSIDEGAP2CROWS open', 'prices.low', inLow);
+  requireArgument('CDLUPSIDEGAP2CROWS open', 'prices.close', inClose);
+  requireHistoryLength('CDLUPSIDEGAP2CROWS open', 'prices.high', inHigh.length, inOpen.length);
+  requireHistoryLength('CDLUPSIDEGAP2CROWS open', 'prices.low', inLow.length, inOpen.length);
+  requireHistoryLength('CDLUPSIDEGAP2CROWS open', 'prices.close', inClose.length, inOpen.length);
+  return cdlupsidegap2crowsOpenInternal(core, float64(inOpen), float64(inHigh), float64(inLow), float64(inClose), 0);
+}
+
+/** @internal */
+export function cdlupsidegap2crowsOpenAndFillPositional(
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outInteger: Int32Array,
+  core: Core = Core.DEFAULT,
+): Cdlupsidegap2crowsStream {
+  requireArgument('CDLUPSIDEGAP2CROWS openAndFill', 'prices.open', inOpen);
+  requireHistory('CDLUPSIDEGAP2CROWS openAndFill', inOpen.length);
+  requireArgument('CDLUPSIDEGAP2CROWS openAndFill', 'prices.high', inHigh);
+  requireArgument('CDLUPSIDEGAP2CROWS openAndFill', 'prices.low', inLow);
+  requireArgument('CDLUPSIDEGAP2CROWS openAndFill', 'prices.close', inClose);
+  const guardOutLen = openFillCount('CDLUPSIDEGAP2CROWS openAndFill', inOpen.length, cdlupsidegap2crowsLookbackPositional(core));
+  requireHistoryLength('CDLUPSIDEGAP2CROWS openAndFill', 'prices.high', inHigh.length, inOpen.length);
+  requireHistoryLength('CDLUPSIDEGAP2CROWS openAndFill', 'prices.low', inLow.length, inOpen.length);
+  requireHistoryLength('CDLUPSIDEGAP2CROWS openAndFill', 'prices.close', inClose.length, inOpen.length);
+  requireOutput('CDLUPSIDEGAP2CROWS openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
+  const inOpenF64 = float64(inOpen);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (outInteger.buffer === inOpenF64.buffer && outInteger.byteOffset === inOpenF64.byteOffset) {
+    throw sharedMemory('CDLUPSIDEGAP2CROWS openAndFill', 'outInteger', 'prices.open');
+  }
+  if (outInteger.buffer === inHighF64.buffer && outInteger.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('CDLUPSIDEGAP2CROWS openAndFill', 'outInteger', 'prices.high');
+  }
+  if (outInteger.buffer === inLowF64.buffer && outInteger.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('CDLUPSIDEGAP2CROWS openAndFill', 'outInteger', 'prices.low');
+  }
+  if (outInteger.buffer === inCloseF64.buffer && outInteger.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('CDLUPSIDEGAP2CROWS openAndFill', 'outInteger', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inOpenF64)) {
+    throw sharedMemory('CDLUPSIDEGAP2CROWS openAndFill', 'outInteger', 'prices.open');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inHighF64)) {
+    throw sharedMemory('CDLUPSIDEGAP2CROWS openAndFill', 'outInteger', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inLowF64)) {
+    throw sharedMemory('CDLUPSIDEGAP2CROWS openAndFill', 'outInteger', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inCloseF64)) {
+    throw sharedMemory('CDLUPSIDEGAP2CROWS openAndFill', 'outInteger', 'prices.close');
+  }
+  return cdlupsidegap2crowsOpenAndFillInternal(core, inOpenF64, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outInteger);
 }
 
 /**
@@ -729,20 +879,16 @@ export function cdlupsidegap2crowsOpenInternal(
  * starts at the last history bar, bit-identical to {@link cdlupsidegap2crows}
  * there.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
+ *   Low price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link Cdlupsidegap2crowsOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlupsidegap2crowsLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for histories of different lengths.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input or histories of different lengths.
  *
  * @example
  * ```ts
@@ -756,54 +902,37 @@ export function cdlupsidegap2crowsOpenInternal(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = cdlupsidegap2crowsOpen(open, high, low, close);
+ * const stream = cdlupsidegap2crowsOpen({ open, high, low, close });
  * const peeked = stream.peek(100.2, 101.4, 99.1, 100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlupsidegap2crowsOpen(
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  core: Core = Core.DEFAULT,
-): Cdlupsidegap2crowsStream {
-  requireArgument('CDLUPSIDEGAP2CROWS open', 'inOpen', inOpen);
-  requireHistory('CDLUPSIDEGAP2CROWS open', inOpen.length);
-  requireArgument('CDLUPSIDEGAP2CROWS open', 'inHigh', inHigh);
-  requireArgument('CDLUPSIDEGAP2CROWS open', 'inLow', inLow);
-  requireArgument('CDLUPSIDEGAP2CROWS open', 'inClose', inClose);
-  requireHistoryLength('CDLUPSIDEGAP2CROWS open', 'inHigh', inHigh.length, inOpen.length);
-  requireHistoryLength('CDLUPSIDEGAP2CROWS open', 'inLow', inLow.length, inOpen.length);
-  requireHistoryLength('CDLUPSIDEGAP2CROWS open', 'inClose', inClose.length, inOpen.length);
-  return cdlupsidegap2crowsOpenInternal(core, float64(inOpen), float64(inHigh), float64(inLow), float64(inClose), 0);
+export function cdlupsidegap2crowsOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdlupsidegap2crowsOptions): Cdlupsidegap2crowsStream {
+  requireArgument('CDLUPSIDEGAP2CROWS open', 'prices', prices);
+  const o = optionsOf('CDLUPSIDEGAP2CROWS open', options);
+  const core = coreOf('CDLUPSIDEGAP2CROWS open', o.core);
+  return cdlupsidegap2crowsOpenPositional(prices.open, prices.high, prices.low, prices.close, core);
 }
 
 /**
- * {@link cdlupsidegap2crowsOpen} that also fills the outputs over the whole
- * history in the same pass, bit-identically to {@link cdlupsidegap2crows}. The
- * range written is the stream's `outRange()`.
+ * {@link cdlupsidegap2crowsOpen} that also computes the outputs over the whole
+ * history in the same pass, bit-identically to {@link cdlupsidegap2crows}.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param outInteger - -100 on a pattern bar, 0 otherwise. Bearish-only: this
- *   pattern never emits +100. Must hold `historyLen - lookback` values and share no
- *   memory with an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
+ *   Low price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link Cdlupsidegap2crowsOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link cdlupsidegap2crows} returns them; the range is
+ *   the stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlupsidegap2crowsLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for histories of different lengths or an output too short or
- *   starting where another output or a `Float64Array` input starts, or, on a history
- *   long enough to open, one sharing memory with another output or a `Float64Array`
- *   input.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input, histories of different lengths or a buffer too short,
+ *   of the wrong type or starting where another buffer or a `Float64Array` input
+ *   starts, or, on a history long enough to open, one sharing memory with another
+ *   buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -817,39 +946,17 @@ export function cdlupsidegap2crowsOpen(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Int32Array(open.length);
- * const stream = cdlupsidegap2crowsOpenAndFill(open, high, low, close, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = cdlupsidegap2crowsOpenAndFill({ open, high, low, close });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlupsidegap2crowsOpenAndFill(
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outInteger: Int32Array,
-  core: Core = Core.DEFAULT,
-): Cdlupsidegap2crowsStream {
-  requireArgument('CDLUPSIDEGAP2CROWS openAndFill', 'inOpen', inOpen);
-  requireHistory('CDLUPSIDEGAP2CROWS openAndFill', inOpen.length);
-  requireArgument('CDLUPSIDEGAP2CROWS openAndFill', 'inHigh', inHigh);
-  requireArgument('CDLUPSIDEGAP2CROWS openAndFill', 'inLow', inLow);
-  requireArgument('CDLUPSIDEGAP2CROWS openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('CDLUPSIDEGAP2CROWS openAndFill', inOpen.length, cdlupsidegap2crowsLookback(core));
-  requireHistoryLength('CDLUPSIDEGAP2CROWS openAndFill', 'inHigh', inHigh.length, inOpen.length);
-  requireHistoryLength('CDLUPSIDEGAP2CROWS openAndFill', 'inLow', inLow.length, inOpen.length);
-  requireHistoryLength('CDLUPSIDEGAP2CROWS openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireOutput('CDLUPSIDEGAP2CROWS openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
-  const inOpenF64 = float64(inOpen);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if ((outInteger.buffer === inOpenF64.buffer && outInteger.byteOffset === inOpenF64.byteOffset) || (outInteger.buffer === inHighF64.buffer && outInteger.byteOffset === inHighF64.byteOffset) || (outInteger.buffer === inLowF64.buffer && outInteger.byteOffset === inLowF64.byteOffset) || (outInteger.buffer === inCloseF64.buffer && outInteger.byteOffset === inCloseF64.byteOffset)) {
-    throw streamFailure('CDLUPSIDEGAP2CROWS openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outInteger, inOpenF64) || overlaps(outInteger, inHighF64) || overlaps(outInteger, inLowF64) || overlaps(outInteger, inCloseF64))) {
-    throw streamFailure('CDLUPSIDEGAP2CROWS openAndFill', RetCode.BAD_PARAM);
-  }
-  return cdlupsidegap2crowsOpenAndFillInternal(core, inOpenF64, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outInteger);
+export function cdlupsidegap2crowsOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdlupsidegap2crowsOptions): Cdlupsidegap2crowsResult & { stream: Cdlupsidegap2crowsStream } {
+  requireArgument('CDLUPSIDEGAP2CROWS openAndFill', 'prices', prices);
+  const o = optionsOf('CDLUPSIDEGAP2CROWS openAndFill', options);
+  const core = coreOf('CDLUPSIDEGAP2CROWS openAndFill', o.core);
+  const capacity = fillCapacity(cdlupsidegap2crowsLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
+  const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;
+  const stream = cdlupsidegap2crowsOpenAndFillPositional(prices.open, prices.high, prices.low, prices.close, outInteger, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outInteger.subarray(0, range.count) };
 }

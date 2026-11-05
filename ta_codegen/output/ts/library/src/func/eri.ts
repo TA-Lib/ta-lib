@@ -11,25 +11,16 @@
  *  090626 KL     First version (issue #361).
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { emaLookback } from './ema.ts';
+import { emaLookbackPositional } from './ema.ts';
 
-/**
- * Number of leading input bars {@link eri} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInTimePeriod - Number of bars in the EMA of close (default 13; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function eriLookback(optInTimePeriod: number, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function eriLookbackPositional(optInTimePeriod: number, core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -41,25 +32,12 @@ export function eriLookback(optInTimePeriod: number, core: Core = Core.DEFAULT):
   /* Exactly the EMA of close underneath: its lookback, unstable period
    * included, is this function's lookback.
    */
-  return emaLookback(optInTimePeriod, core);
+  return emaLookbackPositional(optInTimePeriod, core);
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link eri}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Number of bars in the EMA of close (default 13; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function eriDisplayShift(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (eriLookback(optInTimePeriod, core) < 0) {
+/** @internal */
+export function eriDisplayShiftPositional(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (eriLookbackPositional(optInTimePeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 2) {
@@ -122,7 +100,7 @@ export function eriImpl(
    * No division in the per-bar map: no 0/0, no NaN path (#112 by
    * construction). Bull >= Bear on every bar since high >= low.
    */
-  lookbackTotal = eriLookback(optInTimePeriod, core);
+  lookbackTotal = eriLookbackPositional(optInTimePeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -195,6 +173,165 @@ export function eriImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000']] as const;
+
+/** @internal */
+export function eriPositional(
+  startIdx: number,
+  endIdx: number,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInTimePeriod: number,
+  outBullPower: Float64Array,
+  outBearPower: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('ERI', 'startIdx', startIdx);
+  endIdx = requireInt32('ERI', 'endIdx', endIdx);
+  optInTimePeriod = requireInt32('ERI', 'timePeriod', optInTimePeriod);
+  requireIndexRange('ERI', startIdx, endIdx);
+  const guardLookback = eriLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('ERI', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardStart = clampedStart('ERI', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('ERI', 'prices.high', inHigh, guardInLen);
+  requireLength('ERI', 'prices.low', inLow, guardInLen);
+  requireLength('ERI', 'prices.close', inClose, guardInLen);
+  requireOutput('ERI', 'outBullPower', outBullPower, guardOutLen, Float64Array);
+  requireOutput('ERI', 'outBearPower', outBearPower, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (overlapsPartly(outBullPower, inHighF64)) {
+    throw sharedMemory('ERI', 'outBullPower', 'prices.high');
+  }
+  if (overlapsPartly(outBullPower, inLowF64)) {
+    throw sharedMemory('ERI', 'outBullPower', 'prices.low');
+  }
+  if (overlapsPartly(outBullPower, inCloseF64)) {
+    throw sharedMemory('ERI', 'outBullPower', 'prices.close');
+  }
+  if (overlapsPartly(outBearPower, inHighF64)) {
+    throw sharedMemory('ERI', 'outBearPower', 'prices.high');
+  }
+  if (overlapsPartly(outBearPower, inLowF64)) {
+    throw sharedMemory('ERI', 'outBearPower', 'prices.low');
+  }
+  if (overlapsPartly(outBearPower, inCloseF64)) {
+    throw sharedMemory('ERI', 'outBearPower', 'prices.close');
+  }
+  if (overlaps(outBullPower, outBearPower)) {
+    throw sharedMemory('ERI', 'outBullPower', 'outBearPower');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = eriImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('ERI', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link eri}, {@link eriLookback}, {@link eriDisplayShift},
+ * {@link eriOpen} and {@link eriOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface EriOptions {
+  /**
+   * Number of bars in the EMA of close (default 13; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outBullPower`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outBullPower?: Float64Array | undefined;
+  /**
+   * Buffer for `outBearPower`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outBearPower?: Float64Array | undefined;
+}
+
+/** What {@link eri} returns, and {@link eriOpenAndFill} with its stream. */
+export interface EriResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * High minus the EMA of close. `outBullPower[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  outBullPower: Float64Array;
+  /**
+   * Low minus the EMA of close. `outBearPower[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  outBearPower: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link eri} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link EriOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function eriLookback(options?: EriOptions): number {
+  const o = optionsOf('ERI lookback', options);
+  return eriLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('ERI lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link eri}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link EriOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function eriDisplayShift(outputIdx: number, options?: EriOptions): number {
+  const o = optionsOf('ERI displayShift', options);
+  return eriDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('ERI displayShift', o.core));
+}
+
 /**
  * Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from *Trading
  * for a Living* (1993) — how far the bar's high and low sit from an EMA of the
@@ -211,31 +348,24 @@ export function eriImpl(
  * - No MAType parameter: every canonical source fixes the EMA, and a selectable
  *   average would invent a variant nobody ships.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link eriLookback} is a success with
- * `count` 0.
+ * `outBullPower[k]` is the value at input bar `begIdx + k`; every output is
+ * exactly as long as the number of values written, and nothing is padded. A range
+ * that ends before {@link eriLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inHigh - High price series.
- * @param inLow - Low price series.
- * @param inClose - Close price series.
- * @param optInTimePeriod - Number of bars in the EMA of close (default 13; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outBullPower - High minus the EMA of close. Must hold the values produced
- *   and never be empty; the input length always suffices.
- * @param outBearPower - Low minus the EMA of close. Must hold the values produced
- *   and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `high`: High
+ *   price series. `low`: Low price series. `close`: Close price series.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link EriOptions}.
+ * @returns `begIdx` and the values; see {@link EriResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output,
- *   two outputs sharing memory or an output sharing memory with a `Float64Array`
- *   input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -247,56 +377,32 @@ export function eriImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const bullPower = new Float64Array(high.length);
- * const bearPower = new Float64Array(high.length);
- * const { begIdx, count } = eri(
- *   0, high.length - 1,
- *   high, low, close,
- *   13,
- *   bullPower, bearPower,
- * );
- * // bullPower[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, outBullPower, outBearPower } = eri({ high, low, close }, {
+ *   timePeriod: 13,
+ * });
+ * // outBullPower[k] is the value at bar begIdx + k
  * ```
  * @see [`ema`](https://ta-lib.org/functions/ema)
  * @see [`efi`](https://ta-lib.org/functions/efi)
  * @see [`macd`](https://ta-lib.org/functions/macd)
  */
-export function eri(
-  startIdx: number,
-  endIdx: number,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInTimePeriod: number,
-  outBullPower: Float64Array,
-  outBearPower: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('ERI', 'startIdx', startIdx);
-  endIdx = requireInt32('ERI', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('ERI', 'optInTimePeriod', optInTimePeriod);
-  requireIndexRange('ERI', startIdx, endIdx);
-  const guardStart = clampedStart('ERI', startIdx, eriLookback(optInTimePeriod, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('ERI', 'inHigh', inHigh, guardInLen);
-  requireLength('ERI', 'inLow', inLow, guardInLen);
-  requireLength('ERI', 'inClose', inClose, guardInLen);
-  requireOutput('ERI', 'outBullPower', outBullPower, guardOutLen, Float64Array);
-  requireOutput('ERI', 'outBearPower', outBearPower, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if (overlapsPartly(outBullPower, inHighF64) || overlapsPartly(outBullPower, inLowF64) || overlapsPartly(outBullPower, inCloseF64) || overlapsPartly(outBearPower, inHighF64) || overlapsPartly(outBearPower, inLowF64) || overlapsPartly(outBearPower, inCloseF64) || overlaps(outBullPower, outBearPower)) {
-    throw failure('ERI', RetCode.BAD_PARAM);
+export function eri(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: EriOptions): EriResult {
+  requireArgument('ERI', 'prices', prices);
+  const o = optionsOf('ERI', options);
+  if (o.endIdx === undefined) {
+    requireSeries('ERI', 'prices.high', prices.high);
+    requireSeries('ERI', 'prices.low', prices.low);
+    requireSeries('ERI', 'prices.close', prices.close);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = eriImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('ERI', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('ERI', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.high.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, eriLookbackPositional(optInTimePeriod, core), prices.high, prices.low, prices.close);
+  const outBullPower = o.outBullPower === undefined ? new Float64Array(capacity) : o.outBullPower;
+  const outBearPower = o.outBearPower === undefined ? new Float64Array(capacity) : o.outBearPower;
+  const range = eriPositional(startIdx, endIdx, prices.high, prices.low, prices.close, optInTimePeriod, outBullPower, outBearPower, core);
+  return { begIdx: range.begIdx, outBullPower: outBullPower.subarray(0, range.count), outBearPower: outBearPower.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -362,21 +468,23 @@ export class EriStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inHigh - The bar's `inHigh` value: High price series.
    * @param inLow - The bar's `inLow` value: Low price series.
    * @param inClose - The bar's `inClose` value: Close price series.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link EriOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out: EriOut): void {
+  update(inHigh: number, inLow: number, inClose: number, out?: EriOut): EriOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('ERI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('ERI update', 'EriOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
@@ -384,23 +492,28 @@ export class EriStream {
     }
     eriStepImpl(this, inHigh, inLow, inClose);
     this.outRangeCount++;
-    out.bullPower = this.cur_outBullPower;
-    out.bearPower = this.cur_outBearPower;
+    if (out === undefined) {
+      out = new EriOut();
+    }
+    out.outBullPower = this.cur_outBullPower;
+    out.outBearPower = this.cur_outBearPower;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inHigh - The bar's `inHigh` value: High price series.
    * @param inLow - The bar's `inLow` value: Low price series.
    * @param inClose - The bar's `inClose` value: Close price series.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link EriOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out: EriOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inHigh: number, inLow: number, inClose: number, out?: EriOut): EriOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('ERI peek', 'EriOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
@@ -428,21 +541,31 @@ export class EriStream {
       cur_outBullPower = tempHT - prevMA;
       cur_outBearPower = tempLT - prevMA;
     }
-    out.bullPower = cur_outBullPower;
-    out.bearPower = cur_outBearPower;
+    if (out === undefined) {
+      out = new EriOut();
+    }
+    out.outBullPower = cur_outBullPower;
+    out.outBearPower = cur_outBearPower;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link EriOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: EriOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: EriOut): EriOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('ERI value', 'EriOut');
     }
-    out.bullPower = this.cur_outBullPower;
-    out.bearPower = this.cur_outBearPower;
+    if (out === undefined) {
+      out = new EriOut();
+    }
+    out.outBullPower = this.cur_outBullPower;
+    out.outBearPower = this.cur_outBearPower;
+    return out;
   }
 
   /**
@@ -466,14 +589,15 @@ export class EriStream {
 }
 
 /**
- * The outputs of one ERI bar, written into an object the caller owns and reuses:
- * valid until the next call that writes it.
+ * The outputs of one ERI bar, as `update`, `peek` and `value` return them. Passed
+ * back to one of them, it is filled and returned again, with no allocation; it
+ * holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class EriOut {
   /** High minus the EMA of close. */
-  bullPower: number = 0;
+  outBullPower: number = NaN;
   /** Low minus the EMA of close. */
-  bearPower: number = 0;
+  outBearPower: number = NaN;
 }
 
 function eriStepImpl(sp: EriStream, inHigh: number, inLow: number, inClose: number): void {
@@ -553,7 +677,7 @@ function eriOpenImpl(
      * No division in the per-bar map: no 0/0, no NaN path (#112 by
      * construction). Bull >= Bear on every bar since high >= low.
      */
-    lookbackTotal = eriLookback(optInTimePeriod, core);
+    lookbackTotal = eriLookbackPositional(optInTimePeriod, core);
     if (startIdx < lookbackTotal) {
       startIdx = lookbackTotal;
     }
@@ -616,7 +740,7 @@ function eriOpenImpl(
      * No division in the per-bar map: no 0/0, no NaN path (#112 by
      * construction). Bull >= Bear on every bar since high >= low.
      */
-    lookbackTotal = eriLookback(optInTimePeriod, core);
+    lookbackTotal = eriLookbackPositional(optInTimePeriod, core);
     if (startIdx < lookbackTotal) {
       startIdx = lookbackTotal;
     }
@@ -701,7 +825,10 @@ export function eriOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('ERI openAndFill', inHigh.length, startIdx, eriLookback(optInTimePeriod, core));
+    throw insufficientHistory('ERI openAndFill', inHigh.length, startIdx, eriLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && eriLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('ERI openAndFill', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('ERI openAndFill', retCode);
 }
@@ -727,34 +854,123 @@ export function eriOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('ERI open', inHigh.length, startIdx, eriLookback(optInTimePeriod, core));
+    throw insufficientHistory('ERI open', inHigh.length, startIdx, eriLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && eriLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('ERI open', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('ERI open', retCode);
+}
+
+/** @internal */
+export function eriOpenPositional(
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInTimePeriod: number,
+  core: Core = Core.DEFAULT,
+): EriStream {
+  optInTimePeriod = requireInt32('ERI open', 'timePeriod', optInTimePeriod);
+  requireArgument('ERI open', 'prices.high', inHigh);
+  requireHistory('ERI open', inHigh.length);
+  requireArgument('ERI open', 'prices.low', inLow);
+  requireArgument('ERI open', 'prices.close', inClose);
+  requireHistoryLength('ERI open', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('ERI open', 'prices.close', inClose.length, inHigh.length);
+  return eriOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), 0, optInTimePeriod);
+}
+
+/** @internal */
+export function eriOpenAndFillPositional(
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInTimePeriod: number,
+  outBullPower: Float64Array,
+  outBearPower: Float64Array,
+  core: Core = Core.DEFAULT,
+): EriStream {
+  optInTimePeriod = requireInt32('ERI openAndFill', 'timePeriod', optInTimePeriod);
+  requireArgument('ERI openAndFill', 'prices.high', inHigh);
+  requireHistory('ERI openAndFill', inHigh.length);
+  requireArgument('ERI openAndFill', 'prices.low', inLow);
+  requireArgument('ERI openAndFill', 'prices.close', inClose);
+  const guardLookback = eriLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('ERI openAndFill', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardOutLen = openFillCount('ERI openAndFill', inHigh.length, guardLookback);
+  requireHistoryLength('ERI openAndFill', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('ERI openAndFill', 'prices.close', inClose.length, inHigh.length);
+  requireOutput('ERI openAndFill', 'outBullPower', outBullPower, guardOutLen, Float64Array);
+  requireOutput('ERI openAndFill', 'outBearPower', outBearPower, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (outBullPower.buffer === inHighF64.buffer && outBullPower.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('ERI openAndFill', 'outBullPower', 'prices.high');
+  }
+  if (outBullPower.buffer === inLowF64.buffer && outBullPower.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('ERI openAndFill', 'outBullPower', 'prices.low');
+  }
+  if (outBullPower.buffer === inCloseF64.buffer && outBullPower.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('ERI openAndFill', 'outBullPower', 'prices.close');
+  }
+  if (outBearPower.buffer === inHighF64.buffer && outBearPower.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('ERI openAndFill', 'outBearPower', 'prices.high');
+  }
+  if (outBearPower.buffer === inLowF64.buffer && outBearPower.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('ERI openAndFill', 'outBearPower', 'prices.low');
+  }
+  if (outBearPower.buffer === inCloseF64.buffer && outBearPower.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('ERI openAndFill', 'outBearPower', 'prices.close');
+  }
+  if (outBullPower.buffer === outBearPower.buffer && outBullPower.byteOffset === outBearPower.byteOffset) {
+    throw sharedMemory('ERI openAndFill', 'outBullPower', 'outBearPower');
+  }
+  if (guardOutLen > 0 && overlaps(outBullPower, inHighF64)) {
+    throw sharedMemory('ERI openAndFill', 'outBullPower', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outBullPower, inLowF64)) {
+    throw sharedMemory('ERI openAndFill', 'outBullPower', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outBullPower, inCloseF64)) {
+    throw sharedMemory('ERI openAndFill', 'outBullPower', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outBearPower, inHighF64)) {
+    throw sharedMemory('ERI openAndFill', 'outBearPower', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outBearPower, inLowF64)) {
+    throw sharedMemory('ERI openAndFill', 'outBearPower', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outBearPower, inCloseF64)) {
+    throw sharedMemory('ERI openAndFill', 'outBearPower', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outBullPower, outBearPower)) {
+    throw sharedMemory('ERI openAndFill', 'outBullPower', 'outBearPower');
+  }
+  return eriOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outBullPower, outBearPower);
 }
 
 /**
  * Opens a live ERI stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link eri} there.
  *
- * @param inHigh - Warm-up history. High price series. Every history has the same
- *   length.
- * @param inLow - Warm-up history. Low price series. Every history has the same
- *   length.
- * @param inClose - Warm-up history. Close price series. Every history has the same
- *   length.
- * @param optInTimePeriod - Number of bars in the EMA of close (default 13; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price series. `low`: Low price series. `close`: Close price
+ *   series.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link EriOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `eriLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
  *   an integer parameter that is not an int32, a parameter outside its range or
  *   histories of different lengths.
  *
  * @example
  * ```ts
- * import { EriOut, eriOpen } from 'ta-lib';
+ * import { eriOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
  *   101 + 10 * Math.sin(0.1 * i));
@@ -762,58 +978,39 @@ export function eriOpenInternal(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = eriOpen(high, low, close, 13);
- * const peeked = new EriOut();
- * const updated = new EriOut();
- * stream.peek(101.4, 99.1, 100.9, peeked); // a forming bar: commits nothing
- * stream.update(101.4, 99.1, 100.9, updated); // the bar closes
+ * const stream = eriOpen({ high, low, close }, { timePeriod: 13 });
+ * const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
+ * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function eriOpen(
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInTimePeriod: number,
-  core: Core = Core.DEFAULT,
-): EriStream {
-  optInTimePeriod = requireInt32('ERI open', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('ERI open', 'inHigh', inHigh);
-  requireHistory('ERI open', inHigh.length);
-  requireArgument('ERI open', 'inLow', inLow);
-  requireArgument('ERI open', 'inClose', inClose);
-  requireHistoryLength('ERI open', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('ERI open', 'inClose', inClose.length, inHigh.length);
-  return eriOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), 0, optInTimePeriod);
+export function eriOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: EriOptions): EriStream {
+  requireArgument('ERI open', 'prices', prices);
+  const o = optionsOf('ERI open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('ERI open', o.core);
+  return eriOpenPositional(prices.high, prices.low, prices.close, optInTimePeriod, core);
 }
 
 /**
- * {@link eriOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link eri}. The range written is the stream's
- * `outRange()`.
+ * {@link eriOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link eri}.
  *
- * @param inHigh - Warm-up history. High price series. Every history has the same
- *   length.
- * @param inLow - Warm-up history. Low price series. Every history has the same
- *   length.
- * @param inClose - Warm-up history. Close price series. Every history has the same
- *   length.
- * @param optInTimePeriod - Number of bars in the EMA of close (default 13; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outBullPower - High minus the EMA of close. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param outBearPower - Low minus the EMA of close. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price series. `low`: Low price series. `close`: Close price
+ *   series.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link EriOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link eri} returns them; the range is the stream's
+ *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `eriLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
  *   an integer parameter that is not an int32, a parameter outside its range,
- *   histories of different lengths or an output too short or starting where another
- *   output or a `Float64Array` input starts, or, on a history long enough to open,
- *   one sharing memory with another output or a `Float64Array` input.
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -825,40 +1022,24 @@ export function eriOpen(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const bullPower = new Float64Array(high.length);
- * const bearPower = new Float64Array(high.length);
- * const stream = eriOpenAndFill(high, low, close, 13, bullPower, bearPower);
- * const { begIdx, count } = stream.outRange();
- * // bullPower[k] is the value at bar begIdx + k, for k < count
+ * const {
+ *   stream,
+ *   begIdx,
+ *   outBullPower,
+ *   outBearPower,
+ * } = eriOpenAndFill({ high, low, close }, { timePeriod: 13 });
+ * // outBullPower[k] is the value at bar begIdx + k
  * ```
  */
-export function eriOpenAndFill(
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInTimePeriod: number,
-  outBullPower: Float64Array,
-  outBearPower: Float64Array,
-  core: Core = Core.DEFAULT,
-): EriStream {
-  optInTimePeriod = requireInt32('ERI openAndFill', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('ERI openAndFill', 'inHigh', inHigh);
-  requireHistory('ERI openAndFill', inHigh.length);
-  requireArgument('ERI openAndFill', 'inLow', inLow);
-  requireArgument('ERI openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('ERI openAndFill', inHigh.length, eriLookback(optInTimePeriod, core));
-  requireHistoryLength('ERI openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('ERI openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireOutput('ERI openAndFill', 'outBullPower', outBullPower, guardOutLen, Float64Array);
-  requireOutput('ERI openAndFill', 'outBearPower', outBearPower, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if ((outBullPower.buffer === inHighF64.buffer && outBullPower.byteOffset === inHighF64.byteOffset) || (outBullPower.buffer === inLowF64.buffer && outBullPower.byteOffset === inLowF64.byteOffset) || (outBullPower.buffer === inCloseF64.buffer && outBullPower.byteOffset === inCloseF64.byteOffset) || (outBearPower.buffer === inHighF64.buffer && outBearPower.byteOffset === inHighF64.byteOffset) || (outBearPower.buffer === inLowF64.buffer && outBearPower.byteOffset === inLowF64.byteOffset) || (outBearPower.buffer === inCloseF64.buffer && outBearPower.byteOffset === inCloseF64.byteOffset) || (outBullPower.buffer === outBearPower.buffer && outBullPower.byteOffset === outBearPower.byteOffset)) {
-    throw streamFailure('ERI openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outBullPower, inHighF64) || overlaps(outBullPower, inLowF64) || overlaps(outBullPower, inCloseF64) || overlaps(outBearPower, inHighF64) || overlaps(outBearPower, inLowF64) || overlaps(outBearPower, inCloseF64) || overlaps(outBullPower, outBearPower))) {
-    throw streamFailure('ERI openAndFill', RetCode.BAD_PARAM);
-  }
-  return eriOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outBullPower, outBearPower);
+export function eriOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: EriOptions): EriResult & { stream: EriStream } {
+  requireArgument('ERI openAndFill', 'prices', prices);
+  const o = optionsOf('ERI openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('ERI openAndFill', o.core);
+  const capacity = fillCapacity(eriLookbackPositional(optInTimePeriod, core), prices.high, prices.low, prices.close);
+  const outBullPower = o.outBullPower === undefined ? new Float64Array(capacity) : o.outBullPower;
+  const outBearPower = o.outBearPower === undefined ? new Float64Array(capacity) : o.outBearPower;
+  const stream = eriOpenAndFillPositional(prices.high, prices.low, prices.close, optInTimePeriod, outBullPower, outBearPower, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outBullPower: outBullPower.subarray(0, range.count), outBearPower: outBearPower.subarray(0, range.count) };
 }

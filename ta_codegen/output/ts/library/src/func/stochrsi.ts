@@ -17,33 +17,16 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { RsiStream, rsi, rsiLookback, rsiOpenAndFillInternal } from './rsi.ts';
-import { StochfOut, StochfStream, stochf, stochfLookback, stochfOpenAndFillInternal } from './stochf.ts';
+import { RsiStream, rsiLookbackPositional, rsiOpenAndFillInternal, rsiPositional } from './rsi.ts';
+import { StochfOut, StochfStream, stochfLookbackPositional, stochfOpenAndFillInternal, stochfPositional } from './stochf.ts';
 
-/**
- * Number of leading input bars {@link stochrsi} consumes before its first value:
- * the index of the first bar with a value when the whole series is requested.
- *
- * @param optInTimePeriod - RSI period (default 14; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastK_Period - Lookback window for the RSI min/max stochastic
- *   (default 5; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastD_Period - Smoothing period for %D (default 3; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastD_MAType - MA type used to smooth %D (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function stochrsiLookback(optInTimePeriod: number, optInFastK_Period: number, optInFastD_Period: number, optInFastD_MAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function stochrsiLookbackPositional(optInTimePeriod: number, optInFastK_Period: number, optInFastD_Period: number, optInFastD_MAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -77,34 +60,13 @@ export function stochrsiLookback(optInTimePeriod: number, optInFastK_Period: num
     return -1;
   }
   let retValue = 0;
-  retValue = rsiLookback(optInTimePeriod, core) + stochfLookback(optInFastK_Period, optInFastD_Period, (optInFastD_MAType as MAType), core);
+  retValue = rsiLookbackPositional(optInTimePeriod, core) + stochfLookbackPositional(optInFastK_Period, optInFastD_Period, (optInFastD_MAType as MAType), core);
   return retValue;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link stochrsi}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - RSI period (default 14; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastK_Period - Lookback window for the RSI min/max stochastic
- *   (default 5; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastD_Period - Smoothing period for %D (default 3; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastD_MAType - MA type used to smooth %D (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function stochrsiDisplayShift(optInTimePeriod: number, optInFastK_Period: number, optInFastD_Period: number, optInFastD_MAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (stochrsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, core) < 0) {
+/** @internal */
+export function stochrsiDisplayShiftPositional(optInTimePeriod: number, optInFastK_Period: number, optInFastD_Period: number, optInFastD_MAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (stochrsiLookbackPositional(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 2) {
@@ -192,8 +154,8 @@ export function stochrsiImpl(
   outBegIdx.value = 0;
   outNBElement.value = 0;
   /* Adjust startIdx to account for the lookback period. */
-  lookbackSTOCHF = stochfLookback(optInFastK_Period, optInFastD_Period, (optInFastD_MAType as MAType), core);
-  lookbackTotal = rsiLookback(optInTimePeriod, core) + lookbackSTOCHF;
+  lookbackSTOCHF = stochfLookbackPositional(optInFastK_Period, optInFastD_Period, (optInFastD_MAType as MAType), core);
+  lookbackTotal = rsiLookbackPositional(optInTimePeriod, core) + lookbackSTOCHF;
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -206,7 +168,7 @@ export function stochrsiImpl(
   outBegIdx.value = startIdx;
   tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
   tempRSIBuffer = new Float64Array(tempArraySize);
-  const _xr0 = rsi(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, tempRSIBuffer, core);
+  const _xr0 = rsiPositional(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, tempRSIBuffer, core);
   outBegIdx1.value = _xr0.begIdx;
   outNbElement1.value = _xr0.count;
   retCode = RetCode.SUCCESS;
@@ -215,7 +177,7 @@ export function stochrsiImpl(
     outNBElement.value = 0;
     return retCode;
   }
-  const _xr1 = stochf(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, (optInFastD_MAType as MAType), outFastK, outFastD, core);
+  const _xr1 = stochfPositional(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, (optInFastD_MAType as MAType), outFastK, outFastD, core);
   outBegIdx2.value = _xr1.begIdx;
   outNBElement.value = _xr1.count;
   retCode = RetCode.SUCCESS;
@@ -225,6 +187,170 @@ export function stochrsiImpl(
     return retCode;
   }
   return RetCode.SUCCESS;
+}
+
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['fastKPeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['fastDPeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['fastDMaType', Core.INTEGER_DEFAULT, MATypes.Min, MATypes.Max, 'a MAType']] as const;
+
+/** @internal */
+export function stochrsiPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInFastK_Period: number,
+  optInFastD_Period: number,
+  optInFastD_MAType: MAType | typeof Core.INTEGER_DEFAULT,
+  outFastK: Float64Array,
+  outFastD: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('STOCHRSI', 'startIdx', startIdx);
+  endIdx = requireInt32('STOCHRSI', 'endIdx', endIdx);
+  optInTimePeriod = requireInt32('STOCHRSI', 'timePeriod', optInTimePeriod);
+  optInFastK_Period = requireInt32('STOCHRSI', 'fastKPeriod', optInFastK_Period);
+  optInFastD_Period = requireInt32('STOCHRSI', 'fastDPeriod', optInFastD_Period);
+  optInFastD_MAType = requireInt32('STOCHRSI', 'fastDMaType', optInFastD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireIndexRange('STOCHRSI', startIdx, endIdx);
+  const guardLookback = stochrsiLookbackPositional(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('STOCHRSI', PARAM_RANGES, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+  }
+  const guardStart = clampedStart('STOCHRSI', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('STOCHRSI', 'real', inReal, guardInLen);
+  requireOutput('STOCHRSI', 'outFastK', outFastK, guardOutLen, Float64Array);
+  requireOutput('STOCHRSI', 'outFastD', outFastD, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outFastK, inRealF64)) {
+    throw sharedMemory('STOCHRSI', 'outFastK', 'real');
+  }
+  if (overlapsPartly(outFastD, inRealF64)) {
+    throw sharedMemory('STOCHRSI', 'outFastD', 'real');
+  }
+  if (overlaps(outFastK, outFastD)) {
+    throw sharedMemory('STOCHRSI', 'outFastK', 'outFastD');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = stochrsiImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('STOCHRSI', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link stochrsi}, {@link stochrsiLookback},
+ * {@link stochrsiDisplayShift}, {@link stochrsiOpen} and
+ * {@link stochrsiOpenAndFill}. Every key is optional: an omitted or `undefined`
+ * key takes its default, and a call ignores the keys it has no use for.
+ */
+export interface StochrsiOptions {
+  /**
+   * RSI period (default 14; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the
+   * default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * Lookback window for the RSI min/max stochastic (default 5; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  fastKPeriod?: number | undefined;
+  /**
+   * Smoothing period for %D (default 3; range 1 to 100000; `Core.INTEGER_DEFAULT`
+   * selects the default).
+   */
+  fastDPeriod?: number | undefined;
+  /**
+   * MA type used to smooth %D (default `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA,
+   * 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+   * 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT`
+   * selects the default).
+   */
+  fastDMaType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outFastK`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outFastK?: Float64Array | undefined;
+  /**
+   * Buffer for `outFastD`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outFastD?: Float64Array | undefined;
+}
+
+/** What {@link stochrsi} returns, and {@link stochrsiOpenAndFill} with its stream. */
+export interface StochrsiResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Unsmoothed stochastic of the RSI (raw %K) `outFastK[k]` is the value at input
+   * bar `begIdx + k`.
+   */
+  outFastK: Float64Array;
+  /**
+   * %K smoothed over FastD_Period (signal line) `outFastD[k]` is the value at input
+   * bar `begIdx + k`.
+   */
+  outFastD: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link stochrsi} consumes before its first value:
+ * the index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link StochrsiOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function stochrsiLookback(options?: StochrsiOptions): number {
+  const o = optionsOf('STOCHRSI lookback', options);
+  return stochrsiLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT), orDefault(o.fastDPeriod, Core.INTEGER_DEFAULT), orDefault(o.fastDMaType, Core.INTEGER_DEFAULT), coreOf('STOCHRSI lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link stochrsi}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link StochrsiOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function stochrsiDisplayShift(outputIdx: number, options?: StochrsiOptions): number {
+  const o = optionsOf('STOCHRSI displayShift', options);
+  return stochrsiDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT), orDefault(o.fastDPeriod, Core.INTEGER_DEFAULT), orDefault(o.fastDMaType, Core.INTEGER_DEFAULT), outputIdx, coreOf('STOCHRSI displayShift', o.core));
 }
 
 /**
@@ -241,37 +367,23 @@ export function stochrsiImpl(
  * - When the RSI's recent range is zero, %K is set to 0 instead of being
  *   undefined.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link stochrsiLookback} is a success with
- * `count` 0.
+ * `outFastK[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link stochrsiLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Source series fed into the RSI calculation.
- * @param optInTimePeriod - RSI period (default 14; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastK_Period - Lookback window for the RSI min/max stochastic
- *   (default 5; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastD_Period - Smoothing period for %D (default 3; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastD_MAType - MA type used to smooth %D (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outFastK - Unsmoothed stochastic of the RSI (raw %K) Must hold the values
- *   produced and never be empty; the input length always suffices.
- * @param outFastD - %K smoothed over FastD_Period (signal line) Must hold the
- *   values produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Source series fed into the RSI calculation.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link StochrsiOptions}.
+ * @returns `begIdx` and the values; see {@link StochrsiResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output,
- *   two outputs sharing memory or an output sharing memory with a `Float64Array`
- *   input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -279,57 +391,36 @@ export function stochrsiImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const fastK = new Float64Array(data.length);
- * const fastD = new Float64Array(data.length);
- * const { begIdx, count } = stochrsi(
- *   0, data.length - 1,
- *   data,
- *   14, 5, 3, MAType.SMA,
- *   fastK, fastD,
- * );
- * // fastK[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, outFastK, outFastD } = stochrsi(data, {
+ *   timePeriod: 14,
+ *   fastKPeriod: 5,
+ *   fastDPeriod: 3,
+ *   fastDMaType: MAType.SMA,
+ * });
+ * // outFastK[k] is the value at bar begIdx + k
  * ```
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  * @see [`stochf`](https://ta-lib.org/functions/stochf)
  * @see [`stoch`](https://ta-lib.org/functions/stoch)
  * @see [`ma`](https://ta-lib.org/functions/ma)
  */
-export function stochrsi(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInFastK_Period: number,
-  optInFastD_Period: number,
-  optInFastD_MAType: MAType | typeof Core.INTEGER_DEFAULT,
-  outFastK: Float64Array,
-  outFastD: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('STOCHRSI', 'startIdx', startIdx);
-  endIdx = requireInt32('STOCHRSI', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('STOCHRSI', 'optInTimePeriod', optInTimePeriod);
-  optInFastK_Period = requireInt32('STOCHRSI', 'optInFastK_Period', optInFastK_Period);
-  optInFastD_Period = requireInt32('STOCHRSI', 'optInFastD_Period', optInFastD_Period);
-  optInFastD_MAType = requireInt32('STOCHRSI', 'optInFastD_MAType', optInFastD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireIndexRange('STOCHRSI', startIdx, endIdx);
-  const guardStart = clampedStart('STOCHRSI', startIdx, stochrsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('STOCHRSI', 'inReal', inReal, guardInLen);
-  requireOutput('STOCHRSI', 'outFastK', outFastK, guardOutLen, Float64Array);
-  requireOutput('STOCHRSI', 'outFastD', outFastD, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outFastK, inRealF64) || overlapsPartly(outFastD, inRealF64) || overlaps(outFastK, outFastD)) {
-    throw failure('STOCHRSI', RetCode.BAD_PARAM);
+export function stochrsi(real: ArrayLike<number>, options?: StochrsiOptions): StochrsiResult {
+  const o = optionsOf('STOCHRSI', options);
+  if (o.endIdx === undefined) {
+    requireSeries('STOCHRSI', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = stochrsiImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('STOCHRSI', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);
+  const optInFastD_Period = orDefault(o.fastDPeriod, Core.INTEGER_DEFAULT);
+  const optInFastD_MAType = orDefault(o.fastDMaType, Core.INTEGER_DEFAULT);
+  const core = coreOf('STOCHRSI', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, stochrsiLookbackPositional(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, core), real);
+  const outFastK = o.outFastK === undefined ? new Float64Array(capacity) : o.outFastK;
+  const outFastD = o.outFastD === undefined ? new Float64Array(capacity) : o.outFastD;
+  const range = stochrsiPositional(startIdx, endIdx, real, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastK, outFastD, core);
+  return { begIdx: range.begIdx, outFastK: outFastK.subarray(0, range.count), outFastD: outFastD.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -399,20 +490,22 @@ export class StochrsiStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inReal - The bar's `inReal` value: Source series fed into the RSI
    *   calculation.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link StochrsiOut}
+   *   when omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out: StochrsiOut): void {
+  update(inReal: number, out?: StochrsiOut): StochrsiOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('STOCHRSI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('STOCHRSI update', 'StochrsiOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -420,22 +513,27 @@ export class StochrsiStream {
     }
     stochrsiStepImpl(this, inReal);
     this.outRangeCount++;
-    out.fastK = this.cur_outFastK;
-    out.fastD = this.cur_outFastD;
+    if (out === undefined) {
+      out = new StochrsiOut();
+    }
+    out.outFastK = this.cur_outFastK;
+    out.outFastD = this.cur_outFastD;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inReal - The bar's `inReal` value: Source series fed into the RSI
    *   calculation.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link StochrsiOut}
+   *   when omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number, out: StochrsiOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inReal: number, out?: StochrsiOut): StochrsiOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('STOCHRSI peek', 'StochrsiOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -449,24 +547,34 @@ export class StochrsiStream {
     {
       const subOut1 = (scratchStochfOut ??= new StochfOut());
       sp.sub1.peek(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer, subOut1);
-      cur_outFastK = subOut1.fastK;
-      cur_outFastD = subOut1.fastD;
+      cur_outFastK = subOut1.outFastK;
+      cur_outFastD = subOut1.outFastD;
     }
-    out.fastK = cur_outFastK;
-    out.fastD = cur_outFastD;
+    if (out === undefined) {
+      out = new StochrsiOut();
+    }
+    out.outFastK = cur_outFastK;
+    out.outFastD = cur_outFastD;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link StochrsiOut}
+   *   when omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: StochrsiOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: StochrsiOut): StochrsiOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('STOCHRSI value', 'StochrsiOut');
     }
-    out.fastK = this.cur_outFastK;
-    out.fastD = this.cur_outFastD;
+    if (out === undefined) {
+      out = new StochrsiOut();
+    }
+    out.outFastK = this.cur_outFastK;
+    out.outFastD = this.cur_outFastD;
+    return out;
   }
 
   /**
@@ -492,14 +600,15 @@ export class StochrsiStream {
 }
 
 /**
- * The outputs of one STOCHRSI bar, written into an object the caller owns and
- * reuses: valid until the next call that writes it.
+ * The outputs of one STOCHRSI bar, as `update`, `peek` and `value` return them.
+ * Passed back to one of them, it is filled and returned again, with no allocation;
+ * it holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class StochrsiOut {
   /** Unsmoothed stochastic of the RSI (raw %K) */
-  fastK: number = 0;
+  outFastK: number = NaN;
   /** %K smoothed over FastD_Period (signal line) */
-  fastD: number = 0;
+  outFastD: number = NaN;
 }
 
 function stochrsiStepImpl(sp: StochrsiStream, inReal: number): void {
@@ -510,8 +619,8 @@ function stochrsiStepImpl(sp: StochrsiStream, inReal: number): void {
   {
     const subOut1 = (scratchStochfOut ??= new StochfOut());
     sp.sub1.update(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer, subOut1);
-    cur_outFastK = subOut1.fastK;
-    cur_outFastD = subOut1.fastD;
+    cur_outFastK = subOut1.outFastK;
+    cur_outFastD = subOut1.outFastD;
   }
   sp.cur_outFastK = cur_outFastK;
   sp.cur_outFastD = cur_outFastD;
@@ -572,7 +681,7 @@ function stochrsiOpenImpl(
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
   }
-  if (historyLen < stochrsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType as MAType, core) + 1) {
+  if (historyLen < stochrsiLookbackPositional(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType as MAType, core) + 1) {
     return RetCode.INSUFFICIENT_HISTORY;
   }
   const sc_outFastK = outStride === 1 ? outFastK : new Float64Array(historyLen);
@@ -604,8 +713,8 @@ function stochrsiOpenImpl(
   outBegIdx.value = 0;
   outNBElement.value = 0;
   /* Adjust startIdx to account for the lookback period. */
-  lookbackSTOCHF = stochfLookback(optInFastK_Period, optInFastD_Period, (optInFastD_MAType as MAType), core);
-  lookbackTotal = rsiLookback(optInTimePeriod, core) + lookbackSTOCHF;
+  lookbackSTOCHF = stochfLookbackPositional(optInFastK_Period, optInFastD_Period, (optInFastD_MAType as MAType), core);
+  lookbackTotal = rsiLookbackPositional(optInTimePeriod, core) + lookbackSTOCHF;
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -666,7 +775,10 @@ export function stochrsiOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('STOCHRSI openAndFill', inReal.length, startIdx, stochrsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType as MAType, core));
+    throw insufficientHistory('STOCHRSI openAndFill', inReal.length, startIdx, stochrsiLookbackPositional(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && stochrsiLookbackPositional(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType as MAType, core) < 0) {
+    throw rejectedParams('STOCHRSI openAndFill', PARAM_RANGES, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
   }
   throw streamFailure('STOCHRSI openAndFill', retCode);
 }
@@ -693,47 +805,16 @@ export function stochrsiOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('STOCHRSI open', inReal.length, startIdx, stochrsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType as MAType, core));
+    throw insufficientHistory('STOCHRSI open', inReal.length, startIdx, stochrsiLookbackPositional(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && stochrsiLookbackPositional(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType as MAType, core) < 0) {
+    throw rejectedParams('STOCHRSI open', PARAM_RANGES, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
   }
   throw streamFailure('STOCHRSI open', retCode);
 }
 
-/**
- * Opens a live STOCHRSI stream over the warm-up history: `value()` starts at the
- * last history bar, bit-identical to {@link stochrsi} there.
- *
- * @param inReal - Warm-up history. Source series fed into the RSI calculation.
- * @param optInTimePeriod - RSI period (default 14; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastK_Period - Lookback window for the RSI min/max stochastic
- *   (default 5; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastD_Period - Smoothing period for %D (default 3; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastD_MAType - MA type used to smooth %D (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `stochrsiLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32 or a parameter outside its range.
- *
- * @example
- * ```ts
- * import { MAType, StochrsiOut, stochrsiOpen } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const stream = stochrsiOpen(data, 14, 5, 3, MAType.SMA);
- * const peeked = new StochrsiOut();
- * const updated = new StochrsiOut();
- * stream.peek(100.9, peeked); // a forming bar: commits nothing
- * stream.update(100.9, updated); // the bar closes
- * ```
- */
-export function stochrsiOpen(
+/** @internal */
+export function stochrsiOpenPositional(
   inReal: ArrayLike<number>,
   optInTimePeriod: number,
   optInFastK_Period: number,
@@ -741,61 +822,17 @@ export function stochrsiOpen(
   optInFastD_MAType: MAType | typeof Core.INTEGER_DEFAULT,
   core: Core = Core.DEFAULT,
 ): StochrsiStream {
-  optInTimePeriod = requireInt32('STOCHRSI open', 'optInTimePeriod', optInTimePeriod);
-  optInFastK_Period = requireInt32('STOCHRSI open', 'optInFastK_Period', optInFastK_Period);
-  optInFastD_Period = requireInt32('STOCHRSI open', 'optInFastD_Period', optInFastD_Period);
-  optInFastD_MAType = requireInt32('STOCHRSI open', 'optInFastD_MAType', optInFastD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('STOCHRSI open', 'inReal', inReal);
+  optInTimePeriod = requireInt32('STOCHRSI open', 'timePeriod', optInTimePeriod);
+  optInFastK_Period = requireInt32('STOCHRSI open', 'fastKPeriod', optInFastK_Period);
+  optInFastD_Period = requireInt32('STOCHRSI open', 'fastDPeriod', optInFastD_Period);
+  optInFastD_MAType = requireInt32('STOCHRSI open', 'fastDMaType', optInFastD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('STOCHRSI open', 'real', inReal);
   requireHistory('STOCHRSI open', inReal.length);
   return stochrsiOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
 }
 
-/**
- * {@link stochrsiOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link stochrsi}. The range written is the
- * stream's `outRange()`.
- *
- * @param inReal - Warm-up history. Source series fed into the RSI calculation.
- * @param optInTimePeriod - RSI period (default 14; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastK_Period - Lookback window for the RSI min/max stochastic
- *   (default 5; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastD_Period - Smoothing period for %D (default 3; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastD_MAType - MA type used to smooth %D (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outFastK - Unsmoothed stochastic of the RSI (raw %K) Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param outFastD - %K smoothed over FastD_Period (signal line) Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `stochrsiLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range or
- *   an output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { MAType, stochrsiOpenAndFill } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const fastK = new Float64Array(data.length);
- * const fastD = new Float64Array(data.length);
- * const stream = stochrsiOpenAndFill(data, 14, 5, 3, MAType.SMA, fastK, fastD);
- * const { begIdx, count } = stream.outRange();
- * // fastK[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function stochrsiOpenAndFill(
+/** @internal */
+export function stochrsiOpenAndFillPositional(
   inReal: ArrayLike<number>,
   optInTimePeriod: number,
   optInFastK_Period: number,
@@ -805,23 +842,127 @@ export function stochrsiOpenAndFill(
   outFastD: Float64Array,
   core: Core = Core.DEFAULT,
 ): StochrsiStream {
-  optInTimePeriod = requireInt32('STOCHRSI openAndFill', 'optInTimePeriod', optInTimePeriod);
-  optInFastK_Period = requireInt32('STOCHRSI openAndFill', 'optInFastK_Period', optInFastK_Period);
-  optInFastD_Period = requireInt32('STOCHRSI openAndFill', 'optInFastD_Period', optInFastD_Period);
-  optInFastD_MAType = requireInt32('STOCHRSI openAndFill', 'optInFastD_MAType', optInFastD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('STOCHRSI openAndFill', 'inReal', inReal);
+  optInTimePeriod = requireInt32('STOCHRSI openAndFill', 'timePeriod', optInTimePeriod);
+  optInFastK_Period = requireInt32('STOCHRSI openAndFill', 'fastKPeriod', optInFastK_Period);
+  optInFastD_Period = requireInt32('STOCHRSI openAndFill', 'fastDPeriod', optInFastD_Period);
+  optInFastD_MAType = requireInt32('STOCHRSI openAndFill', 'fastDMaType', optInFastD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('STOCHRSI openAndFill', 'real', inReal);
   requireHistory('STOCHRSI openAndFill', inReal.length);
-  const guardOutLen = openFillCount('STOCHRSI openAndFill', inReal.length, stochrsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType as MAType, core));
+  const guardLookback = stochrsiLookbackPositional(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType as MAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('STOCHRSI openAndFill', PARAM_RANGES, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+  }
+  const guardOutLen = openFillCount('STOCHRSI openAndFill', inReal.length, guardLookback);
   requireOutput('STOCHRSI openAndFill', 'outFastK', outFastK, guardOutLen, Float64Array);
   requireOutput('STOCHRSI openAndFill', 'outFastD', outFastD, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
-  if ((outFastK.buffer === inRealF64.buffer && outFastK.byteOffset === inRealF64.byteOffset) || (outFastD.buffer === inRealF64.buffer && outFastD.byteOffset === inRealF64.byteOffset) || (outFastK.buffer === outFastD.buffer && outFastK.byteOffset === outFastD.byteOffset)) {
-    throw streamFailure('STOCHRSI openAndFill', RetCode.BAD_PARAM);
+  if (outFastK.buffer === inRealF64.buffer && outFastK.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('STOCHRSI openAndFill', 'outFastK', 'real');
   }
-  if (guardOutLen > 0 && (overlaps(outFastK, inRealF64) || overlaps(outFastD, inRealF64) || overlaps(outFastK, outFastD))) {
-    throw streamFailure('STOCHRSI openAndFill', RetCode.BAD_PARAM);
+  if (outFastD.buffer === inRealF64.buffer && outFastD.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('STOCHRSI openAndFill', 'outFastD', 'real');
+  }
+  if (outFastK.buffer === outFastD.buffer && outFastK.byteOffset === outFastD.byteOffset) {
+    throw sharedMemory('STOCHRSI openAndFill', 'outFastK', 'outFastD');
+  }
+  if (guardOutLen > 0 && overlaps(outFastK, inRealF64)) {
+    throw sharedMemory('STOCHRSI openAndFill', 'outFastK', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outFastD, inRealF64)) {
+    throw sharedMemory('STOCHRSI openAndFill', 'outFastD', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outFastK, outFastD)) {
+    throw sharedMemory('STOCHRSI openAndFill', 'outFastK', 'outFastD');
   }
   return stochrsiOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, new MInteger(), new MInteger(), outFastK, outFastD);
+}
+
+/**
+ * Opens a live STOCHRSI stream over the warm-up history: `value()` starts at the
+ * last history bar, bit-identical to {@link stochrsi} there.
+ *
+ * @param real - Warm-up history. Source series fed into the RSI calculation.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link StochrsiOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `stochrsiLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32 or a parameter outside its
+ *   range.
+ *
+ * @example
+ * ```ts
+ * import { MAType, stochrsiOpen } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const stream = stochrsiOpen(data, {
+ *   timePeriod: 14,
+ *   fastKPeriod: 5,
+ *   fastDPeriod: 3,
+ *   fastDMaType: MAType.SMA,
+ * });
+ * const peeked = stream.peek(100.9); // a forming bar: commits nothing
+ * const updated = stream.update(100.9); // the bar closes
+ * ```
+ */
+export function stochrsiOpen(real: ArrayLike<number>, options?: StochrsiOptions): StochrsiStream {
+  const o = optionsOf('STOCHRSI open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);
+  const optInFastD_Period = orDefault(o.fastDPeriod, Core.INTEGER_DEFAULT);
+  const optInFastD_MAType = orDefault(o.fastDMaType, Core.INTEGER_DEFAULT);
+  const core = coreOf('STOCHRSI open', o.core);
+  return stochrsiOpenPositional(real, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, core);
+}
+
+/**
+ * {@link stochrsiOpen} that also computes the outputs over the whole history in
+ * the same pass, bit-identically to {@link stochrsi}.
+ *
+ * @param real - Warm-up history. Source series fed into the RSI calculation.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link StochrsiOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link stochrsi} returns them; the range is the
+ *   stream's `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `stochrsiLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range
+ *   or a buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
+ *
+ * @example
+ * ```ts
+ * import { MAType, stochrsiOpenAndFill } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const { stream, begIdx, outFastK, outFastD } = stochrsiOpenAndFill(data, {
+ *   timePeriod: 14,
+ *   fastKPeriod: 5,
+ *   fastDPeriod: 3,
+ *   fastDMaType: MAType.SMA,
+ * });
+ * // outFastK[k] is the value at bar begIdx + k
+ * ```
+ */
+export function stochrsiOpenAndFill(real: ArrayLike<number>, options?: StochrsiOptions): StochrsiResult & { stream: StochrsiStream } {
+  const o = optionsOf('STOCHRSI openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);
+  const optInFastD_Period = orDefault(o.fastDPeriod, Core.INTEGER_DEFAULT);
+  const optInFastD_MAType = orDefault(o.fastDMaType, Core.INTEGER_DEFAULT);
+  const core = coreOf('STOCHRSI openAndFill', o.core);
+  const capacity = fillCapacity(stochrsiLookbackPositional(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, core), real);
+  const outFastK = o.outFastK === undefined ? new Float64Array(capacity) : o.outFastK;
+  const outFastD = o.outFastD === undefined ? new Float64Array(capacity) : o.outFastD;
+  const stream = stochrsiOpenAndFillPositional(real, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastK, outFastD, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outFastK: outFastK.subarray(0, range.count), outFastD: outFastD.subarray(0, range.count) };
 }
 
 let scratchStochfOut: StochfOut | null = null;

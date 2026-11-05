@@ -126,7 +126,7 @@ const at = (c: Case, what: string, bar: number): string => `MAVP stream ${what}:
 function drive(c: Case, prefix: number, forkAt: number | null, twin: boolean): number {
   const n = c.per.length;
   const [min, max] = c.band;
-  const open = (): MavpStream => mavpOpen(c.price.subarray(0, prefix), c.per.subarray(0, prefix), min, max, c.ty, c.core);
+  const open = (): MavpStream => mavpOpen(c.price.subarray(0, prefix), c.per.subarray(0, prefix), { minPeriod: min, maxPeriod: max, maType: c.ty, core: c.core });
   const h = open();
   assert.ok(Object.is(h.value(), c.batch[prefix - 1 - c.lb]), at(c, 'open', prefix - 1));
   const h2 = twin ? open() : null;
@@ -165,21 +165,23 @@ function streamBank(core: Core): number {
   let compared = 0;
   for (const ty of types) {
     for (const band of BANDS) {
-      const lb = mavpLookback(band[0], band[1], ty, core);
+      const lb = mavpLookback({ minPeriod: band[0], maxPeriod: band[1], maType: ty, core });
       const shapes: [string, Float64Array][] = [['ramp', ramp(lb + RAMP_BARS, band)]];
       if (ty === MAType.WMA || ty === MAType.HMA) shapes.push(['staircase', staircase(lb, band)]);
       for (const [shape, per] of shapes) {
         const n = per.length;
         const price = prices(n);
         const batch = new Float64Array(n);
-        const r = mavp(0, n - 1, price, per, band[0], band[1], ty, batch, core);
-        assert.deepEqual([r.begIdx, r.count], [lb, n - lb]);
+        const opts = { minPeriod: band[0], maxPeriod: band[1], maType: ty, core };
+        const r = mavp(price, per, { ...opts, outReal: batch });
+        assert.deepEqual([r.begIdx, r.values.length], [lb, n - lb]);
         const c: Case = { core, ty, band, shape, price, per, batch, lb };
 
         const out = new Float64Array(n);
-        const f = mavpOpenAndFill(price, per, band[0], band[1], ty, out, core);
-        const fr = f.outRange();
+        const f = mavpOpenAndFill(price, per, { ...opts, outReal: out });
+        const fr = f.stream.outRange();
         assert.deepEqual([fr.begIdx, fr.count], [lb, n - lb]);
+        assert.deepEqual([f.begIdx, f.values.length], [lb, n - lb]);
         for (let i = 0; i < fr.count; i++) if (!Object.is(out[i], batch[i])) assert.fail(at(c, 'openAndFill', lb + i));
         compared += fr.count;
 

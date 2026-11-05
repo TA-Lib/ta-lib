@@ -16,26 +16,14 @@
  *  092426 MF,CC  Default period 100, and stack buffers sized to it (issue #437).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link percentile} consumes before its first value:
- * the index of the first bar with a value when the whole series is requested.
- *
- * @param optInTimePeriod - Number of bars in the trailing window (default 100;
- *   range 2 to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInPercentile - Percentage position within the sorted window (default
- *   50; range 0 to 100; `Core.REAL_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function percentileLookback(optInTimePeriod: number, optInPercentile: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function percentileLookbackPositional(optInTimePeriod: number, optInPercentile: number, _core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -55,24 +43,9 @@ export function percentileLookback(optInTimePeriod: number, optInPercentile: num
   return optInTimePeriod - 1;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link percentile}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Number of bars in the trailing window (default 100;
- *   range 2 to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInPercentile - Percentage position within the sorted window (default
- *   50; range 0 to 100; `Core.REAL_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function percentileDisplayShift(optInTimePeriod: number, optInPercentile: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (percentileLookback(optInTimePeriod, optInPercentile, core) < 0) {
+/** @internal */
+export function percentileDisplayShiftPositional(optInTimePeriod: number, optInPercentile: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (percentileLookbackPositional(optInTimePeriod, optInPercentile, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -811,6 +784,136 @@ export function percentileImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 2, 10000, 'in 2..10000'], ['percentile', Core.REAL_DEFAULT, 0e0, 1e2, 'in 0..100']] as const;
+
+/** @internal */
+export function percentilePositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInPercentile: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('PERCENTILE', 'startIdx', startIdx);
+  endIdx = requireInt32('PERCENTILE', 'endIdx', endIdx);
+  optInTimePeriod = requireInt32('PERCENTILE', 'timePeriod', optInTimePeriod);
+  optInPercentile = requireReal('PERCENTILE', 'percentile', optInPercentile);
+  requireIndexRange('PERCENTILE', startIdx, endIdx);
+  const guardLookback = percentileLookbackPositional(optInTimePeriod, optInPercentile, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('PERCENTILE', PARAM_RANGES, optInTimePeriod, optInPercentile);
+  }
+  const guardStart = clampedStart('PERCENTILE', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('PERCENTILE', 'real', inReal, guardInLen);
+  requireOutput('PERCENTILE', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outReal, inRealF64)) {
+    throw sharedMemory('PERCENTILE', 'outReal', 'real');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = percentileImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, optInPercentile, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('PERCENTILE', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link percentile}, {@link percentileLookback},
+ * {@link percentileDisplayShift}, {@link percentileOpen} and
+ * {@link percentileOpenAndFill}. Every key is optional: an omitted or `undefined`
+ * key takes its default, and a call ignores the keys it has no use for.
+ */
+export interface PercentileOptions {
+  /**
+   * Number of bars in the trailing window (default 100; range 2 to 10000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * Percentage position within the sorted window (default 50; range 0 to 100;
+   * `Core.REAL_DEFAULT` selects the default).
+   */
+  percentile?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/**
+ * What {@link percentile} returns, and {@link percentileOpenAndFill} with its
+ * stream.
+ */
+export interface PercentileResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * The value at the requested rank within the trailing window. `values[k]` is the
+   * value at input bar `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link percentile} consumes before its first value:
+ * the index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PercentileOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function percentileLookback(options?: PercentileOptions): number {
+  const o = optionsOf('PERCENTILE lookback', options);
+  return percentileLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.percentile, Core.REAL_DEFAULT), coreOf('PERCENTILE lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link percentile}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PercentileOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function percentileDisplayShift(outputIdx: number, options?: PercentileOptions): number {
+  const o = optionsOf('PERCENTILE displayShift', options);
+  return percentileDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.percentile, Core.REAL_DEFAULT), outputIdx, coreOf('PERCENTILE displayShift', o.core));
+}
+
 /**
  * Rolling percentile by the nearest-rank method: sort the trailing window
  * ascending and report the value whose 1-based ordinal rank is the P-th percentile
@@ -839,30 +942,23 @@ export function percentileImpl(
  * - Every input value in the window must be finite. A NaN makes every comparison
  *   against it false, which breaks the ordering the rank index is read from.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link percentileLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link percentileLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Source series to take the percentile of.
- * @param optInTimePeriod - Number of bars in the trailing window (default 100;
- *   range 2 to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInPercentile - Percentage position within the sorted window (default
- *   50; range 0 to 100; `Core.REAL_DEFAULT` selects the default).
- * @param outReal - The value at the requested rank within the trailing window.
- *   Must hold the values produced and never be empty; the input length always
- *   suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Source series to take the percentile of.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link PercentileOptions}.
+ * @returns `begIdx` and the values; see {@link PercentileResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   real parameter that is not a number, a parameter outside its range, an array too
- *   short for the range, an empty output or an output sharing memory with a
- *   `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a real parameter that is not a
+ *   number, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -870,45 +966,31 @@ export function percentileImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const { begIdx, count } = percentile(0, data.length - 1, data, 100, 50, out);
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = percentile(data, {
+ *   timePeriod: 100,
+ *   percentile: 50,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`min`](https://ta-lib.org/functions/min)
  * @see [`max`](https://ta-lib.org/functions/max)
  * @see [`medprice`](https://ta-lib.org/functions/medprice)
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
  */
-export function percentile(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInPercentile: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('PERCENTILE', 'startIdx', startIdx);
-  endIdx = requireInt32('PERCENTILE', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('PERCENTILE', 'optInTimePeriod', optInTimePeriod);
-  optInPercentile = requireReal('PERCENTILE', 'optInPercentile', optInPercentile);
-  requireIndexRange('PERCENTILE', startIdx, endIdx);
-  const guardStart = clampedStart('PERCENTILE', startIdx, percentileLookback(optInTimePeriod, optInPercentile, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('PERCENTILE', 'inReal', inReal, guardInLen);
-  requireOutput('PERCENTILE', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outReal, inRealF64)) {
-    throw failure('PERCENTILE', RetCode.BAD_PARAM);
+export function percentile(real: ArrayLike<number>, options?: PercentileOptions): PercentileResult {
+  const o = optionsOf('PERCENTILE', options);
+  if (o.endIdx === undefined) {
+    requireSeries('PERCENTILE', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = percentileImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, optInPercentile, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('PERCENTILE', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInPercentile = orDefault(o.percentile, Core.REAL_DEFAULT);
+  const core = coreOf('PERCENTILE', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, percentileLookbackPositional(optInTimePeriod, optInPercentile, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = percentilePositional(startIdx, endIdx, real, optInTimePeriod, optInPercentile, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -2360,7 +2442,10 @@ export function percentileOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('PERCENTILE openAndFill', inReal.length, startIdx, percentileLookback(optInTimePeriod, optInPercentile, core));
+    throw insufficientHistory('PERCENTILE openAndFill', inReal.length, startIdx, percentileLookbackPositional(optInTimePeriod, optInPercentile, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && percentileLookbackPositional(optInTimePeriod, optInPercentile, core) < 0) {
+    throw rejectedParams('PERCENTILE openAndFill', PARAM_RANGES, optInTimePeriod, optInPercentile);
   }
   throw streamFailure('PERCENTILE openAndFill', retCode);
 }
@@ -2384,27 +2469,69 @@ export function percentileOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('PERCENTILE open', inReal.length, startIdx, percentileLookback(optInTimePeriod, optInPercentile, core));
+    throw insufficientHistory('PERCENTILE open', inReal.length, startIdx, percentileLookbackPositional(optInTimePeriod, optInPercentile, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && percentileLookbackPositional(optInTimePeriod, optInPercentile, core) < 0) {
+    throw rejectedParams('PERCENTILE open', PARAM_RANGES, optInTimePeriod, optInPercentile);
   }
   throw streamFailure('PERCENTILE open', retCode);
+}
+
+/** @internal */
+export function percentileOpenPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInPercentile: number,
+  core: Core = Core.DEFAULT,
+): PercentileStream {
+  optInTimePeriod = requireInt32('PERCENTILE open', 'timePeriod', optInTimePeriod);
+  optInPercentile = requireReal('PERCENTILE open', 'percentile', optInPercentile);
+  requireArgument('PERCENTILE open', 'real', inReal);
+  requireHistory('PERCENTILE open', inReal.length);
+  return percentileOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInPercentile);
+}
+
+/** @internal */
+export function percentileOpenAndFillPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInPercentile: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): PercentileStream {
+  optInTimePeriod = requireInt32('PERCENTILE openAndFill', 'timePeriod', optInTimePeriod);
+  optInPercentile = requireReal('PERCENTILE openAndFill', 'percentile', optInPercentile);
+  requireArgument('PERCENTILE openAndFill', 'real', inReal);
+  requireHistory('PERCENTILE openAndFill', inReal.length);
+  const guardLookback = percentileLookbackPositional(optInTimePeriod, optInPercentile, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('PERCENTILE openAndFill', PARAM_RANGES, optInTimePeriod, optInPercentile);
+  }
+  const guardOutLen = openFillCount('PERCENTILE openAndFill', inReal.length, guardLookback);
+  requireOutput('PERCENTILE openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('PERCENTILE openAndFill', 'outReal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inRealF64)) {
+    throw sharedMemory('PERCENTILE openAndFill', 'outReal', 'real');
+  }
+  return percentileOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, optInPercentile, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live PERCENTILE stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link percentile} there.
  *
- * @param inReal - Warm-up history. Source series to take the percentile of.
- * @param optInTimePeriod - Number of bars in the trailing window (default 100;
- *   range 2 to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInPercentile - Percentage position within the sorted window (default
- *   50; range 0 to 100; `Core.REAL_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param real - Warm-up history. Source series to take the percentile of.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PercentileOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `percentileLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for an integer parameter that is not an int32, a real parameter
- *   that is not a number or a parameter outside its range.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input, an integer parameter that is not an int32, a real
+ *   parameter that is not a number or a parameter outside its range.
  *
  * @example
  * ```ts
@@ -2412,47 +2539,37 @@ export function percentileOpenInternal(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = percentileOpen(data, 100, 50);
+ * const stream = percentileOpen(data, { timePeriod: 100, percentile: 50 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
  */
-export function percentileOpen(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInPercentile: number,
-  core: Core = Core.DEFAULT,
-): PercentileStream {
-  optInTimePeriod = requireInt32('PERCENTILE open', 'optInTimePeriod', optInTimePeriod);
-  optInPercentile = requireReal('PERCENTILE open', 'optInPercentile', optInPercentile);
-  requireArgument('PERCENTILE open', 'inReal', inReal);
-  requireHistory('PERCENTILE open', inReal.length);
-  return percentileOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInPercentile);
+export function percentileOpen(real: ArrayLike<number>, options?: PercentileOptions): PercentileStream {
+  const o = optionsOf('PERCENTILE open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInPercentile = orDefault(o.percentile, Core.REAL_DEFAULT);
+  const core = coreOf('PERCENTILE open', o.core);
+  return percentileOpenPositional(real, optInTimePeriod, optInPercentile, core);
 }
 
 /**
- * {@link percentileOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link percentile}. The range written is the
- * stream's `outRange()`.
+ * {@link percentileOpen} that also computes the outputs over the whole history in
+ * the same pass, bit-identically to {@link percentile}.
  *
- * @param inReal - Warm-up history. Source series to take the percentile of.
- * @param optInTimePeriod - Number of bars in the trailing window (default 100;
- *   range 2 to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInPercentile - Percentage position within the sorted window (default
- *   50; range 0 to 100; `Core.REAL_DEFAULT` selects the default).
- * @param outReal - The value at the requested rank within the trailing window.
- *   Must hold `historyLen - lookback` values and share no memory with an input or
- *   another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param real - Warm-up history. Source series to take the percentile of.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link PercentileOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link percentile} returns them; the range is the
+ *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `percentileLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for an integer parameter that is not an int32, a real parameter
- *   that is not a number, a parameter outside its range or an output too short or
- *   starting where another output or a `Float64Array` input starts, or, on a history
- *   long enough to open, one sharing memory with another output or a `Float64Array`
- *   input.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input, an integer parameter that is not an int32, a real
+ *   parameter that is not a number, a parameter outside its range or a buffer too
+ *   short, of the wrong type or starting where another buffer or a `Float64Array`
+ *   input starts, or, on a history long enough to open, one sharing memory with
+ *   another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -2460,31 +2577,21 @@ export function percentileOpen(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const stream = percentileOpenAndFill(data, 100, 50, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = percentileOpenAndFill(data, {
+ *   timePeriod: 100,
+ *   percentile: 50,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function percentileOpenAndFill(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInPercentile: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): PercentileStream {
-  optInTimePeriod = requireInt32('PERCENTILE openAndFill', 'optInTimePeriod', optInTimePeriod);
-  optInPercentile = requireReal('PERCENTILE openAndFill', 'optInPercentile', optInPercentile);
-  requireArgument('PERCENTILE openAndFill', 'inReal', inReal);
-  requireHistory('PERCENTILE openAndFill', inReal.length);
-  const guardOutLen = openFillCount('PERCENTILE openAndFill', inReal.length, percentileLookback(optInTimePeriod, optInPercentile, core));
-  requireOutput('PERCENTILE openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
-    throw streamFailure('PERCENTILE openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inRealF64))) {
-    throw streamFailure('PERCENTILE openAndFill', RetCode.BAD_PARAM);
-  }
-  return percentileOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, optInPercentile, new MInteger(), new MInteger(), outReal);
+export function percentileOpenAndFill(real: ArrayLike<number>, options?: PercentileOptions): PercentileResult & { stream: PercentileStream } {
+  const o = optionsOf('PERCENTILE openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInPercentile = orDefault(o.percentile, Core.REAL_DEFAULT);
+  const core = coreOf('PERCENTILE openAndFill', o.core);
+  const capacity = fillCapacity(percentileLookbackPositional(optInTimePeriod, optInPercentile, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = percentileOpenAndFillPositional(real, optInTimePeriod, optInPercentile, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

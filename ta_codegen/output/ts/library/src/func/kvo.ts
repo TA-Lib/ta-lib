@@ -15,29 +15,16 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { emaLookback } from './ema.ts';
+import { emaLookbackPositional } from './ema.ts';
 
-/**
- * Number of leading input bars {@link kvo} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInFastPeriod - Period of the faster smoothing of the volume force
- *   (default 34; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slower smoothing of the volume force
- *   (default 55; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Smoothing period of the trigger line (default 13;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function kvoLookback(optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function kvoLookbackPositional(optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, core: Core = Core.DEFAULT): number {
   if ((optInFastPeriod | 0) !== optInFastPeriod) {
     return -1;
   }
@@ -73,29 +60,12 @@ export function kvoLookback(optInFastPeriod: number, optInSlowPeriod: number, op
   if (optInSignalPeriod > longestPeriod) {
     longestPeriod = optInSignalPeriod;
   }
-  return 1 + emaLookback(longestPeriod, core) + ((core.unstableCount(FuncUnstId.EMA, 1, 1) != core.unstableCount(FuncUnstId.EMA, 0, 0)) ? (core.unstableCount(FuncUnstId.EMA, ((((optInFastPeriod > (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod) ? optInFastPeriod : (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod)) > 1) ? ((((((((((4 * 10) | 0) + 23) / 3) | 0) * (optInFastPeriod > (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod) ? optInFastPeriod : (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod))) | 0) + 1) / 2) | 0) : 0) - (((optInFastPeriod > (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod) ? optInFastPeriod : (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod)) > 1) ? (((((10 * (optInFastPeriod > (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod) ? optInFastPeriod : (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod))) | 0) + 1) / 2) | 0) : 0)), ((((optInFastPeriod > (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod) ? optInFastPeriod : (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod)) > 1) ? ((((((((((4 * 19) | 0) + 23) / 3) | 0) * (optInFastPeriod > (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod) ? optInFastPeriod : (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod))) | 0) + 1) / 2) | 0) : 0) - (((optInFastPeriod > (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod) ? optInFastPeriod : (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod)) > 1) ? (((((19 * (optInFastPeriod > (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod) ? optInFastPeriod : (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod))) | 0) + 1) / 2) | 0) : 0))) - core.unstableCount(FuncUnstId.EMA, 0, 0)) : 0);
+  return 1 + emaLookbackPositional(longestPeriod, core) + ((core.unstableCount(FuncUnstId.EMA, 1, 1) != core.unstableCount(FuncUnstId.EMA, 0, 0)) ? (core.unstableCount(FuncUnstId.EMA, ((((optInFastPeriod > (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod) ? optInFastPeriod : (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod)) > 1) ? ((((((((((4 * 10) | 0) + 23) / 3) | 0) * (optInFastPeriod > (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod) ? optInFastPeriod : (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod))) | 0) + 1) / 2) | 0) : 0) - (((optInFastPeriod > (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod) ? optInFastPeriod : (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod)) > 1) ? (((((10 * (optInFastPeriod > (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod) ? optInFastPeriod : (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod))) | 0) + 1) / 2) | 0) : 0)), ((((optInFastPeriod > (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod) ? optInFastPeriod : (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod)) > 1) ? ((((((((((4 * 19) | 0) + 23) / 3) | 0) * (optInFastPeriod > (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod) ? optInFastPeriod : (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod))) | 0) + 1) / 2) | 0) : 0) - (((optInFastPeriod > (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod) ? optInFastPeriod : (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod)) > 1) ? (((((19 * (optInFastPeriod > (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod) ? optInFastPeriod : (optInSlowPeriod > optInSignalPeriod ? optInSlowPeriod : optInSignalPeriod))) | 0) + 1) / 2) | 0) : 0))) - core.unstableCount(FuncUnstId.EMA, 0, 0)) : 0);
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link kvo}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInFastPeriod - Period of the faster smoothing of the volume force
- *   (default 34; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slower smoothing of the volume force
- *   (default 55; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Smoothing period of the trigger line (default 13;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function kvoDisplayShift(optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (kvoLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core) < 0) {
+/** @internal */
+export function kvoDisplayShiftPositional(optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (kvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 2) {
@@ -187,7 +157,7 @@ export function kvoImpl(
    * All three EMAs seed raw on the first volume force, not on an SMA as
    * TA_EMA does. Each k + beta pair must sum to exactly 1.0, as in ema.c.
    */
-  lookbackTotal = kvoLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+  lookbackTotal = kvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -402,6 +372,185 @@ export function kvoImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['fastPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['slowPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['signalPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000']] as const;
+
+/** @internal */
+export function kvoPositional(
+  startIdx: number,
+  endIdx: number,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  inVolume: ArrayLike<number>,
+  optInFastPeriod: number,
+  optInSlowPeriod: number,
+  optInSignalPeriod: number,
+  outKVO: Float64Array,
+  outKVOSignal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('KVO', 'startIdx', startIdx);
+  endIdx = requireInt32('KVO', 'endIdx', endIdx);
+  optInFastPeriod = requireInt32('KVO', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('KVO', 'slowPeriod', optInSlowPeriod);
+  optInSignalPeriod = requireInt32('KVO', 'signalPeriod', optInSignalPeriod);
+  requireIndexRange('KVO', startIdx, endIdx);
+  const guardLookback = kvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('KVO', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+  }
+  const guardStart = clampedStart('KVO', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('KVO', 'prices.high', inHigh, guardInLen);
+  requireLength('KVO', 'prices.low', inLow, guardInLen);
+  requireLength('KVO', 'prices.close', inClose, guardInLen);
+  requireLength('KVO', 'prices.volume', inVolume, guardInLen);
+  requireOutput('KVO', 'outKvo', outKVO, guardOutLen, Float64Array);
+  requireOutput('KVO', 'outKvoSignal', outKVOSignal, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  const inVolumeF64 = float64(inVolume);
+  if (overlapsPartly(outKVO, inHighF64)) {
+    throw sharedMemory('KVO', 'outKvo', 'prices.high');
+  }
+  if (overlapsPartly(outKVO, inLowF64)) {
+    throw sharedMemory('KVO', 'outKvo', 'prices.low');
+  }
+  if (overlapsPartly(outKVO, inCloseF64)) {
+    throw sharedMemory('KVO', 'outKvo', 'prices.close');
+  }
+  if (overlapsPartly(outKVO, inVolumeF64)) {
+    throw sharedMemory('KVO', 'outKvo', 'prices.volume');
+  }
+  if (overlapsPartly(outKVOSignal, inHighF64)) {
+    throw sharedMemory('KVO', 'outKvoSignal', 'prices.high');
+  }
+  if (overlapsPartly(outKVOSignal, inLowF64)) {
+    throw sharedMemory('KVO', 'outKvoSignal', 'prices.low');
+  }
+  if (overlapsPartly(outKVOSignal, inCloseF64)) {
+    throw sharedMemory('KVO', 'outKvoSignal', 'prices.close');
+  }
+  if (overlapsPartly(outKVOSignal, inVolumeF64)) {
+    throw sharedMemory('KVO', 'outKvoSignal', 'prices.volume');
+  }
+  if (overlaps(outKVO, outKVOSignal)) {
+    throw sharedMemory('KVO', 'outKvo', 'outKvoSignal');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = kvoImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, inVolumeF64, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outKVO, outKVOSignal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('KVO', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link kvo}, {@link kvoLookback}, {@link kvoDisplayShift},
+ * {@link kvoOpen} and {@link kvoOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface KvoOptions {
+  /**
+   * Period of the faster smoothing of the volume force (default 34; range 2 to
+   * 100000; `Core.INTEGER_DEFAULT` selects the default).
+   */
+  fastPeriod?: number | undefined;
+  /**
+   * Period of the slower smoothing of the volume force (default 55; range 2 to
+   * 100000; `Core.INTEGER_DEFAULT` selects the default).
+   */
+  slowPeriod?: number | undefined;
+  /**
+   * Smoothing period of the trigger line (default 13; range 2 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  signalPeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outKvo`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outKvo?: Float64Array | undefined;
+  /**
+   * Buffer for `outKvoSignal`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outKvoSignal?: Float64Array | undefined;
+}
+
+/** What {@link kvo} returns, and {@link kvoOpenAndFill} with its stream. */
+export interface KvoResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /** Klinger Volume Oscillator. `outKvo[k]` is the value at input bar `begIdx + k`. */
+  outKvo: Float64Array;
+  /**
+   * Trigger line, an exponential average of the oscillator. `outKvoSignal[k]` is the
+   * value at input bar `begIdx + k`.
+   */
+  outKvoSignal: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link kvo} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link KvoOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function kvoLookback(options?: KvoOptions): number {
+  const o = optionsOf('KVO lookback', options);
+  return kvoLookbackPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), coreOf('KVO lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link kvo}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link KvoOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function kvoDisplayShift(outputIdx: number, options?: KvoOptions): number {
+  const o = optionsOf('KVO displayShift', options);
+  return kvoDisplayShiftPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('KVO displayShift', o.core));
+}
+
 /**
  * Klinger Volume Oscillator: each bar's volume is signed by the direction of its
  * high-low-close sum and weighted by where the bar's own range sits inside the
@@ -436,37 +585,25 @@ export function kvoImpl(
  * - A cumulative range of exactly zero leaves the volume force at zero rather than
  *   dividing.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link kvoLookback} is a success with
- * `count` 0.
+ * `outKvo[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link kvoLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inHigh - High price series.
- * @param inLow - Low price series.
- * @param inClose - Close price series.
- * @param inVolume - Volume series.
- * @param optInFastPeriod - Period of the faster smoothing of the volume force
- *   (default 34; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slower smoothing of the volume force
- *   (default 55; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Smoothing period of the trigger line (default 13;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outKVO - Klinger Volume Oscillator. Must hold the values produced and
- *   never be empty; the input length always suffices.
- * @param outKVOSignal - Trigger line, an exponential average of the oscillator.
- *   Must hold the values produced and never be empty; the input length always
- *   suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `high`: High
+ *   price series. `low`: Low price series. `close`: Close price series. `volume`:
+ *   Volume series.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link KvoOptions}.
+ * @returns `begIdx` and the values; see {@link KvoResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output,
- *   two outputs sharing memory or an output sharing memory with a `Float64Array`
- *   input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -480,64 +617,38 @@ export function kvoImpl(
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const kvoOut = new Float64Array(high.length);
- * const kvoSignal = new Float64Array(high.length);
- * const { begIdx, count } = kvo(
- *   0, high.length - 1,
- *   high, low, close, volume,
- *   34, 55, 13,
- *   kvoOut, kvoSignal,
- * );
- * // kvoOut[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, outKvo, outKvoSignal } = kvo({ high, low, close, volume }, {
+ *   fastPeriod: 34,
+ *   slowPeriod: 55,
+ *   signalPeriod: 13,
+ * });
+ * // outKvo[k] is the value at bar begIdx + k
  * ```
  * @see [`adosc`](https://ta-lib.org/functions/adosc)
  * @see [`obv`](https://ta-lib.org/functions/obv)
  * @see [`mfi`](https://ta-lib.org/functions/mfi)
  * @see [`ad`](https://ta-lib.org/functions/ad)
  */
-export function kvo(
-  startIdx: number,
-  endIdx: number,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  inVolume: ArrayLike<number>,
-  optInFastPeriod: number,
-  optInSlowPeriod: number,
-  optInSignalPeriod: number,
-  outKVO: Float64Array,
-  outKVOSignal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('KVO', 'startIdx', startIdx);
-  endIdx = requireInt32('KVO', 'endIdx', endIdx);
-  optInFastPeriod = requireInt32('KVO', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('KVO', 'optInSlowPeriod', optInSlowPeriod);
-  optInSignalPeriod = requireInt32('KVO', 'optInSignalPeriod', optInSignalPeriod);
-  requireIndexRange('KVO', startIdx, endIdx);
-  const guardStart = clampedStart('KVO', startIdx, kvoLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('KVO', 'inHigh', inHigh, guardInLen);
-  requireLength('KVO', 'inLow', inLow, guardInLen);
-  requireLength('KVO', 'inClose', inClose, guardInLen);
-  requireLength('KVO', 'inVolume', inVolume, guardInLen);
-  requireOutput('KVO', 'outKVO', outKVO, guardOutLen, Float64Array);
-  requireOutput('KVO', 'outKVOSignal', outKVOSignal, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  const inVolumeF64 = float64(inVolume);
-  if (overlapsPartly(outKVO, inHighF64) || overlapsPartly(outKVO, inLowF64) || overlapsPartly(outKVO, inCloseF64) || overlapsPartly(outKVO, inVolumeF64) || overlapsPartly(outKVOSignal, inHighF64) || overlapsPartly(outKVOSignal, inLowF64) || overlapsPartly(outKVOSignal, inCloseF64) || overlapsPartly(outKVOSignal, inVolumeF64) || overlaps(outKVO, outKVOSignal)) {
-    throw failure('KVO', RetCode.BAD_PARAM);
+export function kvo(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number> }, options?: KvoOptions): KvoResult {
+  requireArgument('KVO', 'prices', prices);
+  const o = optionsOf('KVO', options);
+  if (o.endIdx === undefined) {
+    requireSeries('KVO', 'prices.high', prices.high);
+    requireSeries('KVO', 'prices.low', prices.low);
+    requireSeries('KVO', 'prices.close', prices.close);
+    requireSeries('KVO', 'prices.volume', prices.volume);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = kvoImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, inVolumeF64, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outKVO, outKVOSignal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('KVO', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('KVO', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.high.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, kvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core), prices.high, prices.low, prices.close, prices.volume);
+  const outKVO = o.outKvo === undefined ? new Float64Array(capacity) : o.outKvo;
+  const outKVOSignal = o.outKvoSignal === undefined ? new Float64Array(capacity) : o.outKvoSignal;
+  const range = kvoPositional(startIdx, endIdx, prices.high, prices.low, prices.close, prices.volume, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outKVO, outKVOSignal, core);
+  return { begIdx: range.begIdx, outKvo: outKVO.subarray(0, range.count), outKvoSignal: outKVOSignal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -627,22 +738,24 @@ export class KvoStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inHigh - The bar's `inHigh` value: High price series.
    * @param inLow - The bar's `inLow` value: Low price series.
    * @param inClose - The bar's `inClose` value: Close price series.
    * @param inVolume - The bar's `inVolume` value: Volume series.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link KvoOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, inVolume: number, out: KvoOut): void {
+  update(inHigh: number, inLow: number, inClose: number, inVolume: number, out?: KvoOut): KvoOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('KVO update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KVO update', 'KvoOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
@@ -650,24 +763,29 @@ export class KvoStream {
     }
     kvoStepImpl(this, inHigh, inLow, inClose, inVolume);
     this.outRangeCount++;
-    out.kvo = this.cur_outKVO;
-    out.kvoSignal = this.cur_outKVOSignal;
+    if (out === undefined) {
+      out = new KvoOut();
+    }
+    out.outKvo = this.cur_outKVO;
+    out.outKvoSignal = this.cur_outKVOSignal;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inHigh - The bar's `inHigh` value: High price series.
    * @param inLow - The bar's `inLow` value: Low price series.
    * @param inClose - The bar's `inClose` value: Close price series.
    * @param inVolume - The bar's `inVolume` value: Volume series.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link KvoOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number, inVolume: number, out: KvoOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inHigh: number, inLow: number, inClose: number, inVolume: number, out?: KvoOut): KvoOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KVO peek', 'KvoOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
@@ -752,21 +870,31 @@ export class KvoStream {
     }
     cur_outKVO = kvoValue;
     cur_outKVOSignal = signalValue;
-    out.kvo = cur_outKVO;
-    out.kvoSignal = cur_outKVOSignal;
+    if (out === undefined) {
+      out = new KvoOut();
+    }
+    out.outKvo = cur_outKVO;
+    out.outKvoSignal = cur_outKVOSignal;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link KvoOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: KvoOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: KvoOut): KvoOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KVO value', 'KvoOut');
     }
-    out.kvo = this.cur_outKVO;
-    out.kvoSignal = this.cur_outKVOSignal;
+    if (out === undefined) {
+      out = new KvoOut();
+    }
+    out.outKvo = this.cur_outKVO;
+    out.outKvoSignal = this.cur_outKVOSignal;
+    return out;
   }
 
   /**
@@ -802,14 +930,15 @@ export class KvoStream {
 }
 
 /**
- * The outputs of one KVO bar, written into an object the caller owns and reuses:
- * valid until the next call that writes it.
+ * The outputs of one KVO bar, as `update`, `peek` and `value` return them. Passed
+ * back to one of them, it is filled and returned again, with no allocation; it
+ * holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class KvoOut {
   /** Klinger Volume Oscillator. */
-  kvo: number = 0;
+  outKvo: number = NaN;
   /** Trigger line, an exponential average of the oscillator. */
-  kvoSignal: number = 0;
+  outKvoSignal: number = NaN;
 }
 
 function kvoStepImpl(sp: KvoStream, inHigh: number, inLow: number, inClose: number, inVolume: number): void {
@@ -980,7 +1109,7 @@ function kvoOpenImpl(
    * All three EMAs seed raw on the first volume force, not on an SMA as
    * TA_EMA does. Each k + beta pair must sum to exactly 1.0, as in ema.c.
    */
-  lookbackTotal = kvoLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+  lookbackTotal = kvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -1237,7 +1366,10 @@ export function kvoOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('KVO openAndFill', inHigh.length, startIdx, kvoLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
+    throw insufficientHistory('KVO openAndFill', inHigh.length, startIdx, kvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && kvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core) < 0) {
+    throw rejectedParams('KVO openAndFill', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
   }
   throw streamFailure('KVO openAndFill', retCode);
 }
@@ -1266,57 +1398,16 @@ export function kvoOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('KVO open', inHigh.length, startIdx, kvoLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
+    throw insufficientHistory('KVO open', inHigh.length, startIdx, kvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && kvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core) < 0) {
+    throw rejectedParams('KVO open', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
   }
   throw streamFailure('KVO open', retCode);
 }
 
-/**
- * Opens a live KVO stream over the warm-up history: `value()` starts at the last
- * history bar, bit-identical to {@link kvo} there.
- *
- * @param inHigh - Warm-up history. High price series. Every history has the same
- *   length.
- * @param inLow - Warm-up history. Low price series. Every history has the same
- *   length.
- * @param inClose - Warm-up history. Close price series. Every history has the same
- *   length.
- * @param inVolume - Warm-up history. Volume series. Every history has the same
- *   length.
- * @param optInFastPeriod - Period of the faster smoothing of the volume force
- *   (default 34; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slower smoothing of the volume force
- *   (default 55; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Smoothing period of the trigger line (default 13;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `kvoLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   an integer parameter that is not an int32, a parameter outside its range or
- *   histories of different lengths.
- *
- * @example
- * ```ts
- * import { KvoOut, kvoOpen } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const volume = Float64Array.from({ length: 252 }, (_, i) =>
- *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const stream = kvoOpen(high, low, close, volume, 34, 55, 13);
- * const peeked = new KvoOut();
- * const updated = new KvoOut();
- * stream.peek(101.4, 99.1, 100.9, 12345, peeked); // a forming bar: commits nothing
- * stream.update(101.4, 99.1, 100.9, 12345, updated); // the bar closes
- * ```
- */
-export function kvoOpen(
+/** @internal */
+export function kvoOpenPositional(
   inHigh: ArrayLike<number>,
   inLow: ArrayLike<number>,
   inClose: ArrayLike<number>,
@@ -1326,53 +1417,179 @@ export function kvoOpen(
   optInSignalPeriod: number,
   core: Core = Core.DEFAULT,
 ): KvoStream {
-  optInFastPeriod = requireInt32('KVO open', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('KVO open', 'optInSlowPeriod', optInSlowPeriod);
-  optInSignalPeriod = requireInt32('KVO open', 'optInSignalPeriod', optInSignalPeriod);
-  requireArgument('KVO open', 'inHigh', inHigh);
+  optInFastPeriod = requireInt32('KVO open', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('KVO open', 'slowPeriod', optInSlowPeriod);
+  optInSignalPeriod = requireInt32('KVO open', 'signalPeriod', optInSignalPeriod);
+  requireArgument('KVO open', 'prices.high', inHigh);
   requireHistory('KVO open', inHigh.length);
-  requireArgument('KVO open', 'inLow', inLow);
-  requireArgument('KVO open', 'inClose', inClose);
-  requireArgument('KVO open', 'inVolume', inVolume);
-  requireHistoryLength('KVO open', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('KVO open', 'inClose', inClose.length, inHigh.length);
-  requireHistoryLength('KVO open', 'inVolume', inVolume.length, inHigh.length);
+  requireArgument('KVO open', 'prices.low', inLow);
+  requireArgument('KVO open', 'prices.close', inClose);
+  requireArgument('KVO open', 'prices.volume', inVolume);
+  requireHistoryLength('KVO open', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('KVO open', 'prices.close', inClose.length, inHigh.length);
+  requireHistoryLength('KVO open', 'prices.volume', inVolume.length, inHigh.length);
   return kvoOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), float64(inVolume), 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
 }
 
+/** @internal */
+export function kvoOpenAndFillPositional(
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  inVolume: ArrayLike<number>,
+  optInFastPeriod: number,
+  optInSlowPeriod: number,
+  optInSignalPeriod: number,
+  outKVO: Float64Array,
+  outKVOSignal: Float64Array,
+  core: Core = Core.DEFAULT,
+): KvoStream {
+  optInFastPeriod = requireInt32('KVO openAndFill', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('KVO openAndFill', 'slowPeriod', optInSlowPeriod);
+  optInSignalPeriod = requireInt32('KVO openAndFill', 'signalPeriod', optInSignalPeriod);
+  requireArgument('KVO openAndFill', 'prices.high', inHigh);
+  requireHistory('KVO openAndFill', inHigh.length);
+  requireArgument('KVO openAndFill', 'prices.low', inLow);
+  requireArgument('KVO openAndFill', 'prices.close', inClose);
+  requireArgument('KVO openAndFill', 'prices.volume', inVolume);
+  const guardLookback = kvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('KVO openAndFill', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+  }
+  const guardOutLen = openFillCount('KVO openAndFill', inHigh.length, guardLookback);
+  requireHistoryLength('KVO openAndFill', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('KVO openAndFill', 'prices.close', inClose.length, inHigh.length);
+  requireHistoryLength('KVO openAndFill', 'prices.volume', inVolume.length, inHigh.length);
+  requireOutput('KVO openAndFill', 'outKvo', outKVO, guardOutLen, Float64Array);
+  requireOutput('KVO openAndFill', 'outKvoSignal', outKVOSignal, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  const inVolumeF64 = float64(inVolume);
+  if (outKVO.buffer === inHighF64.buffer && outKVO.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('KVO openAndFill', 'outKvo', 'prices.high');
+  }
+  if (outKVO.buffer === inLowF64.buffer && outKVO.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('KVO openAndFill', 'outKvo', 'prices.low');
+  }
+  if (outKVO.buffer === inCloseF64.buffer && outKVO.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('KVO openAndFill', 'outKvo', 'prices.close');
+  }
+  if (outKVO.buffer === inVolumeF64.buffer && outKVO.byteOffset === inVolumeF64.byteOffset) {
+    throw sharedMemory('KVO openAndFill', 'outKvo', 'prices.volume');
+  }
+  if (outKVOSignal.buffer === inHighF64.buffer && outKVOSignal.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('KVO openAndFill', 'outKvoSignal', 'prices.high');
+  }
+  if (outKVOSignal.buffer === inLowF64.buffer && outKVOSignal.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('KVO openAndFill', 'outKvoSignal', 'prices.low');
+  }
+  if (outKVOSignal.buffer === inCloseF64.buffer && outKVOSignal.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('KVO openAndFill', 'outKvoSignal', 'prices.close');
+  }
+  if (outKVOSignal.buffer === inVolumeF64.buffer && outKVOSignal.byteOffset === inVolumeF64.byteOffset) {
+    throw sharedMemory('KVO openAndFill', 'outKvoSignal', 'prices.volume');
+  }
+  if (outKVO.buffer === outKVOSignal.buffer && outKVO.byteOffset === outKVOSignal.byteOffset) {
+    throw sharedMemory('KVO openAndFill', 'outKvo', 'outKvoSignal');
+  }
+  if (guardOutLen > 0 && overlaps(outKVO, inHighF64)) {
+    throw sharedMemory('KVO openAndFill', 'outKvo', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outKVO, inLowF64)) {
+    throw sharedMemory('KVO openAndFill', 'outKvo', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outKVO, inCloseF64)) {
+    throw sharedMemory('KVO openAndFill', 'outKvo', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outKVO, inVolumeF64)) {
+    throw sharedMemory('KVO openAndFill', 'outKvo', 'prices.volume');
+  }
+  if (guardOutLen > 0 && overlaps(outKVOSignal, inHighF64)) {
+    throw sharedMemory('KVO openAndFill', 'outKvoSignal', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outKVOSignal, inLowF64)) {
+    throw sharedMemory('KVO openAndFill', 'outKvoSignal', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outKVOSignal, inCloseF64)) {
+    throw sharedMemory('KVO openAndFill', 'outKvoSignal', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outKVOSignal, inVolumeF64)) {
+    throw sharedMemory('KVO openAndFill', 'outKvoSignal', 'prices.volume');
+  }
+  if (guardOutLen > 0 && overlaps(outKVO, outKVOSignal)) {
+    throw sharedMemory('KVO openAndFill', 'outKvo', 'outKvoSignal');
+  }
+  return kvoOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, inVolumeF64, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, new MInteger(), new MInteger(), outKVO, outKVOSignal);
+}
+
 /**
- * {@link kvoOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link kvo}. The range written is the stream's
- * `outRange()`.
+ * Opens a live KVO stream over the warm-up history: `value()` starts at the last
+ * history bar, bit-identical to {@link kvo} there.
  *
- * @param inHigh - Warm-up history. High price series. Every history has the same
- *   length.
- * @param inLow - Warm-up history. Low price series. Every history has the same
- *   length.
- * @param inClose - Warm-up history. Close price series. Every history has the same
- *   length.
- * @param inVolume - Warm-up history. Volume series. Every history has the same
- *   length.
- * @param optInFastPeriod - Period of the faster smoothing of the volume force
- *   (default 34; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slower smoothing of the volume force
- *   (default 55; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Smoothing period of the trigger line (default 13;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outKVO - Klinger Volume Oscillator. Must hold `historyLen - lookback`
- *   values and share no memory with an input or another output.
- * @param outKVOSignal - Trigger line, an exponential average of the oscillator.
- *   Must hold `historyLen - lookback` values and share no memory with an input or
- *   another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price series. `low`: Low price series. `close`: Close price
+ *   series. `volume`: Volume series.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link KvoOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `kvoLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   an integer parameter that is not an int32, a parameter outside its range or
+ *   histories of different lengths.
+ *
+ * @example
+ * ```ts
+ * import { kvoOpen } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const close = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const volume = Float64Array.from({ length: 252 }, (_, i) =>
+ *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
+ * const stream = kvoOpen({ high, low, close, volume }, {
+ *   fastPeriod: 34,
+ *   slowPeriod: 55,
+ *   signalPeriod: 13,
+ * });
+ * const peeked = stream.peek(101.4, 99.1, 100.9, 12345); // a forming bar: commits nothing
+ * const updated = stream.update(101.4, 99.1, 100.9, 12345); // the bar closes
+ * ```
+ */
+export function kvoOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number> }, options?: KvoOptions): KvoStream {
+  requireArgument('KVO open', 'prices', prices);
+  const o = optionsOf('KVO open', options);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('KVO open', o.core);
+  return kvoOpenPositional(prices.high, prices.low, prices.close, prices.volume, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+}
+
+/**
+ * {@link kvoOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link kvo}.
+ *
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price series. `low`: Low price series. `close`: Close price
+ *   series. `volume`: Volume series.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link KvoOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link kvo} returns them; the range is the stream's
+ *   `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `kvoLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
  *   an integer parameter that is not an int32, a parameter outside its range,
- *   histories of different lengths or an output too short or starting where another
- *   output or a `Float64Array` input starts, or, on a history long enough to open,
- *   one sharing memory with another output or a `Float64Array` input.
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -1386,52 +1603,30 @@ export function kvoOpen(
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const kvoOut = new Float64Array(high.length);
- * const kvoSignal = new Float64Array(high.length);
- * const stream = kvoOpenAndFill(
- *   high, low, close, volume,
- *   34, 55, 13,
- *   kvoOut, kvoSignal,
- * );
- * const { begIdx, count } = stream.outRange();
- * // kvoOut[k] is the value at bar begIdx + k, for k < count
+ * const {
+ *   stream,
+ *   begIdx,
+ *   outKvo,
+ *   outKvoSignal,
+ * } = kvoOpenAndFill({ high, low, close, volume }, {
+ *   fastPeriod: 34,
+ *   slowPeriod: 55,
+ *   signalPeriod: 13,
+ * });
+ * // outKvo[k] is the value at bar begIdx + k
  * ```
  */
-export function kvoOpenAndFill(
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  inVolume: ArrayLike<number>,
-  optInFastPeriod: number,
-  optInSlowPeriod: number,
-  optInSignalPeriod: number,
-  outKVO: Float64Array,
-  outKVOSignal: Float64Array,
-  core: Core = Core.DEFAULT,
-): KvoStream {
-  optInFastPeriod = requireInt32('KVO openAndFill', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('KVO openAndFill', 'optInSlowPeriod', optInSlowPeriod);
-  optInSignalPeriod = requireInt32('KVO openAndFill', 'optInSignalPeriod', optInSignalPeriod);
-  requireArgument('KVO openAndFill', 'inHigh', inHigh);
-  requireHistory('KVO openAndFill', inHigh.length);
-  requireArgument('KVO openAndFill', 'inLow', inLow);
-  requireArgument('KVO openAndFill', 'inClose', inClose);
-  requireArgument('KVO openAndFill', 'inVolume', inVolume);
-  const guardOutLen = openFillCount('KVO openAndFill', inHigh.length, kvoLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
-  requireHistoryLength('KVO openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('KVO openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireHistoryLength('KVO openAndFill', 'inVolume', inVolume.length, inHigh.length);
-  requireOutput('KVO openAndFill', 'outKVO', outKVO, guardOutLen, Float64Array);
-  requireOutput('KVO openAndFill', 'outKVOSignal', outKVOSignal, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  const inVolumeF64 = float64(inVolume);
-  if ((outKVO.buffer === inHighF64.buffer && outKVO.byteOffset === inHighF64.byteOffset) || (outKVO.buffer === inLowF64.buffer && outKVO.byteOffset === inLowF64.byteOffset) || (outKVO.buffer === inCloseF64.buffer && outKVO.byteOffset === inCloseF64.byteOffset) || (outKVO.buffer === inVolumeF64.buffer && outKVO.byteOffset === inVolumeF64.byteOffset) || (outKVOSignal.buffer === inHighF64.buffer && outKVOSignal.byteOffset === inHighF64.byteOffset) || (outKVOSignal.buffer === inLowF64.buffer && outKVOSignal.byteOffset === inLowF64.byteOffset) || (outKVOSignal.buffer === inCloseF64.buffer && outKVOSignal.byteOffset === inCloseF64.byteOffset) || (outKVOSignal.buffer === inVolumeF64.buffer && outKVOSignal.byteOffset === inVolumeF64.byteOffset) || (outKVO.buffer === outKVOSignal.buffer && outKVO.byteOffset === outKVOSignal.byteOffset)) {
-    throw streamFailure('KVO openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outKVO, inHighF64) || overlaps(outKVO, inLowF64) || overlaps(outKVO, inCloseF64) || overlaps(outKVO, inVolumeF64) || overlaps(outKVOSignal, inHighF64) || overlaps(outKVOSignal, inLowF64) || overlaps(outKVOSignal, inCloseF64) || overlaps(outKVOSignal, inVolumeF64) || overlaps(outKVO, outKVOSignal))) {
-    throw streamFailure('KVO openAndFill', RetCode.BAD_PARAM);
-  }
-  return kvoOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, inVolumeF64, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, new MInteger(), new MInteger(), outKVO, outKVOSignal);
+export function kvoOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number> }, options?: KvoOptions): KvoResult & { stream: KvoStream } {
+  requireArgument('KVO openAndFill', 'prices', prices);
+  const o = optionsOf('KVO openAndFill', options);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('KVO openAndFill', o.core);
+  const capacity = fillCapacity(kvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core), prices.high, prices.low, prices.close, prices.volume);
+  const outKVO = o.outKvo === undefined ? new Float64Array(capacity) : o.outKvo;
+  const outKVOSignal = o.outKvoSignal === undefined ? new Float64Array(capacity) : o.outKvoSignal;
+  const stream = kvoOpenAndFillPositional(prices.high, prices.low, prices.close, prices.volume, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outKVO, outKVOSignal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outKvo: outKVO.subarray(0, range.count), outKvoSignal: outKVOSignal.subarray(0, range.count) };
 }

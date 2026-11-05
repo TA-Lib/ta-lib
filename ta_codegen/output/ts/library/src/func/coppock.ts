@@ -11,28 +11,14 @@
  *  090526 KL     First version (issue #362).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link coppock} consumes before its first value:
- * the index of the first bar with a value when the whole series is requested.
- *
- * @param optInWMAPeriod - Smoothing period for the ROC sum (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC1Period - Short rate-of-change period (default 11; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC2Period - Long rate-of-change period (default 14; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function coppockLookback(optInWMAPeriod: number, optInROC1Period: number, optInROC2Period: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function coppockLookbackPositional(optInWMAPeriod: number, optInROC1Period: number, optInROC2Period: number, _core: Core = Core.DEFAULT): number {
   if ((optInWMAPeriod | 0) !== optInWMAPeriod) {
     return -1;
   }
@@ -69,26 +55,9 @@ export function coppockLookback(optInWMAPeriod: number, optInROC1Period: number,
   return optInROC2Period + optInWMAPeriod - 1;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link coppock}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInWMAPeriod - Smoothing period for the ROC sum (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC1Period - Short rate-of-change period (default 11; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC2Period - Long rate-of-change period (default 14; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function coppockDisplayShift(optInWMAPeriod: number, optInROC1Period: number, optInROC2Period: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (coppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period, core) < 0) {
+/** @internal */
+export function coppockDisplayShiftPositional(optInWMAPeriod: number, optInROC1Period: number, optInROC2Period: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (coppockLookbackPositional(optInWMAPeriod, optInROC1Period, optInROC2Period, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -181,7 +150,7 @@ export function coppockImpl(
    * expiring slot and the re-anchor walks the ring, oldest first, weight
    * counting up from 1, then adds the current bar at weight w.
    */
-  lookbackTotal = coppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period, core);
+  lookbackTotal = coppockLookbackPositional(optInWMAPeriod, optInROC1Period, optInROC2Period, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -317,6 +286,137 @@ export function coppockImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['wmaPeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['roc1Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['roc2Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000']] as const;
+
+/** @internal */
+export function coppockPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInWMAPeriod: number,
+  optInROC1Period: number,
+  optInROC2Period: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('COPPOCK', 'startIdx', startIdx);
+  endIdx = requireInt32('COPPOCK', 'endIdx', endIdx);
+  optInWMAPeriod = requireInt32('COPPOCK', 'wmaPeriod', optInWMAPeriod);
+  optInROC1Period = requireInt32('COPPOCK', 'roc1Period', optInROC1Period);
+  optInROC2Period = requireInt32('COPPOCK', 'roc2Period', optInROC2Period);
+  requireIndexRange('COPPOCK', startIdx, endIdx);
+  const guardLookback = coppockLookbackPositional(optInWMAPeriod, optInROC1Period, optInROC2Period, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('COPPOCK', PARAM_RANGES, optInWMAPeriod, optInROC1Period, optInROC2Period);
+  }
+  const guardStart = clampedStart('COPPOCK', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('COPPOCK', 'real', inReal, guardInLen);
+  requireOutput('COPPOCK', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outReal, inRealF64)) {
+    throw sharedMemory('COPPOCK', 'outReal', 'real');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = coppockImpl(core, startIdx, endIdx, inRealF64, optInWMAPeriod, optInROC1Period, optInROC2Period, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('COPPOCK', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link coppock}, {@link coppockLookback},
+ * {@link coppockDisplayShift}, {@link coppockOpen} and {@link coppockOpenAndFill}.
+ * Every key is optional: an omitted or `undefined` key takes its default, and a
+ * call ignores the keys it has no use for.
+ */
+export interface CoppockOptions {
+  /**
+   * Smoothing period for the ROC sum (default 10; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  wmaPeriod?: number | undefined;
+  /**
+   * Short rate-of-change period (default 11; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  roc1Period?: number | undefined;
+  /**
+   * Long rate-of-change period (default 14; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  roc2Period?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link coppock} returns, and {@link coppockOpenAndFill} with its stream. */
+export interface CoppockResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /** Coppock Curve value. `values[k]` is the value at input bar `begIdx + k`. */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link coppock} consumes before its first value:
+ * the index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CoppockOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function coppockLookback(options?: CoppockOptions): number {
+  const o = optionsOf('COPPOCK lookback', options);
+  return coppockLookbackPositional(orDefault(o.wmaPeriod, Core.INTEGER_DEFAULT), orDefault(o.roc1Period, Core.INTEGER_DEFAULT), orDefault(o.roc2Period, Core.INTEGER_DEFAULT), coreOf('COPPOCK lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link coppock}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CoppockOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function coppockDisplayShift(outputIdx: number, options?: CoppockOptions): number {
+  const o = optionsOf('COPPOCK displayShift', options);
+  return coppockDisplayShiftPositional(orDefault(o.wmaPeriod, Core.INTEGER_DEFAULT), orDefault(o.roc1Period, Core.INTEGER_DEFAULT), orDefault(o.roc2Period, Core.INTEGER_DEFAULT), outputIdx, coreOf('COPPOCK displayShift', o.core));
+}
+
 /**
  * Coppock Curve: Edwin S. "Sedge" Coppock's long-term momentum oscillator
  * (*Barron's*, originally published as the "Trendex Model"), computed as a
@@ -337,31 +437,23 @@ export function coppockImpl(
  * - First output at `max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1`.
  *   Not start-dependent: each output depends only on its finite trailing window.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link coppockLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link coppockLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Source price/value series (canonically a monthly close)
- * @param optInWMAPeriod - Smoothing period for the ROC sum (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC1Period - Short rate-of-change period (default 11; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC2Period - Long rate-of-change period (default 14; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Coppock Curve value. Must hold the values produced and never be
- *   empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Source price/value series (canonically a monthly close)
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link CoppockOptions}.
+ * @returns `begIdx` and the values; see {@link CoppockResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output
- *   or an output sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -369,43 +461,29 @@ export function coppockImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const { begIdx, count } = coppock(0, data.length - 1, data, 10, 11, 14, out);
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = coppock(data, {
+ *   wmaPeriod: 10,
+ *   roc1Period: 11,
+ *   roc2Period: 14,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function coppock(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInWMAPeriod: number,
-  optInROC1Period: number,
-  optInROC2Period: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('COPPOCK', 'startIdx', startIdx);
-  endIdx = requireInt32('COPPOCK', 'endIdx', endIdx);
-  optInWMAPeriod = requireInt32('COPPOCK', 'optInWMAPeriod', optInWMAPeriod);
-  optInROC1Period = requireInt32('COPPOCK', 'optInROC1Period', optInROC1Period);
-  optInROC2Period = requireInt32('COPPOCK', 'optInROC2Period', optInROC2Period);
-  requireIndexRange('COPPOCK', startIdx, endIdx);
-  const guardStart = clampedStart('COPPOCK', startIdx, coppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('COPPOCK', 'inReal', inReal, guardInLen);
-  requireOutput('COPPOCK', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outReal, inRealF64)) {
-    throw failure('COPPOCK', RetCode.BAD_PARAM);
+export function coppock(real: ArrayLike<number>, options?: CoppockOptions): CoppockResult {
+  const o = optionsOf('COPPOCK', options);
+  if (o.endIdx === undefined) {
+    requireSeries('COPPOCK', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = coppockImpl(core, startIdx, endIdx, inRealF64, optInWMAPeriod, optInROC1Period, optInROC2Period, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('COPPOCK', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInWMAPeriod = orDefault(o.wmaPeriod, Core.INTEGER_DEFAULT);
+  const optInROC1Period = orDefault(o.roc1Period, Core.INTEGER_DEFAULT);
+  const optInROC2Period = orDefault(o.roc2Period, Core.INTEGER_DEFAULT);
+  const core = coreOf('COPPOCK', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, coppockLookbackPositional(optInWMAPeriod, optInROC1Period, optInROC2Period, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = coppockPositional(startIdx, endIdx, real, optInWMAPeriod, optInROC1Period, optInROC2Period, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -810,7 +888,7 @@ function coppockOpenImpl(
    * expiring slot and the re-anchor walks the ring, oldest first, weight
    * counting up from 1, then adds the current bar at weight w.
    */
-  lookbackTotal = coppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period, core);
+  lookbackTotal = coppockLookbackPositional(optInWMAPeriod, optInROC1Period, optInROC2Period, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -1004,7 +1082,10 @@ export function coppockOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('COPPOCK openAndFill', inReal.length, startIdx, coppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period, core));
+    throw insufficientHistory('COPPOCK openAndFill', inReal.length, startIdx, coppockLookbackPositional(optInWMAPeriod, optInROC1Period, optInROC2Period, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && coppockLookbackPositional(optInWMAPeriod, optInROC1Period, optInROC2Period, core) < 0) {
+    throw rejectedParams('COPPOCK openAndFill', PARAM_RANGES, optInWMAPeriod, optInROC1Period, optInROC2Period);
   }
   throw streamFailure('COPPOCK openAndFill', retCode);
 }
@@ -1029,94 +1110,32 @@ export function coppockOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('COPPOCK open', inReal.length, startIdx, coppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period, core));
+    throw insufficientHistory('COPPOCK open', inReal.length, startIdx, coppockLookbackPositional(optInWMAPeriod, optInROC1Period, optInROC2Period, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && coppockLookbackPositional(optInWMAPeriod, optInROC1Period, optInROC2Period, core) < 0) {
+    throw rejectedParams('COPPOCK open', PARAM_RANGES, optInWMAPeriod, optInROC1Period, optInROC2Period);
   }
   throw streamFailure('COPPOCK open', retCode);
 }
 
-/**
- * Opens a live COPPOCK stream over the warm-up history: `value()` starts at the
- * last history bar, bit-identical to {@link coppock} there.
- *
- * @param inReal - Warm-up history. Source price/value series (canonically a
- *   monthly close)
- * @param optInWMAPeriod - Smoothing period for the ROC sum (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC1Period - Short rate-of-change period (default 11; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC2Period - Long rate-of-change period (default 14; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `coppockLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32 or a parameter outside its range.
- *
- * @example
- * ```ts
- * import { coppockOpen } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const stream = coppockOpen(data, 10, 11, 14);
- * const peeked = stream.peek(100.9); // a forming bar: commits nothing
- * const updated = stream.update(100.9); // the bar closes
- * ```
- */
-export function coppockOpen(
+/** @internal */
+export function coppockOpenPositional(
   inReal: ArrayLike<number>,
   optInWMAPeriod: number,
   optInROC1Period: number,
   optInROC2Period: number,
   core: Core = Core.DEFAULT,
 ): CoppockStream {
-  optInWMAPeriod = requireInt32('COPPOCK open', 'optInWMAPeriod', optInWMAPeriod);
-  optInROC1Period = requireInt32('COPPOCK open', 'optInROC1Period', optInROC1Period);
-  optInROC2Period = requireInt32('COPPOCK open', 'optInROC2Period', optInROC2Period);
-  requireArgument('COPPOCK open', 'inReal', inReal);
+  optInWMAPeriod = requireInt32('COPPOCK open', 'wmaPeriod', optInWMAPeriod);
+  optInROC1Period = requireInt32('COPPOCK open', 'roc1Period', optInROC1Period);
+  optInROC2Period = requireInt32('COPPOCK open', 'roc2Period', optInROC2Period);
+  requireArgument('COPPOCK open', 'real', inReal);
   requireHistory('COPPOCK open', inReal.length);
   return coppockOpenInternal(core, float64(inReal), 0, optInWMAPeriod, optInROC1Period, optInROC2Period);
 }
 
-/**
- * {@link coppockOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link coppock}. The range written is the stream's
- * `outRange()`.
- *
- * @param inReal - Warm-up history. Source price/value series (canonically a
- *   monthly close)
- * @param optInWMAPeriod - Smoothing period for the ROC sum (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC1Period - Short rate-of-change period (default 11; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC2Period - Long rate-of-change period (default 14; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Coppock Curve value. Must hold `historyLen - lookback` values
- *   and share no memory with an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `coppockLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range or
- *   an output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { coppockOpenAndFill } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const stream = coppockOpenAndFill(data, 10, 11, 14, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function coppockOpenAndFill(
+/** @internal */
+export function coppockOpenAndFillPositional(
   inReal: ArrayLike<number>,
   optInWMAPeriod: number,
   optInROC1Period: number,
@@ -1124,19 +1143,108 @@ export function coppockOpenAndFill(
   outReal: Float64Array,
   core: Core = Core.DEFAULT,
 ): CoppockStream {
-  optInWMAPeriod = requireInt32('COPPOCK openAndFill', 'optInWMAPeriod', optInWMAPeriod);
-  optInROC1Period = requireInt32('COPPOCK openAndFill', 'optInROC1Period', optInROC1Period);
-  optInROC2Period = requireInt32('COPPOCK openAndFill', 'optInROC2Period', optInROC2Period);
-  requireArgument('COPPOCK openAndFill', 'inReal', inReal);
+  optInWMAPeriod = requireInt32('COPPOCK openAndFill', 'wmaPeriod', optInWMAPeriod);
+  optInROC1Period = requireInt32('COPPOCK openAndFill', 'roc1Period', optInROC1Period);
+  optInROC2Period = requireInt32('COPPOCK openAndFill', 'roc2Period', optInROC2Period);
+  requireArgument('COPPOCK openAndFill', 'real', inReal);
   requireHistory('COPPOCK openAndFill', inReal.length);
-  const guardOutLen = openFillCount('COPPOCK openAndFill', inReal.length, coppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period, core));
+  const guardLookback = coppockLookbackPositional(optInWMAPeriod, optInROC1Period, optInROC2Period, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('COPPOCK openAndFill', PARAM_RANGES, optInWMAPeriod, optInROC1Period, optInROC2Period);
+  }
+  const guardOutLen = openFillCount('COPPOCK openAndFill', inReal.length, guardLookback);
   requireOutput('COPPOCK openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
-  if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
-    throw streamFailure('COPPOCK openAndFill', RetCode.BAD_PARAM);
+  if (outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('COPPOCK openAndFill', 'outReal', 'real');
   }
-  if (guardOutLen > 0 && (overlaps(outReal, inRealF64))) {
-    throw streamFailure('COPPOCK openAndFill', RetCode.BAD_PARAM);
+  if (guardOutLen > 0 && overlaps(outReal, inRealF64)) {
+    throw sharedMemory('COPPOCK openAndFill', 'outReal', 'real');
   }
   return coppockOpenAndFillInternal(core, inRealF64, 0, optInWMAPeriod, optInROC1Period, optInROC2Period, new MInteger(), new MInteger(), outReal);
+}
+
+/**
+ * Opens a live COPPOCK stream over the warm-up history: `value()` starts at the
+ * last history bar, bit-identical to {@link coppock} there.
+ *
+ * @param real - Warm-up history. Source price/value series (canonically a monthly
+ *   close)
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CoppockOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `coppockLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32 or a parameter outside its
+ *   range.
+ *
+ * @example
+ * ```ts
+ * import { coppockOpen } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const stream = coppockOpen(data, {
+ *   wmaPeriod: 10,
+ *   roc1Period: 11,
+ *   roc2Period: 14,
+ * });
+ * const peeked = stream.peek(100.9); // a forming bar: commits nothing
+ * const updated = stream.update(100.9); // the bar closes
+ * ```
+ */
+export function coppockOpen(real: ArrayLike<number>, options?: CoppockOptions): CoppockStream {
+  const o = optionsOf('COPPOCK open', options);
+  const optInWMAPeriod = orDefault(o.wmaPeriod, Core.INTEGER_DEFAULT);
+  const optInROC1Period = orDefault(o.roc1Period, Core.INTEGER_DEFAULT);
+  const optInROC2Period = orDefault(o.roc2Period, Core.INTEGER_DEFAULT);
+  const core = coreOf('COPPOCK open', o.core);
+  return coppockOpenPositional(real, optInWMAPeriod, optInROC1Period, optInROC2Period, core);
+}
+
+/**
+ * {@link coppockOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link coppock}.
+ *
+ * @param real - Warm-up history. Source price/value series (canonically a monthly
+ *   close)
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link CoppockOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link coppock} returns them; the range is the
+ *   stream's `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `coppockLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range
+ *   or a buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
+ *
+ * @example
+ * ```ts
+ * import { coppockOpenAndFill } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const { stream, begIdx, values } = coppockOpenAndFill(data, {
+ *   wmaPeriod: 10,
+ *   roc1Period: 11,
+ *   roc2Period: 14,
+ * });
+ * // values[k] is the value at bar begIdx + k
+ * ```
+ */
+export function coppockOpenAndFill(real: ArrayLike<number>, options?: CoppockOptions): CoppockResult & { stream: CoppockStream } {
+  const o = optionsOf('COPPOCK openAndFill', options);
+  const optInWMAPeriod = orDefault(o.wmaPeriod, Core.INTEGER_DEFAULT);
+  const optInROC1Period = orDefault(o.roc1Period, Core.INTEGER_DEFAULT);
+  const optInROC2Period = orDefault(o.roc2Period, Core.INTEGER_DEFAULT);
+  const core = coreOf('COPPOCK openAndFill', o.core);
+  const capacity = fillCapacity(coppockLookbackPositional(optInWMAPeriod, optInROC1Period, optInROC2Period, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = coppockOpenAndFillPositional(real, optInWMAPeriod, optInROC1Period, optInROC2Period, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

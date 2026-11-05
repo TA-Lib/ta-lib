@@ -14,43 +14,22 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link ha} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * It includes `core`'s unstable period for this function.
- *
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function haLookback(core: Core = Core.DEFAULT): number {
+/** @internal */
+export function haLookbackPositional(core: Core = Core.DEFAULT): number {
   /* 13/9 is 1/ln(2) rounded up: the open is the only state, and it shows
    * the whole first difference at its first bar.
    */
   return core.unstableCount(FuncUnstId.HA, (((((13 * 10) | 0) + 8) / 9) | 0), (((((13 * 19) | 0) + 8) / 9) | 0));
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link ha}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function haDisplayShift(outputIdx: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function haDisplayShiftPositional(outputIdx: number, _core: Core = Core.DEFAULT): number {
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 4) {
     return -2147483648;
   }
@@ -96,7 +75,7 @@ export function haImpl(
   }
   outBegIdx.value = 0;
   outNBElement.value = 0;
-  lookbackTotal = haLookback(core);
+  lookbackTotal = haLookbackPositional(core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -189,6 +168,220 @@ export function haImpl(
   return RetCode.SUCCESS;
 }
 
+/** @internal */
+export function haPositional(
+  startIdx: number,
+  endIdx: number,
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outHAOpen: Float64Array,
+  outHAHigh: Float64Array,
+  outHALow: Float64Array,
+  outHAClose: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('HA', 'startIdx', startIdx);
+  endIdx = requireInt32('HA', 'endIdx', endIdx);
+  requireIndexRange('HA', startIdx, endIdx);
+  const guardStart = clampedStart('HA', startIdx, haLookbackPositional(core));
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('HA', 'prices.open', inOpen, guardInLen);
+  requireLength('HA', 'prices.high', inHigh, guardInLen);
+  requireLength('HA', 'prices.low', inLow, guardInLen);
+  requireLength('HA', 'prices.close', inClose, guardInLen);
+  requireOutput('HA', 'outHaOpen', outHAOpen, guardOutLen, Float64Array);
+  requireOutput('HA', 'outHaHigh', outHAHigh, guardOutLen, Float64Array);
+  requireOutput('HA', 'outHaLow', outHALow, guardOutLen, Float64Array);
+  requireOutput('HA', 'outHaClose', outHAClose, guardOutLen, Float64Array);
+  const inOpenF64 = float64(inOpen);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (overlapsPartly(outHAOpen, inOpenF64)) {
+    throw sharedMemory('HA', 'outHaOpen', 'prices.open');
+  }
+  if (overlapsPartly(outHAOpen, inHighF64)) {
+    throw sharedMemory('HA', 'outHaOpen', 'prices.high');
+  }
+  if (overlapsPartly(outHAOpen, inLowF64)) {
+    throw sharedMemory('HA', 'outHaOpen', 'prices.low');
+  }
+  if (overlapsPartly(outHAOpen, inCloseF64)) {
+    throw sharedMemory('HA', 'outHaOpen', 'prices.close');
+  }
+  if (overlapsPartly(outHAHigh, inOpenF64)) {
+    throw sharedMemory('HA', 'outHaHigh', 'prices.open');
+  }
+  if (overlapsPartly(outHAHigh, inHighF64)) {
+    throw sharedMemory('HA', 'outHaHigh', 'prices.high');
+  }
+  if (overlapsPartly(outHAHigh, inLowF64)) {
+    throw sharedMemory('HA', 'outHaHigh', 'prices.low');
+  }
+  if (overlapsPartly(outHAHigh, inCloseF64)) {
+    throw sharedMemory('HA', 'outHaHigh', 'prices.close');
+  }
+  if (overlapsPartly(outHALow, inOpenF64)) {
+    throw sharedMemory('HA', 'outHaLow', 'prices.open');
+  }
+  if (overlapsPartly(outHALow, inHighF64)) {
+    throw sharedMemory('HA', 'outHaLow', 'prices.high');
+  }
+  if (overlapsPartly(outHALow, inLowF64)) {
+    throw sharedMemory('HA', 'outHaLow', 'prices.low');
+  }
+  if (overlapsPartly(outHALow, inCloseF64)) {
+    throw sharedMemory('HA', 'outHaLow', 'prices.close');
+  }
+  if (overlapsPartly(outHAClose, inOpenF64)) {
+    throw sharedMemory('HA', 'outHaClose', 'prices.open');
+  }
+  if (overlapsPartly(outHAClose, inHighF64)) {
+    throw sharedMemory('HA', 'outHaClose', 'prices.high');
+  }
+  if (overlapsPartly(outHAClose, inLowF64)) {
+    throw sharedMemory('HA', 'outHaClose', 'prices.low');
+  }
+  if (overlapsPartly(outHAClose, inCloseF64)) {
+    throw sharedMemory('HA', 'outHaClose', 'prices.close');
+  }
+  if (overlaps(outHAOpen, outHAHigh)) {
+    throw sharedMemory('HA', 'outHaOpen', 'outHaHigh');
+  }
+  if (overlaps(outHAOpen, outHALow)) {
+    throw sharedMemory('HA', 'outHaOpen', 'outHaLow');
+  }
+  if (overlaps(outHAOpen, outHAClose)) {
+    throw sharedMemory('HA', 'outHaOpen', 'outHaClose');
+  }
+  if (overlaps(outHAHigh, outHALow)) {
+    throw sharedMemory('HA', 'outHaHigh', 'outHaLow');
+  }
+  if (overlaps(outHAHigh, outHAClose)) {
+    throw sharedMemory('HA', 'outHaHigh', 'outHaClose');
+  }
+  if (overlaps(outHALow, outHAClose)) {
+    throw sharedMemory('HA', 'outHaLow', 'outHaClose');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = haImpl(core, startIdx, endIdx, inOpenF64, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('HA', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link ha}, {@link haLookback}, {@link haDisplayShift},
+ * {@link haOpen} and {@link haOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface HaOptions {
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outHaOpen`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outHaOpen?: Float64Array | undefined;
+  /**
+   * Buffer for `outHaHigh`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outHaHigh?: Float64Array | undefined;
+  /**
+   * Buffer for `outHaLow`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outHaLow?: Float64Array | undefined;
+  /**
+   * Buffer for `outHaClose`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outHaClose?: Float64Array | undefined;
+}
+
+/** What {@link ha} returns, and {@link haOpenAndFill} with its stream. */
+export interface HaResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /** Heikin-Ashi open. `outHaOpen[k]` is the value at input bar `begIdx + k`. */
+  outHaOpen: Float64Array;
+  /** Heikin-Ashi high. `outHaHigh[k]` is the value at input bar `begIdx + k`. */
+  outHaHigh: Float64Array;
+  /** Heikin-Ashi low. `outHaLow[k]` is the value at input bar `begIdx + k`. */
+  outHaLow: Float64Array;
+  /** Heikin-Ashi close. `outHaClose[k]` is the value at input bar `begIdx + k`. */
+  outHaClose: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link ha} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * It includes `core`'s unstable period for this function.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link HaOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function haLookback(options?: HaOptions): number {
+  const o = optionsOf('HA lookback', options);
+  return haLookbackPositional(coreOf('HA lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link ha}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link HaOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function haDisplayShift(outputIdx: number, options?: HaOptions): number {
+  const o = optionsOf('HA displayShift', options);
+  return haDisplayShiftPositional(outputIdx, coreOf('HA displayShift', o.core));
+}
+
 /**
  * Heikin-Ashi candles: an OHLC-to-OHLC transform that replaces each bar with a
  * smoothed synthetic candle. The synthetic close is the bar's four-price average,
@@ -220,33 +413,24 @@ export function haImpl(
  *   [`AVGPRICE`](https://ta-lib.org/functions/avgprice) computes, but it sums them
  *   in a different order, so the two can differ in the last bits.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link haLookback} is a success with `count` 0.
+ * `outHaOpen[k]` is the value at input bar `begIdx + k`; every output is exactly
+ * as long as the number of values written, and nothing is padded. A range that
+ * ends before {@link haLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inOpen - Open price of each bar.
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param inClose - Close price of each bar.
- * @param outHAOpen - Heikin-Ashi open. Must hold the values produced and never be
- *   empty; the input length always suffices.
- * @param outHAHigh - Heikin-Ashi high. Must hold the values produced and never be
- *   empty; the input length always suffices.
- * @param outHALow - Heikin-Ashi low. Must hold the values produced and never be
- *   empty; the input length always suffices.
- * @param outHAClose - Heikin-Ashi close. Must hold the values produced and never
- *   be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `open`: Open
+ *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
+ *   `close`: Close price of each bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link HaOptions}.
+ * @returns `begIdx` and the values; see {@link HaResult}. Each output is a view of
+ *   its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, an
- *   array too short for the range, an empty output, two outputs sharing memory or an
- *   output sharing memory with a `Float64Array` input it is not. Checked before
- *   anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an input too short for the range, a buffer that is empty, too short or of
+ *   the wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -260,63 +444,39 @@ export function haImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const haOpen = new Float64Array(open.length);
- * const haHigh = new Float64Array(open.length);
- * const haLow = new Float64Array(open.length);
- * const haClose = new Float64Array(open.length);
- * const { begIdx, count } = ha(
- *   0, open.length - 1,
- *   open, high, low, close,
- *   haOpen, haHigh, haLow, haClose,
- * );
- * // haOpen[k] is the value at bar begIdx + k, for k < count
+ * const {
+ *   begIdx,
+ *   outHaOpen,
+ *   outHaHigh,
+ *   outHaLow,
+ *   outHaClose,
+ * } = ha({ open, high, low, close });
+ * // outHaOpen[k] is the value at bar begIdx + k
  * ```
  * @see [`avgprice`](https://ta-lib.org/functions/avgprice)
  * @see [`medprice`](https://ta-lib.org/functions/medprice)
  * @see [`typprice`](https://ta-lib.org/functions/typprice)
  * @see [`wclprice`](https://ta-lib.org/functions/wclprice)
  */
-export function ha(
-  startIdx: number,
-  endIdx: number,
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outHAOpen: Float64Array,
-  outHAHigh: Float64Array,
-  outHALow: Float64Array,
-  outHAClose: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('HA', 'startIdx', startIdx);
-  endIdx = requireInt32('HA', 'endIdx', endIdx);
-  requireIndexRange('HA', startIdx, endIdx);
-  const guardStart = clampedStart('HA', startIdx, haLookback(core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('HA', 'inOpen', inOpen, guardInLen);
-  requireLength('HA', 'inHigh', inHigh, guardInLen);
-  requireLength('HA', 'inLow', inLow, guardInLen);
-  requireLength('HA', 'inClose', inClose, guardInLen);
-  requireOutput('HA', 'outHAOpen', outHAOpen, guardOutLen, Float64Array);
-  requireOutput('HA', 'outHAHigh', outHAHigh, guardOutLen, Float64Array);
-  requireOutput('HA', 'outHALow', outHALow, guardOutLen, Float64Array);
-  requireOutput('HA', 'outHAClose', outHAClose, guardOutLen, Float64Array);
-  const inOpenF64 = float64(inOpen);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if (overlapsPartly(outHAOpen, inOpenF64) || overlapsPartly(outHAOpen, inHighF64) || overlapsPartly(outHAOpen, inLowF64) || overlapsPartly(outHAOpen, inCloseF64) || overlapsPartly(outHAHigh, inOpenF64) || overlapsPartly(outHAHigh, inHighF64) || overlapsPartly(outHAHigh, inLowF64) || overlapsPartly(outHAHigh, inCloseF64) || overlapsPartly(outHALow, inOpenF64) || overlapsPartly(outHALow, inHighF64) || overlapsPartly(outHALow, inLowF64) || overlapsPartly(outHALow, inCloseF64) || overlapsPartly(outHAClose, inOpenF64) || overlapsPartly(outHAClose, inHighF64) || overlapsPartly(outHAClose, inLowF64) || overlapsPartly(outHAClose, inCloseF64) || overlaps(outHAOpen, outHAHigh) || overlaps(outHAOpen, outHALow) || overlaps(outHAOpen, outHAClose) || overlaps(outHAHigh, outHALow) || overlaps(outHAHigh, outHAClose) || overlaps(outHALow, outHAClose)) {
-    throw failure('HA', RetCode.BAD_PARAM);
+export function ha(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: HaOptions): HaResult {
+  requireArgument('HA', 'prices', prices);
+  const o = optionsOf('HA', options);
+  if (o.endIdx === undefined) {
+    requireSeries('HA', 'prices.open', prices.open);
+    requireSeries('HA', 'prices.high', prices.high);
+    requireSeries('HA', 'prices.low', prices.low);
+    requireSeries('HA', 'prices.close', prices.close);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = haImpl(core, startIdx, endIdx, inOpenF64, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('HA', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const core = coreOf('HA', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.open.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, haLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
+  const outHAOpen = o.outHaOpen === undefined ? new Float64Array(capacity) : o.outHaOpen;
+  const outHAHigh = o.outHaHigh === undefined ? new Float64Array(capacity) : o.outHaHigh;
+  const outHALow = o.outHaLow === undefined ? new Float64Array(capacity) : o.outHaLow;
+  const outHAClose = o.outHaClose === undefined ? new Float64Array(capacity) : o.outHaClose;
+  const range = haPositional(startIdx, endIdx, prices.open, prices.high, prices.low, prices.close, outHAOpen, outHAHigh, outHALow, outHAClose, core);
+  return { begIdx: range.begIdx, outHaOpen: outHAOpen.subarray(0, range.count), outHaHigh: outHAHigh.subarray(0, range.count), outHaLow: outHALow.subarray(0, range.count), outHaClose: outHAClose.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -382,22 +542,24 @@ export class HaStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inOpen - The bar's `inOpen` value: Open price of each bar.
    * @param inHigh - The bar's `inHigh` value: High price of each bar.
    * @param inLow - The bar's `inLow` value: Low price of each bar.
    * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link HaOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inOpen: number, inHigh: number, inLow: number, inClose: number, out: HaOut): void {
+  update(inOpen: number, inHigh: number, inLow: number, inClose: number, out?: HaOut): HaOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('HA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('HA update', 'HaOut');
     }
     if (!Number.isFinite(inOpen) || !Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
@@ -405,26 +567,31 @@ export class HaStream {
     }
     haStepImpl(this, inOpen, inHigh, inLow, inClose);
     this.outRangeCount++;
-    out.haOpen = this.cur_outHAOpen;
-    out.haHigh = this.cur_outHAHigh;
-    out.haLow = this.cur_outHALow;
-    out.haClose = this.cur_outHAClose;
+    if (out === undefined) {
+      out = new HaOut();
+    }
+    out.outHaOpen = this.cur_outHAOpen;
+    out.outHaHigh = this.cur_outHAHigh;
+    out.outHaLow = this.cur_outHALow;
+    out.outHaClose = this.cur_outHAClose;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inOpen - The bar's `inOpen` value: Open price of each bar.
    * @param inHigh - The bar's `inHigh` value: High price of each bar.
    * @param inLow - The bar's `inLow` value: Low price of each bar.
    * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link HaOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inOpen: number, inHigh: number, inLow: number, inClose: number, out: HaOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inOpen: number, inHigh: number, inLow: number, inClose: number, out?: HaOut): HaOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('HA peek', 'HaOut');
     }
     if (!Number.isFinite(inOpen) || !Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
@@ -471,25 +638,35 @@ export class HaStream {
     cur_outHAHigh = haHigh;
     cur_outHALow = haLow;
     cur_outHAClose = haClose;
-    out.haOpen = cur_outHAOpen;
-    out.haHigh = cur_outHAHigh;
-    out.haLow = cur_outHALow;
-    out.haClose = cur_outHAClose;
+    if (out === undefined) {
+      out = new HaOut();
+    }
+    out.outHaOpen = cur_outHAOpen;
+    out.outHaHigh = cur_outHAHigh;
+    out.outHaLow = cur_outHALow;
+    out.outHaClose = cur_outHAClose;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link HaOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: HaOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: HaOut): HaOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('HA value', 'HaOut');
     }
-    out.haOpen = this.cur_outHAOpen;
-    out.haHigh = this.cur_outHAHigh;
-    out.haLow = this.cur_outHALow;
-    out.haClose = this.cur_outHAClose;
+    if (out === undefined) {
+      out = new HaOut();
+    }
+    out.outHaOpen = this.cur_outHAOpen;
+    out.outHaHigh = this.cur_outHAHigh;
+    out.outHaLow = this.cur_outHALow;
+    out.outHaClose = this.cur_outHAClose;
+    return out;
   }
 
   /**
@@ -513,18 +690,19 @@ export class HaStream {
 }
 
 /**
- * The outputs of one HA bar, written into an object the caller owns and reuses:
- * valid until the next call that writes it.
+ * The outputs of one HA bar, as `update`, `peek` and `value` return them. Passed
+ * back to one of them, it is filled and returned again, with no allocation; it
+ * holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class HaOut {
   /** Heikin-Ashi open. */
-  haOpen: number = 0;
+  outHaOpen: number = NaN;
   /** Heikin-Ashi high. */
-  haHigh: number = 0;
+  outHaHigh: number = NaN;
   /** Heikin-Ashi low. */
-  haLow: number = 0;
+  outHaLow: number = NaN;
   /** Heikin-Ashi close. */
-  haClose: number = 0;
+  outHaClose: number = NaN;
 }
 
 function haStepImpl(sp: HaStream, inOpen: number, inHigh: number, inLow: number, inClose: number): void {
@@ -610,7 +788,7 @@ function haOpenImpl(
   }
   outBegIdx.value = 0;
   outNBElement.value = 0;
-  lookbackTotal = haLookback(core);
+  lookbackTotal = haLookbackPositional(core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -732,7 +910,7 @@ export function haOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('HA openAndFill', inOpen.length, startIdx, haLookback(core));
+    throw insufficientHistory('HA openAndFill', inOpen.length, startIdx, haLookbackPositional(core));
   }
   throw streamFailure('HA openAndFill', retCode);
 }
@@ -760,33 +938,212 @@ export function haOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('HA open', inOpen.length, startIdx, haLookback(core));
+    throw insufficientHistory('HA open', inOpen.length, startIdx, haLookbackPositional(core));
   }
   throw streamFailure('HA open', retCode);
+}
+
+/** @internal */
+export function haOpenPositional(
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  core: Core = Core.DEFAULT,
+): HaStream {
+  requireArgument('HA open', 'prices.open', inOpen);
+  requireHistory('HA open', inOpen.length);
+  requireArgument('HA open', 'prices.high', inHigh);
+  requireArgument('HA open', 'prices.low', inLow);
+  requireArgument('HA open', 'prices.close', inClose);
+  requireHistoryLength('HA open', 'prices.high', inHigh.length, inOpen.length);
+  requireHistoryLength('HA open', 'prices.low', inLow.length, inOpen.length);
+  requireHistoryLength('HA open', 'prices.close', inClose.length, inOpen.length);
+  return haOpenInternal(core, float64(inOpen), float64(inHigh), float64(inLow), float64(inClose), 0);
+}
+
+/** @internal */
+export function haOpenAndFillPositional(
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outHAOpen: Float64Array,
+  outHAHigh: Float64Array,
+  outHALow: Float64Array,
+  outHAClose: Float64Array,
+  core: Core = Core.DEFAULT,
+): HaStream {
+  requireArgument('HA openAndFill', 'prices.open', inOpen);
+  requireHistory('HA openAndFill', inOpen.length);
+  requireArgument('HA openAndFill', 'prices.high', inHigh);
+  requireArgument('HA openAndFill', 'prices.low', inLow);
+  requireArgument('HA openAndFill', 'prices.close', inClose);
+  const guardOutLen = openFillCount('HA openAndFill', inOpen.length, haLookbackPositional(core));
+  requireHistoryLength('HA openAndFill', 'prices.high', inHigh.length, inOpen.length);
+  requireHistoryLength('HA openAndFill', 'prices.low', inLow.length, inOpen.length);
+  requireHistoryLength('HA openAndFill', 'prices.close', inClose.length, inOpen.length);
+  requireOutput('HA openAndFill', 'outHaOpen', outHAOpen, guardOutLen, Float64Array);
+  requireOutput('HA openAndFill', 'outHaHigh', outHAHigh, guardOutLen, Float64Array);
+  requireOutput('HA openAndFill', 'outHaLow', outHALow, guardOutLen, Float64Array);
+  requireOutput('HA openAndFill', 'outHaClose', outHAClose, guardOutLen, Float64Array);
+  const inOpenF64 = float64(inOpen);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (outHAOpen.buffer === inOpenF64.buffer && outHAOpen.byteOffset === inOpenF64.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaOpen', 'prices.open');
+  }
+  if (outHAOpen.buffer === inHighF64.buffer && outHAOpen.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaOpen', 'prices.high');
+  }
+  if (outHAOpen.buffer === inLowF64.buffer && outHAOpen.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaOpen', 'prices.low');
+  }
+  if (outHAOpen.buffer === inCloseF64.buffer && outHAOpen.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaOpen', 'prices.close');
+  }
+  if (outHAHigh.buffer === inOpenF64.buffer && outHAHigh.byteOffset === inOpenF64.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaHigh', 'prices.open');
+  }
+  if (outHAHigh.buffer === inHighF64.buffer && outHAHigh.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaHigh', 'prices.high');
+  }
+  if (outHAHigh.buffer === inLowF64.buffer && outHAHigh.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaHigh', 'prices.low');
+  }
+  if (outHAHigh.buffer === inCloseF64.buffer && outHAHigh.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaHigh', 'prices.close');
+  }
+  if (outHALow.buffer === inOpenF64.buffer && outHALow.byteOffset === inOpenF64.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaLow', 'prices.open');
+  }
+  if (outHALow.buffer === inHighF64.buffer && outHALow.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaLow', 'prices.high');
+  }
+  if (outHALow.buffer === inLowF64.buffer && outHALow.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaLow', 'prices.low');
+  }
+  if (outHALow.buffer === inCloseF64.buffer && outHALow.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaLow', 'prices.close');
+  }
+  if (outHAClose.buffer === inOpenF64.buffer && outHAClose.byteOffset === inOpenF64.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaClose', 'prices.open');
+  }
+  if (outHAClose.buffer === inHighF64.buffer && outHAClose.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaClose', 'prices.high');
+  }
+  if (outHAClose.buffer === inLowF64.buffer && outHAClose.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaClose', 'prices.low');
+  }
+  if (outHAClose.buffer === inCloseF64.buffer && outHAClose.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaClose', 'prices.close');
+  }
+  if (outHAOpen.buffer === outHAHigh.buffer && outHAOpen.byteOffset === outHAHigh.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaOpen', 'outHaHigh');
+  }
+  if (outHAOpen.buffer === outHALow.buffer && outHAOpen.byteOffset === outHALow.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaOpen', 'outHaLow');
+  }
+  if (outHAOpen.buffer === outHAClose.buffer && outHAOpen.byteOffset === outHAClose.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaOpen', 'outHaClose');
+  }
+  if (outHAHigh.buffer === outHALow.buffer && outHAHigh.byteOffset === outHALow.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaHigh', 'outHaLow');
+  }
+  if (outHAHigh.buffer === outHAClose.buffer && outHAHigh.byteOffset === outHAClose.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaHigh', 'outHaClose');
+  }
+  if (outHALow.buffer === outHAClose.buffer && outHALow.byteOffset === outHAClose.byteOffset) {
+    throw sharedMemory('HA openAndFill', 'outHaLow', 'outHaClose');
+  }
+  if (guardOutLen > 0 && overlaps(outHAOpen, inOpenF64)) {
+    throw sharedMemory('HA openAndFill', 'outHaOpen', 'prices.open');
+  }
+  if (guardOutLen > 0 && overlaps(outHAOpen, inHighF64)) {
+    throw sharedMemory('HA openAndFill', 'outHaOpen', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outHAOpen, inLowF64)) {
+    throw sharedMemory('HA openAndFill', 'outHaOpen', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outHAOpen, inCloseF64)) {
+    throw sharedMemory('HA openAndFill', 'outHaOpen', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outHAHigh, inOpenF64)) {
+    throw sharedMemory('HA openAndFill', 'outHaHigh', 'prices.open');
+  }
+  if (guardOutLen > 0 && overlaps(outHAHigh, inHighF64)) {
+    throw sharedMemory('HA openAndFill', 'outHaHigh', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outHAHigh, inLowF64)) {
+    throw sharedMemory('HA openAndFill', 'outHaHigh', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outHAHigh, inCloseF64)) {
+    throw sharedMemory('HA openAndFill', 'outHaHigh', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outHALow, inOpenF64)) {
+    throw sharedMemory('HA openAndFill', 'outHaLow', 'prices.open');
+  }
+  if (guardOutLen > 0 && overlaps(outHALow, inHighF64)) {
+    throw sharedMemory('HA openAndFill', 'outHaLow', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outHALow, inLowF64)) {
+    throw sharedMemory('HA openAndFill', 'outHaLow', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outHALow, inCloseF64)) {
+    throw sharedMemory('HA openAndFill', 'outHaLow', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outHAClose, inOpenF64)) {
+    throw sharedMemory('HA openAndFill', 'outHaClose', 'prices.open');
+  }
+  if (guardOutLen > 0 && overlaps(outHAClose, inHighF64)) {
+    throw sharedMemory('HA openAndFill', 'outHaClose', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outHAClose, inLowF64)) {
+    throw sharedMemory('HA openAndFill', 'outHaClose', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outHAClose, inCloseF64)) {
+    throw sharedMemory('HA openAndFill', 'outHaClose', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outHAOpen, outHAHigh)) {
+    throw sharedMemory('HA openAndFill', 'outHaOpen', 'outHaHigh');
+  }
+  if (guardOutLen > 0 && overlaps(outHAOpen, outHALow)) {
+    throw sharedMemory('HA openAndFill', 'outHaOpen', 'outHaLow');
+  }
+  if (guardOutLen > 0 && overlaps(outHAOpen, outHAClose)) {
+    throw sharedMemory('HA openAndFill', 'outHaOpen', 'outHaClose');
+  }
+  if (guardOutLen > 0 && overlaps(outHAHigh, outHALow)) {
+    throw sharedMemory('HA openAndFill', 'outHaHigh', 'outHaLow');
+  }
+  if (guardOutLen > 0 && overlaps(outHAHigh, outHAClose)) {
+    throw sharedMemory('HA openAndFill', 'outHaHigh', 'outHaClose');
+  }
+  if (guardOutLen > 0 && overlaps(outHALow, outHAClose)) {
+    throw sharedMemory('HA openAndFill', 'outHaLow', 'outHaClose');
+  }
+  return haOpenAndFillInternal(core, inOpenF64, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outHAOpen, outHAHigh, outHALow, outHAClose);
 }
 
 /**
  * Opens a live HA stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link ha} there.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
+ *   Low price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link HaOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `haLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   histories of different lengths.
+ *   options that are not an object, a `core` that is not a `Core`, an absent input
+ *   or histories of different lengths.
  *
  * @example
  * ```ts
- * import { HaOut, haOpen } from 'ta-lib';
+ * import { haOpen } from 'ta-lib';
  *
  * const open = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i - 0.05));
@@ -796,60 +1153,37 @@ export function haOpenInternal(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = haOpen(open, high, low, close);
- * const peeked = new HaOut();
- * const updated = new HaOut();
- * stream.peek(100.2, 101.4, 99.1, 100.9, peeked); // a forming bar: commits nothing
- * stream.update(100.2, 101.4, 99.1, 100.9, updated); // the bar closes
+ * const stream = haOpen({ open, high, low, close });
+ * const peeked = stream.peek(100.2, 101.4, 99.1, 100.9); // a forming bar: commits nothing
+ * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function haOpen(
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  core: Core = Core.DEFAULT,
-): HaStream {
-  requireArgument('HA open', 'inOpen', inOpen);
-  requireHistory('HA open', inOpen.length);
-  requireArgument('HA open', 'inHigh', inHigh);
-  requireArgument('HA open', 'inLow', inLow);
-  requireArgument('HA open', 'inClose', inClose);
-  requireHistoryLength('HA open', 'inHigh', inHigh.length, inOpen.length);
-  requireHistoryLength('HA open', 'inLow', inLow.length, inOpen.length);
-  requireHistoryLength('HA open', 'inClose', inClose.length, inOpen.length);
-  return haOpenInternal(core, float64(inOpen), float64(inHigh), float64(inLow), float64(inClose), 0);
+export function haOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: HaOptions): HaStream {
+  requireArgument('HA open', 'prices', prices);
+  const o = optionsOf('HA open', options);
+  const core = coreOf('HA open', o.core);
+  return haOpenPositional(prices.open, prices.high, prices.low, prices.close, core);
 }
 
 /**
- * {@link haOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link ha}. The range written is the stream's
- * `outRange()`.
+ * {@link haOpen} that also computes the outputs over the whole history in the same
+ * pass, bit-identically to {@link ha}.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param outHAOpen - Heikin-Ashi open. Must hold `historyLen - lookback` values
- *   and share no memory with an input or another output.
- * @param outHAHigh - Heikin-Ashi high. Must hold `historyLen - lookback` values
- *   and share no memory with an input or another output.
- * @param outHALow - Heikin-Ashi low. Must hold `historyLen - lookback` values and
- *   share no memory with an input or another output.
- * @param outHAClose - Heikin-Ashi close. Must hold `historyLen - lookback` values
- *   and share no memory with an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
+ *   Low price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link HaOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link ha} returns them; the range is the stream's
+ *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `haLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   histories of different lengths or an output too short or starting where another
- *   output or a `Float64Array` input starts, or, on a history long enough to open,
- *   one sharing memory with another output or a `Float64Array` input.
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -863,51 +1197,27 @@ export function haOpen(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const haOpen = new Float64Array(open.length);
- * const haHigh = new Float64Array(open.length);
- * const haLow = new Float64Array(open.length);
- * const haClose = new Float64Array(open.length);
- * const stream = haOpenAndFill(
- *   open, high, low, close,
- *   haOpen, haHigh, haLow, haClose,
- * );
- * const { begIdx, count } = stream.outRange();
- * // haOpen[k] is the value at bar begIdx + k, for k < count
+ * const {
+ *   stream,
+ *   begIdx,
+ *   outHaOpen,
+ *   outHaHigh,
+ *   outHaLow,
+ *   outHaClose,
+ * } = haOpenAndFill({ open, high, low, close });
+ * // outHaOpen[k] is the value at bar begIdx + k
  * ```
  */
-export function haOpenAndFill(
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outHAOpen: Float64Array,
-  outHAHigh: Float64Array,
-  outHALow: Float64Array,
-  outHAClose: Float64Array,
-  core: Core = Core.DEFAULT,
-): HaStream {
-  requireArgument('HA openAndFill', 'inOpen', inOpen);
-  requireHistory('HA openAndFill', inOpen.length);
-  requireArgument('HA openAndFill', 'inHigh', inHigh);
-  requireArgument('HA openAndFill', 'inLow', inLow);
-  requireArgument('HA openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('HA openAndFill', inOpen.length, haLookback(core));
-  requireHistoryLength('HA openAndFill', 'inHigh', inHigh.length, inOpen.length);
-  requireHistoryLength('HA openAndFill', 'inLow', inLow.length, inOpen.length);
-  requireHistoryLength('HA openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireOutput('HA openAndFill', 'outHAOpen', outHAOpen, guardOutLen, Float64Array);
-  requireOutput('HA openAndFill', 'outHAHigh', outHAHigh, guardOutLen, Float64Array);
-  requireOutput('HA openAndFill', 'outHALow', outHALow, guardOutLen, Float64Array);
-  requireOutput('HA openAndFill', 'outHAClose', outHAClose, guardOutLen, Float64Array);
-  const inOpenF64 = float64(inOpen);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if ((outHAOpen.buffer === inOpenF64.buffer && outHAOpen.byteOffset === inOpenF64.byteOffset) || (outHAOpen.buffer === inHighF64.buffer && outHAOpen.byteOffset === inHighF64.byteOffset) || (outHAOpen.buffer === inLowF64.buffer && outHAOpen.byteOffset === inLowF64.byteOffset) || (outHAOpen.buffer === inCloseF64.buffer && outHAOpen.byteOffset === inCloseF64.byteOffset) || (outHAHigh.buffer === inOpenF64.buffer && outHAHigh.byteOffset === inOpenF64.byteOffset) || (outHAHigh.buffer === inHighF64.buffer && outHAHigh.byteOffset === inHighF64.byteOffset) || (outHAHigh.buffer === inLowF64.buffer && outHAHigh.byteOffset === inLowF64.byteOffset) || (outHAHigh.buffer === inCloseF64.buffer && outHAHigh.byteOffset === inCloseF64.byteOffset) || (outHALow.buffer === inOpenF64.buffer && outHALow.byteOffset === inOpenF64.byteOffset) || (outHALow.buffer === inHighF64.buffer && outHALow.byteOffset === inHighF64.byteOffset) || (outHALow.buffer === inLowF64.buffer && outHALow.byteOffset === inLowF64.byteOffset) || (outHALow.buffer === inCloseF64.buffer && outHALow.byteOffset === inCloseF64.byteOffset) || (outHAClose.buffer === inOpenF64.buffer && outHAClose.byteOffset === inOpenF64.byteOffset) || (outHAClose.buffer === inHighF64.buffer && outHAClose.byteOffset === inHighF64.byteOffset) || (outHAClose.buffer === inLowF64.buffer && outHAClose.byteOffset === inLowF64.byteOffset) || (outHAClose.buffer === inCloseF64.buffer && outHAClose.byteOffset === inCloseF64.byteOffset) || (outHAOpen.buffer === outHAHigh.buffer && outHAOpen.byteOffset === outHAHigh.byteOffset) || (outHAOpen.buffer === outHALow.buffer && outHAOpen.byteOffset === outHALow.byteOffset) || (outHAOpen.buffer === outHAClose.buffer && outHAOpen.byteOffset === outHAClose.byteOffset) || (outHAHigh.buffer === outHALow.buffer && outHAHigh.byteOffset === outHALow.byteOffset) || (outHAHigh.buffer === outHAClose.buffer && outHAHigh.byteOffset === outHAClose.byteOffset) || (outHALow.buffer === outHAClose.buffer && outHALow.byteOffset === outHAClose.byteOffset)) {
-    throw streamFailure('HA openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outHAOpen, inOpenF64) || overlaps(outHAOpen, inHighF64) || overlaps(outHAOpen, inLowF64) || overlaps(outHAOpen, inCloseF64) || overlaps(outHAHigh, inOpenF64) || overlaps(outHAHigh, inHighF64) || overlaps(outHAHigh, inLowF64) || overlaps(outHAHigh, inCloseF64) || overlaps(outHALow, inOpenF64) || overlaps(outHALow, inHighF64) || overlaps(outHALow, inLowF64) || overlaps(outHALow, inCloseF64) || overlaps(outHAClose, inOpenF64) || overlaps(outHAClose, inHighF64) || overlaps(outHAClose, inLowF64) || overlaps(outHAClose, inCloseF64) || overlaps(outHAOpen, outHAHigh) || overlaps(outHAOpen, outHALow) || overlaps(outHAOpen, outHAClose) || overlaps(outHAHigh, outHALow) || overlaps(outHAHigh, outHAClose) || overlaps(outHALow, outHAClose))) {
-    throw streamFailure('HA openAndFill', RetCode.BAD_PARAM);
-  }
-  return haOpenAndFillInternal(core, inOpenF64, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outHAOpen, outHAHigh, outHALow, outHAClose);
+export function haOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: HaOptions): HaResult & { stream: HaStream } {
+  requireArgument('HA openAndFill', 'prices', prices);
+  const o = optionsOf('HA openAndFill', options);
+  const core = coreOf('HA openAndFill', o.core);
+  const capacity = fillCapacity(haLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
+  const outHAOpen = o.outHaOpen === undefined ? new Float64Array(capacity) : o.outHaOpen;
+  const outHAHigh = o.outHaHigh === undefined ? new Float64Array(capacity) : o.outHaHigh;
+  const outHALow = o.outHaLow === undefined ? new Float64Array(capacity) : o.outHaLow;
+  const outHAClose = o.outHaClose === undefined ? new Float64Array(capacity) : o.outHaClose;
+  const stream = haOpenAndFillPositional(prices.open, prices.high, prices.low, prices.close, outHAOpen, outHAHigh, outHALow, outHAClose, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outHaOpen: outHAOpen.subarray(0, range.count), outHaHigh: outHAHigh.subarray(0, range.count), outHaLow: outHALow.subarray(0, range.count), outHaClose: outHAClose.subarray(0, range.count) };
 }

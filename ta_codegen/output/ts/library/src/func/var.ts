@@ -18,26 +18,14 @@
  *  092226 MF,CC  #434 rebuild against the peak sum of squares; re-anchor a flat window.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link var_} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInTimePeriod - Window length for the variance (default 5; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDev - Deviation count accepted by the API but never used in the
- *   computation (default 1; `Core.REAL_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function varLookback(optInTimePeriod: number, optInNbDev: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function varLookbackPositional(optInTimePeriod: number, optInNbDev: number, _core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -57,24 +45,9 @@ export function varLookback(optInTimePeriod: number, optInNbDev: number, core: C
   return optInTimePeriod - 1;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link var_}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Window length for the variance (default 5; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDev - Deviation count accepted by the API but never used in the
- *   computation (default 1; `Core.REAL_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function varDisplayShift(optInTimePeriod: number, optInNbDev: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (varLookback(optInTimePeriod, optInNbDev, core) < 0) {
+/** @internal */
+export function varDisplayShiftPositional(optInTimePeriod: number, optInNbDev: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (varLookbackPositional(optInTimePeriod, optInNbDev, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -253,6 +226,130 @@ export function varImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['nbDev', Core.REAL_DEFAULT, Core.REAL_MIN, Core.REAL_MAX, 'in -3e37..3e37']] as const;
+
+/** @internal */
+export function varPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInNbDev: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('VAR', 'startIdx', startIdx);
+  endIdx = requireInt32('VAR', 'endIdx', endIdx);
+  optInTimePeriod = requireInt32('VAR', 'timePeriod', optInTimePeriod);
+  optInNbDev = requireReal('VAR', 'nbDev', optInNbDev);
+  requireIndexRange('VAR', startIdx, endIdx);
+  const guardLookback = varLookbackPositional(optInTimePeriod, optInNbDev, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('VAR', PARAM_RANGES, optInTimePeriod, optInNbDev);
+  }
+  const guardStart = clampedStart('VAR', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('VAR', 'real', inReal, guardInLen);
+  requireOutput('VAR', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outReal, inRealF64)) {
+    throw sharedMemory('VAR', 'outReal', 'real');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = varImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('VAR', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link var_}, {@link varLookback}, {@link varDisplayShift},
+ * {@link varOpen} and {@link varOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface VarOptions {
+  /**
+   * Window length for the variance (default 5; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * Deviation count accepted by the API but never used in the computation (default
+   * 1; `Core.REAL_DEFAULT` selects the default).
+   */
+  nbDev?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link var_} returns, and {@link varOpenAndFill} with its stream. */
+export interface VarResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /** Rolling population variance. `values[k]` is the value at input bar `begIdx + k`. */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link var_} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link VarOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function varLookback(options?: VarOptions): number {
+  const o = optionsOf('VAR lookback', options);
+  return varLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.nbDev, Core.REAL_DEFAULT), coreOf('VAR lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link var_}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link VarOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function varDisplayShift(outputIdx: number, options?: VarOptions): number {
+  const o = optionsOf('VAR displayShift', options);
+  return varDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.nbDev, Core.REAL_DEFAULT), outputIdx, coreOf('VAR displayShift', o.core));
+}
+
 /**
  * Rolling population variance of a real series over a given period. Measures
  * dispersion of values around their mean. Higher values indicate greater
@@ -266,29 +363,23 @@ export function varImpl(
  *   (n-1) used by some definitions.
  * - The deviation-count parameter is accepted but has no effect on the result.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link varLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link varLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Source series.
- * @param optInTimePeriod - Window length for the variance (default 5; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDev - Deviation count accepted by the API but never used in the
- *   computation (default 1; `Core.REAL_DEFAULT` selects the default).
- * @param outReal - Rolling population variance. Must hold the values produced and
- *   never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Source series.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link VarOptions}.
+ * @returns `begIdx` and the values; see {@link VarResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   real parameter that is not a number, a parameter outside its range, an array too
- *   short for the range, an empty output or an output sharing memory with a
- *   `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a real parameter that is not a
+ *   number, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -296,42 +387,25 @@ export function varImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const { begIdx, count } = var_(0, data.length - 1, data, 5, 1, out);
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = var_(data, { timePeriod: 5, nbDev: 1 });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
  */
-export function var_(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInNbDev: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('VAR', 'startIdx', startIdx);
-  endIdx = requireInt32('VAR', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('VAR', 'optInTimePeriod', optInTimePeriod);
-  optInNbDev = requireReal('VAR', 'optInNbDev', optInNbDev);
-  requireIndexRange('VAR', startIdx, endIdx);
-  const guardStart = clampedStart('VAR', startIdx, varLookback(optInTimePeriod, optInNbDev, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('VAR', 'inReal', inReal, guardInLen);
-  requireOutput('VAR', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outReal, inRealF64)) {
-    throw failure('VAR', RetCode.BAD_PARAM);
+export function var_(real: ArrayLike<number>, options?: VarOptions): VarResult {
+  const o = optionsOf('VAR', options);
+  if (o.endIdx === undefined) {
+    requireSeries('VAR', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = varImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('VAR', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInNbDev = orDefault(o.nbDev, Core.REAL_DEFAULT);
+  const core = coreOf('VAR', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, varLookbackPositional(optInTimePeriod, optInNbDev, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = varPositional(startIdx, endIdx, real, optInTimePeriod, optInNbDev, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -895,7 +969,10 @@ export function varOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('VAR openAndFill', inReal.length, startIdx, varLookback(optInTimePeriod, optInNbDev, core));
+    throw insufficientHistory('VAR openAndFill', inReal.length, startIdx, varLookbackPositional(optInTimePeriod, optInNbDev, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && varLookbackPositional(optInTimePeriod, optInNbDev, core) < 0) {
+    throw rejectedParams('VAR openAndFill', PARAM_RANGES, optInTimePeriod, optInNbDev);
   }
   throw streamFailure('VAR openAndFill', retCode);
 }
@@ -919,25 +996,67 @@ export function varOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('VAR open', inReal.length, startIdx, varLookback(optInTimePeriod, optInNbDev, core));
+    throw insufficientHistory('VAR open', inReal.length, startIdx, varLookbackPositional(optInTimePeriod, optInNbDev, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && varLookbackPositional(optInTimePeriod, optInNbDev, core) < 0) {
+    throw rejectedParams('VAR open', PARAM_RANGES, optInTimePeriod, optInNbDev);
   }
   throw streamFailure('VAR open', retCode);
+}
+
+/** @internal */
+export function varOpenPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInNbDev: number,
+  core: Core = Core.DEFAULT,
+): VarStream {
+  optInTimePeriod = requireInt32('VAR open', 'timePeriod', optInTimePeriod);
+  optInNbDev = requireReal('VAR open', 'nbDev', optInNbDev);
+  requireArgument('VAR open', 'real', inReal);
+  requireHistory('VAR open', inReal.length);
+  return varOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInNbDev);
+}
+
+/** @internal */
+export function varOpenAndFillPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInNbDev: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): VarStream {
+  optInTimePeriod = requireInt32('VAR openAndFill', 'timePeriod', optInTimePeriod);
+  optInNbDev = requireReal('VAR openAndFill', 'nbDev', optInNbDev);
+  requireArgument('VAR openAndFill', 'real', inReal);
+  requireHistory('VAR openAndFill', inReal.length);
+  const guardLookback = varLookbackPositional(optInTimePeriod, optInNbDev, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('VAR openAndFill', PARAM_RANGES, optInTimePeriod, optInNbDev);
+  }
+  const guardOutLen = openFillCount('VAR openAndFill', inReal.length, guardLookback);
+  requireOutput('VAR openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('VAR openAndFill', 'outReal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inRealF64)) {
+    throw sharedMemory('VAR openAndFill', 'outReal', 'real');
+  }
+  return varOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, optInNbDev, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live VAR stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link var_} there.
  *
- * @param inReal - Warm-up history. Source series.
- * @param optInTimePeriod - Window length for the variance (default 5; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDev - Deviation count accepted by the API but never used in the
- *   computation (default 1; `Core.REAL_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param real - Warm-up history. Source series.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link VarOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `varLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
  *   an integer parameter that is not an int32, a real parameter that is not a number
  *   or a parameter outside its range.
  *
@@ -947,45 +1066,37 @@ export function varOpenInternal(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = varOpen(data, 5, 1);
+ * const stream = varOpen(data, { timePeriod: 5, nbDev: 1 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
  */
-export function varOpen(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInNbDev: number,
-  core: Core = Core.DEFAULT,
-): VarStream {
-  optInTimePeriod = requireInt32('VAR open', 'optInTimePeriod', optInTimePeriod);
-  optInNbDev = requireReal('VAR open', 'optInNbDev', optInNbDev);
-  requireArgument('VAR open', 'inReal', inReal);
-  requireHistory('VAR open', inReal.length);
-  return varOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInNbDev);
+export function varOpen(real: ArrayLike<number>, options?: VarOptions): VarStream {
+  const o = optionsOf('VAR open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInNbDev = orDefault(o.nbDev, Core.REAL_DEFAULT);
+  const core = coreOf('VAR open', o.core);
+  return varOpenPositional(real, optInTimePeriod, optInNbDev, core);
 }
 
 /**
- * {@link varOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link var_}. The range written is the stream's
- * `outRange()`.
+ * {@link varOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link var_}.
  *
- * @param inReal - Warm-up history. Source series.
- * @param optInTimePeriod - Window length for the variance (default 5; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDev - Deviation count accepted by the API but never used in the
- *   computation (default 1; `Core.REAL_DEFAULT` selects the default).
- * @param outReal - Rolling population variance. Must hold `historyLen - lookback`
- *   values and share no memory with an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param real - Warm-up history. Source series.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link VarOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link var_} returns them; the range is the stream's
+ *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `varLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
  *   an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range or an output too short or starting where
- *   another output or a `Float64Array` input starts, or, on a history long enough to
- *   open, one sharing memory with another output or a `Float64Array` input.
+ *   number, a parameter outside its range or a buffer too short, of the wrong type
+ *   or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
  *
  * @example
  * ```ts
@@ -993,31 +1104,21 @@ export function varOpen(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const stream = varOpenAndFill(data, 5, 1, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = varOpenAndFill(data, {
+ *   timePeriod: 5,
+ *   nbDev: 1,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function varOpenAndFill(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInNbDev: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): VarStream {
-  optInTimePeriod = requireInt32('VAR openAndFill', 'optInTimePeriod', optInTimePeriod);
-  optInNbDev = requireReal('VAR openAndFill', 'optInNbDev', optInNbDev);
-  requireArgument('VAR openAndFill', 'inReal', inReal);
-  requireHistory('VAR openAndFill', inReal.length);
-  const guardOutLen = openFillCount('VAR openAndFill', inReal.length, varLookback(optInTimePeriod, optInNbDev, core));
-  requireOutput('VAR openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
-    throw streamFailure('VAR openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inRealF64))) {
-    throw streamFailure('VAR openAndFill', RetCode.BAD_PARAM);
-  }
-  return varOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, optInNbDev, new MInteger(), new MInteger(), outReal);
+export function varOpenAndFill(real: ArrayLike<number>, options?: VarOptions): VarResult & { stream: VarStream } {
+  const o = optionsOf('VAR openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInNbDev = orDefault(o.nbDev, Core.REAL_DEFAULT);
+  const core = coreOf('VAR openAndFill', o.core);
+  const capacity = fillCapacity(varLookbackPositional(optInTimePeriod, optInNbDev, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = varOpenAndFillPositional(real, optInTimePeriod, optInNbDev, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

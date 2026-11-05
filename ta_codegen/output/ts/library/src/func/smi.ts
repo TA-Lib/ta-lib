@@ -15,32 +15,16 @@
  *                any instrument quoted small enough to fall under it.
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { emaLookback } from './ema.ts';
+import { emaLookbackPositional } from './ema.ts';
 
-/**
- * Number of leading input bars {@link smi} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInTimePeriod - Period of the high/low range (default 13; range 2 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastPeriod - Period of the second smoothing, applied to the first
- *   (default 2; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the first smoothing, applied to the raw
- *   momentum (default 25; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the
- *   default).
- * @param optInSignalPeriod - Smoothing period of the signal line (default 9; range
- *   2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function smiLookback(optInTimePeriod: number, optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function smiLookbackPositional(optInTimePeriod: number, optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -79,32 +63,12 @@ export function smiLookback(optInTimePeriod: number, optInFastPeriod: number, op
    * function it comes from, so none of them is restated here -- which is also
    * what makes SMI inherit TA_FUNC_UNST_EMA from its callee.
    */
-  return optInTimePeriod - 1 + emaLookback(optInSlowPeriod, core) + emaLookback(optInFastPeriod, core) + emaLookback(optInSignalPeriod, core);
+  return optInTimePeriod - 1 + emaLookbackPositional(optInSlowPeriod, core) + emaLookbackPositional(optInFastPeriod, core) + emaLookbackPositional(optInSignalPeriod, core);
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link smi}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Period of the high/low range (default 13; range 2 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastPeriod - Period of the second smoothing, applied to the first
- *   (default 2; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the first smoothing, applied to the raw
- *   momentum (default 25; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the
- *   default).
- * @param optInSignalPeriod - Smoothing period of the signal line (default 9; range
- *   2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function smiDisplayShift(optInTimePeriod: number, optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (smiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core) < 0) {
+/** @internal */
+export function smiDisplayShiftPositional(optInTimePeriod: number, optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (smiLookbackPositional(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 2) {
@@ -198,7 +162,7 @@ export function smiImpl(
    * each stage's pair adjacent gcc 13 packs the steps two by two and then
    * reads 16 bytes across two of its own stores, which cannot be forwarded.
    */
-  lookbackTotal = smiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+  lookbackTotal = smiLookbackPositional(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -237,8 +201,8 @@ export function smiImpl(
   if (betaSignal < 0.5) {
     betaSignal = 1.0 - kSignal;
   }
-  lookbackSlow = emaLookback(optInSlowPeriod, core);
-  lookbackFast = emaLookback(optInFastPeriod, core);
+  lookbackSlow = emaLookbackPositional(optInSlowPeriod, core);
+  lookbackFast = emaLookbackPositional(optInFastPeriod, core);
   emaSlowNum = 0.0;
   emaSlowDen = 0.0;
   emaFastNum = 0.0;
@@ -571,6 +535,186 @@ export function smiImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['fastPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['slowPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['signalPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000']] as const;
+
+/** @internal */
+export function smiPositional(
+  startIdx: number,
+  endIdx: number,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInFastPeriod: number,
+  optInSlowPeriod: number,
+  optInSignalPeriod: number,
+  outSMI: Float64Array,
+  outSMISignal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('SMI', 'startIdx', startIdx);
+  endIdx = requireInt32('SMI', 'endIdx', endIdx);
+  optInTimePeriod = requireInt32('SMI', 'timePeriod', optInTimePeriod);
+  optInFastPeriod = requireInt32('SMI', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('SMI', 'slowPeriod', optInSlowPeriod);
+  optInSignalPeriod = requireInt32('SMI', 'signalPeriod', optInSignalPeriod);
+  requireIndexRange('SMI', startIdx, endIdx);
+  const guardLookback = smiLookbackPositional(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('SMI', PARAM_RANGES, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+  }
+  const guardStart = clampedStart('SMI', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('SMI', 'prices.high', inHigh, guardInLen);
+  requireLength('SMI', 'prices.low', inLow, guardInLen);
+  requireLength('SMI', 'prices.close', inClose, guardInLen);
+  requireOutput('SMI', 'outSmi', outSMI, guardOutLen, Float64Array);
+  requireOutput('SMI', 'outSmiSignal', outSMISignal, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (overlapsPartly(outSMI, inHighF64)) {
+    throw sharedMemory('SMI', 'outSmi', 'prices.high');
+  }
+  if (overlapsPartly(outSMI, inLowF64)) {
+    throw sharedMemory('SMI', 'outSmi', 'prices.low');
+  }
+  if (overlapsPartly(outSMI, inCloseF64)) {
+    throw sharedMemory('SMI', 'outSmi', 'prices.close');
+  }
+  if (overlapsPartly(outSMISignal, inHighF64)) {
+    throw sharedMemory('SMI', 'outSmiSignal', 'prices.high');
+  }
+  if (overlapsPartly(outSMISignal, inLowF64)) {
+    throw sharedMemory('SMI', 'outSmiSignal', 'prices.low');
+  }
+  if (overlapsPartly(outSMISignal, inCloseF64)) {
+    throw sharedMemory('SMI', 'outSmiSignal', 'prices.close');
+  }
+  if (overlaps(outSMI, outSMISignal)) {
+    throw sharedMemory('SMI', 'outSmi', 'outSmiSignal');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = smiImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('SMI', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link smi}, {@link smiLookback}, {@link smiDisplayShift},
+ * {@link smiOpen} and {@link smiOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface SmiOptions {
+  /**
+   * Period of the high/low range (default 13; range 2 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * Period of the second smoothing, applied to the first (default 2; range 2 to
+   * 100000; `Core.INTEGER_DEFAULT` selects the default).
+   */
+  fastPeriod?: number | undefined;
+  /**
+   * Period of the first smoothing, applied to the raw momentum (default 25; range 2
+   * to 100000; `Core.INTEGER_DEFAULT` selects the default).
+   */
+  slowPeriod?: number | undefined;
+  /**
+   * Smoothing period of the signal line (default 9; range 2 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  signalPeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outSmi`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outSmi?: Float64Array | undefined;
+  /**
+   * Buffer for `outSmiSignal`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outSmiSignal?: Float64Array | undefined;
+}
+
+/** What {@link smi} returns, and {@link smiOpenAndFill} with its stream. */
+export interface SmiResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Stochastic Momentum Index, -100 to +100. `outSmi[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  outSmi: Float64Array;
+  /**
+   * Exponential average of the SMI line. `outSmiSignal[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  outSmiSignal: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link smi} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link SmiOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function smiLookback(options?: SmiOptions): number {
+  const o = optionsOf('SMI lookback', options);
+  return smiLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), coreOf('SMI lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link smi}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link SmiOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function smiDisplayShift(outputIdx: number, options?: SmiOptions): number {
+  const o = optionsOf('SMI displayShift', options);
+  return smiDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('SMI displayShift', o.core));
+}
+
 /**
  * Stochastic Momentum Index: where the close sits relative to the **midpoint** of
  * the recent high/low range, double-smoothed. Lane's stochastic measures the close
@@ -599,38 +743,24 @@ export function smiImpl(
  * - One output range covers both outputs, so the SMI values consumed by the signal
  *   line's own warm-up are not published.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link smiLookback} is a success with
- * `count` 0.
+ * `outSmi[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link smiLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inHigh - High price series.
- * @param inLow - Low price series.
- * @param inClose - Close price series.
- * @param optInTimePeriod - Period of the high/low range (default 13; range 2 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastPeriod - Period of the second smoothing, applied to the first
- *   (default 2; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the first smoothing, applied to the raw
- *   momentum (default 25; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the
- *   default).
- * @param optInSignalPeriod - Smoothing period of the signal line (default 9; range
- *   2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outSMI - Stochastic Momentum Index, -100 to +100. Must hold the values
- *   produced and never be empty; the input length always suffices.
- * @param outSMISignal - Exponential average of the SMI line. Must hold the values
- *   produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `high`: High
+ *   price series. `low`: Low price series. `close`: Close price series.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link SmiOptions}.
+ * @returns `begIdx` and the values; see {@link SmiResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output,
- *   two outputs sharing memory or an output sharing memory with a `Float64Array`
- *   input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -642,63 +772,39 @@ export function smiImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const smiOut = new Float64Array(high.length);
- * const smiSignal = new Float64Array(high.length);
- * const { begIdx, count } = smi(
- *   0, high.length - 1,
- *   high, low, close,
- *   13, 2, 25, 9,
- *   smiOut, smiSignal,
- * );
- * // smiOut[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, outSmi, outSmiSignal } = smi({ high, low, close }, {
+ *   timePeriod: 13,
+ *   fastPeriod: 2,
+ *   slowPeriod: 25,
+ *   signalPeriod: 9,
+ * });
+ * // outSmi[k] is the value at bar begIdx + k
  * ```
  * @see [`stoch`](https://ta-lib.org/functions/stoch)
  * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)
  * @see [`willr`](https://ta-lib.org/functions/willr)
  * @see [`macd`](https://ta-lib.org/functions/macd)
  */
-export function smi(
-  startIdx: number,
-  endIdx: number,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInFastPeriod: number,
-  optInSlowPeriod: number,
-  optInSignalPeriod: number,
-  outSMI: Float64Array,
-  outSMISignal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('SMI', 'startIdx', startIdx);
-  endIdx = requireInt32('SMI', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('SMI', 'optInTimePeriod', optInTimePeriod);
-  optInFastPeriod = requireInt32('SMI', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('SMI', 'optInSlowPeriod', optInSlowPeriod);
-  optInSignalPeriod = requireInt32('SMI', 'optInSignalPeriod', optInSignalPeriod);
-  requireIndexRange('SMI', startIdx, endIdx);
-  const guardStart = clampedStart('SMI', startIdx, smiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('SMI', 'inHigh', inHigh, guardInLen);
-  requireLength('SMI', 'inLow', inLow, guardInLen);
-  requireLength('SMI', 'inClose', inClose, guardInLen);
-  requireOutput('SMI', 'outSMI', outSMI, guardOutLen, Float64Array);
-  requireOutput('SMI', 'outSMISignal', outSMISignal, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if (overlapsPartly(outSMI, inHighF64) || overlapsPartly(outSMI, inLowF64) || overlapsPartly(outSMI, inCloseF64) || overlapsPartly(outSMISignal, inHighF64) || overlapsPartly(outSMISignal, inLowF64) || overlapsPartly(outSMISignal, inCloseF64) || overlaps(outSMI, outSMISignal)) {
-    throw failure('SMI', RetCode.BAD_PARAM);
+export function smi(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: SmiOptions): SmiResult {
+  requireArgument('SMI', 'prices', prices);
+  const o = optionsOf('SMI', options);
+  if (o.endIdx === undefined) {
+    requireSeries('SMI', 'prices.high', prices.high);
+    requireSeries('SMI', 'prices.low', prices.low);
+    requireSeries('SMI', 'prices.close', prices.close);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = smiImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outSMI, outSMISignal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('SMI', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('SMI', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.high.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, smiLookbackPositional(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core), prices.high, prices.low, prices.close);
+  const outSMI = o.outSmi === undefined ? new Float64Array(capacity) : o.outSmi;
+  const outSMISignal = o.outSmiSignal === undefined ? new Float64Array(capacity) : o.outSmiSignal;
+  const range = smiPositional(startIdx, endIdx, prices.high, prices.low, prices.close, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outSMI, outSMISignal, core);
+  return { begIdx: range.begIdx, outSmi: outSMI.subarray(0, range.count), outSmiSignal: outSMISignal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -808,21 +914,23 @@ export class SmiStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inHigh - The bar's `inHigh` value: High price series.
    * @param inLow - The bar's `inLow` value: Low price series.
    * @param inClose - The bar's `inClose` value: Close price series.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link SmiOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out: SmiOut): void {
+  update(inHigh: number, inLow: number, inClose: number, out?: SmiOut): SmiOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('SMI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('SMI update', 'SmiOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
@@ -830,23 +938,28 @@ export class SmiStream {
     }
     smiStepImpl(this, inHigh, inLow, inClose);
     this.outRangeCount++;
-    out.smi = this.cur_outSMI;
-    out.smiSignal = this.cur_outSMISignal;
+    if (out === undefined) {
+      out = new SmiOut();
+    }
+    out.outSmi = this.cur_outSMI;
+    out.outSmiSignal = this.cur_outSMISignal;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inHigh - The bar's `inHigh` value: High price series.
    * @param inLow - The bar's `inLow` value: Low price series.
    * @param inClose - The bar's `inClose` value: Close price series.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link SmiOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out: SmiOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inHigh: number, inLow: number, inClose: number, out?: SmiOut): SmiOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('SMI peek', 'SmiOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
@@ -1012,21 +1125,31 @@ export class SmiStream {
     }
     cur_outSMI = smiValue;
     cur_outSMISignal = prevSignal;
-    out.smi = cur_outSMI;
-    out.smiSignal = cur_outSMISignal;
+    if (out === undefined) {
+      out = new SmiOut();
+    }
+    out.outSmi = cur_outSMI;
+    out.outSmiSignal = cur_outSMISignal;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link SmiOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: SmiOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: SmiOut): SmiOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('SMI value', 'SmiOut');
     }
-    out.smi = this.cur_outSMI;
-    out.smiSignal = this.cur_outSMISignal;
+    if (out === undefined) {
+      out = new SmiOut();
+    }
+    out.outSmi = this.cur_outSMI;
+    out.outSmiSignal = this.cur_outSMISignal;
+    return out;
   }
 
   /**
@@ -1072,14 +1195,15 @@ export class SmiStream {
 }
 
 /**
- * The outputs of one SMI bar, written into an object the caller owns and reuses:
- * valid until the next call that writes it.
+ * The outputs of one SMI bar, as `update`, `peek` and `value` return them. Passed
+ * back to one of them, it is filled and returned again, with no allocation; it
+ * holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class SmiOut {
   /** Stochastic Momentum Index, -100 to +100. */
-  smi: number = 0;
+  outSmi: number = NaN;
   /** Exponential average of the SMI line. */
-  smiSignal: number = 0;
+  outSmiSignal: number = NaN;
 }
 
 function smiStepImpl(sp: SmiStream, inHigh: number, inLow: number, inClose: number): void {
@@ -1317,7 +1441,7 @@ function smiOpenImpl(
    * each stage's pair adjacent gcc 13 packs the steps two by two and then
    * reads 16 bytes across two of its own stores, which cannot be forwarded.
    */
-  lookbackTotal = smiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+  lookbackTotal = smiLookbackPositional(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -1356,8 +1480,8 @@ function smiOpenImpl(
   if (betaSignal < 0.5) {
     betaSignal = 1.0 - kSignal;
   }
-  lookbackSlow = emaLookback(optInSlowPeriod, core);
-  lookbackFast = emaLookback(optInFastPeriod, core);
+  lookbackSlow = emaLookbackPositional(optInSlowPeriod, core);
+  lookbackFast = emaLookbackPositional(optInFastPeriod, core);
   emaSlowNum = 0.0;
   emaSlowDen = 0.0;
   emaFastNum = 0.0;
@@ -1758,7 +1882,10 @@ export function smiOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('SMI openAndFill', inHigh.length, startIdx, smiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
+    throw insufficientHistory('SMI openAndFill', inHigh.length, startIdx, smiLookbackPositional(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && smiLookbackPositional(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core) < 0) {
+    throw rejectedParams('SMI openAndFill', PARAM_RANGES, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
   }
   throw streamFailure('SMI openAndFill', retCode);
 }
@@ -1787,56 +1914,16 @@ export function smiOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('SMI open', inHigh.length, startIdx, smiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
+    throw insufficientHistory('SMI open', inHigh.length, startIdx, smiLookbackPositional(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && smiLookbackPositional(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core) < 0) {
+    throw rejectedParams('SMI open', PARAM_RANGES, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
   }
   throw streamFailure('SMI open', retCode);
 }
 
-/**
- * Opens a live SMI stream over the warm-up history: `value()` starts at the last
- * history bar, bit-identical to {@link smi} there.
- *
- * @param inHigh - Warm-up history. High price series. Every history has the same
- *   length.
- * @param inLow - Warm-up history. Low price series. Every history has the same
- *   length.
- * @param inClose - Warm-up history. Close price series. Every history has the same
- *   length.
- * @param optInTimePeriod - Period of the high/low range (default 13; range 2 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastPeriod - Period of the second smoothing, applied to the first
- *   (default 2; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the first smoothing, applied to the raw
- *   momentum (default 25; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the
- *   default).
- * @param optInSignalPeriod - Smoothing period of the signal line (default 9; range
- *   2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `smiLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   an integer parameter that is not an int32, a parameter outside its range or
- *   histories of different lengths.
- *
- * @example
- * ```ts
- * import { SmiOut, smiOpen } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = smiOpen(high, low, close, 13, 2, 25, 9);
- * const peeked = new SmiOut();
- * const updated = new SmiOut();
- * stream.peek(101.4, 99.1, 100.9, peeked); // a forming bar: commits nothing
- * stream.update(101.4, 99.1, 100.9, updated); // the bar closes
- * ```
- */
-export function smiOpen(
+/** @internal */
+export function smiOpenPositional(
   inHigh: ArrayLike<number>,
   inLow: ArrayLike<number>,
   inClose: ArrayLike<number>,
@@ -1846,77 +1933,21 @@ export function smiOpen(
   optInSignalPeriod: number,
   core: Core = Core.DEFAULT,
 ): SmiStream {
-  optInTimePeriod = requireInt32('SMI open', 'optInTimePeriod', optInTimePeriod);
-  optInFastPeriod = requireInt32('SMI open', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('SMI open', 'optInSlowPeriod', optInSlowPeriod);
-  optInSignalPeriod = requireInt32('SMI open', 'optInSignalPeriod', optInSignalPeriod);
-  requireArgument('SMI open', 'inHigh', inHigh);
+  optInTimePeriod = requireInt32('SMI open', 'timePeriod', optInTimePeriod);
+  optInFastPeriod = requireInt32('SMI open', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('SMI open', 'slowPeriod', optInSlowPeriod);
+  optInSignalPeriod = requireInt32('SMI open', 'signalPeriod', optInSignalPeriod);
+  requireArgument('SMI open', 'prices.high', inHigh);
   requireHistory('SMI open', inHigh.length);
-  requireArgument('SMI open', 'inLow', inLow);
-  requireArgument('SMI open', 'inClose', inClose);
-  requireHistoryLength('SMI open', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('SMI open', 'inClose', inClose.length, inHigh.length);
+  requireArgument('SMI open', 'prices.low', inLow);
+  requireArgument('SMI open', 'prices.close', inClose);
+  requireHistoryLength('SMI open', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('SMI open', 'prices.close', inClose.length, inHigh.length);
   return smiOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
 }
 
-/**
- * {@link smiOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link smi}. The range written is the stream's
- * `outRange()`.
- *
- * @param inHigh - Warm-up history. High price series. Every history has the same
- *   length.
- * @param inLow - Warm-up history. Low price series. Every history has the same
- *   length.
- * @param inClose - Warm-up history. Close price series. Every history has the same
- *   length.
- * @param optInTimePeriod - Period of the high/low range (default 13; range 2 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInFastPeriod - Period of the second smoothing, applied to the first
- *   (default 2; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the first smoothing, applied to the raw
- *   momentum (default 25; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the
- *   default).
- * @param optInSignalPeriod - Smoothing period of the signal line (default 9; range
- *   2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outSMI - Stochastic Momentum Index, -100 to +100. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param outSMISignal - Exponential average of the SMI line. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `smiLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   an integer parameter that is not an int32, a parameter outside its range,
- *   histories of different lengths or an output too short or starting where another
- *   output or a `Float64Array` input starts, or, on a history long enough to open,
- *   one sharing memory with another output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { smiOpenAndFill } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const smiOut = new Float64Array(high.length);
- * const smiSignal = new Float64Array(high.length);
- * const stream = smiOpenAndFill(
- *   high, low, close,
- *   13, 2, 25, 9,
- *   smiOut, smiSignal,
- * );
- * const { begIdx, count } = stream.outRange();
- * // smiOut[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function smiOpenAndFill(
+/** @internal */
+export function smiOpenAndFillPositional(
   inHigh: ArrayLike<number>,
   inLow: ArrayLike<number>,
   inClose: ArrayLike<number>,
@@ -1928,27 +1959,175 @@ export function smiOpenAndFill(
   outSMISignal: Float64Array,
   core: Core = Core.DEFAULT,
 ): SmiStream {
-  optInTimePeriod = requireInt32('SMI openAndFill', 'optInTimePeriod', optInTimePeriod);
-  optInFastPeriod = requireInt32('SMI openAndFill', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('SMI openAndFill', 'optInSlowPeriod', optInSlowPeriod);
-  optInSignalPeriod = requireInt32('SMI openAndFill', 'optInSignalPeriod', optInSignalPeriod);
-  requireArgument('SMI openAndFill', 'inHigh', inHigh);
+  optInTimePeriod = requireInt32('SMI openAndFill', 'timePeriod', optInTimePeriod);
+  optInFastPeriod = requireInt32('SMI openAndFill', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('SMI openAndFill', 'slowPeriod', optInSlowPeriod);
+  optInSignalPeriod = requireInt32('SMI openAndFill', 'signalPeriod', optInSignalPeriod);
+  requireArgument('SMI openAndFill', 'prices.high', inHigh);
   requireHistory('SMI openAndFill', inHigh.length);
-  requireArgument('SMI openAndFill', 'inLow', inLow);
-  requireArgument('SMI openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('SMI openAndFill', inHigh.length, smiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
-  requireHistoryLength('SMI openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('SMI openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireOutput('SMI openAndFill', 'outSMI', outSMI, guardOutLen, Float64Array);
-  requireOutput('SMI openAndFill', 'outSMISignal', outSMISignal, guardOutLen, Float64Array);
+  requireArgument('SMI openAndFill', 'prices.low', inLow);
+  requireArgument('SMI openAndFill', 'prices.close', inClose);
+  const guardLookback = smiLookbackPositional(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('SMI openAndFill', PARAM_RANGES, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+  }
+  const guardOutLen = openFillCount('SMI openAndFill', inHigh.length, guardLookback);
+  requireHistoryLength('SMI openAndFill', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('SMI openAndFill', 'prices.close', inClose.length, inHigh.length);
+  requireOutput('SMI openAndFill', 'outSmi', outSMI, guardOutLen, Float64Array);
+  requireOutput('SMI openAndFill', 'outSmiSignal', outSMISignal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
-  if ((outSMI.buffer === inHighF64.buffer && outSMI.byteOffset === inHighF64.byteOffset) || (outSMI.buffer === inLowF64.buffer && outSMI.byteOffset === inLowF64.byteOffset) || (outSMI.buffer === inCloseF64.buffer && outSMI.byteOffset === inCloseF64.byteOffset) || (outSMISignal.buffer === inHighF64.buffer && outSMISignal.byteOffset === inHighF64.byteOffset) || (outSMISignal.buffer === inLowF64.buffer && outSMISignal.byteOffset === inLowF64.byteOffset) || (outSMISignal.buffer === inCloseF64.buffer && outSMISignal.byteOffset === inCloseF64.byteOffset) || (outSMI.buffer === outSMISignal.buffer && outSMI.byteOffset === outSMISignal.byteOffset)) {
-    throw streamFailure('SMI openAndFill', RetCode.BAD_PARAM);
+  if (outSMI.buffer === inHighF64.buffer && outSMI.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('SMI openAndFill', 'outSmi', 'prices.high');
   }
-  if (guardOutLen > 0 && (overlaps(outSMI, inHighF64) || overlaps(outSMI, inLowF64) || overlaps(outSMI, inCloseF64) || overlaps(outSMISignal, inHighF64) || overlaps(outSMISignal, inLowF64) || overlaps(outSMISignal, inCloseF64) || overlaps(outSMI, outSMISignal))) {
-    throw streamFailure('SMI openAndFill', RetCode.BAD_PARAM);
+  if (outSMI.buffer === inLowF64.buffer && outSMI.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('SMI openAndFill', 'outSmi', 'prices.low');
+  }
+  if (outSMI.buffer === inCloseF64.buffer && outSMI.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('SMI openAndFill', 'outSmi', 'prices.close');
+  }
+  if (outSMISignal.buffer === inHighF64.buffer && outSMISignal.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('SMI openAndFill', 'outSmiSignal', 'prices.high');
+  }
+  if (outSMISignal.buffer === inLowF64.buffer && outSMISignal.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('SMI openAndFill', 'outSmiSignal', 'prices.low');
+  }
+  if (outSMISignal.buffer === inCloseF64.buffer && outSMISignal.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('SMI openAndFill', 'outSmiSignal', 'prices.close');
+  }
+  if (outSMI.buffer === outSMISignal.buffer && outSMI.byteOffset === outSMISignal.byteOffset) {
+    throw sharedMemory('SMI openAndFill', 'outSmi', 'outSmiSignal');
+  }
+  if (guardOutLen > 0 && overlaps(outSMI, inHighF64)) {
+    throw sharedMemory('SMI openAndFill', 'outSmi', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outSMI, inLowF64)) {
+    throw sharedMemory('SMI openAndFill', 'outSmi', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outSMI, inCloseF64)) {
+    throw sharedMemory('SMI openAndFill', 'outSmi', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outSMISignal, inHighF64)) {
+    throw sharedMemory('SMI openAndFill', 'outSmiSignal', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outSMISignal, inLowF64)) {
+    throw sharedMemory('SMI openAndFill', 'outSmiSignal', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outSMISignal, inCloseF64)) {
+    throw sharedMemory('SMI openAndFill', 'outSmiSignal', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outSMI, outSMISignal)) {
+    throw sharedMemory('SMI openAndFill', 'outSmi', 'outSmiSignal');
   }
   return smiOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, new MInteger(), new MInteger(), outSMI, outSMISignal);
+}
+
+/**
+ * Opens a live SMI stream over the warm-up history: `value()` starts at the last
+ * history bar, bit-identical to {@link smi} there.
+ *
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price series. `low`: Low price series. `close`: Close price
+ *   series.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link SmiOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `smiLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   an integer parameter that is not an int32, a parameter outside its range or
+ *   histories of different lengths.
+ *
+ * @example
+ * ```ts
+ * import { smiOpen } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const close = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const stream = smiOpen({ high, low, close }, {
+ *   timePeriod: 13,
+ *   fastPeriod: 2,
+ *   slowPeriod: 25,
+ *   signalPeriod: 9,
+ * });
+ * const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
+ * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
+ * ```
+ */
+export function smiOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: SmiOptions): SmiStream {
+  requireArgument('SMI open', 'prices', prices);
+  const o = optionsOf('SMI open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('SMI open', o.core);
+  return smiOpenPositional(prices.high, prices.low, prices.close, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+}
+
+/**
+ * {@link smiOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link smi}.
+ *
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price series. `low`: Low price series. `close`: Close price
+ *   series.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link SmiOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link smi} returns them; the range is the stream's
+ *   `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `smiLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   an integer parameter that is not an int32, a parameter outside its range,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
+ *
+ * @example
+ * ```ts
+ * import { smiOpenAndFill } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const close = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const {
+ *   stream,
+ *   begIdx,
+ *   outSmi,
+ *   outSmiSignal,
+ * } = smiOpenAndFill({ high, low, close }, {
+ *   timePeriod: 13,
+ *   fastPeriod: 2,
+ *   slowPeriod: 25,
+ *   signalPeriod: 9,
+ * });
+ * // outSmi[k] is the value at bar begIdx + k
+ * ```
+ */
+export function smiOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: SmiOptions): SmiResult & { stream: SmiStream } {
+  requireArgument('SMI openAndFill', 'prices', prices);
+  const o = optionsOf('SMI openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('SMI openAndFill', o.core);
+  const capacity = fillCapacity(smiLookbackPositional(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core), prices.high, prices.low, prices.close);
+  const outSMI = o.outSmi === undefined ? new Float64Array(capacity) : o.outSmi;
+  const outSMISignal = o.outSmiSignal === undefined ? new Float64Array(capacity) : o.outSmiSignal;
+  const stream = smiOpenAndFillPositional(prices.high, prices.low, prices.close, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outSMI, outSMISignal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outSmi: outSMI.subarray(0, range.count), outSmiSignal: outSMISignal.subarray(0, range.count) };
 }

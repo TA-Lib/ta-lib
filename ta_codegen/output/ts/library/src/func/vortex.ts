@@ -15,24 +15,14 @@
  *  102426 MF,CC  #554 zero-run test on the true range itself.
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link vortex} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInTimePeriod - Number of bars in the rolling sums (default 14; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function vortexLookback(optInTimePeriod: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function vortexLookbackPositional(optInTimePeriod: number, _core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -49,22 +39,9 @@ export function vortexLookback(optInTimePeriod: number, core: Core = Core.DEFAUL
   return optInTimePeriod;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link vortex}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Number of bars in the rolling sums (default 14; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function vortexDisplayShift(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (vortexLookback(optInTimePeriod, core) < 0) {
+/** @internal */
+export function vortexDisplayShiftPositional(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (vortexLookbackPositional(optInTimePeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 2) {
@@ -137,7 +114,7 @@ export function vortexImpl(
    * both of which sit at or ahead of the output slot, which is why the
    * outputs are written LAST (see the loop comment).
    */
-  lookbackTotal = vortexLookback(optInTimePeriod, core);
+  lookbackTotal = vortexLookbackPositional(optInTimePeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -270,6 +247,165 @@ export function vortexImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000']] as const;
+
+/** @internal */
+export function vortexPositional(
+  startIdx: number,
+  endIdx: number,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInTimePeriod: number,
+  outPlusVI: Float64Array,
+  outMinusVI: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('VORTEX', 'startIdx', startIdx);
+  endIdx = requireInt32('VORTEX', 'endIdx', endIdx);
+  optInTimePeriod = requireInt32('VORTEX', 'timePeriod', optInTimePeriod);
+  requireIndexRange('VORTEX', startIdx, endIdx);
+  const guardLookback = vortexLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('VORTEX', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardStart = clampedStart('VORTEX', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('VORTEX', 'prices.high', inHigh, guardInLen);
+  requireLength('VORTEX', 'prices.low', inLow, guardInLen);
+  requireLength('VORTEX', 'prices.close', inClose, guardInLen);
+  requireOutput('VORTEX', 'outPlusVi', outPlusVI, guardOutLen, Float64Array);
+  requireOutput('VORTEX', 'outMinusVi', outMinusVI, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (overlapsPartly(outPlusVI, inHighF64)) {
+    throw sharedMemory('VORTEX', 'outPlusVi', 'prices.high');
+  }
+  if (overlapsPartly(outPlusVI, inLowF64)) {
+    throw sharedMemory('VORTEX', 'outPlusVi', 'prices.low');
+  }
+  if (overlapsPartly(outPlusVI, inCloseF64)) {
+    throw sharedMemory('VORTEX', 'outPlusVi', 'prices.close');
+  }
+  if (overlapsPartly(outMinusVI, inHighF64)) {
+    throw sharedMemory('VORTEX', 'outMinusVi', 'prices.high');
+  }
+  if (overlapsPartly(outMinusVI, inLowF64)) {
+    throw sharedMemory('VORTEX', 'outMinusVi', 'prices.low');
+  }
+  if (overlapsPartly(outMinusVI, inCloseF64)) {
+    throw sharedMemory('VORTEX', 'outMinusVi', 'prices.close');
+  }
+  if (overlaps(outPlusVI, outMinusVI)) {
+    throw sharedMemory('VORTEX', 'outPlusVi', 'outMinusVi');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = vortexImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, optInTimePeriod, outBegIdx, outNBElement, outPlusVI, outMinusVI);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('VORTEX', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link vortex}, {@link vortexLookback}, {@link vortexDisplayShift},
+ * {@link vortexOpen} and {@link vortexOpenAndFill}. Every key is optional: an
+ * omitted or `undefined` key takes its default, and a call ignores the keys it has
+ * no use for.
+ */
+export interface VortexOptions {
+  /**
+   * Number of bars in the rolling sums (default 14; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outPlusVi`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outPlusVi?: Float64Array | undefined;
+  /**
+   * Buffer for `outMinusVi`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outMinusVi?: Float64Array | undefined;
+}
+
+/** What {@link vortex} returns, and {@link vortexOpenAndFill} with its stream. */
+export interface VortexResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Positive vortex line (+VI) `outPlusVi[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  outPlusVi: Float64Array;
+  /**
+   * Negative vortex line (−VI) `outMinusVi[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  outMinusVi: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link vortex} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link VortexOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function vortexLookback(options?: VortexOptions): number {
+  const o = optionsOf('VORTEX lookback', options);
+  return vortexLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('VORTEX lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link vortex}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link VortexOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function vortexDisplayShift(outputIdx: number, options?: VortexOptions): number {
+  const o = optionsOf('VORTEX displayShift', options);
+  return vortexDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('VORTEX displayShift', o.core));
+}
+
 /**
  * Vortex Indicator: Etienne Botes and Douglas Siepman's two-line trend indicator
  * (*Technical Analysis of Stocks & Commodities* 28:1, January 2010). Positive and
@@ -289,31 +425,24 @@ export function vortexImpl(
  * - Not start-dependent: each output depends only on the finite trailing window.
  *   No unstable period.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link vortexLookback} is a success with
- * `count` 0.
+ * `outPlusVi[k]` is the value at input bar `begIdx + k`; every output is exactly
+ * as long as the number of values written, and nothing is padded. A range that
+ * ends before {@link vortexLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inHigh - High price series.
- * @param inLow - Low price series.
- * @param inClose - Close price series.
- * @param optInTimePeriod - Number of bars in the rolling sums (default 14; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outPlusVI - Positive vortex line (+VI) Must hold the values produced and
- *   never be empty; the input length always suffices.
- * @param outMinusVI - Negative vortex line (−VI) Must hold the values produced and
- *   never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `high`: High
+ *   price series. `low`: Low price series. `close`: Close price series.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link VortexOptions}.
+ * @returns `begIdx` and the values; see {@link VortexResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output,
- *   two outputs sharing memory or an output sharing memory with a `Float64Array`
- *   input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -325,57 +454,33 @@ export function vortexImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const plusVi = new Float64Array(high.length);
- * const minusVi = new Float64Array(high.length);
- * const { begIdx, count } = vortex(
- *   0, high.length - 1,
- *   high, low, close,
- *   14,
- *   plusVi, minusVi,
- * );
- * // plusVi[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, outPlusVi, outMinusVi } = vortex({ high, low, close }, {
+ *   timePeriod: 14,
+ * });
+ * // outPlusVi[k] is the value at bar begIdx + k
  * ```
  * @see [`trange`](https://ta-lib.org/functions/trange)
  * @see [`plusDi`](https://ta-lib.org/functions/plus_di)
  * @see [`minusDi`](https://ta-lib.org/functions/minus_di)
  * @see [`adx`](https://ta-lib.org/functions/adx)
  */
-export function vortex(
-  startIdx: number,
-  endIdx: number,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInTimePeriod: number,
-  outPlusVI: Float64Array,
-  outMinusVI: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('VORTEX', 'startIdx', startIdx);
-  endIdx = requireInt32('VORTEX', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('VORTEX', 'optInTimePeriod', optInTimePeriod);
-  requireIndexRange('VORTEX', startIdx, endIdx);
-  const guardStart = clampedStart('VORTEX', startIdx, vortexLookback(optInTimePeriod, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('VORTEX', 'inHigh', inHigh, guardInLen);
-  requireLength('VORTEX', 'inLow', inLow, guardInLen);
-  requireLength('VORTEX', 'inClose', inClose, guardInLen);
-  requireOutput('VORTEX', 'outPlusVI', outPlusVI, guardOutLen, Float64Array);
-  requireOutput('VORTEX', 'outMinusVI', outMinusVI, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if (overlapsPartly(outPlusVI, inHighF64) || overlapsPartly(outPlusVI, inLowF64) || overlapsPartly(outPlusVI, inCloseF64) || overlapsPartly(outMinusVI, inHighF64) || overlapsPartly(outMinusVI, inLowF64) || overlapsPartly(outMinusVI, inCloseF64) || overlaps(outPlusVI, outMinusVI)) {
-    throw failure('VORTEX', RetCode.BAD_PARAM);
+export function vortex(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: VortexOptions): VortexResult {
+  requireArgument('VORTEX', 'prices', prices);
+  const o = optionsOf('VORTEX', options);
+  if (o.endIdx === undefined) {
+    requireSeries('VORTEX', 'prices.high', prices.high);
+    requireSeries('VORTEX', 'prices.low', prices.low);
+    requireSeries('VORTEX', 'prices.close', prices.close);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = vortexImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, optInTimePeriod, outBegIdx, outNBElement, outPlusVI, outMinusVI);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('VORTEX', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('VORTEX', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.high.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, vortexLookbackPositional(optInTimePeriod, core), prices.high, prices.low, prices.close);
+  const outPlusVI = o.outPlusVi === undefined ? new Float64Array(capacity) : o.outPlusVi;
+  const outMinusVI = o.outMinusVi === undefined ? new Float64Array(capacity) : o.outMinusVi;
+  const range = vortexPositional(startIdx, endIdx, prices.high, prices.low, prices.close, optInTimePeriod, outPlusVI, outMinusVI, core);
+  return { begIdx: range.begIdx, outPlusVi: outPlusVI.subarray(0, range.count), outMinusVi: outMinusVI.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -461,21 +566,23 @@ export class VortexStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inHigh - The bar's `inHigh` value: High price series.
    * @param inLow - The bar's `inLow` value: Low price series.
    * @param inClose - The bar's `inClose` value: Close price series.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link VortexOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out: VortexOut): void {
+  update(inHigh: number, inLow: number, inClose: number, out?: VortexOut): VortexOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('VORTEX update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('VORTEX update', 'VortexOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
@@ -483,23 +590,28 @@ export class VortexStream {
     }
     vortexStepImpl(this, inHigh, inLow, inClose);
     this.outRangeCount++;
-    out.plusVI = this.cur_outPlusVI;
-    out.minusVI = this.cur_outMinusVI;
+    if (out === undefined) {
+      out = new VortexOut();
+    }
+    out.outPlusVi = this.cur_outPlusVI;
+    out.outMinusVi = this.cur_outMinusVI;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inHigh - The bar's `inHigh` value: High price series.
    * @param inLow - The bar's `inLow` value: Low price series.
    * @param inClose - The bar's `inClose` value: Close price series.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link VortexOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out: VortexOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inHigh: number, inLow: number, inClose: number, out?: VortexOut): VortexOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('VORTEX peek', 'VortexOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
@@ -615,21 +727,31 @@ export class VortexStream {
       cur_outPlusVI = 0.0;
       cur_outMinusVI = 0.0;
     }
-    out.plusVI = cur_outPlusVI;
-    out.minusVI = cur_outMinusVI;
+    if (out === undefined) {
+      out = new VortexOut();
+    }
+    out.outPlusVi = cur_outPlusVI;
+    out.outMinusVi = cur_outMinusVI;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link VortexOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: VortexOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: VortexOut): VortexOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('VORTEX value', 'VortexOut');
     }
-    out.plusVI = this.cur_outPlusVI;
-    out.minusVI = this.cur_outMinusVI;
+    if (out === undefined) {
+      out = new VortexOut();
+    }
+    out.outPlusVi = this.cur_outPlusVI;
+    out.outMinusVi = this.cur_outMinusVI;
+    return out;
   }
 
   /**
@@ -663,14 +785,15 @@ export class VortexStream {
 }
 
 /**
- * The outputs of one VORTEX bar, written into an object the caller owns and
- * reuses: valid until the next call that writes it.
+ * The outputs of one VORTEX bar, as `update`, `peek` and `value` return them.
+ * Passed back to one of them, it is filled and returned again, with no allocation;
+ * it holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class VortexOut {
   /** Positive vortex line (+VI) */
-  plusVI: number = 0;
+  outPlusVi: number = NaN;
   /** Negative vortex line (−VI) */
-  minusVI: number = 0;
+  outMinusVi: number = NaN;
 }
 
 function vortexStepImpl(sp: VortexStream, inHigh: number, inLow: number, inClose: number): void {
@@ -848,7 +971,7 @@ function vortexOpenImpl(
    * both of which sit at or ahead of the output slot, which is why the
    * outputs are written LAST (see the loop comment).
    */
-  lookbackTotal = vortexLookback(optInTimePeriod, core);
+  lookbackTotal = vortexLookbackPositional(optInTimePeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -1036,7 +1159,10 @@ export function vortexOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('VORTEX openAndFill', inHigh.length, startIdx, vortexLookback(optInTimePeriod, core));
+    throw insufficientHistory('VORTEX openAndFill', inHigh.length, startIdx, vortexLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && vortexLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('VORTEX openAndFill', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('VORTEX openAndFill', retCode);
 }
@@ -1062,34 +1188,123 @@ export function vortexOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('VORTEX open', inHigh.length, startIdx, vortexLookback(optInTimePeriod, core));
+    throw insufficientHistory('VORTEX open', inHigh.length, startIdx, vortexLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && vortexLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('VORTEX open', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('VORTEX open', retCode);
+}
+
+/** @internal */
+export function vortexOpenPositional(
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInTimePeriod: number,
+  core: Core = Core.DEFAULT,
+): VortexStream {
+  optInTimePeriod = requireInt32('VORTEX open', 'timePeriod', optInTimePeriod);
+  requireArgument('VORTEX open', 'prices.high', inHigh);
+  requireHistory('VORTEX open', inHigh.length);
+  requireArgument('VORTEX open', 'prices.low', inLow);
+  requireArgument('VORTEX open', 'prices.close', inClose);
+  requireHistoryLength('VORTEX open', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('VORTEX open', 'prices.close', inClose.length, inHigh.length);
+  return vortexOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), 0, optInTimePeriod);
+}
+
+/** @internal */
+export function vortexOpenAndFillPositional(
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInTimePeriod: number,
+  outPlusVI: Float64Array,
+  outMinusVI: Float64Array,
+  core: Core = Core.DEFAULT,
+): VortexStream {
+  optInTimePeriod = requireInt32('VORTEX openAndFill', 'timePeriod', optInTimePeriod);
+  requireArgument('VORTEX openAndFill', 'prices.high', inHigh);
+  requireHistory('VORTEX openAndFill', inHigh.length);
+  requireArgument('VORTEX openAndFill', 'prices.low', inLow);
+  requireArgument('VORTEX openAndFill', 'prices.close', inClose);
+  const guardLookback = vortexLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('VORTEX openAndFill', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardOutLen = openFillCount('VORTEX openAndFill', inHigh.length, guardLookback);
+  requireHistoryLength('VORTEX openAndFill', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('VORTEX openAndFill', 'prices.close', inClose.length, inHigh.length);
+  requireOutput('VORTEX openAndFill', 'outPlusVi', outPlusVI, guardOutLen, Float64Array);
+  requireOutput('VORTEX openAndFill', 'outMinusVi', outMinusVI, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (outPlusVI.buffer === inHighF64.buffer && outPlusVI.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('VORTEX openAndFill', 'outPlusVi', 'prices.high');
+  }
+  if (outPlusVI.buffer === inLowF64.buffer && outPlusVI.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('VORTEX openAndFill', 'outPlusVi', 'prices.low');
+  }
+  if (outPlusVI.buffer === inCloseF64.buffer && outPlusVI.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('VORTEX openAndFill', 'outPlusVi', 'prices.close');
+  }
+  if (outMinusVI.buffer === inHighF64.buffer && outMinusVI.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('VORTEX openAndFill', 'outMinusVi', 'prices.high');
+  }
+  if (outMinusVI.buffer === inLowF64.buffer && outMinusVI.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('VORTEX openAndFill', 'outMinusVi', 'prices.low');
+  }
+  if (outMinusVI.buffer === inCloseF64.buffer && outMinusVI.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('VORTEX openAndFill', 'outMinusVi', 'prices.close');
+  }
+  if (outPlusVI.buffer === outMinusVI.buffer && outPlusVI.byteOffset === outMinusVI.byteOffset) {
+    throw sharedMemory('VORTEX openAndFill', 'outPlusVi', 'outMinusVi');
+  }
+  if (guardOutLen > 0 && overlaps(outPlusVI, inHighF64)) {
+    throw sharedMemory('VORTEX openAndFill', 'outPlusVi', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outPlusVI, inLowF64)) {
+    throw sharedMemory('VORTEX openAndFill', 'outPlusVi', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outPlusVI, inCloseF64)) {
+    throw sharedMemory('VORTEX openAndFill', 'outPlusVi', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outMinusVI, inHighF64)) {
+    throw sharedMemory('VORTEX openAndFill', 'outMinusVi', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outMinusVI, inLowF64)) {
+    throw sharedMemory('VORTEX openAndFill', 'outMinusVi', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outMinusVI, inCloseF64)) {
+    throw sharedMemory('VORTEX openAndFill', 'outMinusVi', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outPlusVI, outMinusVI)) {
+    throw sharedMemory('VORTEX openAndFill', 'outPlusVi', 'outMinusVi');
+  }
+  return vortexOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outPlusVI, outMinusVI);
 }
 
 /**
  * Opens a live VORTEX stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link vortex} there.
  *
- * @param inHigh - Warm-up history. High price series. Every history has the same
- *   length.
- * @param inLow - Warm-up history. Low price series. Every history has the same
- *   length.
- * @param inClose - Warm-up history. Close price series. Every history has the same
- *   length.
- * @param optInTimePeriod - Number of bars in the rolling sums (default 14; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price series. `low`: Low price series. `close`: Close price
+ *   series.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link VortexOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `vortexLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range or
- *   histories of different lengths.
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range
+ *   or histories of different lengths.
  *
  * @example
  * ```ts
- * import { VortexOut, vortexOpen } from 'ta-lib';
+ * import { vortexOpen } from 'ta-lib';
  *
  * const high = Float64Array.from({ length: 252 }, (_, i) =>
  *   101 + 10 * Math.sin(0.1 * i));
@@ -1097,56 +1312,39 @@ export function vortexOpenInternal(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = vortexOpen(high, low, close, 14);
- * const peeked = new VortexOut();
- * const updated = new VortexOut();
- * stream.peek(101.4, 99.1, 100.9, peeked); // a forming bar: commits nothing
- * stream.update(101.4, 99.1, 100.9, updated); // the bar closes
+ * const stream = vortexOpen({ high, low, close }, { timePeriod: 14 });
+ * const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
+ * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function vortexOpen(
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInTimePeriod: number,
-  core: Core = Core.DEFAULT,
-): VortexStream {
-  optInTimePeriod = requireInt32('VORTEX open', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('VORTEX open', 'inHigh', inHigh);
-  requireHistory('VORTEX open', inHigh.length);
-  requireArgument('VORTEX open', 'inLow', inLow);
-  requireArgument('VORTEX open', 'inClose', inClose);
-  requireHistoryLength('VORTEX open', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('VORTEX open', 'inClose', inClose.length, inHigh.length);
-  return vortexOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), 0, optInTimePeriod);
+export function vortexOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: VortexOptions): VortexStream {
+  requireArgument('VORTEX open', 'prices', prices);
+  const o = optionsOf('VORTEX open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('VORTEX open', o.core);
+  return vortexOpenPositional(prices.high, prices.low, prices.close, optInTimePeriod, core);
 }
 
 /**
- * {@link vortexOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link vortex}. The range written is the stream's
- * `outRange()`.
+ * {@link vortexOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link vortex}.
  *
- * @param inHigh - Warm-up history. High price series. Every history has the same
- *   length.
- * @param inLow - Warm-up history. Low price series. Every history has the same
- *   length.
- * @param inClose - Warm-up history. Close price series. Every history has the same
- *   length.
- * @param optInTimePeriod - Number of bars in the rolling sums (default 14; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outPlusVI - Positive vortex line (+VI) Must hold `historyLen - lookback`
- *   values and share no memory with an input or another output.
- * @param outMinusVI - Negative vortex line (−VI) Must hold `historyLen - lookback`
- *   values and share no memory with an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price series. `low`: Low price series. `close`: Close price
+ *   series.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link VortexOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link vortex} returns them; the range is the
+ *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `vortexLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range,
- *   histories of different lengths or an output too short or starting where another
- *   output or a `Float64Array` input starts, or, on a history long enough to open,
- *   one sharing memory with another output or a `Float64Array` input.
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -1158,40 +1356,24 @@ export function vortexOpen(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const plusVi = new Float64Array(high.length);
- * const minusVi = new Float64Array(high.length);
- * const stream = vortexOpenAndFill(high, low, close, 14, plusVi, minusVi);
- * const { begIdx, count } = stream.outRange();
- * // plusVi[k] is the value at bar begIdx + k, for k < count
+ * const {
+ *   stream,
+ *   begIdx,
+ *   outPlusVi,
+ *   outMinusVi,
+ * } = vortexOpenAndFill({ high, low, close }, { timePeriod: 14 });
+ * // outPlusVi[k] is the value at bar begIdx + k
  * ```
  */
-export function vortexOpenAndFill(
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInTimePeriod: number,
-  outPlusVI: Float64Array,
-  outMinusVI: Float64Array,
-  core: Core = Core.DEFAULT,
-): VortexStream {
-  optInTimePeriod = requireInt32('VORTEX openAndFill', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('VORTEX openAndFill', 'inHigh', inHigh);
-  requireHistory('VORTEX openAndFill', inHigh.length);
-  requireArgument('VORTEX openAndFill', 'inLow', inLow);
-  requireArgument('VORTEX openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('VORTEX openAndFill', inHigh.length, vortexLookback(optInTimePeriod, core));
-  requireHistoryLength('VORTEX openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('VORTEX openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireOutput('VORTEX openAndFill', 'outPlusVI', outPlusVI, guardOutLen, Float64Array);
-  requireOutput('VORTEX openAndFill', 'outMinusVI', outMinusVI, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if ((outPlusVI.buffer === inHighF64.buffer && outPlusVI.byteOffset === inHighF64.byteOffset) || (outPlusVI.buffer === inLowF64.buffer && outPlusVI.byteOffset === inLowF64.byteOffset) || (outPlusVI.buffer === inCloseF64.buffer && outPlusVI.byteOffset === inCloseF64.byteOffset) || (outMinusVI.buffer === inHighF64.buffer && outMinusVI.byteOffset === inHighF64.byteOffset) || (outMinusVI.buffer === inLowF64.buffer && outMinusVI.byteOffset === inLowF64.byteOffset) || (outMinusVI.buffer === inCloseF64.buffer && outMinusVI.byteOffset === inCloseF64.byteOffset) || (outPlusVI.buffer === outMinusVI.buffer && outPlusVI.byteOffset === outMinusVI.byteOffset)) {
-    throw streamFailure('VORTEX openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outPlusVI, inHighF64) || overlaps(outPlusVI, inLowF64) || overlaps(outPlusVI, inCloseF64) || overlaps(outMinusVI, inHighF64) || overlaps(outMinusVI, inLowF64) || overlaps(outMinusVI, inCloseF64) || overlaps(outPlusVI, outMinusVI))) {
-    throw streamFailure('VORTEX openAndFill', RetCode.BAD_PARAM);
-  }
-  return vortexOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outPlusVI, outMinusVI);
+export function vortexOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: VortexOptions): VortexResult & { stream: VortexStream } {
+  requireArgument('VORTEX openAndFill', 'prices', prices);
+  const o = optionsOf('VORTEX openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('VORTEX openAndFill', o.core);
+  const capacity = fillCapacity(vortexLookbackPositional(optInTimePeriod, core), prices.high, prices.low, prices.close);
+  const outPlusVI = o.outPlusVi === undefined ? new Float64Array(capacity) : o.outPlusVi;
+  const outMinusVI = o.outMinusVi === undefined ? new Float64Array(capacity) : o.outMinusVi;
+  const stream = vortexOpenAndFillPositional(prices.high, prices.low, prices.close, optInTimePeriod, outPlusVI, outMinusVI, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outPlusVi: outPlusVI.subarray(0, range.count), outMinusVi: outMinusVI.subarray(0, range.count) };
 }

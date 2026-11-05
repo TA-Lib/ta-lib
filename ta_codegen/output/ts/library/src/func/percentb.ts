@@ -13,35 +13,18 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { bbandsLookback } from './bbands.ts';
-import { MaStream, ma, maOpenAndFillInternal } from './ma.ts';
-import { VarStream, varOpenAndFillInternal, var_ } from './var.ts';
+import { bbandsLookbackPositional } from './bbands.ts';
+import { MaStream, maOpenAndFillInternal, maPositional } from './ma.ts';
+import { VarStream, varOpenAndFillInternal, varPositional } from './var.ts';
 
-/**
- * Number of leading input bars {@link percentb} consumes before its first value:
- * the index of the first bar with a value when the whole series is requested.
- *
- * @param optInTimePeriod - Periods for the MA and standard deviation (default 20;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDevUp - Standard-deviation multiplier for the upper band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInNbDevDn - Standard-deviation multiplier for the lower band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type for the middle band (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function percentbLookback(optInTimePeriod: number, optInNbDevUp: number, optInNbDevDn: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function percentbLookbackPositional(optInTimePeriod: number, optInNbDevUp: number, optInNbDevDn: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -74,33 +57,12 @@ export function percentbLookback(optInTimePeriod: number, optInNbDevUp: number, 
   } else if (optInMAType < MATypes.Min || optInMAType > MATypes.Max) {
     return -1;
   }
-  return bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, (optInMAType as MAType), core);
+  return bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, (optInMAType as MAType), core);
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link percentb}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Periods for the MA and standard deviation (default 20;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDevUp - Standard-deviation multiplier for the upper band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInNbDevDn - Standard-deviation multiplier for the lower band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type for the middle band (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function percentbDisplayShift(optInTimePeriod: number, optInNbDevUp: number, optInNbDevDn: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, core) < 0) {
+/** @internal */
+export function percentbDisplayShiftPositional(optInTimePeriod: number, optInNbDevUp: number, optInNbDevDn: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (percentbLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -327,7 +289,7 @@ export function percentbImpl(
     outBegIdx.value = startIdx;
     return RetCode.SUCCESS;
   }
-  if (percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, (optInMAType as MAType), core) > endIdx) {
+  if (percentbLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, (optInMAType as MAType), core) > endIdx) {
     outBegIdx.value = 0;
     outNBElement.value = 0;
     return RetCode.SUCCESS;
@@ -335,16 +297,16 @@ export function percentbImpl(
   tempMA = new Float64Array(endIdx - startIdx + 1);
   tempX = new Float64Array(endIdx - startIdx + 1);
   /* Both before the variance: it may be written over inReal. */
-  const _xr0 = ma(startIdx, endIdx, inReal, optInTimePeriod, (optInMAType as MAType), tempMA, core);
+  const _xr0 = maPositional(startIdx, endIdx, inReal, optInTimePeriod, (optInMAType as MAType), tempMA, core);
   maBegIdx.value = _xr0.begIdx;
   maNbElement.value = _xr0.count;
-  const _xr1 = ma(maBegIdx.value, endIdx, inReal, 1, (optInMAType as MAType), tempX, core);
+  const _xr1 = maPositional(maBegIdx.value, endIdx, inReal, 1, (optInMAType as MAType), tempX, core);
   xBegIdx.value = _xr1.begIdx;
   xNbElement.value = _xr1.count;
   /* From the moving average's begIdx, as TA_BBANDS enters its deviation:
    * the variance's shift and reseed schedule are anchored on its start.
    */
-  const _xr2 = var_(maBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outReal, core);
+  const _xr2 = varPositional(maBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outReal, core);
   outBegIdx.value = _xr2.begIdx;
   outNBElement.value = _xr2.count;
   offsetMA = maNbElement.value - outNBElement.value;
@@ -377,6 +339,149 @@ export function percentbImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['nbDevUp', Core.REAL_DEFAULT, Core.REAL_MIN, Core.REAL_MAX, 'in -3e37..3e37'], ['nbDevDn', Core.REAL_DEFAULT, Core.REAL_MIN, Core.REAL_MAX, 'in -3e37..3e37'], ['maType', Core.INTEGER_DEFAULT, MATypes.Min, MATypes.Max, 'a MAType']] as const;
+
+/** @internal */
+export function percentbPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInNbDevUp: number,
+  optInNbDevDn: number,
+  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('PERCENTB', 'startIdx', startIdx);
+  endIdx = requireInt32('PERCENTB', 'endIdx', endIdx);
+  optInTimePeriod = requireInt32('PERCENTB', 'timePeriod', optInTimePeriod);
+  optInNbDevUp = requireReal('PERCENTB', 'nbDevUp', optInNbDevUp);
+  optInNbDevDn = requireReal('PERCENTB', 'nbDevDn', optInNbDevDn);
+  optInMAType = requireInt32('PERCENTB', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireIndexRange('PERCENTB', startIdx, endIdx);
+  const guardLookback = percentbLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('PERCENTB', PARAM_RANGES, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+  }
+  const guardStart = clampedStart('PERCENTB', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('PERCENTB', 'real', inReal, guardInLen);
+  requireOutput('PERCENTB', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outReal, inRealF64)) {
+    throw sharedMemory('PERCENTB', 'outReal', 'real');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = percentbImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('PERCENTB', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link percentb}, {@link percentbLookback},
+ * {@link percentbDisplayShift}, {@link percentbOpen} and
+ * {@link percentbOpenAndFill}. Every key is optional: an omitted or `undefined`
+ * key takes its default, and a call ignores the keys it has no use for.
+ */
+export interface PercentbOptions {
+  /**
+   * Periods for the MA and standard deviation (default 20; range 2 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * Standard-deviation multiplier for the upper band (default 2; `Core.REAL_DEFAULT`
+   * selects the default).
+   */
+  nbDevUp?: number | undefined;
+  /**
+   * Standard-deviation multiplier for the lower band (default 2; `Core.REAL_DEFAULT`
+   * selects the default).
+   */
+  nbDevDn?: number | undefined;
+  /**
+   * Moving-average type for the middle band (default `MAType.SMA`; values: 0=SMA,
+   * 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   * 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; `Core.INTEGER_DEFAULT` or
+   * `MAType.DEFAULT` selects the default).
+   */
+  maType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link percentb} returns, and {@link percentbOpenAndFill} with its stream. */
+export interface PercentbResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Position of the input between the lower band (0) and the upper band (1)
+   * `values[k]` is the value at input bar `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link percentb} consumes before its first value:
+ * the index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PercentbOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function percentbLookback(options?: PercentbOptions): number {
+  const o = optionsOf('PERCENTB lookback', options);
+  return percentbLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.nbDevUp, Core.REAL_DEFAULT), orDefault(o.nbDevDn, Core.REAL_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), coreOf('PERCENTB lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link percentb}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PercentbOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function percentbDisplayShift(outputIdx: number, options?: PercentbOptions): number {
+  const o = optionsOf('PERCENTB displayShift', options);
+  return percentbDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.nbDevUp, Core.REAL_DEFAULT), orDefault(o.nbDevDn, Core.REAL_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), outputIdx, coreOf('PERCENTB displayShift', o.core));
+}
+
 /**
  * Bollinger Bands %B: where the input sits relative to its Bollinger Bands, 0 at
  * the lower band and 1 at the upper band. Values below 0 or above 1 mean the input
@@ -397,36 +502,23 @@ export function percentbImpl(
  * - PERCENTB is bit for bit `(inReal - lower) / (upper - lower)` computed from
  *   BBANDS' own outputs, and 0.5 wherever those two bands are equal.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link percentbLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link percentbLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Input data series.
- * @param optInTimePeriod - Periods for the MA and standard deviation (default 20;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDevUp - Standard-deviation multiplier for the upper band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInNbDevDn - Standard-deviation multiplier for the lower band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type for the middle band (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outReal - Position of the input between the lower band (0) and the upper
- *   band (1) Must hold the values produced and never be empty; the input length
- *   always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Input data series.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link PercentbOptions}.
+ * @returns `begIdx` and the values; see {@link PercentbResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   real parameter that is not a number, a parameter outside its range, an array too
- *   short for the range, an empty output or an output sharing memory with a
- *   `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a real parameter that is not a
+ *   number, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -434,53 +526,34 @@ export function percentbImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const { begIdx, count } = percentb(
- *   0, data.length - 1,
- *   data,
- *   20, 2, 2, MAType.SMA,
- *   out,
- * );
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = percentb(data, {
+ *   timePeriod: 20,
+ *   nbDevUp: 2,
+ *   nbDevDn: 2,
+ *   maType: MAType.SMA,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`bbands`](https://ta-lib.org/functions/bbands)
  * @see [`bbw`](https://ta-lib.org/functions/bbw)
  * @see [`stochf`](https://ta-lib.org/functions/stochf)
  */
-export function percentb(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInNbDevUp: number,
-  optInNbDevDn: number,
-  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('PERCENTB', 'startIdx', startIdx);
-  endIdx = requireInt32('PERCENTB', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('PERCENTB', 'optInTimePeriod', optInTimePeriod);
-  optInNbDevUp = requireReal('PERCENTB', 'optInNbDevUp', optInNbDevUp);
-  optInNbDevDn = requireReal('PERCENTB', 'optInNbDevDn', optInNbDevDn);
-  optInMAType = requireInt32('PERCENTB', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireIndexRange('PERCENTB', startIdx, endIdx);
-  const guardStart = clampedStart('PERCENTB', startIdx, percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('PERCENTB', 'inReal', inReal, guardInLen);
-  requireOutput('PERCENTB', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outReal, inRealF64)) {
-    throw failure('PERCENTB', RetCode.BAD_PARAM);
+export function percentb(real: ArrayLike<number>, options?: PercentbOptions): PercentbResult {
+  const o = optionsOf('PERCENTB', options);
+  if (o.endIdx === undefined) {
+    requireSeries('PERCENTB', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = percentbImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('PERCENTB', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInNbDevUp = orDefault(o.nbDevUp, Core.REAL_DEFAULT);
+  const optInNbDevDn = orDefault(o.nbDevDn, Core.REAL_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('PERCENTB', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, percentbLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = percentbPositional(startIdx, endIdx, real, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -745,11 +818,11 @@ function percentbOpenImpl(
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
   }
-  if (historyLen < percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core) + 1) {
+  if (historyLen < percentbLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core) + 1) {
     return RetCode.INSUFFICIENT_HISTORY;
   }
   const sc_outReal = outStride === 1 ? outReal : new Float64Array(historyLen);
-  lookbackTotal = percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, (optInMAType as MAType), core);
+  lookbackTotal = percentbLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, (optInMAType as MAType), core);
   firstIdx = startIdx;
   if (firstIdx < lookbackTotal) {
     firstIdx = lookbackTotal;
@@ -829,7 +902,10 @@ export function percentbOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('PERCENTB openAndFill', inReal.length, startIdx, percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core));
+    throw insufficientHistory('PERCENTB openAndFill', inReal.length, startIdx, percentbLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && percentbLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core) < 0) {
+    throw rejectedParams('PERCENTB openAndFill', PARAM_RANGES, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
   }
   throw streamFailure('PERCENTB openAndFill', retCode);
 }
@@ -855,46 +931,16 @@ export function percentbOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('PERCENTB open', inReal.length, startIdx, percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core));
+    throw insufficientHistory('PERCENTB open', inReal.length, startIdx, percentbLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && percentbLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core) < 0) {
+    throw rejectedParams('PERCENTB open', PARAM_RANGES, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
   }
   throw streamFailure('PERCENTB open', retCode);
 }
 
-/**
- * Opens a live PERCENTB stream over the warm-up history: `value()` starts at the
- * last history bar, bit-identical to {@link percentb} there.
- *
- * @param inReal - Warm-up history. Input data series.
- * @param optInTimePeriod - Periods for the MA and standard deviation (default 20;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDevUp - Standard-deviation multiplier for the upper band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInNbDevDn - Standard-deviation multiplier for the lower band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type for the middle band (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `percentbLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a real parameter that is not a
- *   number or a parameter outside its range.
- *
- * @example
- * ```ts
- * import { MAType, percentbOpen } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const stream = percentbOpen(data, 20, 2, 2, MAType.SMA);
- * const peeked = stream.peek(100.9); // a forming bar: commits nothing
- * const updated = stream.update(100.9); // the bar closes
- * ```
- */
-export function percentbOpen(
+/** @internal */
+export function percentbOpenPositional(
   inReal: ArrayLike<number>,
   optInTimePeriod: number,
   optInNbDevUp: number,
@@ -902,57 +948,17 @@ export function percentbOpen(
   optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
   core: Core = Core.DEFAULT,
 ): PercentbStream {
-  optInTimePeriod = requireInt32('PERCENTB open', 'optInTimePeriod', optInTimePeriod);
-  optInNbDevUp = requireReal('PERCENTB open', 'optInNbDevUp', optInNbDevUp);
-  optInNbDevDn = requireReal('PERCENTB open', 'optInNbDevDn', optInNbDevDn);
-  optInMAType = requireInt32('PERCENTB open', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('PERCENTB open', 'inReal', inReal);
+  optInTimePeriod = requireInt32('PERCENTB open', 'timePeriod', optInTimePeriod);
+  optInNbDevUp = requireReal('PERCENTB open', 'nbDevUp', optInNbDevUp);
+  optInNbDevDn = requireReal('PERCENTB open', 'nbDevDn', optInNbDevDn);
+  optInMAType = requireInt32('PERCENTB open', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('PERCENTB open', 'real', inReal);
   requireHistory('PERCENTB open', inReal.length);
   return percentbOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
 }
 
-/**
- * {@link percentbOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link percentb}. The range written is the
- * stream's `outRange()`.
- *
- * @param inReal - Warm-up history. Input data series.
- * @param optInTimePeriod - Periods for the MA and standard deviation (default 20;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDevUp - Standard-deviation multiplier for the upper band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInNbDevDn - Standard-deviation multiplier for the lower band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type for the middle band (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outReal - Position of the input between the lower band (0) and the upper
- *   band (1) Must hold `historyLen - lookback` values and share no memory with an
- *   input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `percentbLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range or an output too short or starting where
- *   another output or a `Float64Array` input starts, or, on a history long enough to
- *   open, one sharing memory with another output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { MAType, percentbOpenAndFill } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const stream = percentbOpenAndFill(data, 20, 2, 2, MAType.SMA, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function percentbOpenAndFill(
+/** @internal */
+export function percentbOpenAndFillPositional(
   inReal: ArrayLike<number>,
   optInTimePeriod: number,
   optInNbDevUp: number,
@@ -961,20 +967,112 @@ export function percentbOpenAndFill(
   outReal: Float64Array,
   core: Core = Core.DEFAULT,
 ): PercentbStream {
-  optInTimePeriod = requireInt32('PERCENTB openAndFill', 'optInTimePeriod', optInTimePeriod);
-  optInNbDevUp = requireReal('PERCENTB openAndFill', 'optInNbDevUp', optInNbDevUp);
-  optInNbDevDn = requireReal('PERCENTB openAndFill', 'optInNbDevDn', optInNbDevDn);
-  optInMAType = requireInt32('PERCENTB openAndFill', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('PERCENTB openAndFill', 'inReal', inReal);
+  optInTimePeriod = requireInt32('PERCENTB openAndFill', 'timePeriod', optInTimePeriod);
+  optInNbDevUp = requireReal('PERCENTB openAndFill', 'nbDevUp', optInNbDevUp);
+  optInNbDevDn = requireReal('PERCENTB openAndFill', 'nbDevDn', optInNbDevDn);
+  optInMAType = requireInt32('PERCENTB openAndFill', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('PERCENTB openAndFill', 'real', inReal);
   requireHistory('PERCENTB openAndFill', inReal.length);
-  const guardOutLen = openFillCount('PERCENTB openAndFill', inReal.length, percentbLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core));
+  const guardLookback = percentbLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('PERCENTB openAndFill', PARAM_RANGES, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+  }
+  const guardOutLen = openFillCount('PERCENTB openAndFill', inReal.length, guardLookback);
   requireOutput('PERCENTB openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
-  if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
-    throw streamFailure('PERCENTB openAndFill', RetCode.BAD_PARAM);
+  if (outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('PERCENTB openAndFill', 'outReal', 'real');
   }
-  if (guardOutLen > 0 && (overlaps(outReal, inRealF64))) {
-    throw streamFailure('PERCENTB openAndFill', RetCode.BAD_PARAM);
+  if (guardOutLen > 0 && overlaps(outReal, inRealF64)) {
+    throw sharedMemory('PERCENTB openAndFill', 'outReal', 'real');
   }
   return percentbOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, new MInteger(), new MInteger(), outReal);
+}
+
+/**
+ * Opens a live PERCENTB stream over the warm-up history: `value()` starts at the
+ * last history bar, bit-identical to {@link percentb} there.
+ *
+ * @param real - Warm-up history. Input data series.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PercentbOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `percentbLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a real parameter that is not a
+ *   number or a parameter outside its range.
+ *
+ * @example
+ * ```ts
+ * import { MAType, percentbOpen } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const stream = percentbOpen(data, {
+ *   timePeriod: 20,
+ *   nbDevUp: 2,
+ *   nbDevDn: 2,
+ *   maType: MAType.SMA,
+ * });
+ * const peeked = stream.peek(100.9); // a forming bar: commits nothing
+ * const updated = stream.update(100.9); // the bar closes
+ * ```
+ */
+export function percentbOpen(real: ArrayLike<number>, options?: PercentbOptions): PercentbStream {
+  const o = optionsOf('PERCENTB open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInNbDevUp = orDefault(o.nbDevUp, Core.REAL_DEFAULT);
+  const optInNbDevDn = orDefault(o.nbDevDn, Core.REAL_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('PERCENTB open', o.core);
+  return percentbOpenPositional(real, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, core);
+}
+
+/**
+ * {@link percentbOpen} that also computes the outputs over the whole history in
+ * the same pass, bit-identically to {@link percentb}.
+ *
+ * @param real - Warm-up history. Input data series.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link PercentbOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link percentb} returns them; the range is the
+ *   stream's `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `percentbLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a real parameter that is not a
+ *   number, a parameter outside its range or a buffer too short, of the wrong type
+ *   or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
+ *
+ * @example
+ * ```ts
+ * import { MAType, percentbOpenAndFill } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const { stream, begIdx, values } = percentbOpenAndFill(data, {
+ *   timePeriod: 20,
+ *   nbDevUp: 2,
+ *   nbDevDn: 2,
+ *   maType: MAType.SMA,
+ * });
+ * // values[k] is the value at bar begIdx + k
+ * ```
+ */
+export function percentbOpenAndFill(real: ArrayLike<number>, options?: PercentbOptions): PercentbResult & { stream: PercentbStream } {
+  const o = optionsOf('PERCENTB openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInNbDevUp = orDefault(o.nbDevUp, Core.REAL_DEFAULT);
+  const optInNbDevDn = orDefault(o.nbDevDn, Core.REAL_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('PERCENTB openAndFill', o.core);
+  const capacity = fillCapacity(percentbLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = percentbOpenAndFillPositional(real, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

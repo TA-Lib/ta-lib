@@ -66,24 +66,38 @@ pub fn func_ident(func_name: &str) -> String {
 pub struct TsNames {
     /// File stem under `src/func/` (`var`).
     pub module: String,
-    /// Public batch tier (`var_`): validates, copies non-`Float64Array` input,
-    /// throws `TALibError`, returns `OutRange`.
+    /// Public batch function (`var_`): `(inputs.., options?) => <N>Result`.
     pub public: String,
+    /// `@internal` C-shaped batch tier (`varPositional`): validates, copies
+    /// non-`Float64Array` input, throws `TALibError`, returns `OutRange`.
+    pub positional: String,
     /// `@internal` body (`varImpl`): `(core, startIdx, endIdx, ins.., opts..,
     /// outBegIdx, outNBElement, outs..) => RetCode`.
     pub body: String,
-    /// `(opts.., core = Core.DEFAULT) => number`.
+    /// `(options?) => number`.
     pub lookback: String,
-    /// `(opts.., outputIndex, core = Core.DEFAULT) => number`.
+    /// `@internal` `(opts.., core = Core.DEFAULT) => number`.
+    pub lookback_positional: String,
+    /// `(outputIdx, options?) => number`.
     pub display_shift: String,
+    /// `@internal` `(opts.., outputIndex, core = Core.DEFAULT) => number`.
+    pub display_shift_positional: String,
+    /// The batch call's options interface (`SmaOptions`).
+    pub options_type: String,
+    /// The batch call's result interface (`SmaResult`).
+    pub result_type: String,
     /// Streaming handle class (`SmaStream`).
     pub stream_class: String,
-    /// Caller-owned sink a multi-output handle writes (`MacdOut`).
+    /// Sink a multi-output handle writes and returns (`MacdOut`).
     pub out_class: String,
-    /// `(ins.., opts.., core = Core.DEFAULT) => <N>Stream`.
+    /// `(inputs.., options?) => <N>Stream`.
     pub open: String,
-    /// `(ins.., opts.., outs.., core = Core.DEFAULT) => <N>Stream`.
+    /// `@internal` `(ins.., opts.., core = Core.DEFAULT) => <N>Stream`.
+    pub open_positional: String,
+    /// `(inputs.., options?) => <N>Result & { stream }`.
     pub open_and_fill: String,
+    /// `@internal` `(ins.., opts.., outs.., core = Core.DEFAULT) => <N>Stream`.
+    pub open_and_fill_positional: String,
     /// `@internal` `(core, ins.., startIdx, opts..) => <N>Stream`.
     pub open_internal: String,
     /// `@internal` `(core, ins.., startIdx, opts.., outBegIdx, outNBElement, outs..) => <N>Stream`.
@@ -97,15 +111,199 @@ pub fn ts_names(func_name: &str) -> TsNames {
     TsNames {
         module: base.clone(),
         public: ts_ident(&base),
+        positional: format!("{base}Positional"),
         body: format!("{base}Impl"),
         lookback: format!("{base}Lookback"),
+        lookback_positional: format!("{base}LookbackPositional"),
         display_shift: format!("{base}DisplayShift"),
+        display_shift_positional: format!("{base}DisplayShiftPositional"),
+        options_type: format!("{pascal}Options"),
+        result_type: format!("{pascal}Result"),
         stream_class: format!("{pascal}Stream"),
         out_class: format!("{pascal}Out"),
         open: format!("{base}Open"),
+        open_positional: format!("{base}OpenPositional"),
         open_and_fill: format!("{base}OpenAndFill"),
+        open_and_fill_positional: format!("{base}OpenAndFillPositional"),
         open_internal: format!("{base}OpenInternal"),
         open_and_fill_internal: format!("{base}OpenAndFillInternal"),
+    }
+}
+
+/// The words of a C identifier: `_` separates, a capital starts a word unless
+/// it continues an acronym, and digits stay with the word before them
+/// (`optInSlowK_MAType` is `optIn Slow K MA Type`, `outWT1` is `out WT1`).
+fn c_words(name: &str) -> Vec<String> {
+    let chars: Vec<char> = name.chars().collect();
+    let mut words: Vec<String> = Vec::new();
+    let mut cur = String::new();
+    for (i, &c) in chars.iter().enumerate() {
+        if c == '_' {
+            if !cur.is_empty() {
+                words.push(std::mem::take(&mut cur));
+            }
+            continue;
+        }
+        if c.is_ascii_uppercase() && !cur.is_empty() {
+            let prev = chars[i - 1];
+            let next_lower = chars.get(i + 1).is_some_and(char::is_ascii_lowercase);
+            if prev.is_ascii_lowercase() || prev.is_ascii_digit() || (prev.is_ascii_uppercase() && next_lower) {
+                words.push(std::mem::take(&mut cur));
+            }
+        }
+        cur.push(c);
+    }
+    if !cur.is_empty() {
+        words.push(cur);
+    }
+    // `ROCMAType` names an MA type like `FastMAType`: case cannot split two
+    // acronyms, so the `MA` before `Type` is split off by name.
+    let mut k = 0;
+    while k + 1 < words.len() {
+        let w = &words[k];
+        if words[k + 1] == "Type" && w.len() > 2 && w.ends_with("MA") && w.chars().all(|c| c.is_ascii_uppercase()) {
+            let head = w[..w.len() - 2].to_string();
+            words[k] = "MA".to_string();
+            words.insert(k, head);
+            k += 1;
+        }
+        k += 1;
+    }
+    words
+}
+
+fn camel_join(words: &[String]) -> String {
+    let mut out = String::new();
+    for (i, w) in words.iter().enumerate() {
+        let lower = w.to_ascii_lowercase();
+        if i == 0 {
+            out.push_str(&lower);
+        } else {
+            let mut cs = lower.chars();
+            if let Some(f) = cs.next() {
+                out.push(f.to_ascii_uppercase());
+                out.push_str(cs.as_str());
+            }
+        }
+    }
+    out
+}
+
+/// An optional parameter's options key: `optInFastMAType` is `fastMaType`.
+#[must_use]
+pub fn param_key(opt_name: &str) -> String {
+    let rest = opt_name.strip_prefix("optIn").unwrap_or(opt_name);
+    camel_join(&c_words(rest))
+}
+
+/// An output's name in a multi-output result, a buffer key and a sink field:
+/// `out` kept, the type word dropped when other words follow
+/// (`outRealUpperBand` is `outUpperBand`, `outMACDSignal` is `outMacdSignal`).
+#[must_use]
+pub fn output_key(out_name: &str) -> String {
+    let mut words = c_words(out_name);
+    if words.len() > 2 && matches!(words[1].as_str(), "Real" | "Integer") {
+        words.remove(1);
+    }
+    camel_join(&words)
+}
+
+/// The options key of an output buffer: a single output keeps its C name.
+#[must_use]
+pub fn buffer_key(func: &FuncDef, out: &Output) -> String {
+    if func.outputs.len() == 1 {
+        out.name.clone()
+    } else {
+        output_key(&out.name)
+    }
+}
+
+/// An output's key in the batch result: `values` for a single output.
+#[must_use]
+pub fn result_key(func: &FuncDef, out: &Output) -> String {
+    if func.outputs.len() == 1 {
+        "values".to_string()
+    } else {
+        output_key(&out.name)
+    }
+}
+
+/// A plain input's parameter name: `inReal0` is `real0`.
+#[must_use]
+pub fn input_param_name(input_name: &str) -> String {
+    let rest = input_name.strip_prefix("in").unwrap_or(input_name);
+    let mut cs = rest.chars();
+    let name = cs.next().map_or_else(String::new, |f| f.to_ascii_lowercase().to_string() + cs.as_str());
+    ts_ident(&name)
+}
+
+/// The name of the one object parameter a price group is passed as.
+pub const PRICES_PARAM: &str = "prices";
+
+/// One positional parameter of the idiomatic API: a plain input, or a price
+/// group as one object.
+pub struct ApiInput<'a> {
+    pub name: String,
+    /// The signature's type.
+    pub ty: String,
+    /// The expanded inputs it carries, each with the expression that reads it.
+    pub legs: Vec<(&'a crate::ir::Input, String)>,
+    pub is_price: bool,
+}
+
+/// `func`'s inputs as the idiomatic API takes them, in the Abstract API's
+/// grouping.
+///
+/// # Panics
+/// On two price groups, which would need two names.
+#[must_use]
+pub fn api_inputs(func: &FuncDef) -> Vec<ApiInput<'_>> {
+    use super::price_bundle::{group, Grouped};
+    let mut out = Vec::new();
+    for g in group(&func.inputs) {
+        match g {
+            Grouped::Single(i) => {
+                let name = input_param_name(&i.name);
+                out.push(ApiInput { ty: "ArrayLike<number>".to_string(), legs: vec![(i, name.clone())], name, is_price: false });
+            }
+            Grouped::Price(comps) => {
+                assert!(!out.iter().any(|a: &ApiInput| a.is_price), "{}: two price groups", func.name);
+                let mut keys = Vec::new();
+                let mut legs = Vec::new();
+                for i in comps {
+                    let key = i.price.expect("a price component").component.token();
+                    keys.push(format!("{key}: ArrayLike<number>"));
+                    legs.push((i, format!("{PRICES_PARAM}.{key}")));
+                }
+                out.push(ApiInput { name: PRICES_PARAM.to_string(), ty: format!("{{ {} }}", keys.join("; ")), legs, is_price: true });
+            }
+        }
+    }
+    let names: Vec<&str> = out.iter().map(|a| a.name.as_str()).collect();
+    assert!(
+        names.iter().enumerate().all(|(k, n)| !names[..k].contains(n) && !matches!(*n, "options" | "o")),
+        "{}: input parameter names collide: {names:?}",
+        func.name
+    );
+    out
+}
+
+/// Every options key and every result key of `func` is distinct.
+///
+/// # Panics
+/// When two collide: a parameter, a range key, `core` or a buffer key; or two
+/// outputs, `begIdx` or `stream` in the result.
+pub fn assert_unique_keys(func: &FuncDef) {
+    let mut keys: Vec<String> = func.optional_inputs.iter().map(|o| param_key(&o.name)).collect();
+    keys.extend(["startIdx", "endIdx", "core"].map(String::from));
+    keys.extend(func.outputs.iter().map(|o| buffer_key(func, o)));
+    for (k, key) in keys.iter().enumerate() {
+        assert!(!keys[..k].contains(key), "{}: options key `{key}` is not unique", func.name);
+    }
+    let mut results: Vec<String> = func.outputs.iter().map(|o| result_key(func, o)).collect();
+    results.extend(["begIdx", "stream"].map(String::from));
+    for (k, key) in results.iter().enumerate() {
+        assert!(!results[..k].contains(key), "{}: result key `{key}` is not unique", func.name);
     }
 }
 
@@ -117,8 +315,8 @@ pub fn module_stem(func: &FuncDef) -> String {
 
 type CallImports = RefCell<BTreeMap<String, BTreeSet<String>>>;
 
-/// One indicator module: lookback, display shift, the `@internal` body and the
-/// public batch tier.
+/// One indicator module: the `@internal` positional tiers and body, then the
+/// public functions over them.
 #[allow(clippy::implicit_hasher)]
 #[must_use]
 pub fn generate(
@@ -140,7 +338,12 @@ pub fn generate(
         body.push_str(&gen_impl(func, true, &svc));
     }
     body.push_str(&gen_impl(func, false, &svc));
-    body.push_str(&gen_public(func, &svc));
+    body.push_str(&gen_param_ranges(func, enums));
+    body.push_str(&gen_public(func));
+    body.push_str(&gen_api_types(func, &svc));
+    body.push_str(&gen_api_lookback(func));
+    body.push_str(&gen_api_display_shift(func));
+    body.push_str(&gen_api_batch(func, &svc));
     if super::ts_stream::emits_stream(func, registry) {
         body.push_str(&super::ts_stream::generate(func, &svc));
     }
@@ -176,6 +379,8 @@ const RUNTIME_IMPORTS: &[(&str, &str)] = &[
     ("requireLength", "../runtime/checks.ts"),
     ("requireOutput", "../runtime/checks.ts"),
     ("requireArgument", "../runtime/checks.ts"),
+    ("requireSeries", "../runtime/checks.ts"),
+    ("coreOf", "../runtime/checks.ts"),
     ("requireHistory", "../runtime/checks.ts"),
     ("requireHistoryLength", "../runtime/checks.ts"),
     ("openFillCount", "../runtime/checks.ts"),
@@ -185,6 +390,12 @@ const RUNTIME_IMPORTS: &[(&str, &str)] = &[
     ("badSink", "../runtime/checks.ts"),
     ("overlaps", "../runtime/checks.ts"),
     ("overlapsPartly", "../runtime/checks.ts"),
+    ("sharedMemory", "../runtime/checks.ts"),
+    ("rejectedParams", "../runtime/checks.ts"),
+    ("optionsOf", "../runtime/checks.ts"),
+    ("orDefault", "../runtime/checks.ts"),
+    ("batchCapacity", "../runtime/checks.ts"),
+    ("fillCapacity", "../runtime/checks.ts"),
     ("MAType", "../enums.ts"),
     ("MATypes", "../enums.ts"),
     ("FuncUnstId", "../enums.ts"),
@@ -799,9 +1010,75 @@ pub(crate) fn require_arg_types(func: &FuncDef, entry: &str) -> String {
             ParamType::Real => ("requireReal", String::new()),
             ParamType::Price(_) => continue,
         };
-        let _ = writeln!(out, "  {0} = {helper}('{entry}', '{0}', {0}){cast};", o.name);
+        let _ = writeln!(out, "  {0} = {helper}('{entry}', '{1}', {0}){cast};", o.name, param_key(&o.name));
     }
     out
+}
+
+/// What a message calls an input: the public argument that carries it
+/// (`real`, `prices.high`).
+pub fn input_label(func: &FuncDef, input: &str) -> String {
+    api_leg_args(func, &[input.to_string()]).remove(0)
+}
+
+/// What a message calls an output: its buffer key.
+pub fn output_label(func: &FuncDef, output: &str) -> String {
+    let out = func.outputs.iter().find(|o| o.name == output).unwrap_or_else(|| panic!("{}: no output `{output}`", func.name));
+    buffer_key(func, out)
+}
+
+/// The module constant [`param_range_rejection`] reads.
+pub(crate) const PARAM_RANGES: &str = "PARAM_RANGES";
+
+/// `PARAM_RANGES`: per parameter, in check order, what the shared
+/// `rejectedParams` needs to name the one a negative lookback refused. Each
+/// row mirrors [`emit_opt_param_validation`]: a bound or sentinel that differs
+/// from the check names the wrong parameter, or none, without failing.
+#[allow(clippy::cast_possible_truncation)]
+fn gen_param_ranges(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> String {
+    if func.optional_inputs.is_empty() {
+        return String::new();
+    }
+    let fmt_real = |v: f64| {
+        if v.to_bits() == super::common::TA_REAL_MIN.to_bits() {
+            "-3e37".to_string()
+        } else if v.to_bits() == super::common::TA_REAL_MAX.to_bits() {
+            "3e37".to_string()
+        } else {
+            super::doc_meta::fmt_real(v)
+        }
+    };
+    let mut rows = Vec::new();
+    for opt in &func.optional_inputs {
+        let checked = match (&opt.param_type, opt.default) {
+            (_, None) => None,
+            (ParamType::Integer, _) => {
+                opt.range.map(|(lo, hi)| ((lo as i32).to_string(), (hi as i32).to_string(), format!("in {}..{}", lo as i32, hi as i32)))
+            }
+            (ParamType::Enum(name), _) => super::common::int_bound_exprs(opt, enums, Lang::Ts).map(|(lo, hi)| {
+                let accepted = opt.range.map_or_else(|| format!("a {name}"), |(l, h)| format!("in {}..{}", l as i32, h as i32));
+                (lo, hi, accepted)
+            }),
+            (ParamType::Real, _) => opt.range.map(|(lo, hi)| {
+                (
+                    super::common::real_bound_literal(lo, "Core."),
+                    super::common::real_bound_literal(hi, "Core."),
+                    format!("in {}..{}", fmt_real(lo), fmt_real(hi)),
+                )
+            }),
+            (ParamType::Price(_), _) => continue,
+        };
+        let (min, max, accepted) = checked.unwrap_or_else(|| ("0".to_string(), "0".to_string(), String::new()));
+        rows.push(format!("['{}', {}, {min}, {max}, '{accepted}']", param_key(&opt.name), sentinel(opt)));
+    }
+    format!("\nconst {PARAM_RANGES} = [{}] as const;\n", rows.join(", "))
+}
+
+/// The throw for a negative lookback, by an entry named `entry` with the
+/// parameters in scope under their own names; `None` for a function without
+/// parameters, whose lookback never rejects.
+pub(crate) fn param_range_rejection(func: &FuncDef, entry: &str) -> Option<String> {
+    (!func.optional_inputs.is_empty()).then(|| format!("rejectedParams('{entry}', {PARAM_RANGES}, {})", opt_args(func).join(", ")))
 }
 
 fn opt_params(func: &FuncDef) -> Vec<String> {
@@ -829,10 +1106,9 @@ fn gen_lookback(func: &FuncDef, svc: &Services) -> String {
         None => body.push_str("  return 0;\n"),
     }
     format!(
-        "\n{}export function {lb}({}): number {{\n{body}}}\n",
-        super::ts_doc::lookback_docs(func, svc.enums),
+        "\n/** @internal */\nexport function {lb}({}): number {{\n{body}}}\n",
         params.join(", "),
-        lb = names.lookback,
+        lb = names.lookback_positional,
     )
 }
 
@@ -846,7 +1122,7 @@ fn gen_display_shift(func: &FuncDef, svc: &Services) -> String {
     if !func.optional_inputs.is_empty() {
         let mut args = opt_args(func);
         args.push("core".to_string());
-        let _ = writeln!(body, "  if ({}({}) < 0) {{\n    return {INT_MIN};\n  }}", names.lookback, args.join(", "));
+        let _ = writeln!(body, "  if ({}({}) < 0) {{\n    return {INT_MIN};\n  }}", names.lookback_positional, args.join(", "));
     }
     if func.display_shift.is_some() {
         body.push_str(&emit_opt_param_validation(func, INT_MIN, svc.enums));
@@ -866,10 +1142,9 @@ fn gen_display_shift(func: &FuncDef, svc: &Services) -> String {
         None => body.push_str("  return 0;\n"),
     }
     format!(
-        "\n{}export function {ds}({}): number {{\n{body}}}\n",
-        super::ts_doc::display_shift_docs(func, svc.enums),
+        "\n/** @internal */\nexport function {ds}({}): number {{\n{body}}}\n",
         params.join(", "),
-        ds = names.display_shift,
+        ds = names.display_shift_positional,
     )
 }
 
@@ -966,20 +1241,20 @@ pub(crate) fn shared_output_condition(func: &FuncDef) -> Option<String> {
 /// output shares none with a converted input unless it is that input in place,
 /// which only a real output can be. Last of the checks, so a range or length
 /// fault on the same call answers its own code.
-fn batch_overlap_condition(func: &FuncDef) -> Option<String> {
+fn batch_overlap_pairs(func: &FuncDef) -> Vec<(&'static str, String, String, String, String)> {
     let mut pairs = Vec::new();
     for o in &func.outputs {
         let test = if o.param_type == ParamType::Real { "overlapsPartly" } else { "overlaps" };
         for i in &func.inputs {
-            pairs.push(format!("{test}({}, {}F64)", o.name, i.name));
+            pairs.push((test, o.name.clone(), format!("{}F64", i.name), output_label(func, &o.name), input_label(func, &i.name)));
         }
     }
     for (k, a) in func.outputs.iter().enumerate() {
         for b in &func.outputs[k + 1..] {
-            pairs.push(format!("overlaps({}, {})", a.name, b.name));
+            pairs.push(("overlaps", a.name.clone(), b.name.clone(), output_label(func, &a.name), output_label(func, &b.name)));
         }
     }
-    (!pairs.is_empty()).then(|| pairs.join(" || "))
+    pairs
 }
 
 /// The body tier, or with `private` the declared `<n>Private` variant (no
@@ -1047,7 +1322,7 @@ fn gen_impl(func: &FuncDef, private: bool, svc: &Services) -> String {
 /// The public batch tier: argument checks in Java's order with the type tests
 /// first (D13), each non-`Float64Array` input copied once (D5), the body, and
 /// a throw for a rejection.
-fn gen_public(func: &FuncDef, svc: &Services) -> String {
+fn gen_public(func: &FuncDef) -> String {
     let names = ts_names(&func.name);
     let canonical = &func.name;
     let mut params = vec!["startIdx: number".to_string(), "endIdx: number".to_string()];
@@ -1069,7 +1344,14 @@ fn gen_public(func: &FuncDef, svc: &Services) -> String {
     if !func.inputs.is_empty() || !func.outputs.is_empty() {
         let mut lb = opt_args(func);
         lb.push("core".to_string());
-        let _ = writeln!(b, "  const guardStart = clampedStart('{canonical}', startIdx, {}({}));", names.lookback, lb.join(", "));
+        let lookback = format!("{}({})", names.lookback_positional, lb.join(", "));
+        let lookback = if let Some(reject) = param_range_rejection(func, canonical) {
+            let _ = writeln!(b, "  const guardLookback = {lookback};\n  if (guardLookback < 0) {{\n    throw {reject};\n  }}");
+            "guardLookback".to_string()
+        } else {
+            lookback
+        };
+        let _ = writeln!(b, "  const guardStart = clampedStart('{canonical}', startIdx, {lookback});");
         if !func.inputs.is_empty() {
             b.push_str("  const guardInLen = endIdx + 1;\n");
         }
@@ -1077,17 +1359,17 @@ fn gen_public(func: &FuncDef, svc: &Services) -> String {
             b.push_str("  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;\n");
         }
         for i in &func.inputs {
-            let _ = writeln!(b, "  requireLength('{canonical}', '{0}', {0}, guardInLen);", i.name);
+            let _ = writeln!(b, "  requireLength('{canonical}', '{}', {}, guardInLen);", input_label(func, &i.name), i.name);
         }
         for o in &func.outputs {
-            let _ = writeln!(b, "  requireOutput('{canonical}', '{0}', {0}, guardOutLen, {1});", o.name, array_ts_type(&o.param_type));
+            let _ = writeln!(b, "  requireOutput('{canonical}', '{}', {}, guardOutLen, {});", output_label(func, &o.name), o.name, array_ts_type(&o.param_type));
         }
     }
     for i in &func.inputs {
         let _ = writeln!(b, "  const {0}F64 = float64({0});", i.name);
     }
-    if let Some(cond) = batch_overlap_condition(func) {
-        let _ = writeln!(b, "  if ({cond}) {{\n    throw failure('{canonical}', RetCode.BAD_PARAM);\n  }}");
+    for (test, a, b_arr, a_label, b_label) in batch_overlap_pairs(func) {
+        let _ = writeln!(b, "  if ({test}({a}, {b_arr})) {{\n    throw sharedMemory('{canonical}', '{a_label}', '{b_label}');\n  }}");
     }
     b.push_str("  const outBegIdx = new MInteger();\n  const outNBElement = new MInteger();\n");
     let mut args = vec!["core".to_string(), "startIdx".to_string(), "endIdx".to_string()];
@@ -1101,11 +1383,207 @@ fn gen_public(func: &FuncDef, svc: &Services) -> String {
     let _ = writeln!(b, "  const retCode = {}({});", names.body, args.join(", "));
     let _ = writeln!(b, "  if (retCode !== RetCode.SUCCESS) {{\n    throw failure('{canonical}', retCode);\n  }}");
     b.push_str("  return new OutRange(outBegIdx.value, outNBElement.value);\n");
+    format!("\n/** @internal */\nexport function {}(\n  {},\n): OutRange {{\n{b}}}\n", names.positional, params.join(",\n  "))
+}
+
+// ---------------------------------------------------------------------------
+// The idiomatic API: inputs, then one optional options object
+// ---------------------------------------------------------------------------
+
+/// The sentinel an omitted parameter becomes before the positional tier sees it.
+fn sentinel(opt: &OptInput) -> &'static str {
+    match opt.param_type {
+        ParamType::Real => "Core.REAL_DEFAULT",
+        _ => "Core.INTEGER_DEFAULT",
+    }
+}
+
+/// The idiomatic signature's input parameters.
+pub(crate) fn api_input_sig(func: &FuncDef) -> Vec<String> {
+    api_inputs(func).iter().map(|a| format!("{}: {}", a.name, a.ty)).collect()
+}
+
+/// The expression reading each expanded input, in `names` order.
+pub fn api_leg_args(func: &FuncDef, names: &[String]) -> Vec<String> {
+    let inputs = api_inputs(func);
+    let legs: Vec<&(&crate::ir::Input, String)> = inputs.iter().flat_map(|a| &a.legs).collect();
+    names
+        .iter()
+        .map(|n| legs.iter().find(|(i, _)| &i.name == n).unwrap_or_else(|| panic!("{}: no input `{n}`", func.name)).1.clone())
+        .collect()
+}
+
+/// A price object must exist before its legs are read. When the batch call
+/// defaults `endIdx` it reads the first series' length, so it first checks
+/// every series present and non-empty, or it would report an index the caller
+/// never passed; given an `endIdx`, the positional tier checks in the order
+/// every backend shares (the range first). An opener leaves its legs to the
+/// positional tier, whose order puts an empty history ahead of an absent leg.
+/// Then each parameter (an omitted one as its sentinel) and `core`.
+pub(crate) fn api_prologue(func: &FuncDef, entry: &str, batch: bool) -> String {
+    let mut s = String::new();
+    let inputs = api_inputs(func);
+    for a in inputs.iter().filter(|a| a.is_price) {
+        let _ = writeln!(s, "  requireArgument('{entry}', '{0}', {0});", a.name);
+    }
+    let _ = writeln!(s, "  const o = optionsOf('{entry}', options);");
+    if batch && !inputs.is_empty() {
+        s.push_str("  if (o.endIdx === undefined) {\n");
+        for a in &inputs {
+            if a.is_price {
+                for (_, expr) in &a.legs {
+                    let _ = writeln!(s, "    requireSeries('{entry}', '{expr}', {expr});");
+                }
+            } else {
+                let _ = writeln!(s, "    requireSeries('{entry}', '{0}', {0});", a.name);
+            }
+        }
+        s.push_str("  }\n");
+    }
+    for opt in &func.optional_inputs {
+        let _ = writeln!(s, "  const {} = orDefault(o.{}, {});", opt.name, param_key(&opt.name), sentinel(opt));
+    }
+    let _ = writeln!(s, "  const core = coreOf('{entry}', o.core);");
+    s
+}
+
+/// The lookback over the prologue's locals.
+pub(crate) fn api_lookback_call(func: &FuncDef) -> String {
+    let mut args = opt_args(func);
+    args.push("core".to_string());
+    format!("{}({})", ts_names(&func.name).lookback_positional, args.join(", "))
+}
+
+/// Each output buffer: the caller's, or one of `capacity` elements.
+pub(crate) fn api_buffers(func: &FuncDef) -> String {
+    let mut s = String::new();
+    for out in &func.outputs {
+        let _ = writeln!(
+            s,
+            "  const {0} = o.{1} === undefined ? new {2}(capacity) : o.{1};",
+            out.name,
+            buffer_key(func, out),
+            array_ts_type(&out.param_type)
+        );
+    }
+    s
+}
+
+/// The result's output keys, each a view of its buffer trimmed to `count`.
+pub(crate) fn api_result_fields(func: &FuncDef, count: &str) -> Vec<String> {
+    func.outputs.iter().map(|out| format!("{}: {}.subarray(0, {count})", result_key(func, out), out.name)).collect()
+}
+
+fn gen_api_types(func: &FuncDef, svc: &Services) -> String {
+    let names = ts_names(&func.name);
+    assert_unique_keys(func);
+    let mut s = String::new();
+    let _ = write!(s, "\n{}export interface {} {{\n", super::ts_doc::options_docs(func), names.options_type);
+    for opt in &func.optional_inputs {
+        s.push_str(&super::ts_doc::member(&super::ts_doc::param_text(func, opt, svc.enums)));
+        let _ = writeln!(s, "  {}?: {} | undefined;", param_key(&opt.name), opt_ts_type(opt));
+    }
+    for (key, ty, text) in [
+        ("startIdx", "number", super::ts_doc::START_IDX_KEY),
+        ("endIdx", "number", super::ts_doc::END_IDX_KEY),
+        ("core", "Core", super::ts_doc::CORE_KEY),
+    ] {
+        s.push_str(&super::ts_doc::member(text));
+        let _ = writeln!(s, "  {key}?: {ty} | undefined;");
+    }
+    for out in &func.outputs {
+        s.push_str(&super::ts_doc::member(&super::ts_doc::buffer_text(func, out)));
+        let _ = writeln!(s, "  {}?: {} | undefined;", buffer_key(func, out), array_ts_type(&out.param_type));
+    }
+    s.push_str("}\n");
+    let _ = write!(s, "\n{}export interface {} {{\n", super::ts_doc::result_docs(func), names.result_type);
+    s.push_str(&super::ts_doc::member(super::ts_doc::BEG_IDX_FIELD));
+    s.push_str("  begIdx: number;\n");
+    for out in &func.outputs {
+        s.push_str(&super::ts_doc::member(&super::ts_doc::result_field_text(func, out)));
+        let _ = writeln!(s, "  {}: {};", result_key(func, out), array_ts_type(&out.param_type));
+    }
+    s.push_str("}\n");
+    s
+}
+
+fn gen_api_lookback(func: &FuncDef) -> String {
+    let names = ts_names(&func.name);
+    let entry = format!("{} lookback", func.name);
+    let mut args: Vec<String> = func
+        .optional_inputs
+        .iter()
+        .map(|opt| format!("orDefault(o.{}, {})", param_key(&opt.name), sentinel(opt)))
+        .collect();
+    args.push(format!("coreOf('{entry}', o.core)"));
     format!(
-        "\n{}export function {}(\n  {},\n): OutRange {{\n{b}}}\n",
+        "\n{}export function {}(options?: {}): number {{\n  const o = optionsOf('{entry}', options);\n  return {}({});\n}}\n",
+        super::ts_doc::lookback_docs(func),
+        names.lookback,
+        names.options_type,
+        names.lookback_positional,
+        args.join(", ")
+    )
+}
+
+fn gen_api_display_shift(func: &FuncDef) -> String {
+    let names = ts_names(&func.name);
+    let idx = crate::ir::DISPLAY_SHIFT_INDEX_PARAM;
+    let entry = format!("{} displayShift", func.name);
+    let mut args: Vec<String> = func
+        .optional_inputs
+        .iter()
+        .map(|opt| format!("orDefault(o.{}, {})", param_key(&opt.name), sentinel(opt)))
+        .collect();
+    args.push(idx.to_string());
+    args.push(format!("coreOf('{entry}', o.core)"));
+    format!(
+        "\n{}export function {}({idx}: number, options?: {}): number {{\n  const o = optionsOf('{entry}', options);\n  return {}({});\n}}\n",
+        super::ts_doc::display_shift_docs(func),
+        names.display_shift,
+        names.options_type,
+        names.display_shift_positional,
+        args.join(", ")
+    )
+}
+
+/// The public batch function: options resolved to the positional tier's
+/// arguments, each missing buffer allocated, and views of the values written.
+fn gen_api_batch(func: &FuncDef, svc: &Services) -> String {
+    let names = ts_names(&func.name);
+    let canonical = &func.name;
+    let in_names: Vec<String> = func.inputs.iter().map(|i| i.name.clone()).collect();
+    let legs = api_leg_args(func, &in_names);
+    let mut sig = api_input_sig(func);
+    sig.push(format!("options?: {}", names.options_type));
+
+    let mut b = api_prologue(func, canonical, true);
+    b.push_str("  const startIdx = orDefault(o.startIdx, 0);\n");
+    match legs.first() {
+        Some(first) => {
+            let _ = writeln!(b, "  const endIdx = o.endIdx === undefined ? {first}.length - 1 : o.endIdx;");
+        }
+        None => b.push_str("  const endIdx = orDefault(o.endIdx, 0);\n"),
+    }
+    let mut cap_args = vec!["startIdx".to_string(), "endIdx".to_string(), api_lookback_call(func)];
+    cap_args.extend(legs.iter().cloned());
+    let _ = writeln!(b, "  const capacity = batchCapacity({});", cap_args.join(", "));
+    b.push_str(&api_buffers(func));
+    let mut args = vec!["startIdx".to_string(), "endIdx".to_string()];
+    args.extend(legs);
+    args.extend(opt_args(func));
+    args.extend(func.outputs.iter().map(|o| o.name.clone()));
+    args.push("core".to_string());
+    let _ = writeln!(b, "  const range = {}({});", names.positional, args.join(", "));
+    let mut fields = vec!["begIdx: range.begIdx".to_string()];
+    fields.extend(api_result_fields(func, "range.count"));
+    let _ = writeln!(b, "  return {{ {} }};", fields.join(", "));
+    format!(
+        "\n{}export function {}({}): {} {{\n{b}}}\n",
         super::ts_doc::batch_docs(func, svc.enums, svc.registry),
         names.public,
-        params.join(",\n  "),
+        sig.join(", "),
+        names.result_type,
     )
 }
 
@@ -2058,9 +2536,9 @@ fn out_meta_target(arg: &Expr, ctx: &TsCtx) -> String {
     }
 }
 
-/// The names a function module exports publicly, in barrel order. The
-/// `@internal` tiers (`<n>Impl`, `<n>OpenInternal`, ...) are exported from
-/// their module but never listed here.
+/// The values a function module exports publicly, in barrel order. The
+/// `@internal` tiers (`<n>Impl`, `<n>Positional`, `<n>OpenInternal`, ...) are
+/// exported from their module but never listed here.
 #[must_use]
 pub fn public_exports(func: &FuncDef) -> Vec<String> {
     let n = ts_names(&func.name);
@@ -2072,6 +2550,13 @@ pub fn public_exports(func: &FuncDef) -> Vec<String> {
         }
     }
     names
+}
+
+/// The types a function module exports publicly, for `export type`.
+#[must_use]
+pub fn public_type_exports(func: &FuncDef) -> Vec<String> {
+    let n = ts_names(&func.name);
+    vec![n.options_type, n.result_type]
 }
 
 #[allow(clippy::implicit_hasher)]
@@ -2190,6 +2675,7 @@ pub fn render_index(funcs: &[FuncDef]) -> String {
             continue;
         }
         let _ = writeln!(s, "export {{ {} }} from './func/{}.ts';", names.join(", "), module_stem(f));
+        let _ = writeln!(s, "export type {{ {} }} from './func/{}.ts';", public_type_exports(f).join(", "), module_stem(f));
     }
     s
 }

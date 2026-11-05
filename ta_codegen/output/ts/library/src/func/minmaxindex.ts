@@ -14,25 +14,14 @@
  *  100526 MF,CC A tie names the newest bar from any start (#503)
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link minmaxindex} consumes before its first
- * value: the index of the first bar with a value when the whole series is
- * requested.
- *
- * @param optInTimePeriod - Window length in bars (default 30; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function minmaxindexLookback(optInTimePeriod: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function minmaxindexLookbackPositional(optInTimePeriod: number, _core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -44,22 +33,9 @@ export function minmaxindexLookback(optInTimePeriod: number, core: Core = Core.D
   return optInTimePeriod - 1;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link minmaxindex}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Window length in bars (default 30; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function minmaxindexDisplayShift(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (minmaxindexLookback(optInTimePeriod, core) < 0) {
+/** @internal */
+export function minmaxindexDisplayShiftPositional(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (minmaxindexLookbackPositional(optInTimePeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 2) {
@@ -180,6 +156,149 @@ export function minmaxindexImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000']] as const;
+
+/** @internal */
+export function minmaxindexPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  outMinIdx: Int32Array,
+  outMaxIdx: Int32Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('MINMAXINDEX', 'startIdx', startIdx);
+  endIdx = requireInt32('MINMAXINDEX', 'endIdx', endIdx);
+  optInTimePeriod = requireInt32('MINMAXINDEX', 'timePeriod', optInTimePeriod);
+  requireIndexRange('MINMAXINDEX', startIdx, endIdx);
+  const guardLookback = minmaxindexLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('MINMAXINDEX', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardStart = clampedStart('MINMAXINDEX', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('MINMAXINDEX', 'real', inReal, guardInLen);
+  requireOutput('MINMAXINDEX', 'outMinIdx', outMinIdx, guardOutLen, Int32Array);
+  requireOutput('MINMAXINDEX', 'outMaxIdx', outMaxIdx, guardOutLen, Int32Array);
+  const inRealF64 = float64(inReal);
+  if (overlaps(outMinIdx, inRealF64)) {
+    throw sharedMemory('MINMAXINDEX', 'outMinIdx', 'real');
+  }
+  if (overlaps(outMaxIdx, inRealF64)) {
+    throw sharedMemory('MINMAXINDEX', 'outMaxIdx', 'real');
+  }
+  if (overlaps(outMinIdx, outMaxIdx)) {
+    throw sharedMemory('MINMAXINDEX', 'outMinIdx', 'outMaxIdx');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = minmaxindexImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('MINMAXINDEX', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link minmaxindex}, {@link minmaxindexLookback},
+ * {@link minmaxindexDisplayShift}, {@link minmaxindexOpen} and
+ * {@link minmaxindexOpenAndFill}. Every key is optional: an omitted or `undefined`
+ * key takes its default, and a call ignores the keys it has no use for.
+ */
+export interface MinmaxindexOptions {
+  /**
+   * Window length in bars (default 30; range 2 to 100000; `Core.INTEGER_DEFAULT`
+   * selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outMinIdx`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input.
+   */
+  outMinIdx?: Int32Array | undefined;
+  /**
+   * Buffer for `outMaxIdx`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input.
+   */
+  outMaxIdx?: Int32Array | undefined;
+}
+
+/**
+ * What {@link minmaxindex} returns, and {@link minmaxindexOpenAndFill} with its
+ * stream.
+ */
+export interface MinmaxindexResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Absolute index (into inReal) of the window minimum. `outMinIdx[k]` is the value
+   * at input bar `begIdx + k`.
+   */
+  outMinIdx: Int32Array;
+  /**
+   * Absolute index (into inReal) of the window maximum. `outMaxIdx[k]` is the value
+   * at input bar `begIdx + k`.
+   */
+  outMaxIdx: Int32Array;
+}
+
+/**
+ * Number of leading input bars {@link minmaxindex} consumes before its first
+ * value: the index of the first bar with a value when the whole series is
+ * requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MinmaxindexOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function minmaxindexLookback(options?: MinmaxindexOptions): number {
+  const o = optionsOf('MINMAXINDEX lookback', options);
+  return minmaxindexLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('MINMAXINDEX lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link minmaxindex}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MinmaxindexOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function minmaxindexDisplayShift(outputIdx: number, options?: MinmaxindexOptions): number {
+  const o = optionsOf('MINMAXINDEX displayShift', options);
+  return minmaxindexDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('MINMAXINDEX displayShift', o.core));
+}
+
 /**
  * Returns the absolute input indices of the lowest and highest values within each
  * rolling window of optInTimePeriod bars. Index variant of MINMAX.
@@ -191,29 +310,23 @@ export function minmaxindexImpl(
  * - When several bars in a window share the extreme value, the index of the most
  *   recent of them is returned.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link minmaxindexLookback} is a success
- * with `count` 0.
+ * `outMinIdx[k]` is the value at input bar `begIdx + k`; every output is exactly
+ * as long as the number of values written, and nothing is padded. A range that
+ * ends before {@link minmaxindexLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Input series scanned for extremes.
- * @param optInTimePeriod - Window length in bars (default 30; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param outMinIdx - Absolute index (into inReal) of the window minimum. Must hold
- *   the values produced and never be empty; the input length always suffices.
- * @param outMaxIdx - Absolute index (into inReal) of the window maximum. Must hold
- *   the values produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Input series scanned for extremes.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link MinmaxindexOptions}.
+ * @returns `begIdx` and the values; see {@link MinmaxindexResult}. Each output is
+ *   a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output,
- *   two outputs sharing memory or an output sharing memory with a `Float64Array`
- *   input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -221,15 +334,8 @@ export function minmaxindexImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const minIdx = new Int32Array(data.length);
- * const maxIdx = new Int32Array(data.length);
- * const { begIdx, count } = minmaxindex(
- *   0, data.length - 1,
- *   data,
- *   30,
- *   minIdx, maxIdx,
- * );
- * // minIdx[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, outMinIdx, outMaxIdx } = minmaxindex(data, { timePeriod: 30 });
+ * // outMinIdx[k] is the value at bar begIdx + k
  * ```
  * @see [`minmax`](https://ta-lib.org/functions/minmax)
  * @see [`min`](https://ta-lib.org/functions/min)
@@ -237,36 +343,20 @@ export function minmaxindexImpl(
  * @see [`minindex`](https://ta-lib.org/functions/minindex)
  * @see [`maxindex`](https://ta-lib.org/functions/maxindex)
  */
-export function minmaxindex(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  outMinIdx: Int32Array,
-  outMaxIdx: Int32Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('MINMAXINDEX', 'startIdx', startIdx);
-  endIdx = requireInt32('MINMAXINDEX', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('MINMAXINDEX', 'optInTimePeriod', optInTimePeriod);
-  requireIndexRange('MINMAXINDEX', startIdx, endIdx);
-  const guardStart = clampedStart('MINMAXINDEX', startIdx, minmaxindexLookback(optInTimePeriod, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('MINMAXINDEX', 'inReal', inReal, guardInLen);
-  requireOutput('MINMAXINDEX', 'outMinIdx', outMinIdx, guardOutLen, Int32Array);
-  requireOutput('MINMAXINDEX', 'outMaxIdx', outMaxIdx, guardOutLen, Int32Array);
-  const inRealF64 = float64(inReal);
-  if (overlaps(outMinIdx, inRealF64) || overlaps(outMaxIdx, inRealF64) || overlaps(outMinIdx, outMaxIdx)) {
-    throw failure('MINMAXINDEX', RetCode.BAD_PARAM);
+export function minmaxindex(real: ArrayLike<number>, options?: MinmaxindexOptions): MinmaxindexResult {
+  const o = optionsOf('MINMAXINDEX', options);
+  if (o.endIdx === undefined) {
+    requireSeries('MINMAXINDEX', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = minmaxindexImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('MINMAXINDEX', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('MINMAXINDEX', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, minmaxindexLookbackPositional(optInTimePeriod, core), real);
+  const outMinIdx = o.outMinIdx === undefined ? new Int32Array(capacity) : o.outMinIdx;
+  const outMaxIdx = o.outMaxIdx === undefined ? new Int32Array(capacity) : o.outMaxIdx;
+  const range = minmaxindexPositional(startIdx, endIdx, real, optInTimePeriod, outMinIdx, outMaxIdx, core);
+  return { begIdx: range.begIdx, outMinIdx: outMinIdx.subarray(0, range.count), outMaxIdx: outMaxIdx.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -344,19 +434,21 @@ export class MinmaxindexStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inReal - The bar's `inReal` value: Input series scanned for extremes.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MinmaxindexOut}
+   *   when omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out: MinmaxindexOut): void {
+  update(inReal: number, out?: MinmaxindexOut): MinmaxindexOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('MINMAXINDEX update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MINMAXINDEX update', 'MinmaxindexOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -364,21 +456,26 @@ export class MinmaxindexStream {
     }
     minmaxindexStepImpl(this, inReal);
     this.outRangeCount++;
-    out.minIdx = this.cur_outMinIdx;
-    out.maxIdx = this.cur_outMaxIdx;
+    if (out === undefined) {
+      out = new MinmaxindexOut();
+    }
+    out.outMinIdx = this.cur_outMinIdx;
+    out.outMaxIdx = this.cur_outMaxIdx;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inReal - The bar's `inReal` value: Input series scanned for extremes.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MinmaxindexOut}
+   *   when omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number, out: MinmaxindexOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inReal: number, out?: MinmaxindexOut): MinmaxindexOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MINMAXINDEX peek', 'MinmaxindexOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -432,21 +529,31 @@ export class MinmaxindexStream {
     }
     cur_outMaxIdx = highestIdx;
     cur_outMinIdx = lowestIdx;
-    out.minIdx = cur_outMinIdx;
-    out.maxIdx = cur_outMaxIdx;
+    if (out === undefined) {
+      out = new MinmaxindexOut();
+    }
+    out.outMinIdx = cur_outMinIdx;
+    out.outMaxIdx = cur_outMaxIdx;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MinmaxindexOut}
+   *   when omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: MinmaxindexOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: MinmaxindexOut): MinmaxindexOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MINMAXINDEX value', 'MinmaxindexOut');
     }
-    out.minIdx = this.cur_outMinIdx;
-    out.maxIdx = this.cur_outMaxIdx;
+    if (out === undefined) {
+      out = new MinmaxindexOut();
+    }
+    out.outMinIdx = this.cur_outMinIdx;
+    out.outMaxIdx = this.cur_outMaxIdx;
+    return out;
   }
 
   /**
@@ -476,14 +583,15 @@ export class MinmaxindexStream {
 }
 
 /**
- * The outputs of one MINMAXINDEX bar, written into an object the caller owns and
- * reuses: valid until the next call that writes it.
+ * The outputs of one MINMAXINDEX bar, as `update`, `peek` and `value` return them.
+ * Passed back to one of them, it is filled and returned again, with no allocation;
+ * it holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class MinmaxindexOut {
   /** Absolute index (into inReal) of the window minimum. */
-  minIdx: number = 0;
+  outMinIdx: number = NaN;
   /** Absolute index (into inReal) of the window maximum. */
-  maxIdx: number = 0;
+  outMaxIdx: number = NaN;
 }
 
 function minmaxindexStepImpl(sp: MinmaxindexStream, inReal: number): void {
@@ -686,7 +794,10 @@ export function minmaxindexOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MINMAXINDEX openAndFill', inReal.length, startIdx, minmaxindexLookback(optInTimePeriod, core));
+    throw insufficientHistory('MINMAXINDEX openAndFill', inReal.length, startIdx, minmaxindexLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && minmaxindexLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('MINMAXINDEX openAndFill', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('MINMAXINDEX openAndFill', retCode);
 }
@@ -710,73 +821,115 @@ export function minmaxindexOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MINMAXINDEX open', inReal.length, startIdx, minmaxindexLookback(optInTimePeriod, core));
+    throw insufficientHistory('MINMAXINDEX open', inReal.length, startIdx, minmaxindexLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && minmaxindexLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('MINMAXINDEX open', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('MINMAXINDEX open', retCode);
+}
+
+/** @internal */
+export function minmaxindexOpenPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  core: Core = Core.DEFAULT,
+): MinmaxindexStream {
+  optInTimePeriod = requireInt32('MINMAXINDEX open', 'timePeriod', optInTimePeriod);
+  requireArgument('MINMAXINDEX open', 'real', inReal);
+  requireHistory('MINMAXINDEX open', inReal.length);
+  return minmaxindexOpenInternal(core, float64(inReal), 0, optInTimePeriod);
+}
+
+/** @internal */
+export function minmaxindexOpenAndFillPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  outMinIdx: Int32Array,
+  outMaxIdx: Int32Array,
+  core: Core = Core.DEFAULT,
+): MinmaxindexStream {
+  optInTimePeriod = requireInt32('MINMAXINDEX openAndFill', 'timePeriod', optInTimePeriod);
+  requireArgument('MINMAXINDEX openAndFill', 'real', inReal);
+  requireHistory('MINMAXINDEX openAndFill', inReal.length);
+  const guardLookback = minmaxindexLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('MINMAXINDEX openAndFill', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardOutLen = openFillCount('MINMAXINDEX openAndFill', inReal.length, guardLookback);
+  requireOutput('MINMAXINDEX openAndFill', 'outMinIdx', outMinIdx, guardOutLen, Int32Array);
+  requireOutput('MINMAXINDEX openAndFill', 'outMaxIdx', outMaxIdx, guardOutLen, Int32Array);
+  const inRealF64 = float64(inReal);
+  if (outMinIdx.buffer === inRealF64.buffer && outMinIdx.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('MINMAXINDEX openAndFill', 'outMinIdx', 'real');
+  }
+  if (outMaxIdx.buffer === inRealF64.buffer && outMaxIdx.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('MINMAXINDEX openAndFill', 'outMaxIdx', 'real');
+  }
+  if (outMinIdx.buffer === outMaxIdx.buffer && outMinIdx.byteOffset === outMaxIdx.byteOffset) {
+    throw sharedMemory('MINMAXINDEX openAndFill', 'outMinIdx', 'outMaxIdx');
+  }
+  if (guardOutLen > 0 && overlaps(outMinIdx, inRealF64)) {
+    throw sharedMemory('MINMAXINDEX openAndFill', 'outMinIdx', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outMaxIdx, inRealF64)) {
+    throw sharedMemory('MINMAXINDEX openAndFill', 'outMaxIdx', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outMinIdx, outMaxIdx)) {
+    throw sharedMemory('MINMAXINDEX openAndFill', 'outMinIdx', 'outMaxIdx');
+  }
+  return minmaxindexOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outMinIdx, outMaxIdx);
 }
 
 /**
  * Opens a live MINMAXINDEX stream over the warm-up history: `value()` starts at
  * the last history bar, bit-identical to {@link minmaxindex} there.
  *
- * @param inReal - Warm-up history. Input series scanned for extremes.
- * @param optInTimePeriod - Window length in bars (default 30; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param real - Warm-up history. Input series scanned for extremes.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MinmaxindexOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `minmaxindexLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for an integer parameter that is not an int32 or a parameter
- *   outside its range.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input, an integer parameter that is not an int32 or a
+ *   parameter outside its range.
  *
  * @example
  * ```ts
- * import { MinmaxindexOut, minmaxindexOpen } from 'ta-lib';
+ * import { minmaxindexOpen } from 'ta-lib';
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = minmaxindexOpen(data, 30);
- * const peeked = new MinmaxindexOut();
- * const updated = new MinmaxindexOut();
- * stream.peek(100.9, peeked); // a forming bar: commits nothing
- * stream.update(100.9, updated); // the bar closes
+ * const stream = minmaxindexOpen(data, { timePeriod: 30 });
+ * const peeked = stream.peek(100.9); // a forming bar: commits nothing
+ * const updated = stream.update(100.9); // the bar closes
  * ```
  */
-export function minmaxindexOpen(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  core: Core = Core.DEFAULT,
-): MinmaxindexStream {
-  optInTimePeriod = requireInt32('MINMAXINDEX open', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('MINMAXINDEX open', 'inReal', inReal);
-  requireHistory('MINMAXINDEX open', inReal.length);
-  return minmaxindexOpenInternal(core, float64(inReal), 0, optInTimePeriod);
+export function minmaxindexOpen(real: ArrayLike<number>, options?: MinmaxindexOptions): MinmaxindexStream {
+  const o = optionsOf('MINMAXINDEX open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('MINMAXINDEX open', o.core);
+  return minmaxindexOpenPositional(real, optInTimePeriod, core);
 }
 
 /**
- * {@link minmaxindexOpen} that also fills the outputs over the whole history in
- * the same pass, bit-identically to {@link minmaxindex}. The range written is the
- * stream's `outRange()`.
+ * {@link minmaxindexOpen} that also computes the outputs over the whole history in
+ * the same pass, bit-identically to {@link minmaxindex}.
  *
- * @param inReal - Warm-up history. Input series scanned for extremes.
- * @param optInTimePeriod - Window length in bars (default 30; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param outMinIdx - Absolute index (into inReal) of the window minimum. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param outMaxIdx - Absolute index (into inReal) of the window maximum. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param real - Warm-up history. Input series scanned for extremes.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link MinmaxindexOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link minmaxindex} returns them; the range is the
+ *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `minmaxindexLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for an integer parameter that is not an int32, a parameter
- *   outside its range or an output too short or starting where another output or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another output or a `Float64Array` input.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input, an integer parameter that is not an int32, a parameter
+ *   outside its range or a buffer too short, of the wrong type or starting where
+ *   another buffer or a `Float64Array` input starts, or, on a history long enough to
+ *   open, one sharing memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -784,32 +937,23 @@ export function minmaxindexOpen(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const minIdx = new Int32Array(data.length);
- * const maxIdx = new Int32Array(data.length);
- * const stream = minmaxindexOpenAndFill(data, 30, minIdx, maxIdx);
- * const { begIdx, count } = stream.outRange();
- * // minIdx[k] is the value at bar begIdx + k, for k < count
+ * const {
+ *   stream,
+ *   begIdx,
+ *   outMinIdx,
+ *   outMaxIdx,
+ * } = minmaxindexOpenAndFill(data, { timePeriod: 30 });
+ * // outMinIdx[k] is the value at bar begIdx + k
  * ```
  */
-export function minmaxindexOpenAndFill(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  outMinIdx: Int32Array,
-  outMaxIdx: Int32Array,
-  core: Core = Core.DEFAULT,
-): MinmaxindexStream {
-  optInTimePeriod = requireInt32('MINMAXINDEX openAndFill', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('MINMAXINDEX openAndFill', 'inReal', inReal);
-  requireHistory('MINMAXINDEX openAndFill', inReal.length);
-  const guardOutLen = openFillCount('MINMAXINDEX openAndFill', inReal.length, minmaxindexLookback(optInTimePeriod, core));
-  requireOutput('MINMAXINDEX openAndFill', 'outMinIdx', outMinIdx, guardOutLen, Int32Array);
-  requireOutput('MINMAXINDEX openAndFill', 'outMaxIdx', outMaxIdx, guardOutLen, Int32Array);
-  const inRealF64 = float64(inReal);
-  if ((outMinIdx.buffer === inRealF64.buffer && outMinIdx.byteOffset === inRealF64.byteOffset) || (outMaxIdx.buffer === inRealF64.buffer && outMaxIdx.byteOffset === inRealF64.byteOffset) || (outMinIdx.buffer === outMaxIdx.buffer && outMinIdx.byteOffset === outMaxIdx.byteOffset)) {
-    throw streamFailure('MINMAXINDEX openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outMinIdx, inRealF64) || overlaps(outMaxIdx, inRealF64) || overlaps(outMinIdx, outMaxIdx))) {
-    throw streamFailure('MINMAXINDEX openAndFill', RetCode.BAD_PARAM);
-  }
-  return minmaxindexOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outMinIdx, outMaxIdx);
+export function minmaxindexOpenAndFill(real: ArrayLike<number>, options?: MinmaxindexOptions): MinmaxindexResult & { stream: MinmaxindexStream } {
+  const o = optionsOf('MINMAXINDEX openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('MINMAXINDEX openAndFill', o.core);
+  const capacity = fillCapacity(minmaxindexLookbackPositional(optInTimePeriod, core), real);
+  const outMinIdx = o.outMinIdx === undefined ? new Int32Array(capacity) : o.outMinIdx;
+  const outMaxIdx = o.outMaxIdx === undefined ? new Int32Array(capacity) : o.outMaxIdx;
+  const stream = minmaxindexOpenAndFillPositional(real, optInTimePeriod, outMinIdx, outMaxIdx, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outMinIdx: outMinIdx.subarray(0, range.count), outMaxIdx: outMaxIdx.subarray(0, range.count) };
 }

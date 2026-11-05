@@ -132,18 +132,18 @@ fn emit_ts_ridealong_fn(func: &FuncDef) -> String {
     let mut s = String::new();
 
     let mut sig_ins = String::new();
-    let mut args_m = String::new();
-    let mut args_open = String::new();
     let mut upd_args = String::new();
-    // The reject leg hands every entry point the SAME range.
-    let mut args_rej = String::new();
     for name in &input_names {
         let _ = write!(sig_ins, "{name}: Float64Array, ");
-        let _ = write!(args_m, "{name}.slice(0, m), ");
-        let _ = write!(args_open, "{name}.slice(0, lb + 1), ");
-        let _ = write!(args_rej, "{name}.slice(0, m), ");
         let _ = write!(upd_args, "{name}[t], ");
     }
+    let slices = |n: &str| -> Vec<String> { input_names.iter().map(|i| format!("{i}.slice(0, {n})")).collect() };
+    let args_m = slices("m");
+    // The reject leg hands every entry point the SAME range.
+    let args_rej = slices("m");
+    let args_open = slices("lb + 1");
+    let api = crate::server_gen::TsPublic::new(func);
+    let opt_names: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
     let mut sig_opts = String::new();
     let mut opt_args = String::new();
     for opt in &func.optional_inputs {
@@ -157,8 +157,8 @@ fn emit_ts_ridealong_fn(func: &FuncDef) -> String {
 
     let mut ref_decl = String::new();
     let mut fill_decl = String::new();
-    let mut ref_args = String::new();
-    let mut fill_args = String::new();
+    let mut ref_args: Vec<String> = Vec::new();
+    let mut fill_args: Vec<String> = Vec::new();
     let mut slot_of: Vec<(bool, usize)> = Vec::new();
     {
         let (mut r, mut i) = (0usize, 0usize);
@@ -166,15 +166,15 @@ fn emit_ts_ridealong_fn(func: &FuncDef) -> String {
             if out.param_type == ParamType::Integer {
                 let _ = writeln!(ref_decl, "  const rib{i} = new Int32Array(m);");
                 let _ = writeln!(fill_decl, "    const fib{i} = new Int32Array(m);");
-                let _ = write!(ref_args, "rib{i}, ");
-                let _ = write!(fill_args, "fib{i}, ");
+                ref_args.push(format!("rib{i}"));
+                fill_args.push(format!("fib{i}"));
                 slot_of.push((true, i));
                 i += 1;
             } else {
                 let _ = writeln!(ref_decl, "  const rb{r} = new Float64Array(m);");
                 let _ = writeln!(fill_decl, "    const fb{r} = new Float64Array(m);");
-                let _ = write!(ref_args, "rb{r}, ");
-                let _ = write!(fill_args, "fb{r}, ");
+                ref_args.push(format!("rb{r}"));
+                fill_args.push(format!("fb{r}"));
                 slot_of.push((false, r));
                 r += 1;
             }
@@ -183,7 +183,7 @@ fn emit_ts_ridealong_fn(func: &FuncDef) -> String {
 
     let val = |k: usize| -> String {
         if multi {
-            format!("uo.{}", crate::backends::java_stream::value_field_name(&outs[k].name))
+            format!("uo.{}", crate::backends::ts::output_key(&outs[k].name))
         } else {
             "uv".to_string()
         }
@@ -232,7 +232,7 @@ fn emit_ts_ridealong_fn(func: &FuncDef) -> String {
     );
     // A negative lookback is a REJECTED parameter and travels on to the reject
     // leg; everything between here and there must tolerate it.
-    let _ = writeln!(s, "  r.lb = {m_ns}.{}({opt_args}core);", names.lookback);
+    let _ = writeln!(s, "  r.lb = {};", api.lookback(&opt_names, "core"));
     s.push_str("  const lb = r.lb;\n");
     s.push_str("  let navail = endIdx + 1;\n");
     for name in &input_names {
@@ -271,8 +271,9 @@ fn emit_ts_ridealong_fn(func: &FuncDef) -> String {
     s.push_str("  let rejected = false;\n");
     let _ = writeln!(
         s,
-        "  try {{ const _rr = {m_ns}.{}(0, m - 1, {args_m}{opt_args}{ref_args}core); beg = _rr.begIdx; nb = _rr.count; }}",
-        names.public
+        "  try {{ const _rr = {}; beg = _rr.begIdx; nb = _rr.{}.length; }}",
+        api.batch(&args_m, &opt_names, ("0", "m - 1"), "core", &ref_args),
+        api.result_keys()[0]
     );
     s.push_str("  catch (_e) { r.rcBatch = rideCode(_e); codeB = rideCodeName(_e); rejected = true; }\n");
     // A rejection is a property of the CALL: the three entry points owe the
@@ -281,14 +282,14 @@ fn emit_ts_ridealong_fn(func: &FuncDef) -> String {
     s.push_str("    let codeO = '';\n    let codeF = '';\n");
     let _ = writeln!(
         s,
-        "    try {{ {m_ns}.{}({args_rej}{opt_args}core); }} catch (_e) {{ r.rcOpen = rideCode(_e); codeO = rideCodeName(_e); }}",
-        names.open
+        "    try {{ {}; }} catch (_e) {{ r.rcOpen = rideCode(_e); codeO = rideCodeName(_e); }}",
+        api.open(&args_rej, &opt_names, "core")
     );
     s.push_str(&fill_decl);
     let _ = writeln!(
         s,
-        "    try {{ {m_ns}.{}({args_rej}{opt_args}{fill_args}core); }} catch (_e) {{ r.rcFill = rideCode(_e); codeF = rideCodeName(_e); }}",
-        names.open_and_fill
+        "    try {{ {}; }} catch (_e) {{ r.rcFill = rideCode(_e); codeF = rideCodeName(_e); }}",
+        api.open_and_fill(&args_rej, &opt_names, "core", &fill_args)
     );
     s.push_str("    const cmpO = r.rcOpen === r.rcBatch && codeO === codeB;\n");
     s.push_str("    if (cmpO) r.rej++;\n");
@@ -304,7 +305,7 @@ fn emit_ts_ridealong_fn(func: &FuncDef) -> String {
     // Leg 1
     s.push_str("  try {\n");
     s.push_str("    let cmp: boolean;\n");
-    let _ = writeln!(s, "    const st = {m_ns}.{}({args_open}{opt_args}core);", names.open);
+    let _ = writeln!(s, "    const st = {};", api.open(&args_open, &opt_names, "core"));
     if multi {
         let _ = writeln!(s, "    const uo = new {holder}(); st.value(uo);");
     } else {
@@ -325,11 +326,10 @@ fn emit_ts_ridealong_fn(func: &FuncDef) -> String {
     s.push_str("  if (r.ok) {\n");
     s.push_str(&fill_decl);
     s.push_str("    try {\n");
-    let _ = writeln!(
-        s,
-        "      const st2 = {m_ns}.{}({args_m}{opt_args}{fill_args}core);",
-        names.open_and_fill
-    );
+    let _ = writeln!(s, "      const f2 = {};", api.open_and_fill(&args_m, &opt_names, "core", &fill_args));
+    s.push_str("      const st2 = f2.stream;\n");
+    let result_lens = api.result_keys().iter().map(|k| format!(" || f2.{k}.length !== nb")).collect::<Vec<_>>().concat();
+    let _ = writeln!(s, "      if (f2.begIdx !== beg{result_lens}) {{ r.ok = false; r.leg = 2; }}");
     s.push_str("      if (st2.outRange().begIdx !== beg || st2.outRange().count !== nb) { r.ok = false; r.leg = 2; }\n");
     s.push_str("      if (r.ok) {\n");
     s.push_str("        for (let k = 0; k < nb; k++) {\n");

@@ -1,11 +1,20 @@
-import { Core, CoreBuilder, FuncUnstId, OutRange, TALibError, ema, sma } from 'ta-lib';
-import type { FailureRetCode, RetCodeName } from 'ta-lib';
+import { Core, CoreBuilder, FuncUnstId, MAType, TALibError, atr, ema, macd, macdOpen, MacdOut, sma, smaLookback } from 'ta-lib';
+import type { FailureRetCode, MacdResult, RetCodeName, SmaOptions, SmaResult } from 'ta-lib';
 
 const close = new Float64Array(10);
 const out = new Float64Array(close.length);
-const r: OutRange = sma(0, close.length - 1, close, 3, out);
+const r: SmaResult = sma(close, { timePeriod: 3, outReal: out });
+const values: Float64Array = r.values;
 const core: Core = new CoreBuilder().unstablePeriod(FuncUnstId.EMA, 3).build();
-const e: OutRange = ema(0, close.length - 1, [1, 2, 3], 3, out, core);
+const e: Float64Array = ema([1, 2, 3], { timePeriod: 3, outReal: out, core }).values;
+const opts: SmaOptions = { timePeriod: undefined, startIdx: 0, endIdx: close.length - 1 };
+const lb: number = smaLookback(opts);
+const m: MacdResult = macd(close, { fastPeriod: 12, outMacd: out });
+// @ts-expect-error the C-shaped signature is not public
+sma(0, close.length - 1, close, 3, out);
+const sink: MacdOut = macdOpen(close).update(1, new MacdOut());
+const a: Float64Array = atr({ high: close, low: close, close }, { timePeriod: 14 }).values;
+const t: MAType = MAType.EMA;
 const codeOf = (err: unknown): RetCodeName | undefined => (err instanceof TALibError ? err.code : undefined);
 const retCodeOf = (err: unknown): FailureRetCode | undefined => (err instanceof TALibError ? err.retCode : undefined);
-export { r, e, codeOf, retCodeOf };
+export { r, values, e, lb, m, sink, a, t, codeOf, retCodeOf };

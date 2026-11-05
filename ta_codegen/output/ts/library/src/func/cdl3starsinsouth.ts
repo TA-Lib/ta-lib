@@ -16,22 +16,14 @@
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link cdl3starsinsouth} consumes before its first
- * value: the index of the first bar with a value when the whole series is
- * requested.
- *
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function cdl3starsinsouthLookback(core: Core = Core.DEFAULT): number {
+/** @internal */
+export function cdl3starsinsouthLookbackPositional(core: Core = Core.DEFAULT): number {
   const BodyLong_avgPeriod = core.candleSettings[CandleSettingType.BODY_LONG].avgPeriod;
   const BodyShort_avgPeriod = core.candleSettings[CandleSettingType.BODY_SHORT].avgPeriod;
   const ShadowLong_avgPeriod = core.candleSettings[CandleSettingType.SHADOW_LONG].avgPeriod;
@@ -39,20 +31,8 @@ export function cdl3starsinsouthLookback(core: Core = Core.DEFAULT): number {
   return ((ShadowVeryShort_avgPeriod > ShadowLong_avgPeriod ? ShadowVeryShort_avgPeriod : ShadowLong_avgPeriod) > (BodyLong_avgPeriod > BodyShort_avgPeriod ? BodyLong_avgPeriod : BodyShort_avgPeriod) ? (ShadowVeryShort_avgPeriod > ShadowLong_avgPeriod ? ShadowVeryShort_avgPeriod : ShadowLong_avgPeriod) : (BodyLong_avgPeriod > BodyShort_avgPeriod ? BodyLong_avgPeriod : BodyShort_avgPeriod)) + 2;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link cdl3starsinsouth}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function cdl3starsinsouthDisplayShift(outputIdx: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function cdl3starsinsouthDisplayShiftPositional(outputIdx: number, _core: Core = Core.DEFAULT): number {
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
     return -2147483648;
   }
@@ -105,7 +85,7 @@ export function cdl3starsinsouthImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = cdl3starsinsouthLookback(core);
+  lookbackTotal = cdl3starsinsouthLookbackPositional(core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -203,6 +183,135 @@ export function cdl3starsinsouthImpl(
   return RetCode.SUCCESS;
 }
 
+/** @internal */
+export function cdl3starsinsouthPositional(
+  startIdx: number,
+  endIdx: number,
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outInteger: Int32Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('CDL3STARSINSOUTH', 'startIdx', startIdx);
+  endIdx = requireInt32('CDL3STARSINSOUTH', 'endIdx', endIdx);
+  requireIndexRange('CDL3STARSINSOUTH', startIdx, endIdx);
+  const guardStart = clampedStart('CDL3STARSINSOUTH', startIdx, cdl3starsinsouthLookbackPositional(core));
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('CDL3STARSINSOUTH', 'prices.open', inOpen, guardInLen);
+  requireLength('CDL3STARSINSOUTH', 'prices.high', inHigh, guardInLen);
+  requireLength('CDL3STARSINSOUTH', 'prices.low', inLow, guardInLen);
+  requireLength('CDL3STARSINSOUTH', 'prices.close', inClose, guardInLen);
+  requireOutput('CDL3STARSINSOUTH', 'outInteger', outInteger, guardOutLen, Int32Array);
+  const inOpenF64 = float64(inOpen);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (overlaps(outInteger, inOpenF64)) {
+    throw sharedMemory('CDL3STARSINSOUTH', 'outInteger', 'prices.open');
+  }
+  if (overlaps(outInteger, inHighF64)) {
+    throw sharedMemory('CDL3STARSINSOUTH', 'outInteger', 'prices.high');
+  }
+  if (overlaps(outInteger, inLowF64)) {
+    throw sharedMemory('CDL3STARSINSOUTH', 'outInteger', 'prices.low');
+  }
+  if (overlaps(outInteger, inCloseF64)) {
+    throw sharedMemory('CDL3STARSINSOUTH', 'outInteger', 'prices.close');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = cdl3starsinsouthImpl(core, startIdx, endIdx, inOpenF64, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outInteger);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('CDL3STARSINSOUTH', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link cdl3starsinsouth}, {@link cdl3starsinsouthLookback},
+ * {@link cdl3starsinsouthDisplayShift}, {@link cdl3starsinsouthOpen} and
+ * {@link cdl3starsinsouthOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface Cdl3starsinsouthOptions {
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input.
+   */
+  outInteger?: Int32Array | undefined;
+}
+
+/**
+ * What {@link cdl3starsinsouth} returns, and {@link cdl3starsinsouthOpenAndFill}
+ * with its stream.
+ */
+export interface Cdl3starsinsouthResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * +100 on the bar where the pattern completes (always bullish), 0 otherwise. Never
+   * emits -100. `values[k]` is the value at input bar `begIdx + k`.
+   */
+  values: Int32Array;
+}
+
+/**
+ * Number of leading input bars {@link cdl3starsinsouth} consumes before its first
+ * value: the index of the first bar with a value when the whole series is
+ * requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link Cdl3starsinsouthOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function cdl3starsinsouthLookback(options?: Cdl3starsinsouthOptions): number {
+  const o = optionsOf('CDL3STARSINSOUTH lookback', options);
+  return cdl3starsinsouthLookbackPositional(coreOf('CDL3STARSINSOUTH lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link cdl3starsinsouth}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link Cdl3starsinsouthOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function cdl3starsinsouthDisplayShift(outputIdx: number, options?: Cdl3starsinsouthOptions): number {
+  const o = optionsOf('CDL3STARSINSOUTH displayShift', options);
+  return cdl3starsinsouthDisplayShiftPositional(outputIdx, coreOf('CDL3STARSINSOUTH displayShift', o.core));
+}
+
 /**
  * A three-candle bullish reversal pattern of three consecutive black candles that
  * progressively shrink and stabilize: a long black candle with a long lower
@@ -222,28 +331,24 @@ export function cdl3starsinsouthImpl(
  *   post-breakout performance ranks dead last, 103rd of 103.
  *   ([thepatternsite.com](https://thepatternsite.com/ThreeStarsSouth.html))
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link cdl3starsinsouthLookback} is a
- * success with `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link cdl3starsinsouthLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inOpen - Open price of each bar.
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param inClose - Close price of each bar.
- * @param outInteger - +100 on the bar where the pattern completes (always
- *   bullish), 0 otherwise. Never emits -100. Must hold the values produced and never
- *   be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `open`: Open
+ *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
+ *   `close`: Close price of each bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link Cdl3starsinsouthOptions}.
+ * @returns `begIdx` and the values; see {@link Cdl3starsinsouthResult}. Each
+ *   output is a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, an
- *   array too short for the range, an empty output or an output sharing memory with
- *   a `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an input too short for the range, a buffer that is empty, too short or of
+ *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -257,53 +362,29 @@ export function cdl3starsinsouthImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Int32Array(open.length);
- * const { begIdx, count } = cdl3starsinsouth(
- *   0, open.length - 1,
- *   open, high, low, close,
- *   out,
- * );
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = cdl3starsinsouth({ open, high, low, close });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`cdl3blackcrows`](https://ta-lib.org/functions/cdl3blackcrows)
  * @see [`cdlidentical3crows`](https://ta-lib.org/functions/cdlidentical3crows)
  * @see [`cdl3whitesoldiers`](https://ta-lib.org/functions/cdl3whitesoldiers)
  */
-export function cdl3starsinsouth(
-  startIdx: number,
-  endIdx: number,
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outInteger: Int32Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('CDL3STARSINSOUTH', 'startIdx', startIdx);
-  endIdx = requireInt32('CDL3STARSINSOUTH', 'endIdx', endIdx);
-  requireIndexRange('CDL3STARSINSOUTH', startIdx, endIdx);
-  const guardStart = clampedStart('CDL3STARSINSOUTH', startIdx, cdl3starsinsouthLookback(core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('CDL3STARSINSOUTH', 'inOpen', inOpen, guardInLen);
-  requireLength('CDL3STARSINSOUTH', 'inHigh', inHigh, guardInLen);
-  requireLength('CDL3STARSINSOUTH', 'inLow', inLow, guardInLen);
-  requireLength('CDL3STARSINSOUTH', 'inClose', inClose, guardInLen);
-  requireOutput('CDL3STARSINSOUTH', 'outInteger', outInteger, guardOutLen, Int32Array);
-  const inOpenF64 = float64(inOpen);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if (overlaps(outInteger, inOpenF64) || overlaps(outInteger, inHighF64) || overlaps(outInteger, inLowF64) || overlaps(outInteger, inCloseF64)) {
-    throw failure('CDL3STARSINSOUTH', RetCode.BAD_PARAM);
+export function cdl3starsinsouth(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3starsinsouthOptions): Cdl3starsinsouthResult {
+  requireArgument('CDL3STARSINSOUTH', 'prices', prices);
+  const o = optionsOf('CDL3STARSINSOUTH', options);
+  if (o.endIdx === undefined) {
+    requireSeries('CDL3STARSINSOUTH', 'prices.open', prices.open);
+    requireSeries('CDL3STARSINSOUTH', 'prices.high', prices.high);
+    requireSeries('CDL3STARSINSOUTH', 'prices.low', prices.low);
+    requireSeries('CDL3STARSINSOUTH', 'prices.close', prices.close);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = cdl3starsinsouthImpl(core, startIdx, endIdx, inOpenF64, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outInteger);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('CDL3STARSINSOUTH', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const core = coreOf('CDL3STARSINSOUTH', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.open.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, cdl3starsinsouthLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
+  const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;
+  const range = cdl3starsinsouthPositional(startIdx, endIdx, prices.open, prices.high, prices.low, prices.close, outInteger, core);
+  return { begIdx: range.begIdx, values: outInteger.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -706,7 +787,7 @@ function cdl3starsinsouthOpenImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = cdl3starsinsouthLookback(core);
+  lookbackTotal = cdl3starsinsouthLookbackPositional(core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -903,7 +984,7 @@ export function cdl3starsinsouthOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('CDL3STARSINSOUTH openAndFill', inOpen.length, startIdx, cdl3starsinsouthLookback(core));
+    throw insufficientHistory('CDL3STARSINSOUTH openAndFill', inOpen.length, startIdx, cdl3starsinsouthLookbackPositional(core));
   }
   throw streamFailure('CDL3STARSINSOUTH openAndFill', retCode);
 }
@@ -928,29 +1009,94 @@ export function cdl3starsinsouthOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('CDL3STARSINSOUTH open', inOpen.length, startIdx, cdl3starsinsouthLookback(core));
+    throw insufficientHistory('CDL3STARSINSOUTH open', inOpen.length, startIdx, cdl3starsinsouthLookbackPositional(core));
   }
   throw streamFailure('CDL3STARSINSOUTH open', retCode);
+}
+
+/** @internal */
+export function cdl3starsinsouthOpenPositional(
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  core: Core = Core.DEFAULT,
+): Cdl3starsinsouthStream {
+  requireArgument('CDL3STARSINSOUTH open', 'prices.open', inOpen);
+  requireHistory('CDL3STARSINSOUTH open', inOpen.length);
+  requireArgument('CDL3STARSINSOUTH open', 'prices.high', inHigh);
+  requireArgument('CDL3STARSINSOUTH open', 'prices.low', inLow);
+  requireArgument('CDL3STARSINSOUTH open', 'prices.close', inClose);
+  requireHistoryLength('CDL3STARSINSOUTH open', 'prices.high', inHigh.length, inOpen.length);
+  requireHistoryLength('CDL3STARSINSOUTH open', 'prices.low', inLow.length, inOpen.length);
+  requireHistoryLength('CDL3STARSINSOUTH open', 'prices.close', inClose.length, inOpen.length);
+  return cdl3starsinsouthOpenInternal(core, float64(inOpen), float64(inHigh), float64(inLow), float64(inClose), 0);
+}
+
+/** @internal */
+export function cdl3starsinsouthOpenAndFillPositional(
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outInteger: Int32Array,
+  core: Core = Core.DEFAULT,
+): Cdl3starsinsouthStream {
+  requireArgument('CDL3STARSINSOUTH openAndFill', 'prices.open', inOpen);
+  requireHistory('CDL3STARSINSOUTH openAndFill', inOpen.length);
+  requireArgument('CDL3STARSINSOUTH openAndFill', 'prices.high', inHigh);
+  requireArgument('CDL3STARSINSOUTH openAndFill', 'prices.low', inLow);
+  requireArgument('CDL3STARSINSOUTH openAndFill', 'prices.close', inClose);
+  const guardOutLen = openFillCount('CDL3STARSINSOUTH openAndFill', inOpen.length, cdl3starsinsouthLookbackPositional(core));
+  requireHistoryLength('CDL3STARSINSOUTH openAndFill', 'prices.high', inHigh.length, inOpen.length);
+  requireHistoryLength('CDL3STARSINSOUTH openAndFill', 'prices.low', inLow.length, inOpen.length);
+  requireHistoryLength('CDL3STARSINSOUTH openAndFill', 'prices.close', inClose.length, inOpen.length);
+  requireOutput('CDL3STARSINSOUTH openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
+  const inOpenF64 = float64(inOpen);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (outInteger.buffer === inOpenF64.buffer && outInteger.byteOffset === inOpenF64.byteOffset) {
+    throw sharedMemory('CDL3STARSINSOUTH openAndFill', 'outInteger', 'prices.open');
+  }
+  if (outInteger.buffer === inHighF64.buffer && outInteger.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('CDL3STARSINSOUTH openAndFill', 'outInteger', 'prices.high');
+  }
+  if (outInteger.buffer === inLowF64.buffer && outInteger.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('CDL3STARSINSOUTH openAndFill', 'outInteger', 'prices.low');
+  }
+  if (outInteger.buffer === inCloseF64.buffer && outInteger.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('CDL3STARSINSOUTH openAndFill', 'outInteger', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inOpenF64)) {
+    throw sharedMemory('CDL3STARSINSOUTH openAndFill', 'outInteger', 'prices.open');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inHighF64)) {
+    throw sharedMemory('CDL3STARSINSOUTH openAndFill', 'outInteger', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inLowF64)) {
+    throw sharedMemory('CDL3STARSINSOUTH openAndFill', 'outInteger', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inCloseF64)) {
+    throw sharedMemory('CDL3STARSINSOUTH openAndFill', 'outInteger', 'prices.close');
+  }
+  return cdl3starsinsouthOpenAndFillInternal(core, inOpenF64, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outInteger);
 }
 
 /**
  * Opens a live CDL3STARSINSOUTH stream over the warm-up history: `value()` starts
  * at the last history bar, bit-identical to {@link cdl3starsinsouth} there.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
+ *   Low price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link Cdl3starsinsouthOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdl3starsinsouthLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for histories of different lengths.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input or histories of different lengths.
  *
  * @example
  * ```ts
@@ -964,54 +1110,37 @@ export function cdl3starsinsouthOpenInternal(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = cdl3starsinsouthOpen(open, high, low, close);
+ * const stream = cdl3starsinsouthOpen({ open, high, low, close });
  * const peeked = stream.peek(100.2, 101.4, 99.1, 100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdl3starsinsouthOpen(
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  core: Core = Core.DEFAULT,
-): Cdl3starsinsouthStream {
-  requireArgument('CDL3STARSINSOUTH open', 'inOpen', inOpen);
-  requireHistory('CDL3STARSINSOUTH open', inOpen.length);
-  requireArgument('CDL3STARSINSOUTH open', 'inHigh', inHigh);
-  requireArgument('CDL3STARSINSOUTH open', 'inLow', inLow);
-  requireArgument('CDL3STARSINSOUTH open', 'inClose', inClose);
-  requireHistoryLength('CDL3STARSINSOUTH open', 'inHigh', inHigh.length, inOpen.length);
-  requireHistoryLength('CDL3STARSINSOUTH open', 'inLow', inLow.length, inOpen.length);
-  requireHistoryLength('CDL3STARSINSOUTH open', 'inClose', inClose.length, inOpen.length);
-  return cdl3starsinsouthOpenInternal(core, float64(inOpen), float64(inHigh), float64(inLow), float64(inClose), 0);
+export function cdl3starsinsouthOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3starsinsouthOptions): Cdl3starsinsouthStream {
+  requireArgument('CDL3STARSINSOUTH open', 'prices', prices);
+  const o = optionsOf('CDL3STARSINSOUTH open', options);
+  const core = coreOf('CDL3STARSINSOUTH open', o.core);
+  return cdl3starsinsouthOpenPositional(prices.open, prices.high, prices.low, prices.close, core);
 }
 
 /**
- * {@link cdl3starsinsouthOpen} that also fills the outputs over the whole history
- * in the same pass, bit-identically to {@link cdl3starsinsouth}. The range written
- * is the stream's `outRange()`.
+ * {@link cdl3starsinsouthOpen} that also computes the outputs over the whole
+ * history in the same pass, bit-identically to {@link cdl3starsinsouth}.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param outInteger - +100 on the bar where the pattern completes (always
- *   bullish), 0 otherwise. Never emits -100. Must hold `historyLen - lookback`
- *   values and share no memory with an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
+ *   Low price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link Cdl3starsinsouthOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link cdl3starsinsouth} returns them; the range is
+ *   the stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdl3starsinsouthLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for histories of different lengths or an output too short or
- *   starting where another output or a `Float64Array` input starts, or, on a history
- *   long enough to open, one sharing memory with another output or a `Float64Array`
- *   input.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input, histories of different lengths or a buffer too short,
+ *   of the wrong type or starting where another buffer or a `Float64Array` input
+ *   starts, or, on a history long enough to open, one sharing memory with another
+ *   buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1025,39 +1154,17 @@ export function cdl3starsinsouthOpen(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Int32Array(open.length);
- * const stream = cdl3starsinsouthOpenAndFill(open, high, low, close, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = cdl3starsinsouthOpenAndFill({ open, high, low, close });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdl3starsinsouthOpenAndFill(
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outInteger: Int32Array,
-  core: Core = Core.DEFAULT,
-): Cdl3starsinsouthStream {
-  requireArgument('CDL3STARSINSOUTH openAndFill', 'inOpen', inOpen);
-  requireHistory('CDL3STARSINSOUTH openAndFill', inOpen.length);
-  requireArgument('CDL3STARSINSOUTH openAndFill', 'inHigh', inHigh);
-  requireArgument('CDL3STARSINSOUTH openAndFill', 'inLow', inLow);
-  requireArgument('CDL3STARSINSOUTH openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('CDL3STARSINSOUTH openAndFill', inOpen.length, cdl3starsinsouthLookback(core));
-  requireHistoryLength('CDL3STARSINSOUTH openAndFill', 'inHigh', inHigh.length, inOpen.length);
-  requireHistoryLength('CDL3STARSINSOUTH openAndFill', 'inLow', inLow.length, inOpen.length);
-  requireHistoryLength('CDL3STARSINSOUTH openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireOutput('CDL3STARSINSOUTH openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
-  const inOpenF64 = float64(inOpen);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if ((outInteger.buffer === inOpenF64.buffer && outInteger.byteOffset === inOpenF64.byteOffset) || (outInteger.buffer === inHighF64.buffer && outInteger.byteOffset === inHighF64.byteOffset) || (outInteger.buffer === inLowF64.buffer && outInteger.byteOffset === inLowF64.byteOffset) || (outInteger.buffer === inCloseF64.buffer && outInteger.byteOffset === inCloseF64.byteOffset)) {
-    throw streamFailure('CDL3STARSINSOUTH openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outInteger, inOpenF64) || overlaps(outInteger, inHighF64) || overlaps(outInteger, inLowF64) || overlaps(outInteger, inCloseF64))) {
-    throw streamFailure('CDL3STARSINSOUTH openAndFill', RetCode.BAD_PARAM);
-  }
-  return cdl3starsinsouthOpenAndFillInternal(core, inOpenF64, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outInteger);
+export function cdl3starsinsouthOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3starsinsouthOptions): Cdl3starsinsouthResult & { stream: Cdl3starsinsouthStream } {
+  requireArgument('CDL3STARSINSOUTH openAndFill', 'prices', prices);
+  const o = optionsOf('CDL3STARSINSOUTH openAndFill', options);
+  const core = coreOf('CDL3STARSINSOUTH openAndFill', o.core);
+  const capacity = fillCapacity(cdl3starsinsouthLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
+  const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;
+  const stream = cdl3starsinsouthOpenAndFillPositional(prices.open, prices.high, prices.low, prices.close, outInteger, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outInteger.subarray(0, range.count) };
 }

@@ -55,15 +55,15 @@ fn emit_probe(o: &mut String, func: &FuncDef, enums: &HashMap<String, EnumDef>) 
     let ins = quoted(func.inputs.iter().map(|i| leg_kind(&i.name).to_string()).collect());
     let outs = quoted(func.outputs.iter().map(|x| out_kind(&x.param_type).to_string()).collect());
     let (open, fill) = if func.streaming {
-        (format!("{m}.{}", n.open), format!("{m}.{}", n.open_and_fill))
+        (format!("{m}.{}", n.open_positional), format!("{m}.{}", n.open_and_fill_positional))
     } else {
         ("null".to_string(), "null".to_string())
     };
     let _ = writeln!(o, "  {{");
     let _ = writeln!(o, "    name: '{}',", func.name);
-    let _ = writeln!(o, "    batch: {m}.{},", n.public);
+    let _ = writeln!(o, "    batch: {m}.{},", n.positional);
     let _ = writeln!(o, "    body: {m}.{},", n.body);
-    let _ = writeln!(o, "    lookback: {m}.{},", n.lookback);
+    let _ = writeln!(o, "    lookback: {m}.{},", n.lookback_positional);
     let _ = writeln!(o, "    open: {open},");
     let _ = writeln!(o, "    fill: {fill},");
     let _ = writeln!(o, "    ins: [{ins}],");

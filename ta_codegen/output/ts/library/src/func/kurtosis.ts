@@ -14,25 +14,15 @@
  *  092126 MF,CC  Rebuild against the peak moments (issue #433).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link kurtosis} consumes before its first value:
- * the index of the first bar with a value when the whole series is requested.
- *
- * @param optInTimePeriod - Number of trailing values in the window (default 30;
- *   range 4 to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function kurtosisLookback(optInTimePeriod: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function kurtosisLookbackPositional(optInTimePeriod: number, _core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -44,22 +34,9 @@ export function kurtosisLookback(optInTimePeriod: number, core: Core = Core.DEFA
   return optInTimePeriod - 1;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link kurtosis}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Number of trailing values in the window (default 30;
- *   range 4 to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function kurtosisDisplayShift(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (kurtosisLookback(optInTimePeriod, core) < 0) {
+/** @internal */
+export function kurtosisDisplayShiftPositional(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (kurtosisLookbackPositional(optInTimePeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -319,6 +296,126 @@ export function kurtosisImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 4, 10000, 'in 4..10000']] as const;
+
+/** @internal */
+export function kurtosisPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('KURTOSIS', 'startIdx', startIdx);
+  endIdx = requireInt32('KURTOSIS', 'endIdx', endIdx);
+  optInTimePeriod = requireInt32('KURTOSIS', 'timePeriod', optInTimePeriod);
+  requireIndexRange('KURTOSIS', startIdx, endIdx);
+  const guardLookback = kurtosisLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('KURTOSIS', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardStart = clampedStart('KURTOSIS', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('KURTOSIS', 'real', inReal, guardInLen);
+  requireOutput('KURTOSIS', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outReal, inRealF64)) {
+    throw sharedMemory('KURTOSIS', 'outReal', 'real');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = kurtosisImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('KURTOSIS', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link kurtosis}, {@link kurtosisLookback},
+ * {@link kurtosisDisplayShift}, {@link kurtosisOpen} and
+ * {@link kurtosisOpenAndFill}. Every key is optional: an omitted or `undefined`
+ * key takes its default, and a call ignores the keys it has no use for.
+ */
+export interface KurtosisOptions {
+  /**
+   * Number of trailing values in the window (default 30; range 4 to 10000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link kurtosis} returns, and {@link kurtosisOpenAndFill} with its stream. */
+export interface KurtosisResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Excess kurtosis of the trailing window, or NaN where the window has no spread.
+   * `values[k]` is the value at input bar `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link kurtosis} consumes before its first value:
+ * the index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link KurtosisOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function kurtosisLookback(options?: KurtosisOptions): number {
+  const o = optionsOf('KURTOSIS lookback', options);
+  return kurtosisLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('KURTOSIS lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link kurtosis}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link KurtosisOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function kurtosisDisplayShift(outputIdx: number, options?: KurtosisOptions): number {
+  const o = optionsOf('KURTOSIS displayShift', options);
+  return kurtosisDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('KURTOSIS displayShift', o.core));
+}
+
 /**
  * An estimate, from the trailing window, of the excess kurtosis of the
  * distribution its values come from: the fourth standardised moment minus 3, so a
@@ -342,28 +439,23 @@ export function kurtosisImpl(
  * - The result is at most `n`, the value of one reading apart from `n−1` equal
  *   ones, so a window dominated by one outlier is legitimately far above 0.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link kurtosisLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link kurtosisLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - The series to measure.
- * @param optInTimePeriod - Number of trailing values in the window (default 30;
- *   range 4 to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Excess kurtosis of the trailing window, or NaN where the window
- *   has no spread. Must hold the values produced and never be empty; the input
- *   length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - The series to measure.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link KurtosisOptions}.
+ * @returns `begIdx` and the values; see {@link KurtosisResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output
- *   or an output sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -371,42 +463,26 @@ export function kurtosisImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const { begIdx, count } = kurtosis(0, data.length - 1, data, 30, out);
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = kurtosis(data, { timePeriod: 30 });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`var_`](https://ta-lib.org/functions/var)
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
  * @see [`bbands`](https://ta-lib.org/functions/bbands)
  */
-export function kurtosis(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('KURTOSIS', 'startIdx', startIdx);
-  endIdx = requireInt32('KURTOSIS', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('KURTOSIS', 'optInTimePeriod', optInTimePeriod);
-  requireIndexRange('KURTOSIS', startIdx, endIdx);
-  const guardStart = clampedStart('KURTOSIS', startIdx, kurtosisLookback(optInTimePeriod, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('KURTOSIS', 'inReal', inReal, guardInLen);
-  requireOutput('KURTOSIS', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outReal, inRealF64)) {
-    throw failure('KURTOSIS', RetCode.BAD_PARAM);
+export function kurtosis(real: ArrayLike<number>, options?: KurtosisOptions): KurtosisResult {
+  const o = optionsOf('KURTOSIS', options);
+  if (o.endIdx === undefined) {
+    requireSeries('KURTOSIS', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = kurtosisImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('KURTOSIS', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('KURTOSIS', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, kurtosisLookbackPositional(optInTimePeriod, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = kurtosisPositional(startIdx, endIdx, real, optInTimePeriod, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -1214,7 +1290,10 @@ export function kurtosisOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('KURTOSIS openAndFill', inReal.length, startIdx, kurtosisLookback(optInTimePeriod, core));
+    throw insufficientHistory('KURTOSIS openAndFill', inReal.length, startIdx, kurtosisLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && kurtosisLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('KURTOSIS openAndFill', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('KURTOSIS openAndFill', retCode);
 }
@@ -1237,24 +1316,65 @@ export function kurtosisOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('KURTOSIS open', inReal.length, startIdx, kurtosisLookback(optInTimePeriod, core));
+    throw insufficientHistory('KURTOSIS open', inReal.length, startIdx, kurtosisLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && kurtosisLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('KURTOSIS open', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('KURTOSIS open', retCode);
+}
+
+/** @internal */
+export function kurtosisOpenPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  core: Core = Core.DEFAULT,
+): KurtosisStream {
+  optInTimePeriod = requireInt32('KURTOSIS open', 'timePeriod', optInTimePeriod);
+  requireArgument('KURTOSIS open', 'real', inReal);
+  requireHistory('KURTOSIS open', inReal.length);
+  return kurtosisOpenInternal(core, float64(inReal), 0, optInTimePeriod);
+}
+
+/** @internal */
+export function kurtosisOpenAndFillPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): KurtosisStream {
+  optInTimePeriod = requireInt32('KURTOSIS openAndFill', 'timePeriod', optInTimePeriod);
+  requireArgument('KURTOSIS openAndFill', 'real', inReal);
+  requireHistory('KURTOSIS openAndFill', inReal.length);
+  const guardLookback = kurtosisLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('KURTOSIS openAndFill', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardOutLen = openFillCount('KURTOSIS openAndFill', inReal.length, guardLookback);
+  requireOutput('KURTOSIS openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('KURTOSIS openAndFill', 'outReal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inRealF64)) {
+    throw sharedMemory('KURTOSIS openAndFill', 'outReal', 'real');
+  }
+  return kurtosisOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live KURTOSIS stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link kurtosis} there.
  *
- * @param inReal - Warm-up history. The series to measure.
- * @param optInTimePeriod - Number of trailing values in the window (default 30;
- *   range 4 to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param real - Warm-up history. The series to measure.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link KurtosisOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `kurtosisLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32 or a parameter outside its range.
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32 or a parameter outside its
+ *   range.
  *
  * @example
  * ```ts
@@ -1262,42 +1382,35 @@ export function kurtosisOpenInternal(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = kurtosisOpen(data, 30);
+ * const stream = kurtosisOpen(data, { timePeriod: 30 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
  */
-export function kurtosisOpen(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  core: Core = Core.DEFAULT,
-): KurtosisStream {
-  optInTimePeriod = requireInt32('KURTOSIS open', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('KURTOSIS open', 'inReal', inReal);
-  requireHistory('KURTOSIS open', inReal.length);
-  return kurtosisOpenInternal(core, float64(inReal), 0, optInTimePeriod);
+export function kurtosisOpen(real: ArrayLike<number>, options?: KurtosisOptions): KurtosisStream {
+  const o = optionsOf('KURTOSIS open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('KURTOSIS open', o.core);
+  return kurtosisOpenPositional(real, optInTimePeriod, core);
 }
 
 /**
- * {@link kurtosisOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link kurtosis}. The range written is the
- * stream's `outRange()`.
+ * {@link kurtosisOpen} that also computes the outputs over the whole history in
+ * the same pass, bit-identically to {@link kurtosis}.
  *
- * @param inReal - Warm-up history. The series to measure.
- * @param optInTimePeriod - Number of trailing values in the window (default 30;
- *   range 4 to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Excess kurtosis of the trailing window, or NaN where the window
- *   has no spread. Must hold `historyLen - lookback` values and share no memory with
- *   an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param real - Warm-up history. The series to measure.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link KurtosisOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link kurtosis} returns them; the range is the
+ *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `kurtosisLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range or
- *   an output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range
+ *   or a buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1305,29 +1418,19 @@ export function kurtosisOpen(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const stream = kurtosisOpenAndFill(data, 30, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = kurtosisOpenAndFill(data, {
+ *   timePeriod: 30,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function kurtosisOpenAndFill(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): KurtosisStream {
-  optInTimePeriod = requireInt32('KURTOSIS openAndFill', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('KURTOSIS openAndFill', 'inReal', inReal);
-  requireHistory('KURTOSIS openAndFill', inReal.length);
-  const guardOutLen = openFillCount('KURTOSIS openAndFill', inReal.length, kurtosisLookback(optInTimePeriod, core));
-  requireOutput('KURTOSIS openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
-    throw streamFailure('KURTOSIS openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inRealF64))) {
-    throw streamFailure('KURTOSIS openAndFill', RetCode.BAD_PARAM);
-  }
-  return kurtosisOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outReal);
+export function kurtosisOpenAndFill(real: ArrayLike<number>, options?: KurtosisOptions): KurtosisResult & { stream: KurtosisStream } {
+  const o = optionsOf('KURTOSIS openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('KURTOSIS openAndFill', o.core);
+  const capacity = fillCapacity(kurtosisLookbackPositional(optInTimePeriod, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = kurtosisOpenAndFillPositional(real, optInTimePeriod, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

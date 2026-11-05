@@ -75,13 +75,27 @@ fn every_batch_call_takes_the_yaml_argument_order_in_every_language() {
         let ts = read(&root.join(format!("ta_codegen/output/ts/library/src/func/{}.ts", camel_words(&func.name))));
         let mut want_ts = want.clone();
         want_ts.push("core".to_string());
+        let mut want_ts_api: Vec<String> = Vec::new();
+        for i in &func.inputs {
+            let name = if i.price.is_some() {
+                "prices".to_string()
+            } else {
+                let rest = i.name.strip_prefix("in").expect("an input name starts with `in`");
+                rest[..1].to_ascii_lowercase() + &rest[1..]
+            };
+            if want_ts_api.last() != Some(&name) {
+                want_ts_api.push(name);
+            }
+        }
+        want_ts_api.push("options?".to_string());
         let lanes = [
             ("C", param_lists(&header, &format!("TA_RetCode TA_{upper}(")), &want_c, 1),
             ("C float", param_lists(&header, &format!("TA_RetCode TA_S_{upper}(")), &want_c, 1),
             ("Rust", param_lists(&rust, &format!("pub fn {}(", func.name.to_lowercase())), &want, 1),
             ("Java", param_lists(&java, &format!("public OutRange {}(", camel_words(&func.name))), &want, 2),
             ("C#", param_lists(&csharp, &format!("public OutRange {}(", pascal_words(&func.name))), &want, 2),
-            ("TS", param_lists(&ts, &format!("export function {}(", ts::func_ident(&func.name))), &want_ts, 1),
+            ("TS", param_lists(&ts, &format!("export function {}(", ts::ts_names(&func.name).positional)), &want_ts, 1),
+            ("TS public", param_lists(&ts, &format!("export function {}(", ts::func_ident(&func.name))), &want_ts_api, 1),
         ];
         for (lang, lists, want, count) in lanes {
             assert_eq!(lists.len(), count, "{name}: {lang} has {} batch declarations, not {count}", lists.len());
@@ -91,5 +105,5 @@ fn every_batch_call_takes_the_yaml_argument_order_in_every_language() {
             }
         }
     }
-    assert!(checked >= 8 * 150, "only {checked} batch declarations checked");
+    assert!(checked >= 9 * 150, "only {checked} batch declarations checked");
 }

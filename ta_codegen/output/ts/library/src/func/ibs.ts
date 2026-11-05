@@ -14,22 +14,14 @@
  *  092926 MF,CC  Store the quotient, then overwrite it, so the loop vectorizes.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link ibs} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function ibsLookback(core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function ibsLookbackPositional(_core: Core = Core.DEFAULT): number {
   /* One bar in, one bar out: the value reads only its own bar, so there is
    * nothing to warm up. bop.c:19-22's lookback, and stochf_lookback(1,1,SMA)
    * agrees, since ma_lookback returns 0 for a period of 1 (ma.c:28-29).
@@ -37,20 +29,8 @@ export function ibsLookback(core: Core = Core.DEFAULT): number {
   return 0;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link ibs}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function ibsDisplayShift(outputIdx: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function ibsDisplayShiftPositional(outputIdx: number, _core: Core = Core.DEFAULT): number {
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
     return -2147483648;
   }
@@ -102,6 +82,125 @@ export function ibsImpl(
   return RetCode.SUCCESS;
 }
 
+/** @internal */
+export function ibsPositional(
+  startIdx: number,
+  endIdx: number,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('IBS', 'startIdx', startIdx);
+  endIdx = requireInt32('IBS', 'endIdx', endIdx);
+  requireIndexRange('IBS', startIdx, endIdx);
+  const guardStart = clampedStart('IBS', startIdx, ibsLookbackPositional(core));
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('IBS', 'prices.high', inHigh, guardInLen);
+  requireLength('IBS', 'prices.low', inLow, guardInLen);
+  requireLength('IBS', 'prices.close', inClose, guardInLen);
+  requireOutput('IBS', 'outReal', outReal, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (overlapsPartly(outReal, inHighF64)) {
+    throw sharedMemory('IBS', 'outReal', 'prices.high');
+  }
+  if (overlapsPartly(outReal, inLowF64)) {
+    throw sharedMemory('IBS', 'outReal', 'prices.low');
+  }
+  if (overlapsPartly(outReal, inCloseF64)) {
+    throw sharedMemory('IBS', 'outReal', 'prices.close');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = ibsImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('IBS', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link ibs}, {@link ibsLookback}, {@link ibsDisplayShift},
+ * {@link ibsOpen} and {@link ibsOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface IbsOptions {
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link ibs} returns, and {@link ibsOpenAndFill} with its stream. */
+export interface IbsResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Position of the close within the bar's range, 0 to 1 on a bar with range.
+   * `values[k]` is the value at input bar `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link ibs} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link IbsOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function ibsLookback(options?: IbsOptions): number {
+  const o = optionsOf('IBS lookback', options);
+  return ibsLookbackPositional(coreOf('IBS lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link ibs}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link IbsOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function ibsDisplayShift(outputIdx: number, options?: IbsOptions): number {
+  const o = optionsOf('IBS displayShift', options);
+  return ibsDisplayShiftPositional(outputIdx, coreOf('IBS displayShift', o.core));
+}
+
 /**
  * Internal Bar Strength: where the close sits inside its own bar's range. It is 0
  * when the bar closes at its low, 1 at its high and 0.5 at the midpoint, and it
@@ -114,27 +213,24 @@ export function ibsImpl(
  * Formula and more info at
  * [ta-lib.org/functions/ibs](https://ta-lib.org/functions/ibs).
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link ibsLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link ibsLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param inClose - Close price of each bar.
- * @param outReal - Position of the close within the bar's range, 0 to 1 on a bar
- *   with range. Must hold the values produced and never be empty; the input length
- *   always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `high`: High
+ *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
+ *   bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link IbsOptions}.
+ * @returns `begIdx` and the values; see {@link IbsResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, an
- *   array too short for the range, an empty output or an output sharing memory with
- *   a `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an input too short for the range, a buffer that is empty, too short or of
+ *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -146,43 +242,25 @@ export function ibsImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Float64Array(high.length);
- * const { begIdx, count } = ibs(0, high.length - 1, high, low, close, out);
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = ibs({ high, low, close });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function ibs(
-  startIdx: number,
-  endIdx: number,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('IBS', 'startIdx', startIdx);
-  endIdx = requireInt32('IBS', 'endIdx', endIdx);
-  requireIndexRange('IBS', startIdx, endIdx);
-  const guardStart = clampedStart('IBS', startIdx, ibsLookback(core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('IBS', 'inHigh', inHigh, guardInLen);
-  requireLength('IBS', 'inLow', inLow, guardInLen);
-  requireLength('IBS', 'inClose', inClose, guardInLen);
-  requireOutput('IBS', 'outReal', outReal, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if (overlapsPartly(outReal, inHighF64) || overlapsPartly(outReal, inLowF64) || overlapsPartly(outReal, inCloseF64)) {
-    throw failure('IBS', RetCode.BAD_PARAM);
+export function ibs(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: IbsOptions): IbsResult {
+  requireArgument('IBS', 'prices', prices);
+  const o = optionsOf('IBS', options);
+  if (o.endIdx === undefined) {
+    requireSeries('IBS', 'prices.high', prices.high);
+    requireSeries('IBS', 'prices.low', prices.low);
+    requireSeries('IBS', 'prices.close', prices.close);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = ibsImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('IBS', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const core = coreOf('IBS', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.high.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, ibsLookbackPositional(core), prices.high, prices.low, prices.close);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = ibsPositional(startIdx, endIdx, prices.high, prices.low, prices.close, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -401,7 +479,7 @@ export function ibsOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('IBS openAndFill', inHigh.length, startIdx, ibsLookback(core));
+    throw insufficientHistory('IBS openAndFill', inHigh.length, startIdx, ibsLookbackPositional(core));
   }
   throw streamFailure('IBS openAndFill', retCode);
 }
@@ -425,27 +503,81 @@ export function ibsOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('IBS open', inHigh.length, startIdx, ibsLookback(core));
+    throw insufficientHistory('IBS open', inHigh.length, startIdx, ibsLookbackPositional(core));
   }
   throw streamFailure('IBS open', retCode);
+}
+
+/** @internal */
+export function ibsOpenPositional(
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  core: Core = Core.DEFAULT,
+): IbsStream {
+  requireArgument('IBS open', 'prices.high', inHigh);
+  requireHistory('IBS open', inHigh.length);
+  requireArgument('IBS open', 'prices.low', inLow);
+  requireArgument('IBS open', 'prices.close', inClose);
+  requireHistoryLength('IBS open', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('IBS open', 'prices.close', inClose.length, inHigh.length);
+  return ibsOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), 0);
+}
+
+/** @internal */
+export function ibsOpenAndFillPositional(
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): IbsStream {
+  requireArgument('IBS openAndFill', 'prices.high', inHigh);
+  requireHistory('IBS openAndFill', inHigh.length);
+  requireArgument('IBS openAndFill', 'prices.low', inLow);
+  requireArgument('IBS openAndFill', 'prices.close', inClose);
+  const guardOutLen = openFillCount('IBS openAndFill', inHigh.length, ibsLookbackPositional(core));
+  requireHistoryLength('IBS openAndFill', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('IBS openAndFill', 'prices.close', inClose.length, inHigh.length);
+  requireOutput('IBS openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('IBS openAndFill', 'outReal', 'prices.high');
+  }
+  if (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('IBS openAndFill', 'outReal', 'prices.low');
+  }
+  if (outReal.buffer === inCloseF64.buffer && outReal.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('IBS openAndFill', 'outReal', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inHighF64)) {
+    throw sharedMemory('IBS openAndFill', 'outReal', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inLowF64)) {
+    throw sharedMemory('IBS openAndFill', 'outReal', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inCloseF64)) {
+    throw sharedMemory('IBS openAndFill', 'outReal', 'prices.close');
+  }
+  return ibsOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live IBS stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link ibs} there.
  *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link IbsOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `ibsLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   histories of different lengths.
+ *   options that are not an object, a `core` that is not a `Core`, an absent input
+ *   or histories of different lengths.
  *
  * @example
  * ```ts
@@ -457,48 +589,37 @@ export function ibsOpenInternal(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = ibsOpen(high, low, close);
+ * const stream = ibsOpen({ high, low, close });
  * const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function ibsOpen(
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  core: Core = Core.DEFAULT,
-): IbsStream {
-  requireArgument('IBS open', 'inHigh', inHigh);
-  requireHistory('IBS open', inHigh.length);
-  requireArgument('IBS open', 'inLow', inLow);
-  requireArgument('IBS open', 'inClose', inClose);
-  requireHistoryLength('IBS open', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('IBS open', 'inClose', inClose.length, inHigh.length);
-  return ibsOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), 0);
+export function ibsOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: IbsOptions): IbsStream {
+  requireArgument('IBS open', 'prices', prices);
+  const o = optionsOf('IBS open', options);
+  const core = coreOf('IBS open', o.core);
+  return ibsOpenPositional(prices.high, prices.low, prices.close, core);
 }
 
 /**
- * {@link ibsOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link ibs}. The range written is the stream's
- * `outRange()`.
+ * {@link ibsOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link ibs}.
  *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param outReal - Position of the close within the bar's range, 0 to 1 on a bar
- *   with range. Must hold `historyLen - lookback` values and share no memory with an
- *   input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link IbsOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link ibs} returns them; the range is the stream's
+ *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `ibsLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   histories of different lengths or an output too short or starting where another
- *   output or a `Float64Array` input starts, or, on a history long enough to open,
- *   one sharing memory with another output or a `Float64Array` input.
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -510,35 +631,17 @@ export function ibsOpen(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Float64Array(high.length);
- * const stream = ibsOpenAndFill(high, low, close, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = ibsOpenAndFill({ high, low, close });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function ibsOpenAndFill(
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): IbsStream {
-  requireArgument('IBS openAndFill', 'inHigh', inHigh);
-  requireHistory('IBS openAndFill', inHigh.length);
-  requireArgument('IBS openAndFill', 'inLow', inLow);
-  requireArgument('IBS openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('IBS openAndFill', inHigh.length, ibsLookback(core));
-  requireHistoryLength('IBS openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('IBS openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireOutput('IBS openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if ((outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) || (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset) || (outReal.buffer === inCloseF64.buffer && outReal.byteOffset === inCloseF64.byteOffset)) {
-    throw streamFailure('IBS openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inHighF64) || overlaps(outReal, inLowF64) || overlaps(outReal, inCloseF64))) {
-    throw streamFailure('IBS openAndFill', RetCode.BAD_PARAM);
-  }
-  return ibsOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outReal);
+export function ibsOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: IbsOptions): IbsResult & { stream: IbsStream } {
+  requireArgument('IBS openAndFill', 'prices', prices);
+  const o = optionsOf('IBS openAndFill', options);
+  const core = coreOf('IBS openAndFill', o.core);
+  const capacity = fillCapacity(ibsLookbackPositional(core), prices.high, prices.low, prices.close);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = ibsOpenAndFillPositional(prices.high, prices.low, prices.close, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

@@ -24,30 +24,15 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { MaStream, ma, maLookback, maOpenInternal, maPeekTape, maStepTape, maTapeDetach } from './ma.ts';
+import { MaStream, maLookbackPositional, maOpenInternal, maPeekTape, maPositional, maStepTape, maTapeDetach } from './ma.ts';
 
-/**
- * Number of leading input bars {@link mavp} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInMinPeriod - Lower clamp for the per-bar period (default 2; range 1
- *   to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMaxPeriod - Upper clamp for the per-bar period (default 30; range 1
- *   to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type applied (default `MAType.SMA`; values:
- *   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
- *   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function mavpLookback(optInMinPeriod: number, optInMaxPeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function mavpLookbackPositional(optInMinPeriod: number, optInMaxPeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
   if ((optInMinPeriod | 0) !== optInMinPeriod) {
     return -1;
   }
@@ -79,31 +64,12 @@ export function mavpLookback(optInMinPeriod: number, optInMaxPeriod: number, opt
   if (optInMinPeriod > optInMaxPeriod) {
     return -1;
   }
-  return maLookback(optInMaxPeriod, (optInMAType as MAType), core);
+  return maLookbackPositional(optInMaxPeriod, (optInMAType as MAType), core);
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link mavp}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInMinPeriod - Lower clamp for the per-bar period (default 2; range 1
- *   to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMaxPeriod - Upper clamp for the per-bar period (default 30; range 1
- *   to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type applied (default `MAType.SMA`; values:
- *   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
- *   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function mavpDisplayShift(optInMinPeriod: number, optInMaxPeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (mavpLookback(optInMinPeriod, optInMaxPeriod, optInMAType, core) < 0) {
+/** @internal */
+export function mavpDisplayShiftPositional(optInMinPeriod: number, optInMaxPeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (mavpLookbackPositional(optInMinPeriod, optInMaxPeriod, optInMAType, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -180,7 +146,7 @@ export function mavpImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = maLookback(optInMaxPeriod, (optInMAType as MAType), core);
+  lookbackTotal = maLookbackPositional(optInMaxPeriod, (optInMAType as MAType), core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -301,7 +267,7 @@ export function mavpImpl(
     /* Single distinct period: one MA pass, written straight into the
      * destination buffer. Nothing to group or copy.
      */
-    const _xr0 = ma(startIdx, endIdx, inReal, minUsed, (optInMAType as MAType), localFinalArray, core);
+    const _xr0 = maPositional(startIdx, endIdx, inReal, minUsed, (optInMAType as MAType), localFinalArray, core);
     localBegIdx.value = _xr0.begIdx;
     localNbElement.value = _xr0.count;
   } else {
@@ -351,7 +317,7 @@ export function mavpImpl(
         firstOccurrence = sortedIdx[bucketStart];
         lastOccurrence = sortedIdx[bucketEnd - 1];
         /* Calculation of the MA required. */
-        const _xr1 = ma(startIdx, startIdx + lastOccurrence, inReal, curPeriod, (optInMAType as MAType), localOutputArray, core);
+        const _xr1 = maPositional(startIdx, startIdx + lastOccurrence, inReal, curPeriod, (optInMAType as MAType), localOutputArray, core);
         localBegIdx.value = _xr1.begIdx;
         localNbElement.value = _xr1.count;
         if (lastOccurrence - firstOccurrence === bucketEnd - 1 - bucketStart) {
@@ -376,6 +342,148 @@ export function mavpImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['minPeriod', Core.INTEGER_DEFAULT, 1, 10000, 'in 1..10000'], ['maxPeriod', Core.INTEGER_DEFAULT, 1, 10000, 'in 1..10000'], ['maType', Core.INTEGER_DEFAULT, MATypes.Min, MATypes.Max, 'a MAType']] as const;
+
+/** @internal */
+export function mavpPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  inPeriods: ArrayLike<number>,
+  optInMinPeriod: number,
+  optInMaxPeriod: number,
+  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('MAVP', 'startIdx', startIdx);
+  endIdx = requireInt32('MAVP', 'endIdx', endIdx);
+  optInMinPeriod = requireInt32('MAVP', 'minPeriod', optInMinPeriod);
+  optInMaxPeriod = requireInt32('MAVP', 'maxPeriod', optInMaxPeriod);
+  optInMAType = requireInt32('MAVP', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireIndexRange('MAVP', startIdx, endIdx);
+  const guardLookback = mavpLookbackPositional(optInMinPeriod, optInMaxPeriod, optInMAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('MAVP', PARAM_RANGES, optInMinPeriod, optInMaxPeriod, optInMAType);
+  }
+  const guardStart = clampedStart('MAVP', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('MAVP', 'real', inReal, guardInLen);
+  requireLength('MAVP', 'periods', inPeriods, guardInLen);
+  requireOutput('MAVP', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  const inPeriodsF64 = float64(inPeriods);
+  if (overlapsPartly(outReal, inRealF64)) {
+    throw sharedMemory('MAVP', 'outReal', 'real');
+  }
+  if (overlapsPartly(outReal, inPeriodsF64)) {
+    throw sharedMemory('MAVP', 'outReal', 'periods');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = mavpImpl(core, startIdx, endIdx, inRealF64, inPeriodsF64, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('MAVP', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link mavp}, {@link mavpLookback}, {@link mavpDisplayShift},
+ * {@link mavpOpen} and {@link mavpOpenAndFill}. Every key is optional: an omitted
+ * or `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface MavpOptions {
+  /**
+   * Lower clamp for the per-bar period (default 2; range 1 to 10000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  minPeriod?: number | undefined;
+  /**
+   * Upper clamp for the per-bar period (default 30; range 1 to 10000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  maxPeriod?: number | undefined;
+  /**
+   * Moving-average type applied (default `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA,
+   * 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+   * 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT`
+   * selects the default).
+   */
+  maType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link mavp} returns, and {@link mavpOpenAndFill} with its stream. */
+export interface MavpResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * variable-period moving average. `values[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link mavp} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MavpOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function mavpLookback(options?: MavpOptions): number {
+  const o = optionsOf('MAVP lookback', options);
+  return mavpLookbackPositional(orDefault(o.minPeriod, Core.INTEGER_DEFAULT), orDefault(o.maxPeriod, Core.INTEGER_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), coreOf('MAVP lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link mavp}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MavpOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function mavpDisplayShift(outputIdx: number, options?: MavpOptions): number {
+  const o = optionsOf('MAVP displayShift', options);
+  return mavpDisplayShiftPositional(orDefault(o.minPeriod, Core.INTEGER_DEFAULT), orDefault(o.maxPeriod, Core.INTEGER_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), outputIdx, coreOf('MAVP displayShift', o.core));
+}
+
 /**
  * Moving average whose period varies per bar, driven by a companion period series.
  * For each bar it computes an MA of the selected type over the (clamped) period
@@ -392,34 +500,24 @@ export function mavpImpl(
  * - `optInMinPeriod` must not exceed `optInMaxPeriod`; a larger minimum is
  *   rejected.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link mavpLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link mavpLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - series to be averaged.
- * @param inPeriods - per-bar desired MA period.
- * @param optInMinPeriod - Lower clamp for the per-bar period (default 2; range 1
- *   to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMaxPeriod - Upper clamp for the per-bar period (default 30; range 1
- *   to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type applied (default `MAType.SMA`; values:
- *   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
- *   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outReal - variable-period moving average. Must hold the values produced
- *   and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - series to be averaged.
+ * @param periods - per-bar desired MA period.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link MavpOptions}.
+ * @returns `begIdx` and the values; see {@link MavpResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output
- *   or an output sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -428,55 +526,34 @@ export function mavpImpl(
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
  * const periods = Float64Array.from({ length: 252 }, (_, i) => 5 + (i % 10));
- * const out = new Float64Array(data.length);
- * const { begIdx, count } = mavp(
- *   0, data.length - 1,
- *   data, periods,
- *   2, 30, MAType.SMA,
- *   out,
- * );
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = mavp(data, periods, {
+ *   minPeriod: 2,
+ *   maxPeriod: 30,
+ *   maType: MAType.SMA,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`ma`](https://ta-lib.org/functions/ma)
  * @see [`sma`](https://ta-lib.org/functions/sma)
  * @see [`mama`](https://ta-lib.org/functions/mama)
  * @see [`t3`](https://ta-lib.org/functions/t3)
  */
-export function mavp(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  inPeriods: ArrayLike<number>,
-  optInMinPeriod: number,
-  optInMaxPeriod: number,
-  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('MAVP', 'startIdx', startIdx);
-  endIdx = requireInt32('MAVP', 'endIdx', endIdx);
-  optInMinPeriod = requireInt32('MAVP', 'optInMinPeriod', optInMinPeriod);
-  optInMaxPeriod = requireInt32('MAVP', 'optInMaxPeriod', optInMaxPeriod);
-  optInMAType = requireInt32('MAVP', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireIndexRange('MAVP', startIdx, endIdx);
-  const guardStart = clampedStart('MAVP', startIdx, mavpLookback(optInMinPeriod, optInMaxPeriod, optInMAType, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('MAVP', 'inReal', inReal, guardInLen);
-  requireLength('MAVP', 'inPeriods', inPeriods, guardInLen);
-  requireOutput('MAVP', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  const inPeriodsF64 = float64(inPeriods);
-  if (overlapsPartly(outReal, inRealF64) || overlapsPartly(outReal, inPeriodsF64)) {
-    throw failure('MAVP', RetCode.BAD_PARAM);
+export function mavp(real: ArrayLike<number>, periods: ArrayLike<number>, options?: MavpOptions): MavpResult {
+  const o = optionsOf('MAVP', options);
+  if (o.endIdx === undefined) {
+    requireSeries('MAVP', 'real', real);
+    requireSeries('MAVP', 'periods', periods);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = mavpImpl(core, startIdx, endIdx, inRealF64, inPeriodsF64, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('MAVP', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInMinPeriod = orDefault(o.minPeriod, Core.INTEGER_DEFAULT);
+  const optInMaxPeriod = orDefault(o.maxPeriod, Core.INTEGER_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('MAVP', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, mavpLookbackPositional(optInMinPeriod, optInMaxPeriod, optInMAType, core), real, periods);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = mavpPositional(startIdx, endIdx, real, periods, optInMinPeriod, optInMaxPeriod, optInMAType, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -681,7 +758,7 @@ let mavpWindow = new Float64Array(0);
 const mavpValue = new Float64Array(1);
 
 function mavpEvalWindow(sp: MavpStream, inReal: number, cp: number): number {
-  const lb = maLookback(cp, sp.optInMAType as MAType, sp.core);
+  const lb = maLookbackPositional(cp, sp.optInMAType as MAType, sp.core);
   if (mavpWindow.length < lb + 1) {
     mavpWindow = new Float64Array(lb + 1);
   }
@@ -690,7 +767,7 @@ function mavpEvalWindow(sp: MavpStream, inReal: number, cp: number): number {
     win[i] = sp.tape[(sp.tapePos + sp.tapeMask + 2 - lb + i) & sp.tapeMask];
   }
   win[lb] = inReal;
-  ma(lb, lb, win, cp, sp.optInMAType as MAType, mavpValue, sp.core);
+  maPositional(lb, lb, win, cp, sp.optInMAType as MAType, mavpValue, sp.core);
   return mavpValue[0];
 }
 
@@ -732,10 +809,10 @@ function mavpOpenImpl(
   if (optInMinPeriod > optInMaxPeriod) {
     return RetCode.BAD_PARAM;
   }
-  if (historyLen < mavpLookback(optInMinPeriod, optInMaxPeriod, optInMAType as MAType, core) + 1) {
+  if (historyLen < mavpLookbackPositional(optInMinPeriod, optInMaxPeriod, optInMAType as MAType, core) + 1) {
     return RetCode.INSUFFICIENT_HISTORY;
   }
-  const lookbackTotal = maLookback(optInMaxPeriod, optInMAType as MAType, core);
+  const lookbackTotal = maLookbackPositional(optInMaxPeriod, optInMAType as MAType, core);
   const subStart = startIdx < lookbackTotal ? lookbackTotal : startIdx;
   if (historyLen < subStart + 1) {
     return RetCode.INSUFFICIENT_HISTORY;
@@ -747,7 +824,7 @@ function mavpOpenImpl(
   }
   if (window) {
     for (let bankIdx = 0; bankIdx < nBank; bankIdx++) {
-      if (maLookback(optInMinPeriod + bankIdx, optInMAType as MAType, core) > lookbackTotal) {
+      if (maLookbackPositional(optInMinPeriod + bankIdx, optInMAType as MAType, core) > lookbackTotal) {
         window = false;
         break;
       }
@@ -766,7 +843,7 @@ function mavpOpenImpl(
     sp.bank = [];
     mavpTapeOpen(sp, inReal, historyLen, lookbackTotal);
     const out1 = new Float64Array(1);
-    ma(historyLen - 1, historyLen - 1, inReal, cp, optInMAType as MAType, out1, core);
+    maPositional(historyLen - 1, historyLen - 1, inReal, cp, optInMAType as MAType, out1, core);
     sp.cur_outReal = out1[0];
     sp.outRangeBegIdx = subStart;
     sp.outRangeCount = historyLen - subStart;
@@ -839,13 +916,13 @@ function mavpOpenAndFillImpl(
   if ((outReal.buffer === inReal.buffer && outReal.byteOffset === inReal.byteOffset) || (outReal.buffer === inPeriods.buffer && outReal.byteOffset === inPeriods.byteOffset)) {
     return RetCode.BAD_PARAM;
   }
-  if (historyLen > mavpLookback(optInMinPeriod, optInMaxPeriod, optInMAType as MAType, core) && (overlaps(outReal, inReal) || overlaps(outReal, inPeriods))) {
+  if (historyLen > mavpLookbackPositional(optInMinPeriod, optInMaxPeriod, optInMAType as MAType, core) && (overlaps(outReal, inReal) || overlaps(outReal, inPeriods))) {
     return RetCode.BAD_PARAM;
   }
   if (optInMinPeriod > optInMaxPeriod) {
     return RetCode.BAD_PARAM;
   }
-  const lookbackTotal = maLookback(optInMaxPeriod, optInMAType as MAType, core);
+  const lookbackTotal = maLookbackPositional(optInMaxPeriod, optInMAType as MAType, core);
   if (historyLen < lookbackTotal + 1) {
     return RetCode.INSUFFICIENT_HISTORY;
   }
@@ -856,7 +933,7 @@ function mavpOpenAndFillImpl(
   }
   if (window) {
     for (let bankIdx = 0; bankIdx < nBank; bankIdx++) {
-      if (maLookback(optInMinPeriod + bankIdx, optInMAType as MAType, core) > lookbackTotal) {
+      if (maLookbackPositional(optInMinPeriod + bankIdx, optInMAType as MAType, core) > lookbackTotal) {
         window = false;
         break;
       }
@@ -883,7 +960,7 @@ function mavpOpenAndFillImpl(
           break;
         }
       }
-      ma(t, t1, inReal, cp, optInMAType as MAType, run, core);
+      maPositional(t, t1, inReal, cp, optInMAType as MAType, run, core);
       outReal.set(run.subarray(0, t1 - t + 1), t - lookbackTotal);
     }
     sp.optInMinPeriod = optInMinPeriod;
@@ -945,48 +1022,16 @@ export function mavpOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MAVP open', inReal.length, startIdx, mavpLookback(optInMinPeriod, optInMaxPeriod, optInMAType as MAType, core));
+    throw insufficientHistory('MAVP open', inReal.length, startIdx, mavpLookbackPositional(optInMinPeriod, optInMaxPeriod, optInMAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && mavpLookbackPositional(optInMinPeriod, optInMaxPeriod, optInMAType as MAType, core) < 0) {
+    throw rejectedParams('MAVP open', PARAM_RANGES, optInMinPeriod, optInMaxPeriod, optInMAType);
   }
   throw streamFailure('MAVP open', retCode);
 }
 
-/**
- * Opens a live MAVP stream over the warm-up history: `value()` starts at the last
- * history bar, bit-identical to {@link mavp} there.
- *
- * @param inReal - Warm-up history. series to be averaged. Every history has the
- *   same length.
- * @param inPeriods - Warm-up history. per-bar desired MA period. Every history has
- *   the same length.
- * @param optInMinPeriod - Lower clamp for the per-bar period (default 2; range 1
- *   to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMaxPeriod - Upper clamp for the per-bar period (default 30; range 1
- *   to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type applied (default `MAType.SMA`; values:
- *   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
- *   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `mavpLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   an integer parameter that is not an int32, a parameter outside its range or
- *   histories of different lengths.
- *
- * @example
- * ```ts
- * import { MAType, mavpOpen } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const periods = Float64Array.from({ length: 252 }, (_, i) => 5 + (i % 10));
- * const stream = mavpOpen(data, periods, 2, 30, MAType.SMA);
- * const peeked = stream.peek(100.9, 14); // a forming bar: commits nothing
- * const updated = stream.update(100.9, 14); // the bar closes
- * ```
- */
-export function mavpOpen(
+/** @internal */
+export function mavpOpenPositional(
   inReal: ArrayLike<number>,
   inPeriods: ArrayLike<number>,
   optInMinPeriod: number,
@@ -994,60 +1039,18 @@ export function mavpOpen(
   optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
   core: Core = Core.DEFAULT,
 ): MavpStream {
-  optInMinPeriod = requireInt32('MAVP open', 'optInMinPeriod', optInMinPeriod);
-  optInMaxPeriod = requireInt32('MAVP open', 'optInMaxPeriod', optInMaxPeriod);
-  optInMAType = requireInt32('MAVP open', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('MAVP open', 'inReal', inReal);
+  optInMinPeriod = requireInt32('MAVP open', 'minPeriod', optInMinPeriod);
+  optInMaxPeriod = requireInt32('MAVP open', 'maxPeriod', optInMaxPeriod);
+  optInMAType = requireInt32('MAVP open', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('MAVP open', 'real', inReal);
   requireHistory('MAVP open', inReal.length);
-  requireArgument('MAVP open', 'inPeriods', inPeriods);
-  requireHistoryLength('MAVP open', 'inPeriods', inPeriods.length, inReal.length);
+  requireArgument('MAVP open', 'periods', inPeriods);
+  requireHistoryLength('MAVP open', 'periods', inPeriods.length, inReal.length);
   return mavpOpenInternal(core, float64(inReal), float64(inPeriods), 0, optInMinPeriod, optInMaxPeriod, optInMAType);
 }
 
-/**
- * {@link mavpOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link mavp}. The range written is the stream's
- * `outRange()`.
- *
- * @param inReal - Warm-up history. series to be averaged. Every history has the
- *   same length.
- * @param inPeriods - Warm-up history. per-bar desired MA period. Every history has
- *   the same length.
- * @param optInMinPeriod - Lower clamp for the per-bar period (default 2; range 1
- *   to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMaxPeriod - Upper clamp for the per-bar period (default 30; range 1
- *   to 10000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type applied (default `MAType.SMA`; values:
- *   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
- *   10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outReal - variable-period moving average. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `mavpLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   an integer parameter that is not an int32, a parameter outside its range,
- *   histories of different lengths or an output too short or starting where another
- *   output or a `Float64Array` input starts, or, on a history long enough to open,
- *   one sharing memory with another output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { MAType, mavpOpenAndFill } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const periods = Float64Array.from({ length: 252 }, (_, i) => 5 + (i % 10));
- * const out = new Float64Array(data.length);
- * const stream = mavpOpenAndFill(data, periods, 2, 30, MAType.SMA, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function mavpOpenAndFill(
+/** @internal */
+export function mavpOpenAndFillPositional(
   inReal: ArrayLike<number>,
   inPeriods: ArrayLike<number>,
   optInMinPeriod: number,
@@ -1056,17 +1059,33 @@ export function mavpOpenAndFill(
   outReal: Float64Array,
   core: Core = Core.DEFAULT,
 ): MavpStream {
-  optInMinPeriod = requireInt32('MAVP openAndFill', 'optInMinPeriod', optInMinPeriod);
-  optInMaxPeriod = requireInt32('MAVP openAndFill', 'optInMaxPeriod', optInMaxPeriod);
-  optInMAType = requireInt32('MAVP openAndFill', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('MAVP openAndFill', 'inReal', inReal);
+  optInMinPeriod = requireInt32('MAVP openAndFill', 'minPeriod', optInMinPeriod);
+  optInMaxPeriod = requireInt32('MAVP openAndFill', 'maxPeriod', optInMaxPeriod);
+  optInMAType = requireInt32('MAVP openAndFill', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('MAVP openAndFill', 'real', inReal);
   requireHistory('MAVP openAndFill', inReal.length);
-  requireArgument('MAVP openAndFill', 'inPeriods', inPeriods);
-  const guardOutLen = openFillCount('MAVP openAndFill', inReal.length, mavpLookback(optInMinPeriod, optInMaxPeriod, optInMAType as MAType, core));
-  requireHistoryLength('MAVP openAndFill', 'inPeriods', inPeriods.length, inReal.length);
+  requireArgument('MAVP openAndFill', 'periods', inPeriods);
+  const guardLookback = mavpLookbackPositional(optInMinPeriod, optInMaxPeriod, optInMAType as MAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('MAVP openAndFill', PARAM_RANGES, optInMinPeriod, optInMaxPeriod, optInMAType);
+  }
+  const guardOutLen = openFillCount('MAVP openAndFill', inReal.length, guardLookback);
+  requireHistoryLength('MAVP openAndFill', 'periods', inPeriods.length, inReal.length);
   requireOutput('MAVP openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   const inPeriodsF64 = float64(inPeriods);
+  if (outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('MAVP openAndFill', 'outReal', 'real');
+  }
+  if (outReal.buffer === inPeriodsF64.buffer && outReal.byteOffset === inPeriodsF64.byteOffset) {
+    throw sharedMemory('MAVP openAndFill', 'outReal', 'periods');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inRealF64)) {
+    throw sharedMemory('MAVP openAndFill', 'outReal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inPeriodsF64)) {
+    throw sharedMemory('MAVP openAndFill', 'outReal', 'periods');
+  }
   const sp = MavpStream.of(core);
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
@@ -1077,7 +1096,98 @@ export function mavpOpenAndFill(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MAVP openAndFill', inReal.length, 0, mavpLookback(optInMinPeriod, optInMaxPeriod, optInMAType as MAType, core));
+    throw insufficientHistory('MAVP openAndFill', inReal.length, 0, mavpLookbackPositional(optInMinPeriod, optInMaxPeriod, optInMAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && mavpLookbackPositional(optInMinPeriod, optInMaxPeriod, optInMAType as MAType, core) < 0) {
+    throw rejectedParams('MAVP openAndFill', PARAM_RANGES, optInMinPeriod, optInMaxPeriod, optInMAType);
   }
   throw streamFailure('MAVP openAndFill', retCode);
+}
+
+/**
+ * Opens a live MAVP stream over the warm-up history: `value()` starts at the last
+ * history bar, bit-identical to {@link mavp} there.
+ *
+ * @param real - Warm-up history. series to be averaged.
+ * @param periods - Warm-up history. per-bar desired MA period.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MavpOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `mavpLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   an integer parameter that is not an int32, a parameter outside its range or
+ *   histories of different lengths.
+ *
+ * @example
+ * ```ts
+ * import { MAType, mavpOpen } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const periods = Float64Array.from({ length: 252 }, (_, i) => 5 + (i % 10));
+ * const stream = mavpOpen(data, periods, {
+ *   minPeriod: 2,
+ *   maxPeriod: 30,
+ *   maType: MAType.SMA,
+ * });
+ * const peeked = stream.peek(100.9, 14); // a forming bar: commits nothing
+ * const updated = stream.update(100.9, 14); // the bar closes
+ * ```
+ */
+export function mavpOpen(real: ArrayLike<number>, periods: ArrayLike<number>, options?: MavpOptions): MavpStream {
+  const o = optionsOf('MAVP open', options);
+  const optInMinPeriod = orDefault(o.minPeriod, Core.INTEGER_DEFAULT);
+  const optInMaxPeriod = orDefault(o.maxPeriod, Core.INTEGER_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('MAVP open', o.core);
+  return mavpOpenPositional(real, periods, optInMinPeriod, optInMaxPeriod, optInMAType, core);
+}
+
+/**
+ * {@link mavpOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link mavp}.
+ *
+ * @param real - Warm-up history. series to be averaged.
+ * @param periods - Warm-up history. per-bar desired MA period.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link MavpOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link mavp} returns them; the range is the stream's
+ *   `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `mavpLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   an integer parameter that is not an int32, a parameter outside its range,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
+ *
+ * @example
+ * ```ts
+ * import { MAType, mavpOpenAndFill } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const periods = Float64Array.from({ length: 252 }, (_, i) => 5 + (i % 10));
+ * const { stream, begIdx, values } = mavpOpenAndFill(data, periods, {
+ *   minPeriod: 2,
+ *   maxPeriod: 30,
+ *   maType: MAType.SMA,
+ * });
+ * // values[k] is the value at bar begIdx + k
+ * ```
+ */
+export function mavpOpenAndFill(real: ArrayLike<number>, periods: ArrayLike<number>, options?: MavpOptions): MavpResult & { stream: MavpStream } {
+  const o = optionsOf('MAVP openAndFill', options);
+  const optInMinPeriod = orDefault(o.minPeriod, Core.INTEGER_DEFAULT);
+  const optInMaxPeriod = orDefault(o.maxPeriod, Core.INTEGER_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('MAVP openAndFill', o.core);
+  const capacity = fillCapacity(mavpLookbackPositional(optInMinPeriod, optInMaxPeriod, optInMAType, core), real, periods);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = mavpOpenAndFillPositional(real, periods, optInMinPeriod, optInMaxPeriod, optInMAType, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

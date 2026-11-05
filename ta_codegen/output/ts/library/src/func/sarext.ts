@@ -19,40 +19,16 @@
  *               the read was of an uninitialised local.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { minusDm } from './minusDm.ts';
+import { minusDmPositional } from './minusDm.ts';
 
-/**
- * Number of leading input bars {@link sarext} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInStartValue - Initial SAR/direction: 0 auto, >0 start long at value,
- *   \<0 start short at -value (default 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInOffsetOnReverse - Fractional offset applied to the stop on each
- *   reversal (default 0; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationInitLong - Initial acceleration factor when long
- *   (default 0.02; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationLong - AF increment per new long extreme (default 0.02;
- *   minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationMaxLong - Cap on the long acceleration factor (default
- *   0.2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationInitShort - Initial acceleration factor when short
- *   (default 0.02; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationShort - AF increment per new short extreme (default
- *   0.02; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationMaxShort - Cap on the short acceleration factor (default
- *   0.2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function sarextLookback(optInStartValue: number, optInOffsetOnReverse: number, optInAccelerationInitLong: number, optInAccelerationLong: number, optInAccelerationMaxLong: number, optInAccelerationInitShort: number, optInAccelerationShort: number, optInAccelerationMaxShort: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function sarextLookbackPositional(optInStartValue: number, optInOffsetOnReverse: number, optInAccelerationInitLong: number, optInAccelerationLong: number, optInAccelerationMaxLong: number, optInAccelerationInitShort: number, optInAccelerationShort: number, optInAccelerationMaxShort: number, _core: Core = Core.DEFAULT): number {
   if (typeof optInStartValue !== 'number') {
     return -1;
   }
@@ -123,36 +99,9 @@ export function sarextLookback(optInStartValue: number, optInOffsetOnReverse: nu
   return 1;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link sarext}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInStartValue - Initial SAR/direction: 0 auto, >0 start long at value,
- *   \<0 start short at -value (default 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInOffsetOnReverse - Fractional offset applied to the stop on each
- *   reversal (default 0; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationInitLong - Initial acceleration factor when long
- *   (default 0.02; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationLong - AF increment per new long extreme (default 0.02;
- *   minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationMaxLong - Cap on the long acceleration factor (default
- *   0.2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationInitShort - Initial acceleration factor when short
- *   (default 0.02; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationShort - AF increment per new short extreme (default
- *   0.02; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationMaxShort - Cap on the short acceleration factor (default
- *   0.2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function sarextDisplayShift(optInStartValue: number, optInOffsetOnReverse: number, optInAccelerationInitLong: number, optInAccelerationLong: number, optInAccelerationMaxLong: number, optInAccelerationInitShort: number, optInAccelerationShort: number, optInAccelerationMaxShort: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (sarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, core) < 0) {
+/** @internal */
+export function sarextDisplayShiftPositional(optInStartValue: number, optInOffsetOnReverse: number, optInAccelerationInitLong: number, optInAccelerationLong: number, optInAccelerationMaxLong: number, optInAccelerationInitShort: number, optInAccelerationShort: number, optInAccelerationMaxShort: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (sarextLookbackPositional(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -340,7 +289,7 @@ export function sarextImpl(
      * (ep is just used as a temp buffer here, the name
      *  of the parameter is not significant).
      */
-    const _xr0 = minusDm(startIdx, startIdx, inHigh, inLow, 1, ep_temp, core);
+    const _xr0 = minusDmPositional(startIdx, startIdx, inHigh, inLow, 1, ep_temp, core);
     tempInt.value = _xr0.begIdx;
     tempInt.value = _xr0.count;
     if (ep_temp[0] > 0) {
@@ -566,74 +515,10 @@ export function sarextImpl(
   return RetCode.SUCCESS;
 }
 
-/**
- * Extended Parabolic SAR (stop and reverse) giving the caller full control over
- * the initial state and separate acceleration factors for long and short
- * positions. Unlike SAR, it returns negative values while short so reversals are
- * distinguishable. Sign flip of the output marks a trend reversal (positive=long
- * stop, negative=short stop).
- *
- * Formula and more info at
- * [ta-lib.org/functions/sarext](https://ta-lib.org/functions/sarext).
- *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link sarextLookback} is a success with
- * `count` 0.
- *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param optInStartValue - Initial SAR/direction: 0 auto, >0 start long at value,
- *   \<0 start short at -value (default 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInOffsetOnReverse - Fractional offset applied to the stop on each
- *   reversal (default 0; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationInitLong - Initial acceleration factor when long
- *   (default 0.02; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationLong - AF increment per new long extreme (default 0.02;
- *   minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationMaxLong - Cap on the long acceleration factor (default
- *   0.2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationInitShort - Initial acceleration factor when short
- *   (default 0.02; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationShort - AF increment per new short extreme (default
- *   0.02; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationMaxShort - Cap on the short acceleration factor (default
- *   0.2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param outReal - SAR stop level; positive while long, negative while short. Must
- *   hold the values produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   real parameter that is not a number, a parameter outside its range, an array too
- *   short for the range, an empty output or an output sharing memory with a
- *   `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { sarext } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(high.length);
- * const { begIdx, count } = sarext(
- *   0, high.length - 1,
- *   high, low,
- *   0, 0, 0.02, 0.02, 0.2, 0.02, 0.02, 0.2,
- *   out,
- * );
- * // out[k] is the value at bar begIdx + k, for k < count
- * ```
- * @see [`sar`](https://ta-lib.org/functions/sar)
- * @see [`minusDm`](https://ta-lib.org/functions/minus_dm)
- */
-export function sarext(
+const PARAM_RANGES = [['startValue', Core.REAL_DEFAULT, Core.REAL_MIN, Core.REAL_MAX, 'in -3e37..3e37'], ['offsetOnReverse', Core.REAL_DEFAULT, 0e0, Core.REAL_MAX, 'in 0..3e37'], ['accelerationInitLong', Core.REAL_DEFAULT, 0e0, Core.REAL_MAX, 'in 0..3e37'], ['accelerationLong', Core.REAL_DEFAULT, 0e0, Core.REAL_MAX, 'in 0..3e37'], ['accelerationMaxLong', Core.REAL_DEFAULT, 0e0, Core.REAL_MAX, 'in 0..3e37'], ['accelerationInitShort', Core.REAL_DEFAULT, 0e0, Core.REAL_MAX, 'in 0..3e37'], ['accelerationShort', Core.REAL_DEFAULT, 0e0, Core.REAL_MAX, 'in 0..3e37'], ['accelerationMaxShort', Core.REAL_DEFAULT, 0e0, Core.REAL_MAX, 'in 0..3e37']] as const;
+
+/** @internal */
+export function sarextPositional(
   startIdx: number,
   endIdx: number,
   inHigh: ArrayLike<number>,
@@ -651,25 +536,32 @@ export function sarext(
 ): OutRange {
   startIdx = requireInt32('SAREXT', 'startIdx', startIdx);
   endIdx = requireInt32('SAREXT', 'endIdx', endIdx);
-  optInStartValue = requireReal('SAREXT', 'optInStartValue', optInStartValue);
-  optInOffsetOnReverse = requireReal('SAREXT', 'optInOffsetOnReverse', optInOffsetOnReverse);
-  optInAccelerationInitLong = requireReal('SAREXT', 'optInAccelerationInitLong', optInAccelerationInitLong);
-  optInAccelerationLong = requireReal('SAREXT', 'optInAccelerationLong', optInAccelerationLong);
-  optInAccelerationMaxLong = requireReal('SAREXT', 'optInAccelerationMaxLong', optInAccelerationMaxLong);
-  optInAccelerationInitShort = requireReal('SAREXT', 'optInAccelerationInitShort', optInAccelerationInitShort);
-  optInAccelerationShort = requireReal('SAREXT', 'optInAccelerationShort', optInAccelerationShort);
-  optInAccelerationMaxShort = requireReal('SAREXT', 'optInAccelerationMaxShort', optInAccelerationMaxShort);
+  optInStartValue = requireReal('SAREXT', 'startValue', optInStartValue);
+  optInOffsetOnReverse = requireReal('SAREXT', 'offsetOnReverse', optInOffsetOnReverse);
+  optInAccelerationInitLong = requireReal('SAREXT', 'accelerationInitLong', optInAccelerationInitLong);
+  optInAccelerationLong = requireReal('SAREXT', 'accelerationLong', optInAccelerationLong);
+  optInAccelerationMaxLong = requireReal('SAREXT', 'accelerationMaxLong', optInAccelerationMaxLong);
+  optInAccelerationInitShort = requireReal('SAREXT', 'accelerationInitShort', optInAccelerationInitShort);
+  optInAccelerationShort = requireReal('SAREXT', 'accelerationShort', optInAccelerationShort);
+  optInAccelerationMaxShort = requireReal('SAREXT', 'accelerationMaxShort', optInAccelerationMaxShort);
   requireIndexRange('SAREXT', startIdx, endIdx);
-  const guardStart = clampedStart('SAREXT', startIdx, sarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, core));
+  const guardLookback = sarextLookbackPositional(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('SAREXT', PARAM_RANGES, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+  }
+  const guardStart = clampedStart('SAREXT', startIdx, guardLookback);
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('SAREXT', 'inHigh', inHigh, guardInLen);
-  requireLength('SAREXT', 'inLow', inLow, guardInLen);
+  requireLength('SAREXT', 'prices.high', inHigh, guardInLen);
+  requireLength('SAREXT', 'prices.low', inLow, guardInLen);
   requireOutput('SAREXT', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
-  if (overlapsPartly(outReal, inHighF64) || overlapsPartly(outReal, inLowF64)) {
-    throw failure('SAREXT', RetCode.BAD_PARAM);
+  if (overlapsPartly(outReal, inHighF64)) {
+    throw sharedMemory('SAREXT', 'outReal', 'prices.high');
+  }
+  if (overlapsPartly(outReal, inLowF64)) {
+    throw sharedMemory('SAREXT', 'outReal', 'prices.low');
   }
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
@@ -678,6 +570,200 @@ export function sarext(
     throw failure('SAREXT', retCode);
   }
   return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link sarext}, {@link sarextLookback}, {@link sarextDisplayShift},
+ * {@link sarextOpen} and {@link sarextOpenAndFill}. Every key is optional: an
+ * omitted or `undefined` key takes its default, and a call ignores the keys it has
+ * no use for.
+ */
+export interface SarextOptions {
+  /**
+   * Initial SAR/direction: 0 auto, >0 start long at value, \<0 start short at -value
+   * (default 0; `Core.REAL_DEFAULT` selects the default).
+   */
+  startValue?: number | undefined;
+  /**
+   * Fractional offset applied to the stop on each reversal (default 0; minimum 0;
+   * `Core.REAL_DEFAULT` selects the default).
+   */
+  offsetOnReverse?: number | undefined;
+  /**
+   * Initial acceleration factor when long (default 0.02; minimum 0;
+   * `Core.REAL_DEFAULT` selects the default).
+   */
+  accelerationInitLong?: number | undefined;
+  /**
+   * AF increment per new long extreme (default 0.02; minimum 0; `Core.REAL_DEFAULT`
+   * selects the default).
+   */
+  accelerationLong?: number | undefined;
+  /**
+   * Cap on the long acceleration factor (default 0.2; minimum 0; `Core.REAL_DEFAULT`
+   * selects the default).
+   */
+  accelerationMaxLong?: number | undefined;
+  /**
+   * Initial acceleration factor when short (default 0.02; minimum 0;
+   * `Core.REAL_DEFAULT` selects the default).
+   */
+  accelerationInitShort?: number | undefined;
+  /**
+   * AF increment per new short extreme (default 0.02; minimum 0; `Core.REAL_DEFAULT`
+   * selects the default).
+   */
+  accelerationShort?: number | undefined;
+  /**
+   * Cap on the short acceleration factor (default 0.2; minimum 0;
+   * `Core.REAL_DEFAULT` selects the default).
+   */
+  accelerationMaxShort?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link sarext} returns, and {@link sarextOpenAndFill} with its stream. */
+export interface SarextResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * SAR stop level; positive while long, negative while short. `values[k]` is the
+   * value at input bar `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link sarext} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link SarextOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function sarextLookback(options?: SarextOptions): number {
+  const o = optionsOf('SAREXT lookback', options);
+  return sarextLookbackPositional(orDefault(o.startValue, Core.REAL_DEFAULT), orDefault(o.offsetOnReverse, Core.REAL_DEFAULT), orDefault(o.accelerationInitLong, Core.REAL_DEFAULT), orDefault(o.accelerationLong, Core.REAL_DEFAULT), orDefault(o.accelerationMaxLong, Core.REAL_DEFAULT), orDefault(o.accelerationInitShort, Core.REAL_DEFAULT), orDefault(o.accelerationShort, Core.REAL_DEFAULT), orDefault(o.accelerationMaxShort, Core.REAL_DEFAULT), coreOf('SAREXT lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link sarext}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link SarextOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function sarextDisplayShift(outputIdx: number, options?: SarextOptions): number {
+  const o = optionsOf('SAREXT displayShift', options);
+  return sarextDisplayShiftPositional(orDefault(o.startValue, Core.REAL_DEFAULT), orDefault(o.offsetOnReverse, Core.REAL_DEFAULT), orDefault(o.accelerationInitLong, Core.REAL_DEFAULT), orDefault(o.accelerationLong, Core.REAL_DEFAULT), orDefault(o.accelerationMaxLong, Core.REAL_DEFAULT), orDefault(o.accelerationInitShort, Core.REAL_DEFAULT), orDefault(o.accelerationShort, Core.REAL_DEFAULT), orDefault(o.accelerationMaxShort, Core.REAL_DEFAULT), outputIdx, coreOf('SAREXT displayShift', o.core));
+}
+
+/**
+ * Extended Parabolic SAR (stop and reverse) giving the caller full control over
+ * the initial state and separate acceleration factors for long and short
+ * positions. Unlike SAR, it returns negative values while short so reversals are
+ * distinguishable. Sign flip of the output marks a trend reversal (positive=long
+ * stop, negative=short stop).
+ *
+ * Formula and more info at
+ * [ta-lib.org/functions/sarext](https://ta-lib.org/functions/sarext).
+ *
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link sarextLookback} is a success with empty outputs.
+ *
+ * @param prices - One series per price component, all of one length. `high`: High
+ *   price of each bar. `low`: Low price of each bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link SarextOptions}.
+ * @returns `begIdx` and the values; see {@link SarextResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
+ * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
+ *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, a real parameter that is not a number, a parameter outside its range, an
+ *   input too short for the range, a buffer that is empty, too short or of the wrong
+ *   type or a buffer sharing memory with a `Float64Array` input it is not. Checked
+ *   before anything is written.
+ *
+ * @example
+ * ```ts
+ * import { sarext } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const { begIdx, values } = sarext({ high, low }, {
+ *   startValue: 0,
+ *   offsetOnReverse: 0,
+ *   accelerationInitLong: 0.02,
+ *   accelerationLong: 0.02,
+ *   accelerationMaxLong: 0.2,
+ *   accelerationInitShort: 0.02,
+ *   accelerationShort: 0.02,
+ *   accelerationMaxShort: 0.2,
+ * });
+ * // values[k] is the value at bar begIdx + k
+ * ```
+ * @see [`sar`](https://ta-lib.org/functions/sar)
+ * @see [`minusDm`](https://ta-lib.org/functions/minus_dm)
+ */
+export function sarext(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: SarextOptions): SarextResult {
+  requireArgument('SAREXT', 'prices', prices);
+  const o = optionsOf('SAREXT', options);
+  if (o.endIdx === undefined) {
+    requireSeries('SAREXT', 'prices.high', prices.high);
+    requireSeries('SAREXT', 'prices.low', prices.low);
+  }
+  const optInStartValue = orDefault(o.startValue, Core.REAL_DEFAULT);
+  const optInOffsetOnReverse = orDefault(o.offsetOnReverse, Core.REAL_DEFAULT);
+  const optInAccelerationInitLong = orDefault(o.accelerationInitLong, Core.REAL_DEFAULT);
+  const optInAccelerationLong = orDefault(o.accelerationLong, Core.REAL_DEFAULT);
+  const optInAccelerationMaxLong = orDefault(o.accelerationMaxLong, Core.REAL_DEFAULT);
+  const optInAccelerationInitShort = orDefault(o.accelerationInitShort, Core.REAL_DEFAULT);
+  const optInAccelerationShort = orDefault(o.accelerationShort, Core.REAL_DEFAULT);
+  const optInAccelerationMaxShort = orDefault(o.accelerationMaxShort, Core.REAL_DEFAULT);
+  const core = coreOf('SAREXT', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.high.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, sarextLookbackPositional(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, core), prices.high, prices.low);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = sarextPositional(startIdx, endIdx, prices.high, prices.low, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -1390,7 +1476,7 @@ function sarextOpenImpl(
      * (ep is just used as a temp buffer here, the name
      *  of the parameter is not significant).
      */
-    const _xr8 = minusDm(startIdx, startIdx, inHigh, inLow, 1, ep_temp, core);
+    const _xr8 = minusDmPositional(startIdx, startIdx, inHigh, inLow, 1, ep_temp, core);
     tempInt.value = _xr8.begIdx;
     tempInt.value = _xr8.count;
     if (ep_temp[0] > 0) {
@@ -1658,7 +1744,10 @@ export function sarextOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('SAREXT openAndFill', inHigh.length, startIdx, sarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, core));
+    throw insufficientHistory('SAREXT openAndFill', inHigh.length, startIdx, sarextLookbackPositional(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && sarextLookbackPositional(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, core) < 0) {
+    throw rejectedParams('SAREXT openAndFill', PARAM_RANGES, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
   }
   throw streamFailure('SAREXT openAndFill', retCode);
 }
@@ -1689,57 +1778,16 @@ export function sarextOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('SAREXT open', inHigh.length, startIdx, sarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, core));
+    throw insufficientHistory('SAREXT open', inHigh.length, startIdx, sarextLookbackPositional(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && sarextLookbackPositional(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, core) < 0) {
+    throw rejectedParams('SAREXT open', PARAM_RANGES, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
   }
   throw streamFailure('SAREXT open', retCode);
 }
 
-/**
- * Opens a live SAREXT stream over the warm-up history: `value()` starts at the
- * last history bar, bit-identical to {@link sarext} there.
- *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param optInStartValue - Initial SAR/direction: 0 auto, >0 start long at value,
- *   \<0 start short at -value (default 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInOffsetOnReverse - Fractional offset applied to the stop on each
- *   reversal (default 0; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationInitLong - Initial acceleration factor when long
- *   (default 0.02; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationLong - AF increment per new long extreme (default 0.02;
- *   minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationMaxLong - Cap on the long acceleration factor (default
- *   0.2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationInitShort - Initial acceleration factor when short
- *   (default 0.02; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationShort - AF increment per new short extreme (default
- *   0.02; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationMaxShort - Cap on the short acceleration factor (default
- *   0.2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `sarextLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for a real parameter that is not a number, a parameter outside its range or
- *   histories of different lengths.
- *
- * @example
- * ```ts
- * import { sarextOpen } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const stream = sarextOpen(high, low, 0, 0, 0.02, 0.02, 0.2, 0.02, 0.02, 0.2);
- * const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
- * const updated = stream.update(101.4, 99.1); // the bar closes
- * ```
- */
-export function sarextOpen(
+/** @internal */
+export function sarextOpenPositional(
   inHigh: ArrayLike<number>,
   inLow: ArrayLike<number>,
   optInStartValue: number,
@@ -1752,78 +1800,23 @@ export function sarextOpen(
   optInAccelerationMaxShort: number,
   core: Core = Core.DEFAULT,
 ): SarextStream {
-  optInStartValue = requireReal('SAREXT open', 'optInStartValue', optInStartValue);
-  optInOffsetOnReverse = requireReal('SAREXT open', 'optInOffsetOnReverse', optInOffsetOnReverse);
-  optInAccelerationInitLong = requireReal('SAREXT open', 'optInAccelerationInitLong', optInAccelerationInitLong);
-  optInAccelerationLong = requireReal('SAREXT open', 'optInAccelerationLong', optInAccelerationLong);
-  optInAccelerationMaxLong = requireReal('SAREXT open', 'optInAccelerationMaxLong', optInAccelerationMaxLong);
-  optInAccelerationInitShort = requireReal('SAREXT open', 'optInAccelerationInitShort', optInAccelerationInitShort);
-  optInAccelerationShort = requireReal('SAREXT open', 'optInAccelerationShort', optInAccelerationShort);
-  optInAccelerationMaxShort = requireReal('SAREXT open', 'optInAccelerationMaxShort', optInAccelerationMaxShort);
-  requireArgument('SAREXT open', 'inHigh', inHigh);
+  optInStartValue = requireReal('SAREXT open', 'startValue', optInStartValue);
+  optInOffsetOnReverse = requireReal('SAREXT open', 'offsetOnReverse', optInOffsetOnReverse);
+  optInAccelerationInitLong = requireReal('SAREXT open', 'accelerationInitLong', optInAccelerationInitLong);
+  optInAccelerationLong = requireReal('SAREXT open', 'accelerationLong', optInAccelerationLong);
+  optInAccelerationMaxLong = requireReal('SAREXT open', 'accelerationMaxLong', optInAccelerationMaxLong);
+  optInAccelerationInitShort = requireReal('SAREXT open', 'accelerationInitShort', optInAccelerationInitShort);
+  optInAccelerationShort = requireReal('SAREXT open', 'accelerationShort', optInAccelerationShort);
+  optInAccelerationMaxShort = requireReal('SAREXT open', 'accelerationMaxShort', optInAccelerationMaxShort);
+  requireArgument('SAREXT open', 'prices.high', inHigh);
   requireHistory('SAREXT open', inHigh.length);
-  requireArgument('SAREXT open', 'inLow', inLow);
-  requireHistoryLength('SAREXT open', 'inLow', inLow.length, inHigh.length);
+  requireArgument('SAREXT open', 'prices.low', inLow);
+  requireHistoryLength('SAREXT open', 'prices.low', inLow.length, inHigh.length);
   return sarextOpenInternal(core, float64(inHigh), float64(inLow), 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
 }
 
-/**
- * {@link sarextOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link sarext}. The range written is the stream's
- * `outRange()`.
- *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param optInStartValue - Initial SAR/direction: 0 auto, >0 start long at value,
- *   \<0 start short at -value (default 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInOffsetOnReverse - Fractional offset applied to the stop on each
- *   reversal (default 0; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationInitLong - Initial acceleration factor when long
- *   (default 0.02; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationLong - AF increment per new long extreme (default 0.02;
- *   minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationMaxLong - Cap on the long acceleration factor (default
- *   0.2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationInitShort - Initial acceleration factor when short
- *   (default 0.02; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationShort - AF increment per new short extreme (default
- *   0.02; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param optInAccelerationMaxShort - Cap on the short acceleration factor (default
- *   0.2; minimum 0; `Core.REAL_DEFAULT` selects the default).
- * @param outReal - SAR stop level; positive while long, negative while short. Must
- *   hold `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `sarextLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for a real parameter that is not a number, a parameter outside its range,
- *   histories of different lengths or an output too short or starting where another
- *   output or a `Float64Array` input starts, or, on a history long enough to open,
- *   one sharing memory with another output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { sarextOpenAndFill } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(high.length);
- * const stream = sarextOpenAndFill(
- *   high, low,
- *   0, 0, 0.02, 0.02, 0.2, 0.02, 0.02, 0.2,
- *   out,
- * );
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function sarextOpenAndFill(
+/** @internal */
+export function sarextOpenAndFillPositional(
   inHigh: ArrayLike<number>,
   inLow: ArrayLike<number>,
   optInStartValue: number,
@@ -1837,27 +1830,149 @@ export function sarextOpenAndFill(
   outReal: Float64Array,
   core: Core = Core.DEFAULT,
 ): SarextStream {
-  optInStartValue = requireReal('SAREXT openAndFill', 'optInStartValue', optInStartValue);
-  optInOffsetOnReverse = requireReal('SAREXT openAndFill', 'optInOffsetOnReverse', optInOffsetOnReverse);
-  optInAccelerationInitLong = requireReal('SAREXT openAndFill', 'optInAccelerationInitLong', optInAccelerationInitLong);
-  optInAccelerationLong = requireReal('SAREXT openAndFill', 'optInAccelerationLong', optInAccelerationLong);
-  optInAccelerationMaxLong = requireReal('SAREXT openAndFill', 'optInAccelerationMaxLong', optInAccelerationMaxLong);
-  optInAccelerationInitShort = requireReal('SAREXT openAndFill', 'optInAccelerationInitShort', optInAccelerationInitShort);
-  optInAccelerationShort = requireReal('SAREXT openAndFill', 'optInAccelerationShort', optInAccelerationShort);
-  optInAccelerationMaxShort = requireReal('SAREXT openAndFill', 'optInAccelerationMaxShort', optInAccelerationMaxShort);
-  requireArgument('SAREXT openAndFill', 'inHigh', inHigh);
+  optInStartValue = requireReal('SAREXT openAndFill', 'startValue', optInStartValue);
+  optInOffsetOnReverse = requireReal('SAREXT openAndFill', 'offsetOnReverse', optInOffsetOnReverse);
+  optInAccelerationInitLong = requireReal('SAREXT openAndFill', 'accelerationInitLong', optInAccelerationInitLong);
+  optInAccelerationLong = requireReal('SAREXT openAndFill', 'accelerationLong', optInAccelerationLong);
+  optInAccelerationMaxLong = requireReal('SAREXT openAndFill', 'accelerationMaxLong', optInAccelerationMaxLong);
+  optInAccelerationInitShort = requireReal('SAREXT openAndFill', 'accelerationInitShort', optInAccelerationInitShort);
+  optInAccelerationShort = requireReal('SAREXT openAndFill', 'accelerationShort', optInAccelerationShort);
+  optInAccelerationMaxShort = requireReal('SAREXT openAndFill', 'accelerationMaxShort', optInAccelerationMaxShort);
+  requireArgument('SAREXT openAndFill', 'prices.high', inHigh);
   requireHistory('SAREXT openAndFill', inHigh.length);
-  requireArgument('SAREXT openAndFill', 'inLow', inLow);
-  const guardOutLen = openFillCount('SAREXT openAndFill', inHigh.length, sarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, core));
-  requireHistoryLength('SAREXT openAndFill', 'inLow', inLow.length, inHigh.length);
+  requireArgument('SAREXT openAndFill', 'prices.low', inLow);
+  const guardLookback = sarextLookbackPositional(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('SAREXT openAndFill', PARAM_RANGES, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+  }
+  const guardOutLen = openFillCount('SAREXT openAndFill', inHigh.length, guardLookback);
+  requireHistoryLength('SAREXT openAndFill', 'prices.low', inLow.length, inHigh.length);
   requireOutput('SAREXT openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
-  if ((outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) || (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset)) {
-    throw streamFailure('SAREXT openAndFill', RetCode.BAD_PARAM);
+  if (outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('SAREXT openAndFill', 'outReal', 'prices.high');
   }
-  if (guardOutLen > 0 && (overlaps(outReal, inHighF64) || overlaps(outReal, inLowF64))) {
-    throw streamFailure('SAREXT openAndFill', RetCode.BAD_PARAM);
+  if (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('SAREXT openAndFill', 'outReal', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inHighF64)) {
+    throw sharedMemory('SAREXT openAndFill', 'outReal', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inLowF64)) {
+    throw sharedMemory('SAREXT openAndFill', 'outReal', 'prices.low');
   }
   return sarextOpenAndFillInternal(core, inHighF64, inLowF64, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, new MInteger(), new MInteger(), outReal);
+}
+
+/**
+ * Opens a live SAREXT stream over the warm-up history: `value()` starts at the
+ * last history bar, bit-identical to {@link sarext} there.
+ *
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link SarextOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `sarextLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, a real parameter that is not a number, a parameter outside its range or
+ *   histories of different lengths.
+ *
+ * @example
+ * ```ts
+ * import { sarextOpen } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const stream = sarextOpen({ high, low }, {
+ *   startValue: 0,
+ *   offsetOnReverse: 0,
+ *   accelerationInitLong: 0.02,
+ *   accelerationLong: 0.02,
+ *   accelerationMaxLong: 0.2,
+ *   accelerationInitShort: 0.02,
+ *   accelerationShort: 0.02,
+ *   accelerationMaxShort: 0.2,
+ * });
+ * const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
+ * const updated = stream.update(101.4, 99.1); // the bar closes
+ * ```
+ */
+export function sarextOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: SarextOptions): SarextStream {
+  requireArgument('SAREXT open', 'prices', prices);
+  const o = optionsOf('SAREXT open', options);
+  const optInStartValue = orDefault(o.startValue, Core.REAL_DEFAULT);
+  const optInOffsetOnReverse = orDefault(o.offsetOnReverse, Core.REAL_DEFAULT);
+  const optInAccelerationInitLong = orDefault(o.accelerationInitLong, Core.REAL_DEFAULT);
+  const optInAccelerationLong = orDefault(o.accelerationLong, Core.REAL_DEFAULT);
+  const optInAccelerationMaxLong = orDefault(o.accelerationMaxLong, Core.REAL_DEFAULT);
+  const optInAccelerationInitShort = orDefault(o.accelerationInitShort, Core.REAL_DEFAULT);
+  const optInAccelerationShort = orDefault(o.accelerationShort, Core.REAL_DEFAULT);
+  const optInAccelerationMaxShort = orDefault(o.accelerationMaxShort, Core.REAL_DEFAULT);
+  const core = coreOf('SAREXT open', o.core);
+  return sarextOpenPositional(prices.high, prices.low, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, core);
+}
+
+/**
+ * {@link sarextOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link sarext}.
+ *
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link SarextOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link sarext} returns them; the range is the
+ *   stream's `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `sarextLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, a real parameter that is not a number, a parameter outside its range,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
+ *
+ * @example
+ * ```ts
+ * import { sarextOpenAndFill } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const { stream, begIdx, values } = sarextOpenAndFill({ high, low }, {
+ *   startValue: 0,
+ *   offsetOnReverse: 0,
+ *   accelerationInitLong: 0.02,
+ *   accelerationLong: 0.02,
+ *   accelerationMaxLong: 0.2,
+ *   accelerationInitShort: 0.02,
+ *   accelerationShort: 0.02,
+ *   accelerationMaxShort: 0.2,
+ * });
+ * // values[k] is the value at bar begIdx + k
+ * ```
+ */
+export function sarextOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: SarextOptions): SarextResult & { stream: SarextStream } {
+  requireArgument('SAREXT openAndFill', 'prices', prices);
+  const o = optionsOf('SAREXT openAndFill', options);
+  const optInStartValue = orDefault(o.startValue, Core.REAL_DEFAULT);
+  const optInOffsetOnReverse = orDefault(o.offsetOnReverse, Core.REAL_DEFAULT);
+  const optInAccelerationInitLong = orDefault(o.accelerationInitLong, Core.REAL_DEFAULT);
+  const optInAccelerationLong = orDefault(o.accelerationLong, Core.REAL_DEFAULT);
+  const optInAccelerationMaxLong = orDefault(o.accelerationMaxLong, Core.REAL_DEFAULT);
+  const optInAccelerationInitShort = orDefault(o.accelerationInitShort, Core.REAL_DEFAULT);
+  const optInAccelerationShort = orDefault(o.accelerationShort, Core.REAL_DEFAULT);
+  const optInAccelerationMaxShort = orDefault(o.accelerationMaxShort, Core.REAL_DEFAULT);
+  const core = coreOf('SAREXT openAndFill', o.core);
+  const capacity = fillCapacity(sarextLookbackPositional(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, core), prices.high, prices.low);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = sarextOpenAndFillPositional(prices.high, prices.low, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

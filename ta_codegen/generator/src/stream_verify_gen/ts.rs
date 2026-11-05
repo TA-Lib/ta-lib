@@ -30,9 +30,7 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     let names = ts_names(&func.name);
     let ns = &func.name;
     let impl_fn = format!("{ns}.{}", names.body);
-    let lookback_fn = format!("{ns}.{}", names.lookback);
-    let open = format!("{ns}.{}", names.open);
-    let open_fill = format!("{ns}.{}", names.open_and_fill);
+    let api = crate::server_gen::TsPublic::new(func);
     let open_internal = format!("{ns}.{}", names.open_internal);
     let ocls = format!("{ns}.{}", names.out_class);
     let candle = func.name.starts_with("CDL");
@@ -49,7 +47,7 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     let vfield: Vec<String> = func
         .outputs
         .iter()
-        .map(|o| crate::backends::java_stream::value_field_name(&o.name))
+        .map(|o| crate::backends::ts::output_key(&o.name))
         .collect();
 
     let mut s = String::new();
@@ -107,10 +105,12 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     }
 
     let full_ins = arrays.join(", ");
-    let pfx_ins = |n: &str| -> String {
-        arrays.iter().map(|a| format!("{a}.slice(0, {n})")).collect::<Vec<_>>().join(", ")
-    };
-    let opts = func.optional_inputs.iter().map(|o| o.name.clone()).collect::<Vec<_>>().join(", ");
+    let opt_names: Vec<String> = func.optional_inputs.iter().map(|o| o.name.clone()).collect();
+    let pfx_ins = |n: &str| -> Vec<String> { arrays.iter().map(|a| format!("{a}.slice(0, {n})")).collect() };
+    let open = |ins: &[String]| api.open(ins, &opt_names, "c2");
+    let open_fill = |ins: &[String], outs: &[String]| api.open_and_fill(ins, &opt_names, "c2", outs);
+    let full: Vec<String> = arrays.iter().map(|a| (*a).to_string()).collect();
+    let opts = opt_names.join(", ");
     let opts_lead = if opts.is_empty() { String::new() } else { format!("{opts}, ") };
     let opts_tail = if opts.is_empty() { String::new() } else { format!(", {opts}") };
     let bar_args = |t: &str| -> String {
@@ -121,7 +121,7 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     let mut bdecls = String::new();
     let mut bargs = String::new();
     let mut fdecls = String::new();
-    let mut fargs = String::new();
+    let mut fouts: Vec<String> = Vec::new();
     for (i, is_int) in out_is_int.iter().enumerate() {
         let ty = if *is_int { "Int32Array" } else { "Float64Array" };
         let _ = writeln!(bdecls, "  const b{i} = new {ty}(svN);");
@@ -129,7 +129,7 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
         // Canary-filled: the slack above the produced range is asserted untouched.
         let canary = if *is_int { "-987654321" } else { "-1.2345678901234e300" };
         let _ = writeln!(fdecls, "      const f{i} = new {ty}(svN).fill({canary});");
-        let _ = write!(fargs, ", f{i}");
+        fouts.push(format!("f{i}"));
     }
     s.push_str(&bdecls);
 
@@ -169,13 +169,15 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
         s.push_str("      let r1: boolean;\n");
         let _ = writeln!(
             s,
-            "      try {{ {open}({full_ins}{opts_tail}, c2); r1 = false; }} catch (e) {{ r1 = svRejected(e); }}"
+            "      try {{ {}; r1 = false; }} catch (e) {{ r1 = svRejected(e); }}",
+            open(&full)
         );
         s.push_str(&fdecls);
         s.push_str("      let r2: boolean;\n");
         let _ = writeln!(
             s,
-            "      try {{ {open_fill}({full_ins}{opts_tail}{fargs}, c2); r2 = false; }} catch (e) {{ r2 = svRejected(e); }}"
+            "      try {{ {}; r2 = false; }} catch (e) {{ r2 = svRejected(e); }}",
+            open_fill(&full, &fouts)
         );
         s.push_str("      const okr = r1 && r2;\n");
         s.push_str("      return `{\"retCode\":0,\"legs\":0,\"unsupportedArm\":1,\"ok\":${okr ? 1 : 0},\"peek_ok\":1}`;\n");
@@ -188,12 +190,13 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
         s,
         "    try {{ rc = {impl_fn}(c2, 0, svN - 1, {full_ins}, {opts_lead}beg, nb{bargs}); }}\n    catch (e) {{ if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }}"
     );
-    let _ = writeln!(s, "    const lb = {lookback_fn}({opts_lead}c2);");
+    let _ = writeln!(s, "    const lb = {};", api.lookback(&opt_names, "c2"));
     s.push_str("    if (rc !== RetCode.SUCCESS || nb.value === 0) {\n");
     s.push_str("      let openRejects: boolean;\n");
     let _ = writeln!(
         s,
-        "      try {{ {open}({full_ins}{opts_tail}, c2); openRejects = false; }} catch (e) {{ openRejects = svRejected(e); }}"
+        "      try {{ {}; openRejects = false; }} catch (e) {{ openRejects = svRejected(e); }}",
+        open(&full)
     );
     if candle {
         s.push_str("      if (!openRejects) allOk = false;\n");
@@ -207,10 +210,12 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     // OpenAndFill leg + aliasing probes.
     s.push_str("    fillChecked = 1;\n    try {\n");
     s.push_str(&fdecls);
-    let _ = writeln!(s, "      const _fh = {open_fill}({full_ins}{opts_tail}{fargs}, c2);");
-    s.push_str("      const _fr = _fh.outRange();\n");
+    let _ = writeln!(s, "      const _fh = {};", open_fill(&full, &fouts));
+    s.push_str("      const _fr = _fh.stream.outRange();\n");
     let _ = writeln!(s, "      rangeChecked = 1; rangeLegs++; rangeSites |= {};", sv_range_bit(SvRangeSite::Fill, SV_RANGE_MASK_TS));
     s.push_str("      if (_fr.begIdx !== beg.value || _fr.count !== nb.value) rangeOk = false;\n");
+    let result_lens = api.result_keys().iter().map(|k| format!(" || _fh.{k}.length !== _fr.count")).collect::<Vec<_>>().concat();
+    let _ = writeln!(s, "      if (_fh.begIdx !== _fr.begIdx{result_lens}) fillOk = false;");
     s.push_str("      if (_fr.begIdx !== beg.value || _fr.count !== nb.value) fillOk = false;\n      else {\n");
     for (i, is_int) in out_is_int.iter().enumerate() {
         if *is_int {
@@ -225,31 +230,13 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     }
     s.push_str("      }\n");
     if !out_is_int[0] {
-        let mut alias = String::new();
-        for i in 0..n_out {
-            if i == 0 {
-                let _ = write!(alias, ", {}", arrays[0]);
-            } else {
-                let _ = write!(alias, ", f{i}");
-            }
-        }
-        let _ = writeln!(
-            s,
-            "      try {{ {open_fill}({full_ins}{opts_tail}{alias}, c2); fillOk = false; }} catch (e) {{ svRejected(e); }}"
-        );
+        let mut alias = fouts.clone();
+        alias[0] = arrays[0].to_string();
+        let _ = writeln!(s, "      try {{ {}; fillOk = false; }} catch (e) {{ svRejected(e); }}", open_fill(&full, &alias));
         if multi && !out_is_int[1] {
-            let mut alias2 = String::new();
-            for i in 0..n_out {
-                if i == 1 {
-                    alias2.push_str(", f0");
-                } else {
-                    let _ = write!(alias2, ", f{i}");
-                }
-            }
-            let _ = writeln!(
-                s,
-                "      try {{ {open_fill}({full_ins}{opts_tail}{alias2}, c2); fillOk = false; }} catch (e) {{ svRejected(e); }}"
-            );
+            let mut alias2 = fouts.clone();
+            alias2[1] = "f0".to_string();
+            let _ = writeln!(s, "      try {{ {}; fillOk = false; }} catch (e) {{ svRejected(e); }}", open_fill(&full, &alias2));
         }
     }
     s.push_str("    } catch (e) { svRejected(e); fillOk = false; }\n");
@@ -262,7 +249,7 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     s.push_str("      if (P < lb + 1 || P > svN - 1 || P === prevP) continue;\n");
     s.push_str("      prevP = P;\n");
     let _ = writeln!(s, "      let st: {ns}.{};", names.stream_class);
-    let _ = writeln!(s, "      try {{ st = {open}({}{opts_tail}, c2); }}", pfx_ins("P"));
+    let _ = writeln!(s, "      try {{ st = {}; }}", open(&pfx_ins("P")));
     s.push_str("      catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,\"openRejectP\":${P}`; continue; }\n");
     s.push_str("      legs++;\n");
     let open_diag = |i: usize| {
@@ -384,7 +371,7 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     s.push_str("      if (p0 <= svN - 1) {\n");
     s.push_str("        try {\n");
     s.push_str(&fdecls.replace("      const", "          const"));
-    let _ = writeln!(s, "          const sA = {open_fill}({}{opts_tail}{fargs}, c2);", pfx_ins("p0"));
+    let _ = writeln!(s, "          const sA = {}.stream;", open_fill(&pfx_ins("p0"), &fouts));
     s.push_str("          const mid = Math.trunc((p0 + svN) / 2);\n");
     let val = |u: &str, i: usize| if multi { format!("{u}.{}", vfield[i]) } else { u.to_string() };
     let diverged = |cond: String| {
@@ -455,16 +442,16 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     s.push_str("    if (lb >= 1 && lb < svN) {\n");
     let _ = writeln!(
         s,
-        "      try {{ {open}({}{opts_tail}, c2); allOk = false; if (diag === '') diag = ',\"shortHistoryAccepted\":1'; }}",
-        pfx_ins("lb")
+        "      try {{ {}; allOk = false; if (diag === '') diag = ',\"shortHistoryAccepted\":1'; }}",
+        open(&pfx_ins("lb"))
     );
     s.push_str("      catch (e) { if (!svShortHistory(e)) { allOk = false; if (diag === '') diag = ',\"shortHistoryWrongType\":1'; } }\n");
     s.push_str("      {\n");
     s.push_str(&fdecls.replace("      const", "        const"));
     let _ = writeln!(
         s,
-        "        try {{ {open_fill}({}{opts_tail}{fargs}, c2); allOk = false; if (diag === '') diag = ',\"shortHistoryFillAccepted\":1'; }}",
-        pfx_ins("lb")
+        "        try {{ {}; allOk = false; if (diag === '') diag = ',\"shortHistoryFillAccepted\":1'; }}",
+        open_fill(&pfx_ins("lb"), &fouts)
     );
     s.push_str("        catch (e) { if (!svShortHistory(e)) { allOk = false; if (diag === '') diag = ',\"shortHistoryFillWrongType\":1'; } }\n");
     s.push_str("      }\n");
@@ -488,8 +475,8 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
             }
         }
         s.push_str("    try {\n");
-        let _ = writeln!(s, "      const sD = {open}({full_ins}, {}, c2);", sent_args.join(", "));
-        let _ = writeln!(s, "      const sE = {open}({full_ins}, {}, c2);", expl_args.join(", "));
+        let _ = writeln!(s, "      const sD = {};", api.open(&full, &sent_args, "c2"));
+        let _ = writeln!(s, "      const sE = {};", api.open(&full, &expl_args, "c2"));
         let dflt = "{ allOk = false; if (diag === '') diag = ',\"minValueDefault\":1'; }";
         if multi {
             let _ = writeln!(s, "      const vD = new {ocls}(); sD.value(vD);");
@@ -529,7 +516,7 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
          \x20           rangeChecked = 1; rangeLegs++; rangeSites |= {anchored_bit};\n\
          \x20           if (stA.outRange().begIdx !== begS.value || stA.outRange().count !== nbS.value) rangeOk = false;\n\
          \x20         }} catch (e) {{ svRejected(e); rangeOk = false; if (diag === '') diag = ',\"anchoredOpenRejected\":1'; }}",
-        pfx_ins("svN")
+        pfx_ins("svN").join(", ")
     );
     s.push_str("        }\n");
     s.push_str("      }\n");
@@ -603,9 +590,9 @@ function svCandleRound(rd: number): CoreBuilder {
   const b = Core.builder();
   if (rd === 0) return b;
   for (const cs of Core.DEFAULT.candleSettings) {
-    if (rd === 1) b.candleSetting(cs.settingType, cs.rangeType, cs.avgPeriod + 3, cs.factor);
-    else if (rd === 2) b.candleSetting(cs.settingType, cs.rangeType, 0, cs.factor);
-    else b.candleSetting(cs.settingType, RangeType.SHADOWS, cs.avgPeriod, cs.factor);
+    if (rd === 1) b.candleSetting(cs.settingType as Parameters<CoreBuilder['candleSetting']>[0], cs.rangeType, cs.avgPeriod + 3, cs.factor);
+    else if (rd === 2) b.candleSetting(cs.settingType as Parameters<CoreBuilder['candleSetting']>[0], cs.rangeType, 0, cs.factor);
+    else b.candleSetting(cs.settingType as Parameters<CoreBuilder['candleSetting']>[0], RangeType.SHADOWS, cs.avgPeriod, cs.factor);
   }
   return b;
 }

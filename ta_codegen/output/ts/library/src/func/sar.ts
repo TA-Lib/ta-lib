@@ -16,29 +16,16 @@
  *                the read was of an uninitialised local.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { minusDm } from './minusDm.ts';
+import { minusDmPositional } from './minusDm.ts';
 
-/**
- * Number of leading input bars {@link sar} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInAcceleration - Step added to the acceleration factor on each new
- *   extreme point (default 0.02; minimum 0; `Core.REAL_DEFAULT` selects the
- *   default).
- * @param optInMaximum - Ceiling on the acceleration factor (default 0.2; minimum
- *   0; `Core.REAL_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function sarLookback(optInAcceleration: number, optInMaximum: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function sarLookbackPositional(optInAcceleration: number, optInMaximum: number, _core: Core = Core.DEFAULT): number {
   if (typeof optInAcceleration !== 'number') {
     return -1;
   }
@@ -61,25 +48,9 @@ export function sarLookback(optInAcceleration: number, optInMaximum: number, cor
   return 1;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link sar}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInAcceleration - Step added to the acceleration factor on each new
- *   extreme point (default 0.02; minimum 0; `Core.REAL_DEFAULT` selects the
- *   default).
- * @param optInMaximum - Ceiling on the acceleration factor (default 0.2; minimum
- *   0; `Core.REAL_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function sarDisplayShift(optInAcceleration: number, optInMaximum: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (sarLookback(optInAcceleration, optInMaximum, core) < 0) {
+/** @internal */
+export function sarDisplayShiftPositional(optInAcceleration: number, optInMaximum: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (sarLookbackPositional(optInAcceleration, optInMaximum, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -197,7 +168,7 @@ export function sarImpl(
    * (ep is just used as a temp buffer here, the name
    *  of the parameter is not significant).
    */
-  const _xr0 = minusDm(startIdx, startIdx, inHigh, inLow, 1, ep_temp, core);
+  const _xr0 = minusDmPositional(startIdx, startIdx, inHigh, inLow, 1, ep_temp, core);
   tempInt.value = _xr0.begIdx;
   tempInt.value = _xr0.count;
   if (ep_temp[0] > 0) {
@@ -399,58 +370,10 @@ export function sarImpl(
   return RetCode.SUCCESS;
 }
 
-/**
- * Wilder's Parabolic SAR (Stop And Reverse): a trailing stop/reverse level that
- * accelerates toward price via an acceleration factor. Signals trend direction and
- * trailing exit points. SAR below price = uptrend (long); SAR above price =
- * downtrend (short). Price crossing SAR flips direction.
- *
- * Formula and more info at
- * [ta-lib.org/functions/sar](https://ta-lib.org/functions/sar).
- *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link sarLookback} is a success with
- * `count` 0.
- *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param optInAcceleration - Step added to the acceleration factor on each new
- *   extreme point (default 0.02; minimum 0; `Core.REAL_DEFAULT` selects the
- *   default).
- * @param optInMaximum - Ceiling on the acceleration factor (default 0.2; minimum
- *   0; `Core.REAL_DEFAULT` selects the default).
- * @param outReal - Parabolic SAR stop/reverse level per bar. Must hold the values
- *   produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   real parameter that is not a number, a parameter outside its range, an array too
- *   short for the range, an empty output or an output sharing memory with a
- *   `Float64Array` input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { sar } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(high.length);
- * const { begIdx, count } = sar(0, high.length - 1, high, low, 0.02, 0.2, out);
- * // out[k] is the value at bar begIdx + k, for k < count
- * ```
- * @see [`sarext`](https://ta-lib.org/functions/sarext)
- * @see [`minusDm`](https://ta-lib.org/functions/minus_dm)
- * @see [`plusDm`](https://ta-lib.org/functions/plus_dm)
- */
-export function sar(
+const PARAM_RANGES = [['acceleration', Core.REAL_DEFAULT, 0e0, Core.REAL_MAX, 'in 0..3e37'], ['maximum', Core.REAL_DEFAULT, 0e0, Core.REAL_MAX, 'in 0..3e37']] as const;
+
+/** @internal */
+export function sarPositional(
   startIdx: number,
   endIdx: number,
   inHigh: ArrayLike<number>,
@@ -462,19 +385,26 @@ export function sar(
 ): OutRange {
   startIdx = requireInt32('SAR', 'startIdx', startIdx);
   endIdx = requireInt32('SAR', 'endIdx', endIdx);
-  optInAcceleration = requireReal('SAR', 'optInAcceleration', optInAcceleration);
-  optInMaximum = requireReal('SAR', 'optInMaximum', optInMaximum);
+  optInAcceleration = requireReal('SAR', 'acceleration', optInAcceleration);
+  optInMaximum = requireReal('SAR', 'maximum', optInMaximum);
   requireIndexRange('SAR', startIdx, endIdx);
-  const guardStart = clampedStart('SAR', startIdx, sarLookback(optInAcceleration, optInMaximum, core));
+  const guardLookback = sarLookbackPositional(optInAcceleration, optInMaximum, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('SAR', PARAM_RANGES, optInAcceleration, optInMaximum);
+  }
+  const guardStart = clampedStart('SAR', startIdx, guardLookback);
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('SAR', 'inHigh', inHigh, guardInLen);
-  requireLength('SAR', 'inLow', inLow, guardInLen);
+  requireLength('SAR', 'prices.high', inHigh, guardInLen);
+  requireLength('SAR', 'prices.low', inLow, guardInLen);
   requireOutput('SAR', 'outReal', outReal, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
-  if (overlapsPartly(outReal, inHighF64) || overlapsPartly(outReal, inLowF64)) {
-    throw failure('SAR', RetCode.BAD_PARAM);
+  if (overlapsPartly(outReal, inHighF64)) {
+    throw sharedMemory('SAR', 'outReal', 'prices.high');
+  }
+  if (overlapsPartly(outReal, inLowF64)) {
+    throw sharedMemory('SAR', 'outReal', 'prices.low');
   }
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
@@ -483,6 +413,158 @@ export function sar(
     throw failure('SAR', retCode);
   }
   return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link sar}, {@link sarLookback}, {@link sarDisplayShift},
+ * {@link sarOpen} and {@link sarOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface SarOptions {
+  /**
+   * Step added to the acceleration factor on each new extreme point (default 0.02;
+   * minimum 0; `Core.REAL_DEFAULT` selects the default).
+   */
+  acceleration?: number | undefined;
+  /**
+   * Ceiling on the acceleration factor (default 0.2; minimum 0; `Core.REAL_DEFAULT`
+   * selects the default).
+   */
+  maximum?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link sar} returns, and {@link sarOpenAndFill} with its stream. */
+export interface SarResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Parabolic SAR stop/reverse level per bar. `values[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link sar} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link SarOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function sarLookback(options?: SarOptions): number {
+  const o = optionsOf('SAR lookback', options);
+  return sarLookbackPositional(orDefault(o.acceleration, Core.REAL_DEFAULT), orDefault(o.maximum, Core.REAL_DEFAULT), coreOf('SAR lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link sar}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link SarOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function sarDisplayShift(outputIdx: number, options?: SarOptions): number {
+  const o = optionsOf('SAR displayShift', options);
+  return sarDisplayShiftPositional(orDefault(o.acceleration, Core.REAL_DEFAULT), orDefault(o.maximum, Core.REAL_DEFAULT), outputIdx, coreOf('SAR displayShift', o.core));
+}
+
+/**
+ * Wilder's Parabolic SAR (Stop And Reverse): a trailing stop/reverse level that
+ * accelerates toward price via an acceleration factor. Signals trend direction and
+ * trailing exit points. SAR below price = uptrend (long); SAR above price =
+ * downtrend (short). Price crossing SAR flips direction.
+ *
+ * Formula and more info at
+ * [ta-lib.org/functions/sar](https://ta-lib.org/functions/sar).
+ *
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link sarLookback} is a success with empty outputs.
+ *
+ * @param prices - One series per price component, all of one length. `high`: High
+ *   price of each bar. `low`: Low price of each bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link SarOptions}.
+ * @returns `begIdx` and the values; see {@link SarResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
+ * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
+ *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, a real parameter that is not a number, a parameter outside its range, an
+ *   input too short for the range, a buffer that is empty, too short or of the wrong
+ *   type or a buffer sharing memory with a `Float64Array` input it is not. Checked
+ *   before anything is written.
+ *
+ * @example
+ * ```ts
+ * import { sar } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const { begIdx, values } = sar({ high, low }, {
+ *   acceleration: 0.02,
+ *   maximum: 0.2,
+ * });
+ * // values[k] is the value at bar begIdx + k
+ * ```
+ * @see [`sarext`](https://ta-lib.org/functions/sarext)
+ * @see [`minusDm`](https://ta-lib.org/functions/minus_dm)
+ * @see [`plusDm`](https://ta-lib.org/functions/plus_dm)
+ */
+export function sar(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: SarOptions): SarResult {
+  requireArgument('SAR', 'prices', prices);
+  const o = optionsOf('SAR', options);
+  if (o.endIdx === undefined) {
+    requireSeries('SAR', 'prices.high', prices.high);
+    requireSeries('SAR', 'prices.low', prices.low);
+  }
+  const optInAcceleration = orDefault(o.acceleration, Core.REAL_DEFAULT);
+  const optInMaximum = orDefault(o.maximum, Core.REAL_DEFAULT);
+  const core = coreOf('SAR', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.high.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, sarLookbackPositional(optInAcceleration, optInMaximum, core), prices.high, prices.low);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = sarPositional(startIdx, endIdx, prices.high, prices.low, optInAcceleration, optInMaximum, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -1091,7 +1173,7 @@ function sarOpenImpl(
    * (ep is just used as a temp buffer here, the name
    *  of the parameter is not significant).
    */
-  const _xr8 = minusDm(startIdx, startIdx, inHigh, inLow, 1, ep_temp, core);
+  const _xr8 = minusDmPositional(startIdx, startIdx, inHigh, inLow, 1, ep_temp, core);
   tempInt.value = _xr8.begIdx;
   tempInt.value = _xr8.count;
   if (ep_temp[0] > 0) {
@@ -1322,7 +1404,10 @@ export function sarOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('SAR openAndFill', inHigh.length, startIdx, sarLookback(optInAcceleration, optInMaximum, core));
+    throw insufficientHistory('SAR openAndFill', inHigh.length, startIdx, sarLookbackPositional(optInAcceleration, optInMaximum, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && sarLookbackPositional(optInAcceleration, optInMaximum, core) < 0) {
+    throw rejectedParams('SAR openAndFill', PARAM_RANGES, optInAcceleration, optInMaximum);
   }
   throw streamFailure('SAR openAndFill', retCode);
 }
@@ -1347,29 +1432,81 @@ export function sarOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('SAR open', inHigh.length, startIdx, sarLookback(optInAcceleration, optInMaximum, core));
+    throw insufficientHistory('SAR open', inHigh.length, startIdx, sarLookbackPositional(optInAcceleration, optInMaximum, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && sarLookbackPositional(optInAcceleration, optInMaximum, core) < 0) {
+    throw rejectedParams('SAR open', PARAM_RANGES, optInAcceleration, optInMaximum);
   }
   throw streamFailure('SAR open', retCode);
+}
+
+/** @internal */
+export function sarOpenPositional(
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  optInAcceleration: number,
+  optInMaximum: number,
+  core: Core = Core.DEFAULT,
+): SarStream {
+  optInAcceleration = requireReal('SAR open', 'acceleration', optInAcceleration);
+  optInMaximum = requireReal('SAR open', 'maximum', optInMaximum);
+  requireArgument('SAR open', 'prices.high', inHigh);
+  requireHistory('SAR open', inHigh.length);
+  requireArgument('SAR open', 'prices.low', inLow);
+  requireHistoryLength('SAR open', 'prices.low', inLow.length, inHigh.length);
+  return sarOpenInternal(core, float64(inHigh), float64(inLow), 0, optInAcceleration, optInMaximum);
+}
+
+/** @internal */
+export function sarOpenAndFillPositional(
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  optInAcceleration: number,
+  optInMaximum: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): SarStream {
+  optInAcceleration = requireReal('SAR openAndFill', 'acceleration', optInAcceleration);
+  optInMaximum = requireReal('SAR openAndFill', 'maximum', optInMaximum);
+  requireArgument('SAR openAndFill', 'prices.high', inHigh);
+  requireHistory('SAR openAndFill', inHigh.length);
+  requireArgument('SAR openAndFill', 'prices.low', inLow);
+  const guardLookback = sarLookbackPositional(optInAcceleration, optInMaximum, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('SAR openAndFill', PARAM_RANGES, optInAcceleration, optInMaximum);
+  }
+  const guardOutLen = openFillCount('SAR openAndFill', inHigh.length, guardLookback);
+  requireHistoryLength('SAR openAndFill', 'prices.low', inLow.length, inHigh.length);
+  requireOutput('SAR openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  if (outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('SAR openAndFill', 'outReal', 'prices.high');
+  }
+  if (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('SAR openAndFill', 'outReal', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inHighF64)) {
+    throw sharedMemory('SAR openAndFill', 'outReal', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inLowF64)) {
+    throw sharedMemory('SAR openAndFill', 'outReal', 'prices.low');
+  }
+  return sarOpenAndFillInternal(core, inHighF64, inLowF64, 0, optInAcceleration, optInMaximum, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live SAR stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link sar} there.
  *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param optInAcceleration - Step added to the acceleration factor on each new
- *   extreme point (default 0.02; minimum 0; `Core.REAL_DEFAULT` selects the
- *   default).
- * @param optInMaximum - Ceiling on the acceleration factor (default 0.2; minimum
- *   0; `Core.REAL_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link SarOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `sarLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
  *   a real parameter that is not a number, a parameter outside its range or
  *   histories of different lengths.
  *
@@ -1381,53 +1518,38 @@ export function sarOpenInternal(
  *   101 + 10 * Math.sin(0.1 * i));
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
  *   99 + 10 * Math.sin(0.1 * i));
- * const stream = sarOpen(high, low, 0.02, 0.2);
+ * const stream = sarOpen({ high, low }, { acceleration: 0.02, maximum: 0.2 });
  * const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
  * const updated = stream.update(101.4, 99.1); // the bar closes
  * ```
  */
-export function sarOpen(
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  optInAcceleration: number,
-  optInMaximum: number,
-  core: Core = Core.DEFAULT,
-): SarStream {
-  optInAcceleration = requireReal('SAR open', 'optInAcceleration', optInAcceleration);
-  optInMaximum = requireReal('SAR open', 'optInMaximum', optInMaximum);
-  requireArgument('SAR open', 'inHigh', inHigh);
-  requireHistory('SAR open', inHigh.length);
-  requireArgument('SAR open', 'inLow', inLow);
-  requireHistoryLength('SAR open', 'inLow', inLow.length, inHigh.length);
-  return sarOpenInternal(core, float64(inHigh), float64(inLow), 0, optInAcceleration, optInMaximum);
+export function sarOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: SarOptions): SarStream {
+  requireArgument('SAR open', 'prices', prices);
+  const o = optionsOf('SAR open', options);
+  const optInAcceleration = orDefault(o.acceleration, Core.REAL_DEFAULT);
+  const optInMaximum = orDefault(o.maximum, Core.REAL_DEFAULT);
+  const core = coreOf('SAR open', o.core);
+  return sarOpenPositional(prices.high, prices.low, optInAcceleration, optInMaximum, core);
 }
 
 /**
- * {@link sarOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link sar}. The range written is the stream's
- * `outRange()`.
+ * {@link sarOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link sar}.
  *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param optInAcceleration - Step added to the acceleration factor on each new
- *   extreme point (default 0.02; minimum 0; `Core.REAL_DEFAULT` selects the
- *   default).
- * @param optInMaximum - Ceiling on the acceleration factor (default 0.2; minimum
- *   0; `Core.REAL_DEFAULT` selects the default).
- * @param outReal - Parabolic SAR stop/reverse level per bar. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link SarOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link sar} returns them; the range is the stream's
+ *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `sarLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
  *   a real parameter that is not a number, a parameter outside its range, histories
- *   of different lengths or an output too short or starting where another output or
- *   a `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another output or a `Float64Array` input.
+ *   of different lengths or a buffer too short, of the wrong type or starting where
+ *   another buffer or a `Float64Array` input starts, or, on a history long enough to
+ *   open, one sharing memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1437,35 +1559,22 @@ export function sarOpen(
  *   101 + 10 * Math.sin(0.1 * i));
  * const low = Float64Array.from({ length: 252 }, (_, i) =>
  *   99 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(high.length);
- * const stream = sarOpenAndFill(high, low, 0.02, 0.2, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = sarOpenAndFill({ high, low }, {
+ *   acceleration: 0.02,
+ *   maximum: 0.2,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function sarOpenAndFill(
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  optInAcceleration: number,
-  optInMaximum: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): SarStream {
-  optInAcceleration = requireReal('SAR openAndFill', 'optInAcceleration', optInAcceleration);
-  optInMaximum = requireReal('SAR openAndFill', 'optInMaximum', optInMaximum);
-  requireArgument('SAR openAndFill', 'inHigh', inHigh);
-  requireHistory('SAR openAndFill', inHigh.length);
-  requireArgument('SAR openAndFill', 'inLow', inLow);
-  const guardOutLen = openFillCount('SAR openAndFill', inHigh.length, sarLookback(optInAcceleration, optInMaximum, core));
-  requireHistoryLength('SAR openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireOutput('SAR openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  if ((outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) || (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset)) {
-    throw streamFailure('SAR openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inHighF64) || overlaps(outReal, inLowF64))) {
-    throw streamFailure('SAR openAndFill', RetCode.BAD_PARAM);
-  }
-  return sarOpenAndFillInternal(core, inHighF64, inLowF64, 0, optInAcceleration, optInMaximum, new MInteger(), new MInteger(), outReal);
+export function sarOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: SarOptions): SarResult & { stream: SarStream } {
+  requireArgument('SAR openAndFill', 'prices', prices);
+  const o = optionsOf('SAR openAndFill', options);
+  const optInAcceleration = orDefault(o.acceleration, Core.REAL_DEFAULT);
+  const optInMaximum = orDefault(o.maximum, Core.REAL_DEFAULT);
+  const core = coreOf('SAR openAndFill', o.core);
+  const capacity = fillCapacity(sarLookbackPositional(optInAcceleration, optInMaximum, core), prices.high, prices.low);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = sarOpenAndFillPositional(prices.high, prices.low, optInAcceleration, optInMaximum, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

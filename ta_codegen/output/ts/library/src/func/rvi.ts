@@ -14,29 +14,15 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma, fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link rvi} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * It includes `core`'s unstable period for this function.
- *
- * @param optInTimePeriod - Wilder smoothing period applied to both legs (default
- *   14; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInStdDevPeriod - Number of trailing values the standard deviation
- *   spans (default 10; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the
- *   default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function rviLookback(optInTimePeriod: number, optInStdDevPeriod: number, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function rviLookbackPositional(optInTimePeriod: number, optInStdDevPeriod: number, core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -56,25 +42,9 @@ export function rviLookback(optInTimePeriod: number, optInStdDevPeriod: number, 
   return optInStdDevPeriod - 1 + (optInTimePeriod - 1) + core.unstableCount(FuncUnstId.RVI, ((optInTimePeriod > 1) ? ((10 * optInTimePeriod) | 0) : 0), ((optInTimePeriod > 1) ? ((19 * optInTimePeriod) | 0) : 0));
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link rvi}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Wilder smoothing period applied to both legs (default
- *   14; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInStdDevPeriod - Number of trailing values the standard deviation
- *   spans (default 10; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the
- *   default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function rviDisplayShift(optInTimePeriod: number, optInStdDevPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (rviLookback(optInTimePeriod, optInStdDevPeriod, core) < 0) {
+/** @internal */
+export function rviDisplayShiftPositional(optInTimePeriod: number, optInStdDevPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (rviLookbackPositional(optInTimePeriod, optInStdDevPeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -142,7 +112,7 @@ export function rviImpl(
   }
   outBegIdx.value = 0;
   outNBElement.value = 0;
-  lookbackTotal = rviLookback(optInTimePeriod, optInStdDevPeriod, core);
+  lookbackTotal = rviLookbackPositional(optInTimePeriod, optInStdDevPeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -457,6 +427,135 @@ export function rviImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['stdDevPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000']] as const;
+
+/** @internal */
+export function rviPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInStdDevPeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('RVI', 'startIdx', startIdx);
+  endIdx = requireInt32('RVI', 'endIdx', endIdx);
+  optInTimePeriod = requireInt32('RVI', 'timePeriod', optInTimePeriod);
+  optInStdDevPeriod = requireInt32('RVI', 'stdDevPeriod', optInStdDevPeriod);
+  requireIndexRange('RVI', startIdx, endIdx);
+  const guardLookback = rviLookbackPositional(optInTimePeriod, optInStdDevPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('RVI', PARAM_RANGES, optInTimePeriod, optInStdDevPeriod);
+  }
+  const guardStart = clampedStart('RVI', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('RVI', 'real', inReal, guardInLen);
+  requireOutput('RVI', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outReal, inRealF64)) {
+    throw sharedMemory('RVI', 'outReal', 'real');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = rviImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('RVI', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link rvi}, {@link rviLookback}, {@link rviDisplayShift},
+ * {@link rviOpen} and {@link rviOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface RviOptions {
+  /**
+   * Wilder smoothing period applied to both legs (default 14; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * Number of trailing values the standard deviation spans (default 10; range 2 to
+   * 100000; `Core.INTEGER_DEFAULT` selects the default).
+   */
+  stdDevPeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link rvi} returns, and {@link rviOpenAndFill} with its stream. */
+export interface RviResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Relative Volatility Index value. `values[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link rvi} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * It includes `core`'s unstable period for this function.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link RviOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function rviLookback(options?: RviOptions): number {
+  const o = optionsOf('RVI lookback', options);
+  return rviLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.stdDevPeriod, Core.INTEGER_DEFAULT), coreOf('RVI lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link rvi}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link RviOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function rviDisplayShift(outputIdx: number, options?: RviOptions): number {
+  const o = optionsOf('RVI displayShift', options);
+  return rviDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.stdDevPeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('RVI displayShift', o.core));
+}
+
 /**
  * Relative Volatility Index: Donald Dorsey's volatility oscillator, built exactly
  * like RSI except that the quantity routed to the up and down buckets is the
@@ -479,30 +578,23 @@ export function rviImpl(
  * - Unrelated to the Relative Vigor Index, which several platforms also abbreviate
  *   RVI.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link rviLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link rviLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Source price/value series, canonically the close.
- * @param optInTimePeriod - Wilder smoothing period applied to both legs (default
- *   14; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInStdDevPeriod - Number of trailing values the standard deviation
- *   spans (default 10; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the
- *   default).
- * @param outReal - Relative Volatility Index value. Must hold the values produced
- *   and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Source price/value series, canonically the close.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link RviOptions}.
+ * @returns `begIdx` and the values; see {@link RviResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output
- *   or an output sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -510,45 +602,28 @@ export function rviImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const { begIdx, count } = rvi(0, data.length - 1, data, 14, 10, out);
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = rvi(data, { timePeriod: 14, stdDevPeriod: 10 });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  * @see [`rma`](https://ta-lib.org/functions/rma)
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
  * @see [`cmo`](https://ta-lib.org/functions/cmo)
  */
-export function rvi(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInStdDevPeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('RVI', 'startIdx', startIdx);
-  endIdx = requireInt32('RVI', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('RVI', 'optInTimePeriod', optInTimePeriod);
-  optInStdDevPeriod = requireInt32('RVI', 'optInStdDevPeriod', optInStdDevPeriod);
-  requireIndexRange('RVI', startIdx, endIdx);
-  const guardStart = clampedStart('RVI', startIdx, rviLookback(optInTimePeriod, optInStdDevPeriod, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('RVI', 'inReal', inReal, guardInLen);
-  requireOutput('RVI', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outReal, inRealF64)) {
-    throw failure('RVI', RetCode.BAD_PARAM);
+export function rvi(real: ArrayLike<number>, options?: RviOptions): RviResult {
+  const o = optionsOf('RVI', options);
+  if (o.endIdx === undefined) {
+    requireSeries('RVI', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = rviImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('RVI', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInStdDevPeriod = orDefault(o.stdDevPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('RVI', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, rviLookbackPositional(optInTimePeriod, optInStdDevPeriod, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = rviPositional(startIdx, endIdx, real, optInTimePeriod, optInStdDevPeriod, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -957,7 +1032,7 @@ function rviOpenImpl(
   }
   outBegIdx.value = 0;
   outNBElement.value = 0;
-  lookbackTotal = rviLookback(optInTimePeriod, optInStdDevPeriod, core);
+  lookbackTotal = rviLookbackPositional(optInTimePeriod, optInStdDevPeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -1324,7 +1399,10 @@ export function rviOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('RVI openAndFill', inReal.length, startIdx, rviLookback(optInTimePeriod, optInStdDevPeriod, core));
+    throw insufficientHistory('RVI openAndFill', inReal.length, startIdx, rviLookbackPositional(optInTimePeriod, optInStdDevPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && rviLookbackPositional(optInTimePeriod, optInStdDevPeriod, core) < 0) {
+    throw rejectedParams('RVI openAndFill', PARAM_RANGES, optInTimePeriod, optInStdDevPeriod);
   }
   throw streamFailure('RVI openAndFill', retCode);
 }
@@ -1348,27 +1426,67 @@ export function rviOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('RVI open', inReal.length, startIdx, rviLookback(optInTimePeriod, optInStdDevPeriod, core));
+    throw insufficientHistory('RVI open', inReal.length, startIdx, rviLookbackPositional(optInTimePeriod, optInStdDevPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && rviLookbackPositional(optInTimePeriod, optInStdDevPeriod, core) < 0) {
+    throw rejectedParams('RVI open', PARAM_RANGES, optInTimePeriod, optInStdDevPeriod);
   }
   throw streamFailure('RVI open', retCode);
+}
+
+/** @internal */
+export function rviOpenPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInStdDevPeriod: number,
+  core: Core = Core.DEFAULT,
+): RviStream {
+  optInTimePeriod = requireInt32('RVI open', 'timePeriod', optInTimePeriod);
+  optInStdDevPeriod = requireInt32('RVI open', 'stdDevPeriod', optInStdDevPeriod);
+  requireArgument('RVI open', 'real', inReal);
+  requireHistory('RVI open', inReal.length);
+  return rviOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInStdDevPeriod);
+}
+
+/** @internal */
+export function rviOpenAndFillPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInStdDevPeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): RviStream {
+  optInTimePeriod = requireInt32('RVI openAndFill', 'timePeriod', optInTimePeriod);
+  optInStdDevPeriod = requireInt32('RVI openAndFill', 'stdDevPeriod', optInStdDevPeriod);
+  requireArgument('RVI openAndFill', 'real', inReal);
+  requireHistory('RVI openAndFill', inReal.length);
+  const guardLookback = rviLookbackPositional(optInTimePeriod, optInStdDevPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('RVI openAndFill', PARAM_RANGES, optInTimePeriod, optInStdDevPeriod);
+  }
+  const guardOutLen = openFillCount('RVI openAndFill', inReal.length, guardLookback);
+  requireOutput('RVI openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('RVI openAndFill', 'outReal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inRealF64)) {
+    throw sharedMemory('RVI openAndFill', 'outReal', 'real');
+  }
+  return rviOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, optInStdDevPeriod, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live RVI stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link rvi} there.
  *
- * @param inReal - Warm-up history. Source price/value series, canonically the
- *   close.
- * @param optInTimePeriod - Wilder smoothing period applied to both legs (default
- *   14; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInStdDevPeriod - Number of trailing values the standard deviation
- *   spans (default 10; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the
- *   default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param real - Warm-up history. Source price/value series, canonically the close.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link RviOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `rviLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
  *   an integer parameter that is not an int32 or a parameter outside its range.
  *
  * @example
@@ -1377,48 +1495,36 @@ export function rviOpenInternal(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = rviOpen(data, 14, 10);
+ * const stream = rviOpen(data, { timePeriod: 14, stdDevPeriod: 10 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
  */
-export function rviOpen(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInStdDevPeriod: number,
-  core: Core = Core.DEFAULT,
-): RviStream {
-  optInTimePeriod = requireInt32('RVI open', 'optInTimePeriod', optInTimePeriod);
-  optInStdDevPeriod = requireInt32('RVI open', 'optInStdDevPeriod', optInStdDevPeriod);
-  requireArgument('RVI open', 'inReal', inReal);
-  requireHistory('RVI open', inReal.length);
-  return rviOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInStdDevPeriod);
+export function rviOpen(real: ArrayLike<number>, options?: RviOptions): RviStream {
+  const o = optionsOf('RVI open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInStdDevPeriod = orDefault(o.stdDevPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('RVI open', o.core);
+  return rviOpenPositional(real, optInTimePeriod, optInStdDevPeriod, core);
 }
 
 /**
- * {@link rviOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link rvi}. The range written is the stream's
- * `outRange()`.
+ * {@link rviOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link rvi}.
  *
- * @param inReal - Warm-up history. Source price/value series, canonically the
- *   close.
- * @param optInTimePeriod - Wilder smoothing period applied to both legs (default
- *   14; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInStdDevPeriod - Number of trailing values the standard deviation
- *   spans (default 10; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the
- *   default).
- * @param outReal - Relative Volatility Index value. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param real - Warm-up history. Source price/value series, canonically the close.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link RviOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link rvi} returns them; the range is the stream's
+ *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `rviLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   an integer parameter that is not an int32, a parameter outside its range or an
- *   output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   an integer parameter that is not an int32, a parameter outside its range or a
+ *   buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1426,31 +1532,21 @@ export function rviOpen(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const stream = rviOpenAndFill(data, 14, 10, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = rviOpenAndFill(data, {
+ *   timePeriod: 14,
+ *   stdDevPeriod: 10,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function rviOpenAndFill(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInStdDevPeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): RviStream {
-  optInTimePeriod = requireInt32('RVI openAndFill', 'optInTimePeriod', optInTimePeriod);
-  optInStdDevPeriod = requireInt32('RVI openAndFill', 'optInStdDevPeriod', optInStdDevPeriod);
-  requireArgument('RVI openAndFill', 'inReal', inReal);
-  requireHistory('RVI openAndFill', inReal.length);
-  const guardOutLen = openFillCount('RVI openAndFill', inReal.length, rviLookback(optInTimePeriod, optInStdDevPeriod, core));
-  requireOutput('RVI openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
-    throw streamFailure('RVI openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inRealF64))) {
-    throw streamFailure('RVI openAndFill', RetCode.BAD_PARAM);
-  }
-  return rviOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, optInStdDevPeriod, new MInteger(), new MInteger(), outReal);
+export function rviOpenAndFill(real: ArrayLike<number>, options?: RviOptions): RviResult & { stream: RviStream } {
+  const o = optionsOf('RVI openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInStdDevPeriod = orDefault(o.stdDevPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('RVI openAndFill', o.core);
+  const capacity = fillCapacity(rviLookbackPositional(optInTimePeriod, optInStdDevPeriod, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = rviOpenAndFillPositional(real, optInTimePeriod, optInStdDevPeriod, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

@@ -35,34 +35,17 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { MaStream, ma, maLookback as maLookback_, maOpenAndFillInternal } from './ma.ts';
-import { StddevStream, stddev, stddevLookback as stddevLookback_, stddevOpenAndFillInternal } from './stddev.ts';
+import { MaStream, maLookbackPositional, maOpenAndFillInternal, maPositional } from './ma.ts';
+import { StddevStream, stddevLookbackPositional, stddevOpenAndFillInternal, stddevPositional } from './stddev.ts';
 
-/**
- * Number of leading input bars {@link bbands} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInTimePeriod - Periods for the MA and standard deviation (default 20;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDevUp - Standard-deviation multiplier for the upper band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInNbDevDn - Standard-deviation multiplier for the lower band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type for the middle band (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function bbandsLookback(optInTimePeriod: number, optInNbDevUp: number, optInNbDevDn: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function bbandsLookbackPositional(optInTimePeriod: number, optInNbDevUp: number, optInNbDevDn: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -109,35 +92,14 @@ export function bbandsLookback(optInTimePeriod: number, optInNbDevUp: number, op
    * Open is tied to lookback+1. The middle band still begins at the MA's earlier
    * begIdx internally and is realigned to this later bar in bbands() below.
    */
-  maLookback = maLookback_(optInTimePeriod, (optInMAType as MAType), core);
-  stddevLookback = stddevLookback_(optInTimePeriod, 1.0, core);
+  maLookback = maLookbackPositional(optInTimePeriod, (optInMAType as MAType), core);
+  stddevLookback = stddevLookbackPositional(optInTimePeriod, 1.0, core);
   return (maLookback > stddevLookback) ? maLookback : stddevLookback;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link bbands}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Periods for the MA and standard deviation (default 20;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDevUp - Standard-deviation multiplier for the upper band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInNbDevDn - Standard-deviation multiplier for the lower band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type for the middle band (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function bbandsDisplayShift(optInTimePeriod: number, optInNbDevUp: number, optInNbDevDn: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, core) < 0) {
+/** @internal */
+export function bbandsDisplayShiftPositional(optInTimePeriod: number, optInNbDevUp: number, optInNbDevDn: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 3) {
@@ -402,7 +364,7 @@ export function bbandsImpl(
    * deviation's, so its clamp already covers it. Pinned by the zero-length
    * no-I/O probe over every guarded core, at every MA type.
    */
-  if (bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, (optInMAType as MAType), core) > endIdx) {
+  if (bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, (optInMAType as MAType), core) > endIdx) {
     outBegIdx.value = 0;
     outNBElement.value = 0;
     return RetCode.SUCCESS;
@@ -410,7 +372,7 @@ export function bbandsImpl(
   tempBuffer1 = new Float64Array(endIdx - startIdx + 1);
   tempBuffer2 = new Float64Array(endIdx - startIdx + 1);
   /* Calculate the middle band moving average. */
-  const _xr0 = ma(startIdx, endIdx, inReal, optInTimePeriod, (optInMAType as MAType), tempBuffer1, core);
+  const _xr0 = maPositional(startIdx, endIdx, inReal, optInTimePeriod, (optInMAType as MAType), tempBuffer1, core);
   outBegIdx.value = _xr0.begIdx;
   outNBElement.value = _xr0.count;
   retCode = RetCode.SUCCESS;
@@ -421,7 +383,7 @@ export function bbandsImpl(
   /* Remember where the moving average begins, to realign it below. */
   maBegIdx = outBegIdx.value;
   /* Calculate the Standard Deviation into tempBuffer2. */
-  const _xr1 = stddev(outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, tempBuffer2, core);
+  const _xr1 = stddevPositional(outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, tempBuffer2, core);
   outBegIdx.value = _xr1.begIdx;
   outNBElement.value = _xr1.count;
   retCode = RetCode.SUCCESS;
@@ -458,71 +420,10 @@ export function bbandsImpl(
   return RetCode.SUCCESS;
 }
 
-/**
- * Bollinger Bands: a moving-average middle band with upper and lower bands offset
- * by a multiple of the standard deviation. Used to gauge relative price
- * volatility.
- *
- * Formula and more info at
- * [ta-lib.org/functions/bbands](https://ta-lib.org/functions/bbands).
- *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link bbandsLookback} is a success with
- * `count` 0.
- *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Input data series.
- * @param optInTimePeriod - Periods for the MA and standard deviation (default 20;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDevUp - Standard-deviation multiplier for the upper band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInNbDevDn - Standard-deviation multiplier for the lower band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type for the middle band (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outRealUpperBand - Middle band plus nbDevUp standard deviations. Must
- *   hold the values produced and never be empty; the input length always suffices.
- * @param outRealMiddleBand - The moving average. Must hold the values produced and
- *   never be empty; the input length always suffices.
- * @param outRealLowerBand - Middle band minus nbDevDn standard deviations. Must
- *   hold the values produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   real parameter that is not a number, a parameter outside its range, an array too
- *   short for the range, an empty output, two outputs sharing memory or an output
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { MAType, bbands } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const upperBand = new Float64Array(data.length);
- * const middleBand = new Float64Array(data.length);
- * const lowerBand = new Float64Array(data.length);
- * const { begIdx, count } = bbands(
- *   0, data.length - 1,
- *   data,
- *   20, 2, 2, MAType.SMA,
- *   upperBand, middleBand, lowerBand,
- * );
- * // upperBand[k] is the value at bar begIdx + k, for k < count
- * ```
- * @see [`ma`](https://ta-lib.org/functions/ma)
- * @see [`stddev`](https://ta-lib.org/functions/stddev)
- * @see [`sma`](https://ta-lib.org/functions/sma)
- */
-export function bbands(
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['nbDevUp', Core.REAL_DEFAULT, Core.REAL_MIN, Core.REAL_MAX, 'in -3e37..3e37'], ['nbDevDn', Core.REAL_DEFAULT, Core.REAL_MIN, Core.REAL_MAX, 'in -3e37..3e37'], ['maType', Core.INTEGER_DEFAULT, MATypes.Min, MATypes.Max, 'a MAType']] as const;
+
+/** @internal */
+export function bbandsPositional(
   startIdx: number,
   endIdx: number,
   inReal: ArrayLike<number>,
@@ -537,21 +438,40 @@ export function bbands(
 ): OutRange {
   startIdx = requireInt32('BBANDS', 'startIdx', startIdx);
   endIdx = requireInt32('BBANDS', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('BBANDS', 'optInTimePeriod', optInTimePeriod);
-  optInNbDevUp = requireReal('BBANDS', 'optInNbDevUp', optInNbDevUp);
-  optInNbDevDn = requireReal('BBANDS', 'optInNbDevDn', optInNbDevDn);
-  optInMAType = requireInt32('BBANDS', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  optInTimePeriod = requireInt32('BBANDS', 'timePeriod', optInTimePeriod);
+  optInNbDevUp = requireReal('BBANDS', 'nbDevUp', optInNbDevUp);
+  optInNbDevDn = requireReal('BBANDS', 'nbDevDn', optInNbDevDn);
+  optInMAType = requireInt32('BBANDS', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireIndexRange('BBANDS', startIdx, endIdx);
-  const guardStart = clampedStart('BBANDS', startIdx, bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, core));
+  const guardLookback = bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('BBANDS', PARAM_RANGES, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+  }
+  const guardStart = clampedStart('BBANDS', startIdx, guardLookback);
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('BBANDS', 'inReal', inReal, guardInLen);
-  requireOutput('BBANDS', 'outRealUpperBand', outRealUpperBand, guardOutLen, Float64Array);
-  requireOutput('BBANDS', 'outRealMiddleBand', outRealMiddleBand, guardOutLen, Float64Array);
-  requireOutput('BBANDS', 'outRealLowerBand', outRealLowerBand, guardOutLen, Float64Array);
+  requireLength('BBANDS', 'real', inReal, guardInLen);
+  requireOutput('BBANDS', 'outUpperBand', outRealUpperBand, guardOutLen, Float64Array);
+  requireOutput('BBANDS', 'outMiddleBand', outRealMiddleBand, guardOutLen, Float64Array);
+  requireOutput('BBANDS', 'outLowerBand', outRealLowerBand, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
-  if (overlapsPartly(outRealUpperBand, inRealF64) || overlapsPartly(outRealMiddleBand, inRealF64) || overlapsPartly(outRealLowerBand, inRealF64) || overlaps(outRealUpperBand, outRealMiddleBand) || overlaps(outRealUpperBand, outRealLowerBand) || overlaps(outRealMiddleBand, outRealLowerBand)) {
-    throw failure('BBANDS', RetCode.BAD_PARAM);
+  if (overlapsPartly(outRealUpperBand, inRealF64)) {
+    throw sharedMemory('BBANDS', 'outUpperBand', 'real');
+  }
+  if (overlapsPartly(outRealMiddleBand, inRealF64)) {
+    throw sharedMemory('BBANDS', 'outMiddleBand', 'real');
+  }
+  if (overlapsPartly(outRealLowerBand, inRealF64)) {
+    throw sharedMemory('BBANDS', 'outLowerBand', 'real');
+  }
+  if (overlaps(outRealUpperBand, outRealMiddleBand)) {
+    throw sharedMemory('BBANDS', 'outUpperBand', 'outMiddleBand');
+  }
+  if (overlaps(outRealUpperBand, outRealLowerBand)) {
+    throw sharedMemory('BBANDS', 'outUpperBand', 'outLowerBand');
+  }
+  if (overlaps(outRealMiddleBand, outRealLowerBand)) {
+    throw sharedMemory('BBANDS', 'outMiddleBand', 'outLowerBand');
   }
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
@@ -560,6 +480,199 @@ export function bbands(
     throw failure('BBANDS', retCode);
   }
   return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link bbands}, {@link bbandsLookback}, {@link bbandsDisplayShift},
+ * {@link bbandsOpen} and {@link bbandsOpenAndFill}. Every key is optional: an
+ * omitted or `undefined` key takes its default, and a call ignores the keys it has
+ * no use for.
+ */
+export interface BbandsOptions {
+  /**
+   * Periods for the MA and standard deviation (default 20; range 2 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * Standard-deviation multiplier for the upper band (default 2; `Core.REAL_DEFAULT`
+   * selects the default).
+   */
+  nbDevUp?: number | undefined;
+  /**
+   * Standard-deviation multiplier for the lower band (default 2; `Core.REAL_DEFAULT`
+   * selects the default).
+   */
+  nbDevDn?: number | undefined;
+  /**
+   * Moving-average type for the middle band (default `MAType.SMA`; values: 0=SMA,
+   * 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   * 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; `Core.INTEGER_DEFAULT` or
+   * `MAType.DEFAULT` selects the default).
+   */
+  maType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outUpperBand`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outUpperBand?: Float64Array | undefined;
+  /**
+   * Buffer for `outMiddleBand`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outMiddleBand?: Float64Array | undefined;
+  /**
+   * Buffer for `outLowerBand`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outLowerBand?: Float64Array | undefined;
+}
+
+/** What {@link bbands} returns, and {@link bbandsOpenAndFill} with its stream. */
+export interface BbandsResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Middle band plus nbDevUp standard deviations. `outUpperBand[k]` is the value at
+   * input bar `begIdx + k`.
+   */
+  outUpperBand: Float64Array;
+  /** The moving average. `outMiddleBand[k]` is the value at input bar `begIdx + k`. */
+  outMiddleBand: Float64Array;
+  /**
+   * Middle band minus nbDevDn standard deviations. `outLowerBand[k]` is the value at
+   * input bar `begIdx + k`.
+   */
+  outLowerBand: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link bbands} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link BbandsOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function bbandsLookback(options?: BbandsOptions): number {
+  const o = optionsOf('BBANDS lookback', options);
+  return bbandsLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.nbDevUp, Core.REAL_DEFAULT), orDefault(o.nbDevDn, Core.REAL_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), coreOf('BBANDS lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link bbands}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link BbandsOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function bbandsDisplayShift(outputIdx: number, options?: BbandsOptions): number {
+  const o = optionsOf('BBANDS displayShift', options);
+  return bbandsDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.nbDevUp, Core.REAL_DEFAULT), orDefault(o.nbDevDn, Core.REAL_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), outputIdx, coreOf('BBANDS displayShift', o.core));
+}
+
+/**
+ * Bollinger Bands: a moving-average middle band with upper and lower bands offset
+ * by a multiple of the standard deviation. Used to gauge relative price
+ * volatility.
+ *
+ * Formula and more info at
+ * [ta-lib.org/functions/bbands](https://ta-lib.org/functions/bbands).
+ *
+ * `outUpperBand[k]` is the value at input bar `begIdx + k`; every output is
+ * exactly as long as the number of values written, and nothing is padded. A range
+ * that ends before {@link bbandsLookback} is a success with empty outputs.
+ *
+ * @param real - Input data series.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link BbandsOptions}.
+ * @returns `begIdx` and the values; see {@link BbandsResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
+ * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
+ *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a real parameter that is not a
+ *   number, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
+ *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
+ *   anything is written.
+ *
+ * @example
+ * ```ts
+ * import { MAType, bbands } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const {
+ *   begIdx,
+ *   outUpperBand,
+ *   outMiddleBand,
+ *   outLowerBand,
+ * } = bbands(data, {
+ *   timePeriod: 20,
+ *   nbDevUp: 2,
+ *   nbDevDn: 2,
+ *   maType: MAType.SMA,
+ * });
+ * // outUpperBand[k] is the value at bar begIdx + k
+ * ```
+ * @see [`ma`](https://ta-lib.org/functions/ma)
+ * @see [`stddev`](https://ta-lib.org/functions/stddev)
+ * @see [`sma`](https://ta-lib.org/functions/sma)
+ */
+export function bbands(real: ArrayLike<number>, options?: BbandsOptions): BbandsResult {
+  const o = optionsOf('BBANDS', options);
+  if (o.endIdx === undefined) {
+    requireSeries('BBANDS', 'real', real);
+  }
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInNbDevUp = orDefault(o.nbDevUp, Core.REAL_DEFAULT);
+  const optInNbDevDn = orDefault(o.nbDevDn, Core.REAL_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('BBANDS', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, core), real);
+  const outRealUpperBand = o.outUpperBand === undefined ? new Float64Array(capacity) : o.outUpperBand;
+  const outRealMiddleBand = o.outMiddleBand === undefined ? new Float64Array(capacity) : o.outMiddleBand;
+  const outRealLowerBand = o.outLowerBand === undefined ? new Float64Array(capacity) : o.outLowerBand;
+  const range = bbandsPositional(startIdx, endIdx, real, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outRealUpperBand, outRealMiddleBand, outRealLowerBand, core);
+  return { begIdx: range.begIdx, outUpperBand: outRealUpperBand.subarray(0, range.count), outMiddleBand: outRealMiddleBand.subarray(0, range.count), outLowerBand: outRealLowerBand.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -631,19 +744,21 @@ export class BbandsStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inReal - The bar's `inReal` value: Input data series.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link BbandsOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out: BbandsOut): void {
+  update(inReal: number, out?: BbandsOut): BbandsOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('BBANDS update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('BBANDS update', 'BbandsOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -651,22 +766,27 @@ export class BbandsStream {
     }
     bbandsStepImpl(this, inReal);
     this.outRangeCount++;
-    out.realUpperBand = this.cur_outRealUpperBand;
-    out.realMiddleBand = this.cur_outRealMiddleBand;
-    out.realLowerBand = this.cur_outRealLowerBand;
+    if (out === undefined) {
+      out = new BbandsOut();
+    }
+    out.outUpperBand = this.cur_outRealUpperBand;
+    out.outMiddleBand = this.cur_outRealMiddleBand;
+    out.outLowerBand = this.cur_outRealLowerBand;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inReal - The bar's `inReal` value: Input data series.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link BbandsOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number, out: BbandsOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inReal: number, out?: BbandsOut): BbandsOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('BBANDS peek', 'BbandsOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -693,23 +813,33 @@ export class BbandsStream {
       cur_outRealLowerBand = tempReal2 - cur_tempBuffer2 * sp.optInNbDevDn;
     }
     cur_outRealMiddleBand = cur_tempBuffer1;
-    out.realUpperBand = cur_outRealUpperBand;
-    out.realMiddleBand = cur_outRealMiddleBand;
-    out.realLowerBand = cur_outRealLowerBand;
+    if (out === undefined) {
+      out = new BbandsOut();
+    }
+    out.outUpperBand = cur_outRealUpperBand;
+    out.outMiddleBand = cur_outRealMiddleBand;
+    out.outLowerBand = cur_outRealLowerBand;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link BbandsOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: BbandsOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: BbandsOut): BbandsOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('BBANDS value', 'BbandsOut');
     }
-    out.realUpperBand = this.cur_outRealUpperBand;
-    out.realMiddleBand = this.cur_outRealMiddleBand;
-    out.realLowerBand = this.cur_outRealLowerBand;
+    if (out === undefined) {
+      out = new BbandsOut();
+    }
+    out.outUpperBand = this.cur_outRealUpperBand;
+    out.outMiddleBand = this.cur_outRealMiddleBand;
+    out.outLowerBand = this.cur_outRealLowerBand;
+    return out;
   }
 
   /**
@@ -736,16 +866,17 @@ export class BbandsStream {
 }
 
 /**
- * The outputs of one BBANDS bar, written into an object the caller owns and
- * reuses: valid until the next call that writes it.
+ * The outputs of one BBANDS bar, as `update`, `peek` and `value` return them.
+ * Passed back to one of them, it is filled and returned again, with no allocation;
+ * it holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class BbandsOut {
   /** Middle band plus nbDevUp standard deviations. */
-  realUpperBand: number = 0;
+  outUpperBand: number = NaN;
   /** The moving average. */
-  realMiddleBand: number = 0;
+  outMiddleBand: number = NaN;
   /** Middle band minus nbDevDn standard deviations. */
-  realLowerBand: number = 0;
+  outLowerBand: number = NaN;
 }
 
 function bbandsStepImpl(sp: BbandsStream, inReal: number): void {
@@ -828,7 +959,7 @@ function bbandsOpenImpl(
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
   }
-  if (historyLen < bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core) + 1) {
+  if (historyLen < bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core) + 1) {
     return RetCode.INSUFFICIENT_HISTORY;
   }
   const sc_outRealUpperBand = outStride === 1 ? outRealUpperBand : new Float64Array(historyLen);
@@ -854,7 +985,7 @@ function bbandsOpenImpl(
    * deviation's, so its clamp already covers it. Pinned by the zero-length
    * no-I/O probe over every guarded core, at every MA type.
    */
-  if (bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, (optInMAType as MAType), core) > endIdx) {
+  if (bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, (optInMAType as MAType), core) > endIdx) {
     outBegIdx.value = 0;
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
@@ -939,7 +1070,10 @@ export function bbandsOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('BBANDS openAndFill', inReal.length, startIdx, bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core));
+    throw insufficientHistory('BBANDS openAndFill', inReal.length, startIdx, bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core) < 0) {
+    throw rejectedParams('BBANDS openAndFill', PARAM_RANGES, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
   }
   throw streamFailure('BBANDS openAndFill', retCode);
 }
@@ -967,48 +1101,16 @@ export function bbandsOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('BBANDS open', inReal.length, startIdx, bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core));
+    throw insufficientHistory('BBANDS open', inReal.length, startIdx, bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core) < 0) {
+    throw rejectedParams('BBANDS open', PARAM_RANGES, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
   }
   throw streamFailure('BBANDS open', retCode);
 }
 
-/**
- * Opens a live BBANDS stream over the warm-up history: `value()` starts at the
- * last history bar, bit-identical to {@link bbands} there.
- *
- * @param inReal - Warm-up history. Input data series.
- * @param optInTimePeriod - Periods for the MA and standard deviation (default 20;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDevUp - Standard-deviation multiplier for the upper band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInNbDevDn - Standard-deviation multiplier for the lower band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type for the middle band (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `bbandsLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a real parameter that is not a
- *   number or a parameter outside its range.
- *
- * @example
- * ```ts
- * import { BbandsOut, MAType, bbandsOpen } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const stream = bbandsOpen(data, 20, 2, 2, MAType.SMA);
- * const peeked = new BbandsOut();
- * const updated = new BbandsOut();
- * stream.peek(100.9, peeked); // a forming bar: commits nothing
- * stream.update(100.9, updated); // the bar closes
- * ```
- */
-export function bbandsOpen(
+/** @internal */
+export function bbandsOpenPositional(
   inReal: ArrayLike<number>,
   optInTimePeriod: number,
   optInNbDevUp: number,
@@ -1016,68 +1118,17 @@ export function bbandsOpen(
   optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
   core: Core = Core.DEFAULT,
 ): BbandsStream {
-  optInTimePeriod = requireInt32('BBANDS open', 'optInTimePeriod', optInTimePeriod);
-  optInNbDevUp = requireReal('BBANDS open', 'optInNbDevUp', optInNbDevUp);
-  optInNbDevDn = requireReal('BBANDS open', 'optInNbDevDn', optInNbDevDn);
-  optInMAType = requireInt32('BBANDS open', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('BBANDS open', 'inReal', inReal);
+  optInTimePeriod = requireInt32('BBANDS open', 'timePeriod', optInTimePeriod);
+  optInNbDevUp = requireReal('BBANDS open', 'nbDevUp', optInNbDevUp);
+  optInNbDevDn = requireReal('BBANDS open', 'nbDevDn', optInNbDevDn);
+  optInMAType = requireInt32('BBANDS open', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('BBANDS open', 'real', inReal);
   requireHistory('BBANDS open', inReal.length);
   return bbandsOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
 }
 
-/**
- * {@link bbandsOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link bbands}. The range written is the stream's
- * `outRange()`.
- *
- * @param inReal - Warm-up history. Input data series.
- * @param optInTimePeriod - Periods for the MA and standard deviation (default 20;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDevUp - Standard-deviation multiplier for the upper band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInNbDevDn - Standard-deviation multiplier for the lower band (default
- *   2; `Core.REAL_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type for the middle band (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outRealUpperBand - Middle band plus nbDevUp standard deviations. Must
- *   hold `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param outRealMiddleBand - The moving average. Must hold `historyLen - lookback`
- *   values and share no memory with an input or another output.
- * @param outRealLowerBand - Middle band minus nbDevDn standard deviations. Must
- *   hold `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `bbandsLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range or an output too short or starting where
- *   another output or a `Float64Array` input starts, or, on a history long enough to
- *   open, one sharing memory with another output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { MAType, bbandsOpenAndFill } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const upperBand = new Float64Array(data.length);
- * const middleBand = new Float64Array(data.length);
- * const lowerBand = new Float64Array(data.length);
- * const stream = bbandsOpenAndFill(
- *   data,
- *   20, 2, 2, MAType.SMA,
- *   upperBand, middleBand, lowerBand,
- * );
- * const { begIdx, count } = stream.outRange();
- * // upperBand[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function bbandsOpenAndFill(
+/** @internal */
+export function bbandsOpenAndFillPositional(
   inReal: ArrayLike<number>,
   optInTimePeriod: number,
   optInNbDevUp: number,
@@ -1088,22 +1139,152 @@ export function bbandsOpenAndFill(
   outRealLowerBand: Float64Array,
   core: Core = Core.DEFAULT,
 ): BbandsStream {
-  optInTimePeriod = requireInt32('BBANDS openAndFill', 'optInTimePeriod', optInTimePeriod);
-  optInNbDevUp = requireReal('BBANDS openAndFill', 'optInNbDevUp', optInNbDevUp);
-  optInNbDevDn = requireReal('BBANDS openAndFill', 'optInNbDevDn', optInNbDevDn);
-  optInMAType = requireInt32('BBANDS openAndFill', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('BBANDS openAndFill', 'inReal', inReal);
+  optInTimePeriod = requireInt32('BBANDS openAndFill', 'timePeriod', optInTimePeriod);
+  optInNbDevUp = requireReal('BBANDS openAndFill', 'nbDevUp', optInNbDevUp);
+  optInNbDevDn = requireReal('BBANDS openAndFill', 'nbDevDn', optInNbDevDn);
+  optInMAType = requireInt32('BBANDS openAndFill', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('BBANDS openAndFill', 'real', inReal);
   requireHistory('BBANDS openAndFill', inReal.length);
-  const guardOutLen = openFillCount('BBANDS openAndFill', inReal.length, bbandsLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core));
-  requireOutput('BBANDS openAndFill', 'outRealUpperBand', outRealUpperBand, guardOutLen, Float64Array);
-  requireOutput('BBANDS openAndFill', 'outRealMiddleBand', outRealMiddleBand, guardOutLen, Float64Array);
-  requireOutput('BBANDS openAndFill', 'outRealLowerBand', outRealLowerBand, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outRealUpperBand.buffer === inRealF64.buffer && outRealUpperBand.byteOffset === inRealF64.byteOffset) || (outRealMiddleBand.buffer === inRealF64.buffer && outRealMiddleBand.byteOffset === inRealF64.byteOffset) || (outRealLowerBand.buffer === inRealF64.buffer && outRealLowerBand.byteOffset === inRealF64.byteOffset) || (outRealUpperBand.buffer === outRealMiddleBand.buffer && outRealUpperBand.byteOffset === outRealMiddleBand.byteOffset) || (outRealUpperBand.buffer === outRealLowerBand.buffer && outRealUpperBand.byteOffset === outRealLowerBand.byteOffset) || (outRealMiddleBand.buffer === outRealLowerBand.buffer && outRealMiddleBand.byteOffset === outRealLowerBand.byteOffset)) {
-    throw streamFailure('BBANDS openAndFill', RetCode.BAD_PARAM);
+  const guardLookback = bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('BBANDS openAndFill', PARAM_RANGES, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
   }
-  if (guardOutLen > 0 && (overlaps(outRealUpperBand, inRealF64) || overlaps(outRealMiddleBand, inRealF64) || overlaps(outRealLowerBand, inRealF64) || overlaps(outRealUpperBand, outRealMiddleBand) || overlaps(outRealUpperBand, outRealLowerBand) || overlaps(outRealMiddleBand, outRealLowerBand))) {
-    throw streamFailure('BBANDS openAndFill', RetCode.BAD_PARAM);
+  const guardOutLen = openFillCount('BBANDS openAndFill', inReal.length, guardLookback);
+  requireOutput('BBANDS openAndFill', 'outUpperBand', outRealUpperBand, guardOutLen, Float64Array);
+  requireOutput('BBANDS openAndFill', 'outMiddleBand', outRealMiddleBand, guardOutLen, Float64Array);
+  requireOutput('BBANDS openAndFill', 'outLowerBand', outRealLowerBand, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outRealUpperBand.buffer === inRealF64.buffer && outRealUpperBand.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('BBANDS openAndFill', 'outUpperBand', 'real');
+  }
+  if (outRealMiddleBand.buffer === inRealF64.buffer && outRealMiddleBand.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('BBANDS openAndFill', 'outMiddleBand', 'real');
+  }
+  if (outRealLowerBand.buffer === inRealF64.buffer && outRealLowerBand.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('BBANDS openAndFill', 'outLowerBand', 'real');
+  }
+  if (outRealUpperBand.buffer === outRealMiddleBand.buffer && outRealUpperBand.byteOffset === outRealMiddleBand.byteOffset) {
+    throw sharedMemory('BBANDS openAndFill', 'outUpperBand', 'outMiddleBand');
+  }
+  if (outRealUpperBand.buffer === outRealLowerBand.buffer && outRealUpperBand.byteOffset === outRealLowerBand.byteOffset) {
+    throw sharedMemory('BBANDS openAndFill', 'outUpperBand', 'outLowerBand');
+  }
+  if (outRealMiddleBand.buffer === outRealLowerBand.buffer && outRealMiddleBand.byteOffset === outRealLowerBand.byteOffset) {
+    throw sharedMemory('BBANDS openAndFill', 'outMiddleBand', 'outLowerBand');
+  }
+  if (guardOutLen > 0 && overlaps(outRealUpperBand, inRealF64)) {
+    throw sharedMemory('BBANDS openAndFill', 'outUpperBand', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outRealMiddleBand, inRealF64)) {
+    throw sharedMemory('BBANDS openAndFill', 'outMiddleBand', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outRealLowerBand, inRealF64)) {
+    throw sharedMemory('BBANDS openAndFill', 'outLowerBand', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outRealUpperBand, outRealMiddleBand)) {
+    throw sharedMemory('BBANDS openAndFill', 'outUpperBand', 'outMiddleBand');
+  }
+  if (guardOutLen > 0 && overlaps(outRealUpperBand, outRealLowerBand)) {
+    throw sharedMemory('BBANDS openAndFill', 'outUpperBand', 'outLowerBand');
+  }
+  if (guardOutLen > 0 && overlaps(outRealMiddleBand, outRealLowerBand)) {
+    throw sharedMemory('BBANDS openAndFill', 'outMiddleBand', 'outLowerBand');
   }
   return bbandsOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, new MInteger(), new MInteger(), outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+}
+
+/**
+ * Opens a live BBANDS stream over the warm-up history: `value()` starts at the
+ * last history bar, bit-identical to {@link bbands} there.
+ *
+ * @param real - Warm-up history. Input data series.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link BbandsOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `bbandsLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a real parameter that is not a
+ *   number or a parameter outside its range.
+ *
+ * @example
+ * ```ts
+ * import { MAType, bbandsOpen } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const stream = bbandsOpen(data, {
+ *   timePeriod: 20,
+ *   nbDevUp: 2,
+ *   nbDevDn: 2,
+ *   maType: MAType.SMA,
+ * });
+ * const peeked = stream.peek(100.9); // a forming bar: commits nothing
+ * const updated = stream.update(100.9); // the bar closes
+ * ```
+ */
+export function bbandsOpen(real: ArrayLike<number>, options?: BbandsOptions): BbandsStream {
+  const o = optionsOf('BBANDS open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInNbDevUp = orDefault(o.nbDevUp, Core.REAL_DEFAULT);
+  const optInNbDevDn = orDefault(o.nbDevDn, Core.REAL_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('BBANDS open', o.core);
+  return bbandsOpenPositional(real, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, core);
+}
+
+/**
+ * {@link bbandsOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link bbands}.
+ *
+ * @param real - Warm-up history. Input data series.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link BbandsOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link bbands} returns them; the range is the
+ *   stream's `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `bbandsLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a real parameter that is not a
+ *   number, a parameter outside its range or a buffer too short, of the wrong type
+ *   or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
+ *
+ * @example
+ * ```ts
+ * import { MAType, bbandsOpenAndFill } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const {
+ *   stream,
+ *   begIdx,
+ *   outUpperBand,
+ *   outMiddleBand,
+ *   outLowerBand,
+ * } = bbandsOpenAndFill(data, {
+ *   timePeriod: 20,
+ *   nbDevUp: 2,
+ *   nbDevDn: 2,
+ *   maType: MAType.SMA,
+ * });
+ * // outUpperBand[k] is the value at bar begIdx + k
+ * ```
+ */
+export function bbandsOpenAndFill(real: ArrayLike<number>, options?: BbandsOptions): BbandsResult & { stream: BbandsStream } {
+  const o = optionsOf('BBANDS openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInNbDevUp = orDefault(o.nbDevUp, Core.REAL_DEFAULT);
+  const optInNbDevDn = orDefault(o.nbDevDn, Core.REAL_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('BBANDS openAndFill', o.core);
+  const capacity = fillCapacity(bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, core), real);
+  const outRealUpperBand = o.outUpperBand === undefined ? new Float64Array(capacity) : o.outUpperBand;
+  const outRealMiddleBand = o.outMiddleBand === undefined ? new Float64Array(capacity) : o.outMiddleBand;
+  const outRealLowerBand = o.outLowerBand === undefined ? new Float64Array(capacity) : o.outLowerBand;
+  const stream = bbandsOpenAndFillPositional(real, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outRealUpperBand, outRealMiddleBand, outRealLowerBand, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outUpperBand: outRealUpperBand.subarray(0, range.count), outMiddleBand: outRealMiddleBand.subarray(0, range.count), outLowerBand: outRealLowerBand.subarray(0, range.count) };
 }

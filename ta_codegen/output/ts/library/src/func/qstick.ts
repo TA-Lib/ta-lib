@@ -11,26 +11,14 @@
  *  081226 KL   Initial version.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link qstick} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInTimePeriod - Number of bars averaged. Default 10, matching Tulip
- *   Indicators and pandas-ta-classic. Other packages differ: TraderEvolution
- *   documents 1, and AmiBroker community code commonly uses 8 (default 10; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function qstickLookback(optInTimePeriod: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function qstickLookbackPositional(optInTimePeriod: number, _core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -42,24 +30,9 @@ export function qstickLookback(optInTimePeriod: number, core: Core = Core.DEFAUL
   return optInTimePeriod - 1;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link qstick}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Number of bars averaged. Default 10, matching Tulip
- *   Indicators and pandas-ta-classic. Other packages differ: TraderEvolution
- *   documents 1, and AmiBroker community code commonly uses 8 (default 10; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function qstickDisplayShift(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (qstickLookback(optInTimePeriod, core) < 0) {
+/** @internal */
+export function qstickDisplayShiftPositional(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (qstickLookbackPositional(optInTimePeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -162,59 +135,10 @@ export function qstickImpl(
   return RetCode.SUCCESS;
 }
 
-/**
- * Tushar Chande and Stanley Kroll's Qstick (*The New Technical Trader*, 1994): a
- * simple moving average of the candle body, close minus open. It measures how
- * bullish or bearish the bodies have been over the window, independently of the
- * wicks — above zero the bodies closed up on balance, below zero they closed down,
- * and the zero-line crossings are the signal.
- *
- * Formula and more info at
- * [ta-lib.org/functions/qstick](https://ta-lib.org/functions/qstick).
- *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link qstickLookback} is a success with
- * `count` 0.
- *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inOpen - Open price of each bar.
- * @param inClose - Close price of each bar.
- * @param optInTimePeriod - Number of bars averaged. Default 10, matching Tulip
- *   Indicators and pandas-ta-classic. Other packages differ: TraderEvolution
- *   documents 1, and AmiBroker community code commonly uses 8 (default 10; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Average candle body over the window. Must hold the values
- *   produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output
- *   or an output sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
- *
- * @example
- * ```ts
- * import { qstick } from 'ta-lib';
- *
- * const open = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i - 0.05));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Float64Array(open.length);
- * const { begIdx, count } = qstick(0, open.length - 1, open, close, 10, out);
- * // out[k] is the value at bar begIdx + k, for k < count
- * ```
- * @see [`cmo`](https://ta-lib.org/functions/cmo)
- * @see [`imi`](https://ta-lib.org/functions/imi)
- * @see [`mom`](https://ta-lib.org/functions/mom)
- * @see [`sma`](https://ta-lib.org/functions/sma)
- */
-export function qstick(
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000']] as const;
+
+/** @internal */
+export function qstickPositional(
   startIdx: number,
   endIdx: number,
   inOpen: ArrayLike<number>,
@@ -225,18 +149,25 @@ export function qstick(
 ): OutRange {
   startIdx = requireInt32('QSTICK', 'startIdx', startIdx);
   endIdx = requireInt32('QSTICK', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('QSTICK', 'optInTimePeriod', optInTimePeriod);
+  optInTimePeriod = requireInt32('QSTICK', 'timePeriod', optInTimePeriod);
   requireIndexRange('QSTICK', startIdx, endIdx);
-  const guardStart = clampedStart('QSTICK', startIdx, qstickLookback(optInTimePeriod, core));
+  const guardLookback = qstickLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('QSTICK', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardStart = clampedStart('QSTICK', startIdx, guardLookback);
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('QSTICK', 'inOpen', inOpen, guardInLen);
-  requireLength('QSTICK', 'inClose', inClose, guardInLen);
+  requireLength('QSTICK', 'prices.open', inOpen, guardInLen);
+  requireLength('QSTICK', 'prices.close', inClose, guardInLen);
   requireOutput('QSTICK', 'outReal', outReal, guardOutLen, Float64Array);
   const inOpenF64 = float64(inOpen);
   const inCloseF64 = float64(inClose);
-  if (overlapsPartly(outReal, inOpenF64) || overlapsPartly(outReal, inCloseF64)) {
-    throw failure('QSTICK', RetCode.BAD_PARAM);
+  if (overlapsPartly(outReal, inOpenF64)) {
+    throw sharedMemory('QSTICK', 'outReal', 'prices.open');
+  }
+  if (overlapsPartly(outReal, inCloseF64)) {
+    throw sharedMemory('QSTICK', 'outReal', 'prices.close');
   }
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
@@ -245,6 +176,153 @@ export function qstick(
     throw failure('QSTICK', retCode);
   }
   return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link qstick}, {@link qstickLookback}, {@link qstickDisplayShift},
+ * {@link qstickOpen} and {@link qstickOpenAndFill}. Every key is optional: an
+ * omitted or `undefined` key takes its default, and a call ignores the keys it has
+ * no use for.
+ */
+export interface QstickOptions {
+  /**
+   * Number of bars averaged. Default 10, matching Tulip Indicators and
+   * pandas-ta-classic. Other packages differ: TraderEvolution documents 1, and
+   * AmiBroker community code commonly uses 8 (default 10; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link qstick} returns, and {@link qstickOpenAndFill} with its stream. */
+export interface QstickResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Average candle body over the window. `values[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link qstick} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link QstickOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function qstickLookback(options?: QstickOptions): number {
+  const o = optionsOf('QSTICK lookback', options);
+  return qstickLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('QSTICK lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link qstick}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link QstickOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function qstickDisplayShift(outputIdx: number, options?: QstickOptions): number {
+  const o = optionsOf('QSTICK displayShift', options);
+  return qstickDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('QSTICK displayShift', o.core));
+}
+
+/**
+ * Tushar Chande and Stanley Kroll's Qstick (*The New Technical Trader*, 1994): a
+ * simple moving average of the candle body, close minus open. It measures how
+ * bullish or bearish the bodies have been over the window, independently of the
+ * wicks — above zero the bodies closed up on balance, below zero they closed down,
+ * and the zero-line crossings are the signal.
+ *
+ * Formula and more info at
+ * [ta-lib.org/functions/qstick](https://ta-lib.org/functions/qstick).
+ *
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link qstickLookback} is a success with empty outputs.
+ *
+ * @param prices - One series per price component, all of one length. `open`: Open
+ *   price of each bar. `close`: Close price of each bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link QstickOptions}.
+ * @returns `begIdx` and the values; see {@link QstickResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
+ * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
+ *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
+ *
+ * @example
+ * ```ts
+ * import { qstick } from 'ta-lib';
+ *
+ * const open = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i - 0.05));
+ * const close = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const { begIdx, values } = qstick({ open, close }, { timePeriod: 10 });
+ * // values[k] is the value at bar begIdx + k
+ * ```
+ * @see [`cmo`](https://ta-lib.org/functions/cmo)
+ * @see [`imi`](https://ta-lib.org/functions/imi)
+ * @see [`mom`](https://ta-lib.org/functions/mom)
+ * @see [`sma`](https://ta-lib.org/functions/sma)
+ */
+export function qstick(prices: { open: ArrayLike<number>; close: ArrayLike<number> }, options?: QstickOptions): QstickResult {
+  requireArgument('QSTICK', 'prices', prices);
+  const o = optionsOf('QSTICK', options);
+  if (o.endIdx === undefined) {
+    requireSeries('QSTICK', 'prices.open', prices.open);
+    requireSeries('QSTICK', 'prices.close', prices.close);
+  }
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('QSTICK', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.open.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, qstickLookbackPositional(optInTimePeriod, core), prices.open, prices.close);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = qstickPositional(startIdx, endIdx, prices.open, prices.close, optInTimePeriod, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -539,7 +617,10 @@ export function qstickOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('QSTICK openAndFill', inOpen.length, startIdx, qstickLookback(optInTimePeriod, core));
+    throw insufficientHistory('QSTICK openAndFill', inOpen.length, startIdx, qstickLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && qstickLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('QSTICK openAndFill', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('QSTICK openAndFill', retCode);
 }
@@ -563,30 +644,79 @@ export function qstickOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('QSTICK open', inOpen.length, startIdx, qstickLookback(optInTimePeriod, core));
+    throw insufficientHistory('QSTICK open', inOpen.length, startIdx, qstickLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && qstickLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('QSTICK open', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('QSTICK open', retCode);
+}
+
+/** @internal */
+export function qstickOpenPositional(
+  inOpen: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInTimePeriod: number,
+  core: Core = Core.DEFAULT,
+): QstickStream {
+  optInTimePeriod = requireInt32('QSTICK open', 'timePeriod', optInTimePeriod);
+  requireArgument('QSTICK open', 'prices.open', inOpen);
+  requireHistory('QSTICK open', inOpen.length);
+  requireArgument('QSTICK open', 'prices.close', inClose);
+  requireHistoryLength('QSTICK open', 'prices.close', inClose.length, inOpen.length);
+  return qstickOpenInternal(core, float64(inOpen), float64(inClose), 0, optInTimePeriod);
+}
+
+/** @internal */
+export function qstickOpenAndFillPositional(
+  inOpen: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInTimePeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): QstickStream {
+  optInTimePeriod = requireInt32('QSTICK openAndFill', 'timePeriod', optInTimePeriod);
+  requireArgument('QSTICK openAndFill', 'prices.open', inOpen);
+  requireHistory('QSTICK openAndFill', inOpen.length);
+  requireArgument('QSTICK openAndFill', 'prices.close', inClose);
+  const guardLookback = qstickLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('QSTICK openAndFill', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardOutLen = openFillCount('QSTICK openAndFill', inOpen.length, guardLookback);
+  requireHistoryLength('QSTICK openAndFill', 'prices.close', inClose.length, inOpen.length);
+  requireOutput('QSTICK openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inOpenF64 = float64(inOpen);
+  const inCloseF64 = float64(inClose);
+  if (outReal.buffer === inOpenF64.buffer && outReal.byteOffset === inOpenF64.byteOffset) {
+    throw sharedMemory('QSTICK openAndFill', 'outReal', 'prices.open');
+  }
+  if (outReal.buffer === inCloseF64.buffer && outReal.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('QSTICK openAndFill', 'outReal', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inOpenF64)) {
+    throw sharedMemory('QSTICK openAndFill', 'outReal', 'prices.open');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inCloseF64)) {
+    throw sharedMemory('QSTICK openAndFill', 'outReal', 'prices.close');
+  }
+  return qstickOpenAndFillInternal(core, inOpenF64, inCloseF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live QSTICK stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link qstick} there.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param optInTimePeriod - Number of bars averaged. Default 10, matching Tulip
- *   Indicators and pandas-ta-classic. Other packages differ: TraderEvolution
- *   documents 1, and AmiBroker community code commonly uses 8 (default 10; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link QstickOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `qstickLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range or
- *   histories of different lengths.
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range
+ *   or histories of different lengths.
  *
  * @example
  * ```ts
@@ -596,50 +726,38 @@ export function qstickOpenInternal(
  *   100 + 10 * Math.sin(0.1 * i - 0.05));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = qstickOpen(open, close, 10);
+ * const stream = qstickOpen({ open, close }, { timePeriod: 10 });
  * const peeked = stream.peek(100.2, 100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.2, 100.9); // the bar closes
  * ```
  */
-export function qstickOpen(
-  inOpen: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInTimePeriod: number,
-  core: Core = Core.DEFAULT,
-): QstickStream {
-  optInTimePeriod = requireInt32('QSTICK open', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('QSTICK open', 'inOpen', inOpen);
-  requireHistory('QSTICK open', inOpen.length);
-  requireArgument('QSTICK open', 'inClose', inClose);
-  requireHistoryLength('QSTICK open', 'inClose', inClose.length, inOpen.length);
-  return qstickOpenInternal(core, float64(inOpen), float64(inClose), 0, optInTimePeriod);
+export function qstickOpen(prices: { open: ArrayLike<number>; close: ArrayLike<number> }, options?: QstickOptions): QstickStream {
+  requireArgument('QSTICK open', 'prices', prices);
+  const o = optionsOf('QSTICK open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('QSTICK open', o.core);
+  return qstickOpenPositional(prices.open, prices.close, optInTimePeriod, core);
 }
 
 /**
- * {@link qstickOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link qstick}. The range written is the stream's
- * `outRange()`.
+ * {@link qstickOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link qstick}.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param optInTimePeriod - Number of bars averaged. Default 10, matching Tulip
- *   Indicators and pandas-ta-classic. Other packages differ: TraderEvolution
- *   documents 1, and AmiBroker community code commonly uses 8 (default 10; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Average candle body over the window. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link QstickOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link qstick} returns them; the range is the
+ *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `qstickLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range,
- *   histories of different lengths or an output too short or starting where another
- *   output or a `Float64Array` input starts, or, on a history long enough to open,
- *   one sharing memory with another output or a `Float64Array` input.
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -649,33 +767,20 @@ export function qstickOpen(
  *   100 + 10 * Math.sin(0.1 * i - 0.05));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Float64Array(open.length);
- * const stream = qstickOpenAndFill(open, close, 10, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = qstickOpenAndFill({ open, close }, {
+ *   timePeriod: 10,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function qstickOpenAndFill(
-  inOpen: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInTimePeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): QstickStream {
-  optInTimePeriod = requireInt32('QSTICK openAndFill', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('QSTICK openAndFill', 'inOpen', inOpen);
-  requireHistory('QSTICK openAndFill', inOpen.length);
-  requireArgument('QSTICK openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('QSTICK openAndFill', inOpen.length, qstickLookback(optInTimePeriod, core));
-  requireHistoryLength('QSTICK openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireOutput('QSTICK openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inOpenF64 = float64(inOpen);
-  const inCloseF64 = float64(inClose);
-  if ((outReal.buffer === inOpenF64.buffer && outReal.byteOffset === inOpenF64.byteOffset) || (outReal.buffer === inCloseF64.buffer && outReal.byteOffset === inCloseF64.byteOffset)) {
-    throw streamFailure('QSTICK openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inOpenF64) || overlaps(outReal, inCloseF64))) {
-    throw streamFailure('QSTICK openAndFill', RetCode.BAD_PARAM);
-  }
-  return qstickOpenAndFillInternal(core, inOpenF64, inCloseF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outReal);
+export function qstickOpenAndFill(prices: { open: ArrayLike<number>; close: ArrayLike<number> }, options?: QstickOptions): QstickResult & { stream: QstickStream } {
+  requireArgument('QSTICK openAndFill', 'prices', prices);
+  const o = optionsOf('QSTICK openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('QSTICK openAndFill', o.core);
+  const capacity = fillCapacity(qstickLookbackPositional(optInTimePeriod, core), prices.open, prices.close);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = qstickOpenAndFillPositional(prices.open, prices.close, optInTimePeriod, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

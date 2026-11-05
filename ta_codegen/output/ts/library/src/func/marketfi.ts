@@ -11,42 +11,22 @@
  *  081226 KL   Initial version.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link marketfi} consumes before its first value:
- * the index of the first bar with a value when the whole series is requested.
- *
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function marketfiLookback(core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function marketfiLookbackPositional(_core: Core = Core.DEFAULT): number {
   /* Each output depends only on its own bar, so nothing is consumed
    * before the first one can be produced.
    */
   return 0;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link marketfi}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function marketfiDisplayShift(outputIdx: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function marketfiDisplayShiftPositional(outputIdx: number, _core: Core = Core.DEFAULT): number {
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
     return -2147483648;
   }
@@ -110,6 +90,125 @@ export function marketfiImpl(
   return RetCode.SUCCESS;
 }
 
+/** @internal */
+export function marketfiPositional(
+  startIdx: number,
+  endIdx: number,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inVolume: ArrayLike<number>,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('MARKETFI', 'startIdx', startIdx);
+  endIdx = requireInt32('MARKETFI', 'endIdx', endIdx);
+  requireIndexRange('MARKETFI', startIdx, endIdx);
+  const guardStart = clampedStart('MARKETFI', startIdx, marketfiLookbackPositional(core));
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('MARKETFI', 'prices.high', inHigh, guardInLen);
+  requireLength('MARKETFI', 'prices.low', inLow, guardInLen);
+  requireLength('MARKETFI', 'prices.volume', inVolume, guardInLen);
+  requireOutput('MARKETFI', 'outReal', outReal, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inVolumeF64 = float64(inVolume);
+  if (overlapsPartly(outReal, inHighF64)) {
+    throw sharedMemory('MARKETFI', 'outReal', 'prices.high');
+  }
+  if (overlapsPartly(outReal, inLowF64)) {
+    throw sharedMemory('MARKETFI', 'outReal', 'prices.low');
+  }
+  if (overlapsPartly(outReal, inVolumeF64)) {
+    throw sharedMemory('MARKETFI', 'outReal', 'prices.volume');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = marketfiImpl(core, startIdx, endIdx, inHighF64, inLowF64, inVolumeF64, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('MARKETFI', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link marketfi}, {@link marketfiLookback},
+ * {@link marketfiDisplayShift}, {@link marketfiOpen} and
+ * {@link marketfiOpenAndFill}. Every key is optional: an omitted or `undefined`
+ * key takes its default, and a call ignores the keys it has no use for.
+ */
+export interface MarketfiOptions {
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link marketfi} returns, and {@link marketfiOpenAndFill} with its stream. */
+export interface MarketfiResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Range travelled per unit of volume, per bar. `values[k]` is the value at input
+   * bar `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link marketfi} consumes before its first value:
+ * the index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MarketfiOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function marketfiLookback(options?: MarketfiOptions): number {
+  const o = optionsOf('MARKETFI lookback', options);
+  return marketfiLookbackPositional(coreOf('MARKETFI lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link marketfi}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MarketfiOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function marketfiDisplayShift(outputIdx: number, options?: MarketfiOptions): number {
+  const o = optionsOf('MARKETFI displayShift', options);
+  return marketfiDisplayShiftPositional(outputIdx, coreOf('MARKETFI displayShift', o.core));
+}
+
 /**
  * Bill Williams' Market Facilitation Index (*Trading Chaos*, 1995): the price
  * range a bar travelled per unit of volume traded — how much movement the market
@@ -125,26 +224,23 @@ export function marketfiImpl(
  * Formula and more info at
  * [ta-lib.org/functions/marketfi](https://ta-lib.org/functions/marketfi).
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link marketfiLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link marketfiLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param inVolume - Volume of each bar.
- * @param outReal - Range travelled per unit of volume, per bar. Must hold the
- *   values produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `high`: High
+ *   price of each bar. `low`: Low price of each bar. `volume`: Volume of each bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link MarketfiOptions}.
+ * @returns `begIdx` and the values; see {@link MarketfiResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, an
- *   array too short for the range, an empty output or an output sharing memory with
- *   a `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an input too short for the range, a buffer that is empty, too short or of
+ *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -156,9 +252,8 @@ export function marketfiImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const out = new Float64Array(high.length);
- * const { begIdx, count } = marketfi(0, high.length - 1, high, low, volume, out);
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = marketfi({ high, low, volume });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`ad`](https://ta-lib.org/functions/ad)
  * @see [`adosc`](https://ta-lib.org/functions/adosc)
@@ -166,38 +261,21 @@ export function marketfiImpl(
  * @see [`obv`](https://ta-lib.org/functions/obv)
  * @see [`pvi`](https://ta-lib.org/functions/pvi)
  */
-export function marketfi(
-  startIdx: number,
-  endIdx: number,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inVolume: ArrayLike<number>,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('MARKETFI', 'startIdx', startIdx);
-  endIdx = requireInt32('MARKETFI', 'endIdx', endIdx);
-  requireIndexRange('MARKETFI', startIdx, endIdx);
-  const guardStart = clampedStart('MARKETFI', startIdx, marketfiLookback(core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('MARKETFI', 'inHigh', inHigh, guardInLen);
-  requireLength('MARKETFI', 'inLow', inLow, guardInLen);
-  requireLength('MARKETFI', 'inVolume', inVolume, guardInLen);
-  requireOutput('MARKETFI', 'outReal', outReal, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inVolumeF64 = float64(inVolume);
-  if (overlapsPartly(outReal, inHighF64) || overlapsPartly(outReal, inLowF64) || overlapsPartly(outReal, inVolumeF64)) {
-    throw failure('MARKETFI', RetCode.BAD_PARAM);
+export function marketfi(prices: { high: ArrayLike<number>; low: ArrayLike<number>; volume: ArrayLike<number> }, options?: MarketfiOptions): MarketfiResult {
+  requireArgument('MARKETFI', 'prices', prices);
+  const o = optionsOf('MARKETFI', options);
+  if (o.endIdx === undefined) {
+    requireSeries('MARKETFI', 'prices.high', prices.high);
+    requireSeries('MARKETFI', 'prices.low', prices.low);
+    requireSeries('MARKETFI', 'prices.volume', prices.volume);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = marketfiImpl(core, startIdx, endIdx, inHighF64, inLowF64, inVolumeF64, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('MARKETFI', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const core = coreOf('MARKETFI', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.high.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, marketfiLookbackPositional(core), prices.high, prices.low, prices.volume);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = marketfiPositional(startIdx, endIdx, prices.high, prices.low, prices.volume, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -432,7 +510,7 @@ export function marketfiOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MARKETFI openAndFill', inHigh.length, startIdx, marketfiLookback(core));
+    throw insufficientHistory('MARKETFI openAndFill', inHigh.length, startIdx, marketfiLookbackPositional(core));
   }
   throw streamFailure('MARKETFI openAndFill', retCode);
 }
@@ -456,27 +534,81 @@ export function marketfiOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MARKETFI open', inHigh.length, startIdx, marketfiLookback(core));
+    throw insufficientHistory('MARKETFI open', inHigh.length, startIdx, marketfiLookbackPositional(core));
   }
   throw streamFailure('MARKETFI open', retCode);
+}
+
+/** @internal */
+export function marketfiOpenPositional(
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inVolume: ArrayLike<number>,
+  core: Core = Core.DEFAULT,
+): MarketfiStream {
+  requireArgument('MARKETFI open', 'prices.high', inHigh);
+  requireHistory('MARKETFI open', inHigh.length);
+  requireArgument('MARKETFI open', 'prices.low', inLow);
+  requireArgument('MARKETFI open', 'prices.volume', inVolume);
+  requireHistoryLength('MARKETFI open', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('MARKETFI open', 'prices.volume', inVolume.length, inHigh.length);
+  return marketfiOpenInternal(core, float64(inHigh), float64(inLow), float64(inVolume), 0);
+}
+
+/** @internal */
+export function marketfiOpenAndFillPositional(
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inVolume: ArrayLike<number>,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): MarketfiStream {
+  requireArgument('MARKETFI openAndFill', 'prices.high', inHigh);
+  requireHistory('MARKETFI openAndFill', inHigh.length);
+  requireArgument('MARKETFI openAndFill', 'prices.low', inLow);
+  requireArgument('MARKETFI openAndFill', 'prices.volume', inVolume);
+  const guardOutLen = openFillCount('MARKETFI openAndFill', inHigh.length, marketfiLookbackPositional(core));
+  requireHistoryLength('MARKETFI openAndFill', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('MARKETFI openAndFill', 'prices.volume', inVolume.length, inHigh.length);
+  requireOutput('MARKETFI openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inVolumeF64 = float64(inVolume);
+  if (outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('MARKETFI openAndFill', 'outReal', 'prices.high');
+  }
+  if (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('MARKETFI openAndFill', 'outReal', 'prices.low');
+  }
+  if (outReal.buffer === inVolumeF64.buffer && outReal.byteOffset === inVolumeF64.byteOffset) {
+    throw sharedMemory('MARKETFI openAndFill', 'outReal', 'prices.volume');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inHighF64)) {
+    throw sharedMemory('MARKETFI openAndFill', 'outReal', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inLowF64)) {
+    throw sharedMemory('MARKETFI openAndFill', 'outReal', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inVolumeF64)) {
+    throw sharedMemory('MARKETFI openAndFill', 'outReal', 'prices.volume');
+  }
+  return marketfiOpenAndFillInternal(core, inHighF64, inLowF64, inVolumeF64, 0, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live MARKETFI stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link marketfi} there.
  *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inVolume - Warm-up history. Volume of each bar. Every history has the
- *   same length.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar. `volume`:
+ *   Volume of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MarketfiOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `marketfiLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for histories of different lengths.
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input or histories of different lengths.
  *
  * @example
  * ```ts
@@ -488,48 +620,37 @@ export function marketfiOpenInternal(
  *   99 + 10 * Math.sin(0.1 * i));
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const stream = marketfiOpen(high, low, volume);
+ * const stream = marketfiOpen({ high, low, volume });
  * const peeked = stream.peek(101.4, 99.1, 12345); // a forming bar: commits nothing
  * const updated = stream.update(101.4, 99.1, 12345); // the bar closes
  * ```
  */
-export function marketfiOpen(
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inVolume: ArrayLike<number>,
-  core: Core = Core.DEFAULT,
-): MarketfiStream {
-  requireArgument('MARKETFI open', 'inHigh', inHigh);
-  requireHistory('MARKETFI open', inHigh.length);
-  requireArgument('MARKETFI open', 'inLow', inLow);
-  requireArgument('MARKETFI open', 'inVolume', inVolume);
-  requireHistoryLength('MARKETFI open', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('MARKETFI open', 'inVolume', inVolume.length, inHigh.length);
-  return marketfiOpenInternal(core, float64(inHigh), float64(inLow), float64(inVolume), 0);
+export function marketfiOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; volume: ArrayLike<number> }, options?: MarketfiOptions): MarketfiStream {
+  requireArgument('MARKETFI open', 'prices', prices);
+  const o = optionsOf('MARKETFI open', options);
+  const core = coreOf('MARKETFI open', o.core);
+  return marketfiOpenPositional(prices.high, prices.low, prices.volume, core);
 }
 
 /**
- * {@link marketfiOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link marketfi}. The range written is the
- * stream's `outRange()`.
+ * {@link marketfiOpen} that also computes the outputs over the whole history in
+ * the same pass, bit-identically to {@link marketfi}.
  *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inVolume - Warm-up history. Volume of each bar. Every history has the
- *   same length.
- * @param outReal - Range travelled per unit of volume, per bar. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar. `volume`:
+ *   Volume of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link MarketfiOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link marketfi} returns them; the range is the
+ *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `marketfiLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for histories of different lengths or an output too short or starting where
- *   another output or a `Float64Array` input starts, or, on a history long enough to
- *   open, one sharing memory with another output or a `Float64Array` input.
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, histories of different lengths or a buffer too short, of the wrong type
+ *   or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
  *
  * @example
  * ```ts
@@ -541,35 +662,17 @@ export function marketfiOpen(
  *   99 + 10 * Math.sin(0.1 * i));
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const out = new Float64Array(high.length);
- * const stream = marketfiOpenAndFill(high, low, volume, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = marketfiOpenAndFill({ high, low, volume });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function marketfiOpenAndFill(
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inVolume: ArrayLike<number>,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): MarketfiStream {
-  requireArgument('MARKETFI openAndFill', 'inHigh', inHigh);
-  requireHistory('MARKETFI openAndFill', inHigh.length);
-  requireArgument('MARKETFI openAndFill', 'inLow', inLow);
-  requireArgument('MARKETFI openAndFill', 'inVolume', inVolume);
-  const guardOutLen = openFillCount('MARKETFI openAndFill', inHigh.length, marketfiLookback(core));
-  requireHistoryLength('MARKETFI openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('MARKETFI openAndFill', 'inVolume', inVolume.length, inHigh.length);
-  requireOutput('MARKETFI openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inVolumeF64 = float64(inVolume);
-  if ((outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) || (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset) || (outReal.buffer === inVolumeF64.buffer && outReal.byteOffset === inVolumeF64.byteOffset)) {
-    throw streamFailure('MARKETFI openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inHighF64) || overlaps(outReal, inLowF64) || overlaps(outReal, inVolumeF64))) {
-    throw streamFailure('MARKETFI openAndFill', RetCode.BAD_PARAM);
-  }
-  return marketfiOpenAndFillInternal(core, inHighF64, inLowF64, inVolumeF64, 0, new MInteger(), new MInteger(), outReal);
+export function marketfiOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; volume: ArrayLike<number> }, options?: MarketfiOptions): MarketfiResult & { stream: MarketfiStream } {
+  requireArgument('MARKETFI openAndFill', 'prices', prices);
+  const o = optionsOf('MARKETFI openAndFill', options);
+  const core = coreOf('MARKETFI openAndFill', o.core);
+  const capacity = fillCapacity(marketfiLookbackPositional(core), prices.high, prices.low, prices.volume);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = marketfiOpenAndFillPositional(prices.high, prices.low, prices.volume, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

@@ -22,28 +22,15 @@
  *  102426 MF,CC #554 zero-run test on the true range itself.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { smaLookback } from './sma.ts';
+import { smaLookbackPositional } from './sma.ts';
 
-/**
- * Number of leading input bars {@link ultosc} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInTimePeriod1 - Bars for one averaging window (default 7; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInTimePeriod2 - Bars for another averaging window (default 14; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInTimePeriod3 - Bars for another averaging window (default 28; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function ultoscLookback(optInTimePeriod1: number, optInTimePeriod2: number, optInTimePeriod3: number, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function ultoscLookbackPositional(optInTimePeriod1: number, optInTimePeriod2: number, optInTimePeriod3: number, core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod1 | 0) !== optInTimePeriod1) {
     return -1;
   }
@@ -73,29 +60,12 @@ export function ultoscLookback(optInTimePeriod1: number, optInTimePeriod2: numbe
    * time period, plus 1 for the True Range.
    */
   maxPeriod = ((optInTimePeriod1 > optInTimePeriod2 ? optInTimePeriod1 : optInTimePeriod2) > optInTimePeriod3 ? (optInTimePeriod1 > optInTimePeriod2 ? optInTimePeriod1 : optInTimePeriod2) : optInTimePeriod3);
-  return smaLookback(maxPeriod, core) + 1;
+  return smaLookbackPositional(maxPeriod, core) + 1;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link ultosc}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod1 - Bars for one averaging window (default 7; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInTimePeriod2 - Bars for another averaging window (default 14; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInTimePeriod3 - Bars for another averaging window (default 28; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function ultoscDisplayShift(optInTimePeriod1: number, optInTimePeriod2: number, optInTimePeriod3: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (ultoscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core) < 0) {
+/** @internal */
+export function ultoscDisplayShiftPositional(optInTimePeriod1: number, optInTimePeriod2: number, optInTimePeriod3: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (ultoscLookbackPositional(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -207,7 +177,7 @@ export function ultoscImpl(
   optInTimePeriod2 = sortedPeriods[1];
   optInTimePeriod3 = sortedPeriods[0];
   /* Adjust startIdx for lookback period. */
-  lookbackTotal = ultoscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core);
+  lookbackTotal = ultoscLookbackPositional(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -396,6 +366,149 @@ export function ultoscImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['timePeriod1', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['timePeriod2', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['timePeriod3', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000']] as const;
+
+/** @internal */
+export function ultoscPositional(
+  startIdx: number,
+  endIdx: number,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInTimePeriod1: number,
+  optInTimePeriod2: number,
+  optInTimePeriod3: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('ULTOSC', 'startIdx', startIdx);
+  endIdx = requireInt32('ULTOSC', 'endIdx', endIdx);
+  optInTimePeriod1 = requireInt32('ULTOSC', 'timePeriod1', optInTimePeriod1);
+  optInTimePeriod2 = requireInt32('ULTOSC', 'timePeriod2', optInTimePeriod2);
+  optInTimePeriod3 = requireInt32('ULTOSC', 'timePeriod3', optInTimePeriod3);
+  requireIndexRange('ULTOSC', startIdx, endIdx);
+  const guardLookback = ultoscLookbackPositional(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('ULTOSC', PARAM_RANGES, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+  }
+  const guardStart = clampedStart('ULTOSC', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('ULTOSC', 'prices.high', inHigh, guardInLen);
+  requireLength('ULTOSC', 'prices.low', inLow, guardInLen);
+  requireLength('ULTOSC', 'prices.close', inClose, guardInLen);
+  requireOutput('ULTOSC', 'outReal', outReal, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (overlapsPartly(outReal, inHighF64)) {
+    throw sharedMemory('ULTOSC', 'outReal', 'prices.high');
+  }
+  if (overlapsPartly(outReal, inLowF64)) {
+    throw sharedMemory('ULTOSC', 'outReal', 'prices.low');
+  }
+  if (overlapsPartly(outReal, inCloseF64)) {
+    throw sharedMemory('ULTOSC', 'outReal', 'prices.close');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = ultoscImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('ULTOSC', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link ultosc}, {@link ultoscLookback}, {@link ultoscDisplayShift},
+ * {@link ultoscOpen} and {@link ultoscOpenAndFill}. Every key is optional: an
+ * omitted or `undefined` key takes its default, and a call ignores the keys it has
+ * no use for.
+ */
+export interface UltoscOptions {
+  /**
+   * Bars for one averaging window (default 7; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod1?: number | undefined;
+  /**
+   * Bars for another averaging window (default 14; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod2?: number | undefined;
+  /**
+   * Bars for another averaging window (default 28; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod3?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link ultosc} returns, and {@link ultoscOpenAndFill} with its stream. */
+export interface UltoscResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /** Ultimate Oscillator value. `values[k]` is the value at input bar `begIdx + k`. */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link ultosc} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link UltoscOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function ultoscLookback(options?: UltoscOptions): number {
+  const o = optionsOf('ULTOSC lookback', options);
+  return ultoscLookbackPositional(orDefault(o.timePeriod1, Core.INTEGER_DEFAULT), orDefault(o.timePeriod2, Core.INTEGER_DEFAULT), orDefault(o.timePeriod3, Core.INTEGER_DEFAULT), coreOf('ULTOSC lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link ultosc}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link UltoscOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function ultoscDisplayShift(outputIdx: number, options?: UltoscOptions): number {
+  const o = optionsOf('ULTOSC displayShift', options);
+  return ultoscDisplayShiftPositional(orDefault(o.timePeriod1, Core.INTEGER_DEFAULT), orDefault(o.timePeriod2, Core.INTEGER_DEFAULT), orDefault(o.timePeriod3, Core.INTEGER_DEFAULT), outputIdx, coreOf('ULTOSC displayShift', o.core));
+}
+
 /**
  * Ultimate Oscillator: momentum indicator combining buying-pressure/true-range
  * ratios over three time periods into one 0-100 weighted average. Blends short-,
@@ -410,33 +523,25 @@ export function ultoscImpl(
  *   to the shortest, middle, and longest period regardless of the order in which
  *   you pass them.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link ultoscLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link ultoscLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param inClose - Close price of each bar.
- * @param optInTimePeriod1 - Bars for one averaging window (default 7; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInTimePeriod2 - Bars for another averaging window (default 14; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInTimePeriod3 - Bars for another averaging window (default 28; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Ultimate Oscillator value. Must hold the values produced and
- *   never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `high`: High
+ *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
+ *   bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link UltoscOptions}.
+ * @returns `begIdx` and the values; see {@link UltoscResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output
- *   or an output sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -448,57 +553,35 @@ export function ultoscImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Float64Array(high.length);
- * const { begIdx, count } = ultosc(
- *   0, high.length - 1,
- *   high, low, close,
- *   7, 14, 28,
- *   out,
- * );
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = ultosc({ high, low, close }, {
+ *   timePeriod1: 7,
+ *   timePeriod2: 14,
+ *   timePeriod3: 28,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`atr`](https://ta-lib.org/functions/atr)
  * @see [`trange`](https://ta-lib.org/functions/trange)
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  */
-export function ultosc(
-  startIdx: number,
-  endIdx: number,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInTimePeriod1: number,
-  optInTimePeriod2: number,
-  optInTimePeriod3: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('ULTOSC', 'startIdx', startIdx);
-  endIdx = requireInt32('ULTOSC', 'endIdx', endIdx);
-  optInTimePeriod1 = requireInt32('ULTOSC', 'optInTimePeriod1', optInTimePeriod1);
-  optInTimePeriod2 = requireInt32('ULTOSC', 'optInTimePeriod2', optInTimePeriod2);
-  optInTimePeriod3 = requireInt32('ULTOSC', 'optInTimePeriod3', optInTimePeriod3);
-  requireIndexRange('ULTOSC', startIdx, endIdx);
-  const guardStart = clampedStart('ULTOSC', startIdx, ultoscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('ULTOSC', 'inHigh', inHigh, guardInLen);
-  requireLength('ULTOSC', 'inLow', inLow, guardInLen);
-  requireLength('ULTOSC', 'inClose', inClose, guardInLen);
-  requireOutput('ULTOSC', 'outReal', outReal, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if (overlapsPartly(outReal, inHighF64) || overlapsPartly(outReal, inLowF64) || overlapsPartly(outReal, inCloseF64)) {
-    throw failure('ULTOSC', RetCode.BAD_PARAM);
+export function ultosc(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: UltoscOptions): UltoscResult {
+  requireArgument('ULTOSC', 'prices', prices);
+  const o = optionsOf('ULTOSC', options);
+  if (o.endIdx === undefined) {
+    requireSeries('ULTOSC', 'prices.high', prices.high);
+    requireSeries('ULTOSC', 'prices.low', prices.low);
+    requireSeries('ULTOSC', 'prices.close', prices.close);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = ultoscImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('ULTOSC', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod1 = orDefault(o.timePeriod1, Core.INTEGER_DEFAULT);
+  const optInTimePeriod2 = orDefault(o.timePeriod2, Core.INTEGER_DEFAULT);
+  const optInTimePeriod3 = orDefault(o.timePeriod3, Core.INTEGER_DEFAULT);
+  const core = coreOf('ULTOSC', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.high.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, ultoscLookbackPositional(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core), prices.high, prices.low, prices.close);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = ultoscPositional(startIdx, endIdx, prices.high, prices.low, prices.close, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -993,7 +1076,7 @@ function ultoscOpenImpl(
   optInTimePeriod2 = sortedPeriods[1];
   optInTimePeriod3 = sortedPeriods[0];
   /* Adjust startIdx for lookback period. */
-  lookbackTotal = ultoscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core);
+  lookbackTotal = ultoscLookbackPositional(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -1227,7 +1310,10 @@ export function ultoscOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('ULTOSC openAndFill', inHigh.length, startIdx, ultoscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core));
+    throw insufficientHistory('ULTOSC openAndFill', inHigh.length, startIdx, ultoscLookbackPositional(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && ultoscLookbackPositional(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core) < 0) {
+    throw rejectedParams('ULTOSC openAndFill', PARAM_RANGES, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
   }
   throw streamFailure('ULTOSC openAndFill', retCode);
 }
@@ -1254,34 +1340,101 @@ export function ultoscOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('ULTOSC open', inHigh.length, startIdx, ultoscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core));
+    throw insufficientHistory('ULTOSC open', inHigh.length, startIdx, ultoscLookbackPositional(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && ultoscLookbackPositional(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core) < 0) {
+    throw rejectedParams('ULTOSC open', PARAM_RANGES, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
   }
   throw streamFailure('ULTOSC open', retCode);
+}
+
+/** @internal */
+export function ultoscOpenPositional(
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInTimePeriod1: number,
+  optInTimePeriod2: number,
+  optInTimePeriod3: number,
+  core: Core = Core.DEFAULT,
+): UltoscStream {
+  optInTimePeriod1 = requireInt32('ULTOSC open', 'timePeriod1', optInTimePeriod1);
+  optInTimePeriod2 = requireInt32('ULTOSC open', 'timePeriod2', optInTimePeriod2);
+  optInTimePeriod3 = requireInt32('ULTOSC open', 'timePeriod3', optInTimePeriod3);
+  requireArgument('ULTOSC open', 'prices.high', inHigh);
+  requireHistory('ULTOSC open', inHigh.length);
+  requireArgument('ULTOSC open', 'prices.low', inLow);
+  requireArgument('ULTOSC open', 'prices.close', inClose);
+  requireHistoryLength('ULTOSC open', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('ULTOSC open', 'prices.close', inClose.length, inHigh.length);
+  return ultoscOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+}
+
+/** @internal */
+export function ultoscOpenAndFillPositional(
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInTimePeriod1: number,
+  optInTimePeriod2: number,
+  optInTimePeriod3: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): UltoscStream {
+  optInTimePeriod1 = requireInt32('ULTOSC openAndFill', 'timePeriod1', optInTimePeriod1);
+  optInTimePeriod2 = requireInt32('ULTOSC openAndFill', 'timePeriod2', optInTimePeriod2);
+  optInTimePeriod3 = requireInt32('ULTOSC openAndFill', 'timePeriod3', optInTimePeriod3);
+  requireArgument('ULTOSC openAndFill', 'prices.high', inHigh);
+  requireHistory('ULTOSC openAndFill', inHigh.length);
+  requireArgument('ULTOSC openAndFill', 'prices.low', inLow);
+  requireArgument('ULTOSC openAndFill', 'prices.close', inClose);
+  const guardLookback = ultoscLookbackPositional(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('ULTOSC openAndFill', PARAM_RANGES, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+  }
+  const guardOutLen = openFillCount('ULTOSC openAndFill', inHigh.length, guardLookback);
+  requireHistoryLength('ULTOSC openAndFill', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('ULTOSC openAndFill', 'prices.close', inClose.length, inHigh.length);
+  requireOutput('ULTOSC openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('ULTOSC openAndFill', 'outReal', 'prices.high');
+  }
+  if (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('ULTOSC openAndFill', 'outReal', 'prices.low');
+  }
+  if (outReal.buffer === inCloseF64.buffer && outReal.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('ULTOSC openAndFill', 'outReal', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inHighF64)) {
+    throw sharedMemory('ULTOSC openAndFill', 'outReal', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inLowF64)) {
+    throw sharedMemory('ULTOSC openAndFill', 'outReal', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inCloseF64)) {
+    throw sharedMemory('ULTOSC openAndFill', 'outReal', 'prices.close');
+  }
+  return ultoscOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live ULTOSC stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link ultosc} there.
  *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param optInTimePeriod1 - Bars for one averaging window (default 7; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInTimePeriod2 - Bars for another averaging window (default 14; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInTimePeriod3 - Bars for another averaging window (default 28; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link UltoscOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `ultoscLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range or
- *   histories of different lengths.
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range
+ *   or histories of different lengths.
  *
  * @example
  * ```ts
@@ -1293,60 +1446,45 @@ export function ultoscOpenInternal(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = ultoscOpen(high, low, close, 7, 14, 28);
+ * const stream = ultoscOpen({ high, low, close }, {
+ *   timePeriod1: 7,
+ *   timePeriod2: 14,
+ *   timePeriod3: 28,
+ * });
  * const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function ultoscOpen(
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInTimePeriod1: number,
-  optInTimePeriod2: number,
-  optInTimePeriod3: number,
-  core: Core = Core.DEFAULT,
-): UltoscStream {
-  optInTimePeriod1 = requireInt32('ULTOSC open', 'optInTimePeriod1', optInTimePeriod1);
-  optInTimePeriod2 = requireInt32('ULTOSC open', 'optInTimePeriod2', optInTimePeriod2);
-  optInTimePeriod3 = requireInt32('ULTOSC open', 'optInTimePeriod3', optInTimePeriod3);
-  requireArgument('ULTOSC open', 'inHigh', inHigh);
-  requireHistory('ULTOSC open', inHigh.length);
-  requireArgument('ULTOSC open', 'inLow', inLow);
-  requireArgument('ULTOSC open', 'inClose', inClose);
-  requireHistoryLength('ULTOSC open', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('ULTOSC open', 'inClose', inClose.length, inHigh.length);
-  return ultoscOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+export function ultoscOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: UltoscOptions): UltoscStream {
+  requireArgument('ULTOSC open', 'prices', prices);
+  const o = optionsOf('ULTOSC open', options);
+  const optInTimePeriod1 = orDefault(o.timePeriod1, Core.INTEGER_DEFAULT);
+  const optInTimePeriod2 = orDefault(o.timePeriod2, Core.INTEGER_DEFAULT);
+  const optInTimePeriod3 = orDefault(o.timePeriod3, Core.INTEGER_DEFAULT);
+  const core = coreOf('ULTOSC open', o.core);
+  return ultoscOpenPositional(prices.high, prices.low, prices.close, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core);
 }
 
 /**
- * {@link ultoscOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link ultosc}. The range written is the stream's
- * `outRange()`.
+ * {@link ultoscOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link ultosc}.
  *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param optInTimePeriod1 - Bars for one averaging window (default 7; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInTimePeriod2 - Bars for another averaging window (default 14; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInTimePeriod3 - Bars for another averaging window (default 28; range 1
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Ultimate Oscillator value. Must hold `historyLen - lookback`
- *   values and share no memory with an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link UltoscOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link ultosc} returns them; the range is the
+ *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `ultoscLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range,
- *   histories of different lengths or an output too short or starting where another
- *   output or a `Float64Array` input starts, or, on a history long enough to open,
- *   one sharing memory with another output or a `Float64Array` input.
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -1358,41 +1496,24 @@ export function ultoscOpen(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Float64Array(high.length);
- * const stream = ultoscOpenAndFill(high, low, close, 7, 14, 28, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = ultoscOpenAndFill({ high, low, close }, {
+ *   timePeriod1: 7,
+ *   timePeriod2: 14,
+ *   timePeriod3: 28,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function ultoscOpenAndFill(
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInTimePeriod1: number,
-  optInTimePeriod2: number,
-  optInTimePeriod3: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): UltoscStream {
-  optInTimePeriod1 = requireInt32('ULTOSC openAndFill', 'optInTimePeriod1', optInTimePeriod1);
-  optInTimePeriod2 = requireInt32('ULTOSC openAndFill', 'optInTimePeriod2', optInTimePeriod2);
-  optInTimePeriod3 = requireInt32('ULTOSC openAndFill', 'optInTimePeriod3', optInTimePeriod3);
-  requireArgument('ULTOSC openAndFill', 'inHigh', inHigh);
-  requireHistory('ULTOSC openAndFill', inHigh.length);
-  requireArgument('ULTOSC openAndFill', 'inLow', inLow);
-  requireArgument('ULTOSC openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('ULTOSC openAndFill', inHigh.length, ultoscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core));
-  requireHistoryLength('ULTOSC openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('ULTOSC openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireOutput('ULTOSC openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if ((outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) || (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset) || (outReal.buffer === inCloseF64.buffer && outReal.byteOffset === inCloseF64.byteOffset)) {
-    throw streamFailure('ULTOSC openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inHighF64) || overlaps(outReal, inLowF64) || overlaps(outReal, inCloseF64))) {
-    throw streamFailure('ULTOSC openAndFill', RetCode.BAD_PARAM);
-  }
-  return ultoscOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, new MInteger(), new MInteger(), outReal);
+export function ultoscOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: UltoscOptions): UltoscResult & { stream: UltoscStream } {
+  requireArgument('ULTOSC openAndFill', 'prices', prices);
+  const o = optionsOf('ULTOSC openAndFill', options);
+  const optInTimePeriod1 = orDefault(o.timePeriod1, Core.INTEGER_DEFAULT);
+  const optInTimePeriod2 = orDefault(o.timePeriod2, Core.INTEGER_DEFAULT);
+  const optInTimePeriod3 = orDefault(o.timePeriod3, Core.INTEGER_DEFAULT);
+  const core = coreOf('ULTOSC openAndFill', o.core);
+  const capacity = fillCapacity(ultoscLookbackPositional(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, core), prices.high, prices.low, prices.close);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = ultoscOpenAndFillPositional(prices.high, prices.low, prices.close, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

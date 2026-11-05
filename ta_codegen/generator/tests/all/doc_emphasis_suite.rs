@@ -89,7 +89,13 @@ fn rendered_docs(name: &str, registry: &Registry) -> Vec<(String, String)> {
         backends::csharp_doc::lookback_docs(&func, &upper, &enums),
     ));
     out.push((format!("ts {upper} batch"), backends::ts_doc::batch_docs(&func, &enums, registry)));
-    out.push((format!("ts {upper} lookback"), backends::ts_doc::lookback_docs(&func, &enums)));
+    out.push((format!("ts {upper} lookback"), backends::ts_doc::lookback_docs(&func)));
+    let options: String = func
+        .optional_inputs
+        .iter()
+        .map(|o| backends::ts_doc::member(&backends::ts_doc::param_text(&func, o, &enums)))
+        .collect();
+    out.push((format!("ts {upper} options"), options));
     out
 }
 

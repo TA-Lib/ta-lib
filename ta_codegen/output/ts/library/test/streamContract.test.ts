@@ -52,7 +52,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { type Arr, L, N, type Param, type Range, series } from './corpus.ts';
-import { bytes, filled, type Named, namedSpecs, optsOf, outOfDomain, outputsOf, rejects, untouched } from './contract.ts';
+import { assertNamesRange, bytes, filled, type Named, namedSpecs, optsOf, outOfDomain, outputsOf, rejects, untouched } from './contract.ts';
 import * as lib from '../src/index.ts';
 import { Core, MAType } from '../src/index.ts';
 import { FuncFlags, Functions } from '../src/metadata/index.ts';
@@ -83,7 +83,7 @@ function history(s: Named, data: Record<string, Float64Array>, n: number): Float
 function read(s: Named, h: Stream, verb: 'update' | 'peek' | 'value', bars: number[]): number[] {
   if (s.outClass === null) return [h[verb](...bars) as number];
   const sink = new (L[s.outClass] as new () => Record<string, number>)();
-  h[verb](...bars, sink);
+  assert.equal(h[verb](...bars, sink), sink, `${s.fn} ${verb}: the given sink is not returned`);
   return Object.keys(sink).map((k) => sink[k]);
 }
 
@@ -125,37 +125,44 @@ test('an opener names its own function: one bar is too short for every function 
   assert.ok(own > 0 && opened > 0, `${own} rejecting, ${opened} zero-lookback`);
 });
 
-test('openAndFill refuses an absent output naming it, and an empty one even on a history too short to open', () => {
+test('openAndFill refuses a null output naming it, allocates an undefined one, and refuses an empty one even on a history too short to open', () => {
   const data = series(42);
   let absent = 0;
+  let allocated = 0;
   let empty = 0;
   for (const s of SPECS) {
     const opts = dflt(s);
     const lb = s.lookback(...opts) as number;
     const full = history(s, data, N);
+    const ref = s.fillFull(...full, ...opts, ...outputsOf(s).map((p) => filled(p, N)));
     outputsOf(s).forEach((o, k) => {
       const outs = (n: number): unknown[] => outputsOf(s).map((p) => filled(p, n));
-      for (const none of [null, undefined]) {
-        const a = outs(N);
-        a[k] = none;
-        rejects(() => s.fill(...full, ...opts, ...a), 'TA_BAD_PARAM', `${s.fn}: ${o.name}=${none}`, `${s.fn} openAndFill: ${o.name} is absent`);
-        absent++;
-      }
+      const z = outs(N);
+      z[k] = null;
+      rejects(() => s.fill(...full, ...opts, ...z), 'TA_BAD_PARAM', `${s.fn}: ${o.name}=null`, `${s.fn} openAndFill: ${o.key} is absent`);
+      absent++;
+      const u = outs(N);
+      u[k] = undefined;
+      const got = s.fillFull(...full, ...opts, ...u);
+      assert.deepEqual(got.range, ref.range, `${s.fn}: ${o.name}=undefined: range`);
+      got.outs.forEach((x, j) => assert.deepEqual(bytes(x), bytes(ref.outs[j]), `${s.fn}: ${o.name}=undefined: output ${j}`));
+      allocated++;
       const a = outs(N);
       a[k] = filled(o, 0);
-      rejects(() => s.fill(...full, ...opts, ...a), 'TA_BAD_PARAM', `${s.fn}: empty ${o.name}`, `${s.fn} openAndFill: ${o.name} has length 0, needs ${N - lb}`);
+      rejects(() => s.fill(...full, ...opts, ...a), 'TA_BAD_PARAM', `${s.fn}: empty ${o.name}`, `${s.fn} openAndFill: ${o.key} has length 0, needs ${N - lb}`);
       empty++;
       if (lb === 0) return;
       const b = outs(1);
       b[k] = filled(o, 0);
-      rejects(() => s.fill(...history(s, data, lb), ...opts, ...b), 'TA_BAD_PARAM', `${s.fn}: empty ${o.name}, short history`, `${s.fn} openAndFill: ${o.name} is empty`);
+      rejects(() => s.fill(...history(s, data, lb), ...opts, ...b), 'TA_BAD_PARAM', `${s.fn}: empty ${o.name}, short history`, `${s.fn} openAndFill: ${o.key} is empty`);
       empty++;
     });
     if (lb > 0) {
       rejects(() => s.fill(...history(s, data, lb), ...opts, ...outputsOf(s).map((p) => filled(p, 1))), 'TA_INSUFFICIENT_HISTORY', `${s.fn}: one element each`);
     }
   }
-  assert.equal(absent, 2 * SPECS.reduce((n, s) => n + outputsOf(s).length, 0));
+  assert.equal(absent, SPECS.reduce((n, s) => n + outputsOf(s).length, 0));
+  assert.equal(allocated, absent);
   assert.ok(empty > SPECS.length, `only ${empty} empty outputs`);
 });
 
@@ -168,8 +175,8 @@ test('openAndFill refuses an output of another element type, naming it', () => {
     outputsOf(s).forEach((o, k) => {
       const outs: unknown[] = outputsOf(s).map((p) => filled(p, N));
       outs[k] = o.int32 ? new Float64Array(N) : new Float32Array(N);
-      const want = o.int32 ? 'Int32Array' : 'Float64Array';
-      rejects(() => s.fill(...full, ...opts, ...outs), 'TA_BAD_PARAM', `${s.fn}: ${o.name}`, `${s.fn} openAndFill: ${o.name} is not a ${want}`);
+      const want = o.int32 ? 'an Int32Array' : 'a Float64Array';
+      rejects(() => s.fill(...full, ...opts, ...outs), 'TA_BAD_PARAM', `${s.fn}: ${o.name}`, `${s.fn} openAndFill: ${o.key} is not ${want}`);
       checked++;
     });
   }
@@ -181,7 +188,7 @@ function claiming(n: number): ArrayLike<number> {
   return { length: n } as ArrayLike<number>;
 }
 
-test('an empty history is a short history ahead of every presence check, and one past INDEX_MAX + 1 bars is the end-index fault', () => {
+test('an empty history is a short history ahead of every leg presence, length and output check, an absent leg is named once a bar is there, and one past INDEX_MAX + 1 bars is the end-index fault', () => {
   let probes = 0;
   let legs = 0;
   let inclusive = 0;
@@ -193,9 +200,17 @@ test('an empty history is a short history ahead of every presence check, and one
     rejects(() => s.open(...empty, ...opts), 'TA_INSUFFICIENT_HISTORY', `${s.fn} open: empty`, `${s.fn} open: history shorter than lookback + 1`);
     rejects(() => s.fill(...empty, ...opts, ...none), 'TA_INSUFFICIENT_HISTORY', `${s.fn} openAndFill: empty, no outputs`, `${s.fn} openAndFill: history shorter than lookback + 1`);
     if (ins.length > 1) {
+      // As in every backend, an empty history outranks an absent leg.
       const firstOnly = ins.map((_, k) => (k === 0 ? new Float64Array(0) : null));
-      rejects(() => s.open(...firstOnly, ...opts), 'TA_INSUFFICIENT_HISTORY', `${s.fn} open: empty history, absent legs`);
-      rejects(() => s.fill(...firstOnly, ...opts, ...none), 'TA_INSUFFICIENT_HISTORY', `${s.fn} openAndFill: empty history, absent legs`);
+      rejects(() => s.open(...firstOnly, ...opts), 'TA_INSUFFICIENT_HISTORY', `${s.fn} open: empty history, absent legs`, `${s.fn} open: history shorter than lookback + 1`);
+      rejects(() => s.fill(...firstOnly, ...opts, ...none), 'TA_INSUFFICIENT_HISTORY', `${s.fn} openAndFill: empty history, absent legs`, `${s.fn} openAndFill: history shorter than lookback + 1`);
+      // A one-bar history is past that check, so the absent leg is named.
+      const oneBar = ins.map((_, k) => (k === 0 ? new Float64Array(1) : null));
+      rejects(() => s.open(...oneBar, ...opts), 'TA_BAD_PARAM', `${s.fn} open: one bar, absent legs`, `${s.fn} open: ${ins[1].key} is absent`);
+      rejects(() => s.fill(...oneBar, ...opts, ...none), 'TA_BAD_PARAM', `${s.fn} openAndFill: one bar, absent legs`, `${s.fn} openAndFill: ${ins[1].key} is absent`);
+      const firstEmpty = ins.map((_, k) => new Float64Array(k === 0 ? 0 : 5));
+      rejects(() => s.open(...firstEmpty, ...opts), 'TA_INSUFFICIENT_HISTORY', `${s.fn} open: empty history, longer legs`, `${s.fn} open: history shorter than lookback + 1`);
+      rejects(() => s.fill(...firstEmpty, ...opts, ...none), 'TA_INSUFFICIENT_HISTORY', `${s.fn} openAndFill: empty history, longer legs`, `${s.fn} openAndFill: history shorter than lookback + 1`);
       legs++;
     }
     const past = ins.map(() => claiming(Core.INDEX_MAX + 2));
@@ -232,8 +247,8 @@ test('every history leg must be exactly the history length', () => {
       for (const len of [h - 1, h + 1]) {
         const legs = ins.map((q, j) => data[q.name].subarray(0, j === k ? len : h));
         const outs = outputsOf(s).map((o) => filled(o, N));
-        rejects(() => s.open(...legs, ...opts), 'TA_BAD_PARAM', `${s.fn} open: ${p.name} of ${len}`, `${s.fn} open: ${p.name} has length ${len}, needs ${h}`);
-        rejects(() => s.fill(...legs, ...opts, ...outs), 'TA_BAD_PARAM', `${s.fn} openAndFill: ${p.name} of ${len}`, `${s.fn} openAndFill: ${p.name} has length ${len}, needs ${h}`);
+        rejects(() => s.open(...legs, ...opts), 'TA_BAD_PARAM', `${s.fn} open: ${p.name} of ${len}`, `${s.fn} open: ${p.key} has length ${len}, needs ${h}`);
+        rejects(() => s.fill(...legs, ...opts, ...outs), 'TA_BAD_PARAM', `${s.fn} openAndFill: ${p.name} of ${len}`, `${s.fn} openAndFill: ${p.key} has length ${len}, needs ${h}`);
         for (const o of outs) assert.ok(untouched(o), `${s.fn} openAndFill: a rejected leg wrote an output`);
         probes++;
       }
@@ -254,8 +269,8 @@ test('an absent history or leg is TA_BAD_PARAM naming it at both openers, and a 
         const legs: unknown[] = ins.map((q) => data[q.name].subarray(0, N));
         legs[k] = none;
         const outs = outputsOf(s).map((o) => filled(o, N));
-        rejects(() => s.open(...legs, ...opts), 'TA_BAD_PARAM', `${s.fn} open: ${p.name}=${none}`, `${s.fn} open: ${p.name} is absent`);
-        rejects(() => s.fill(...legs, ...opts, ...outs), 'TA_BAD_PARAM', `${s.fn} openAndFill: ${p.name}=${none}`, `${s.fn} openAndFill: ${p.name} is absent`);
+        rejects(() => s.open(...legs, ...opts), 'TA_BAD_PARAM', `${s.fn} open: ${p.name}=${none}`, `${s.fn} open: ${p.key} is absent`);
+        rejects(() => s.fill(...legs, ...opts, ...outs), 'TA_BAD_PARAM', `${s.fn} openAndFill: ${p.name}=${none}`, `${s.fn} openAndFill: ${p.key} is absent`);
         for (const o of outs) assert.ok(untouched(o), `${s.fn} openAndFill: an absent ${p.name} wrote an output`);
         probes++;
       }
@@ -282,7 +297,7 @@ test('the fill output bound from both sides: exact accepted, one short refused w
       exact++;
       outputsOf(s).forEach((o, k) => {
         const outs = outputsOf(s).map((p, j) => filled(p, j === k ? produced - 1 : produced));
-        rejects(() => s.fill(...ins, ...opts, ...outs), 'TA_BAD_PARAM', `${what}: ${o.name} one short`, `${s.fn} openAndFill: ${o.name} has length ${produced - 1}, needs ${produced}`);
+        rejects(() => s.fill(...ins, ...opts, ...outs), 'TA_BAD_PARAM', `${what}: ${o.name} one short`, `${s.fn} openAndFill: ${o.key} has length ${produced - 1}, needs ${produced}`);
         for (const a of outs) assert.ok(untouched(a), `${what}: a rejected fill wrote an output`);
         short++;
       });
@@ -308,8 +323,9 @@ test('a parameter out of its domain outranks an absent output at the opener', ()
       const opts = dflt(s);
       opts[k] = outOfDomain(s, k);
       const what = `${s.fn}: ${p.name}=${opts[k]}`;
-      rejects(() => s.open(...ins, ...opts), 'TA_BAD_PARAM', `${what} open`, `${s.fn} open: bad parameter...`);
-      rejects(() => s.fill(...ins, ...opts, ...none), 'TA_BAD_PARAM', `${what} openAndFill, no outputs`, `${s.fn} openAndFill: bad parameter...`);
+      assertNamesRange(s, k, `${s.fn} open`, opts[k], rejects(() => s.open(...ins, ...opts), 'TA_BAD_PARAM', `${what} open`), `${what} open`);
+      const fill = `${what} openAndFill, no outputs`;
+      assertNamesRange(s, k, `${s.fn} openAndFill`, opts[k], rejects(() => s.fill(...ins, ...opts, ...none), 'TA_BAD_PARAM', fill), fill);
       probes++;
     });
   }
@@ -322,7 +338,6 @@ test('a non-finite real parameter is refused at every entry point, and its lookb
   let realParams = 0;
   for (const s of SPECS) {
     const ins = history(s, data, N);
-    const shift = L[`${s.name}DisplayShift`] as (...a: unknown[]) => number;
     optsOf(s).forEach((p, k) => {
       if (p.kind !== 'real') return;
       realParams++;
@@ -332,12 +347,12 @@ test('a non-finite real parameter is refused at every entry point, and its lookb
         const what = `${s.fn}: ${p.name}=${v}`;
         const outs = (): Arr[] => outputsOf(s).map((o) => filled(o, N));
         const batchOuts = outs();
-        rejects(() => s.batch(0, N - 1, ...ins, ...opts, ...batchOuts), 'TA_BAD_PARAM', `${what} batch`, `${s.fn}: bad parameter...`);
+        assertNamesRange(s, k, s.fn, v, rejects(() => s.batch(0, N - 1, ...ins, ...opts, ...batchOuts), 'TA_BAD_PARAM', `${what} batch`), `${what} batch`);
         for (const a of batchOuts) assert.ok(untouched(a), `${what}: a rejected batch call wrote`);
-        rejects(() => s.open(...ins, ...opts), 'TA_BAD_PARAM', `${what} open`);
-        rejects(() => s.fill(...ins, ...opts, ...outs()), 'TA_BAD_PARAM', `${what} openAndFill`);
+        assertNamesRange(s, k, `${s.fn} open`, v, rejects(() => s.open(...ins, ...opts), 'TA_BAD_PARAM', `${what} open`), `${what} open`);
+        assertNamesRange(s, k, `${s.fn} openAndFill`, v, rejects(() => s.fill(...ins, ...opts, ...outs()), 'TA_BAD_PARAM', `${what} openAndFill`), `${what} openAndFill`);
         assert.equal(s.lookback(...opts), -1, `${what} lookback`);
-        assert.equal(shift(...opts, 0), -2147483648, `${what} display shift`);
+        assert.equal(s.shift(...opts, 0), -2147483648, `${what} display shift`);
         probes++;
       }
     });
@@ -393,9 +408,9 @@ test('the last bar a stream counts is INDEX_MAX: past it advance and update refu
   const close = data.inClose.subarray(0, h);
   const periods = data.inPeriods.subarray(0, h);
   const cases: [string, Stream, number[]][] = [
-    ['SMA', lib.smaOpen(close, 14) as unknown as Stream, [data.inClose[h]]],
-    ['MA', lib.maOpen(close, 1, MAType.SMA) as unknown as Stream, [data.inClose[h]]],
-    ['MAVP', lib.mavpOpen(close, periods, 2, 30, MAType.SMA) as unknown as Stream, [data.inClose[h], data.inPeriods[h]]],
+    ['SMA', lib.smaOpen(close, { timePeriod: 14 }) as unknown as Stream, [data.inClose[h]]],
+    ['MA', lib.maOpen(close, { timePeriod: 1, maType: MAType.SMA }) as unknown as Stream, [data.inClose[h]]],
+    ['MAVP', lib.mavpOpen(close, periods, { minPeriod: 2, maxPeriod: 30, maType: MAType.SMA }) as unknown as Stream, [data.inClose[h], data.inPeriods[h]]],
   ];
   for (const [fn, s, bar] of cases) {
     const at = s.outRange();
@@ -415,34 +430,42 @@ test('the last bar a stream counts is INDEX_MAX: past it advance and update refu
 
 test('a partial overlap is checked after the history, a start address shared before it', () => {
   const buf = series(46).inClose.slice(0, 120);
-  const lb = lib.smaLookback(30);
-  rejects(() => lib.smaOpenAndFill(buf.subarray(0, lb), 30, buf.subarray(1, 1 + lb)), 'TA_INSUFFICIENT_HISTORY', 'a partial overlap on a history too short to open');
-  rejects(() => lib.smaOpenAndFill(buf.subarray(0, lb + 10), 30, buf.subarray(1, 11 + lb)), 'TA_BAD_PARAM', 'a partial overlap on a history long enough to open');
-  rejects(() => lib.smaOpenAndFill(buf.subarray(0, lb), 30, buf.subarray(0, 5)), 'TA_BAD_PARAM', 'an output starting on the input, short history');
+  const lb = lib.smaLookback({ timePeriod: 30 });
+  const sma = (n: number, out: Float64Array): unknown => lib.smaOpenAndFill(buf.subarray(0, n), { timePeriod: 30, outReal: out });
+  rejects(() => sma(lb, buf.subarray(1, 1 + lb)), 'TA_INSUFFICIENT_HISTORY', 'a partial overlap on a history too short to open');
+  rejects(() => sma(lb + 10, buf.subarray(1, 11 + lb)), 'TA_BAD_PARAM', 'a partial overlap on a history long enough to open');
+  rejects(() => sma(lb, buf.subarray(0, 5)), 'TA_BAD_PARAM', 'an output starting on the input, short history');
 
-  const maLb = lib.maLookback(30, MAType.EMA);
-  rejects(() => lib.maOpenAndFill(buf.subarray(0, maLb), 30, MAType.EMA, buf.subarray(1, 1 + maLb)), 'TA_INSUFFICIENT_HISTORY', 'MA: a partial overlap on a history too short to open');
-  rejects(() => lib.maOpenAndFill(buf.subarray(0, maLb + 10), 30, MAType.EMA, buf.subarray(1, 11 + maLb)), 'TA_BAD_PARAM', 'MA: a partial overlap on a history long enough to open');
-  rejects(() => lib.maOpenAndFill(buf.subarray(0, maLb), 30, MAType.EMA, buf.subarray(0, 5)), 'TA_BAD_PARAM', 'MA: an output starting on the input, short history');
+  const maOpts = { timePeriod: 30, maType: MAType.EMA };
+  const maLb = lib.maLookback(maOpts);
+  const ma = (n: number, out: Float64Array): unknown => lib.maOpenAndFill(buf.subarray(0, n), { ...maOpts, outReal: out });
+  rejects(() => ma(maLb, buf.subarray(1, 1 + maLb)), 'TA_INSUFFICIENT_HISTORY', 'MA: a partial overlap on a history too short to open');
+  rejects(() => ma(maLb + 10, buf.subarray(1, 11 + maLb)), 'TA_BAD_PARAM', 'MA: a partial overlap on a history long enough to open');
+  rejects(() => ma(maLb, buf.subarray(0, 5)), 'TA_BAD_PARAM', 'MA: an output starting on the input, short history');
 
-  const mvLb = lib.mavpLookback(2, 30, MAType.SMA);
+  const mvOpts = { minPeriod: 2, maxPeriod: 30, maType: MAType.SMA };
+  const mvLb = lib.mavpLookback(mvOpts);
   const per = new Float64Array(120).fill(10);
-  rejects(() => lib.mavpOpenAndFill(buf.subarray(0, mvLb), per.subarray(0, mvLb), 2, 30, MAType.SMA, buf.subarray(1, 1 + mvLb)), 'TA_INSUFFICIENT_HISTORY', 'MAVP: a partial overlap on a history too short to open');
-  rejects(() => lib.mavpOpenAndFill(buf.subarray(0, mvLb + 10), per.subarray(0, mvLb + 10), 2, 30, MAType.SMA, buf.subarray(1, 11 + mvLb)), 'TA_BAD_PARAM', 'MAVP: a partial overlap on a history long enough to open');
-  rejects(() => lib.mavpOpenAndFill(buf.subarray(0, mvLb), per.subarray(0, mvLb), 2, 30, MAType.SMA, buf.subarray(0, 5)), 'TA_BAD_PARAM', 'MAVP: an output starting on the input, short history');
+  const mavp = (n: number, out: Float64Array): unknown => lib.mavpOpenAndFill(buf.subarray(0, n), per.subarray(0, n), { ...mvOpts, outReal: out });
+  rejects(() => mavp(mvLb, buf.subarray(1, 1 + mvLb)), 'TA_INSUFFICIENT_HISTORY', 'MAVP: a partial overlap on a history too short to open');
+  rejects(() => mavp(mvLb + 10, buf.subarray(1, 11 + mvLb)), 'TA_BAD_PARAM', 'MAVP: a partial overlap on a history long enough to open');
+  rejects(() => mavp(mvLb, buf.subarray(0, 5)), 'TA_BAD_PARAM', 'MAVP: an output starting on the input, short history');
 
   const hlc = series(47).inClose.slice(0, 64);
   const outs = new Float64Array(200);
-  const acLb = lib.accbandsLookback(20);
+  const acLb = lib.accbandsLookback({ timePeriod: 20 });
   const shortHlc = hlc.slice(0, acLb);
-  rejects(() => lib.accbandsOpenAndFill(shortHlc, shortHlc, shortHlc, 20, outs.subarray(0, 50), outs.subarray(1, 51), outs.subarray(100, 150)), 'TA_INSUFFICIENT_HISTORY', 'two outputs overlapping in part, short history');
-  rejects(() => lib.accbandsOpenAndFill(hlc, hlc, hlc, 20, outs.subarray(0, 50), outs.subarray(1, 51), outs.subarray(100, 150)), 'TA_BAD_PARAM', 'two outputs overlapping in part, history long enough');
-  rejects(() => lib.accbandsOpenAndFill(shortHlc, shortHlc, shortHlc, 20, outs.subarray(0, 50), outs.subarray(0, 40), outs.subarray(100, 150)), 'TA_BAD_PARAM', 'two outputs starting at one address, short history');
+  const acc = (x: Float64Array, upper: Float64Array, middle: Float64Array, lower: Float64Array): unknown =>
+    lib.accbandsOpenAndFill({ high: x, low: x, close: x }, { timePeriod: 20, outUpperBand: upper, outMiddleBand: middle, outLowerBand: lower });
+  rejects(() => acc(shortHlc, outs.subarray(0, 50), outs.subarray(1, 51), outs.subarray(100, 150)), 'TA_INSUFFICIENT_HISTORY', 'two outputs overlapping in part, short history');
+  rejects(() => acc(hlc, outs.subarray(0, 50), outs.subarray(1, 51), outs.subarray(100, 150)), 'TA_BAD_PARAM', 'two outputs overlapping in part, history long enough');
+  rejects(() => acc(shortHlc, outs.subarray(0, 50), outs.subarray(0, 40), outs.subarray(100, 150)), 'TA_BAD_PARAM', 'two outputs starting at one address, short history');
 
   const dojiLb = lib.cdldojiLookback();
   const ohlc = series(48).inClose.slice(0, dojiLb + 40);
   const h = ohlc.subarray(0, dojiLb);
+  const doji = (out: Int32Array): unknown => lib.cdldojiOpenAndFill({ open: h, high: h, low: h, close: h }, { outInteger: out });
   const intOver = new Int32Array(ohlc.buffer, 8, Math.max(1, dojiLb));
-  rejects(() => lib.cdldojiOpenAndFill(h, h, h, h, intOver), 'TA_INSUFFICIENT_HISTORY', 'an int output over a real input in part, short history');
-  rejects(() => lib.cdldojiOpenAndFill(h, h, h, h, new Int32Array(ohlc.buffer, 0, Math.max(1, dojiLb))), 'TA_BAD_PARAM', 'an int output starting on a real input, short history');
+  rejects(() => doji(intOver), 'TA_INSUFFICIENT_HISTORY', 'an int output over a real input in part, short history');
+  rejects(() => doji(new Int32Array(ohlc.buffer, 0, Math.max(1, dojiLb))), 'TA_BAD_PARAM', 'an int output starting on a real input, short history');
 });

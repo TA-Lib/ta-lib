@@ -14,24 +14,15 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link htSine} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * It includes `core`'s unstable period for this function.
- *
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function htSineLookback(core: Core = Core.DEFAULT): number {
+/** @internal */
+export function htSineLookbackPositional(core: Core = Core.DEFAULT): number {
   /* 31 input are skip
    * +32 output are skip to account for misc lookback
    * ---
@@ -43,20 +34,8 @@ export function htSineLookback(core: Core = Core.DEFAULT): number {
   return 63 + core.unstableCount(FuncUnstId.HT_SINE, (80 + ((50 * 4) | 0)), (80 + ((50 * 8) | 0)));
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link htSine}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function htSineDisplayShift(outputIdx: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function htSineDisplayShiftPositional(outputIdx: number, _core: Core = Core.DEFAULT): number {
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 2) {
     return -2147483648;
   }
@@ -171,7 +150,7 @@ export function htSineImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = htSineLookback(core);
+  lookbackTotal = htSineLookbackPositional(core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -631,54 +610,8 @@ export function htSineImpl(
   return RetCode.SUCCESS;
 }
 
-/**
- * Hilbert Transform SineWave: derives the dominant-cycle phase from price and
- * emits its sine plus a 45-degree-lead sine. The two curves cross near cycle
- * turning points. outSine and outLeadSine crossing marks cycle turning points.
- *
- * Formula and more info at
- * [ta-lib.org/functions/ht_sine](https://ta-lib.org/functions/ht_sine).
- *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link htSineLookback} is a success with
- * `count` 0.
- *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Source price series.
- * @param outSine - Sine of the dominant-cycle phase. Must hold the values produced
- *   and never be empty; the input length always suffices.
- * @param outLeadSine - Sine of the phase advanced 45 degrees (lead) Must hold the
- *   values produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, an
- *   array too short for the range, an empty output, two outputs sharing memory or an
- *   output sharing memory with a `Float64Array` input it is not. Checked before
- *   anything is written.
- *
- * @example
- * ```ts
- * import { htSine } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const sine = new Float64Array(data.length);
- * const leadSine = new Float64Array(data.length);
- * const { begIdx, count } = htSine(0, data.length - 1, data, sine, leadSine);
- * // sine[k] is the value at bar begIdx + k, for k < count
- * ```
- * @see [`htDcphase`](https://ta-lib.org/functions/ht_dcphase)
- * @see [`htDcperiod`](https://ta-lib.org/functions/ht_dcperiod)
- * @see [`htPhasor`](https://ta-lib.org/functions/ht_phasor)
- * @see [`htTrendmode`](https://ta-lib.org/functions/ht_trendmode)
- * @see [`mama`](https://ta-lib.org/functions/mama)
- */
-export function htSine(
+/** @internal */
+export function htSinePositional(
   startIdx: number,
   endIdx: number,
   inReal: ArrayLike<number>,
@@ -689,15 +622,21 @@ export function htSine(
   startIdx = requireInt32('HT_SINE', 'startIdx', startIdx);
   endIdx = requireInt32('HT_SINE', 'endIdx', endIdx);
   requireIndexRange('HT_SINE', startIdx, endIdx);
-  const guardStart = clampedStart('HT_SINE', startIdx, htSineLookback(core));
+  const guardStart = clampedStart('HT_SINE', startIdx, htSineLookbackPositional(core));
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('HT_SINE', 'inReal', inReal, guardInLen);
+  requireLength('HT_SINE', 'real', inReal, guardInLen);
   requireOutput('HT_SINE', 'outSine', outSine, guardOutLen, Float64Array);
   requireOutput('HT_SINE', 'outLeadSine', outLeadSine, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
-  if (overlapsPartly(outSine, inRealF64) || overlapsPartly(outLeadSine, inRealF64) || overlaps(outSine, outLeadSine)) {
-    throw failure('HT_SINE', RetCode.BAD_PARAM);
+  if (overlapsPartly(outSine, inRealF64)) {
+    throw sharedMemory('HT_SINE', 'outSine', 'real');
+  }
+  if (overlapsPartly(outLeadSine, inRealF64)) {
+    throw sharedMemory('HT_SINE', 'outLeadSine', 'real');
+  }
+  if (overlaps(outSine, outLeadSine)) {
+    throw sharedMemory('HT_SINE', 'outSine', 'outLeadSine');
   }
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
@@ -706,6 +645,154 @@ export function htSine(
     throw failure('HT_SINE', retCode);
   }
   return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link htSine}, {@link htSineLookback}, {@link htSineDisplayShift},
+ * {@link htSineOpen} and {@link htSineOpenAndFill}. Every key is optional: an
+ * omitted or `undefined` key takes its default, and a call ignores the keys it has
+ * no use for.
+ */
+export interface HtSineOptions {
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outSine`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outSine?: Float64Array | undefined;
+  /**
+   * Buffer for `outLeadSine`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outLeadSine?: Float64Array | undefined;
+}
+
+/** What {@link htSine} returns, and {@link htSineOpenAndFill} with its stream. */
+export interface HtSineResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Sine of the dominant-cycle phase. `outSine[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  outSine: Float64Array;
+  /**
+   * Sine of the phase advanced 45 degrees (lead) `outLeadSine[k]` is the value at
+   * input bar `begIdx + k`.
+   */
+  outLeadSine: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link htSine} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * It includes `core`'s unstable period for this function.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link HtSineOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function htSineLookback(options?: HtSineOptions): number {
+  const o = optionsOf('HT_SINE lookback', options);
+  return htSineLookbackPositional(coreOf('HT_SINE lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link htSine}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link HtSineOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function htSineDisplayShift(outputIdx: number, options?: HtSineOptions): number {
+  const o = optionsOf('HT_SINE displayShift', options);
+  return htSineDisplayShiftPositional(outputIdx, coreOf('HT_SINE displayShift', o.core));
+}
+
+/**
+ * Hilbert Transform SineWave: derives the dominant-cycle phase from price and
+ * emits its sine plus a 45-degree-lead sine. The two curves cross near cycle
+ * turning points. outSine and outLeadSine crossing marks cycle turning points.
+ *
+ * Formula and more info at
+ * [ta-lib.org/functions/ht_sine](https://ta-lib.org/functions/ht_sine).
+ *
+ * `outSine[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link htSineLookback} is a success with empty outputs.
+ *
+ * @param real - Source price series.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link HtSineOptions}.
+ * @returns `begIdx` and the values; see {@link HtSineResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
+ * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
+ *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an input too short for the range, a buffer that is empty, too short or of
+ *   the wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
+ *
+ * @example
+ * ```ts
+ * import { htSine } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const { begIdx, outSine, outLeadSine } = htSine(data);
+ * // outSine[k] is the value at bar begIdx + k
+ * ```
+ * @see [`htDcphase`](https://ta-lib.org/functions/ht_dcphase)
+ * @see [`htDcperiod`](https://ta-lib.org/functions/ht_dcperiod)
+ * @see [`htPhasor`](https://ta-lib.org/functions/ht_phasor)
+ * @see [`htTrendmode`](https://ta-lib.org/functions/ht_trendmode)
+ * @see [`mama`](https://ta-lib.org/functions/mama)
+ */
+export function htSine(real: ArrayLike<number>, options?: HtSineOptions): HtSineResult {
+  const o = optionsOf('HT_SINE', options);
+  if (o.endIdx === undefined) {
+    requireSeries('HT_SINE', 'real', real);
+  }
+  const core = coreOf('HT_SINE', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, htSineLookbackPositional(core), real);
+  const outSine = o.outSine === undefined ? new Float64Array(capacity) : o.outSine;
+  const outLeadSine = o.outLeadSine === undefined ? new Float64Array(capacity) : o.outLeadSine;
+  const range = htSinePositional(startIdx, endIdx, real, outSine, outLeadSine, core);
+  return { begIdx: range.begIdx, outSine: outSine.subarray(0, range.count), outLeadSine: outLeadSine.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -867,19 +954,21 @@ export class HtSineStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inReal - The bar's `inReal` value: Source price series.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link HtSineOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out: HtSineOut): void {
+  update(inReal: number, out?: HtSineOut): HtSineOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('HT_SINE update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('HT_SINE update', 'HtSineOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -887,21 +976,26 @@ export class HtSineStream {
     }
     htSineStepImpl(this, inReal);
     this.outRangeCount++;
-    out.sine = this.cur_outSine;
-    out.leadSine = this.cur_outLeadSine;
+    if (out === undefined) {
+      out = new HtSineOut();
+    }
+    out.outSine = this.cur_outSine;
+    out.outLeadSine = this.cur_outLeadSine;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inReal - The bar's `inReal` value: Source price series.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link HtSineOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number, out: HtSineOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inReal: number, out?: HtSineOut): HtSineOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('HT_SINE peek', 'HtSineOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -1278,21 +1372,31 @@ export class HtSineStream {
     }
     cur_outSine = Math.sin(DCPhase * sp.deg2Rad);
     cur_outLeadSine = Math.sin((DCPhase + 45) * sp.deg2Rad);
-    out.sine = cur_outSine;
-    out.leadSine = cur_outLeadSine;
+    if (out === undefined) {
+      out = new HtSineOut();
+    }
+    out.outSine = cur_outSine;
+    out.outLeadSine = cur_outLeadSine;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link HtSineOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: HtSineOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: HtSineOut): HtSineOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('HT_SINE value', 'HtSineOut');
     }
-    out.sine = this.cur_outSine;
-    out.leadSine = this.cur_outLeadSine;
+    if (out === undefined) {
+      out = new HtSineOut();
+    }
+    out.outSine = this.cur_outSine;
+    out.outLeadSine = this.cur_outLeadSine;
+    return out;
   }
 
   /**
@@ -1364,14 +1468,15 @@ export class HtSineStream {
 }
 
 /**
- * The outputs of one HT_SINE bar, written into an object the caller owns and
- * reuses: valid until the next call that writes it.
+ * The outputs of one HT_SINE bar, as `update`, `peek` and `value` return them.
+ * Passed back to one of them, it is filled and returned again, with no allocation;
+ * it holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class HtSineOut {
   /** Sine of the dominant-cycle phase. */
-  sine: number = 0;
+  outSine: number = NaN;
   /** Sine of the phase advanced 45 degrees (lead) */
-  leadSine: number = 0;
+  outLeadSine: number = NaN;
 }
 
 function htSineStepImpl(sp: HtSineStream, inReal: number): void {
@@ -1844,7 +1949,7 @@ function htSineOpenImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = htSineLookback(core);
+  lookbackTotal = htSineLookbackPositional(core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -2387,7 +2492,7 @@ export function htSineOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('HT_SINE openAndFill', inReal.length, startIdx, htSineLookback(core));
+    throw insufficientHistory('HT_SINE openAndFill', inReal.length, startIdx, htSineLookbackPositional(core));
   }
   throw streamFailure('HT_SINE openAndFill', retCode);
 }
@@ -2410,64 +2515,101 @@ export function htSineOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('HT_SINE open', inReal.length, startIdx, htSineLookback(core));
+    throw insufficientHistory('HT_SINE open', inReal.length, startIdx, htSineLookbackPositional(core));
   }
   throw streamFailure('HT_SINE open', retCode);
+}
+
+/** @internal */
+export function htSineOpenPositional(
+  inReal: ArrayLike<number>,
+  core: Core = Core.DEFAULT,
+): HtSineStream {
+  requireArgument('HT_SINE open', 'real', inReal);
+  requireHistory('HT_SINE open', inReal.length);
+  return htSineOpenInternal(core, float64(inReal), 0);
+}
+
+/** @internal */
+export function htSineOpenAndFillPositional(
+  inReal: ArrayLike<number>,
+  outSine: Float64Array,
+  outLeadSine: Float64Array,
+  core: Core = Core.DEFAULT,
+): HtSineStream {
+  requireArgument('HT_SINE openAndFill', 'real', inReal);
+  requireHistory('HT_SINE openAndFill', inReal.length);
+  const guardOutLen = openFillCount('HT_SINE openAndFill', inReal.length, htSineLookbackPositional(core));
+  requireOutput('HT_SINE openAndFill', 'outSine', outSine, guardOutLen, Float64Array);
+  requireOutput('HT_SINE openAndFill', 'outLeadSine', outLeadSine, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outSine.buffer === inRealF64.buffer && outSine.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('HT_SINE openAndFill', 'outSine', 'real');
+  }
+  if (outLeadSine.buffer === inRealF64.buffer && outLeadSine.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('HT_SINE openAndFill', 'outLeadSine', 'real');
+  }
+  if (outSine.buffer === outLeadSine.buffer && outSine.byteOffset === outLeadSine.byteOffset) {
+    throw sharedMemory('HT_SINE openAndFill', 'outSine', 'outLeadSine');
+  }
+  if (guardOutLen > 0 && overlaps(outSine, inRealF64)) {
+    throw sharedMemory('HT_SINE openAndFill', 'outSine', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outLeadSine, inRealF64)) {
+    throw sharedMemory('HT_SINE openAndFill', 'outLeadSine', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outSine, outLeadSine)) {
+    throw sharedMemory('HT_SINE openAndFill', 'outSine', 'outLeadSine');
+  }
+  return htSineOpenAndFillInternal(core, inRealF64, 0, new MInteger(), new MInteger(), outSine, outLeadSine);
 }
 
 /**
  * Opens a live HT_SINE stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link htSine} there.
  *
- * @param inReal - Warm-up history. Source price series.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param real - Warm-up history. Source price series.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link HtSineOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `htSineLookback(...) + 1` bars, an empty one included.
+ *   than `htSineLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core` or an absent
+ *   input.
  *
  * @example
  * ```ts
- * import { HtSineOut, htSineOpen } from 'ta-lib';
+ * import { htSineOpen } from 'ta-lib';
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
  * const stream = htSineOpen(data);
- * const peeked = new HtSineOut();
- * const updated = new HtSineOut();
- * stream.peek(100.9, peeked); // a forming bar: commits nothing
- * stream.update(100.9, updated); // the bar closes
+ * const peeked = stream.peek(100.9); // a forming bar: commits nothing
+ * const updated = stream.update(100.9); // the bar closes
  * ```
  */
-export function htSineOpen(
-  inReal: ArrayLike<number>,
-  core: Core = Core.DEFAULT,
-): HtSineStream {
-  requireArgument('HT_SINE open', 'inReal', inReal);
-  requireHistory('HT_SINE open', inReal.length);
-  return htSineOpenInternal(core, float64(inReal), 0);
+export function htSineOpen(real: ArrayLike<number>, options?: HtSineOptions): HtSineStream {
+  const o = optionsOf('HT_SINE open', options);
+  const core = coreOf('HT_SINE open', o.core);
+  return htSineOpenPositional(real, core);
 }
 
 /**
- * {@link htSineOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link htSine}. The range written is the stream's
- * `outRange()`.
+ * {@link htSineOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link htSine}.
  *
- * @param inReal - Warm-up history. Source price series.
- * @param outSine - Sine of the dominant-cycle phase. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param outLeadSine - Sine of the phase advanced 45 degrees (lead) Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param real - Warm-up history. Source price series.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link HtSineOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link htSine} returns them; the range is the
+ *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `htSineLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an output too short or starting where another output or a `Float64Array`
- *   input starts, or, on a history long enough to open, one sharing memory with
- *   another output or a `Float64Array` input.
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input or a buffer too short, of the wrong type or starting where another buffer
+ *   or a `Float64Array` input starts, or, on a history long enough to open, one
+ *   sharing memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -2475,30 +2617,22 @@ export function htSineOpen(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const sine = new Float64Array(data.length);
- * const leadSine = new Float64Array(data.length);
- * const stream = htSineOpenAndFill(data, sine, leadSine);
- * const { begIdx, count } = stream.outRange();
- * // sine[k] is the value at bar begIdx + k, for k < count
+ * const {
+ *   stream,
+ *   begIdx,
+ *   outSine,
+ *   outLeadSine,
+ * } = htSineOpenAndFill(data);
+ * // outSine[k] is the value at bar begIdx + k
  * ```
  */
-export function htSineOpenAndFill(
-  inReal: ArrayLike<number>,
-  outSine: Float64Array,
-  outLeadSine: Float64Array,
-  core: Core = Core.DEFAULT,
-): HtSineStream {
-  requireArgument('HT_SINE openAndFill', 'inReal', inReal);
-  requireHistory('HT_SINE openAndFill', inReal.length);
-  const guardOutLen = openFillCount('HT_SINE openAndFill', inReal.length, htSineLookback(core));
-  requireOutput('HT_SINE openAndFill', 'outSine', outSine, guardOutLen, Float64Array);
-  requireOutput('HT_SINE openAndFill', 'outLeadSine', outLeadSine, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outSine.buffer === inRealF64.buffer && outSine.byteOffset === inRealF64.byteOffset) || (outLeadSine.buffer === inRealF64.buffer && outLeadSine.byteOffset === inRealF64.byteOffset) || (outSine.buffer === outLeadSine.buffer && outSine.byteOffset === outLeadSine.byteOffset)) {
-    throw streamFailure('HT_SINE openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outSine, inRealF64) || overlaps(outLeadSine, inRealF64) || overlaps(outSine, outLeadSine))) {
-    throw streamFailure('HT_SINE openAndFill', RetCode.BAD_PARAM);
-  }
-  return htSineOpenAndFillInternal(core, inRealF64, 0, new MInteger(), new MInteger(), outSine, outLeadSine);
+export function htSineOpenAndFill(real: ArrayLike<number>, options?: HtSineOptions): HtSineResult & { stream: HtSineStream } {
+  const o = optionsOf('HT_SINE openAndFill', options);
+  const core = coreOf('HT_SINE openAndFill', o.core);
+  const capacity = fillCapacity(htSineLookbackPositional(core), real);
+  const outSine = o.outSine === undefined ? new Float64Array(capacity) : o.outSine;
+  const outLeadSine = o.outLeadSine === undefined ? new Float64Array(capacity) : o.outLeadSine;
+  const stream = htSineOpenAndFillPositional(real, outSine, outLeadSine, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outSine: outSine.subarray(0, range.count), outLeadSine: outLeadSine.subarray(0, range.count) };
 }

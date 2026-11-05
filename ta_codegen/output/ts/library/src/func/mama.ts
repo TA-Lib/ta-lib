@@ -15,28 +15,15 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link mama} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * It includes `core`'s unstable period for this function.
- *
- * @param optInFastLimit - Upper bound on the adaptive smoothing factor (default
- *   0.5; range 0.01 to 0.99; `Core.REAL_DEFAULT` selects the default).
- * @param optInSlowLimit - Lower bound on the adaptive smoothing factor (default
- *   0.05; range 0.01 to 0.99; `Core.REAL_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function mamaLookback(optInFastLimit: number, optInSlowLimit: number, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function mamaLookbackPositional(optInFastLimit: number, optInSlowLimit: number, core: Core = Core.DEFAULT): number {
   if (typeof optInFastLimit !== 'number') {
     return -1;
   }
@@ -81,24 +68,9 @@ export function mamaLookback(optInFastLimit: number, optInSlowLimit: number, cor
   return 32 + core.unstableCount(FuncUnstId.MAMA, (80 + ((50 * 4) | 0)) + count4, (80 + ((50 * 8) | 0)) + count8);
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link mama}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInFastLimit - Upper bound on the adaptive smoothing factor (default
- *   0.5; range 0.01 to 0.99; `Core.REAL_DEFAULT` selects the default).
- * @param optInSlowLimit - Lower bound on the adaptive smoothing factor (default
- *   0.05; range 0.01 to 0.99; `Core.REAL_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function mamaDisplayShift(optInFastLimit: number, optInSlowLimit: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (mamaLookback(optInFastLimit, optInSlowLimit, core) < 0) {
+/** @internal */
+export function mamaDisplayShiftPositional(optInFastLimit: number, optInSlowLimit: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (mamaLookbackPositional(optInFastLimit, optInSlowLimit, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 2) {
@@ -208,7 +180,7 @@ export function mamaImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = mamaLookback(optInFastLimit, optInSlowLimit, core);
+  lookbackTotal = mamaLookbackPositional(optInFastLimit, optInSlowLimit, core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -659,64 +631,10 @@ export function mamaImpl(
   return RetCode.SUCCESS;
 }
 
-/**
- * MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is driven
- * by the dominant-cycle phase rate measured with a Hilbert transform. Emits two
- * lines, MAMA and its slower follower FAMA. MAMA crossing above FAMA is bullish;
- * crossing below is bearish.
- *
- * Formula and more info at
- * [ta-lib.org/functions/mama](https://ta-lib.org/functions/mama).
- *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link mamaLookback} is a success with
- * `count` 0.
- *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Price series to smooth.
- * @param optInFastLimit - Upper bound on the adaptive smoothing factor (default
- *   0.5; range 0.01 to 0.99; `Core.REAL_DEFAULT` selects the default).
- * @param optInSlowLimit - Lower bound on the adaptive smoothing factor (default
- *   0.05; range 0.01 to 0.99; `Core.REAL_DEFAULT` selects the default).
- * @param outMAMA - Adaptive moving average (fast line) Must hold the values
- *   produced and never be empty; the input length always suffices.
- * @param outFAMA - Following adaptive moving average, using half the alpha (slow
- *   line) Must hold the values produced and never be empty; the input length always
- *   suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   real parameter that is not a number, a parameter outside its range, an array too
- *   short for the range, an empty output, two outputs sharing memory or an output
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
- *
- * @example
- * ```ts
- * import { mama } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const mamaOut = new Float64Array(data.length);
- * const fama = new Float64Array(data.length);
- * const { begIdx, count } = mama(
- *   0, data.length - 1,
- *   data,
- *   0.5, 0.05,
- *   mamaOut, fama,
- * );
- * // mamaOut[k] is the value at bar begIdx + k, for k < count
- * ```
- * @see [`ma`](https://ta-lib.org/functions/ma)
- * @see [`wma`](https://ta-lib.org/functions/wma)
- * @see [`htDcperiod`](https://ta-lib.org/functions/ht_dcperiod)
- */
-export function mama(
+const PARAM_RANGES = [['fastLimit', Core.REAL_DEFAULT, 1e-2, 9.9e-1, 'in 0.01..0.99'], ['slowLimit', Core.REAL_DEFAULT, 1e-2, 9.9e-1, 'in 0.01..0.99']] as const;
+
+/** @internal */
+export function mamaPositional(
   startIdx: number,
   endIdx: number,
   inReal: ArrayLike<number>,
@@ -728,18 +646,28 @@ export function mama(
 ): OutRange {
   startIdx = requireInt32('MAMA', 'startIdx', startIdx);
   endIdx = requireInt32('MAMA', 'endIdx', endIdx);
-  optInFastLimit = requireReal('MAMA', 'optInFastLimit', optInFastLimit);
-  optInSlowLimit = requireReal('MAMA', 'optInSlowLimit', optInSlowLimit);
+  optInFastLimit = requireReal('MAMA', 'fastLimit', optInFastLimit);
+  optInSlowLimit = requireReal('MAMA', 'slowLimit', optInSlowLimit);
   requireIndexRange('MAMA', startIdx, endIdx);
-  const guardStart = clampedStart('MAMA', startIdx, mamaLookback(optInFastLimit, optInSlowLimit, core));
+  const guardLookback = mamaLookbackPositional(optInFastLimit, optInSlowLimit, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('MAMA', PARAM_RANGES, optInFastLimit, optInSlowLimit);
+  }
+  const guardStart = clampedStart('MAMA', startIdx, guardLookback);
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('MAMA', 'inReal', inReal, guardInLen);
-  requireOutput('MAMA', 'outMAMA', outMAMA, guardOutLen, Float64Array);
-  requireOutput('MAMA', 'outFAMA', outFAMA, guardOutLen, Float64Array);
+  requireLength('MAMA', 'real', inReal, guardInLen);
+  requireOutput('MAMA', 'outMama', outMAMA, guardOutLen, Float64Array);
+  requireOutput('MAMA', 'outFama', outFAMA, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
-  if (overlapsPartly(outMAMA, inRealF64) || overlapsPartly(outFAMA, inRealF64) || overlaps(outMAMA, outFAMA)) {
-    throw failure('MAMA', RetCode.BAD_PARAM);
+  if (overlapsPartly(outMAMA, inRealF64)) {
+    throw sharedMemory('MAMA', 'outMama', 'real');
+  }
+  if (overlapsPartly(outFAMA, inRealF64)) {
+    throw sharedMemory('MAMA', 'outFama', 'real');
+  }
+  if (overlaps(outMAMA, outFAMA)) {
+    throw sharedMemory('MAMA', 'outMama', 'outFama');
   }
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
@@ -748,6 +676,169 @@ export function mama(
     throw failure('MAMA', retCode);
   }
   return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link mama}, {@link mamaLookback}, {@link mamaDisplayShift},
+ * {@link mamaOpen} and {@link mamaOpenAndFill}. Every key is optional: an omitted
+ * or `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface MamaOptions {
+  /**
+   * Upper bound on the adaptive smoothing factor (default 0.5; range 0.01 to 0.99;
+   * `Core.REAL_DEFAULT` selects the default).
+   */
+  fastLimit?: number | undefined;
+  /**
+   * Lower bound on the adaptive smoothing factor (default 0.05; range 0.01 to 0.99;
+   * `Core.REAL_DEFAULT` selects the default).
+   */
+  slowLimit?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outMama`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outMama?: Float64Array | undefined;
+  /**
+   * Buffer for `outFama`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outFama?: Float64Array | undefined;
+}
+
+/** What {@link mama} returns, and {@link mamaOpenAndFill} with its stream. */
+export interface MamaResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Adaptive moving average (fast line) `outMama[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  outMama: Float64Array;
+  /**
+   * Following adaptive moving average, using half the alpha (slow line) `outFama[k]`
+   * is the value at input bar `begIdx + k`.
+   */
+  outFama: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link mama} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * It includes `core`'s unstable period for this function.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MamaOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function mamaLookback(options?: MamaOptions): number {
+  const o = optionsOf('MAMA lookback', options);
+  return mamaLookbackPositional(orDefault(o.fastLimit, Core.REAL_DEFAULT), orDefault(o.slowLimit, Core.REAL_DEFAULT), coreOf('MAMA lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link mama}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MamaOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function mamaDisplayShift(outputIdx: number, options?: MamaOptions): number {
+  const o = optionsOf('MAMA displayShift', options);
+  return mamaDisplayShiftPositional(orDefault(o.fastLimit, Core.REAL_DEFAULT), orDefault(o.slowLimit, Core.REAL_DEFAULT), outputIdx, coreOf('MAMA displayShift', o.core));
+}
+
+/**
+ * MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is driven
+ * by the dominant-cycle phase rate measured with a Hilbert transform. Emits two
+ * lines, MAMA and its slower follower FAMA. MAMA crossing above FAMA is bullish;
+ * crossing below is bearish.
+ *
+ * Formula and more info at
+ * [ta-lib.org/functions/mama](https://ta-lib.org/functions/mama).
+ *
+ * `outMama[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link mamaLookback} is a success with empty outputs.
+ *
+ * @param real - Price series to smooth.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link MamaOptions}.
+ * @returns `begIdx` and the values; see {@link MamaResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
+ * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
+ *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, a real parameter that is not a number, a parameter outside its range, an
+ *   input too short for the range, a buffer that is empty, too short or of the wrong
+ *   type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
+ *
+ * @example
+ * ```ts
+ * import { mama } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const { begIdx, outMama, outFama } = mama(data, {
+ *   fastLimit: 0.5,
+ *   slowLimit: 0.05,
+ * });
+ * // outMama[k] is the value at bar begIdx + k
+ * ```
+ * @see [`ma`](https://ta-lib.org/functions/ma)
+ * @see [`wma`](https://ta-lib.org/functions/wma)
+ * @see [`htDcperiod`](https://ta-lib.org/functions/ht_dcperiod)
+ */
+export function mama(real: ArrayLike<number>, options?: MamaOptions): MamaResult {
+  const o = optionsOf('MAMA', options);
+  if (o.endIdx === undefined) {
+    requireSeries('MAMA', 'real', real);
+  }
+  const optInFastLimit = orDefault(o.fastLimit, Core.REAL_DEFAULT);
+  const optInSlowLimit = orDefault(o.slowLimit, Core.REAL_DEFAULT);
+  const core = coreOf('MAMA', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, mamaLookbackPositional(optInFastLimit, optInSlowLimit, core), real);
+  const outMAMA = o.outMama === undefined ? new Float64Array(capacity) : o.outMama;
+  const outFAMA = o.outFama === undefined ? new Float64Array(capacity) : o.outFama;
+  const range = mamaPositional(startIdx, endIdx, real, optInFastLimit, optInSlowLimit, outMAMA, outFAMA, core);
+  return { begIdx: range.begIdx, outMama: outMAMA.subarray(0, range.count), outFama: outFAMA.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -903,19 +994,21 @@ export class MamaStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inReal - The bar's `inReal` value: Price series to smooth.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MamaOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out: MamaOut): void {
+  update(inReal: number, out?: MamaOut): MamaOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('MAMA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MAMA update', 'MamaOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -923,21 +1016,26 @@ export class MamaStream {
     }
     mamaStepImpl(this, inReal);
     this.outRangeCount++;
-    out.mama = this.cur_outMAMA;
-    out.fama = this.cur_outFAMA;
+    if (out === undefined) {
+      out = new MamaOut();
+    }
+    out.outMama = this.cur_outMAMA;
+    out.outFama = this.cur_outFAMA;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inReal - The bar's `inReal` value: Price series to smooth.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MamaOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number, out: MamaOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inReal: number, out?: MamaOut): MamaOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MAMA peek', 'MamaOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -1116,21 +1214,31 @@ export class MamaStream {
     }
     cur_outFAMA = fama;
     cur_outMAMA = mama;
-    out.mama = cur_outMAMA;
-    out.fama = cur_outFAMA;
+    if (out === undefined) {
+      out = new MamaOut();
+    }
+    out.outMama = cur_outMAMA;
+    out.outFama = cur_outFAMA;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MamaOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: MamaOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: MamaOut): MamaOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MAMA value', 'MamaOut');
     }
-    out.mama = this.cur_outMAMA;
-    out.fama = this.cur_outFAMA;
+    if (out === undefined) {
+      out = new MamaOut();
+    }
+    out.outMama = this.cur_outMAMA;
+    out.outFama = this.cur_outFAMA;
+    return out;
   }
 
   /**
@@ -1199,14 +1307,15 @@ export class MamaStream {
 }
 
 /**
- * The outputs of one MAMA bar, written into an object the caller owns and reuses:
- * valid until the next call that writes it.
+ * The outputs of one MAMA bar, as `update`, `peek` and `value` return them. Passed
+ * back to one of them, it is filled and returned again, with no allocation; it
+ * holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class MamaOut {
   /** Adaptive moving average (fast line) */
-  mama: number = 0;
+  outMama: number = NaN;
   /** Following adaptive moving average, using half the alpha (slow line) */
-  fama: number = 0;
+  outFama: number = NaN;
 }
 
 function mamaStepImpl(sp: MamaStream, inReal: number): void {
@@ -1658,7 +1767,7 @@ function mamaOpenImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = mamaLookback(optInFastLimit, optInSlowLimit, core);
+  lookbackTotal = mamaLookbackPositional(optInFastLimit, optInSlowLimit, core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -2187,7 +2296,10 @@ export function mamaOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MAMA openAndFill', inReal.length, startIdx, mamaLookback(optInFastLimit, optInSlowLimit, core));
+    throw insufficientHistory('MAMA openAndFill', inReal.length, startIdx, mamaLookbackPositional(optInFastLimit, optInSlowLimit, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && mamaLookbackPositional(optInFastLimit, optInSlowLimit, core) < 0) {
+    throw rejectedParams('MAMA openAndFill', PARAM_RANGES, optInFastLimit, optInSlowLimit);
   }
   throw streamFailure('MAMA openAndFill', retCode);
 }
@@ -2212,93 +2324,30 @@ export function mamaOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MAMA open', inReal.length, startIdx, mamaLookback(optInFastLimit, optInSlowLimit, core));
+    throw insufficientHistory('MAMA open', inReal.length, startIdx, mamaLookbackPositional(optInFastLimit, optInSlowLimit, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && mamaLookbackPositional(optInFastLimit, optInSlowLimit, core) < 0) {
+    throw rejectedParams('MAMA open', PARAM_RANGES, optInFastLimit, optInSlowLimit);
   }
   throw streamFailure('MAMA open', retCode);
 }
 
-/**
- * Opens a live MAMA stream over the warm-up history: `value()` starts at the last
- * history bar, bit-identical to {@link mama} there.
- *
- * @param inReal - Warm-up history. Price series to smooth.
- * @param optInFastLimit - Upper bound on the adaptive smoothing factor (default
- *   0.5; range 0.01 to 0.99; `Core.REAL_DEFAULT` selects the default).
- * @param optInSlowLimit - Lower bound on the adaptive smoothing factor (default
- *   0.05; range 0.01 to 0.99; `Core.REAL_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `mamaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   a real parameter that is not a number or a parameter outside its range.
- *
- * @example
- * ```ts
- * import { MamaOut, mamaOpen } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const stream = mamaOpen(data, 0.5, 0.05);
- * const peeked = new MamaOut();
- * const updated = new MamaOut();
- * stream.peek(100.9, peeked); // a forming bar: commits nothing
- * stream.update(100.9, updated); // the bar closes
- * ```
- */
-export function mamaOpen(
+/** @internal */
+export function mamaOpenPositional(
   inReal: ArrayLike<number>,
   optInFastLimit: number,
   optInSlowLimit: number,
   core: Core = Core.DEFAULT,
 ): MamaStream {
-  optInFastLimit = requireReal('MAMA open', 'optInFastLimit', optInFastLimit);
-  optInSlowLimit = requireReal('MAMA open', 'optInSlowLimit', optInSlowLimit);
-  requireArgument('MAMA open', 'inReal', inReal);
+  optInFastLimit = requireReal('MAMA open', 'fastLimit', optInFastLimit);
+  optInSlowLimit = requireReal('MAMA open', 'slowLimit', optInSlowLimit);
+  requireArgument('MAMA open', 'real', inReal);
   requireHistory('MAMA open', inReal.length);
   return mamaOpenInternal(core, float64(inReal), 0, optInFastLimit, optInSlowLimit);
 }
 
-/**
- * {@link mamaOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link mama}. The range written is the stream's
- * `outRange()`.
- *
- * @param inReal - Warm-up history. Price series to smooth.
- * @param optInFastLimit - Upper bound on the adaptive smoothing factor (default
- *   0.5; range 0.01 to 0.99; `Core.REAL_DEFAULT` selects the default).
- * @param optInSlowLimit - Lower bound on the adaptive smoothing factor (default
- *   0.05; range 0.01 to 0.99; `Core.REAL_DEFAULT` selects the default).
- * @param outMAMA - Adaptive moving average (fast line) Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param outFAMA - Following adaptive moving average, using half the alpha (slow
- *   line) Must hold `historyLen - lookback` values and share no memory with an input
- *   or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `mamaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   a real parameter that is not a number, a parameter outside its range or an
- *   output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { mamaOpenAndFill } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const mamaOut = new Float64Array(data.length);
- * const fama = new Float64Array(data.length);
- * const stream = mamaOpenAndFill(data, 0.5, 0.05, mamaOut, fama);
- * const { begIdx, count } = stream.outRange();
- * // mamaOut[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function mamaOpenAndFill(
+/** @internal */
+export function mamaOpenAndFillPositional(
   inReal: ArrayLike<number>,
   optInFastLimit: number,
   optInSlowLimit: number,
@@ -2306,21 +2355,113 @@ export function mamaOpenAndFill(
   outFAMA: Float64Array,
   core: Core = Core.DEFAULT,
 ): MamaStream {
-  optInFastLimit = requireReal('MAMA openAndFill', 'optInFastLimit', optInFastLimit);
-  optInSlowLimit = requireReal('MAMA openAndFill', 'optInSlowLimit', optInSlowLimit);
-  requireArgument('MAMA openAndFill', 'inReal', inReal);
+  optInFastLimit = requireReal('MAMA openAndFill', 'fastLimit', optInFastLimit);
+  optInSlowLimit = requireReal('MAMA openAndFill', 'slowLimit', optInSlowLimit);
+  requireArgument('MAMA openAndFill', 'real', inReal);
   requireHistory('MAMA openAndFill', inReal.length);
-  const guardOutLen = openFillCount('MAMA openAndFill', inReal.length, mamaLookback(optInFastLimit, optInSlowLimit, core));
-  requireOutput('MAMA openAndFill', 'outMAMA', outMAMA, guardOutLen, Float64Array);
-  requireOutput('MAMA openAndFill', 'outFAMA', outFAMA, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outMAMA.buffer === inRealF64.buffer && outMAMA.byteOffset === inRealF64.byteOffset) || (outFAMA.buffer === inRealF64.buffer && outFAMA.byteOffset === inRealF64.byteOffset) || (outMAMA.buffer === outFAMA.buffer && outMAMA.byteOffset === outFAMA.byteOffset)) {
-    throw streamFailure('MAMA openAndFill', RetCode.BAD_PARAM);
+  const guardLookback = mamaLookbackPositional(optInFastLimit, optInSlowLimit, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('MAMA openAndFill', PARAM_RANGES, optInFastLimit, optInSlowLimit);
   }
-  if (guardOutLen > 0 && (overlaps(outMAMA, inRealF64) || overlaps(outFAMA, inRealF64) || overlaps(outMAMA, outFAMA))) {
-    throw streamFailure('MAMA openAndFill', RetCode.BAD_PARAM);
+  const guardOutLen = openFillCount('MAMA openAndFill', inReal.length, guardLookback);
+  requireOutput('MAMA openAndFill', 'outMama', outMAMA, guardOutLen, Float64Array);
+  requireOutput('MAMA openAndFill', 'outFama', outFAMA, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outMAMA.buffer === inRealF64.buffer && outMAMA.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('MAMA openAndFill', 'outMama', 'real');
+  }
+  if (outFAMA.buffer === inRealF64.buffer && outFAMA.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('MAMA openAndFill', 'outFama', 'real');
+  }
+  if (outMAMA.buffer === outFAMA.buffer && outMAMA.byteOffset === outFAMA.byteOffset) {
+    throw sharedMemory('MAMA openAndFill', 'outMama', 'outFama');
+  }
+  if (guardOutLen > 0 && overlaps(outMAMA, inRealF64)) {
+    throw sharedMemory('MAMA openAndFill', 'outMama', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outFAMA, inRealF64)) {
+    throw sharedMemory('MAMA openAndFill', 'outFama', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outMAMA, outFAMA)) {
+    throw sharedMemory('MAMA openAndFill', 'outMama', 'outFama');
   }
   return mamaOpenAndFillInternal(core, inRealF64, 0, optInFastLimit, optInSlowLimit, new MInteger(), new MInteger(), outMAMA, outFAMA);
+}
+
+/**
+ * Opens a live MAMA stream over the warm-up history: `value()` starts at the last
+ * history bar, bit-identical to {@link mama} there.
+ *
+ * @param real - Warm-up history. Price series to smooth.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MamaOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `mamaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   a real parameter that is not a number or a parameter outside its range.
+ *
+ * @example
+ * ```ts
+ * import { mamaOpen } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const stream = mamaOpen(data, { fastLimit: 0.5, slowLimit: 0.05 });
+ * const peeked = stream.peek(100.9); // a forming bar: commits nothing
+ * const updated = stream.update(100.9); // the bar closes
+ * ```
+ */
+export function mamaOpen(real: ArrayLike<number>, options?: MamaOptions): MamaStream {
+  const o = optionsOf('MAMA open', options);
+  const optInFastLimit = orDefault(o.fastLimit, Core.REAL_DEFAULT);
+  const optInSlowLimit = orDefault(o.slowLimit, Core.REAL_DEFAULT);
+  const core = coreOf('MAMA open', o.core);
+  return mamaOpenPositional(real, optInFastLimit, optInSlowLimit, core);
+}
+
+/**
+ * {@link mamaOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link mama}.
+ *
+ * @param real - Warm-up history. Price series to smooth.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link MamaOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link mama} returns them; the range is the stream's
+ *   `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `mamaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   a real parameter that is not a number, a parameter outside its range or a buffer
+ *   too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
+ *
+ * @example
+ * ```ts
+ * import { mamaOpenAndFill } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const { stream, begIdx, outMama, outFama } = mamaOpenAndFill(data, {
+ *   fastLimit: 0.5,
+ *   slowLimit: 0.05,
+ * });
+ * // outMama[k] is the value at bar begIdx + k
+ * ```
+ */
+export function mamaOpenAndFill(real: ArrayLike<number>, options?: MamaOptions): MamaResult & { stream: MamaStream } {
+  const o = optionsOf('MAMA openAndFill', options);
+  const optInFastLimit = orDefault(o.fastLimit, Core.REAL_DEFAULT);
+  const optInSlowLimit = orDefault(o.slowLimit, Core.REAL_DEFAULT);
+  const core = coreOf('MAMA openAndFill', o.core);
+  const capacity = fillCapacity(mamaLookbackPositional(optInFastLimit, optInSlowLimit, core), real);
+  const outMAMA = o.outMama === undefined ? new Float64Array(capacity) : o.outMama;
+  const outFAMA = o.outFama === undefined ? new Float64Array(capacity) : o.outFama;
+  const stream = mamaOpenAndFillPositional(real, optInFastLimit, optInSlowLimit, outMAMA, outFAMA, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outMama: outMAMA.subarray(0, range.count), outFama: outFAMA.subarray(0, range.count) };
 }
 
 /** @internal */
@@ -2836,8 +2977,8 @@ export function mamaPeekTape(sp: MamaStream, tape: Float64Array, tapeBase: numbe
   }
   cur_outFAMA = fama;
   cur_outMAMA = mama;
-  out.mama = cur_outMAMA;
-  out.fama = cur_outFAMA;
+  out.outMama = cur_outMAMA;
+  out.outFama = cur_outFAMA;
 }
 
 /** @internal */

@@ -11,39 +11,19 @@
  *  090807 MF     Initial Version
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link log10} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function log10Lookback(core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function log10LookbackPositional(_core: Core = Core.DEFAULT): number {
   return 0;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link log10}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function log10DisplayShift(outputIdx: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function log10DisplayShiftPositional(outputIdx: number, _core: Core = Core.DEFAULT): number {
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
     return -2147483648;
   }
@@ -76,6 +56,113 @@ export function log10Impl(
   return RetCode.SUCCESS;
 }
 
+/** @internal */
+export function log10Positional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('LOG10', 'startIdx', startIdx);
+  endIdx = requireInt32('LOG10', 'endIdx', endIdx);
+  requireIndexRange('LOG10', startIdx, endIdx);
+  const guardStart = clampedStart('LOG10', startIdx, log10LookbackPositional(core));
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('LOG10', 'real', inReal, guardInLen);
+  requireOutput('LOG10', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outReal, inRealF64)) {
+    throw sharedMemory('LOG10', 'outReal', 'real');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = log10Impl(core, startIdx, endIdx, inRealF64, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('LOG10', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link log10}, {@link log10Lookback}, {@link log10DisplayShift},
+ * {@link log10Open} and {@link log10OpenAndFill}. Every key is optional: an
+ * omitted or `undefined` key takes its default, and a call ignores the keys it has
+ * no use for.
+ */
+export interface Log10Options {
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link log10} returns, and {@link log10OpenAndFill} with its stream. */
+export interface Log10Result {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Base-10 logarithm of each input. `values[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link log10} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link Log10Options}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function log10Lookback(options?: Log10Options): number {
+  const o = optionsOf('LOG10 lookback', options);
+  return log10LookbackPositional(coreOf('LOG10 lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link log10}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link Log10Options}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function log10DisplayShift(outputIdx: number, options?: Log10Options): number {
+  const o = optionsOf('LOG10 displayShift', options);
+  return log10DisplayShiftPositional(outputIdx, coreOf('LOG10 displayShift', o.core));
+}
+
 /**
  * Element-wise base-10 logarithm of the input series.
  *
@@ -86,24 +173,22 @@ export function log10Impl(
  * - The logarithm is defined only for positive values: a negative input gives NaN,
  *   and a zero input gives negative infinity.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link log10Lookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link log10Lookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Input values.
- * @param outReal - Base-10 logarithm of each input. Must hold the values produced
- *   and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Input values.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link Log10Options}.
+ * @returns `begIdx` and the values; see {@link Log10Result}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, an
- *   array too short for the range, an empty output or an output sharing memory with
- *   a `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an input too short for the range, a buffer that is empty, too short or of
+ *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -111,39 +196,24 @@ export function log10Impl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const { begIdx, count } = log10(0, data.length - 1, data, out);
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = log10(data);
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`ln`](https://ta-lib.org/functions/ln)
  * @see [`exp`](https://ta-lib.org/functions/exp)
  */
-export function log10(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('LOG10', 'startIdx', startIdx);
-  endIdx = requireInt32('LOG10', 'endIdx', endIdx);
-  requireIndexRange('LOG10', startIdx, endIdx);
-  const guardStart = clampedStart('LOG10', startIdx, log10Lookback(core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('LOG10', 'inReal', inReal, guardInLen);
-  requireOutput('LOG10', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outReal, inRealF64)) {
-    throw failure('LOG10', RetCode.BAD_PARAM);
+export function log10(real: ArrayLike<number>, options?: Log10Options): Log10Result {
+  const o = optionsOf('LOG10', options);
+  if (o.endIdx === undefined) {
+    requireSeries('LOG10', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = log10Impl(core, startIdx, endIdx, inRealF64, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('LOG10', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const core = coreOf('LOG10', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, log10LookbackPositional(core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = log10Positional(startIdx, endIdx, real, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -310,7 +380,7 @@ export function log10OpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('LOG10 openAndFill', inReal.length, startIdx, log10Lookback(core));
+    throw insufficientHistory('LOG10 openAndFill', inReal.length, startIdx, log10LookbackPositional(core));
   }
   throw streamFailure('LOG10 openAndFill', retCode);
 }
@@ -332,21 +402,53 @@ export function log10OpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('LOG10 open', inReal.length, startIdx, log10Lookback(core));
+    throw insufficientHistory('LOG10 open', inReal.length, startIdx, log10LookbackPositional(core));
   }
   throw streamFailure('LOG10 open', retCode);
+}
+
+/** @internal */
+export function log10OpenPositional(
+  inReal: ArrayLike<number>,
+  core: Core = Core.DEFAULT,
+): Log10Stream {
+  requireArgument('LOG10 open', 'real', inReal);
+  requireHistory('LOG10 open', inReal.length);
+  return log10OpenInternal(core, float64(inReal), 0);
+}
+
+/** @internal */
+export function log10OpenAndFillPositional(
+  inReal: ArrayLike<number>,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): Log10Stream {
+  requireArgument('LOG10 openAndFill', 'real', inReal);
+  requireHistory('LOG10 openAndFill', inReal.length);
+  const guardOutLen = openFillCount('LOG10 openAndFill', inReal.length, log10LookbackPositional(core));
+  requireOutput('LOG10 openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('LOG10 openAndFill', 'outReal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inRealF64)) {
+    throw sharedMemory('LOG10 openAndFill', 'outReal', 'real');
+  }
+  return log10OpenAndFillInternal(core, inRealF64, 0, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live LOG10 stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link log10} there.
  *
- * @param inReal - Warm-up history. Input values.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param real - Warm-up history. Input values.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link Log10Options}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `log10Lookback(...) + 1` bars, an empty one included.
+ *   than `log10Lookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core` or an absent
+ *   input.
  *
  * @example
  * ```ts
@@ -359,32 +461,28 @@ export function log10OpenInternal(
  * const updated = stream.update(100.9); // the bar closes
  * ```
  */
-export function log10Open(
-  inReal: ArrayLike<number>,
-  core: Core = Core.DEFAULT,
-): Log10Stream {
-  requireArgument('LOG10 open', 'inReal', inReal);
-  requireHistory('LOG10 open', inReal.length);
-  return log10OpenInternal(core, float64(inReal), 0);
+export function log10Open(real: ArrayLike<number>, options?: Log10Options): Log10Stream {
+  const o = optionsOf('LOG10 open', options);
+  const core = coreOf('LOG10 open', o.core);
+  return log10OpenPositional(real, core);
 }
 
 /**
- * {@link log10Open} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link log10}. The range written is the stream's
- * `outRange()`.
+ * {@link log10Open} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link log10}.
  *
- * @param inReal - Warm-up history. Input values.
- * @param outReal - Base-10 logarithm of each input. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param real - Warm-up history. Input values.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link Log10Options}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link log10} returns them; the range is the stream's
+ *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `log10Lookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an output too short or starting where another output or a `Float64Array`
- *   input starts, or, on a history long enough to open, one sharing memory with
- *   another output or a `Float64Array` input.
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input or a buffer too short, of the wrong type or starting where another buffer
+ *   or a `Float64Array` input starts, or, on a history long enough to open, one
+ *   sharing memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -392,27 +490,16 @@ export function log10Open(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const stream = log10OpenAndFill(data, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = log10OpenAndFill(data);
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function log10OpenAndFill(
-  inReal: ArrayLike<number>,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): Log10Stream {
-  requireArgument('LOG10 openAndFill', 'inReal', inReal);
-  requireHistory('LOG10 openAndFill', inReal.length);
-  const guardOutLen = openFillCount('LOG10 openAndFill', inReal.length, log10Lookback(core));
-  requireOutput('LOG10 openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
-    throw streamFailure('LOG10 openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inRealF64))) {
-    throw streamFailure('LOG10 openAndFill', RetCode.BAD_PARAM);
-  }
-  return log10OpenAndFillInternal(core, inRealF64, 0, new MInteger(), new MInteger(), outReal);
+export function log10OpenAndFill(real: ArrayLike<number>, options?: Log10Options): Log10Result & { stream: Log10Stream } {
+  const o = optionsOf('LOG10 openAndFill', options);
+  const core = coreOf('LOG10 openAndFill', o.core);
+  const capacity = fillCapacity(log10LookbackPositional(core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = log10OpenAndFillPositional(real, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

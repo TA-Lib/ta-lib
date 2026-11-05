@@ -20,7 +20,7 @@ use super::ctype::CType;
 use super::fma::{self, FmaVarSets};
 use super::java_stream::{
     build_composed_open_bodies, build_open_body_java, composed_cur_scalars, dual_scalar_union, has_return,
-    localize_state_writes, transform_map_step, value_field_name,
+    localize_state_writes, transform_map_step,
 };
 use super::ts::{self, ts_names, Services, TsCtx};
 use super::ts_doc::{self, StreamMethod};
@@ -373,13 +373,13 @@ impl<'a> Em<'a> {
     }
 
     fn lookback(&self) -> String {
-        lookback_call(self.func, &ts_names(&self.func.name).lookback)
+        lookback_call(self.func, &ts_names(&self.func.name).lookback_positional)
     }
 
     /// The function's own lookback where transcribed locals are in scope: a
     /// local of the same name is reached past through a self-import alias.
     fn lookback_in(&self, ctx: &TsCtx) -> String {
-        let sym = ts::note_import(ctx, &self.func.name.to_lowercase(), &ts_names(&self.func.name).lookback);
+        let sym = ts::note_import(ctx, &self.func.name.to_lowercase(), &ts_names(&self.func.name).lookback_positional);
         lookback_call(self.func, &sym)
     }
 
@@ -474,25 +474,48 @@ pub(crate) fn generate_visiting(func: &FuncDef, svc: &Services, visit: Option<Vi
 /// the history is long enough, so a short history answers
 /// `TA_INSUFFICIENT_HISTORY` in every language.
 fn alias_conditions(func: &FuncDef, input: &dyn Fn(&str) -> String) -> Option<(String, String)> {
-    let inputs = streaming::input_array_names(func);
-    let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
-    let mut pairs: Vec<(String, String)> = Vec::new();
-    for out in &outs {
-        for i in &inputs {
-            pairs.push(((*out).to_string(), input(i)));
-        }
-    }
-    for i in 0..outs.len() {
-        for b in &outs[i + 1..] {
-            pairs.push((outs[i].to_string(), (*b).to_string()));
-        }
-    }
+    let pairs = alias_pairs(func, input);
     if pairs.is_empty() {
         return None;
     }
-    let same = pairs.iter().map(|(a, b)| format!("({a}.buffer === {b}.buffer && {a}.byteOffset === {b}.byteOffset)"));
-    let partial = pairs.iter().map(|(a, b)| format!("overlaps({a}, {b})"));
+    let same = pairs.iter().map(|[a, b, ..]| format!("({})", same_start(a, b)));
+    let partial = pairs.iter().map(|[a, b, ..]| format!("overlaps({a}, {b})"));
     Some((same.collect::<Vec<_>>().join(" || "), partial.collect::<Vec<_>>().join(" || ")))
+}
+
+fn same_start(a: &str, b: &str) -> String {
+    format!("{a}.buffer === {b}.buffer && {a}.byteOffset === {b}.byteOffset")
+}
+
+/// [`alias_conditions`]' pairs in its order, each `[a, b, a's label, b's label]`.
+fn alias_pairs(func: &FuncDef, input: &dyn Fn(&str) -> String) -> Vec<[String; 4]> {
+    let inputs = streaming::input_array_names(func);
+    let label = |out: &str| ts::output_label(func, out);
+    let mut pairs = Vec::new();
+    for out in &func.outputs {
+        for i in &inputs {
+            pairs.push([out.name.clone(), input(i), label(&out.name), ts::input_label(func, i)]);
+        }
+    }
+    for (k, a) in func.outputs.iter().enumerate() {
+        for b in &func.outputs[k + 1..] {
+            pairs.push([a.name.clone(), b.name.clone(), label(&a.name), label(&b.name)]);
+        }
+    }
+    pairs
+}
+
+/// The public fill's overlap guards, one throw per pair so the message names
+/// it: one start address, refused ahead of the history check, then any
+/// overlap once the history is long enough to open.
+fn emit_fill_alias_guards(o: &mut String, em: &Em) {
+    let pairs = alias_pairs(em.func, &|i| format!("{i}F64"));
+    let entry = format!("{} openAndFill", em.name());
+    for (head, cond) in [("", same_start as fn(&str, &str) -> String), ("guardOutLen > 0 && ", |a: &str, b: &str| format!("overlaps({a}, {b})"))] {
+        for [a, b, la, lb] in &pairs {
+            let _ = writeln!(o, "  if ({head}{}) {{\n    throw sharedMemory('{entry}', '{la}', '{lb}');\n  }}", cond(a, b));
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -613,7 +636,7 @@ fn emit_out_class(o: &mut String, em: &Em) {
     let _ = writeln!(o, "export class {} {{", em.out_class());
     for out in &func.outputs {
         o.push_str(&ts_doc::out_field_docs(func, out));
-        let _ = writeln!(o, "  {}: number = 0;", value_field_name(&out.name));
+        let _ = writeln!(o, "  {}: number = NaN;", ts::output_key(&out.name));
     }
     let _ = writeln!(o, "}}");
 }
@@ -622,7 +645,7 @@ fn write_out_stmts(func: &FuncDef, src: &str, indent: &str) -> String {
     let mut o = String::new();
     for out in &func.outputs {
         let rhs = if src.is_empty() { format!("cur_{}", out.name) } else { format!("{src}.cur_{}", out.name) };
-        let _ = writeln!(o, "{indent}out.{} = {rhs};", value_field_name(&out.name));
+        let _ = writeln!(o, "{indent}out.{} = {rhs};", ts::output_key(&out.name));
     }
     o
 }
@@ -664,34 +687,45 @@ fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
 }
 
 /// A multi-output call's sink check, ahead of the finite-bar check as in Java:
-/// an absent sink must be rejected before the step commits the bar. Not an
-/// `instanceof`: a structurally typed object, or a sink from a second copy of
-/// the package, is a valid sink.
+/// a sink that is not an object must be rejected before the step commits the
+/// bar; an omitted one is allocated after it. Not an `instanceof`: a
+/// structurally typed object, or a sink from a second copy of the package, is
+/// a valid sink.
 fn sink_check(em: &Em, indent: &str, verb: &str) -> String {
     if !has_out_class(em.func) {
         return String::new();
     }
     let cls = em.out_class();
     format!(
-        "{indent}if (typeof out !== 'object' || out === null) {{\n{indent}  throw badSink('{} {verb}', '{cls}');\n{indent}}}\n",
+        "{indent}if (out !== undefined && (typeof out !== 'object' || out === null)) {{\n{indent}  throw badSink('{} {verb}', '{cls}');\n{indent}}}\n",
         em.func.name
     )
 }
 
 fn sink_param(em: &Em) -> String {
     if has_out_class(em.func) {
-        format!(", out: {}", em.out_class())
+        format!(", out?: {}", em.out_class())
     } else {
         String::new()
     }
 }
 
-fn value_type(em: &Em) -> &'static str {
+fn value_type(em: &Em) -> String {
     if has_out_class(em.func) {
-        "void"
+        em.out_class()
     } else {
-        "number"
+        "number".to_string()
     }
+}
+
+/// A multi-output call's tail: the caller's sink, or a new one, filled from
+/// `src`'s outputs and returned.
+fn fill_sink(em: &Em, src: &str, indent: &str) -> String {
+    format!(
+        "{indent}if (out === undefined) {{\n{indent}  out = new {}();\n{indent}}}\n{}{indent}return out;\n",
+        em.out_class(),
+        write_out_stmts(em.func, src, indent)
+    )
 }
 
 fn emit_update_method(o: &mut String, em: &Em) {
@@ -708,7 +742,7 @@ fn emit_update_method(o: &mut String, em: &Em) {
     let _ = writeln!(o, "    {}StepImpl(this{sep}{fwd_bars});", em.base());
     let _ = writeln!(o, "    this.outRangeCount++;");
     if has_out_class(func) {
-        o.push_str(&write_out_stmts(func, "this", "    "));
+        o.push_str(&fill_sink(em, "this", "    "));
     } else {
         let _ = writeln!(o, "    return this.cur_{};", func.outputs[0].name);
     }
@@ -730,7 +764,7 @@ fn emit_peek_method(o: &mut String, em: &Em, frame: Option<&PeekFrame>) {
     if frame.terminal {
         assert!(!has_out_class(func), "a terminal peek frame would skip the caller's sink write");
     } else if has_out_class(func) {
-        o.push_str(&write_out_stmts(func, "", "    "));
+        o.push_str(&fill_sink(em, "", "    "));
     } else {
         let _ = writeln!(o, "    return {};", fresh_value_expr_local(func));
     }
@@ -741,9 +775,9 @@ fn emit_value_method(o: &mut String, em: &Em) {
     let func = em.func;
     let _ = write!(o, "\n{}", ts_doc::stream_method_docs(func, StreamMethod::Value));
     if has_out_class(func) {
-        let _ = writeln!(o, "  value(out: {}): void {{", em.out_class());
+        let _ = writeln!(o, "  value(out?: {0}): {0} {{", em.out_class());
         o.push_str(&sink_check(em, "    ", "value"));
-        o.push_str(&write_out_stmts(func, "this", "    "));
+        o.push_str(&fill_sink(em, "this", "    "));
     } else {
         let _ = writeln!(o, "  value(): number {{");
         let _ = writeln!(o, "    return this.cur_{};", func.outputs[0].name);
@@ -1453,6 +1487,9 @@ fn emit_reject_conversion(o: &mut String, em: &Em, what: &str, anchor: Option<&s
         "  if (retCode === RetCode.INSUFFICIENT_HISTORY) {{\n    throw insufficientHistory('{n} {what}', {history}.length, {anchor}, {});\n  }}",
         em.lookback()
     );
+    if let Some(reject) = ts::param_range_rejection(em.func, &format!("{n} {what}")) {
+        let _ = writeln!(o, "  if (retCode === RetCode.BAD_PARAM && {} < 0) {{\n    throw {reject};\n  }}", em.lookback());
+    }
     let _ = writeln!(o, "  throw streamFailure('{n} {what}', retCode);");
 }
 
@@ -1501,21 +1538,34 @@ fn emit_public_open_guards(o: &mut String, em: &Em, verb: &str, with_outputs: bo
     let n = em.name();
     let inputs = streaming::input_array_names(func);
     let history = &inputs[0];
-    o.push_str(&ts::require_arg_types(func, &format!("{n} {verb}")));
-    let _ = writeln!(o, "  requireArgument('{n} {verb}', '{history}', {history});");
-    let _ = writeln!(o, "  requireHistory('{n} {verb}', {history}.length);");
+    let entry = format!("{n} {verb}");
+    o.push_str(&ts::require_arg_types(func, &entry));
+    let _ = writeln!(o, "  requireArgument('{entry}', '{}', {history});", ts::input_label(func, history));
+    let _ = writeln!(o, "  requireHistory('{entry}', {history}.length);");
     for input in &inputs[1..] {
-        let _ = writeln!(o, "  requireArgument('{n} {verb}', '{input}', {input});");
+        let _ = writeln!(o, "  requireArgument('{entry}', '{}', {input});", ts::input_label(func, input));
     }
     if with_outputs {
-        let _ = writeln!(o, "  const guardOutLen = openFillCount('{n} {verb}', {history}.length, {});", em.lookback());
+        let lookback = if let Some(reject) = ts::param_range_rejection(func, &entry) {
+            let _ = writeln!(o, "  const guardLookback = {};\n  if (guardLookback < 0) {{\n    throw {reject};\n  }}", em.lookback());
+            "guardLookback".to_string()
+        } else {
+            em.lookback()
+        };
+        let _ = writeln!(o, "  const guardOutLen = openFillCount('{entry}', {history}.length, {lookback});");
     }
     for input in &inputs[1..] {
-        let _ = writeln!(o, "  requireHistoryLength('{n} {verb}', '{input}', {input}.length, {history}.length);");
+        let _ = writeln!(o, "  requireHistoryLength('{entry}', '{}', {input}.length, {history}.length);", ts::input_label(func, input));
     }
     if with_outputs {
         for out in &func.outputs {
-            let _ = writeln!(o, "  requireOutput('{n} {verb}', '{0}', {0}, guardOutLen, {1});", out.name, super::ts::array_ts_type(&out.param_type));
+            let _ = writeln!(
+                o,
+                "  requireOutput('{entry}', '{}', {}, guardOutLen, {});",
+                ts::output_label(func, &out.name),
+                out.name,
+                super::ts::array_ts_type(&out.param_type)
+            );
         }
     }
 }
@@ -1539,29 +1589,24 @@ fn emit_open_wrappers(o: &mut String, em: &Em, merged: bool) {
     let func = em.func;
     let base = em.base();
     let class = em.class();
+    let names = ts_names(&func.name);
     let inputs = streaming::input_array_names(func);
     emit_open_internal_seam(o, em, merged);
 
-    let _ = write!(o, "\n{}", ts_doc::open_docs(func, em.svc.enums));
-    let _ = writeln!(o, "export function {base}Open(\n  {},\n): {class} {{", public_sig(func, false).join(",\n  "));
+    let _ = writeln!(o, "\n/** @internal */\nexport function {}(\n  {},\n): {class} {{", names.open_positional, public_sig(func, false).join(",\n  "));
     emit_public_open_guards(o, em, "open", false);
     let conv: Vec<String> = inputs.iter().map(|i| format!("float64({i})")).collect();
     let _ = writeln!(o, "  return {base}OpenInternal(core, {}, 0{});", conv.join(", "), comma(&opt_fwd(func)));
     let _ = writeln!(o, "}}");
 
-    let _ = write!(o, "\n{}", ts_doc::open_and_fill_docs(func, em.svc.enums));
-    let _ = writeln!(o, "export function {base}OpenAndFill(\n  {},\n): {class} {{", public_sig(func, true).join(",\n  "));
+    let _ = writeln!(o, "\n/** @internal */\nexport function {}(\n  {},\n): {class} {{", names.open_and_fill_positional, public_sig(func, true).join(",\n  "));
     emit_public_open_guards(o, em, "openAndFill", true);
     for i in &inputs {
         let _ = writeln!(o, "  const {i}F64 = float64({i});");
     }
     let mut args: Vec<String> = inputs.iter().map(|i| format!("{i}F64")).collect();
+    emit_fill_alias_guards(o, em);
     if merged {
-        if let Some((same, partial)) = alias_conditions(func, &|i| format!("{i}F64")) {
-            for cond in [same, format!("guardOutLen > 0 && ({partial})")] {
-                let _ = writeln!(o, "  if ({cond}) {{\n    throw streamFailure('{} openAndFill', RetCode.BAD_PARAM);\n  }}", em.name());
-            }
-        }
         args.push("0".to_string());
         args.extend(opt_fwd(func));
         args.push("new MInteger()".to_string());
@@ -1582,6 +1627,45 @@ fn emit_open_wrappers(o: &mut String, em: &Em, merged: bool) {
         emit_reject_conversion(o, em, "openAndFill", None);
     }
     let _ = writeln!(o, "}}");
+    emit_api_openers(o, em);
+}
+
+/// The public openers: inputs, then the batch call's options object.
+fn emit_api_openers(o: &mut String, em: &Em) {
+    let func = em.func;
+    let names = ts_names(&func.name);
+    let class = em.class();
+    let inputs = streaming::input_array_names(func);
+    let legs = ts::api_leg_args(func, &inputs);
+    let mut sig = ts::api_input_sig(func);
+    sig.push(format!("options?: {}", names.options_type));
+    let sig = sig.join(", ");
+    let mut opts: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    opts.push("core".to_string());
+
+    let _ = write!(o, "\n{}", ts_doc::open_docs(func, em.svc.enums));
+    let _ = writeln!(o, "export function {}({sig}): {class} {{", names.open);
+    o.push_str(&ts::api_prologue(func, &format!("{} open", func.name), false));
+    let mut args = legs.clone();
+    args.extend(opts.iter().cloned());
+    let _ = writeln!(o, "  return {}({});\n}}", names.open_positional, args.join(", "));
+
+    let _ = write!(o, "\n{}", ts_doc::open_and_fill_docs(func, em.svc.enums));
+    let _ = writeln!(o, "export function {}({sig}): {} & {{ stream: {class} }} {{", names.open_and_fill, names.result_type);
+    o.push_str(&ts::api_prologue(func, &format!("{} openAndFill", func.name), false));
+    let mut cap = vec![ts::api_lookback_call(func)];
+    cap.extend(legs.iter().cloned());
+    let _ = writeln!(o, "  const capacity = fillCapacity({});", cap.join(", "));
+    o.push_str(&ts::api_buffers(func));
+    let mut args = legs;
+    args.extend(func.optional_inputs.iter().map(|p| p.name.clone()));
+    args.extend(func.outputs.iter().map(|x| x.name.clone()));
+    args.push("core".to_string());
+    let _ = writeln!(o, "  const stream = {}({});", names.open_and_fill_positional, args.join(", "));
+    o.push_str("  const range = stream.outRange();\n");
+    let mut fields = vec!["stream".to_string(), "begIdx: range.begIdx".to_string()];
+    fields.extend(ts::api_result_fields(func, "range.count"));
+    let _ = writeln!(o, "  return {{ {} }};\n}}", fields.join(", "));
 }
 
 fn emit_open_and_fill_internal_wrapper(o: &mut String, em: &Em, merged: bool) {
@@ -1751,7 +1835,7 @@ fn callee_names(em: &Em, callee: &str) -> ts::TsNames {
 }
 
 fn callee_value_field(em: &Em, callee: &str, slot: usize) -> String {
-    value_field_name(&em.svc.registry.callee_outputs(callee)[slot])
+    ts::output_key(&em.svc.registry.callee_outputs(callee)[slot])
 }
 
 /// The callee's stream class, imported.
@@ -2038,11 +2122,11 @@ fn emit_dispatch_open(o: &mut String, em: &Em, dp: &streaming::DispatchPlan, mod
                         fill_outs.join(", ")
                     );
                 } else {
-                    em.svc.import(&arm.callee, &cn.open_and_fill);
+                    em.svc.import(&arm.callee, &cn.open_and_fill_positional);
                     let _ = writeln!(
                         s,
                         "      const sub = {}({bar_args}{}, {}, core);",
-                        cn.open_and_fill,
+                        cn.open_and_fill_positional,
                         comma(&opts),
                         fill_outs.join(", ")
                     );
@@ -2165,7 +2249,7 @@ fn emit_period_bank(o: &mut String, em: &Em, plan: &streaming::PeriodBankPlan) {
     let step_tape = format!("{callee_camel}StepTape");
     let peek_tape = format!("{callee_camel}PeekTape");
     let detach = format!("{callee_camel}TapeDetach");
-    for sym in [&cn.lookback, &cn.open_internal, &step_tape, &peek_tape, &detach] {
+    for sym in [&cn.lookback_positional, &cn.open_internal, &step_tape, &peek_tape, &detach] {
         em.svc.import(callee, sym);
     }
     let callee_args = |per: &str, ty: &str| -> String {
@@ -2191,7 +2275,7 @@ fn emit_period_bank(o: &mut String, em: &Em, plan: &streaming::PeriodBankPlan) {
     let window_labels = registry.window_labels(&func.name.to_lowercase());
     let windowed = !window_labels.is_empty();
     if windowed {
-        em.svc.import(callee, &cn.public);
+        em.svc.import(callee, &cn.positional);
     }
     let window_gate = |o: &mut String| {
         let _ = writeln!(o, "  let window = {base}WindowMode({matype});");
@@ -2201,7 +2285,7 @@ fn emit_period_bank(o: &mut String, em: &Em, plan: &streaming::PeriodBankPlan) {
         let _ = writeln!(
             o,
             "      if ({}({}, core) > lookbackTotal) {{\n        window = false;\n        break;\n      }}",
-            cn.lookback,
+            cn.lookback_positional,
             callee_args(&format!("{min} + bankIdx"), matype)
         );
         let _ = writeln!(o, "    }}\n  }}");
@@ -2291,13 +2375,13 @@ fn emit_period_bank(o: &mut String, em: &Em, plan: &streaming::PeriodBankPlan) {
         // per bar, and nothing they call re-enters this module.
         let _ = writeln!(o, "\nlet {base}Window = new Float64Array(0);\nconst {base}Value = new Float64Array(1);");
         let _ = writeln!(o, "\nfunction {base}EvalWindow(sp: {class}, {price}: number, cp: number): number {{");
-        let _ = writeln!(o, "  const lb = {}({}, sp.core);", cn.lookback, callee_args("cp", &format!("sp.{matype}")));
+        let _ = writeln!(o, "  const lb = {}({}, sp.core);", cn.lookback_positional, callee_args("cp", &format!("sp.{matype}")));
         let _ = writeln!(o, "  if ({base}Window.length < lb + 1) {{\n    {base}Window = new Float64Array(lb + 1);\n  }}");
         let _ = writeln!(o, "  const win = {base}Window;");
         let _ = writeln!(o, "  for (let i = 0; i < lb; i++) {{");
         let _ = writeln!(o, "    win[i] = sp.tape[(sp.tapePos + sp.tapeMask + 2 - lb + i) & sp.tapeMask];\n  }}");
         let _ = writeln!(o, "  win[lb] = {price};");
-        let _ = writeln!(o, "  {}(lb, lb, win, {}, {base}Value, sp.core);", cn.public, callee_args("cp", &format!("sp.{matype}")));
+        let _ = writeln!(o, "  {}(lb, lb, win, {}, {base}Value, sp.core);", cn.positional, callee_args("cp", &format!("sp.{matype}")));
         let _ = writeln!(o, "  return {base}Value[0];\n}}");
     }
 
@@ -2309,7 +2393,7 @@ fn emit_period_bank(o: &mut String, em: &Em, plan: &streaming::PeriodBankPlan) {
     let _ = writeln!(s, "  if ({min} > {max}) {{\n    return RetCode.BAD_PARAM;\n  }}");
     let _ = writeln!(s, "  if (historyLen < {own_lb} + 1) {{\n    return RetCode.INSUFFICIENT_HISTORY;\n  }}");
     // Every sub seeds at the shared max-period lookback, as batch does.
-    let _ = writeln!(s, "  const lookbackTotal = {}({lb_args}, core);", cn.lookback);
+    let _ = writeln!(s, "  const lookbackTotal = {}({lb_args}, core);", cn.lookback_positional);
     let _ = writeln!(s, "  const subStart = startIdx < lookbackTotal ? lookbackTotal : startIdx;");
     let _ = writeln!(s, "  if (historyLen < subStart + 1) {{\n    return RetCode.INSUFFICIENT_HISTORY;\n  }}");
     let _ = writeln!(s, "  const nBank = {max} - {min} + 1;");
@@ -2320,7 +2404,7 @@ fn emit_period_bank(o: &mut String, em: &Em, plan: &streaming::PeriodBankPlan) {
         store_window_handle(&mut s);
         let _ = writeln!(s, "    {base}TapeOpen(sp, {price}, historyLen, lookbackTotal);");
         let _ = writeln!(s, "    const out1 = new Float64Array(1);");
-        let _ = writeln!(s, "    {}(historyLen - 1, historyLen - 1, {price}, {}, out1, core);", cn.public, callee_args("cp", matype));
+        let _ = writeln!(s, "    {}(historyLen - 1, historyLen - 1, {price}, {}, out1, core);", cn.positional, callee_args("cp", matype));
         let _ = writeln!(s, "    sp.cur_{out} = out1[0];");
         let _ = writeln!(s, "    sp.outRangeBegIdx = subStart;\n    sp.outRangeCount = historyLen - subStart;");
         let _ = writeln!(s, "    return RetCode.SUCCESS;\n  }}");
@@ -2340,7 +2424,7 @@ fn emit_period_bank(o: &mut String, em: &Em, plan: &streaming::PeriodBankPlan) {
     let _ = writeln!(s, "  const historyLen = {price}.length;");
     emit_open_validation(&mut s, em, OutMode::Fill);
     let _ = writeln!(s, "  if ({min} > {max}) {{\n    return RetCode.BAD_PARAM;\n  }}");
-    let _ = writeln!(s, "  const lookbackTotal = {}({lb_args}, core);", cn.lookback);
+    let _ = writeln!(s, "  const lookbackTotal = {}({lb_args}, core);", cn.lookback_positional);
     let _ = writeln!(s, "  if (historyLen < lookbackTotal + 1) {{\n    return RetCode.INSUFFICIENT_HISTORY;\n  }}");
     let _ = writeln!(s, "  const nBank = {max} - {min} + 1;");
     if windowed {
@@ -2353,7 +2437,7 @@ fn emit_period_bank(o: &mut String, em: &Em, plan: &streaming::PeriodBankPlan) {
         let _ = writeln!(s, "      for (t1 = t; t1 + 1 < historyLen; t1++) {{");
         clamp_to(&mut s, "        ", "cp2", &format!("{period}[t1 + 1]"), "");
         let _ = writeln!(s, "        if (cp2 !== cp) {{\n          break;\n        }}\n      }}");
-        let _ = writeln!(s, "      {}(t, t1, {price}, {}, run, core);", cn.public, callee_args("cp", matype));
+        let _ = writeln!(s, "      {}(t, t1, {price}, {}, run, core);", cn.positional, callee_args("cp", matype));
         let _ = writeln!(s, "      {out}.set(run.subarray(0, t1 - t + 1), t - lookbackTotal);");
         let _ = writeln!(s, "    }}");
         store_window_handle(&mut s);

@@ -16,7 +16,7 @@
  *  092926 MF,CC  First version (issue #475).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
@@ -24,23 +24,8 @@ import { OutRange } from '../runtime/outRange.ts';
 
 /* Using alma_ALT1 for TA_ALT={BATCH,ALL_LANGUAGES} */
 
-/**
- * Number of leading input bars {@link alma} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInTimePeriod - Number of bars in the window (default 9; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSigma - Divides the period to give the Gaussian's width in bars
- *   (default 6; minimum 0.01; `Core.REAL_DEFAULT` selects the default).
- * @param optInOffset - Position of the peak weight, 0 at the oldest bar and 1 at
- *   the newest (default 0.85; range 0 to 1; `Core.REAL_DEFAULT` selects the
- *   default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function almaLookback(optInTimePeriod: number, optInSigma: number, optInOffset: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function almaLookbackPositional(optInTimePeriod: number, optInSigma: number, optInOffset: number, _core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -68,27 +53,9 @@ export function almaLookback(optInTimePeriod: number, optInSigma: number, optInO
   return optInTimePeriod - 1;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link alma}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Number of bars in the window (default 9; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSigma - Divides the period to give the Gaussian's width in bars
- *   (default 6; minimum 0.01; `Core.REAL_DEFAULT` selects the default).
- * @param optInOffset - Position of the peak weight, 0 at the oldest bar and 1 at
- *   the newest (default 0.85; range 0 to 1; `Core.REAL_DEFAULT` selects the
- *   default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function almaDisplayShift(optInTimePeriod: number, optInSigma: number, optInOffset: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (almaLookback(optInTimePeriod, optInSigma, optInOffset, core) < 0) {
+/** @internal */
+export function almaDisplayShiftPositional(optInTimePeriod: number, optInSigma: number, optInOffset: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (almaLookbackPositional(optInTimePeriod, optInSigma, optInOffset, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -234,6 +201,140 @@ export function almaImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['sigma', Core.REAL_DEFAULT, 1e-2, Core.REAL_MAX, 'in 0.01..3e37'], ['offset', Core.REAL_DEFAULT, 0e0, 1e0, 'in 0..1']] as const;
+
+/** @internal */
+export function almaPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInSigma: number,
+  optInOffset: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('ALMA', 'startIdx', startIdx);
+  endIdx = requireInt32('ALMA', 'endIdx', endIdx);
+  optInTimePeriod = requireInt32('ALMA', 'timePeriod', optInTimePeriod);
+  optInSigma = requireReal('ALMA', 'sigma', optInSigma);
+  optInOffset = requireReal('ALMA', 'offset', optInOffset);
+  requireIndexRange('ALMA', startIdx, endIdx);
+  const guardLookback = almaLookbackPositional(optInTimePeriod, optInSigma, optInOffset, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('ALMA', PARAM_RANGES, optInTimePeriod, optInSigma, optInOffset);
+  }
+  const guardStart = clampedStart('ALMA', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('ALMA', 'real', inReal, guardInLen);
+  requireOutput('ALMA', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outReal, inRealF64)) {
+    throw sharedMemory('ALMA', 'outReal', 'real');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = almaImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, optInSigma, optInOffset, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('ALMA', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link alma}, {@link almaLookback}, {@link almaDisplayShift},
+ * {@link almaOpen} and {@link almaOpenAndFill}. Every key is optional: an omitted
+ * or `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface AlmaOptions {
+  /**
+   * Number of bars in the window (default 9; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * Divides the period to give the Gaussian's width in bars (default 6; minimum
+   * 0.01; `Core.REAL_DEFAULT` selects the default).
+   */
+  sigma?: number | undefined;
+  /**
+   * Position of the peak weight, 0 at the oldest bar and 1 at the newest (default
+   * 0.85; range 0 to 1; `Core.REAL_DEFAULT` selects the default).
+   */
+  offset?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link alma} returns, and {@link almaOpenAndFill} with its stream. */
+export interface AlmaResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Arnaud Legoux Moving Average line. `values[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link alma} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link AlmaOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function almaLookback(options?: AlmaOptions): number {
+  const o = optionsOf('ALMA lookback', options);
+  return almaLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.sigma, Core.REAL_DEFAULT), orDefault(o.offset, Core.REAL_DEFAULT), coreOf('ALMA lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link alma}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link AlmaOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function almaDisplayShift(outputIdx: number, options?: AlmaOptions): number {
+  const o = optionsOf('ALMA displayShift', options);
+  return almaDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.sigma, Core.REAL_DEFAULT), orDefault(o.offset, Core.REAL_DEFAULT), outputIdx, coreOf('ALMA displayShift', o.core));
+}
+
 /**
  * Arnaud Legoux Moving Average: the last N inputs weighted by a Gaussian whose
  * peak sits a fraction `offset` of the way from the oldest to the newest bar.
@@ -259,32 +360,23 @@ export function almaImpl(
  * - The published paper's summary formula uses a different parameterisation; this
  *   is the form of the authors' own implementation.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link almaLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link almaLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Data on which to compute the average.
- * @param optInTimePeriod - Number of bars in the window (default 9; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSigma - Divides the period to give the Gaussian's width in bars
- *   (default 6; minimum 0.01; `Core.REAL_DEFAULT` selects the default).
- * @param optInOffset - Position of the peak weight, 0 at the oldest bar and 1 at
- *   the newest (default 0.85; range 0 to 1; `Core.REAL_DEFAULT` selects the
- *   default).
- * @param outReal - Arnaud Legoux Moving Average line. Must hold the values
- *   produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Data on which to compute the average.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link AlmaOptions}.
+ * @returns `begIdx` and the values; see {@link AlmaResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   real parameter that is not a number, a parameter outside its range, an array too
- *   short for the range, an empty output or an output sharing memory with a
- *   `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a real parameter that is not a
+ *   number, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type or a buffer sharing memory
+ *   with a `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -292,47 +384,33 @@ export function almaImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const { begIdx, count } = alma(0, data.length - 1, data, 9, 6, 0.85, out);
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = alma(data, {
+ *   timePeriod: 9,
+ *   sigma: 6,
+ *   offset: 0.85,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`wma`](https://ta-lib.org/functions/wma)
  * @see [`sma`](https://ta-lib.org/functions/sma)
  * @see [`trima`](https://ta-lib.org/functions/trima)
  * @see [`hma`](https://ta-lib.org/functions/hma)
  */
-export function alma(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInSigma: number,
-  optInOffset: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('ALMA', 'startIdx', startIdx);
-  endIdx = requireInt32('ALMA', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('ALMA', 'optInTimePeriod', optInTimePeriod);
-  optInSigma = requireReal('ALMA', 'optInSigma', optInSigma);
-  optInOffset = requireReal('ALMA', 'optInOffset', optInOffset);
-  requireIndexRange('ALMA', startIdx, endIdx);
-  const guardStart = clampedStart('ALMA', startIdx, almaLookback(optInTimePeriod, optInSigma, optInOffset, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('ALMA', 'inReal', inReal, guardInLen);
-  requireOutput('ALMA', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outReal, inRealF64)) {
-    throw failure('ALMA', RetCode.BAD_PARAM);
+export function alma(real: ArrayLike<number>, options?: AlmaOptions): AlmaResult {
+  const o = optionsOf('ALMA', options);
+  if (o.endIdx === undefined) {
+    requireSeries('ALMA', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = almaImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, optInSigma, optInOffset, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('ALMA', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInSigma = orDefault(o.sigma, Core.REAL_DEFAULT);
+  const optInOffset = orDefault(o.offset, Core.REAL_DEFAULT);
+  const core = coreOf('ALMA', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, almaLookbackPositional(optInTimePeriod, optInSigma, optInOffset, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = almaPositional(startIdx, endIdx, real, optInTimePeriod, optInSigma, optInOffset, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -574,7 +652,7 @@ function almaOpenImpl(
     return RetCode.INSUFFICIENT_HISTORY;
   }
   if (optInTimePeriod === 1) {
-    let fillLb = almaLookback(optInTimePeriod, optInSigma, optInOffset, core);
+    let fillLb = almaLookbackPositional(optInTimePeriod, optInSigma, optInOffset, core);
     if (startIdx > fillLb) {
       fillLb = startIdx;
     }
@@ -698,7 +776,10 @@ export function almaOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('ALMA openAndFill', inReal.length, startIdx, almaLookback(optInTimePeriod, optInSigma, optInOffset, core));
+    throw insufficientHistory('ALMA openAndFill', inReal.length, startIdx, almaLookbackPositional(optInTimePeriod, optInSigma, optInOffset, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && almaLookbackPositional(optInTimePeriod, optInSigma, optInOffset, core) < 0) {
+    throw rejectedParams('ALMA openAndFill', PARAM_RANGES, optInTimePeriod, optInSigma, optInOffset);
   }
   throw streamFailure('ALMA openAndFill', retCode);
 }
@@ -723,28 +804,71 @@ export function almaOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('ALMA open', inReal.length, startIdx, almaLookback(optInTimePeriod, optInSigma, optInOffset, core));
+    throw insufficientHistory('ALMA open', inReal.length, startIdx, almaLookbackPositional(optInTimePeriod, optInSigma, optInOffset, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && almaLookbackPositional(optInTimePeriod, optInSigma, optInOffset, core) < 0) {
+    throw rejectedParams('ALMA open', PARAM_RANGES, optInTimePeriod, optInSigma, optInOffset);
   }
   throw streamFailure('ALMA open', retCode);
+}
+
+/** @internal */
+export function almaOpenPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInSigma: number,
+  optInOffset: number,
+  core: Core = Core.DEFAULT,
+): AlmaStream {
+  optInTimePeriod = requireInt32('ALMA open', 'timePeriod', optInTimePeriod);
+  optInSigma = requireReal('ALMA open', 'sigma', optInSigma);
+  optInOffset = requireReal('ALMA open', 'offset', optInOffset);
+  requireArgument('ALMA open', 'real', inReal);
+  requireHistory('ALMA open', inReal.length);
+  return almaOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInSigma, optInOffset);
+}
+
+/** @internal */
+export function almaOpenAndFillPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInSigma: number,
+  optInOffset: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): AlmaStream {
+  optInTimePeriod = requireInt32('ALMA openAndFill', 'timePeriod', optInTimePeriod);
+  optInSigma = requireReal('ALMA openAndFill', 'sigma', optInSigma);
+  optInOffset = requireReal('ALMA openAndFill', 'offset', optInOffset);
+  requireArgument('ALMA openAndFill', 'real', inReal);
+  requireHistory('ALMA openAndFill', inReal.length);
+  const guardLookback = almaLookbackPositional(optInTimePeriod, optInSigma, optInOffset, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('ALMA openAndFill', PARAM_RANGES, optInTimePeriod, optInSigma, optInOffset);
+  }
+  const guardOutLen = openFillCount('ALMA openAndFill', inReal.length, guardLookback);
+  requireOutput('ALMA openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('ALMA openAndFill', 'outReal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inRealF64)) {
+    throw sharedMemory('ALMA openAndFill', 'outReal', 'real');
+  }
+  return almaOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, optInSigma, optInOffset, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live ALMA stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link alma} there.
  *
- * @param inReal - Warm-up history. Data on which to compute the average.
- * @param optInTimePeriod - Number of bars in the window (default 9; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSigma - Divides the period to give the Gaussian's width in bars
- *   (default 6; minimum 0.01; `Core.REAL_DEFAULT` selects the default).
- * @param optInOffset - Position of the peak weight, 0 at the oldest bar and 1 at
- *   the newest (default 0.85; range 0 to 1; `Core.REAL_DEFAULT` selects the
- *   default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param real - Warm-up history. Data on which to compute the average.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link AlmaOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `almaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
  *   an integer parameter that is not an int32, a real parameter that is not a number
  *   or a parameter outside its range.
  *
@@ -754,51 +878,38 @@ export function almaOpenInternal(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = almaOpen(data, 9, 6, 0.85);
+ * const stream = almaOpen(data, { timePeriod: 9, sigma: 6, offset: 0.85 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
  */
-export function almaOpen(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInSigma: number,
-  optInOffset: number,
-  core: Core = Core.DEFAULT,
-): AlmaStream {
-  optInTimePeriod = requireInt32('ALMA open', 'optInTimePeriod', optInTimePeriod);
-  optInSigma = requireReal('ALMA open', 'optInSigma', optInSigma);
-  optInOffset = requireReal('ALMA open', 'optInOffset', optInOffset);
-  requireArgument('ALMA open', 'inReal', inReal);
-  requireHistory('ALMA open', inReal.length);
-  return almaOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInSigma, optInOffset);
+export function almaOpen(real: ArrayLike<number>, options?: AlmaOptions): AlmaStream {
+  const o = optionsOf('ALMA open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInSigma = orDefault(o.sigma, Core.REAL_DEFAULT);
+  const optInOffset = orDefault(o.offset, Core.REAL_DEFAULT);
+  const core = coreOf('ALMA open', o.core);
+  return almaOpenPositional(real, optInTimePeriod, optInSigma, optInOffset, core);
 }
 
 /**
- * {@link almaOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link alma}. The range written is the stream's
- * `outRange()`.
+ * {@link almaOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link alma}.
  *
- * @param inReal - Warm-up history. Data on which to compute the average.
- * @param optInTimePeriod - Number of bars in the window (default 9; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSigma - Divides the period to give the Gaussian's width in bars
- *   (default 6; minimum 0.01; `Core.REAL_DEFAULT` selects the default).
- * @param optInOffset - Position of the peak weight, 0 at the oldest bar and 1 at
- *   the newest (default 0.85; range 0 to 1; `Core.REAL_DEFAULT` selects the
- *   default).
- * @param outReal - Arnaud Legoux Moving Average line. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param real - Warm-up history. Data on which to compute the average.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link AlmaOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link alma} returns them; the range is the stream's
+ *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `almaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
  *   an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range or an output too short or starting where
- *   another output or a `Float64Array` input starts, or, on a history long enough to
- *   open, one sharing memory with another output or a `Float64Array` input.
+ *   number, a parameter outside its range or a buffer too short, of the wrong type
+ *   or starting where another buffer or a `Float64Array` input starts, or, on a
+ *   history long enough to open, one sharing memory with another buffer or a
+ *   `Float64Array` input.
  *
  * @example
  * ```ts
@@ -806,35 +917,25 @@ export function almaOpen(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const stream = almaOpenAndFill(data, 9, 6, 0.85, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = almaOpenAndFill(data, {
+ *   timePeriod: 9,
+ *   sigma: 6,
+ *   offset: 0.85,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function almaOpenAndFill(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInSigma: number,
-  optInOffset: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): AlmaStream {
-  optInTimePeriod = requireInt32('ALMA openAndFill', 'optInTimePeriod', optInTimePeriod);
-  optInSigma = requireReal('ALMA openAndFill', 'optInSigma', optInSigma);
-  optInOffset = requireReal('ALMA openAndFill', 'optInOffset', optInOffset);
-  requireArgument('ALMA openAndFill', 'inReal', inReal);
-  requireHistory('ALMA openAndFill', inReal.length);
-  const guardOutLen = openFillCount('ALMA openAndFill', inReal.length, almaLookback(optInTimePeriod, optInSigma, optInOffset, core));
-  requireOutput('ALMA openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
-    throw streamFailure('ALMA openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inRealF64))) {
-    throw streamFailure('ALMA openAndFill', RetCode.BAD_PARAM);
-  }
-  return almaOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, optInSigma, optInOffset, new MInteger(), new MInteger(), outReal);
+export function almaOpenAndFill(real: ArrayLike<number>, options?: AlmaOptions): AlmaResult & { stream: AlmaStream } {
+  const o = optionsOf('ALMA openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInSigma = orDefault(o.sigma, Core.REAL_DEFAULT);
+  const optInOffset = orDefault(o.offset, Core.REAL_DEFAULT);
+  const core = coreOf('ALMA openAndFill', o.core);
+  const capacity = fillCapacity(almaLookbackPositional(optInTimePeriod, optInSigma, optInOffset, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = almaOpenAndFillPositional(real, optInTimePeriod, optInSigma, optInOffset, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /** @internal */

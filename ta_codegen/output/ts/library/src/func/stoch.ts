@@ -27,36 +27,15 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { MaStream, ma, maLookback, maOpenAndFillInternal, maOpenInternal } from './ma.ts';
+import { MaStream, maLookbackPositional, maOpenAndFillInternal, maOpenInternal, maPositional } from './ma.ts';
 
-/**
- * Number of leading input bars {@link stoch} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInFastK_Period - Lookback window for the raw %K high-low range
- *   (default 5; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowK_Period - Smoothing period turning FastK into SlowK (default 3;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowK_MAType - MA type used to smooth into SlowK (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSlowD_Period - Smoothing period for the SlowD signal line (default
- *   3; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowD_MAType - MA type used for the SlowD line (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function stochLookback(optInFastK_Period: number, optInSlowK_Period: number, optInSlowK_MAType: MAType | typeof Core.INTEGER_DEFAULT, optInSlowD_Period: number, optInSlowD_MAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function stochLookbackPositional(optInFastK_Period: number, optInSlowK_Period: number, optInSlowK_MAType: MAType | typeof Core.INTEGER_DEFAULT, optInSlowD_Period: number, optInSlowD_MAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
   if ((optInFastK_Period | 0) !== optInFastK_Period) {
     return -1;
   }
@@ -101,40 +80,15 @@ export function stochLookback(optInFastK_Period: number, optInSlowK_Period: numb
   /* Account for the initial data needed for Fast-K. */
   retValue = optInFastK_Period - 1;
   /* Add the smoothing being done for %K slow */
-  retValue += maLookback(optInSlowK_Period, (optInSlowK_MAType as MAType), core);
+  retValue += maLookbackPositional(optInSlowK_Period, (optInSlowK_MAType as MAType), core);
   /* Add the smoothing being done for %D slow. */
-  retValue += maLookback(optInSlowD_Period, (optInSlowD_MAType as MAType), core);
+  retValue += maLookbackPositional(optInSlowD_Period, (optInSlowD_MAType as MAType), core);
   return retValue;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link stoch}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInFastK_Period - Lookback window for the raw %K high-low range
- *   (default 5; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowK_Period - Smoothing period turning FastK into SlowK (default 3;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowK_MAType - MA type used to smooth into SlowK (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSlowD_Period - Smoothing period for the SlowD signal line (default
- *   3; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowD_MAType - MA type used for the SlowD line (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function stochDisplayShift(optInFastK_Period: number, optInSlowK_Period: number, optInSlowK_MAType: MAType | typeof Core.INTEGER_DEFAULT, optInSlowD_Period: number, optInSlowD_MAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (stochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, core) < 0) {
+/** @internal */
+export function stochDisplayShiftPositional(optInFastK_Period: number, optInSlowK_Period: number, optInSlowK_MAType: MAType | typeof Core.INTEGER_DEFAULT, optInSlowD_Period: number, optInSlowD_MAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (stochLookbackPositional(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 2) {
@@ -243,8 +197,8 @@ export function stochImpl(
    */
   /* Identify the lookback needed. */
   lookbackK = optInFastK_Period - 1;
-  lookbackKSlow = maLookback(optInSlowK_Period, (optInSlowK_MAType as MAType), core);
-  lookbackDSlow = maLookback(optInSlowD_Period, (optInSlowD_MAType as MAType), core);
+  lookbackKSlow = maLookbackPositional(optInSlowK_Period, (optInSlowK_MAType as MAType), core);
+  lookbackDSlow = maLookbackPositional(optInSlowD_Period, (optInSlowD_MAType as MAType), core);
   lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
   /* Move up the start index if there is not
    * enough initial data.
@@ -356,7 +310,7 @@ export function stochImpl(
    * Some documentation will refer to the smoothed version as being
    * "K-Slow", but often this end up to be shorten to "K".
    */
-  const _xr0 = ma(0, outIdx - 1, tempBuffer, optInSlowK_Period, (optInSlowK_MAType as MAType), tempBuffer, core);
+  const _xr0 = maPositional(0, outIdx - 1, tempBuffer, optInSlowK_Period, (optInSlowK_MAType as MAType), tempBuffer, core);
   outBegIdx.value = _xr0.begIdx;
   outNBElement.value = _xr0.count;
   retCode = RetCode.SUCCESS;
@@ -369,7 +323,7 @@ export function stochImpl(
   /* Calculate the %D which is simply a moving average of
    * the already smoothed %K.
    */
-  const _xr1 = ma(0, outNBElement.value - 1, tempBuffer, optInSlowD_Period, (optInSlowD_MAType as MAType), outSlowD, core);
+  const _xr1 = maPositional(0, outNBElement.value - 1, tempBuffer, optInSlowD_Period, (optInSlowD_MAType as MAType), outSlowD, core);
   outBegIdx.value = _xr1.begIdx;
   outNBElement.value = _xr1.count;
   retCode = RetCode.SUCCESS;
@@ -389,82 +343,10 @@ export function stochImpl(
   return RetCode.SUCCESS;
 }
 
-/**
- * Slow Stochastic oscillator: locates the close within the high-low range over a
- * lookback period, then double-smooths it. Returns the Slow-%K and Slow-%D lines.
- * SlowK/SlowD > 80 overbought, \< 20 oversold; %K crossing %D signals momentum
- * shifts.
- *
- * Formula and more info at
- * [ta-lib.org/functions/stoch](https://ta-lib.org/functions/stoch).
- *
- * **Notes**
- * - When the high-low range over the window is zero, the raw stochastic is set to
- *   0 instead of being undefined.
- *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link stochLookback} is a success with
- * `count` 0.
- *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param inClose - Close price of each bar.
- * @param optInFastK_Period - Lookback window for the raw %K high-low range
- *   (default 5; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowK_Period - Smoothing period turning FastK into SlowK (default 3;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowK_MAType - MA type used to smooth into SlowK (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSlowD_Period - Smoothing period for the SlowD signal line (default
- *   3; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowD_MAType - MA type used for the SlowD line (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outSlowK - Raw FastK smoothed by SlowK_Period MA. Must hold the values
- *   produced and never be empty; the input length always suffices.
- * @param outSlowD - Signal line: SlowK smoothed by SlowD_Period MA. Must hold the
- *   values produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output,
- *   two outputs sharing memory or an output sharing memory with a `Float64Array`
- *   input it is not. Checked before anything is written.
- *
- * @example
- * ```ts
- * import { MAType, stoch } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const slowK = new Float64Array(high.length);
- * const slowD = new Float64Array(high.length);
- * const { begIdx, count } = stoch(
- *   0, high.length - 1,
- *   high, low, close,
- *   5, 3, MAType.SMA, 3, MAType.SMA,
- *   slowK, slowD,
- * );
- * // slowK[k] is the value at bar begIdx + k, for k < count
- * ```
- * @see [`stochf`](https://ta-lib.org/functions/stochf)
- * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)
- * @see [`ma`](https://ta-lib.org/functions/ma)
- */
-export function stoch(
+const PARAM_RANGES = [['fastKPeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['slowKPeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['slowKMaType', Core.INTEGER_DEFAULT, MATypes.Min, MATypes.Max, 'a MAType'], ['slowDPeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['slowDMaType', Core.INTEGER_DEFAULT, MATypes.Min, MATypes.Max, 'a MAType']] as const;
+
+/** @internal */
+export function stochPositional(
   startIdx: number,
   endIdx: number,
   inHigh: ArrayLike<number>,
@@ -481,25 +363,47 @@ export function stoch(
 ): OutRange {
   startIdx = requireInt32('STOCH', 'startIdx', startIdx);
   endIdx = requireInt32('STOCH', 'endIdx', endIdx);
-  optInFastK_Period = requireInt32('STOCH', 'optInFastK_Period', optInFastK_Period);
-  optInSlowK_Period = requireInt32('STOCH', 'optInSlowK_Period', optInSlowK_Period);
-  optInSlowK_MAType = requireInt32('STOCH', 'optInSlowK_MAType', optInSlowK_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  optInSlowD_Period = requireInt32('STOCH', 'optInSlowD_Period', optInSlowD_Period);
-  optInSlowD_MAType = requireInt32('STOCH', 'optInSlowD_MAType', optInSlowD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  optInFastK_Period = requireInt32('STOCH', 'fastKPeriod', optInFastK_Period);
+  optInSlowK_Period = requireInt32('STOCH', 'slowKPeriod', optInSlowK_Period);
+  optInSlowK_MAType = requireInt32('STOCH', 'slowKMaType', optInSlowK_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  optInSlowD_Period = requireInt32('STOCH', 'slowDPeriod', optInSlowD_Period);
+  optInSlowD_MAType = requireInt32('STOCH', 'slowDMaType', optInSlowD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireIndexRange('STOCH', startIdx, endIdx);
-  const guardStart = clampedStart('STOCH', startIdx, stochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, core));
+  const guardLookback = stochLookbackPositional(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('STOCH', PARAM_RANGES, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+  }
+  const guardStart = clampedStart('STOCH', startIdx, guardLookback);
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('STOCH', 'inHigh', inHigh, guardInLen);
-  requireLength('STOCH', 'inLow', inLow, guardInLen);
-  requireLength('STOCH', 'inClose', inClose, guardInLen);
+  requireLength('STOCH', 'prices.high', inHigh, guardInLen);
+  requireLength('STOCH', 'prices.low', inLow, guardInLen);
+  requireLength('STOCH', 'prices.close', inClose, guardInLen);
   requireOutput('STOCH', 'outSlowK', outSlowK, guardOutLen, Float64Array);
   requireOutput('STOCH', 'outSlowD', outSlowD, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
-  if (overlapsPartly(outSlowK, inHighF64) || overlapsPartly(outSlowK, inLowF64) || overlapsPartly(outSlowK, inCloseF64) || overlapsPartly(outSlowD, inHighF64) || overlapsPartly(outSlowD, inLowF64) || overlapsPartly(outSlowD, inCloseF64) || overlaps(outSlowK, outSlowD)) {
-    throw failure('STOCH', RetCode.BAD_PARAM);
+  if (overlapsPartly(outSlowK, inHighF64)) {
+    throw sharedMemory('STOCH', 'outSlowK', 'prices.high');
+  }
+  if (overlapsPartly(outSlowK, inLowF64)) {
+    throw sharedMemory('STOCH', 'outSlowK', 'prices.low');
+  }
+  if (overlapsPartly(outSlowK, inCloseF64)) {
+    throw sharedMemory('STOCH', 'outSlowK', 'prices.close');
+  }
+  if (overlapsPartly(outSlowD, inHighF64)) {
+    throw sharedMemory('STOCH', 'outSlowD', 'prices.high');
+  }
+  if (overlapsPartly(outSlowD, inLowF64)) {
+    throw sharedMemory('STOCH', 'outSlowD', 'prices.low');
+  }
+  if (overlapsPartly(outSlowD, inCloseF64)) {
+    throw sharedMemory('STOCH', 'outSlowD', 'prices.close');
+  }
+  if (overlaps(outSlowK, outSlowD)) {
+    throw sharedMemory('STOCH', 'outSlowK', 'outSlowD');
   }
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
@@ -508,6 +412,205 @@ export function stoch(
     throw failure('STOCH', retCode);
   }
   return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link stoch}, {@link stochLookback}, {@link stochDisplayShift},
+ * {@link stochOpen} and {@link stochOpenAndFill}. Every key is optional: an
+ * omitted or `undefined` key takes its default, and a call ignores the keys it has
+ * no use for.
+ */
+export interface StochOptions {
+  /**
+   * Lookback window for the raw %K high-low range (default 5; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  fastKPeriod?: number | undefined;
+  /**
+   * Smoothing period turning FastK into SlowK (default 3; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  slowKPeriod?: number | undefined;
+  /**
+   * MA type used to smooth into SlowK (default `MAType.SMA`; values: 0=SMA, 1=EMA,
+   * 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   * 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; `Core.INTEGER_DEFAULT` or
+   * `MAType.DEFAULT` selects the default).
+   */
+  slowKMaType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
+  /**
+   * Smoothing period for the SlowD signal line (default 3; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  slowDPeriod?: number | undefined;
+  /**
+   * MA type used for the SlowD line (default `MAType.SMA`; values: 0=SMA, 1=EMA,
+   * 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   * 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; `Core.INTEGER_DEFAULT` or
+   * `MAType.DEFAULT` selects the default).
+   */
+  slowDMaType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outSlowK`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outSlowK?: Float64Array | undefined;
+  /**
+   * Buffer for `outSlowD`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outSlowD?: Float64Array | undefined;
+}
+
+/** What {@link stoch} returns, and {@link stochOpenAndFill} with its stream. */
+export interface StochResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Raw FastK smoothed by SlowK_Period MA. `outSlowK[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  outSlowK: Float64Array;
+  /**
+   * Signal line: SlowK smoothed by SlowD_Period MA. `outSlowD[k]` is the value at
+   * input bar `begIdx + k`.
+   */
+  outSlowD: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link stoch} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link StochOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function stochLookback(options?: StochOptions): number {
+  const o = optionsOf('STOCH lookback', options);
+  return stochLookbackPositional(orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowKPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowKMaType, Core.INTEGER_DEFAULT), orDefault(o.slowDPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowDMaType, Core.INTEGER_DEFAULT), coreOf('STOCH lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link stoch}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link StochOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function stochDisplayShift(outputIdx: number, options?: StochOptions): number {
+  const o = optionsOf('STOCH displayShift', options);
+  return stochDisplayShiftPositional(orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowKPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowKMaType, Core.INTEGER_DEFAULT), orDefault(o.slowDPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowDMaType, Core.INTEGER_DEFAULT), outputIdx, coreOf('STOCH displayShift', o.core));
+}
+
+/**
+ * Slow Stochastic oscillator: locates the close within the high-low range over a
+ * lookback period, then double-smooths it. Returns the Slow-%K and Slow-%D lines.
+ * SlowK/SlowD > 80 overbought, \< 20 oversold; %K crossing %D signals momentum
+ * shifts.
+ *
+ * Formula and more info at
+ * [ta-lib.org/functions/stoch](https://ta-lib.org/functions/stoch).
+ *
+ * **Notes**
+ * - When the high-low range over the window is zero, the raw stochastic is set to
+ *   0 instead of being undefined.
+ *
+ * `outSlowK[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link stochLookback} is a success with empty outputs.
+ *
+ * @param prices - One series per price component, all of one length. `high`: High
+ *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
+ *   bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link StochOptions}.
+ * @returns `begIdx` and the values; see {@link StochResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
+ * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
+ *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
+ *
+ * @example
+ * ```ts
+ * import { MAType, stoch } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const close = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const { begIdx, outSlowK, outSlowD } = stoch({ high, low, close }, {
+ *   fastKPeriod: 5,
+ *   slowKPeriod: 3,
+ *   slowKMaType: MAType.SMA,
+ *   slowDPeriod: 3,
+ *   slowDMaType: MAType.SMA,
+ * });
+ * // outSlowK[k] is the value at bar begIdx + k
+ * ```
+ * @see [`stochf`](https://ta-lib.org/functions/stochf)
+ * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)
+ * @see [`ma`](https://ta-lib.org/functions/ma)
+ */
+export function stoch(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: StochOptions): StochResult {
+  requireArgument('STOCH', 'prices', prices);
+  const o = optionsOf('STOCH', options);
+  if (o.endIdx === undefined) {
+    requireSeries('STOCH', 'prices.high', prices.high);
+    requireSeries('STOCH', 'prices.low', prices.low);
+    requireSeries('STOCH', 'prices.close', prices.close);
+  }
+  const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowK_Period = orDefault(o.slowKPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowK_MAType = orDefault(o.slowKMaType, Core.INTEGER_DEFAULT);
+  const optInSlowD_Period = orDefault(o.slowDPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowD_MAType = orDefault(o.slowDMaType, Core.INTEGER_DEFAULT);
+  const core = coreOf('STOCH', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.high.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, stochLookbackPositional(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, core), prices.high, prices.low, prices.close);
+  const outSlowK = o.outSlowK === undefined ? new Float64Array(capacity) : o.outSlowK;
+  const outSlowD = o.outSlowD === undefined ? new Float64Array(capacity) : o.outSlowD;
+  const range = stochPositional(startIdx, endIdx, prices.high, prices.low, prices.close, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outSlowK, outSlowD, core);
+  return { begIdx: range.begIdx, outSlowK: outSlowK.subarray(0, range.count), outSlowD: outSlowD.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -601,21 +704,23 @@ export class StochStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inHigh - The bar's `inHigh` value: High price of each bar.
    * @param inLow - The bar's `inLow` value: Low price of each bar.
    * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link StochOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out: StochOut): void {
+  update(inHigh: number, inLow: number, inClose: number, out?: StochOut): StochOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('STOCH update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('STOCH update', 'StochOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
@@ -623,23 +728,28 @@ export class StochStream {
     }
     stochStepImpl(this, inHigh, inLow, inClose);
     this.outRangeCount++;
-    out.slowK = this.cur_outSlowK;
-    out.slowD = this.cur_outSlowD;
+    if (out === undefined) {
+      out = new StochOut();
+    }
+    out.outSlowK = this.cur_outSlowK;
+    out.outSlowD = this.cur_outSlowD;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inHigh - The bar's `inHigh` value: High price of each bar.
    * @param inLow - The bar's `inLow` value: Low price of each bar.
    * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link StochOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out: StochOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inHigh: number, inLow: number, inClose: number, out?: StochOut): StochOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('STOCH peek', 'StochOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
@@ -719,21 +829,31 @@ export class StochStream {
     cur_tempBuffer = sp.sub0.peek(cur_tempBuffer);
     cur_outSlowD = sp.sub1.peek(cur_tempBuffer);
     cur_outSlowK = cur_tempBuffer;
-    out.slowK = cur_outSlowK;
-    out.slowD = cur_outSlowD;
+    if (out === undefined) {
+      out = new StochOut();
+    }
+    out.outSlowK = cur_outSlowK;
+    out.outSlowD = cur_outSlowD;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link StochOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: StochOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: StochOut): StochOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('STOCH value', 'StochOut');
     }
-    out.slowK = this.cur_outSlowK;
-    out.slowD = this.cur_outSlowD;
+    if (out === undefined) {
+      out = new StochOut();
+    }
+    out.outSlowK = this.cur_outSlowK;
+    out.outSlowD = this.cur_outSlowD;
+    return out;
   }
 
   /**
@@ -771,14 +891,15 @@ export class StochStream {
 }
 
 /**
- * The outputs of one STOCH bar, written into an object the caller owns and reuses:
- * valid until the next call that writes it.
+ * The outputs of one STOCH bar, as `update`, `peek` and `value` return them.
+ * Passed back to one of them, it is filled and returned again, with no allocation;
+ * it holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class StochOut {
   /** Raw FastK smoothed by SlowK_Period MA. */
-  slowK: number = 0;
+  outSlowK: number = NaN;
   /** Signal line: SlowK smoothed by SlowD_Period MA. */
-  slowD: number = 0;
+  outSlowD: number = NaN;
 }
 
 function stochStepImpl(sp: StochStream, inHigh: number, inLow: number, inClose: number): void {
@@ -918,7 +1039,7 @@ function stochOpenImpl(
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
   }
-  if (historyLen < stochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType as MAType, optInSlowD_Period, optInSlowD_MAType as MAType, core) + 1) {
+  if (historyLen < stochLookbackPositional(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType as MAType, optInSlowD_Period, optInSlowD_MAType as MAType, core) + 1) {
     return RetCode.INSUFFICIENT_HISTORY;
   }
   const sc_outSlowK = outStride === 1 ? outSlowK : new Float64Array(historyLen);
@@ -956,8 +1077,8 @@ function stochOpenImpl(
    */
   /* Identify the lookback needed. */
   lookbackK = optInFastK_Period - 1;
-  lookbackKSlow = maLookback(optInSlowK_Period, (optInSlowK_MAType as MAType), core);
-  lookbackDSlow = maLookback(optInSlowD_Period, (optInSlowD_MAType as MAType), core);
+  lookbackKSlow = maLookbackPositional(optInSlowK_Period, (optInSlowK_MAType as MAType), core);
+  lookbackDSlow = maLookbackPositional(optInSlowD_Period, (optInSlowD_MAType as MAType), core);
   lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
   /* Move up the start index if there is not
    * enough initial data.
@@ -1070,7 +1191,7 @@ function stochOpenImpl(
    * "K-Slow", but often this end up to be shorten to "K".
    */
   const sub0 = maOpenInternal(core, tempBuffer.slice(0, (outIdx - 1) + 1), 0, optInSlowK_Period, (optInSlowK_MAType as MAType));
-  const _xr0 = ma(0, outIdx - 1, tempBuffer, optInSlowK_Period, (optInSlowK_MAType as MAType), tempBuffer, core);
+  const _xr0 = maPositional(0, outIdx - 1, tempBuffer, optInSlowK_Period, (optInSlowK_MAType as MAType), tempBuffer, core);
   outBegIdx.value = _xr0.begIdx;
   outNBElement.value = _xr0.count;
   if (outNBElement.value === 0) {
@@ -1163,7 +1284,10 @@ export function stochOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('STOCH openAndFill', inHigh.length, startIdx, stochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType as MAType, optInSlowD_Period, optInSlowD_MAType as MAType, core));
+    throw insufficientHistory('STOCH openAndFill', inHigh.length, startIdx, stochLookbackPositional(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType as MAType, optInSlowD_Period, optInSlowD_MAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && stochLookbackPositional(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType as MAType, optInSlowD_Period, optInSlowD_MAType as MAType, core) < 0) {
+    throw rejectedParams('STOCH openAndFill', PARAM_RANGES, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
   }
   throw streamFailure('STOCH openAndFill', retCode);
 }
@@ -1193,61 +1317,16 @@ export function stochOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('STOCH open', inHigh.length, startIdx, stochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType as MAType, optInSlowD_Period, optInSlowD_MAType as MAType, core));
+    throw insufficientHistory('STOCH open', inHigh.length, startIdx, stochLookbackPositional(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType as MAType, optInSlowD_Period, optInSlowD_MAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && stochLookbackPositional(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType as MAType, optInSlowD_Period, optInSlowD_MAType as MAType, core) < 0) {
+    throw rejectedParams('STOCH open', PARAM_RANGES, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
   }
   throw streamFailure('STOCH open', retCode);
 }
 
-/**
- * Opens a live STOCH stream over the warm-up history: `value()` starts at the last
- * history bar, bit-identical to {@link stoch} there.
- *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param optInFastK_Period - Lookback window for the raw %K high-low range
- *   (default 5; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowK_Period - Smoothing period turning FastK into SlowK (default 3;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowK_MAType - MA type used to smooth into SlowK (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSlowD_Period - Smoothing period for the SlowD signal line (default
- *   3; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowD_MAType - MA type used for the SlowD line (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `stochLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range or
- *   histories of different lengths.
- *
- * @example
- * ```ts
- * import { MAType, StochOut, stochOpen } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = stochOpen(high, low, close, 5, 3, MAType.SMA, 3, MAType.SMA);
- * const peeked = new StochOut();
- * const updated = new StochOut();
- * stream.peek(101.4, 99.1, 100.9, peeked); // a forming bar: commits nothing
- * stream.update(101.4, 99.1, 100.9, updated); // the bar closes
- * ```
- */
-export function stochOpen(
+/** @internal */
+export function stochOpenPositional(
   inHigh: ArrayLike<number>,
   inLow: ArrayLike<number>,
   inClose: ArrayLike<number>,
@@ -1258,83 +1337,22 @@ export function stochOpen(
   optInSlowD_MAType: MAType | typeof Core.INTEGER_DEFAULT,
   core: Core = Core.DEFAULT,
 ): StochStream {
-  optInFastK_Period = requireInt32('STOCH open', 'optInFastK_Period', optInFastK_Period);
-  optInSlowK_Period = requireInt32('STOCH open', 'optInSlowK_Period', optInSlowK_Period);
-  optInSlowK_MAType = requireInt32('STOCH open', 'optInSlowK_MAType', optInSlowK_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  optInSlowD_Period = requireInt32('STOCH open', 'optInSlowD_Period', optInSlowD_Period);
-  optInSlowD_MAType = requireInt32('STOCH open', 'optInSlowD_MAType', optInSlowD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('STOCH open', 'inHigh', inHigh);
+  optInFastK_Period = requireInt32('STOCH open', 'fastKPeriod', optInFastK_Period);
+  optInSlowK_Period = requireInt32('STOCH open', 'slowKPeriod', optInSlowK_Period);
+  optInSlowK_MAType = requireInt32('STOCH open', 'slowKMaType', optInSlowK_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  optInSlowD_Period = requireInt32('STOCH open', 'slowDPeriod', optInSlowD_Period);
+  optInSlowD_MAType = requireInt32('STOCH open', 'slowDMaType', optInSlowD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('STOCH open', 'prices.high', inHigh);
   requireHistory('STOCH open', inHigh.length);
-  requireArgument('STOCH open', 'inLow', inLow);
-  requireArgument('STOCH open', 'inClose', inClose);
-  requireHistoryLength('STOCH open', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('STOCH open', 'inClose', inClose.length, inHigh.length);
+  requireArgument('STOCH open', 'prices.low', inLow);
+  requireArgument('STOCH open', 'prices.close', inClose);
+  requireHistoryLength('STOCH open', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('STOCH open', 'prices.close', inClose.length, inHigh.length);
   return stochOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
 }
 
-/**
- * {@link stochOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link stoch}. The range written is the stream's
- * `outRange()`.
- *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param optInFastK_Period - Lookback window for the raw %K high-low range
- *   (default 5; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowK_Period - Smoothing period turning FastK into SlowK (default 3;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowK_MAType - MA type used to smooth into SlowK (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSlowD_Period - Smoothing period for the SlowD signal line (default
- *   3; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowD_MAType - MA type used for the SlowD line (default
- *   `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outSlowK - Raw FastK smoothed by SlowK_Period MA. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param outSlowD - Signal line: SlowK smoothed by SlowD_Period MA. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `stochLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range,
- *   histories of different lengths or an output too short or starting where another
- *   output or a `Float64Array` input starts, or, on a history long enough to open,
- *   one sharing memory with another output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { MAType, stochOpenAndFill } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const slowK = new Float64Array(high.length);
- * const slowD = new Float64Array(high.length);
- * const stream = stochOpenAndFill(
- *   high, low, close,
- *   5, 3, MAType.SMA, 3, MAType.SMA,
- *   slowK, slowD,
- * );
- * const { begIdx, count } = stream.outRange();
- * // slowK[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function stochOpenAndFill(
+/** @internal */
+export function stochOpenAndFillPositional(
   inHigh: ArrayLike<number>,
   inLow: ArrayLike<number>,
   inClose: ArrayLike<number>,
@@ -1347,28 +1365,175 @@ export function stochOpenAndFill(
   outSlowD: Float64Array,
   core: Core = Core.DEFAULT,
 ): StochStream {
-  optInFastK_Period = requireInt32('STOCH openAndFill', 'optInFastK_Period', optInFastK_Period);
-  optInSlowK_Period = requireInt32('STOCH openAndFill', 'optInSlowK_Period', optInSlowK_Period);
-  optInSlowK_MAType = requireInt32('STOCH openAndFill', 'optInSlowK_MAType', optInSlowK_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  optInSlowD_Period = requireInt32('STOCH openAndFill', 'optInSlowD_Period', optInSlowD_Period);
-  optInSlowD_MAType = requireInt32('STOCH openAndFill', 'optInSlowD_MAType', optInSlowD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('STOCH openAndFill', 'inHigh', inHigh);
+  optInFastK_Period = requireInt32('STOCH openAndFill', 'fastKPeriod', optInFastK_Period);
+  optInSlowK_Period = requireInt32('STOCH openAndFill', 'slowKPeriod', optInSlowK_Period);
+  optInSlowK_MAType = requireInt32('STOCH openAndFill', 'slowKMaType', optInSlowK_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  optInSlowD_Period = requireInt32('STOCH openAndFill', 'slowDPeriod', optInSlowD_Period);
+  optInSlowD_MAType = requireInt32('STOCH openAndFill', 'slowDMaType', optInSlowD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('STOCH openAndFill', 'prices.high', inHigh);
   requireHistory('STOCH openAndFill', inHigh.length);
-  requireArgument('STOCH openAndFill', 'inLow', inLow);
-  requireArgument('STOCH openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('STOCH openAndFill', inHigh.length, stochLookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType as MAType, optInSlowD_Period, optInSlowD_MAType as MAType, core));
-  requireHistoryLength('STOCH openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('STOCH openAndFill', 'inClose', inClose.length, inHigh.length);
+  requireArgument('STOCH openAndFill', 'prices.low', inLow);
+  requireArgument('STOCH openAndFill', 'prices.close', inClose);
+  const guardLookback = stochLookbackPositional(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType as MAType, optInSlowD_Period, optInSlowD_MAType as MAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('STOCH openAndFill', PARAM_RANGES, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+  }
+  const guardOutLen = openFillCount('STOCH openAndFill', inHigh.length, guardLookback);
+  requireHistoryLength('STOCH openAndFill', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('STOCH openAndFill', 'prices.close', inClose.length, inHigh.length);
   requireOutput('STOCH openAndFill', 'outSlowK', outSlowK, guardOutLen, Float64Array);
   requireOutput('STOCH openAndFill', 'outSlowD', outSlowD, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
-  if ((outSlowK.buffer === inHighF64.buffer && outSlowK.byteOffset === inHighF64.byteOffset) || (outSlowK.buffer === inLowF64.buffer && outSlowK.byteOffset === inLowF64.byteOffset) || (outSlowK.buffer === inCloseF64.buffer && outSlowK.byteOffset === inCloseF64.byteOffset) || (outSlowD.buffer === inHighF64.buffer && outSlowD.byteOffset === inHighF64.byteOffset) || (outSlowD.buffer === inLowF64.buffer && outSlowD.byteOffset === inLowF64.byteOffset) || (outSlowD.buffer === inCloseF64.buffer && outSlowD.byteOffset === inCloseF64.byteOffset) || (outSlowK.buffer === outSlowD.buffer && outSlowK.byteOffset === outSlowD.byteOffset)) {
-    throw streamFailure('STOCH openAndFill', RetCode.BAD_PARAM);
+  if (outSlowK.buffer === inHighF64.buffer && outSlowK.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('STOCH openAndFill', 'outSlowK', 'prices.high');
   }
-  if (guardOutLen > 0 && (overlaps(outSlowK, inHighF64) || overlaps(outSlowK, inLowF64) || overlaps(outSlowK, inCloseF64) || overlaps(outSlowD, inHighF64) || overlaps(outSlowD, inLowF64) || overlaps(outSlowD, inCloseF64) || overlaps(outSlowK, outSlowD))) {
-    throw streamFailure('STOCH openAndFill', RetCode.BAD_PARAM);
+  if (outSlowK.buffer === inLowF64.buffer && outSlowK.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('STOCH openAndFill', 'outSlowK', 'prices.low');
+  }
+  if (outSlowK.buffer === inCloseF64.buffer && outSlowK.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('STOCH openAndFill', 'outSlowK', 'prices.close');
+  }
+  if (outSlowD.buffer === inHighF64.buffer && outSlowD.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('STOCH openAndFill', 'outSlowD', 'prices.high');
+  }
+  if (outSlowD.buffer === inLowF64.buffer && outSlowD.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('STOCH openAndFill', 'outSlowD', 'prices.low');
+  }
+  if (outSlowD.buffer === inCloseF64.buffer && outSlowD.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('STOCH openAndFill', 'outSlowD', 'prices.close');
+  }
+  if (outSlowK.buffer === outSlowD.buffer && outSlowK.byteOffset === outSlowD.byteOffset) {
+    throw sharedMemory('STOCH openAndFill', 'outSlowK', 'outSlowD');
+  }
+  if (guardOutLen > 0 && overlaps(outSlowK, inHighF64)) {
+    throw sharedMemory('STOCH openAndFill', 'outSlowK', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outSlowK, inLowF64)) {
+    throw sharedMemory('STOCH openAndFill', 'outSlowK', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outSlowK, inCloseF64)) {
+    throw sharedMemory('STOCH openAndFill', 'outSlowK', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outSlowD, inHighF64)) {
+    throw sharedMemory('STOCH openAndFill', 'outSlowD', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outSlowD, inLowF64)) {
+    throw sharedMemory('STOCH openAndFill', 'outSlowD', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outSlowD, inCloseF64)) {
+    throw sharedMemory('STOCH openAndFill', 'outSlowD', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outSlowK, outSlowD)) {
+    throw sharedMemory('STOCH openAndFill', 'outSlowK', 'outSlowD');
   }
   return stochOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, new MInteger(), new MInteger(), outSlowK, outSlowD);
+}
+
+/**
+ * Opens a live STOCH stream over the warm-up history: `value()` starts at the last
+ * history bar, bit-identical to {@link stoch} there.
+ *
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link StochOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `stochLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range
+ *   or histories of different lengths.
+ *
+ * @example
+ * ```ts
+ * import { MAType, stochOpen } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const close = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const stream = stochOpen({ high, low, close }, {
+ *   fastKPeriod: 5,
+ *   slowKPeriod: 3,
+ *   slowKMaType: MAType.SMA,
+ *   slowDPeriod: 3,
+ *   slowDMaType: MAType.SMA,
+ * });
+ * const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
+ * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
+ * ```
+ */
+export function stochOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: StochOptions): StochStream {
+  requireArgument('STOCH open', 'prices', prices);
+  const o = optionsOf('STOCH open', options);
+  const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowK_Period = orDefault(o.slowKPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowK_MAType = orDefault(o.slowKMaType, Core.INTEGER_DEFAULT);
+  const optInSlowD_Period = orDefault(o.slowDPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowD_MAType = orDefault(o.slowDMaType, Core.INTEGER_DEFAULT);
+  const core = coreOf('STOCH open', o.core);
+  return stochOpenPositional(prices.high, prices.low, prices.close, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, core);
+}
+
+/**
+ * {@link stochOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link stoch}.
+ *
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link StochOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link stoch} returns them; the range is the stream's
+ *   `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `stochLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
+ *
+ * @example
+ * ```ts
+ * import { MAType, stochOpenAndFill } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const close = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const { stream, begIdx, outSlowK, outSlowD } = stochOpenAndFill({ high, low, close }, {
+ *   fastKPeriod: 5,
+ *   slowKPeriod: 3,
+ *   slowKMaType: MAType.SMA,
+ *   slowDPeriod: 3,
+ *   slowDMaType: MAType.SMA,
+ * });
+ * // outSlowK[k] is the value at bar begIdx + k
+ * ```
+ */
+export function stochOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: StochOptions): StochResult & { stream: StochStream } {
+  requireArgument('STOCH openAndFill', 'prices', prices);
+  const o = optionsOf('STOCH openAndFill', options);
+  const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowK_Period = orDefault(o.slowKPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowK_MAType = orDefault(o.slowKMaType, Core.INTEGER_DEFAULT);
+  const optInSlowD_Period = orDefault(o.slowDPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowD_MAType = orDefault(o.slowDMaType, Core.INTEGER_DEFAULT);
+  const core = coreOf('STOCH openAndFill', o.core);
+  const capacity = fillCapacity(stochLookbackPositional(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, core), prices.high, prices.low, prices.close);
+  const outSlowK = o.outSlowK === undefined ? new Float64Array(capacity) : o.outSlowK;
+  const outSlowD = o.outSlowD === undefined ? new Float64Array(capacity) : o.outSlowD;
+  const stream = stochOpenAndFillPositional(prices.high, prices.low, prices.close, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outSlowK, outSlowD, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outSlowK: outSlowK.subarray(0, range.count), outSlowD: outSlowD.subarray(0, range.count) };
 }

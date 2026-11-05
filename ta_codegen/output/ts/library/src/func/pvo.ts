@@ -18,32 +18,17 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { emaLookback } from './ema.ts';
-import { MaStream, ma, maLookback, maOpenAndFillInternal } from './ma.ts';
+import { emaLookbackPositional } from './ema.ts';
+import { MaStream, maLookbackPositional, maOpenAndFillInternal, maPositional } from './ma.ts';
 
-/**
- * Number of leading input bars {@link pvo} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInFastPeriod - Period of the fast MA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow MA (default 26; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Moving average type used for both MAs (default
- *   `MAType.EMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function pvoLookback(optInFastPeriod: number, optInSlowPeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function pvoLookbackPositional(optInFastPeriod: number, optInSlowPeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
   if ((optInFastPeriod | 0) !== optInFastPeriod) {
     return -1;
   }
@@ -69,31 +54,12 @@ export function pvoLookback(optInFastPeriod: number, optInSlowPeriod: number, op
     return -1;
   }
   /* Lookback is driven by the slowest MA. */
-  return maLookback((optInSlowPeriod > optInFastPeriod ? optInSlowPeriod : optInFastPeriod), (optInMAType as MAType), core);
+  return maLookbackPositional((optInSlowPeriod > optInFastPeriod ? optInSlowPeriod : optInFastPeriod), (optInMAType as MAType), core);
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link pvo}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInFastPeriod - Period of the fast MA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow MA (default 26; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Moving average type used for both MAs (default
- *   `MAType.EMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function pvoDisplayShift(optInFastPeriod: number, optInSlowPeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType, core) < 0) {
+/** @internal */
+export function pvoDisplayShiftPositional(optInFastPeriod: number, optInSlowPeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (pvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -158,7 +124,7 @@ export function pvoImpl(
    * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
    * probe over every guarded core.
    */
-  if (maLookback((optInSlowPeriod > optInFastPeriod ? optInSlowPeriod : optInFastPeriod), (optInMAType as MAType), core) > endIdx) {
+  if (maLookbackPositional((optInSlowPeriod > optInFastPeriod ? optInSlowPeriod : optInFastPeriod), (optInMAType as MAType), core) > endIdx) {
     outBegIdx.value = 0;
     outNBElement.value = 0;
     return RetCode.SUCCESS;
@@ -307,16 +273,16 @@ export function pvoImpl(
     if (_eSlowBeta < 0.5) {
       _eSlowBeta = 1.0 - _eSlowK;
     }
-    _eFastToday = emaLookback(optInFastPeriod, core);
+    _eFastToday = emaLookbackPositional(optInFastPeriod, core);
     if (_eFastToday < startIdx) {
       _eFastToday = startIdx;
     }
-    _eFastToday -= emaLookback(optInFastPeriod, core);
-    _eSlowStart = emaLookback(optInSlowPeriod, core);
+    _eFastToday -= emaLookbackPositional(optInFastPeriod, core);
+    _eSlowStart = emaLookbackPositional(optInSlowPeriod, core);
     if (_eSlowStart < startIdx) {
       _eSlowStart = startIdx;
     }
-    _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod, core);
+    _eSlowToday = _eSlowStart - emaLookbackPositional(optInSlowPeriod, core);
     _eFast = 0.0;
     for (_eN = 0; _eN < optInFastPeriod; _eN += 1) {
       _eFast += inVolume[_eFastToday++];
@@ -424,11 +390,11 @@ export function pvoImpl(
     optInFastPeriod = tempInteger;
   }
   /* Calculate the fast MA into the tempBuffer. */
-  const _xr4 = ma(startIdx, endIdx, inVolume, optInFastPeriod, (optInMAType as MAType), tempBuffer, core);
+  const _xr4 = maPositional(startIdx, endIdx, inVolume, optInFastPeriod, (optInMAType as MAType), tempBuffer, core);
   fastBeg.value = _xr4.begIdx;
   fastNb.value = _xr4.count;
   /* Calculate the slow MA into the output. */
-  const _xr5 = ma(startIdx, endIdx, inVolume, optInSlowPeriod, (optInMAType as MAType), outReal, core);
+  const _xr5 = maPositional(startIdx, endIdx, inVolume, optInSlowPeriod, (optInMAType as MAType), outReal, core);
   outBegIdx.value = _xr5.begIdx;
   outNBElement.value = _xr5.count;
   /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
@@ -443,7 +409,7 @@ export function pvoImpl(
    * the window is dead. The recursive MA types really are nonzero on such a
    * window, so they keep the plain loop.
    */
-  slowLookback = maLookback(optInSlowPeriod, (optInMAType as MAType), core);
+  slowLookback = maLookbackPositional(optInSlowPeriod, (optInMAType as MAType), core);
   windowed = (optInMAType === MAType.SMA || optInMAType === MAType.WMA || optInMAType === MAType.TRIMA || optInMAType === MAType.HMA ? 1 : 0);
   zeroRun = 0;
   for (i = outBegIdx.value - slowLookback; i < outBegIdx.value; i += 1) {
@@ -476,6 +442,139 @@ export function pvoImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['fastPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['slowPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['maType', Core.INTEGER_DEFAULT, MATypes.Min, MATypes.Max, 'a MAType']] as const;
+
+/** @internal */
+export function pvoPositional(
+  startIdx: number,
+  endIdx: number,
+  inVolume: ArrayLike<number>,
+  optInFastPeriod: number,
+  optInSlowPeriod: number,
+  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('PVO', 'startIdx', startIdx);
+  endIdx = requireInt32('PVO', 'endIdx', endIdx);
+  optInFastPeriod = requireInt32('PVO', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('PVO', 'slowPeriod', optInSlowPeriod);
+  optInMAType = requireInt32('PVO', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireIndexRange('PVO', startIdx, endIdx);
+  const guardLookback = pvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('PVO', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInMAType);
+  }
+  const guardStart = clampedStart('PVO', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('PVO', 'prices.volume', inVolume, guardInLen);
+  requireOutput('PVO', 'outReal', outReal, guardOutLen, Float64Array);
+  const inVolumeF64 = float64(inVolume);
+  if (overlapsPartly(outReal, inVolumeF64)) {
+    throw sharedMemory('PVO', 'outReal', 'prices.volume');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = pvoImpl(core, startIdx, endIdx, inVolumeF64, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('PVO', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link pvo}, {@link pvoLookback}, {@link pvoDisplayShift},
+ * {@link pvoOpen} and {@link pvoOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface PvoOptions {
+  /**
+   * Period of the fast MA (default 12; range 2 to 100000; `Core.INTEGER_DEFAULT`
+   * selects the default).
+   */
+  fastPeriod?: number | undefined;
+  /**
+   * Period of the slow MA (default 26; range 2 to 100000; `Core.INTEGER_DEFAULT`
+   * selects the default).
+   */
+  slowPeriod?: number | undefined;
+  /**
+   * Moving average type used for both MAs (default `MAType.EMA`; values: 0=SMA,
+   * 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   * 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; `Core.INTEGER_DEFAULT` or
+   * `MAType.DEFAULT` selects the default).
+   */
+  maType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link pvo} returns, and {@link pvoOpenAndFill} with its stream. */
+export interface PvoResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /** PVO value in percent. `values[k]` is the value at input bar `begIdx + k`. */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link pvo} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PvoOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function pvoLookback(options?: PvoOptions): number {
+  const o = optionsOf('PVO lookback', options);
+  return pvoLookbackPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), coreOf('PVO lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link pvo}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PvoOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function pvoDisplayShift(outputIdx: number, options?: PvoOptions): number {
+  const o = optionsOf('PVO displayShift', options);
+  return pvoDisplayShiftPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), outputIdx, coreOf('PVO displayShift', o.core));
+}
+
 /**
  * Percentage Volume Oscillator: a variation of the [Percentage Price
  * Oscillator](https://ta-lib.org/functions/ppo) (PPO, created by Gerald Appel)
@@ -496,33 +595,24 @@ export function pvoImpl(
  * - If the slow period is set smaller than the fast period, the two are swapped,
  *   as in `MACD`.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link pvoLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link pvoLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inVolume - Volume of each bar.
- * @param optInFastPeriod - Period of the fast MA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow MA (default 26; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Moving average type used for both MAs (default
- *   `MAType.EMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outReal - PVO value in percent. Must hold the values produced and never
- *   be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `volume`:
+ *   Volume of each bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link PvoOptions}.
+ * @returns `begIdx` and the values; see {@link PvoResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output
- *   or an output sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -530,51 +620,33 @@ export function pvoImpl(
  *
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const out = new Float64Array(volume.length);
- * const { begIdx, count } = pvo(
- *   0, volume.length - 1,
- *   volume,
- *   12, 26, MAType.EMA,
- *   out,
- * );
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = pvo({ volume }, {
+ *   fastPeriod: 12,
+ *   slowPeriod: 26,
+ *   maType: MAType.EMA,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`ppo`](https://ta-lib.org/functions/ppo)
  * @see [`obv`](https://ta-lib.org/functions/obv)
  * @see [`macd`](https://ta-lib.org/functions/macd)
  */
-export function pvo(
-  startIdx: number,
-  endIdx: number,
-  inVolume: ArrayLike<number>,
-  optInFastPeriod: number,
-  optInSlowPeriod: number,
-  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('PVO', 'startIdx', startIdx);
-  endIdx = requireInt32('PVO', 'endIdx', endIdx);
-  optInFastPeriod = requireInt32('PVO', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('PVO', 'optInSlowPeriod', optInSlowPeriod);
-  optInMAType = requireInt32('PVO', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireIndexRange('PVO', startIdx, endIdx);
-  const guardStart = clampedStart('PVO', startIdx, pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('PVO', 'inVolume', inVolume, guardInLen);
-  requireOutput('PVO', 'outReal', outReal, guardOutLen, Float64Array);
-  const inVolumeF64 = float64(inVolume);
-  if (overlapsPartly(outReal, inVolumeF64)) {
-    throw failure('PVO', RetCode.BAD_PARAM);
+export function pvo(prices: { volume: ArrayLike<number> }, options?: PvoOptions): PvoResult {
+  requireArgument('PVO', 'prices', prices);
+  const o = optionsOf('PVO', options);
+  if (o.endIdx === undefined) {
+    requireSeries('PVO', 'prices.volume', prices.volume);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = pvoImpl(core, startIdx, endIdx, inVolumeF64, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('PVO', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('PVO', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.volume.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, pvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType, core), prices.volume);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = pvoPositional(startIdx, endIdx, prices.volume, optInFastPeriod, optInSlowPeriod, optInMAType, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -822,7 +894,7 @@ function pvoOpenImpl(
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
   }
-  if (historyLen < pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core) + 1) {
+  if (historyLen < pvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core) + 1) {
     return RetCode.INSUFFICIENT_HISTORY;
   }
   const sc_outReal = outStride === 1 ? outReal : new Float64Array(historyLen);
@@ -838,7 +910,7 @@ function pvoOpenImpl(
    * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
    * probe over every guarded core.
    */
-  if (maLookback((optInSlowPeriod > optInFastPeriod ? optInSlowPeriod : optInFastPeriod), (optInMAType as MAType), core) > endIdx) {
+  if (maLookbackPositional((optInSlowPeriod > optInFastPeriod ? optInSlowPeriod : optInFastPeriod), (optInMAType as MAType), core) > endIdx) {
     outBegIdx.value = 0;
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
@@ -870,7 +942,7 @@ function pvoOpenImpl(
    * the window is dead. The recursive MA types really are nonzero on such a
    * window, so they keep the plain loop.
    */
-  slowLookback = maLookback(optInSlowPeriod, (optInMAType as MAType), core);
+  slowLookback = maLookbackPositional(optInSlowPeriod, (optInMAType as MAType), core);
   windowed = (optInMAType === MAType.SMA || optInMAType === MAType.WMA || optInMAType === MAType.TRIMA || optInMAType === MAType.HMA ? 1 : 0);
   zeroRun = 0;
   for (i = outBegIdx.value - slowLookback; i < outBegIdx.value; i += 1) {
@@ -935,7 +1007,10 @@ export function pvoOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('PVO openAndFill', inVolume.length, startIdx, pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core));
+    throw insufficientHistory('PVO openAndFill', inVolume.length, startIdx, pvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && pvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core) < 0) {
+    throw rejectedParams('PVO openAndFill', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInMAType);
   }
   throw streamFailure('PVO openAndFill', retCode);
 }
@@ -960,29 +1035,72 @@ export function pvoOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('PVO open', inVolume.length, startIdx, pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core));
+    throw insufficientHistory('PVO open', inVolume.length, startIdx, pvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && pvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core) < 0) {
+    throw rejectedParams('PVO open', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInMAType);
   }
   throw streamFailure('PVO open', retCode);
+}
+
+/** @internal */
+export function pvoOpenPositional(
+  inVolume: ArrayLike<number>,
+  optInFastPeriod: number,
+  optInSlowPeriod: number,
+  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
+  core: Core = Core.DEFAULT,
+): PvoStream {
+  optInFastPeriod = requireInt32('PVO open', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('PVO open', 'slowPeriod', optInSlowPeriod);
+  optInMAType = requireInt32('PVO open', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('PVO open', 'prices.volume', inVolume);
+  requireHistory('PVO open', inVolume.length);
+  return pvoOpenInternal(core, float64(inVolume), 0, optInFastPeriod, optInSlowPeriod, optInMAType);
+}
+
+/** @internal */
+export function pvoOpenAndFillPositional(
+  inVolume: ArrayLike<number>,
+  optInFastPeriod: number,
+  optInSlowPeriod: number,
+  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): PvoStream {
+  optInFastPeriod = requireInt32('PVO openAndFill', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('PVO openAndFill', 'slowPeriod', optInSlowPeriod);
+  optInMAType = requireInt32('PVO openAndFill', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('PVO openAndFill', 'prices.volume', inVolume);
+  requireHistory('PVO openAndFill', inVolume.length);
+  const guardLookback = pvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('PVO openAndFill', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInMAType);
+  }
+  const guardOutLen = openFillCount('PVO openAndFill', inVolume.length, guardLookback);
+  requireOutput('PVO openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inVolumeF64 = float64(inVolume);
+  if (outReal.buffer === inVolumeF64.buffer && outReal.byteOffset === inVolumeF64.byteOffset) {
+    throw sharedMemory('PVO openAndFill', 'outReal', 'prices.volume');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inVolumeF64)) {
+    throw sharedMemory('PVO openAndFill', 'outReal', 'prices.volume');
+  }
+  return pvoOpenAndFillInternal(core, inVolumeF64, 0, optInFastPeriod, optInSlowPeriod, optInMAType, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live PVO stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link pvo} there.
  *
- * @param inVolume - Warm-up history. Volume of each bar.
- * @param optInFastPeriod - Period of the fast MA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow MA (default 26; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Moving average type used for both MAs (default
- *   `MAType.EMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `volume`: Volume of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PvoOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `pvoLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
  *   an integer parameter that is not an int32 or a parameter outside its range.
  *
  * @example
@@ -991,51 +1109,43 @@ export function pvoOpenInternal(
  *
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const stream = pvoOpen(volume, 12, 26, MAType.EMA);
+ * const stream = pvoOpen({ volume }, {
+ *   fastPeriod: 12,
+ *   slowPeriod: 26,
+ *   maType: MAType.EMA,
+ * });
  * const peeked = stream.peek(12345); // a forming bar: commits nothing
  * const updated = stream.update(12345); // the bar closes
  * ```
  */
-export function pvoOpen(
-  inVolume: ArrayLike<number>,
-  optInFastPeriod: number,
-  optInSlowPeriod: number,
-  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
-  core: Core = Core.DEFAULT,
-): PvoStream {
-  optInFastPeriod = requireInt32('PVO open', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('PVO open', 'optInSlowPeriod', optInSlowPeriod);
-  optInMAType = requireInt32('PVO open', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('PVO open', 'inVolume', inVolume);
-  requireHistory('PVO open', inVolume.length);
-  return pvoOpenInternal(core, float64(inVolume), 0, optInFastPeriod, optInSlowPeriod, optInMAType);
+export function pvoOpen(prices: { volume: ArrayLike<number> }, options?: PvoOptions): PvoStream {
+  requireArgument('PVO open', 'prices', prices);
+  const o = optionsOf('PVO open', options);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('PVO open', o.core);
+  return pvoOpenPositional(prices.volume, optInFastPeriod, optInSlowPeriod, optInMAType, core);
 }
 
 /**
- * {@link pvoOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link pvo}. The range written is the stream's
- * `outRange()`.
+ * {@link pvoOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link pvo}.
  *
- * @param inVolume - Warm-up history. Volume of each bar.
- * @param optInFastPeriod - Period of the fast MA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow MA (default 26; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Moving average type used for both MAs (default
- *   `MAType.EMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outReal - PVO value in percent. Must hold `historyLen - lookback` values
- *   and share no memory with an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `volume`: Volume of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link PvoOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link pvo} returns them; the range is the stream's
+ *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `pvoLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   an integer parameter that is not an int32, a parameter outside its range or an
- *   output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   an integer parameter that is not an int32, a parameter outside its range or a
+ *   buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1043,33 +1153,24 @@ export function pvoOpen(
  *
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const out = new Float64Array(volume.length);
- * const stream = pvoOpenAndFill(volume, 12, 26, MAType.EMA, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = pvoOpenAndFill({ volume }, {
+ *   fastPeriod: 12,
+ *   slowPeriod: 26,
+ *   maType: MAType.EMA,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function pvoOpenAndFill(
-  inVolume: ArrayLike<number>,
-  optInFastPeriod: number,
-  optInSlowPeriod: number,
-  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): PvoStream {
-  optInFastPeriod = requireInt32('PVO openAndFill', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('PVO openAndFill', 'optInSlowPeriod', optInSlowPeriod);
-  optInMAType = requireInt32('PVO openAndFill', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('PVO openAndFill', 'inVolume', inVolume);
-  requireHistory('PVO openAndFill', inVolume.length);
-  const guardOutLen = openFillCount('PVO openAndFill', inVolume.length, pvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core));
-  requireOutput('PVO openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inVolumeF64 = float64(inVolume);
-  if ((outReal.buffer === inVolumeF64.buffer && outReal.byteOffset === inVolumeF64.byteOffset)) {
-    throw streamFailure('PVO openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inVolumeF64))) {
-    throw streamFailure('PVO openAndFill', RetCode.BAD_PARAM);
-  }
-  return pvoOpenAndFillInternal(core, inVolumeF64, 0, optInFastPeriod, optInSlowPeriod, optInMAType, new MInteger(), new MInteger(), outReal);
+export function pvoOpenAndFill(prices: { volume: ArrayLike<number> }, options?: PvoOptions): PvoResult & { stream: PvoStream } {
+  requireArgument('PVO openAndFill', 'prices', prices);
+  const o = optionsOf('PVO openAndFill', options);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('PVO openAndFill', o.core);
+  const capacity = fillCapacity(pvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType, core), prices.volume);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = pvoOpenAndFillPositional(prices.volume, optInFastPeriod, optInSlowPeriod, optInMAType, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

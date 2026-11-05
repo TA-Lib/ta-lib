@@ -16,41 +16,21 @@
  *  103126 MF,CC  Lead with the colour and gap tests as the one pre-check
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link cdlkickingbylength} consumes before its
- * first value: the index of the first bar with a value when the whole series is
- * requested.
- *
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function cdlkickingbylengthLookback(core: Core = Core.DEFAULT): number {
+/** @internal */
+export function cdlkickingbylengthLookbackPositional(core: Core = Core.DEFAULT): number {
   const BodyLong_avgPeriod = core.candleSettings[CandleSettingType.BODY_LONG].avgPeriod;
   const ShadowVeryShort_avgPeriod = core.candleSettings[CandleSettingType.SHADOW_VERY_SHORT].avgPeriod;
   return (ShadowVeryShort_avgPeriod > BodyLong_avgPeriod ? ShadowVeryShort_avgPeriod : BodyLong_avgPeriod) + 1;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link cdlkickingbylength}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function cdlkickingbylengthDisplayShift(outputIdx: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function cdlkickingbylengthDisplayShiftPositional(outputIdx: number, _core: Core = Core.DEFAULT): number {
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
     return -2147483648;
   }
@@ -93,7 +73,7 @@ export function cdlkickingbylengthImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = cdlkickingbylengthLookback(core);
+  lookbackTotal = cdlkickingbylengthLookbackPositional(core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -169,6 +149,137 @@ export function cdlkickingbylengthImpl(
   return RetCode.SUCCESS;
 }
 
+/** @internal */
+export function cdlkickingbylengthPositional(
+  startIdx: number,
+  endIdx: number,
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outInteger: Int32Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('CDLKICKINGBYLENGTH', 'startIdx', startIdx);
+  endIdx = requireInt32('CDLKICKINGBYLENGTH', 'endIdx', endIdx);
+  requireIndexRange('CDLKICKINGBYLENGTH', startIdx, endIdx);
+  const guardStart = clampedStart('CDLKICKINGBYLENGTH', startIdx, cdlkickingbylengthLookbackPositional(core));
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('CDLKICKINGBYLENGTH', 'prices.open', inOpen, guardInLen);
+  requireLength('CDLKICKINGBYLENGTH', 'prices.high', inHigh, guardInLen);
+  requireLength('CDLKICKINGBYLENGTH', 'prices.low', inLow, guardInLen);
+  requireLength('CDLKICKINGBYLENGTH', 'prices.close', inClose, guardInLen);
+  requireOutput('CDLKICKINGBYLENGTH', 'outInteger', outInteger, guardOutLen, Int32Array);
+  const inOpenF64 = float64(inOpen);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (overlaps(outInteger, inOpenF64)) {
+    throw sharedMemory('CDLKICKINGBYLENGTH', 'outInteger', 'prices.open');
+  }
+  if (overlaps(outInteger, inHighF64)) {
+    throw sharedMemory('CDLKICKINGBYLENGTH', 'outInteger', 'prices.high');
+  }
+  if (overlaps(outInteger, inLowF64)) {
+    throw sharedMemory('CDLKICKINGBYLENGTH', 'outInteger', 'prices.low');
+  }
+  if (overlaps(outInteger, inCloseF64)) {
+    throw sharedMemory('CDLKICKINGBYLENGTH', 'outInteger', 'prices.close');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = cdlkickingbylengthImpl(core, startIdx, endIdx, inOpenF64, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outInteger);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('CDLKICKINGBYLENGTH', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link cdlkickingbylength}, {@link cdlkickingbylengthLookback},
+ * {@link cdlkickingbylengthDisplayShift}, {@link cdlkickingbylengthOpen} and
+ * {@link cdlkickingbylengthOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface CdlkickingbylengthOptions {
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input.
+   */
+  outInteger?: Int32Array | undefined;
+}
+
+/**
+ * What {@link cdlkickingbylength} returns, and
+ * {@link cdlkickingbylengthOpenAndFill} with its stream.
+ */
+export interface CdlkickingbylengthResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * +100 or -100 on a hit, 0 otherwise. Sign = candlecolor of the candle with the
+   * larger realbody (i if realbody(i) > realbody(i-1), else i-1; tie goes to i-1):
+   * +100 if that marubozu is white, -100 if black. `values[k]` is the value at input
+   * bar `begIdx + k`.
+   */
+  values: Int32Array;
+}
+
+/**
+ * Number of leading input bars {@link cdlkickingbylength} consumes before its
+ * first value: the index of the first bar with a value when the whole series is
+ * requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CdlkickingbylengthOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function cdlkickingbylengthLookback(options?: CdlkickingbylengthOptions): number {
+  const o = optionsOf('CDLKICKINGBYLENGTH lookback', options);
+  return cdlkickingbylengthLookbackPositional(coreOf('CDLKICKINGBYLENGTH lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link cdlkickingbylength}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CdlkickingbylengthOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function cdlkickingbylengthDisplayShift(outputIdx: number, options?: CdlkickingbylengthOptions): number {
+  const o = optionsOf('CDLKICKINGBYLENGTH displayShift', options);
+  return cdlkickingbylengthDisplayShiftPositional(outputIdx, coreOf('CDLKICKINGBYLENGTH displayShift', o.core));
+}
+
 /**
  * A two-candle pattern of two opposite-color marubozu (long body, very short
  * shadows on both ends) separated by a gap. A strong directional/reversal signal
@@ -177,29 +288,24 @@ export function cdlkickingbylengthImpl(
  * Formula and more info at
  * [ta-lib.org/functions/cdlkickingbylength](https://ta-lib.org/functions/cdlkickingbylength).
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link cdlkickingbylengthLookback} is a
- * success with `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link cdlkickingbylengthLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inOpen - Open price of each bar.
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param inClose - Close price of each bar.
- * @param outInteger - +100 or -100 on a hit, 0 otherwise. Sign = candlecolor of
- *   the candle with the larger realbody (i if realbody(i) > realbody(i-1), else i-1;
- *   tie goes to i-1): +100 if that marubozu is white, -100 if black. Must hold the
- *   values produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `open`: Open
+ *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
+ *   `close`: Close price of each bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link CdlkickingbylengthOptions}.
+ * @returns `begIdx` and the values; see {@link CdlkickingbylengthResult}. Each
+ *   output is a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, an
- *   array too short for the range, an empty output or an output sharing memory with
- *   a `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an input too short for the range, a buffer that is empty, too short or of
+ *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -213,53 +319,29 @@ export function cdlkickingbylengthImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Int32Array(open.length);
- * const { begIdx, count } = cdlkickingbylength(
- *   0, open.length - 1,
- *   open, high, low, close,
- *   out,
- * );
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = cdlkickingbylength({ open, high, low, close });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`cdlkicking`](https://ta-lib.org/functions/cdlkicking)
  * @see [`cdlmarubozu`](https://ta-lib.org/functions/cdlmarubozu)
  * @see [`cdlgapsidesidewhite`](https://ta-lib.org/functions/cdlgapsidesidewhite)
  */
-export function cdlkickingbylength(
-  startIdx: number,
-  endIdx: number,
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outInteger: Int32Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('CDLKICKINGBYLENGTH', 'startIdx', startIdx);
-  endIdx = requireInt32('CDLKICKINGBYLENGTH', 'endIdx', endIdx);
-  requireIndexRange('CDLKICKINGBYLENGTH', startIdx, endIdx);
-  const guardStart = clampedStart('CDLKICKINGBYLENGTH', startIdx, cdlkickingbylengthLookback(core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('CDLKICKINGBYLENGTH', 'inOpen', inOpen, guardInLen);
-  requireLength('CDLKICKINGBYLENGTH', 'inHigh', inHigh, guardInLen);
-  requireLength('CDLKICKINGBYLENGTH', 'inLow', inLow, guardInLen);
-  requireLength('CDLKICKINGBYLENGTH', 'inClose', inClose, guardInLen);
-  requireOutput('CDLKICKINGBYLENGTH', 'outInteger', outInteger, guardOutLen, Int32Array);
-  const inOpenF64 = float64(inOpen);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if (overlaps(outInteger, inOpenF64) || overlaps(outInteger, inHighF64) || overlaps(outInteger, inLowF64) || overlaps(outInteger, inCloseF64)) {
-    throw failure('CDLKICKINGBYLENGTH', RetCode.BAD_PARAM);
+export function cdlkickingbylength(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlkickingbylengthOptions): CdlkickingbylengthResult {
+  requireArgument('CDLKICKINGBYLENGTH', 'prices', prices);
+  const o = optionsOf('CDLKICKINGBYLENGTH', options);
+  if (o.endIdx === undefined) {
+    requireSeries('CDLKICKINGBYLENGTH', 'prices.open', prices.open);
+    requireSeries('CDLKICKINGBYLENGTH', 'prices.high', prices.high);
+    requireSeries('CDLKICKINGBYLENGTH', 'prices.low', prices.low);
+    requireSeries('CDLKICKINGBYLENGTH', 'prices.close', prices.close);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = cdlkickingbylengthImpl(core, startIdx, endIdx, inOpenF64, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outInteger);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('CDLKICKINGBYLENGTH', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const core = coreOf('CDLKICKINGBYLENGTH', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.open.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, cdlkickingbylengthLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
+  const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;
+  const range = cdlkickingbylengthPositional(startIdx, endIdx, prices.open, prices.high, prices.low, prices.close, outInteger, core);
+  return { begIdx: range.begIdx, values: outInteger.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -554,7 +636,7 @@ function cdlkickingbylengthOpenImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = cdlkickingbylengthLookback(core);
+  lookbackTotal = cdlkickingbylengthLookbackPositional(core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -691,7 +773,7 @@ export function cdlkickingbylengthOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('CDLKICKINGBYLENGTH openAndFill', inOpen.length, startIdx, cdlkickingbylengthLookback(core));
+    throw insufficientHistory('CDLKICKINGBYLENGTH openAndFill', inOpen.length, startIdx, cdlkickingbylengthLookbackPositional(core));
   }
   throw streamFailure('CDLKICKINGBYLENGTH openAndFill', retCode);
 }
@@ -716,9 +798,78 @@ export function cdlkickingbylengthOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('CDLKICKINGBYLENGTH open', inOpen.length, startIdx, cdlkickingbylengthLookback(core));
+    throw insufficientHistory('CDLKICKINGBYLENGTH open', inOpen.length, startIdx, cdlkickingbylengthLookbackPositional(core));
   }
   throw streamFailure('CDLKICKINGBYLENGTH open', retCode);
+}
+
+/** @internal */
+export function cdlkickingbylengthOpenPositional(
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  core: Core = Core.DEFAULT,
+): CdlkickingbylengthStream {
+  requireArgument('CDLKICKINGBYLENGTH open', 'prices.open', inOpen);
+  requireHistory('CDLKICKINGBYLENGTH open', inOpen.length);
+  requireArgument('CDLKICKINGBYLENGTH open', 'prices.high', inHigh);
+  requireArgument('CDLKICKINGBYLENGTH open', 'prices.low', inLow);
+  requireArgument('CDLKICKINGBYLENGTH open', 'prices.close', inClose);
+  requireHistoryLength('CDLKICKINGBYLENGTH open', 'prices.high', inHigh.length, inOpen.length);
+  requireHistoryLength('CDLKICKINGBYLENGTH open', 'prices.low', inLow.length, inOpen.length);
+  requireHistoryLength('CDLKICKINGBYLENGTH open', 'prices.close', inClose.length, inOpen.length);
+  return cdlkickingbylengthOpenInternal(core, float64(inOpen), float64(inHigh), float64(inLow), float64(inClose), 0);
+}
+
+/** @internal */
+export function cdlkickingbylengthOpenAndFillPositional(
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outInteger: Int32Array,
+  core: Core = Core.DEFAULT,
+): CdlkickingbylengthStream {
+  requireArgument('CDLKICKINGBYLENGTH openAndFill', 'prices.open', inOpen);
+  requireHistory('CDLKICKINGBYLENGTH openAndFill', inOpen.length);
+  requireArgument('CDLKICKINGBYLENGTH openAndFill', 'prices.high', inHigh);
+  requireArgument('CDLKICKINGBYLENGTH openAndFill', 'prices.low', inLow);
+  requireArgument('CDLKICKINGBYLENGTH openAndFill', 'prices.close', inClose);
+  const guardOutLen = openFillCount('CDLKICKINGBYLENGTH openAndFill', inOpen.length, cdlkickingbylengthLookbackPositional(core));
+  requireHistoryLength('CDLKICKINGBYLENGTH openAndFill', 'prices.high', inHigh.length, inOpen.length);
+  requireHistoryLength('CDLKICKINGBYLENGTH openAndFill', 'prices.low', inLow.length, inOpen.length);
+  requireHistoryLength('CDLKICKINGBYLENGTH openAndFill', 'prices.close', inClose.length, inOpen.length);
+  requireOutput('CDLKICKINGBYLENGTH openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
+  const inOpenF64 = float64(inOpen);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (outInteger.buffer === inOpenF64.buffer && outInteger.byteOffset === inOpenF64.byteOffset) {
+    throw sharedMemory('CDLKICKINGBYLENGTH openAndFill', 'outInteger', 'prices.open');
+  }
+  if (outInteger.buffer === inHighF64.buffer && outInteger.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('CDLKICKINGBYLENGTH openAndFill', 'outInteger', 'prices.high');
+  }
+  if (outInteger.buffer === inLowF64.buffer && outInteger.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('CDLKICKINGBYLENGTH openAndFill', 'outInteger', 'prices.low');
+  }
+  if (outInteger.buffer === inCloseF64.buffer && outInteger.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('CDLKICKINGBYLENGTH openAndFill', 'outInteger', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inOpenF64)) {
+    throw sharedMemory('CDLKICKINGBYLENGTH openAndFill', 'outInteger', 'prices.open');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inHighF64)) {
+    throw sharedMemory('CDLKICKINGBYLENGTH openAndFill', 'outInteger', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inLowF64)) {
+    throw sharedMemory('CDLKICKINGBYLENGTH openAndFill', 'outInteger', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inCloseF64)) {
+    throw sharedMemory('CDLKICKINGBYLENGTH openAndFill', 'outInteger', 'prices.close');
+  }
+  return cdlkickingbylengthOpenAndFillInternal(core, inOpenF64, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outInteger);
 }
 
 /**
@@ -726,20 +877,16 @@ export function cdlkickingbylengthOpenInternal(
  * starts at the last history bar, bit-identical to {@link cdlkickingbylength}
  * there.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
+ *   Low price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CdlkickingbylengthOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlkickingbylengthLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for histories of different lengths.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input or histories of different lengths.
  *
  * @example
  * ```ts
@@ -753,56 +900,37 @@ export function cdlkickingbylengthOpenInternal(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = cdlkickingbylengthOpen(open, high, low, close);
+ * const stream = cdlkickingbylengthOpen({ open, high, low, close });
  * const peeked = stream.peek(100.2, 101.4, 99.1, 100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlkickingbylengthOpen(
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  core: Core = Core.DEFAULT,
-): CdlkickingbylengthStream {
-  requireArgument('CDLKICKINGBYLENGTH open', 'inOpen', inOpen);
-  requireHistory('CDLKICKINGBYLENGTH open', inOpen.length);
-  requireArgument('CDLKICKINGBYLENGTH open', 'inHigh', inHigh);
-  requireArgument('CDLKICKINGBYLENGTH open', 'inLow', inLow);
-  requireArgument('CDLKICKINGBYLENGTH open', 'inClose', inClose);
-  requireHistoryLength('CDLKICKINGBYLENGTH open', 'inHigh', inHigh.length, inOpen.length);
-  requireHistoryLength('CDLKICKINGBYLENGTH open', 'inLow', inLow.length, inOpen.length);
-  requireHistoryLength('CDLKICKINGBYLENGTH open', 'inClose', inClose.length, inOpen.length);
-  return cdlkickingbylengthOpenInternal(core, float64(inOpen), float64(inHigh), float64(inLow), float64(inClose), 0);
+export function cdlkickingbylengthOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlkickingbylengthOptions): CdlkickingbylengthStream {
+  requireArgument('CDLKICKINGBYLENGTH open', 'prices', prices);
+  const o = optionsOf('CDLKICKINGBYLENGTH open', options);
+  const core = coreOf('CDLKICKINGBYLENGTH open', o.core);
+  return cdlkickingbylengthOpenPositional(prices.open, prices.high, prices.low, prices.close, core);
 }
 
 /**
- * {@link cdlkickingbylengthOpen} that also fills the outputs over the whole
- * history in the same pass, bit-identically to {@link cdlkickingbylength}. The
- * range written is the stream's `outRange()`.
+ * {@link cdlkickingbylengthOpen} that also computes the outputs over the whole
+ * history in the same pass, bit-identically to {@link cdlkickingbylength}.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param outInteger - +100 or -100 on a hit, 0 otherwise. Sign = candlecolor of
- *   the candle with the larger realbody (i if realbody(i) > realbody(i-1), else i-1;
- *   tie goes to i-1): +100 if that marubozu is white, -100 if black. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
+ *   Low price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link CdlkickingbylengthOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link cdlkickingbylength} returns them; the range is
+ *   the stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlkickingbylengthLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for histories of different lengths or an output too short or
- *   starting where another output or a `Float64Array` input starts, or, on a history
- *   long enough to open, one sharing memory with another output or a `Float64Array`
- *   input.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input, histories of different lengths or a buffer too short,
+ *   of the wrong type or starting where another buffer or a `Float64Array` input
+ *   starts, or, on a history long enough to open, one sharing memory with another
+ *   buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -816,39 +944,17 @@ export function cdlkickingbylengthOpen(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Int32Array(open.length);
- * const stream = cdlkickingbylengthOpenAndFill(open, high, low, close, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = cdlkickingbylengthOpenAndFill({ open, high, low, close });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlkickingbylengthOpenAndFill(
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outInteger: Int32Array,
-  core: Core = Core.DEFAULT,
-): CdlkickingbylengthStream {
-  requireArgument('CDLKICKINGBYLENGTH openAndFill', 'inOpen', inOpen);
-  requireHistory('CDLKICKINGBYLENGTH openAndFill', inOpen.length);
-  requireArgument('CDLKICKINGBYLENGTH openAndFill', 'inHigh', inHigh);
-  requireArgument('CDLKICKINGBYLENGTH openAndFill', 'inLow', inLow);
-  requireArgument('CDLKICKINGBYLENGTH openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('CDLKICKINGBYLENGTH openAndFill', inOpen.length, cdlkickingbylengthLookback(core));
-  requireHistoryLength('CDLKICKINGBYLENGTH openAndFill', 'inHigh', inHigh.length, inOpen.length);
-  requireHistoryLength('CDLKICKINGBYLENGTH openAndFill', 'inLow', inLow.length, inOpen.length);
-  requireHistoryLength('CDLKICKINGBYLENGTH openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireOutput('CDLKICKINGBYLENGTH openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
-  const inOpenF64 = float64(inOpen);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if ((outInteger.buffer === inOpenF64.buffer && outInteger.byteOffset === inOpenF64.byteOffset) || (outInteger.buffer === inHighF64.buffer && outInteger.byteOffset === inHighF64.byteOffset) || (outInteger.buffer === inLowF64.buffer && outInteger.byteOffset === inLowF64.byteOffset) || (outInteger.buffer === inCloseF64.buffer && outInteger.byteOffset === inCloseF64.byteOffset)) {
-    throw streamFailure('CDLKICKINGBYLENGTH openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outInteger, inOpenF64) || overlaps(outInteger, inHighF64) || overlaps(outInteger, inLowF64) || overlaps(outInteger, inCloseF64))) {
-    throw streamFailure('CDLKICKINGBYLENGTH openAndFill', RetCode.BAD_PARAM);
-  }
-  return cdlkickingbylengthOpenAndFillInternal(core, inOpenF64, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outInteger);
+export function cdlkickingbylengthOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlkickingbylengthOptions): CdlkickingbylengthResult & { stream: CdlkickingbylengthStream } {
+  requireArgument('CDLKICKINGBYLENGTH openAndFill', 'prices', prices);
+  const o = optionsOf('CDLKICKINGBYLENGTH openAndFill', options);
+  const core = coreOf('CDLKICKINGBYLENGTH openAndFill', o.core);
+  const capacity = fillCapacity(cdlkickingbylengthLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
+  const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;
+  const stream = cdlkickingbylengthOpenAndFillPositional(prices.open, prices.high, prices.low, prices.close, outInteger, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outInteger.subarray(0, range.count) };
 }

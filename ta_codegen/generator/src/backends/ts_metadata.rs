@@ -720,7 +720,7 @@ export class ParamHolder {
 // dispatch.ts
 // ---------------------------------------------------------------------------
 
-/// One thunk triple per function, each calling the function's public tier.
+/// One thunk triple per function, each calling the function's positional tier.
 fn dispatch(rows: &[FuncRow], by_name: &HashMap<&str, &FuncDef>) -> String {
     let mut s = header();
     let mut enum_types: Vec<&str> = rows
@@ -794,9 +794,9 @@ fn dispatch(rows: &[FuncRow], by_name: &HashMap<&str, &FuncDef>) -> String {
         }
         call.push("h.core".into());
         let _ = writeln!(s, "  ['{m}', {{");
-        let _ = writeln!(s, "    lookback: (h) => {m}.{}({}),", n.lookback, lb.join(", "));
-        let _ = writeln!(s, "    displayShift: (h, o) => {m}.{}({}),", n.display_shift, ds.join(", "));
-        let _ = writeln!(s, "    call: (h, s, e) => {m}.{}({}),", n.public, call.join(", "));
+        let _ = writeln!(s, "    lookback: (h) => {m}.{}({}),", n.lookback_positional, lb.join(", "));
+        let _ = writeln!(s, "    displayShift: (h, o) => {m}.{}({}),", n.display_shift_positional, ds.join(", "));
+        let _ = writeln!(s, "    call: (h, s, e) => {m}.{}({}),", n.positional, call.join(", "));
         s.push_str("  }],\n");
     }
     s.push_str("]);\n");

@@ -14,27 +14,16 @@
  *  100726 MF,CC  Batch tier: block scan of the Fast-K window (#473).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma, fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { emaLookback } from './ema.ts';
+import { emaLookbackPositional } from './ema.ts';
 
-/**
- * Number of leading input bars {@link pso} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInFastK_Period - Time period for building the Fast-K line (default 8;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInEMAPeriod - Period of each of the two smoothing passes (default 5;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function psoLookback(optInFastK_Period: number, optInEMAPeriod: number, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function psoLookbackPositional(optInFastK_Period: number, optInEMAPeriod: number, core: Core = Core.DEFAULT): number {
   if ((optInFastK_Period | 0) !== optInFastK_Period) {
     return -1;
   }
@@ -59,27 +48,12 @@ export function psoLookback(optInFastK_Period: number, optInEMAPeriod: number, c
    * own, and what carries the Auto warm-up levels of #492 through both
    * passes without this file knowing their rule.
    */
-  return optInFastK_Period - 1 + emaLookback(optInEMAPeriod, core) + emaLookback(optInEMAPeriod, core);
+  return optInFastK_Period - 1 + emaLookbackPositional(optInEMAPeriod, core) + emaLookbackPositional(optInEMAPeriod, core);
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link pso}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInFastK_Period - Time period for building the Fast-K line (default 8;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInEMAPeriod - Period of each of the two smoothing passes (default 5;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function psoDisplayShift(optInFastK_Period: number, optInEMAPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (psoLookback(optInFastK_Period, optInEMAPeriod, core) < 0) {
+/** @internal */
+export function psoDisplayShiftPositional(optInFastK_Period: number, optInEMAPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (psoLookbackPositional(optInFastK_Period, optInEMAPeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -147,7 +121,7 @@ export function psoImpl(
   } else if (optInEMAPeriod < 1 || optInEMAPeriod > 100000) {
     return RetCode.BAD_PARAM;
   }
-  lookbackTotal = psoLookback(optInFastK_Period, optInEMAPeriod, core);
+  lookbackTotal = psoLookbackPositional(optInFastK_Period, optInEMAPeriod, core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -172,7 +146,7 @@ export function psoImpl(
   if (emaBeta < 0.5) {
     emaBeta = 1.0 - emaK;
   }
-  lookbackEMA = emaLookback(optInEMAPeriod, core);
+  lookbackEMA = emaLookbackPositional(optInEMAPeriod, core);
   warmBars = lookbackEMA + lookbackEMA;
   ema1 = 0.0;
   ema2 = 0.0;
@@ -375,6 +349,145 @@ export function psoImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['fastKPeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['emaPeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000']] as const;
+
+/** @internal */
+export function psoPositional(
+  startIdx: number,
+  endIdx: number,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInFastK_Period: number,
+  optInEMAPeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('PSO', 'startIdx', startIdx);
+  endIdx = requireInt32('PSO', 'endIdx', endIdx);
+  optInFastK_Period = requireInt32('PSO', 'fastKPeriod', optInFastK_Period);
+  optInEMAPeriod = requireInt32('PSO', 'emaPeriod', optInEMAPeriod);
+  requireIndexRange('PSO', startIdx, endIdx);
+  const guardLookback = psoLookbackPositional(optInFastK_Period, optInEMAPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('PSO', PARAM_RANGES, optInFastK_Period, optInEMAPeriod);
+  }
+  const guardStart = clampedStart('PSO', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('PSO', 'prices.high', inHigh, guardInLen);
+  requireLength('PSO', 'prices.low', inLow, guardInLen);
+  requireLength('PSO', 'prices.close', inClose, guardInLen);
+  requireOutput('PSO', 'outReal', outReal, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (overlapsPartly(outReal, inHighF64)) {
+    throw sharedMemory('PSO', 'outReal', 'prices.high');
+  }
+  if (overlapsPartly(outReal, inLowF64)) {
+    throw sharedMemory('PSO', 'outReal', 'prices.low');
+  }
+  if (overlapsPartly(outReal, inCloseF64)) {
+    throw sharedMemory('PSO', 'outReal', 'prices.close');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = psoImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, optInFastK_Period, optInEMAPeriod, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('PSO', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link pso}, {@link psoLookback}, {@link psoDisplayShift},
+ * {@link psoOpen} and {@link psoOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface PsoOptions {
+  /**
+   * Time period for building the Fast-K line (default 8; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  fastKPeriod?: number | undefined;
+  /**
+   * Period of each of the two smoothing passes (default 5; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  emaPeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link pso} returns, and {@link psoOpenAndFill} with its stream. */
+export interface PsoResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Premier Stochastic Oscillator, -1 to +1. `values[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link pso} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PsoOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function psoLookback(options?: PsoOptions): number {
+  const o = optionsOf('PSO lookback', options);
+  return psoLookbackPositional(orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT), orDefault(o.emaPeriod, Core.INTEGER_DEFAULT), coreOf('PSO lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link pso}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PsoOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function psoDisplayShift(outputIdx: number, options?: PsoOptions): number {
+  const o = optionsOf('PSO displayShift', options);
+  return psoDisplayShiftPositional(orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT), orDefault(o.emaPeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('PSO displayShift', o.core));
+}
+
 /**
  * Premier Stochastic Oscillator: a short-period Fast %K, recentred on zero and
  * rescaled, double-smoothed and then squashed into the range -1 to +1. Leibfarth's
@@ -408,31 +521,24 @@ export function psoImpl(
  *   25 in his article. The length is taken here directly, as an integer, because
  *   the sources that follow the square root disagree over how to round it.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link psoLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link psoLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inHigh - High price series.
- * @param inLow - Low price series.
- * @param inClose - Close price series.
- * @param optInFastK_Period - Time period for building the Fast-K line (default 8;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInEMAPeriod - Period of each of the two smoothing passes (default 5;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Premier Stochastic Oscillator, -1 to +1. Must hold the values
- *   produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `high`: High
+ *   price series. `low`: Low price series. `close`: Close price series.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link PsoOptions}.
+ * @returns `begIdx` and the values; see {@link PsoResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output
- *   or an output sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -444,51 +550,34 @@ export function psoImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Float64Array(high.length);
- * const { begIdx, count } = pso(0, high.length - 1, high, low, close, 8, 5, out);
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = pso({ high, low, close }, {
+ *   fastKPeriod: 8,
+ *   emaPeriod: 5,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`stochf`](https://ta-lib.org/functions/stochf)
  * @see [`stoch`](https://ta-lib.org/functions/stoch)
  * @see [`smi`](https://ta-lib.org/functions/smi)
  * @see [`willr`](https://ta-lib.org/functions/willr)
  */
-export function pso(
-  startIdx: number,
-  endIdx: number,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInFastK_Period: number,
-  optInEMAPeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('PSO', 'startIdx', startIdx);
-  endIdx = requireInt32('PSO', 'endIdx', endIdx);
-  optInFastK_Period = requireInt32('PSO', 'optInFastK_Period', optInFastK_Period);
-  optInEMAPeriod = requireInt32('PSO', 'optInEMAPeriod', optInEMAPeriod);
-  requireIndexRange('PSO', startIdx, endIdx);
-  const guardStart = clampedStart('PSO', startIdx, psoLookback(optInFastK_Period, optInEMAPeriod, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('PSO', 'inHigh', inHigh, guardInLen);
-  requireLength('PSO', 'inLow', inLow, guardInLen);
-  requireLength('PSO', 'inClose', inClose, guardInLen);
-  requireOutput('PSO', 'outReal', outReal, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if (overlapsPartly(outReal, inHighF64) || overlapsPartly(outReal, inLowF64) || overlapsPartly(outReal, inCloseF64)) {
-    throw failure('PSO', RetCode.BAD_PARAM);
+export function pso(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: PsoOptions): PsoResult {
+  requireArgument('PSO', 'prices', prices);
+  const o = optionsOf('PSO', options);
+  if (o.endIdx === undefined) {
+    requireSeries('PSO', 'prices.high', prices.high);
+    requireSeries('PSO', 'prices.low', prices.low);
+    requireSeries('PSO', 'prices.close', prices.close);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = psoImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, optInFastK_Period, optInEMAPeriod, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('PSO', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);
+  const optInEMAPeriod = orDefault(o.emaPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('PSO', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.high.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, psoLookbackPositional(optInFastK_Period, optInEMAPeriod, core), prices.high, prices.low, prices.close);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = psoPositional(startIdx, endIdx, prices.high, prices.low, prices.close, optInFastK_Period, optInEMAPeriod, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -838,7 +927,7 @@ function psoOpenImpl(
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
   }
-  lookbackTotal = psoLookback(optInFastK_Period, optInEMAPeriod, core);
+  lookbackTotal = psoLookbackPositional(optInFastK_Period, optInEMAPeriod, core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -877,7 +966,7 @@ function psoOpenImpl(
   if (emaBeta < 0.5) {
     emaBeta = 1.0 - emaK;
   }
-  lookbackEMA = emaLookback(optInEMAPeriod, core);
+  lookbackEMA = emaLookbackPositional(optInEMAPeriod, core);
   ema1 = 0.0;
   ema2 = 0.0;
   sum1 = 0.0;
@@ -1144,7 +1233,10 @@ export function psoOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('PSO openAndFill', inHigh.length, startIdx, psoLookback(optInFastK_Period, optInEMAPeriod, core));
+    throw insufficientHistory('PSO openAndFill', inHigh.length, startIdx, psoLookbackPositional(optInFastK_Period, optInEMAPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && psoLookbackPositional(optInFastK_Period, optInEMAPeriod, core) < 0) {
+    throw rejectedParams('PSO openAndFill', PARAM_RANGES, optInFastK_Period, optInEMAPeriod);
   }
   throw streamFailure('PSO openAndFill', retCode);
 }
@@ -1170,30 +1262,95 @@ export function psoOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('PSO open', inHigh.length, startIdx, psoLookback(optInFastK_Period, optInEMAPeriod, core));
+    throw insufficientHistory('PSO open', inHigh.length, startIdx, psoLookbackPositional(optInFastK_Period, optInEMAPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && psoLookbackPositional(optInFastK_Period, optInEMAPeriod, core) < 0) {
+    throw rejectedParams('PSO open', PARAM_RANGES, optInFastK_Period, optInEMAPeriod);
   }
   throw streamFailure('PSO open', retCode);
+}
+
+/** @internal */
+export function psoOpenPositional(
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInFastK_Period: number,
+  optInEMAPeriod: number,
+  core: Core = Core.DEFAULT,
+): PsoStream {
+  optInFastK_Period = requireInt32('PSO open', 'fastKPeriod', optInFastK_Period);
+  optInEMAPeriod = requireInt32('PSO open', 'emaPeriod', optInEMAPeriod);
+  requireArgument('PSO open', 'prices.high', inHigh);
+  requireHistory('PSO open', inHigh.length);
+  requireArgument('PSO open', 'prices.low', inLow);
+  requireArgument('PSO open', 'prices.close', inClose);
+  requireHistoryLength('PSO open', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('PSO open', 'prices.close', inClose.length, inHigh.length);
+  return psoOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), 0, optInFastK_Period, optInEMAPeriod);
+}
+
+/** @internal */
+export function psoOpenAndFillPositional(
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInFastK_Period: number,
+  optInEMAPeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): PsoStream {
+  optInFastK_Period = requireInt32('PSO openAndFill', 'fastKPeriod', optInFastK_Period);
+  optInEMAPeriod = requireInt32('PSO openAndFill', 'emaPeriod', optInEMAPeriod);
+  requireArgument('PSO openAndFill', 'prices.high', inHigh);
+  requireHistory('PSO openAndFill', inHigh.length);
+  requireArgument('PSO openAndFill', 'prices.low', inLow);
+  requireArgument('PSO openAndFill', 'prices.close', inClose);
+  const guardLookback = psoLookbackPositional(optInFastK_Period, optInEMAPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('PSO openAndFill', PARAM_RANGES, optInFastK_Period, optInEMAPeriod);
+  }
+  const guardOutLen = openFillCount('PSO openAndFill', inHigh.length, guardLookback);
+  requireHistoryLength('PSO openAndFill', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('PSO openAndFill', 'prices.close', inClose.length, inHigh.length);
+  requireOutput('PSO openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('PSO openAndFill', 'outReal', 'prices.high');
+  }
+  if (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('PSO openAndFill', 'outReal', 'prices.low');
+  }
+  if (outReal.buffer === inCloseF64.buffer && outReal.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('PSO openAndFill', 'outReal', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inHighF64)) {
+    throw sharedMemory('PSO openAndFill', 'outReal', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inLowF64)) {
+    throw sharedMemory('PSO openAndFill', 'outReal', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inCloseF64)) {
+    throw sharedMemory('PSO openAndFill', 'outReal', 'prices.close');
+  }
+  return psoOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, 0, optInFastK_Period, optInEMAPeriod, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live PSO stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link pso} there.
  *
- * @param inHigh - Warm-up history. High price series. Every history has the same
- *   length.
- * @param inLow - Warm-up history. Low price series. Every history has the same
- *   length.
- * @param inClose - Warm-up history. Close price series. Every history has the same
- *   length.
- * @param optInFastK_Period - Time period for building the Fast-K line (default 8;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInEMAPeriod - Period of each of the two smoothing passes (default 5;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price series. `low`: Low price series. `close`: Close price
+ *   series.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PsoOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `psoLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
  *   an integer parameter that is not an int32, a parameter outside its range or
  *   histories of different lengths.
  *
@@ -1207,57 +1364,40 @@ export function psoOpenInternal(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = psoOpen(high, low, close, 8, 5);
+ * const stream = psoOpen({ high, low, close }, { fastKPeriod: 8, emaPeriod: 5 });
  * const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function psoOpen(
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInFastK_Period: number,
-  optInEMAPeriod: number,
-  core: Core = Core.DEFAULT,
-): PsoStream {
-  optInFastK_Period = requireInt32('PSO open', 'optInFastK_Period', optInFastK_Period);
-  optInEMAPeriod = requireInt32('PSO open', 'optInEMAPeriod', optInEMAPeriod);
-  requireArgument('PSO open', 'inHigh', inHigh);
-  requireHistory('PSO open', inHigh.length);
-  requireArgument('PSO open', 'inLow', inLow);
-  requireArgument('PSO open', 'inClose', inClose);
-  requireHistoryLength('PSO open', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('PSO open', 'inClose', inClose.length, inHigh.length);
-  return psoOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), 0, optInFastK_Period, optInEMAPeriod);
+export function psoOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: PsoOptions): PsoStream {
+  requireArgument('PSO open', 'prices', prices);
+  const o = optionsOf('PSO open', options);
+  const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);
+  const optInEMAPeriod = orDefault(o.emaPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('PSO open', o.core);
+  return psoOpenPositional(prices.high, prices.low, prices.close, optInFastK_Period, optInEMAPeriod, core);
 }
 
 /**
- * {@link psoOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link pso}. The range written is the stream's
- * `outRange()`.
+ * {@link psoOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link pso}.
  *
- * @param inHigh - Warm-up history. High price series. Every history has the same
- *   length.
- * @param inLow - Warm-up history. Low price series. Every history has the same
- *   length.
- * @param inClose - Warm-up history. Close price series. Every history has the same
- *   length.
- * @param optInFastK_Period - Time period for building the Fast-K line (default 8;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInEMAPeriod - Period of each of the two smoothing passes (default 5;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Premier Stochastic Oscillator, -1 to +1. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price series. `low`: Low price series. `close`: Close price
+ *   series.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link PsoOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link pso} returns them; the range is the stream's
+ *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `psoLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
  *   an integer parameter that is not an int32, a parameter outside its range,
- *   histories of different lengths or an output too short or starting where another
- *   output or a `Float64Array` input starts, or, on a history long enough to open,
- *   one sharing memory with another output or a `Float64Array` input.
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -1269,39 +1409,22 @@ export function psoOpen(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Float64Array(high.length);
- * const stream = psoOpenAndFill(high, low, close, 8, 5, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = psoOpenAndFill({ high, low, close }, {
+ *   fastKPeriod: 8,
+ *   emaPeriod: 5,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function psoOpenAndFill(
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInFastK_Period: number,
-  optInEMAPeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): PsoStream {
-  optInFastK_Period = requireInt32('PSO openAndFill', 'optInFastK_Period', optInFastK_Period);
-  optInEMAPeriod = requireInt32('PSO openAndFill', 'optInEMAPeriod', optInEMAPeriod);
-  requireArgument('PSO openAndFill', 'inHigh', inHigh);
-  requireHistory('PSO openAndFill', inHigh.length);
-  requireArgument('PSO openAndFill', 'inLow', inLow);
-  requireArgument('PSO openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('PSO openAndFill', inHigh.length, psoLookback(optInFastK_Period, optInEMAPeriod, core));
-  requireHistoryLength('PSO openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('PSO openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireOutput('PSO openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if ((outReal.buffer === inHighF64.buffer && outReal.byteOffset === inHighF64.byteOffset) || (outReal.buffer === inLowF64.buffer && outReal.byteOffset === inLowF64.byteOffset) || (outReal.buffer === inCloseF64.buffer && outReal.byteOffset === inCloseF64.byteOffset)) {
-    throw streamFailure('PSO openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inHighF64) || overlaps(outReal, inLowF64) || overlaps(outReal, inCloseF64))) {
-    throw streamFailure('PSO openAndFill', RetCode.BAD_PARAM);
-  }
-  return psoOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, 0, optInFastK_Period, optInEMAPeriod, new MInteger(), new MInteger(), outReal);
+export function psoOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: PsoOptions): PsoResult & { stream: PsoStream } {
+  requireArgument('PSO openAndFill', 'prices', prices);
+  const o = optionsOf('PSO openAndFill', options);
+  const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);
+  const optInEMAPeriod = orDefault(o.emaPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('PSO openAndFill', o.core);
+  const capacity = fillCapacity(psoLookbackPositional(optInFastK_Period, optInEMAPeriod, core), prices.high, prices.low, prices.close);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = psoOpenAndFillPositional(prices.high, prices.low, prices.close, optInFastK_Period, optInEMAPeriod, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

@@ -551,3 +551,47 @@ fn the_reject_leg_gives_every_entry_point_the_caller_s_own_range() {
         );
     }
 }
+
+/// The TS server's stream-verify and ride-along legs reach the PUBLIC tier
+/// (`<n>`, `<n>Lookback`, `<n>Open`, `<n>OpenAndFill`), the one a caller
+/// meets. The C-shaped `<n>*Positional` tier underneath answers every value
+/// the same, so a leg moved back onto it stays green at run time while the
+/// public options mapping, buffer keys and result shape go unexercised.
+#[test]
+fn the_ts_server_legs_call_the_public_tier() {
+    use ta_codegen_lib::backends::{common::pascal_words, ts::ts_names, ts_stream::emits_stream};
+    let (funcs, enums) = corpus();
+    let src = ta_codegen_lib::server_gen::generate_ts_server(&funcs, &enums);
+    let body = |head: &str| -> &str {
+        let at = src.find(head).unwrap_or_else(|| panic!("ts: no `{head}`"));
+        &src[at..at + src[at..].find("\n}\n").expect("the function ends")]
+    };
+    let calls = |hay: &str, ns: &str, name: &str| -> bool {
+        let needle = format!("{ns}.{name}(");
+        hay.match_indices(&needle)
+            .any(|(i, _)| !hay[..i].chars().next_back().is_some_and(|c| c.is_alphanumeric() || c == '_'))
+    };
+    let lookup = ta_codegen_lib::streaming::FuncsLookup(&funcs);
+    let (mut sv_seen, mut ride_seen) = (0usize, 0usize);
+    for f in &funcs {
+        let n = ts_names(&f.name);
+        let ns = f.name.as_str();
+        let mut legs: Vec<(String, Vec<&str>)> = Vec::new();
+        if emits_stream(f, &lookup) {
+            sv_seen += 1;
+            legs.push((format!("function sv_{ns}(p: Params)"), vec![&n.lookback, &n.open, &n.open_and_fill]));
+        }
+        if f.streaming {
+            ride_seen += 1;
+            legs.push((format!("function rideBody{}(", pascal_words(ns)), vec![&n.lookback, &n.public, &n.open, &n.open_and_fill]));
+        }
+        for (head, want) in legs {
+            let b = body(&head);
+            assert!(!b.contains("Positional("), "ts: `{head}` calls a positional tier:\n{b}");
+            for name in want {
+                assert!(calls(b, ns, name), "ts: `{head}` never calls `{ns}.{name}(`");
+            }
+        }
+    }
+    assert!(sv_seen > 0 && ride_seen > 0, "ts: no stream-verify or ride-along leg was checked");
+}

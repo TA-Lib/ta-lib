@@ -12,40 +12,20 @@
  *  090426 MF,CC  First version (issue #364).
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link pvt} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function pvtLookback(core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function pvtLookbackPositional(_core: Core = Core.DEFAULT): number {
   /* This function have no lookback needed. */
   return 0;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link pvt}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function pvtDisplayShift(outputIdx: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function pvtDisplayShiftPositional(outputIdx: number, _core: Core = Core.DEFAULT): number {
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
     return -2147483648;
   }
@@ -94,6 +74,119 @@ export function pvtImpl(
   return RetCode.SUCCESS;
 }
 
+/** @internal */
+export function pvtPositional(
+  startIdx: number,
+  endIdx: number,
+  inClose: ArrayLike<number>,
+  inVolume: ArrayLike<number>,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('PVT', 'startIdx', startIdx);
+  endIdx = requireInt32('PVT', 'endIdx', endIdx);
+  requireIndexRange('PVT', startIdx, endIdx);
+  const guardStart = clampedStart('PVT', startIdx, pvtLookbackPositional(core));
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('PVT', 'prices.close', inClose, guardInLen);
+  requireLength('PVT', 'prices.volume', inVolume, guardInLen);
+  requireOutput('PVT', 'outReal', outReal, guardOutLen, Float64Array);
+  const inCloseF64 = float64(inClose);
+  const inVolumeF64 = float64(inVolume);
+  if (overlapsPartly(outReal, inCloseF64)) {
+    throw sharedMemory('PVT', 'outReal', 'prices.close');
+  }
+  if (overlapsPartly(outReal, inVolumeF64)) {
+    throw sharedMemory('PVT', 'outReal', 'prices.volume');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = pvtImpl(core, startIdx, endIdx, inCloseF64, inVolumeF64, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('PVT', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link pvt}, {@link pvtLookback}, {@link pvtDisplayShift},
+ * {@link pvtOpen} and {@link pvtOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface PvtOptions {
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link pvt} returns, and {@link pvtOpenAndFill} with its stream. */
+export interface PvtResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Cumulative price volume trend, seeded at zero. `values[k]` is the value at input
+   * bar `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link pvt} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PvtOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function pvtLookback(options?: PvtOptions): number {
+  const o = optionsOf('PVT lookback', options);
+  return pvtLookbackPositional(coreOf('PVT lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link pvt}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PvtOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function pvtDisplayShift(outputIdx: number, options?: PvtOptions): number {
+  const o = optionsOf('PVT displayShift', options);
+  return pvtDisplayShiftPositional(outputIdx, coreOf('PVT displayShift', o.core));
+}
+
 /**
  * Price Volume Trend: a running cumulative total of each bar's volume weighted by
  * that bar's fractional price change. It is the On Balance Volume idea with
@@ -122,25 +215,23 @@ export function pvtImpl(
  *   stretch of the output can therefore mean either genuine zero net accumulation
  *   or a run of zero previous closes.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link pvtLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link pvtLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inClose - Close price of each bar.
- * @param inVolume - Volume of each bar.
- * @param outReal - Cumulative price volume trend, seeded at zero. Must hold the
- *   values produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `close`:
+ *   Close price of each bar. `volume`: Volume of each bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link PvtOptions}.
+ * @returns `begIdx` and the values; see {@link PvtResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, an
- *   array too short for the range, an empty output or an output sharing memory with
- *   a `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an input too short for the range, a buffer that is empty, too short or of
+ *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -150,9 +241,8 @@ export function pvtImpl(
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const out = new Float64Array(close.length);
- * const { begIdx, count } = pvt(0, close.length - 1, close, volume, out);
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = pvt({ close, volume });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`obv`](https://ta-lib.org/functions/obv)
  * @see [`nvi`](https://ta-lib.org/functions/nvi)
@@ -160,35 +250,20 @@ export function pvtImpl(
  * @see [`pvo`](https://ta-lib.org/functions/pvo)
  * @see [`ad`](https://ta-lib.org/functions/ad)
  */
-export function pvt(
-  startIdx: number,
-  endIdx: number,
-  inClose: ArrayLike<number>,
-  inVolume: ArrayLike<number>,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('PVT', 'startIdx', startIdx);
-  endIdx = requireInt32('PVT', 'endIdx', endIdx);
-  requireIndexRange('PVT', startIdx, endIdx);
-  const guardStart = clampedStart('PVT', startIdx, pvtLookback(core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('PVT', 'inClose', inClose, guardInLen);
-  requireLength('PVT', 'inVolume', inVolume, guardInLen);
-  requireOutput('PVT', 'outReal', outReal, guardOutLen, Float64Array);
-  const inCloseF64 = float64(inClose);
-  const inVolumeF64 = float64(inVolume);
-  if (overlapsPartly(outReal, inCloseF64) || overlapsPartly(outReal, inVolumeF64)) {
-    throw failure('PVT', RetCode.BAD_PARAM);
+export function pvt(prices: { close: ArrayLike<number>; volume: ArrayLike<number> }, options?: PvtOptions): PvtResult {
+  requireArgument('PVT', 'prices', prices);
+  const o = optionsOf('PVT', options);
+  if (o.endIdx === undefined) {
+    requireSeries('PVT', 'prices.close', prices.close);
+    requireSeries('PVT', 'prices.volume', prices.volume);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = pvtImpl(core, startIdx, endIdx, inCloseF64, inVolumeF64, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('PVT', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const core = coreOf('PVT', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.close.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, pvtLookbackPositional(core), prices.close, prices.volume);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = pvtPositional(startIdx, endIdx, prices.close, prices.volume, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -406,7 +481,7 @@ export function pvtOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('PVT openAndFill', inClose.length, startIdx, pvtLookback(core));
+    throw insufficientHistory('PVT openAndFill', inClose.length, startIdx, pvtLookbackPositional(core));
   }
   throw streamFailure('PVT openAndFill', retCode);
 }
@@ -429,25 +504,67 @@ export function pvtOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('PVT open', inClose.length, startIdx, pvtLookback(core));
+    throw insufficientHistory('PVT open', inClose.length, startIdx, pvtLookbackPositional(core));
   }
   throw streamFailure('PVT open', retCode);
+}
+
+/** @internal */
+export function pvtOpenPositional(
+  inClose: ArrayLike<number>,
+  inVolume: ArrayLike<number>,
+  core: Core = Core.DEFAULT,
+): PvtStream {
+  requireArgument('PVT open', 'prices.close', inClose);
+  requireHistory('PVT open', inClose.length);
+  requireArgument('PVT open', 'prices.volume', inVolume);
+  requireHistoryLength('PVT open', 'prices.volume', inVolume.length, inClose.length);
+  return pvtOpenInternal(core, float64(inClose), float64(inVolume), 0);
+}
+
+/** @internal */
+export function pvtOpenAndFillPositional(
+  inClose: ArrayLike<number>,
+  inVolume: ArrayLike<number>,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): PvtStream {
+  requireArgument('PVT openAndFill', 'prices.close', inClose);
+  requireHistory('PVT openAndFill', inClose.length);
+  requireArgument('PVT openAndFill', 'prices.volume', inVolume);
+  const guardOutLen = openFillCount('PVT openAndFill', inClose.length, pvtLookbackPositional(core));
+  requireHistoryLength('PVT openAndFill', 'prices.volume', inVolume.length, inClose.length);
+  requireOutput('PVT openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inCloseF64 = float64(inClose);
+  const inVolumeF64 = float64(inVolume);
+  if (outReal.buffer === inCloseF64.buffer && outReal.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('PVT openAndFill', 'outReal', 'prices.close');
+  }
+  if (outReal.buffer === inVolumeF64.buffer && outReal.byteOffset === inVolumeF64.byteOffset) {
+    throw sharedMemory('PVT openAndFill', 'outReal', 'prices.volume');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inCloseF64)) {
+    throw sharedMemory('PVT openAndFill', 'outReal', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inVolumeF64)) {
+    throw sharedMemory('PVT openAndFill', 'outReal', 'prices.volume');
+  }
+  return pvtOpenAndFillInternal(core, inCloseF64, inVolumeF64, 0, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live PVT stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link pvt} there.
  *
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param inVolume - Warm-up history. Volume of each bar. Every history has the
- *   same length.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `close`: Close price of each bar. `volume`: Volume of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link PvtOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `pvtLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   histories of different lengths.
+ *   options that are not an object, a `core` that is not a `Core`, an absent input
+ *   or histories of different lengths.
  *
  * @example
  * ```ts
@@ -457,43 +574,36 @@ export function pvtOpenInternal(
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const stream = pvtOpen(close, volume);
+ * const stream = pvtOpen({ close, volume });
  * const peeked = stream.peek(100.9, 12345); // a forming bar: commits nothing
  * const updated = stream.update(100.9, 12345); // the bar closes
  * ```
  */
-export function pvtOpen(
-  inClose: ArrayLike<number>,
-  inVolume: ArrayLike<number>,
-  core: Core = Core.DEFAULT,
-): PvtStream {
-  requireArgument('PVT open', 'inClose', inClose);
-  requireHistory('PVT open', inClose.length);
-  requireArgument('PVT open', 'inVolume', inVolume);
-  requireHistoryLength('PVT open', 'inVolume', inVolume.length, inClose.length);
-  return pvtOpenInternal(core, float64(inClose), float64(inVolume), 0);
+export function pvtOpen(prices: { close: ArrayLike<number>; volume: ArrayLike<number> }, options?: PvtOptions): PvtStream {
+  requireArgument('PVT open', 'prices', prices);
+  const o = optionsOf('PVT open', options);
+  const core = coreOf('PVT open', o.core);
+  return pvtOpenPositional(prices.close, prices.volume, core);
 }
 
 /**
- * {@link pvtOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link pvt}. The range written is the stream's
- * `outRange()`.
+ * {@link pvtOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link pvt}.
  *
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param inVolume - Warm-up history. Volume of each bar. Every history has the
- *   same length.
- * @param outReal - Cumulative price volume trend, seeded at zero. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `close`: Close price of each bar. `volume`: Volume of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link PvtOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link pvt} returns them; the range is the stream's
+ *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `pvtLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   histories of different lengths or an output too short or starting where another
- *   output or a `Float64Array` input starts, or, on a history long enough to open,
- *   one sharing memory with another output or a `Float64Array` input.
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -503,31 +613,17 @@ export function pvtOpen(
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const out = new Float64Array(close.length);
- * const stream = pvtOpenAndFill(close, volume, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = pvtOpenAndFill({ close, volume });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function pvtOpenAndFill(
-  inClose: ArrayLike<number>,
-  inVolume: ArrayLike<number>,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): PvtStream {
-  requireArgument('PVT openAndFill', 'inClose', inClose);
-  requireHistory('PVT openAndFill', inClose.length);
-  requireArgument('PVT openAndFill', 'inVolume', inVolume);
-  const guardOutLen = openFillCount('PVT openAndFill', inClose.length, pvtLookback(core));
-  requireHistoryLength('PVT openAndFill', 'inVolume', inVolume.length, inClose.length);
-  requireOutput('PVT openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inCloseF64 = float64(inClose);
-  const inVolumeF64 = float64(inVolume);
-  if ((outReal.buffer === inCloseF64.buffer && outReal.byteOffset === inCloseF64.byteOffset) || (outReal.buffer === inVolumeF64.buffer && outReal.byteOffset === inVolumeF64.byteOffset)) {
-    throw streamFailure('PVT openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inCloseF64) || overlaps(outReal, inVolumeF64))) {
-    throw streamFailure('PVT openAndFill', RetCode.BAD_PARAM);
-  }
-  return pvtOpenAndFillInternal(core, inCloseF64, inVolumeF64, 0, new MInteger(), new MInteger(), outReal);
+export function pvtOpenAndFill(prices: { close: ArrayLike<number>; volume: ArrayLike<number> }, options?: PvtOptions): PvtResult & { stream: PvtStream } {
+  requireArgument('PVT openAndFill', 'prices', prices);
+  const o = optionsOf('PVT openAndFill', options);
+  const core = coreOf('PVT openAndFill', o.core);
+  const capacity = fillCapacity(pvtLookbackPositional(core), prices.close, prices.volume);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = pvtOpenAndFillPositional(prices.close, prices.volume, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

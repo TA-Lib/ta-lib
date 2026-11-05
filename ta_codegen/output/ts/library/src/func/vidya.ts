@@ -14,28 +14,15 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma, fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link vidya} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * It includes `core`'s unstable period for this function.
- *
- * @param optInTimePeriod - The EMA length whose alpha the CMO scales (default 12;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInCMOPeriod - Number of trailing price changes in the CMO (default 9;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function vidyaLookback(optInTimePeriod: number, optInCMOPeriod: number, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function vidyaLookbackPositional(optInTimePeriod: number, optInCMOPeriod: number, core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -60,24 +47,9 @@ export function vidyaLookback(optInTimePeriod: number, optInCMOPeriod: number, c
   return optInCMOPeriod + core.unstableCount(FuncUnstId.VIDYA, ((((((((2 * 4) | 0) * (optInTimePeriod + 1)) | 0) * root) | 0) > 100000000) ? 100000000 : ((((((2 * 4) | 0) * (optInTimePeriod + 1)) | 0) * root) | 0)), ((((((((2 * 8) | 0) * (optInTimePeriod + 1)) | 0) * root) | 0) > 100000000) ? 100000000 : ((((((2 * 8) | 0) * (optInTimePeriod + 1)) | 0) * root) | 0)));
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link vidya}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - The EMA length whose alpha the CMO scales (default 12;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInCMOPeriod - Number of trailing price changes in the CMO (default 9;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function vidyaDisplayShift(optInTimePeriod: number, optInCMOPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (vidyaLookback(optInTimePeriod, optInCMOPeriod, core) < 0) {
+/** @internal */
+export function vidyaDisplayShiftPositional(optInTimePeriod: number, optInCMOPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (vidyaLookbackPositional(optInTimePeriod, optInCMOPeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -138,7 +110,7 @@ export function vidyaImpl(
    * for every MAType. The unstable period still delays the first output.
    */
   if (optInTimePeriod === 1) {
-    lookbackTotal = vidyaLookback(optInTimePeriod, optInCMOPeriod, core);
+    lookbackTotal = vidyaLookbackPositional(optInTimePeriod, optInCMOPeriod, core);
     if (startIdx < lookbackTotal) {
       startIdx = lookbackTotal;
     }
@@ -154,7 +126,7 @@ export function vidyaImpl(
     outNBElement.value = outIdx;
     return RetCode.SUCCESS;
   }
-  lookbackTotal = vidyaLookback(optInTimePeriod, optInCMOPeriod, core);
+  lookbackTotal = vidyaLookbackPositional(optInTimePeriod, optInCMOPeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -320,6 +292,135 @@ export function vidyaImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['cmoPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000']] as const;
+
+/** @internal */
+export function vidyaPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInCMOPeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('VIDYA', 'startIdx', startIdx);
+  endIdx = requireInt32('VIDYA', 'endIdx', endIdx);
+  optInTimePeriod = requireInt32('VIDYA', 'timePeriod', optInTimePeriod);
+  optInCMOPeriod = requireInt32('VIDYA', 'cmoPeriod', optInCMOPeriod);
+  requireIndexRange('VIDYA', startIdx, endIdx);
+  const guardLookback = vidyaLookbackPositional(optInTimePeriod, optInCMOPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('VIDYA', PARAM_RANGES, optInTimePeriod, optInCMOPeriod);
+  }
+  const guardStart = clampedStart('VIDYA', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('VIDYA', 'real', inReal, guardInLen);
+  requireOutput('VIDYA', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outReal, inRealF64)) {
+    throw sharedMemory('VIDYA', 'outReal', 'real');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = vidyaImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, optInCMOPeriod, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('VIDYA', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link vidya}, {@link vidyaLookback}, {@link vidyaDisplayShift},
+ * {@link vidyaOpen} and {@link vidyaOpenAndFill}. Every key is optional: an
+ * omitted or `undefined` key takes its default, and a call ignores the keys it has
+ * no use for.
+ */
+export interface VidyaOptions {
+  /**
+   * The EMA length whose alpha the CMO scales (default 12; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * Number of trailing price changes in the CMO (default 9; range 2 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  cmoPeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link vidya} returns, and {@link vidyaOpenAndFill} with its stream. */
+export interface VidyaResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Variable Index Dynamic Average line. `values[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link vidya} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * It includes `core`'s unstable period for this function.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link VidyaOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function vidyaLookback(options?: VidyaOptions): number {
+  const o = optionsOf('VIDYA lookback', options);
+  return vidyaLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.cmoPeriod, Core.INTEGER_DEFAULT), coreOf('VIDYA lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link vidya}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link VidyaOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function vidyaDisplayShift(outputIdx: number, options?: VidyaOptions): number {
+  const o = optionsOf('VIDYA displayShift', options);
+  return vidyaDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.cmoPeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('VIDYA displayShift', o.core));
+}
+
 /**
  * Variable Index Dynamic Average (Tushar Chande): an EMA whose smoothing factor is
  * scaled every bar by the absolute value of the Chande Momentum Oscillator. It
@@ -344,29 +445,23 @@ export function vidyaImpl(
  * - As an `MA` type, the one period is n and the CMO period is (3n + 2) / 4 in
  *   integer division, Chande's 12:9 ratio.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link vidyaLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link vidyaLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Data on which to compute the average.
- * @param optInTimePeriod - The EMA length whose alpha the CMO scales (default 12;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInCMOPeriod - Number of trailing price changes in the CMO (default 9;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Variable Index Dynamic Average line. Must hold the values
- *   produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Data on which to compute the average.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link VidyaOptions}.
+ * @returns `begIdx` and the values; see {@link VidyaResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output
- *   or an output sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -374,45 +469,28 @@ export function vidyaImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const { begIdx, count } = vidya(0, data.length - 1, data, 12, 9, out);
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = vidya(data, { timePeriod: 12, cmoPeriod: 9 });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`cmou`](https://ta-lib.org/functions/cmou)
  * @see [`ema`](https://ta-lib.org/functions/ema)
  * @see [`kama`](https://ta-lib.org/functions/kama)
  * @see [`ma`](https://ta-lib.org/functions/ma)
  */
-export function vidya(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInCMOPeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('VIDYA', 'startIdx', startIdx);
-  endIdx = requireInt32('VIDYA', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('VIDYA', 'optInTimePeriod', optInTimePeriod);
-  optInCMOPeriod = requireInt32('VIDYA', 'optInCMOPeriod', optInCMOPeriod);
-  requireIndexRange('VIDYA', startIdx, endIdx);
-  const guardStart = clampedStart('VIDYA', startIdx, vidyaLookback(optInTimePeriod, optInCMOPeriod, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('VIDYA', 'inReal', inReal, guardInLen);
-  requireOutput('VIDYA', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outReal, inRealF64)) {
-    throw failure('VIDYA', RetCode.BAD_PARAM);
+export function vidya(real: ArrayLike<number>, options?: VidyaOptions): VidyaResult {
+  const o = optionsOf('VIDYA', options);
+  if (o.endIdx === undefined) {
+    requireSeries('VIDYA', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = vidyaImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, optInCMOPeriod, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('VIDYA', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInCMOPeriod = orDefault(o.cmoPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('VIDYA', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, vidyaLookbackPositional(optInTimePeriod, optInCMOPeriod, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = vidyaPositional(startIdx, endIdx, real, optInTimePeriod, optInCMOPeriod, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -702,7 +780,7 @@ function vidyaOpenImpl(
     return RetCode.INSUFFICIENT_HISTORY;
   }
   if (optInTimePeriod === 1) {
-    let fillLb = vidyaLookback(optInTimePeriod, optInCMOPeriod, core);
+    let fillLb = vidyaLookbackPositional(optInTimePeriod, optInCMOPeriod, core);
     if (startIdx > fillLb) {
       fillLb = startIdx;
     }
@@ -735,7 +813,7 @@ function vidyaOpenImpl(
   }
   outBegIdx.value = 0;
   outNBElement.value = 0;
-  lookbackTotal = vidyaLookback(optInTimePeriod, optInCMOPeriod, core);
+  lookbackTotal = vidyaLookbackPositional(optInTimePeriod, optInCMOPeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -940,7 +1018,10 @@ export function vidyaOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('VIDYA openAndFill', inReal.length, startIdx, vidyaLookback(optInTimePeriod, optInCMOPeriod, core));
+    throw insufficientHistory('VIDYA openAndFill', inReal.length, startIdx, vidyaLookbackPositional(optInTimePeriod, optInCMOPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && vidyaLookbackPositional(optInTimePeriod, optInCMOPeriod, core) < 0) {
+    throw rejectedParams('VIDYA openAndFill', PARAM_RANGES, optInTimePeriod, optInCMOPeriod);
   }
   throw streamFailure('VIDYA openAndFill', retCode);
 }
@@ -964,26 +1045,69 @@ export function vidyaOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('VIDYA open', inReal.length, startIdx, vidyaLookback(optInTimePeriod, optInCMOPeriod, core));
+    throw insufficientHistory('VIDYA open', inReal.length, startIdx, vidyaLookbackPositional(optInTimePeriod, optInCMOPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && vidyaLookbackPositional(optInTimePeriod, optInCMOPeriod, core) < 0) {
+    throw rejectedParams('VIDYA open', PARAM_RANGES, optInTimePeriod, optInCMOPeriod);
   }
   throw streamFailure('VIDYA open', retCode);
+}
+
+/** @internal */
+export function vidyaOpenPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInCMOPeriod: number,
+  core: Core = Core.DEFAULT,
+): VidyaStream {
+  optInTimePeriod = requireInt32('VIDYA open', 'timePeriod', optInTimePeriod);
+  optInCMOPeriod = requireInt32('VIDYA open', 'cmoPeriod', optInCMOPeriod);
+  requireArgument('VIDYA open', 'real', inReal);
+  requireHistory('VIDYA open', inReal.length);
+  return vidyaOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInCMOPeriod);
+}
+
+/** @internal */
+export function vidyaOpenAndFillPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInCMOPeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): VidyaStream {
+  optInTimePeriod = requireInt32('VIDYA openAndFill', 'timePeriod', optInTimePeriod);
+  optInCMOPeriod = requireInt32('VIDYA openAndFill', 'cmoPeriod', optInCMOPeriod);
+  requireArgument('VIDYA openAndFill', 'real', inReal);
+  requireHistory('VIDYA openAndFill', inReal.length);
+  const guardLookback = vidyaLookbackPositional(optInTimePeriod, optInCMOPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('VIDYA openAndFill', PARAM_RANGES, optInTimePeriod, optInCMOPeriod);
+  }
+  const guardOutLen = openFillCount('VIDYA openAndFill', inReal.length, guardLookback);
+  requireOutput('VIDYA openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('VIDYA openAndFill', 'outReal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inRealF64)) {
+    throw sharedMemory('VIDYA openAndFill', 'outReal', 'real');
+  }
+  return vidyaOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, optInCMOPeriod, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live VIDYA stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link vidya} there.
  *
- * @param inReal - Warm-up history. Data on which to compute the average.
- * @param optInTimePeriod - The EMA length whose alpha the CMO scales (default 12;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInCMOPeriod - Number of trailing price changes in the CMO (default 9;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param real - Warm-up history. Data on which to compute the average.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link VidyaOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `vidyaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32 or a parameter outside its range.
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32 or a parameter outside its
+ *   range.
  *
  * @example
  * ```ts
@@ -991,46 +1115,36 @@ export function vidyaOpenInternal(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = vidyaOpen(data, 12, 9);
+ * const stream = vidyaOpen(data, { timePeriod: 12, cmoPeriod: 9 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
  */
-export function vidyaOpen(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInCMOPeriod: number,
-  core: Core = Core.DEFAULT,
-): VidyaStream {
-  optInTimePeriod = requireInt32('VIDYA open', 'optInTimePeriod', optInTimePeriod);
-  optInCMOPeriod = requireInt32('VIDYA open', 'optInCMOPeriod', optInCMOPeriod);
-  requireArgument('VIDYA open', 'inReal', inReal);
-  requireHistory('VIDYA open', inReal.length);
-  return vidyaOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInCMOPeriod);
+export function vidyaOpen(real: ArrayLike<number>, options?: VidyaOptions): VidyaStream {
+  const o = optionsOf('VIDYA open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInCMOPeriod = orDefault(o.cmoPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('VIDYA open', o.core);
+  return vidyaOpenPositional(real, optInTimePeriod, optInCMOPeriod, core);
 }
 
 /**
- * {@link vidyaOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link vidya}. The range written is the stream's
- * `outRange()`.
+ * {@link vidyaOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link vidya}.
  *
- * @param inReal - Warm-up history. Data on which to compute the average.
- * @param optInTimePeriod - The EMA length whose alpha the CMO scales (default 12;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInCMOPeriod - Number of trailing price changes in the CMO (default 9;
- *   range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Variable Index Dynamic Average line. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param real - Warm-up history. Data on which to compute the average.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link VidyaOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link vidya} returns them; the range is the stream's
+ *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `vidyaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range or
- *   an output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range
+ *   or a buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1038,33 +1152,23 @@ export function vidyaOpen(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const stream = vidyaOpenAndFill(data, 12, 9, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = vidyaOpenAndFill(data, {
+ *   timePeriod: 12,
+ *   cmoPeriod: 9,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function vidyaOpenAndFill(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInCMOPeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): VidyaStream {
-  optInTimePeriod = requireInt32('VIDYA openAndFill', 'optInTimePeriod', optInTimePeriod);
-  optInCMOPeriod = requireInt32('VIDYA openAndFill', 'optInCMOPeriod', optInCMOPeriod);
-  requireArgument('VIDYA openAndFill', 'inReal', inReal);
-  requireHistory('VIDYA openAndFill', inReal.length);
-  const guardOutLen = openFillCount('VIDYA openAndFill', inReal.length, vidyaLookback(optInTimePeriod, optInCMOPeriod, core));
-  requireOutput('VIDYA openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
-    throw streamFailure('VIDYA openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inRealF64))) {
-    throw streamFailure('VIDYA openAndFill', RetCode.BAD_PARAM);
-  }
-  return vidyaOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, optInCMOPeriod, new MInteger(), new MInteger(), outReal);
+export function vidyaOpenAndFill(real: ArrayLike<number>, options?: VidyaOptions): VidyaResult & { stream: VidyaStream } {
+  const o = optionsOf('VIDYA openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInCMOPeriod = orDefault(o.cmoPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('VIDYA openAndFill', o.core);
+  const capacity = fillCapacity(vidyaLookbackPositional(optInTimePeriod, optInCMOPeriod, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = vidyaOpenAndFillPositional(real, optInTimePeriod, optInCMOPeriod, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /** @internal */

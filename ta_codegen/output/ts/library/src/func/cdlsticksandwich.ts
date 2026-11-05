@@ -16,40 +16,20 @@
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link cdlsticksandwich} consumes before its first
- * value: the index of the first bar with a value when the whole series is
- * requested.
- *
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function cdlsticksandwichLookback(core: Core = Core.DEFAULT): number {
+/** @internal */
+export function cdlsticksandwichLookbackPositional(core: Core = Core.DEFAULT): number {
   const Equal_avgPeriod = core.candleSettings[CandleSettingType.EQUAL].avgPeriod;
   return Equal_avgPeriod + 2;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link cdlsticksandwich}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function cdlsticksandwichDisplayShift(outputIdx: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function cdlsticksandwichDisplayShiftPositional(outputIdx: number, _core: Core = Core.DEFAULT): number {
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
     return -2147483648;
   }
@@ -86,7 +66,7 @@ export function cdlsticksandwichImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = cdlsticksandwichLookback(core);
+  lookbackTotal = cdlsticksandwichLookbackPositional(core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -142,6 +122,135 @@ export function cdlsticksandwichImpl(
   return RetCode.SUCCESS;
 }
 
+/** @internal */
+export function cdlsticksandwichPositional(
+  startIdx: number,
+  endIdx: number,
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outInteger: Int32Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('CDLSTICKSANDWICH', 'startIdx', startIdx);
+  endIdx = requireInt32('CDLSTICKSANDWICH', 'endIdx', endIdx);
+  requireIndexRange('CDLSTICKSANDWICH', startIdx, endIdx);
+  const guardStart = clampedStart('CDLSTICKSANDWICH', startIdx, cdlsticksandwichLookbackPositional(core));
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('CDLSTICKSANDWICH', 'prices.open', inOpen, guardInLen);
+  requireLength('CDLSTICKSANDWICH', 'prices.high', inHigh, guardInLen);
+  requireLength('CDLSTICKSANDWICH', 'prices.low', inLow, guardInLen);
+  requireLength('CDLSTICKSANDWICH', 'prices.close', inClose, guardInLen);
+  requireOutput('CDLSTICKSANDWICH', 'outInteger', outInteger, guardOutLen, Int32Array);
+  const inOpenF64 = float64(inOpen);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (overlaps(outInteger, inOpenF64)) {
+    throw sharedMemory('CDLSTICKSANDWICH', 'outInteger', 'prices.open');
+  }
+  if (overlaps(outInteger, inHighF64)) {
+    throw sharedMemory('CDLSTICKSANDWICH', 'outInteger', 'prices.high');
+  }
+  if (overlaps(outInteger, inLowF64)) {
+    throw sharedMemory('CDLSTICKSANDWICH', 'outInteger', 'prices.low');
+  }
+  if (overlaps(outInteger, inCloseF64)) {
+    throw sharedMemory('CDLSTICKSANDWICH', 'outInteger', 'prices.close');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = cdlsticksandwichImpl(core, startIdx, endIdx, inOpenF64, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outInteger);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('CDLSTICKSANDWICH', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link cdlsticksandwich}, {@link cdlsticksandwichLookback},
+ * {@link cdlsticksandwichDisplayShift}, {@link cdlsticksandwichOpen} and
+ * {@link cdlsticksandwichOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface CdlsticksandwichOptions {
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input.
+   */
+  outInteger?: Int32Array | undefined;
+}
+
+/**
+ * What {@link cdlsticksandwich} returns, and {@link cdlsticksandwichOpenAndFill}
+ * with its stream.
+ */
+export interface CdlsticksandwichResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * +100 when the pattern is present, 0 otherwise. Never -100 — Stick Sandwich is
+   * always bullish. `values[k]` is the value at input bar `begIdx + k`.
+   */
+  values: Int32Array;
+}
+
+/**
+ * Number of leading input bars {@link cdlsticksandwich} consumes before its first
+ * value: the index of the first bar with a value when the whole series is
+ * requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CdlsticksandwichOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function cdlsticksandwichLookback(options?: CdlsticksandwichOptions): number {
+  const o = optionsOf('CDLSTICKSANDWICH lookback', options);
+  return cdlsticksandwichLookbackPositional(coreOf('CDLSTICKSANDWICH lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link cdlsticksandwich}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CdlsticksandwichOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function cdlsticksandwichDisplayShift(outputIdx: number, options?: CdlsticksandwichOptions): number {
+  const o = optionsOf('CDLSTICKSANDWICH displayShift', options);
+  return cdlsticksandwichDisplayShiftPositional(outputIdx, coreOf('CDLSTICKSANDWICH displayShift', o.core));
+}
+
 /**
  * A three-candle bullish reversal pattern: two black candles (1st and 3rd)
  * sandwiching a white candle, where the 3rd black candle closes at the same level
@@ -158,28 +267,24 @@ export function cdlsticksandwichImpl(
  *   overall performance.
  *   ([thepatternsite.com](https://thepatternsite.com/StickSandwich.html))
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link cdlsticksandwichLookback} is a
- * success with `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link cdlsticksandwichLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inOpen - Open price of each bar.
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param inClose - Close price of each bar.
- * @param outInteger - +100 when the pattern is present, 0 otherwise. Never -100 —
- *   Stick Sandwich is always bullish. Must hold the values produced and never be
- *   empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `open`: Open
+ *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
+ *   `close`: Close price of each bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link CdlsticksandwichOptions}.
+ * @returns `begIdx` and the values; see {@link CdlsticksandwichResult}. Each
+ *   output is a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, an
- *   array too short for the range, an empty output or an output sharing memory with
- *   a `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an input too short for the range, a buffer that is empty, too short or of
+ *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -193,52 +298,28 @@ export function cdlsticksandwichImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Int32Array(open.length);
- * const { begIdx, count } = cdlsticksandwich(
- *   0, open.length - 1,
- *   open, high, low, close,
- *   out,
- * );
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = cdlsticksandwich({ open, high, low, close });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`cdlmatchinglow`](https://ta-lib.org/functions/cdlmatchinglow)
  * @see [`cdlhomingpigeon`](https://ta-lib.org/functions/cdlhomingpigeon)
  */
-export function cdlsticksandwich(
-  startIdx: number,
-  endIdx: number,
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outInteger: Int32Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('CDLSTICKSANDWICH', 'startIdx', startIdx);
-  endIdx = requireInt32('CDLSTICKSANDWICH', 'endIdx', endIdx);
-  requireIndexRange('CDLSTICKSANDWICH', startIdx, endIdx);
-  const guardStart = clampedStart('CDLSTICKSANDWICH', startIdx, cdlsticksandwichLookback(core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('CDLSTICKSANDWICH', 'inOpen', inOpen, guardInLen);
-  requireLength('CDLSTICKSANDWICH', 'inHigh', inHigh, guardInLen);
-  requireLength('CDLSTICKSANDWICH', 'inLow', inLow, guardInLen);
-  requireLength('CDLSTICKSANDWICH', 'inClose', inClose, guardInLen);
-  requireOutput('CDLSTICKSANDWICH', 'outInteger', outInteger, guardOutLen, Int32Array);
-  const inOpenF64 = float64(inOpen);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if (overlaps(outInteger, inOpenF64) || overlaps(outInteger, inHighF64) || overlaps(outInteger, inLowF64) || overlaps(outInteger, inCloseF64)) {
-    throw failure('CDLSTICKSANDWICH', RetCode.BAD_PARAM);
+export function cdlsticksandwich(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlsticksandwichOptions): CdlsticksandwichResult {
+  requireArgument('CDLSTICKSANDWICH', 'prices', prices);
+  const o = optionsOf('CDLSTICKSANDWICH', options);
+  if (o.endIdx === undefined) {
+    requireSeries('CDLSTICKSANDWICH', 'prices.open', prices.open);
+    requireSeries('CDLSTICKSANDWICH', 'prices.high', prices.high);
+    requireSeries('CDLSTICKSANDWICH', 'prices.low', prices.low);
+    requireSeries('CDLSTICKSANDWICH', 'prices.close', prices.close);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = cdlsticksandwichImpl(core, startIdx, endIdx, inOpenF64, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outInteger);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('CDLSTICKSANDWICH', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const core = coreOf('CDLSTICKSANDWICH', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.open.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, cdlsticksandwichLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
+  const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;
+  const range = cdlsticksandwichPositional(startIdx, endIdx, prices.open, prices.high, prices.low, prices.close, outInteger, core);
+  return { begIdx: range.begIdx, values: outInteger.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -494,7 +575,7 @@ function cdlsticksandwichOpenImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = cdlsticksandwichLookback(core);
+  lookbackTotal = cdlsticksandwichLookbackPositional(core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -597,7 +678,7 @@ export function cdlsticksandwichOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('CDLSTICKSANDWICH openAndFill', inOpen.length, startIdx, cdlsticksandwichLookback(core));
+    throw insufficientHistory('CDLSTICKSANDWICH openAndFill', inOpen.length, startIdx, cdlsticksandwichLookbackPositional(core));
   }
   throw streamFailure('CDLSTICKSANDWICH openAndFill', retCode);
 }
@@ -622,29 +703,94 @@ export function cdlsticksandwichOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('CDLSTICKSANDWICH open', inOpen.length, startIdx, cdlsticksandwichLookback(core));
+    throw insufficientHistory('CDLSTICKSANDWICH open', inOpen.length, startIdx, cdlsticksandwichLookbackPositional(core));
   }
   throw streamFailure('CDLSTICKSANDWICH open', retCode);
+}
+
+/** @internal */
+export function cdlsticksandwichOpenPositional(
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  core: Core = Core.DEFAULT,
+): CdlsticksandwichStream {
+  requireArgument('CDLSTICKSANDWICH open', 'prices.open', inOpen);
+  requireHistory('CDLSTICKSANDWICH open', inOpen.length);
+  requireArgument('CDLSTICKSANDWICH open', 'prices.high', inHigh);
+  requireArgument('CDLSTICKSANDWICH open', 'prices.low', inLow);
+  requireArgument('CDLSTICKSANDWICH open', 'prices.close', inClose);
+  requireHistoryLength('CDLSTICKSANDWICH open', 'prices.high', inHigh.length, inOpen.length);
+  requireHistoryLength('CDLSTICKSANDWICH open', 'prices.low', inLow.length, inOpen.length);
+  requireHistoryLength('CDLSTICKSANDWICH open', 'prices.close', inClose.length, inOpen.length);
+  return cdlsticksandwichOpenInternal(core, float64(inOpen), float64(inHigh), float64(inLow), float64(inClose), 0);
+}
+
+/** @internal */
+export function cdlsticksandwichOpenAndFillPositional(
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outInteger: Int32Array,
+  core: Core = Core.DEFAULT,
+): CdlsticksandwichStream {
+  requireArgument('CDLSTICKSANDWICH openAndFill', 'prices.open', inOpen);
+  requireHistory('CDLSTICKSANDWICH openAndFill', inOpen.length);
+  requireArgument('CDLSTICKSANDWICH openAndFill', 'prices.high', inHigh);
+  requireArgument('CDLSTICKSANDWICH openAndFill', 'prices.low', inLow);
+  requireArgument('CDLSTICKSANDWICH openAndFill', 'prices.close', inClose);
+  const guardOutLen = openFillCount('CDLSTICKSANDWICH openAndFill', inOpen.length, cdlsticksandwichLookbackPositional(core));
+  requireHistoryLength('CDLSTICKSANDWICH openAndFill', 'prices.high', inHigh.length, inOpen.length);
+  requireHistoryLength('CDLSTICKSANDWICH openAndFill', 'prices.low', inLow.length, inOpen.length);
+  requireHistoryLength('CDLSTICKSANDWICH openAndFill', 'prices.close', inClose.length, inOpen.length);
+  requireOutput('CDLSTICKSANDWICH openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
+  const inOpenF64 = float64(inOpen);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (outInteger.buffer === inOpenF64.buffer && outInteger.byteOffset === inOpenF64.byteOffset) {
+    throw sharedMemory('CDLSTICKSANDWICH openAndFill', 'outInteger', 'prices.open');
+  }
+  if (outInteger.buffer === inHighF64.buffer && outInteger.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('CDLSTICKSANDWICH openAndFill', 'outInteger', 'prices.high');
+  }
+  if (outInteger.buffer === inLowF64.buffer && outInteger.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('CDLSTICKSANDWICH openAndFill', 'outInteger', 'prices.low');
+  }
+  if (outInteger.buffer === inCloseF64.buffer && outInteger.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('CDLSTICKSANDWICH openAndFill', 'outInteger', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inOpenF64)) {
+    throw sharedMemory('CDLSTICKSANDWICH openAndFill', 'outInteger', 'prices.open');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inHighF64)) {
+    throw sharedMemory('CDLSTICKSANDWICH openAndFill', 'outInteger', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inLowF64)) {
+    throw sharedMemory('CDLSTICKSANDWICH openAndFill', 'outInteger', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inCloseF64)) {
+    throw sharedMemory('CDLSTICKSANDWICH openAndFill', 'outInteger', 'prices.close');
+  }
+  return cdlsticksandwichOpenAndFillInternal(core, inOpenF64, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outInteger);
 }
 
 /**
  * Opens a live CDLSTICKSANDWICH stream over the warm-up history: `value()` starts
  * at the last history bar, bit-identical to {@link cdlsticksandwich} there.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
+ *   Low price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CdlsticksandwichOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlsticksandwichLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for histories of different lengths.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input or histories of different lengths.
  *
  * @example
  * ```ts
@@ -658,54 +804,37 @@ export function cdlsticksandwichOpenInternal(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = cdlsticksandwichOpen(open, high, low, close);
+ * const stream = cdlsticksandwichOpen({ open, high, low, close });
  * const peeked = stream.peek(100.2, 101.4, 99.1, 100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlsticksandwichOpen(
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  core: Core = Core.DEFAULT,
-): CdlsticksandwichStream {
-  requireArgument('CDLSTICKSANDWICH open', 'inOpen', inOpen);
-  requireHistory('CDLSTICKSANDWICH open', inOpen.length);
-  requireArgument('CDLSTICKSANDWICH open', 'inHigh', inHigh);
-  requireArgument('CDLSTICKSANDWICH open', 'inLow', inLow);
-  requireArgument('CDLSTICKSANDWICH open', 'inClose', inClose);
-  requireHistoryLength('CDLSTICKSANDWICH open', 'inHigh', inHigh.length, inOpen.length);
-  requireHistoryLength('CDLSTICKSANDWICH open', 'inLow', inLow.length, inOpen.length);
-  requireHistoryLength('CDLSTICKSANDWICH open', 'inClose', inClose.length, inOpen.length);
-  return cdlsticksandwichOpenInternal(core, float64(inOpen), float64(inHigh), float64(inLow), float64(inClose), 0);
+export function cdlsticksandwichOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlsticksandwichOptions): CdlsticksandwichStream {
+  requireArgument('CDLSTICKSANDWICH open', 'prices', prices);
+  const o = optionsOf('CDLSTICKSANDWICH open', options);
+  const core = coreOf('CDLSTICKSANDWICH open', o.core);
+  return cdlsticksandwichOpenPositional(prices.open, prices.high, prices.low, prices.close, core);
 }
 
 /**
- * {@link cdlsticksandwichOpen} that also fills the outputs over the whole history
- * in the same pass, bit-identically to {@link cdlsticksandwich}. The range written
- * is the stream's `outRange()`.
+ * {@link cdlsticksandwichOpen} that also computes the outputs over the whole
+ * history in the same pass, bit-identically to {@link cdlsticksandwich}.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param outInteger - +100 when the pattern is present, 0 otherwise. Never -100 —
- *   Stick Sandwich is always bullish. Must hold `historyLen - lookback` values and
- *   share no memory with an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
+ *   Low price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link CdlsticksandwichOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link cdlsticksandwich} returns them; the range is
+ *   the stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlsticksandwichLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for histories of different lengths or an output too short or
- *   starting where another output or a `Float64Array` input starts, or, on a history
- *   long enough to open, one sharing memory with another output or a `Float64Array`
- *   input.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input, histories of different lengths or a buffer too short,
+ *   of the wrong type or starting where another buffer or a `Float64Array` input
+ *   starts, or, on a history long enough to open, one sharing memory with another
+ *   buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -719,39 +848,17 @@ export function cdlsticksandwichOpen(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Int32Array(open.length);
- * const stream = cdlsticksandwichOpenAndFill(open, high, low, close, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = cdlsticksandwichOpenAndFill({ open, high, low, close });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlsticksandwichOpenAndFill(
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outInteger: Int32Array,
-  core: Core = Core.DEFAULT,
-): CdlsticksandwichStream {
-  requireArgument('CDLSTICKSANDWICH openAndFill', 'inOpen', inOpen);
-  requireHistory('CDLSTICKSANDWICH openAndFill', inOpen.length);
-  requireArgument('CDLSTICKSANDWICH openAndFill', 'inHigh', inHigh);
-  requireArgument('CDLSTICKSANDWICH openAndFill', 'inLow', inLow);
-  requireArgument('CDLSTICKSANDWICH openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('CDLSTICKSANDWICH openAndFill', inOpen.length, cdlsticksandwichLookback(core));
-  requireHistoryLength('CDLSTICKSANDWICH openAndFill', 'inHigh', inHigh.length, inOpen.length);
-  requireHistoryLength('CDLSTICKSANDWICH openAndFill', 'inLow', inLow.length, inOpen.length);
-  requireHistoryLength('CDLSTICKSANDWICH openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireOutput('CDLSTICKSANDWICH openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
-  const inOpenF64 = float64(inOpen);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if ((outInteger.buffer === inOpenF64.buffer && outInteger.byteOffset === inOpenF64.byteOffset) || (outInteger.buffer === inHighF64.buffer && outInteger.byteOffset === inHighF64.byteOffset) || (outInteger.buffer === inLowF64.buffer && outInteger.byteOffset === inLowF64.byteOffset) || (outInteger.buffer === inCloseF64.buffer && outInteger.byteOffset === inCloseF64.byteOffset)) {
-    throw streamFailure('CDLSTICKSANDWICH openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outInteger, inOpenF64) || overlaps(outInteger, inHighF64) || overlaps(outInteger, inLowF64) || overlaps(outInteger, inCloseF64))) {
-    throw streamFailure('CDLSTICKSANDWICH openAndFill', RetCode.BAD_PARAM);
-  }
-  return cdlsticksandwichOpenAndFillInternal(core, inOpenF64, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outInteger);
+export function cdlsticksandwichOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlsticksandwichOptions): CdlsticksandwichResult & { stream: CdlsticksandwichStream } {
+  requireArgument('CDLSTICKSANDWICH openAndFill', 'prices', prices);
+  const o = optionsOf('CDLSTICKSANDWICH openAndFill', options);
+  const core = coreOf('CDLSTICKSANDWICH openAndFill', o.core);
+  const capacity = fillCapacity(cdlsticksandwichLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
+  const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;
+  const stream = cdlsticksandwichOpenAndFillPositional(prices.open, prices.high, prices.low, prices.close, outInteger, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outInteger.subarray(0, range.count) };
 }

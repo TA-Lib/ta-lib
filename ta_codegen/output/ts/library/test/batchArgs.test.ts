@@ -54,7 +54,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { type Arr, type Fn, isBadParam, L, N, type Param, type Spec, series, specs } from './corpus.ts';
+import { type Arr, type Fn, isBadParam, N, type Param, type Spec, series, specs } from './corpus.ts';
 import * as lib from '../src/index.ts';
 import { Core, TALibError } from '../src/index.ts';
 
@@ -194,14 +194,15 @@ test('partial overlaps in BBANDS, MAVP and SUPERTREND are TA_BAD_PARAM; whole-ar
   const n = 64;
   const src = series(27).inClose.slice(0, n);
   const big = new Float64Array(n + 40);
+  const bb = { timePeriod: 5, nbDevUp: 2, nbDevDn: 2, maType: lib.MAType.SMA };
 
   throwsCode(
-    () => lib.bbands(0, n - 1, src, 5, 2, 2, lib.MAType.SMA, big.subarray(0, n), big.subarray(10, 10 + n), new Float64Array(n)),
+    () => lib.bbands(src, { ...bb, outUpperBand: big.subarray(0, n), outMiddleBand: big.subarray(10, 10 + n), outLowerBand: new Float64Array(n) }),
     'TA_BAD_PARAM',
     'outputs overlapping at an offset',
   );
   throwsCode(
-    () => lib.bbands(0, n - 1, src, 5, 2, 2, lib.MAType.SMA, big.subarray(0, n), big.subarray(0, n + 1), new Float64Array(n)),
+    () => lib.bbands(src, { ...bb, outUpperBand: big.subarray(0, n), outMiddleBand: big.subarray(0, n + 1), outLowerBand: new Float64Array(n) }),
     'TA_BAD_PARAM',
     'outputs sharing a start but differing in length',
   );
@@ -209,7 +210,7 @@ test('partial overlaps in BBANDS, MAVP and SUPERTREND are TA_BAD_PARAM; whole-ar
   const buf = new Float64Array(n + 40);
   buf.set(src);
   throwsCode(
-    () => lib.bbands(0, n - 1, buf.subarray(0, n), 5, 2, 2, lib.MAType.SMA, buf.subarray(20, 20 + n), new Float64Array(n), new Float64Array(n)),
+    () => lib.bbands(buf.subarray(0, n), { ...bb, outUpperBand: buf.subarray(20, 20 + n), outMiddleBand: new Float64Array(n), outLowerBand: new Float64Array(n) }),
     'TA_BAD_PARAM',
     'an output partially overlapping an input',
   );
@@ -218,34 +219,37 @@ test('partial overlaps in BBANDS, MAVP and SUPERTREND are TA_BAD_PARAM; whole-ar
   const mbuf = new Float64Array(n + 40);
   mbuf.set(src);
   throwsCode(
-    () => lib.mavp(0, n - 1, mbuf.subarray(0, n), per, 2, 20, lib.MAType.SMA, mbuf.subarray(15, 15 + n)),
+    () => lib.mavp(mbuf.subarray(0, n), per, { minPeriod: 2, maxPeriod: 20, maType: lib.MAType.SMA, outReal: mbuf.subarray(15, 15 + n) }),
     'TA_BAD_PARAM',
     'MAVP with a partially overlapping output',
   );
 
+  const hlc = { high: src, low: src, close: src };
   const shared = new Float64Array(n);
   throwsCode(
-    () => lib.supertrend(0, n - 1, src, src, src, 10, 3, shared, new Int32Array(shared.buffer)),
+    () => lib.supertrend(hlc, { timePeriod: 10, multiplier: 3, outSupertrend: shared, outTrend: new Int32Array(shared.buffer) }),
     'TA_BAD_PARAM',
     "SUPERTREND's int direction output on its real trend output",
   );
   throwsCode(
-    () => lib.supertrend(0, n - 1, src, src, src, 10, 3, shared, new Int32Array(shared.buffer, 8, n)),
+    () => lib.supertrend(hlc, { timePeriod: 10, multiplier: 3, outSupertrend: shared, outTrend: new Int32Array(shared.buffer, 8, n) }),
     'TA_BAD_PARAM',
     "SUPERTREND's int direction output inside its real trend output",
   );
-  const st = lib.supertrend(0, n - 1, src, src, src, 10, 3, new Float64Array(n), new Int32Array(n));
-  assert.ok(st.count > 0, 'disjoint mixed-type outputs');
+  const st = lib.supertrend(hlc, { timePeriod: 10, multiplier: 3, outSupertrend: new Float64Array(n), outTrend: new Int32Array(n) });
+  assert.ok(st.outSupertrend.length > 0, 'disjoint mixed-type outputs');
 
   const reference = new Float64Array(n);
-  const ref = lib.sma(0, n - 1, src, 5, reference);
+  const ref = lib.sma(src, { timePeriod: 5, outReal: reference });
   const inplace = src.slice();
-  assert.deepEqual(lib.sma(0, n - 1, inplace, 5, inplace), ref, 'whole-array in place');
-  assert.ok(ref.count > 0);
-  assert.deepEqual(bytes(inplace, ref.count), bytes(reference, ref.count), 'in place is bit-identical to the disjoint call');
+  const ip = lib.sma(inplace, { timePeriod: 5, outReal: inplace });
+  assert.deepEqual([ip.begIdx, ip.values.length], [ref.begIdx, ref.values.length], 'whole-array in place');
+  assert.ok(ip.values.buffer === inplace.buffer && ip.values.byteOffset === 0, 'in place: a view of the input');
+  assert.ok(ref.values.length > 0);
+  assert.deepEqual(bytes(inplace, ref.values.length), bytes(reference, ref.values.length), 'in place is bit-identical to the disjoint call');
 
-  const bb = lib.bbands(0, n - 1, src, 5, 2, 2, lib.MAType.SMA, new Float64Array(n), new Float64Array(n), new Float64Array(n));
-  assert.ok(bb.count > 0, 'disjoint outputs');
+  const bbr = lib.bbands(src, { ...bb, outUpperBand: new Float64Array(n), outMiddleBand: new Float64Array(n), outLowerBand: new Float64Array(n) });
+  assert.ok(bbr.outUpperBand.length > 0, 'disjoint outputs');
 
   // A non-Float64Array input is copied before the body reads it, so an output
   // over its bytes is legal and computes from the caller's values.
@@ -253,19 +257,20 @@ test('partial overlaps in BBANDS, MAVP and SUPERTREND are TA_BAD_PARAM; whole-ar
   const f32 = new Float32Array(fbuf, 0, n);
   f32.set(src);
   const expect = new Float64Array(n);
-  const want = lib.sma(0, n - 1, Float64Array.from(f32), 5, expect);
+  const want = lib.sma(Float64Array.from(f32), { timePeriod: 5, outReal: expect });
   const over = new Float64Array(fbuf, 0, n);
-  assert.deepEqual(lib.sma(0, n - 1, f32, 5, over), want, 'an output over a Float32Array input');
-  assert.deepEqual(bytes(over, want.count), bytes(expect, want.count), 'over a Float32Array input: bit-identical');
+  const got = lib.sma(f32, { timePeriod: 5, outReal: over });
+  assert.deepEqual([got.begIdx, got.values.length], [want.begIdx, want.values.length], 'an output over a Float32Array input');
+  assert.deepEqual(bytes(over, want.values.length), bytes(expect, want.values.length), 'over a Float32Array input: bit-identical');
 });
 
 test('a partial overlap is checked last: an index fault on the same call answers its own code', () => {
   const buf = series(28).inClose.slice(0, 300);
   const input = buf.subarray(0, 200);
   const out = buf.subarray(1, 201);
-  throwsCode(() => lib.sma(-1, 199, input, 10, out), 'TA_OUT_OF_RANGE_START_INDEX', 'with a negative startIdx');
-  throwsCode(() => lib.sma(50, 10, input, 10, out), 'TA_OUT_OF_RANGE_END_INDEX', 'with endIdx below startIdx');
-  throwsCode(() => lib.sma(0, 199, input, 10, out), 'TA_BAD_PARAM', 'alone');
+  throwsCode(() => lib.sma(input, { startIdx: -1, endIdx: 199, timePeriod: 10, outReal: out }), 'TA_OUT_OF_RANGE_START_INDEX', 'with a negative startIdx');
+  throwsCode(() => lib.sma(input, { startIdx: 50, endIdx: 10, timePeriod: 10, outReal: out }), 'TA_OUT_OF_RANGE_END_INDEX', 'with endIdx below startIdx');
+  throwsCode(() => lib.sma(input, { startIdx: 0, endIdx: 199, timePeriod: 10, outReal: out }), 'TA_BAD_PARAM', 'alone');
 });
 
 const NOT_INT32 = [1.5, -0.5, 2 ** 31, -(2 ** 31) - 1, Number.NaN, Number.POSITIVE_INFINITY, '7' as unknown as number];
@@ -296,17 +301,17 @@ test('a non-int32 integer parameter or index is TA_BAD_PARAM before any range ch
   assert.ok(rejected > 2 * NOT_INT32.length * SPECS.length);
 });
 
-const NOT_NUMBER = ['0.02', null, undefined, true] as unknown as number[];
+const NOT_NUMBER = ['0.02', null, true] as unknown as number[];
 
-test('a real parameter that is not a number is TA_BAD_PARAM, and its lookback and display shift reject it', () => {
+test('a real parameter that is not a number is TA_BAD_PARAM, and its lookback and display shift reject it; undefined is its default', () => {
   const data = series(25);
   let realParams = 0;
   let rejected = 0;
+  let defaulted = 0;
   for (const spec of SPECS) {
     const ins = inputsOf(spec).map((p) => data[p.name]);
     const opts = sentinels(spec);
     const outs = () => outputsOf(spec).map((p) => fresh(p, N));
-    const shift = L[`${spec.name}DisplayShift`] as Fn;
     optsOf(spec).forEach((p, k) => {
       if (p.kind !== 'real') return;
       realParams++;
@@ -318,13 +323,25 @@ test('a real parameter that is not a number is TA_BAD_PARAM, and its lookback an
         throwsCode(() => spec.open(...ins, ...v), 'TA_BAD_PARAM', `${what} (open)`);
         throwsCode(() => spec.fill(...ins, ...v, ...outs()), 'TA_BAD_PARAM', `${what} (openAndFill)`);
         assert.equal(spec.lookback(...v), -1, `${what} (lookback)`);
-        assert.equal(shift(...v, 0), -2147483648, `${what} (display shift)`);
+        assert.equal(spec.shift(...v, 0), -2147483648, `${what} (display shift)`);
         rejected++;
       }
+      // `undefined` selects the default: the sentinel's call, bit for bit.
+      const v = opts.slice();
+      v[k] = undefined as unknown as number;
+      const what = `${spec.name}: ${p.name} undefined`;
+      const a = outs();
+      const b = outs();
+      assert.deepEqual(spec.batch(0, N - 1, ...ins, ...v, ...a), spec.batch(0, N - 1, ...ins, ...opts, ...b), `${what}: range`);
+      a.forEach((x, j) => assert.deepEqual(bytes(x), bytes(b[j]), `${what}: output ${j}`));
+      assert.equal(spec.lookback(...v), spec.lookback(...opts), `${what} (lookback)`);
+      assert.equal(spec.shift(...v, 0), spec.shift(...opts, 0), `${what} (display shift)`);
+      defaulted++;
     });
   }
   assert.ok(realParams > 0 && SPECS.some((s) => s.name === 'sar' && optsOf(s).every((p) => p.kind === 'real')));
   assert.equal(rejected, realParams * NOT_NUMBER.length);
+  assert.equal(defaulted, realParams);
 });
 
 test('INT_MIN and -4e37 select the documented defaults, in the batch tier and at open', () => {

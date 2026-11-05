@@ -40,10 +40,12 @@ fn section(name: &str) -> String {
     section_of(&full).unwrap_or_else(|| panic!("{name}: stream section missing"))
 }
 
-/// The brace-balanced body of the first definition whose text contains `needle`.
+/// The brace-balanced body of the first definition whose text contains
+/// `needle`, from the first brace that ends its line: an inline object type in
+/// the signature is passed over.
 fn body_of(src: &str, needle: &str) -> String {
     let i = src.find(needle).unwrap_or_else(|| panic!("no definition matching {needle:?}"));
-    let j = src[i..].find('{').expect("definition has a body") + i;
+    let j = src[i..].find("{\n").expect("definition has a body") + i;
     let bytes = src.as_bytes();
     let (mut depth, mut k) = (0usize, j);
     loop {
@@ -90,16 +92,18 @@ fn ts_open_family_is_one_core_with_four_entries() {
     for (entry, callee) in [
         ("export function cdlhammerOpenInternal(", "cdlhammerOpenImpl("),
         ("export function cdlhammerOpenAndFillInternal(", "cdlhammerOpenImpl("),
-        ("export function cdlhammerOpenAndFill(", "cdlhammerOpenAndFillInternal("),
-        ("export function cdlhammerOpen(", "cdlhammerOpenInternal("),
+        ("export function cdlhammerOpenAndFillPositional(", "cdlhammerOpenAndFillInternal("),
+        ("export function cdlhammerOpenPositional(", "cdlhammerOpenInternal("),
+        ("export function cdlhammerOpenAndFill(", "cdlhammerOpenAndFillPositional("),
+        ("export function cdlhammerOpen(", "cdlhammerOpenPositional("),
     ] {
         let body = body_of(&s, entry);
         assert!(body.contains(callee), "{entry} delegates to {callee}:\n{body}");
         assert!(!body.contains("BodyPeriodTotal"), "{entry} must not re-transcribe the algorithm");
     }
     assert!(!s.contains("cdlhammerOpenAndFillImpl("), "a merged function has no second body");
-    let open = body_of(&s, "export function cdlhammerOpen(");
-    assert!(open.contains("float64(inOpen)"), "the public open copies a non-Float64Array input once:\n{open}");
+    let open = body_of(&s, "export function cdlhammerOpenPositional(");
+    assert!(open.contains("float64(inOpen)"), "the positional open copies a non-Float64Array input once:\n{open}");
 }
 
 #[test]
@@ -116,14 +120,14 @@ fn ts_plain_open_uses_a_one_element_sink_at_stride_zero() {
 #[test]
 fn ts_public_fill_keeps_the_overlap_guards() {
     let s = section("accbands");
-    let body = body_of(&s, "export function accbandsOpenAndFill(");
-    for guard in ["overlaps(outRealUpperBand, inHighF64)", "overlaps(outRealUpperBand, outRealMiddleBand)"] {
-        assert!(body.contains(guard), "{guard} survives on the public fill:\n{body}");
+    let body = body_of(&s, "export function accbandsOpenAndFillPositional(");
+    for (guard, names) in [
+        ("overlaps(outRealUpperBand, inHighF64)", "'outUpperBand', 'prices.high'"),
+        ("overlaps(outRealUpperBand, outRealMiddleBand)", "'outUpperBand', 'outMiddleBand'"),
+    ] {
+        let needle = format!("if (guardOutLen > 0 && {guard}) {{\n    throw sharedMemory('ACCBANDS openAndFill', {names});");
+        assert!(body.contains(&needle), "{guard} survives on the public fill, naming its pair:\n{body}");
     }
-    assert!(
-        body.contains("throw streamFailure('ACCBANDS openAndFill', RetCode.BAD_PARAM);"),
-        "the guard throws through the opener's shared mapping:\n{body}"
-    );
     for seam in ["export function accbandsOpenInternal(", "export function accbandsOpenAndFillInternal("] {
         assert!(!body_of(&s, seam).contains("overlaps("), "{seam} must not carry the guard");
     }
@@ -253,6 +257,7 @@ fn the_stream_fuses_where_java_s_does() {
 #[test]
 fn no_step_or_peek_frame_allocates_a_sink() {
     let mut frames = 0usize;
+    let mut omitted_sinks = 0usize;
     let mut scratch: BTreeSet<String> = BTreeSet::new();
     for name in streaming_funcs() {
         let s = section(&name);
@@ -265,9 +270,15 @@ fn no_step_or_peek_frame_allocates_a_sink() {
             }
         }
         for b in &bodies {
-            // `??= new` allocates once per module, on first use.
+            // `??= new` allocates once per module, on first use; the public
+            // peek allocates only the sink its caller did not pass.
             let allocates = b.match_indices("new ").any(|(i, _)| {
-                !b[..i].ends_with("??= ") && b[i + 4..].split('(').next().is_some_and(|t| t.ends_with("Out"))
+                let omitted = b[..i].ends_with("out = ")
+                    && b[..i].trim_end_matches("out = ").trim_end().ends_with("if (out === undefined) {");
+                if omitted {
+                    omitted_sinks += 1;
+                }
+                !b[..i].ends_with("??= ") && !omitted && b[i + 4..].split('(').next().is_some_and(|t| t.ends_with("Out"))
             });
             assert!(!allocates, "{name}: a frame allocates a sink per bar:\n{b}");
             frames += 1;
@@ -278,6 +289,7 @@ fn no_step_or_peek_frame_allocates_a_sink() {
     }
     assert!(frames >= 400, "only {frames} frames checked");
     assert!(!scratch.is_empty(), "no frame drives a multi-output sub-stream, so the sweep checks nothing");
+    assert!(omitted_sinks >= 20, "only {omitted_sinks} multi-output peeks allocate an omitted sink");
 }
 
 /// Issue #205's fill-mode scratch aliases the caller's array, so no copy-back
@@ -342,6 +354,7 @@ fn no_ts_peek_copies_the_handle() {
     let mut fixtures = 0usize;
     let mut fully_shadowed: BTreeSet<String> = BTreeSet::new();
     let mut offenders: Vec<String> = Vec::new();
+    let mut omitted_sinks = 0usize;
     for name in streaming_funcs() {
         let (func, enums) = load(&name);
         let full = backends::ts::generate(&func, &enums, registry, helpers);
@@ -374,6 +387,7 @@ fn no_ts_peek_copies_the_handle() {
         // scripts/synth_gate.py, never a shipped function.
         let fixture = name.starts_with("synth");
         fixtures += usize::from(fixture);
+        let mut prev = "";
         for l in bodies.iter().flat_map(|b| b.lines()).map(str::trim) {
             if l.starts_with("//") || l.starts_with("/*") || l.starts_with('*') {
                 continue;
@@ -383,6 +397,13 @@ fn no_ts_peek_copies_the_handle() {
             let composed_sink = l.contains("Out ??= new ") && l.ends_with("Out());");
             if composed_sink {
                 sink_sites.insert(name.clone());
+            }
+            // The sink a caller did not pass, which the peek returns.
+            let omitted_sink = prev == "if (out === undefined) {" && l.starts_with("out = new ") && l.ends_with("Out();");
+            omitted_sinks += usize::from(omitted_sink);
+            prev = l;
+            if omitted_sink {
+                continue;
             }
             // ONE copy is contract-legal: a fixed-size accumulator, whose copy
             // cannot grow with the period. The emitter reaches it only where it
@@ -427,6 +448,7 @@ fn no_ts_peek_copies_the_handle() {
         fully_shadowed.len()
     );
     assert!(offenders.is_empty(), "a peek copies:\n{}", offenders.join("\n"));
+    assert!(omitted_sinks >= 20, "only {omitted_sinks} multi-output peeks allocate an omitted sink");
     // On the shipped corpus the exemption is reached by nothing; when the
     // fixtures are in the tree it must be, or the branch is dead.
     if fixtures > 0 {

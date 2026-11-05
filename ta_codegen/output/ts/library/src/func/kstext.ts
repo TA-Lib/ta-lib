@@ -14,50 +14,17 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { MaStream, ma, maLookback, maOpenAndFillInternal, maOpenInternal } from './ma.ts';
-import { RocStream, roc, rocOpenAndFillInternal } from './roc.ts';
+import { MaStream, maLookbackPositional, maOpenAndFillInternal, maOpenInternal, maPositional } from './ma.ts';
+import { RocStream, rocOpenAndFillInternal, rocPositional } from './roc.ts';
 
-/**
- * Number of leading input bars {@link kstext} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInROC1Period - Rate-of-change period of leg 1 (weight 1) (default 10;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC2Period - Rate-of-change period of leg 2 (weight 2) (default 15;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC3Period - Rate-of-change period of leg 3 (weight 3) (default 20;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC4Period - Rate-of-change period of leg 4 (weight 4) (default 30;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA1Period - Period of the MA smoothing leg 1 (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA2Period - Period of the MA smoothing leg 2 (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA3Period - Period of the MA smoothing leg 3 (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA4Period - Period of the MA smoothing leg 4 (default 15; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Period of the signal-line MA (default 9; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROCMAType - MA type smoothing the four legs (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSignalMAType - MA type for the signal line (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function kstextLookback(optInROC1Period: number, optInROC2Period: number, optInROC3Period: number, optInROC4Period: number, optInMA1Period: number, optInMA2Period: number, optInMA3Period: number, optInMA4Period: number, optInSignalPeriod: number, optInROCMAType: MAType | typeof Core.INTEGER_DEFAULT, optInSignalMAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function kstextLookbackPositional(optInROC1Period: number, optInROC2Period: number, optInROC3Period: number, optInROC4Period: number, optInMA1Period: number, optInMA2Period: number, optInMA3Period: number, optInMA4Period: number, optInSignalPeriod: number, optInROCMAType: MAType | typeof Core.INTEGER_DEFAULT, optInSignalMAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
   if ((optInROC1Period | 0) !== optInROC1Period) {
     return -1;
   }
@@ -148,62 +115,25 @@ export function kstextLookback(optInROC1Period: number, optInROC2Period: number,
   }
   let legMax = 0;
   let leg = 0;
-  legMax = optInROC1Period + maLookback(optInMA1Period, (optInROCMAType as MAType), core);
-  leg = optInROC2Period + maLookback(optInMA2Period, (optInROCMAType as MAType), core);
+  legMax = optInROC1Period + maLookbackPositional(optInMA1Period, (optInROCMAType as MAType), core);
+  leg = optInROC2Period + maLookbackPositional(optInMA2Period, (optInROCMAType as MAType), core);
   if (leg > legMax) {
     legMax = leg;
   }
-  leg = optInROC3Period + maLookback(optInMA3Period, (optInROCMAType as MAType), core);
+  leg = optInROC3Period + maLookbackPositional(optInMA3Period, (optInROCMAType as MAType), core);
   if (leg > legMax) {
     legMax = leg;
   }
-  leg = optInROC4Period + maLookback(optInMA4Period, (optInROCMAType as MAType), core);
+  leg = optInROC4Period + maLookbackPositional(optInMA4Period, (optInROCMAType as MAType), core);
   if (leg > legMax) {
     legMax = leg;
   }
-  return legMax + maLookback(optInSignalPeriod, (optInSignalMAType as MAType), core);
+  return legMax + maLookbackPositional(optInSignalPeriod, (optInSignalMAType as MAType), core);
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link kstext}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInROC1Period - Rate-of-change period of leg 1 (weight 1) (default 10;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC2Period - Rate-of-change period of leg 2 (weight 2) (default 15;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC3Period - Rate-of-change period of leg 3 (weight 3) (default 20;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC4Period - Rate-of-change period of leg 4 (weight 4) (default 30;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA1Period - Period of the MA smoothing leg 1 (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA2Period - Period of the MA smoothing leg 2 (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA3Period - Period of the MA smoothing leg 3 (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA4Period - Period of the MA smoothing leg 4 (default 15; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Period of the signal-line MA (default 9; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROCMAType - MA type smoothing the four legs (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSignalMAType - MA type for the signal line (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function kstextDisplayShift(optInROC1Period: number, optInROC2Period: number, optInROC3Period: number, optInROC4Period: number, optInMA1Period: number, optInMA2Period: number, optInMA3Period: number, optInMA4Period: number, optInSignalPeriod: number, optInROCMAType: MAType | typeof Core.INTEGER_DEFAULT, optInSignalMAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, core) < 0) {
+/** @internal */
+export function kstextDisplayShiftPositional(optInROC1Period: number, optInROC2Period: number, optInROC3Period: number, optInROC4Period: number, optInMA1Period: number, optInMA2Period: number, optInMA3Period: number, optInMA4Period: number, optInSignalPeriod: number, optInROCMAType: MAType | typeof Core.INTEGER_DEFAULT, optInSignalMAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (kstextLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 2) {
@@ -322,11 +252,11 @@ export function kstextImpl(
   outBegIdx.value = 0;
   outNBElement.value = 0;
   /* lookbackTotal must stay kstext_lookback() of the same parameters. */
-  lookbackSignal = maLookback(optInSignalPeriod, (optInSignalMAType as MAType), core);
-  lookbackMA1 = maLookback(optInMA1Period, (optInROCMAType as MAType), core);
-  lookbackMA2 = maLookback(optInMA2Period, (optInROCMAType as MAType), core);
-  lookbackMA3 = maLookback(optInMA3Period, (optInROCMAType as MAType), core);
-  lookbackMA4 = maLookback(optInMA4Period, (optInROCMAType as MAType), core);
+  lookbackSignal = maLookbackPositional(optInSignalPeriod, (optInSignalMAType as MAType), core);
+  lookbackMA1 = maLookbackPositional(optInMA1Period, (optInROCMAType as MAType), core);
+  lookbackMA2 = maLookbackPositional(optInMA2Period, (optInROCMAType as MAType), core);
+  lookbackMA3 = maLookbackPositional(optInMA3Period, (optInROCMAType as MAType), core);
+  lookbackMA4 = maLookbackPositional(optInMA4Period, (optInROCMAType as MAType), core);
   lookbackTotal = optInROC1Period + lookbackMA1;
   tempInteger = optInROC2Period + lookbackMA2;
   if (tempInteger > lookbackTotal) {
@@ -364,16 +294,16 @@ export function kstextImpl(
   tempInteger = endIdx - sigStart + 1 + lookbackMA;
   kstBuffer = new Float64Array(tempInteger);
   tempBuffer = new Float64Array(tempInteger);
-  const _xr0 = roc(sigStart - lookbackMA1, endIdx, inReal, optInROC1Period, kstBuffer, core);
+  const _xr0 = rocPositional(sigStart - lookbackMA1, endIdx, inReal, optInROC1Period, kstBuffer, core);
   tempBegIdx.value = _xr0.begIdx;
   rocNb.value = _xr0.count;
-  const _xr1 = ma(0, rocNb.value - 1, kstBuffer, optInMA1Period, (optInROCMAType as MAType), kstBuffer, core);
+  const _xr1 = maPositional(0, rocNb.value - 1, kstBuffer, optInMA1Period, (optInROCMAType as MAType), kstBuffer, core);
   tempBegIdx.value = _xr1.begIdx;
   kstNb.value = _xr1.count;
-  const _xr2 = roc(sigStart - lookbackMA2, endIdx, inReal, optInROC2Period, tempBuffer, core);
+  const _xr2 = rocPositional(sigStart - lookbackMA2, endIdx, inReal, optInROC2Period, tempBuffer, core);
   tempBegIdx.value = _xr2.begIdx;
   rocNb.value = _xr2.count;
-  const _xr3 = ma(0, rocNb.value - 1, tempBuffer, optInMA2Period, (optInROCMAType as MAType), tempBuffer, core);
+  const _xr3 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA2Period, (optInROCMAType as MAType), tempBuffer, core);
   tempBegIdx.value = _xr3.begIdx;
   legNb.value = _xr3.count;
   for (i = 0; i < kstNb.value; i += 1) {
@@ -393,10 +323,10 @@ export function kstextImpl(
         : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
     }
   }
-  const _xr5 = roc(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, tempBuffer, core);
+  const _xr5 = rocPositional(sigStart - lookbackMA3, endIdx, inReal, optInROC3Period, tempBuffer, core);
   tempBegIdx.value = _xr5.begIdx;
   rocNb.value = _xr5.count;
-  const _xr6 = ma(0, rocNb.value - 1, tempBuffer, optInMA3Period, (optInROCMAType as MAType), tempBuffer, core);
+  const _xr6 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA3Period, (optInROCMAType as MAType), tempBuffer, core);
   tempBegIdx.value = _xr6.begIdx;
   legNb.value = _xr6.count;
   for (i = 0; i < kstNb.value; i += 1) {
@@ -416,10 +346,10 @@ export function kstextImpl(
         : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
     }
   }
-  const _xr8 = roc(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, tempBuffer, core);
+  const _xr8 = rocPositional(sigStart - lookbackMA4, endIdx, inReal, optInROC4Period, tempBuffer, core);
   tempBegIdx.value = _xr8.begIdx;
   rocNb.value = _xr8.count;
-  const _xr9 = ma(0, rocNb.value - 1, tempBuffer, optInMA4Period, (optInROCMAType as MAType), tempBuffer, core);
+  const _xr9 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA4Period, (optInROCMAType as MAType), tempBuffer, core);
   tempBegIdx.value = _xr9.begIdx;
   legNb.value = _xr9.count;
   for (i = 0; i < kstNb.value; i += 1) {
@@ -441,12 +371,224 @@ export function kstextImpl(
   }
   /* Every read of inReal is done: an output may alias it. */
   outKST.set(kstBuffer.subarray(lookbackSignal, lookbackSignal + (endIdx - startIdx + 1)), 0);
-  const _xr11 = ma(0, kstNb.value - 1, kstBuffer, optInSignalPeriod, (optInSignalMAType as MAType), outKSTSignal, core);
+  const _xr11 = maPositional(0, kstNb.value - 1, kstBuffer, optInSignalPeriod, (optInSignalMAType as MAType), outKSTSignal, core);
   tempBegIdx.value = _xr11.begIdx;
   sigNb.value = _xr11.count;
   outBegIdx.value = startIdx;
   outNBElement.value = sigNb.value;
   return RetCode.SUCCESS;
+}
+
+const PARAM_RANGES = [['roc1Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['roc2Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['roc3Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['roc4Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['ma1Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['ma2Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['ma3Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['ma4Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['signalPeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['rocMaType', Core.INTEGER_DEFAULT, MATypes.Min, MATypes.Max, 'a MAType'], ['signalMaType', Core.INTEGER_DEFAULT, MATypes.Min, MATypes.Max, 'a MAType']] as const;
+
+/** @internal */
+export function kstextPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInROC1Period: number,
+  optInROC2Period: number,
+  optInROC3Period: number,
+  optInROC4Period: number,
+  optInMA1Period: number,
+  optInMA2Period: number,
+  optInMA3Period: number,
+  optInMA4Period: number,
+  optInSignalPeriod: number,
+  optInROCMAType: MAType | typeof Core.INTEGER_DEFAULT,
+  optInSignalMAType: MAType | typeof Core.INTEGER_DEFAULT,
+  outKST: Float64Array,
+  outKSTSignal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('KSTEXT', 'startIdx', startIdx);
+  endIdx = requireInt32('KSTEXT', 'endIdx', endIdx);
+  optInROC1Period = requireInt32('KSTEXT', 'roc1Period', optInROC1Period);
+  optInROC2Period = requireInt32('KSTEXT', 'roc2Period', optInROC2Period);
+  optInROC3Period = requireInt32('KSTEXT', 'roc3Period', optInROC3Period);
+  optInROC4Period = requireInt32('KSTEXT', 'roc4Period', optInROC4Period);
+  optInMA1Period = requireInt32('KSTEXT', 'ma1Period', optInMA1Period);
+  optInMA2Period = requireInt32('KSTEXT', 'ma2Period', optInMA2Period);
+  optInMA3Period = requireInt32('KSTEXT', 'ma3Period', optInMA3Period);
+  optInMA4Period = requireInt32('KSTEXT', 'ma4Period', optInMA4Period);
+  optInSignalPeriod = requireInt32('KSTEXT', 'signalPeriod', optInSignalPeriod);
+  optInROCMAType = requireInt32('KSTEXT', 'rocMaType', optInROCMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  optInSignalMAType = requireInt32('KSTEXT', 'signalMaType', optInSignalMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireIndexRange('KSTEXT', startIdx, endIdx);
+  const guardLookback = kstextLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('KSTEXT', PARAM_RANGES, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
+  }
+  const guardStart = clampedStart('KSTEXT', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('KSTEXT', 'real', inReal, guardInLen);
+  requireOutput('KSTEXT', 'outKst', outKST, guardOutLen, Float64Array);
+  requireOutput('KSTEXT', 'outKstSignal', outKSTSignal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outKST, inRealF64)) {
+    throw sharedMemory('KSTEXT', 'outKst', 'real');
+  }
+  if (overlapsPartly(outKSTSignal, inRealF64)) {
+    throw sharedMemory('KSTEXT', 'outKstSignal', 'real');
+  }
+  if (overlaps(outKST, outKSTSignal)) {
+    throw sharedMemory('KSTEXT', 'outKst', 'outKstSignal');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = kstextImpl(core, startIdx, endIdx, inRealF64, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outBegIdx, outNBElement, outKST, outKSTSignal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('KSTEXT', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link kstext}, {@link kstextLookback}, {@link kstextDisplayShift},
+ * {@link kstextOpen} and {@link kstextOpenAndFill}. Every key is optional: an
+ * omitted or `undefined` key takes its default, and a call ignores the keys it has
+ * no use for.
+ */
+export interface KstextOptions {
+  /**
+   * Rate-of-change period of leg 1 (weight 1) (default 10; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  roc1Period?: number | undefined;
+  /**
+   * Rate-of-change period of leg 2 (weight 2) (default 15; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  roc2Period?: number | undefined;
+  /**
+   * Rate-of-change period of leg 3 (weight 3) (default 20; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  roc3Period?: number | undefined;
+  /**
+   * Rate-of-change period of leg 4 (weight 4) (default 30; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  roc4Period?: number | undefined;
+  /**
+   * Period of the MA smoothing leg 1 (default 10; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  ma1Period?: number | undefined;
+  /**
+   * Period of the MA smoothing leg 2 (default 10; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  ma2Period?: number | undefined;
+  /**
+   * Period of the MA smoothing leg 3 (default 10; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  ma3Period?: number | undefined;
+  /**
+   * Period of the MA smoothing leg 4 (default 15; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  ma4Period?: number | undefined;
+  /**
+   * Period of the signal-line MA (default 9; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  signalPeriod?: number | undefined;
+  /**
+   * MA type smoothing the four legs (default `MAType.SMA`; values: 0=SMA, 1=EMA,
+   * 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   * 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; `Core.INTEGER_DEFAULT` or
+   * `MAType.DEFAULT` selects the default).
+   */
+  rocMaType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
+  /**
+   * MA type for the signal line (default `MAType.SMA`; values: 0=SMA, 1=EMA, 2=WMA,
+   * 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+   * 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT`
+   * selects the default).
+   */
+  signalMaType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outKst`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outKst?: Float64Array | undefined;
+  /**
+   * Buffer for `outKstSignal`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outKstSignal?: Float64Array | undefined;
+}
+
+/** What {@link kstext} returns, and {@link kstextOpenAndFill} with its stream. */
+export interface KstextResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /** Know Sure Thing line. `outKst[k]` is the value at input bar `begIdx + k`. */
+  outKst: Float64Array;
+  /**
+   * Signal line: MA of the line. `outKstSignal[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  outKstSignal: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link kstext} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link KstextOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function kstextLookback(options?: KstextOptions): number {
+  const o = optionsOf('KSTEXT lookback', options);
+  return kstextLookbackPositional(orDefault(o.roc1Period, Core.INTEGER_DEFAULT), orDefault(o.roc2Period, Core.INTEGER_DEFAULT), orDefault(o.roc3Period, Core.INTEGER_DEFAULT), orDefault(o.roc4Period, Core.INTEGER_DEFAULT), orDefault(o.ma1Period, Core.INTEGER_DEFAULT), orDefault(o.ma2Period, Core.INTEGER_DEFAULT), orDefault(o.ma3Period, Core.INTEGER_DEFAULT), orDefault(o.ma4Period, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), orDefault(o.rocMaType, Core.INTEGER_DEFAULT), orDefault(o.signalMaType, Core.INTEGER_DEFAULT), coreOf('KSTEXT lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link kstext}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link KstextOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function kstextDisplayShift(outputIdx: number, options?: KstextOptions): number {
+  const o = optionsOf('KSTEXT displayShift', options);
+  return kstextDisplayShiftPositional(orDefault(o.roc1Period, Core.INTEGER_DEFAULT), orDefault(o.roc2Period, Core.INTEGER_DEFAULT), orDefault(o.roc3Period, Core.INTEGER_DEFAULT), orDefault(o.roc4Period, Core.INTEGER_DEFAULT), orDefault(o.ma1Period, Core.INTEGER_DEFAULT), orDefault(o.ma2Period, Core.INTEGER_DEFAULT), orDefault(o.ma3Period, Core.INTEGER_DEFAULT), orDefault(o.ma4Period, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), orDefault(o.rocMaType, Core.INTEGER_DEFAULT), orDefault(o.signalMaType, Core.INTEGER_DEFAULT), outputIdx, coreOf('KSTEXT displayShift', o.core));
 }
 
 /**
@@ -478,53 +620,23 @@ export function kstextImpl(
  *   term 0.
  * - The weights go with leg position, not with the length of the rate of change.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link kstextLookback} is a success with
- * `count` 0.
+ * `outKst[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link kstextLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Source price series (canonically the close)
- * @param optInROC1Period - Rate-of-change period of leg 1 (weight 1) (default 10;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC2Period - Rate-of-change period of leg 2 (weight 2) (default 15;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC3Period - Rate-of-change period of leg 3 (weight 3) (default 20;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC4Period - Rate-of-change period of leg 4 (weight 4) (default 30;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA1Period - Period of the MA smoothing leg 1 (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA2Period - Period of the MA smoothing leg 2 (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA3Period - Period of the MA smoothing leg 3 (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA4Period - Period of the MA smoothing leg 4 (default 15; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Period of the signal-line MA (default 9; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROCMAType - MA type smoothing the four legs (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSignalMAType - MA type for the signal line (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outKST - Know Sure Thing line. Must hold the values produced and never be
- *   empty; the input length always suffices.
- * @param outKSTSignal - Signal line: MA of the line. Must hold the values produced
- *   and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Source price series (canonically the close)
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link KstextOptions}.
+ * @returns `begIdx` and the values; see {@link KstextResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output,
- *   two outputs sharing memory or an output sharing memory with a `Float64Array`
- *   input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -532,15 +644,20 @@ export function kstextImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const kst = new Float64Array(data.length);
- * const kstSignal = new Float64Array(data.length);
- * const { begIdx, count } = kstext(
- *   0, data.length - 1,
- *   data,
- *   10, 15, 20, 30, 10, 10, 10, 15, 9, MAType.SMA, MAType.SMA,
- *   kst, kstSignal,
- * );
- * // kst[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, outKst, outKstSignal } = kstext(data, {
+ *   roc1Period: 10,
+ *   roc2Period: 15,
+ *   roc3Period: 20,
+ *   roc4Period: 30,
+ *   ma1Period: 10,
+ *   ma2Period: 10,
+ *   ma3Period: 10,
+ *   ma4Period: 15,
+ *   signalPeriod: 9,
+ *   rocMaType: MAType.SMA,
+ *   signalMaType: MAType.SMA,
+ * });
+ * // outKst[k] is the value at bar begIdx + k
  * ```
  * @see [`kst`](https://ta-lib.org/functions/kst)
  * @see [`roc`](https://ta-lib.org/functions/roc)
@@ -548,56 +665,30 @@ export function kstextImpl(
  * @see [`macdext`](https://ta-lib.org/functions/macdext)
  * @see [`coppock`](https://ta-lib.org/functions/coppock)
  */
-export function kstext(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInROC1Period: number,
-  optInROC2Period: number,
-  optInROC3Period: number,
-  optInROC4Period: number,
-  optInMA1Period: number,
-  optInMA2Period: number,
-  optInMA3Period: number,
-  optInMA4Period: number,
-  optInSignalPeriod: number,
-  optInROCMAType: MAType | typeof Core.INTEGER_DEFAULT,
-  optInSignalMAType: MAType | typeof Core.INTEGER_DEFAULT,
-  outKST: Float64Array,
-  outKSTSignal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('KSTEXT', 'startIdx', startIdx);
-  endIdx = requireInt32('KSTEXT', 'endIdx', endIdx);
-  optInROC1Period = requireInt32('KSTEXT', 'optInROC1Period', optInROC1Period);
-  optInROC2Period = requireInt32('KSTEXT', 'optInROC2Period', optInROC2Period);
-  optInROC3Period = requireInt32('KSTEXT', 'optInROC3Period', optInROC3Period);
-  optInROC4Period = requireInt32('KSTEXT', 'optInROC4Period', optInROC4Period);
-  optInMA1Period = requireInt32('KSTEXT', 'optInMA1Period', optInMA1Period);
-  optInMA2Period = requireInt32('KSTEXT', 'optInMA2Period', optInMA2Period);
-  optInMA3Period = requireInt32('KSTEXT', 'optInMA3Period', optInMA3Period);
-  optInMA4Period = requireInt32('KSTEXT', 'optInMA4Period', optInMA4Period);
-  optInSignalPeriod = requireInt32('KSTEXT', 'optInSignalPeriod', optInSignalPeriod);
-  optInROCMAType = requireInt32('KSTEXT', 'optInROCMAType', optInROCMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  optInSignalMAType = requireInt32('KSTEXT', 'optInSignalMAType', optInSignalMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireIndexRange('KSTEXT', startIdx, endIdx);
-  const guardStart = clampedStart('KSTEXT', startIdx, kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('KSTEXT', 'inReal', inReal, guardInLen);
-  requireOutput('KSTEXT', 'outKST', outKST, guardOutLen, Float64Array);
-  requireOutput('KSTEXT', 'outKSTSignal', outKSTSignal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outKST, inRealF64) || overlapsPartly(outKSTSignal, inRealF64) || overlaps(outKST, outKSTSignal)) {
-    throw failure('KSTEXT', RetCode.BAD_PARAM);
+export function kstext(real: ArrayLike<number>, options?: KstextOptions): KstextResult {
+  const o = optionsOf('KSTEXT', options);
+  if (o.endIdx === undefined) {
+    requireSeries('KSTEXT', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = kstextImpl(core, startIdx, endIdx, inRealF64, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outBegIdx, outNBElement, outKST, outKSTSignal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('KSTEXT', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInROC1Period = orDefault(o.roc1Period, Core.INTEGER_DEFAULT);
+  const optInROC2Period = orDefault(o.roc2Period, Core.INTEGER_DEFAULT);
+  const optInROC3Period = orDefault(o.roc3Period, Core.INTEGER_DEFAULT);
+  const optInROC4Period = orDefault(o.roc4Period, Core.INTEGER_DEFAULT);
+  const optInMA1Period = orDefault(o.ma1Period, Core.INTEGER_DEFAULT);
+  const optInMA2Period = orDefault(o.ma2Period, Core.INTEGER_DEFAULT);
+  const optInMA3Period = orDefault(o.ma3Period, Core.INTEGER_DEFAULT);
+  const optInMA4Period = orDefault(o.ma4Period, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const optInROCMAType = orDefault(o.rocMaType, Core.INTEGER_DEFAULT);
+  const optInSignalMAType = orDefault(o.signalMaType, Core.INTEGER_DEFAULT);
+  const core = coreOf('KSTEXT', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, kstextLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, core), real);
+  const outKST = o.outKst === undefined ? new Float64Array(capacity) : o.outKst;
+  const outKSTSignal = o.outKstSignal === undefined ? new Float64Array(capacity) : o.outKstSignal;
+  const range = kstextPositional(startIdx, endIdx, real, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKST, outKSTSignal, core);
+  return { begIdx: range.begIdx, outKst: outKST.subarray(0, range.count), outKstSignal: outKSTSignal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -695,20 +786,22 @@ export class KstextStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inReal - The bar's `inReal` value: Source price series (canonically the
    *   close)
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link KstextOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out: KstextOut): void {
+  update(inReal: number, out?: KstextOut): KstextOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('KSTEXT update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KSTEXT update', 'KstextOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -716,22 +809,27 @@ export class KstextStream {
     }
     kstextStepImpl(this, inReal);
     this.outRangeCount++;
-    out.kst = this.cur_outKST;
-    out.kstSignal = this.cur_outKSTSignal;
+    if (out === undefined) {
+      out = new KstextOut();
+    }
+    out.outKst = this.cur_outKST;
+    out.outKstSignal = this.cur_outKSTSignal;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inReal - The bar's `inReal` value: Source price series (canonically the
    *   close)
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link KstextOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number, out: KstextOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inReal: number, out?: KstextOut): KstextOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KSTEXT peek', 'KstextOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -797,21 +895,31 @@ export class KstextStream {
     }
     cur_outKSTSignal = sp.sub8.peek(cur_kstBuffer);
     cur_outKST = cur_kstBuffer;
-    out.kst = cur_outKST;
-    out.kstSignal = cur_outKSTSignal;
+    if (out === undefined) {
+      out = new KstextOut();
+    }
+    out.outKst = cur_outKST;
+    out.outKstSignal = cur_outKSTSignal;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link KstextOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: KstextOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: KstextOut): KstextOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KSTEXT value', 'KstextOut');
     }
-    out.kst = this.cur_outKST;
-    out.kstSignal = this.cur_outKSTSignal;
+    if (out === undefined) {
+      out = new KstextOut();
+    }
+    out.outKst = this.cur_outKST;
+    out.outKstSignal = this.cur_outKSTSignal;
+    return out;
   }
 
   /**
@@ -851,14 +959,15 @@ export class KstextStream {
 }
 
 /**
- * The outputs of one KSTEXT bar, written into an object the caller owns and
- * reuses: valid until the next call that writes it.
+ * The outputs of one KSTEXT bar, as `update`, `peek` and `value` return them.
+ * Passed back to one of them, it is filled and returned again, with no allocation;
+ * it holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class KstextOut {
   /** Know Sure Thing line. */
-  kst: number = 0;
+  outKst: number = NaN;
   /** Signal line: MA of the line. */
-  kstSignal: number = 0;
+  outKstSignal: number = NaN;
 }
 
 function kstextStepImpl(sp: KstextStream, inReal: number): void {
@@ -1030,7 +1139,7 @@ function kstextOpenImpl(
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
   }
-  if (historyLen < kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType as MAType, optInSignalMAType as MAType, core) + 1) {
+  if (historyLen < kstextLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType as MAType, optInSignalMAType as MAType, core) + 1) {
     return RetCode.INSUFFICIENT_HISTORY;
   }
   const sc_outKST = outStride === 1 ? outKST : new Float64Array(historyLen);
@@ -1042,11 +1151,11 @@ function kstextOpenImpl(
   outBegIdx.value = 0;
   outNBElement.value = 0;
   /* lookbackTotal must stay kstext_lookback() of the same parameters. */
-  lookbackSignal = maLookback(optInSignalPeriod, (optInSignalMAType as MAType), core);
-  lookbackMA1 = maLookback(optInMA1Period, (optInROCMAType as MAType), core);
-  lookbackMA2 = maLookback(optInMA2Period, (optInROCMAType as MAType), core);
-  lookbackMA3 = maLookback(optInMA3Period, (optInROCMAType as MAType), core);
-  lookbackMA4 = maLookback(optInMA4Period, (optInROCMAType as MAType), core);
+  lookbackSignal = maLookbackPositional(optInSignalPeriod, (optInSignalMAType as MAType), core);
+  lookbackMA1 = maLookbackPositional(optInMA1Period, (optInROCMAType as MAType), core);
+  lookbackMA2 = maLookbackPositional(optInMA2Period, (optInROCMAType as MAType), core);
+  lookbackMA3 = maLookbackPositional(optInMA3Period, (optInROCMAType as MAType), core);
+  lookbackMA4 = maLookbackPositional(optInMA4Period, (optInROCMAType as MAType), core);
   lookbackTotal = optInROC1Period + lookbackMA1;
   tempInteger = optInROC2Period + lookbackMA2;
   if (tempInteger > lookbackTotal) {
@@ -1086,12 +1195,12 @@ function kstextOpenImpl(
   tempBuffer = new Float64Array(tempInteger);
   const sub0 = rocOpenAndFillInternal(core, inReal, sigStart - lookbackMA1, optInROC1Period, tempBegIdx, rocNb, kstBuffer);
   const sub1 = maOpenInternal(core, kstBuffer.slice(0, (rocNb.value - 1) + 1), 0, optInMA1Period, (optInROCMAType as MAType));
-  const _xr6 = ma(0, rocNb.value - 1, kstBuffer, optInMA1Period, (optInROCMAType as MAType), kstBuffer, core);
+  const _xr6 = maPositional(0, rocNb.value - 1, kstBuffer, optInMA1Period, (optInROCMAType as MAType), kstBuffer, core);
   tempBegIdx.value = _xr6.begIdx;
   kstNb.value = _xr6.count;
   const sub2 = rocOpenAndFillInternal(core, inReal, sigStart - lookbackMA2, optInROC2Period, tempBegIdx, rocNb, tempBuffer);
   const sub3 = maOpenInternal(core, tempBuffer.slice(0, (rocNb.value - 1) + 1), 0, optInMA2Period, (optInROCMAType as MAType));
-  const _xr7 = ma(0, rocNb.value - 1, tempBuffer, optInMA2Period, (optInROCMAType as MAType), tempBuffer, core);
+  const _xr7 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA2Period, (optInROCMAType as MAType), tempBuffer, core);
   tempBegIdx.value = _xr7.begIdx;
   legNb.value = _xr7.count;
   for (i = 0; i < kstNb.value; i += 1) {
@@ -1113,7 +1222,7 @@ function kstextOpenImpl(
   }
   const sub4 = rocOpenAndFillInternal(core, inReal, sigStart - lookbackMA3, optInROC3Period, tempBegIdx, rocNb, tempBuffer);
   const sub5 = maOpenInternal(core, tempBuffer.slice(0, (rocNb.value - 1) + 1), 0, optInMA3Period, (optInROCMAType as MAType));
-  const _xr9 = ma(0, rocNb.value - 1, tempBuffer, optInMA3Period, (optInROCMAType as MAType), tempBuffer, core);
+  const _xr9 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA3Period, (optInROCMAType as MAType), tempBuffer, core);
   tempBegIdx.value = _xr9.begIdx;
   legNb.value = _xr9.count;
   for (i = 0; i < kstNb.value; i += 1) {
@@ -1135,7 +1244,7 @@ function kstextOpenImpl(
   }
   const sub6 = rocOpenAndFillInternal(core, inReal, sigStart - lookbackMA4, optInROC4Period, tempBegIdx, rocNb, tempBuffer);
   const sub7 = maOpenInternal(core, tempBuffer.slice(0, (rocNb.value - 1) + 1), 0, optInMA4Period, (optInROCMAType as MAType));
-  const _xr11 = ma(0, rocNb.value - 1, tempBuffer, optInMA4Period, (optInROCMAType as MAType), tempBuffer, core);
+  const _xr11 = maPositional(0, rocNb.value - 1, tempBuffer, optInMA4Period, (optInROCMAType as MAType), tempBuffer, core);
   tempBegIdx.value = _xr11.begIdx;
   legNb.value = _xr11.count;
   for (i = 0; i < kstNb.value; i += 1) {
@@ -1217,7 +1326,10 @@ export function kstextOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('KSTEXT openAndFill', inReal.length, startIdx, kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType as MAType, optInSignalMAType as MAType, core));
+    throw insufficientHistory('KSTEXT openAndFill', inReal.length, startIdx, kstextLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType as MAType, optInSignalMAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && kstextLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType as MAType, optInSignalMAType as MAType, core) < 0) {
+    throw rejectedParams('KSTEXT openAndFill', PARAM_RANGES, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
   }
   throw streamFailure('KSTEXT openAndFill', retCode);
 }
@@ -1251,65 +1363,16 @@ export function kstextOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('KSTEXT open', inReal.length, startIdx, kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType as MAType, optInSignalMAType as MAType, core));
+    throw insufficientHistory('KSTEXT open', inReal.length, startIdx, kstextLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType as MAType, optInSignalMAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && kstextLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType as MAType, optInSignalMAType as MAType, core) < 0) {
+    throw rejectedParams('KSTEXT open', PARAM_RANGES, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
   }
   throw streamFailure('KSTEXT open', retCode);
 }
 
-/**
- * Opens a live KSTEXT stream over the warm-up history: `value()` starts at the
- * last history bar, bit-identical to {@link kstext} there.
- *
- * @param inReal - Warm-up history. Source price series (canonically the close)
- * @param optInROC1Period - Rate-of-change period of leg 1 (weight 1) (default 10;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC2Period - Rate-of-change period of leg 2 (weight 2) (default 15;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC3Period - Rate-of-change period of leg 3 (weight 3) (default 20;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC4Period - Rate-of-change period of leg 4 (weight 4) (default 30;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA1Period - Period of the MA smoothing leg 1 (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA2Period - Period of the MA smoothing leg 2 (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA3Period - Period of the MA smoothing leg 3 (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA4Period - Period of the MA smoothing leg 4 (default 15; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Period of the signal-line MA (default 9; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROCMAType - MA type smoothing the four legs (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSignalMAType - MA type for the signal line (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `kstextLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32 or a parameter outside its range.
- *
- * @example
- * ```ts
- * import { KstextOut, MAType, kstextOpen } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const stream = kstextOpen(
- *   data, 10, 15, 20, 30, 10, 10, 10, 15, 9, MAType.SMA, MAType.SMA,
- * );
- * const peeked = new KstextOut();
- * const updated = new KstextOut();
- * stream.peek(100.9, peeked); // a forming bar: commits nothing
- * stream.update(100.9, updated); // the bar closes
- * ```
- */
-export function kstextOpen(
+/** @internal */
+export function kstextOpenPositional(
   inReal: ArrayLike<number>,
   optInROC1Period: number,
   optInROC2Period: number,
@@ -1324,87 +1387,24 @@ export function kstextOpen(
   optInSignalMAType: MAType | typeof Core.INTEGER_DEFAULT,
   core: Core = Core.DEFAULT,
 ): KstextStream {
-  optInROC1Period = requireInt32('KSTEXT open', 'optInROC1Period', optInROC1Period);
-  optInROC2Period = requireInt32('KSTEXT open', 'optInROC2Period', optInROC2Period);
-  optInROC3Period = requireInt32('KSTEXT open', 'optInROC3Period', optInROC3Period);
-  optInROC4Period = requireInt32('KSTEXT open', 'optInROC4Period', optInROC4Period);
-  optInMA1Period = requireInt32('KSTEXT open', 'optInMA1Period', optInMA1Period);
-  optInMA2Period = requireInt32('KSTEXT open', 'optInMA2Period', optInMA2Period);
-  optInMA3Period = requireInt32('KSTEXT open', 'optInMA3Period', optInMA3Period);
-  optInMA4Period = requireInt32('KSTEXT open', 'optInMA4Period', optInMA4Period);
-  optInSignalPeriod = requireInt32('KSTEXT open', 'optInSignalPeriod', optInSignalPeriod);
-  optInROCMAType = requireInt32('KSTEXT open', 'optInROCMAType', optInROCMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  optInSignalMAType = requireInt32('KSTEXT open', 'optInSignalMAType', optInSignalMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('KSTEXT open', 'inReal', inReal);
+  optInROC1Period = requireInt32('KSTEXT open', 'roc1Period', optInROC1Period);
+  optInROC2Period = requireInt32('KSTEXT open', 'roc2Period', optInROC2Period);
+  optInROC3Period = requireInt32('KSTEXT open', 'roc3Period', optInROC3Period);
+  optInROC4Period = requireInt32('KSTEXT open', 'roc4Period', optInROC4Period);
+  optInMA1Period = requireInt32('KSTEXT open', 'ma1Period', optInMA1Period);
+  optInMA2Period = requireInt32('KSTEXT open', 'ma2Period', optInMA2Period);
+  optInMA3Period = requireInt32('KSTEXT open', 'ma3Period', optInMA3Period);
+  optInMA4Period = requireInt32('KSTEXT open', 'ma4Period', optInMA4Period);
+  optInSignalPeriod = requireInt32('KSTEXT open', 'signalPeriod', optInSignalPeriod);
+  optInROCMAType = requireInt32('KSTEXT open', 'rocMaType', optInROCMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  optInSignalMAType = requireInt32('KSTEXT open', 'signalMaType', optInSignalMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('KSTEXT open', 'real', inReal);
   requireHistory('KSTEXT open', inReal.length);
   return kstextOpenInternal(core, float64(inReal), 0, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
 }
 
-/**
- * {@link kstextOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link kstext}. The range written is the stream's
- * `outRange()`.
- *
- * @param inReal - Warm-up history. Source price series (canonically the close)
- * @param optInROC1Period - Rate-of-change period of leg 1 (weight 1) (default 10;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC2Period - Rate-of-change period of leg 2 (weight 2) (default 15;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC3Period - Rate-of-change period of leg 3 (weight 3) (default 20;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC4Period - Rate-of-change period of leg 4 (weight 4) (default 30;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA1Period - Period of the MA smoothing leg 1 (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA2Period - Period of the MA smoothing leg 2 (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA3Period - Period of the MA smoothing leg 3 (default 10; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMA4Period - Period of the MA smoothing leg 4 (default 15; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Period of the signal-line MA (default 9; range 1 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROCMAType - MA type smoothing the four legs (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param optInSignalMAType - MA type for the signal line (default `MAType.SMA`;
- *   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3,
- *   9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA;
- *   `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outKST - Know Sure Thing line. Must hold `historyLen - lookback` values
- *   and share no memory with an input or another output.
- * @param outKSTSignal - Signal line: MA of the line. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `kstextLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range or
- *   an output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { MAType, kstextOpenAndFill } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const kst = new Float64Array(data.length);
- * const kstSignal = new Float64Array(data.length);
- * const stream = kstextOpenAndFill(
- *   data,
- *   10, 15, 20, 30, 10, 10, 10, 15, 9, MAType.SMA, MAType.SMA,
- *   kst, kstSignal,
- * );
- * const { begIdx, count } = stream.outRange();
- * // kst[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function kstextOpenAndFill(
+/** @internal */
+export function kstextOpenAndFillPositional(
   inReal: ArrayLike<number>,
   optInROC1Period: number,
   optInROC2Period: number,
@@ -1421,28 +1421,165 @@ export function kstextOpenAndFill(
   outKSTSignal: Float64Array,
   core: Core = Core.DEFAULT,
 ): KstextStream {
-  optInROC1Period = requireInt32('KSTEXT openAndFill', 'optInROC1Period', optInROC1Period);
-  optInROC2Period = requireInt32('KSTEXT openAndFill', 'optInROC2Period', optInROC2Period);
-  optInROC3Period = requireInt32('KSTEXT openAndFill', 'optInROC3Period', optInROC3Period);
-  optInROC4Period = requireInt32('KSTEXT openAndFill', 'optInROC4Period', optInROC4Period);
-  optInMA1Period = requireInt32('KSTEXT openAndFill', 'optInMA1Period', optInMA1Period);
-  optInMA2Period = requireInt32('KSTEXT openAndFill', 'optInMA2Period', optInMA2Period);
-  optInMA3Period = requireInt32('KSTEXT openAndFill', 'optInMA3Period', optInMA3Period);
-  optInMA4Period = requireInt32('KSTEXT openAndFill', 'optInMA4Period', optInMA4Period);
-  optInSignalPeriod = requireInt32('KSTEXT openAndFill', 'optInSignalPeriod', optInSignalPeriod);
-  optInROCMAType = requireInt32('KSTEXT openAndFill', 'optInROCMAType', optInROCMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  optInSignalMAType = requireInt32('KSTEXT openAndFill', 'optInSignalMAType', optInSignalMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('KSTEXT openAndFill', 'inReal', inReal);
+  optInROC1Period = requireInt32('KSTEXT openAndFill', 'roc1Period', optInROC1Period);
+  optInROC2Period = requireInt32('KSTEXT openAndFill', 'roc2Period', optInROC2Period);
+  optInROC3Period = requireInt32('KSTEXT openAndFill', 'roc3Period', optInROC3Period);
+  optInROC4Period = requireInt32('KSTEXT openAndFill', 'roc4Period', optInROC4Period);
+  optInMA1Period = requireInt32('KSTEXT openAndFill', 'ma1Period', optInMA1Period);
+  optInMA2Period = requireInt32('KSTEXT openAndFill', 'ma2Period', optInMA2Period);
+  optInMA3Period = requireInt32('KSTEXT openAndFill', 'ma3Period', optInMA3Period);
+  optInMA4Period = requireInt32('KSTEXT openAndFill', 'ma4Period', optInMA4Period);
+  optInSignalPeriod = requireInt32('KSTEXT openAndFill', 'signalPeriod', optInSignalPeriod);
+  optInROCMAType = requireInt32('KSTEXT openAndFill', 'rocMaType', optInROCMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  optInSignalMAType = requireInt32('KSTEXT openAndFill', 'signalMaType', optInSignalMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('KSTEXT openAndFill', 'real', inReal);
   requireHistory('KSTEXT openAndFill', inReal.length);
-  const guardOutLen = openFillCount('KSTEXT openAndFill', inReal.length, kstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType as MAType, optInSignalMAType as MAType, core));
-  requireOutput('KSTEXT openAndFill', 'outKST', outKST, guardOutLen, Float64Array);
-  requireOutput('KSTEXT openAndFill', 'outKSTSignal', outKSTSignal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outKST.buffer === inRealF64.buffer && outKST.byteOffset === inRealF64.byteOffset) || (outKSTSignal.buffer === inRealF64.buffer && outKSTSignal.byteOffset === inRealF64.byteOffset) || (outKST.buffer === outKSTSignal.buffer && outKST.byteOffset === outKSTSignal.byteOffset)) {
-    throw streamFailure('KSTEXT openAndFill', RetCode.BAD_PARAM);
+  const guardLookback = kstextLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType as MAType, optInSignalMAType as MAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('KSTEXT openAndFill', PARAM_RANGES, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
   }
-  if (guardOutLen > 0 && (overlaps(outKST, inRealF64) || overlaps(outKSTSignal, inRealF64) || overlaps(outKST, outKSTSignal))) {
-    throw streamFailure('KSTEXT openAndFill', RetCode.BAD_PARAM);
+  const guardOutLen = openFillCount('KSTEXT openAndFill', inReal.length, guardLookback);
+  requireOutput('KSTEXT openAndFill', 'outKst', outKST, guardOutLen, Float64Array);
+  requireOutput('KSTEXT openAndFill', 'outKstSignal', outKSTSignal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outKST.buffer === inRealF64.buffer && outKST.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('KSTEXT openAndFill', 'outKst', 'real');
+  }
+  if (outKSTSignal.buffer === inRealF64.buffer && outKSTSignal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('KSTEXT openAndFill', 'outKstSignal', 'real');
+  }
+  if (outKST.buffer === outKSTSignal.buffer && outKST.byteOffset === outKSTSignal.byteOffset) {
+    throw sharedMemory('KSTEXT openAndFill', 'outKst', 'outKstSignal');
+  }
+  if (guardOutLen > 0 && overlaps(outKST, inRealF64)) {
+    throw sharedMemory('KSTEXT openAndFill', 'outKst', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outKSTSignal, inRealF64)) {
+    throw sharedMemory('KSTEXT openAndFill', 'outKstSignal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outKST, outKSTSignal)) {
+    throw sharedMemory('KSTEXT openAndFill', 'outKst', 'outKstSignal');
   }
   return kstextOpenAndFillInternal(core, inRealF64, 0, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, new MInteger(), new MInteger(), outKST, outKSTSignal);
+}
+
+/**
+ * Opens a live KSTEXT stream over the warm-up history: `value()` starts at the
+ * last history bar, bit-identical to {@link kstext} there.
+ *
+ * @param real - Warm-up history. Source price series (canonically the close)
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link KstextOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `kstextLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32 or a parameter outside its
+ *   range.
+ *
+ * @example
+ * ```ts
+ * import { MAType, kstextOpen } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const stream = kstextOpen(data, {
+ *   roc1Period: 10,
+ *   roc2Period: 15,
+ *   roc3Period: 20,
+ *   roc4Period: 30,
+ *   ma1Period: 10,
+ *   ma2Period: 10,
+ *   ma3Period: 10,
+ *   ma4Period: 15,
+ *   signalPeriod: 9,
+ *   rocMaType: MAType.SMA,
+ *   signalMaType: MAType.SMA,
+ * });
+ * const peeked = stream.peek(100.9); // a forming bar: commits nothing
+ * const updated = stream.update(100.9); // the bar closes
+ * ```
+ */
+export function kstextOpen(real: ArrayLike<number>, options?: KstextOptions): KstextStream {
+  const o = optionsOf('KSTEXT open', options);
+  const optInROC1Period = orDefault(o.roc1Period, Core.INTEGER_DEFAULT);
+  const optInROC2Period = orDefault(o.roc2Period, Core.INTEGER_DEFAULT);
+  const optInROC3Period = orDefault(o.roc3Period, Core.INTEGER_DEFAULT);
+  const optInROC4Period = orDefault(o.roc4Period, Core.INTEGER_DEFAULT);
+  const optInMA1Period = orDefault(o.ma1Period, Core.INTEGER_DEFAULT);
+  const optInMA2Period = orDefault(o.ma2Period, Core.INTEGER_DEFAULT);
+  const optInMA3Period = orDefault(o.ma3Period, Core.INTEGER_DEFAULT);
+  const optInMA4Period = orDefault(o.ma4Period, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const optInROCMAType = orDefault(o.rocMaType, Core.INTEGER_DEFAULT);
+  const optInSignalMAType = orDefault(o.signalMaType, Core.INTEGER_DEFAULT);
+  const core = coreOf('KSTEXT open', o.core);
+  return kstextOpenPositional(real, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, core);
+}
+
+/**
+ * {@link kstextOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link kstext}.
+ *
+ * @param real - Warm-up history. Source price series (canonically the close)
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link KstextOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link kstext} returns them; the range is the
+ *   stream's `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `kstextLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range
+ *   or a buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
+ *
+ * @example
+ * ```ts
+ * import { MAType, kstextOpenAndFill } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const {
+ *   stream,
+ *   begIdx,
+ *   outKst,
+ *   outKstSignal,
+ * } = kstextOpenAndFill(data, {
+ *   roc1Period: 10,
+ *   roc2Period: 15,
+ *   roc3Period: 20,
+ *   roc4Period: 30,
+ *   ma1Period: 10,
+ *   ma2Period: 10,
+ *   ma3Period: 10,
+ *   ma4Period: 15,
+ *   signalPeriod: 9,
+ *   rocMaType: MAType.SMA,
+ *   signalMaType: MAType.SMA,
+ * });
+ * // outKst[k] is the value at bar begIdx + k
+ * ```
+ */
+export function kstextOpenAndFill(real: ArrayLike<number>, options?: KstextOptions): KstextResult & { stream: KstextStream } {
+  const o = optionsOf('KSTEXT openAndFill', options);
+  const optInROC1Period = orDefault(o.roc1Period, Core.INTEGER_DEFAULT);
+  const optInROC2Period = orDefault(o.roc2Period, Core.INTEGER_DEFAULT);
+  const optInROC3Period = orDefault(o.roc3Period, Core.INTEGER_DEFAULT);
+  const optInROC4Period = orDefault(o.roc4Period, Core.INTEGER_DEFAULT);
+  const optInMA1Period = orDefault(o.ma1Period, Core.INTEGER_DEFAULT);
+  const optInMA2Period = orDefault(o.ma2Period, Core.INTEGER_DEFAULT);
+  const optInMA3Period = orDefault(o.ma3Period, Core.INTEGER_DEFAULT);
+  const optInMA4Period = orDefault(o.ma4Period, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const optInROCMAType = orDefault(o.rocMaType, Core.INTEGER_DEFAULT);
+  const optInSignalMAType = orDefault(o.signalMaType, Core.INTEGER_DEFAULT);
+  const core = coreOf('KSTEXT openAndFill', o.core);
+  const capacity = fillCapacity(kstextLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, core), real);
+  const outKST = o.outKst === undefined ? new Float64Array(capacity) : o.outKst;
+  const outKSTSignal = o.outKstSignal === undefined ? new Float64Array(capacity) : o.outKstSignal;
+  const stream = kstextOpenAndFillPositional(real, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType, outKST, outKSTSignal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outKst: outKST.subarray(0, range.count), outKstSignal: outKSTSignal.subarray(0, range.count) };
 }

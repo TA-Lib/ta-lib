@@ -57,11 +57,12 @@ import { FuncFlags, Functions } from '../src/metadata/index.ts';
 
 const TESTS: Record<string, number> = {
   'batchArgs.test.ts': 9,
-  'batchContract.test.ts': 6,
+  'batchContract.test.ts': 10,
   'inputForms.test.ts': 1,
   'mavpBank.test.ts': 2,
   'metadata.test.ts': 10,
   'metadataSweep.test.ts': 6,
+  'options.test.ts': 8,
   'phantomIo.test.ts': 5,
   'publicApi.test.ts': 4,
   'runtime.test.ts': 13,

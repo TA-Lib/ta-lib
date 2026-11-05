@@ -16,40 +16,20 @@
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link cdlladderbottom} consumes before its first
- * value: the index of the first bar with a value when the whole series is
- * requested.
- *
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function cdlladderbottomLookback(core: Core = Core.DEFAULT): number {
+/** @internal */
+export function cdlladderbottomLookbackPositional(core: Core = Core.DEFAULT): number {
   const ShadowVeryShort_avgPeriod = core.candleSettings[CandleSettingType.SHADOW_VERY_SHORT].avgPeriod;
   return ShadowVeryShort_avgPeriod + 4;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link cdlladderbottom}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function cdlladderbottomDisplayShift(outputIdx: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function cdlladderbottomDisplayShiftPositional(outputIdx: number, _core: Core = Core.DEFAULT): number {
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
     return -2147483648;
   }
@@ -86,7 +66,7 @@ export function cdlladderbottomImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = cdlladderbottomLookback(core);
+  lookbackTotal = cdlladderbottomLookbackPositional(core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -148,6 +128,135 @@ export function cdlladderbottomImpl(
   return RetCode.SUCCESS;
 }
 
+/** @internal */
+export function cdlladderbottomPositional(
+  startIdx: number,
+  endIdx: number,
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outInteger: Int32Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('CDLLADDERBOTTOM', 'startIdx', startIdx);
+  endIdx = requireInt32('CDLLADDERBOTTOM', 'endIdx', endIdx);
+  requireIndexRange('CDLLADDERBOTTOM', startIdx, endIdx);
+  const guardStart = clampedStart('CDLLADDERBOTTOM', startIdx, cdlladderbottomLookbackPositional(core));
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('CDLLADDERBOTTOM', 'prices.open', inOpen, guardInLen);
+  requireLength('CDLLADDERBOTTOM', 'prices.high', inHigh, guardInLen);
+  requireLength('CDLLADDERBOTTOM', 'prices.low', inLow, guardInLen);
+  requireLength('CDLLADDERBOTTOM', 'prices.close', inClose, guardInLen);
+  requireOutput('CDLLADDERBOTTOM', 'outInteger', outInteger, guardOutLen, Int32Array);
+  const inOpenF64 = float64(inOpen);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (overlaps(outInteger, inOpenF64)) {
+    throw sharedMemory('CDLLADDERBOTTOM', 'outInteger', 'prices.open');
+  }
+  if (overlaps(outInteger, inHighF64)) {
+    throw sharedMemory('CDLLADDERBOTTOM', 'outInteger', 'prices.high');
+  }
+  if (overlaps(outInteger, inLowF64)) {
+    throw sharedMemory('CDLLADDERBOTTOM', 'outInteger', 'prices.low');
+  }
+  if (overlaps(outInteger, inCloseF64)) {
+    throw sharedMemory('CDLLADDERBOTTOM', 'outInteger', 'prices.close');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = cdlladderbottomImpl(core, startIdx, endIdx, inOpenF64, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outInteger);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('CDLLADDERBOTTOM', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link cdlladderbottom}, {@link cdlladderbottomLookback},
+ * {@link cdlladderbottomDisplayShift}, {@link cdlladderbottomOpen} and
+ * {@link cdlladderbottomOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface CdlladderbottomOptions {
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input.
+   */
+  outInteger?: Int32Array | undefined;
+}
+
+/**
+ * What {@link cdlladderbottom} returns, and {@link cdlladderbottomOpenAndFill}
+ * with its stream.
+ */
+export interface CdlladderbottomResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * +100 on a detected ladder bottom, 0 otherwise. Only ever emits +100 (never
+   * -100); inherently bullish. `values[k]` is the value at input bar `begIdx + k`.
+   */
+  values: Int32Array;
+}
+
+/**
+ * Number of leading input bars {@link cdlladderbottom} consumes before its first
+ * value: the index of the first bar with a value when the whole series is
+ * requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CdlladderbottomOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function cdlladderbottomLookback(options?: CdlladderbottomOptions): number {
+  const o = optionsOf('CDLLADDERBOTTOM lookback', options);
+  return cdlladderbottomLookbackPositional(coreOf('CDLLADDERBOTTOM lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link cdlladderbottom}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CdlladderbottomOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function cdlladderbottomDisplayShift(outputIdx: number, options?: CdlladderbottomOptions): number {
+  const o = optionsOf('CDLLADDERBOTTOM displayShift', options);
+  return cdlladderbottomDisplayShiftPositional(outputIdx, coreOf('CDLLADDERBOTTOM displayShift', o.core));
+}
+
 /**
  * Five-candle bullish reversal pattern: three consecutively lower black candles, a
  * fourth black candle with a non-very-short upper shadow, then a white candle that
@@ -165,28 +274,24 @@ export function cdlladderbottomImpl(
  *   candle lines), ranking 41st of 103 patterns for overall performance.
  *   ([thepatternsite.com](https://thepatternsite.com/LadderBottom.html))
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link cdlladderbottomLookback} is a success
- * with `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link cdlladderbottomLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inOpen - Open price of each bar.
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param inClose - Close price of each bar.
- * @param outInteger - +100 on a detected ladder bottom, 0 otherwise. Only ever
- *   emits +100 (never -100); inherently bullish. Must hold the values produced and
- *   never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `open`: Open
+ *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
+ *   `close`: Close price of each bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link CdlladderbottomOptions}.
+ * @returns `begIdx` and the values; see {@link CdlladderbottomResult}. Each output
+ *   is a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, an
- *   array too short for the range, an empty output or an output sharing memory with
- *   a `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an input too short for the range, a buffer that is empty, too short or of
+ *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -200,53 +305,29 @@ export function cdlladderbottomImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Int32Array(open.length);
- * const { begIdx, count } = cdlladderbottom(
- *   0, open.length - 1,
- *   open, high, low, close,
- *   out,
- * );
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = cdlladderbottom({ open, high, low, close });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`cdl3blackcrows`](https://ta-lib.org/functions/cdl3blackcrows)
  * @see [`cdlmatchinglow`](https://ta-lib.org/functions/cdlmatchinglow)
  * @see [`cdlbreakaway`](https://ta-lib.org/functions/cdlbreakaway)
  */
-export function cdlladderbottom(
-  startIdx: number,
-  endIdx: number,
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outInteger: Int32Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('CDLLADDERBOTTOM', 'startIdx', startIdx);
-  endIdx = requireInt32('CDLLADDERBOTTOM', 'endIdx', endIdx);
-  requireIndexRange('CDLLADDERBOTTOM', startIdx, endIdx);
-  const guardStart = clampedStart('CDLLADDERBOTTOM', startIdx, cdlladderbottomLookback(core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('CDLLADDERBOTTOM', 'inOpen', inOpen, guardInLen);
-  requireLength('CDLLADDERBOTTOM', 'inHigh', inHigh, guardInLen);
-  requireLength('CDLLADDERBOTTOM', 'inLow', inLow, guardInLen);
-  requireLength('CDLLADDERBOTTOM', 'inClose', inClose, guardInLen);
-  requireOutput('CDLLADDERBOTTOM', 'outInteger', outInteger, guardOutLen, Int32Array);
-  const inOpenF64 = float64(inOpen);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if (overlaps(outInteger, inOpenF64) || overlaps(outInteger, inHighF64) || overlaps(outInteger, inLowF64) || overlaps(outInteger, inCloseF64)) {
-    throw failure('CDLLADDERBOTTOM', RetCode.BAD_PARAM);
+export function cdlladderbottom(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlladderbottomOptions): CdlladderbottomResult {
+  requireArgument('CDLLADDERBOTTOM', 'prices', prices);
+  const o = optionsOf('CDLLADDERBOTTOM', options);
+  if (o.endIdx === undefined) {
+    requireSeries('CDLLADDERBOTTOM', 'prices.open', prices.open);
+    requireSeries('CDLLADDERBOTTOM', 'prices.high', prices.high);
+    requireSeries('CDLLADDERBOTTOM', 'prices.low', prices.low);
+    requireSeries('CDLLADDERBOTTOM', 'prices.close', prices.close);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = cdlladderbottomImpl(core, startIdx, endIdx, inOpenF64, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outInteger);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('CDLLADDERBOTTOM', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const core = coreOf('CDLLADDERBOTTOM', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.open.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, cdlladderbottomLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
+  const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;
+  const range = cdlladderbottomPositional(startIdx, endIdx, prices.open, prices.high, prices.low, prices.close, outInteger, core);
+  return { begIdx: range.begIdx, values: outInteger.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -522,7 +603,7 @@ function cdlladderbottomOpenImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = cdlladderbottomLookback(core);
+  lookbackTotal = cdlladderbottomLookbackPositional(core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -633,7 +714,7 @@ export function cdlladderbottomOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('CDLLADDERBOTTOM openAndFill', inOpen.length, startIdx, cdlladderbottomLookback(core));
+    throw insufficientHistory('CDLLADDERBOTTOM openAndFill', inOpen.length, startIdx, cdlladderbottomLookbackPositional(core));
   }
   throw streamFailure('CDLLADDERBOTTOM openAndFill', retCode);
 }
@@ -658,29 +739,94 @@ export function cdlladderbottomOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('CDLLADDERBOTTOM open', inOpen.length, startIdx, cdlladderbottomLookback(core));
+    throw insufficientHistory('CDLLADDERBOTTOM open', inOpen.length, startIdx, cdlladderbottomLookbackPositional(core));
   }
   throw streamFailure('CDLLADDERBOTTOM open', retCode);
+}
+
+/** @internal */
+export function cdlladderbottomOpenPositional(
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  core: Core = Core.DEFAULT,
+): CdlladderbottomStream {
+  requireArgument('CDLLADDERBOTTOM open', 'prices.open', inOpen);
+  requireHistory('CDLLADDERBOTTOM open', inOpen.length);
+  requireArgument('CDLLADDERBOTTOM open', 'prices.high', inHigh);
+  requireArgument('CDLLADDERBOTTOM open', 'prices.low', inLow);
+  requireArgument('CDLLADDERBOTTOM open', 'prices.close', inClose);
+  requireHistoryLength('CDLLADDERBOTTOM open', 'prices.high', inHigh.length, inOpen.length);
+  requireHistoryLength('CDLLADDERBOTTOM open', 'prices.low', inLow.length, inOpen.length);
+  requireHistoryLength('CDLLADDERBOTTOM open', 'prices.close', inClose.length, inOpen.length);
+  return cdlladderbottomOpenInternal(core, float64(inOpen), float64(inHigh), float64(inLow), float64(inClose), 0);
+}
+
+/** @internal */
+export function cdlladderbottomOpenAndFillPositional(
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outInteger: Int32Array,
+  core: Core = Core.DEFAULT,
+): CdlladderbottomStream {
+  requireArgument('CDLLADDERBOTTOM openAndFill', 'prices.open', inOpen);
+  requireHistory('CDLLADDERBOTTOM openAndFill', inOpen.length);
+  requireArgument('CDLLADDERBOTTOM openAndFill', 'prices.high', inHigh);
+  requireArgument('CDLLADDERBOTTOM openAndFill', 'prices.low', inLow);
+  requireArgument('CDLLADDERBOTTOM openAndFill', 'prices.close', inClose);
+  const guardOutLen = openFillCount('CDLLADDERBOTTOM openAndFill', inOpen.length, cdlladderbottomLookbackPositional(core));
+  requireHistoryLength('CDLLADDERBOTTOM openAndFill', 'prices.high', inHigh.length, inOpen.length);
+  requireHistoryLength('CDLLADDERBOTTOM openAndFill', 'prices.low', inLow.length, inOpen.length);
+  requireHistoryLength('CDLLADDERBOTTOM openAndFill', 'prices.close', inClose.length, inOpen.length);
+  requireOutput('CDLLADDERBOTTOM openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
+  const inOpenF64 = float64(inOpen);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (outInteger.buffer === inOpenF64.buffer && outInteger.byteOffset === inOpenF64.byteOffset) {
+    throw sharedMemory('CDLLADDERBOTTOM openAndFill', 'outInteger', 'prices.open');
+  }
+  if (outInteger.buffer === inHighF64.buffer && outInteger.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('CDLLADDERBOTTOM openAndFill', 'outInteger', 'prices.high');
+  }
+  if (outInteger.buffer === inLowF64.buffer && outInteger.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('CDLLADDERBOTTOM openAndFill', 'outInteger', 'prices.low');
+  }
+  if (outInteger.buffer === inCloseF64.buffer && outInteger.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('CDLLADDERBOTTOM openAndFill', 'outInteger', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inOpenF64)) {
+    throw sharedMemory('CDLLADDERBOTTOM openAndFill', 'outInteger', 'prices.open');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inHighF64)) {
+    throw sharedMemory('CDLLADDERBOTTOM openAndFill', 'outInteger', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inLowF64)) {
+    throw sharedMemory('CDLLADDERBOTTOM openAndFill', 'outInteger', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inCloseF64)) {
+    throw sharedMemory('CDLLADDERBOTTOM openAndFill', 'outInteger', 'prices.close');
+  }
+  return cdlladderbottomOpenAndFillInternal(core, inOpenF64, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outInteger);
 }
 
 /**
  * Opens a live CDLLADDERBOTTOM stream over the warm-up history: `value()` starts
  * at the last history bar, bit-identical to {@link cdlladderbottom} there.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
+ *   Low price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CdlladderbottomOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlladderbottomLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for histories of different lengths.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input or histories of different lengths.
  *
  * @example
  * ```ts
@@ -694,54 +840,37 @@ export function cdlladderbottomOpenInternal(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = cdlladderbottomOpen(open, high, low, close);
+ * const stream = cdlladderbottomOpen({ open, high, low, close });
  * const peeked = stream.peek(100.2, 101.4, 99.1, 100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlladderbottomOpen(
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  core: Core = Core.DEFAULT,
-): CdlladderbottomStream {
-  requireArgument('CDLLADDERBOTTOM open', 'inOpen', inOpen);
-  requireHistory('CDLLADDERBOTTOM open', inOpen.length);
-  requireArgument('CDLLADDERBOTTOM open', 'inHigh', inHigh);
-  requireArgument('CDLLADDERBOTTOM open', 'inLow', inLow);
-  requireArgument('CDLLADDERBOTTOM open', 'inClose', inClose);
-  requireHistoryLength('CDLLADDERBOTTOM open', 'inHigh', inHigh.length, inOpen.length);
-  requireHistoryLength('CDLLADDERBOTTOM open', 'inLow', inLow.length, inOpen.length);
-  requireHistoryLength('CDLLADDERBOTTOM open', 'inClose', inClose.length, inOpen.length);
-  return cdlladderbottomOpenInternal(core, float64(inOpen), float64(inHigh), float64(inLow), float64(inClose), 0);
+export function cdlladderbottomOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlladderbottomOptions): CdlladderbottomStream {
+  requireArgument('CDLLADDERBOTTOM open', 'prices', prices);
+  const o = optionsOf('CDLLADDERBOTTOM open', options);
+  const core = coreOf('CDLLADDERBOTTOM open', o.core);
+  return cdlladderbottomOpenPositional(prices.open, prices.high, prices.low, prices.close, core);
 }
 
 /**
- * {@link cdlladderbottomOpen} that also fills the outputs over the whole history
- * in the same pass, bit-identically to {@link cdlladderbottom}. The range written
- * is the stream's `outRange()`.
+ * {@link cdlladderbottomOpen} that also computes the outputs over the whole
+ * history in the same pass, bit-identically to {@link cdlladderbottom}.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param outInteger - +100 on a detected ladder bottom, 0 otherwise. Only ever
- *   emits +100 (never -100); inherently bullish. Must hold `historyLen - lookback`
- *   values and share no memory with an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
+ *   Low price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link CdlladderbottomOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link cdlladderbottom} returns them; the range is
+ *   the stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlladderbottomLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for histories of different lengths or an output too short or
- *   starting where another output or a `Float64Array` input starts, or, on a history
- *   long enough to open, one sharing memory with another output or a `Float64Array`
- *   input.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input, histories of different lengths or a buffer too short,
+ *   of the wrong type or starting where another buffer or a `Float64Array` input
+ *   starts, or, on a history long enough to open, one sharing memory with another
+ *   buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -755,39 +884,17 @@ export function cdlladderbottomOpen(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Int32Array(open.length);
- * const stream = cdlladderbottomOpenAndFill(open, high, low, close, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = cdlladderbottomOpenAndFill({ open, high, low, close });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlladderbottomOpenAndFill(
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outInteger: Int32Array,
-  core: Core = Core.DEFAULT,
-): CdlladderbottomStream {
-  requireArgument('CDLLADDERBOTTOM openAndFill', 'inOpen', inOpen);
-  requireHistory('CDLLADDERBOTTOM openAndFill', inOpen.length);
-  requireArgument('CDLLADDERBOTTOM openAndFill', 'inHigh', inHigh);
-  requireArgument('CDLLADDERBOTTOM openAndFill', 'inLow', inLow);
-  requireArgument('CDLLADDERBOTTOM openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('CDLLADDERBOTTOM openAndFill', inOpen.length, cdlladderbottomLookback(core));
-  requireHistoryLength('CDLLADDERBOTTOM openAndFill', 'inHigh', inHigh.length, inOpen.length);
-  requireHistoryLength('CDLLADDERBOTTOM openAndFill', 'inLow', inLow.length, inOpen.length);
-  requireHistoryLength('CDLLADDERBOTTOM openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireOutput('CDLLADDERBOTTOM openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
-  const inOpenF64 = float64(inOpen);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if ((outInteger.buffer === inOpenF64.buffer && outInteger.byteOffset === inOpenF64.byteOffset) || (outInteger.buffer === inHighF64.buffer && outInteger.byteOffset === inHighF64.byteOffset) || (outInteger.buffer === inLowF64.buffer && outInteger.byteOffset === inLowF64.byteOffset) || (outInteger.buffer === inCloseF64.buffer && outInteger.byteOffset === inCloseF64.byteOffset)) {
-    throw streamFailure('CDLLADDERBOTTOM openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outInteger, inOpenF64) || overlaps(outInteger, inHighF64) || overlaps(outInteger, inLowF64) || overlaps(outInteger, inCloseF64))) {
-    throw streamFailure('CDLLADDERBOTTOM openAndFill', RetCode.BAD_PARAM);
-  }
-  return cdlladderbottomOpenAndFillInternal(core, inOpenF64, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outInteger);
+export function cdlladderbottomOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlladderbottomOptions): CdlladderbottomResult & { stream: CdlladderbottomStream } {
+  requireArgument('CDLLADDERBOTTOM openAndFill', 'prices', prices);
+  const o = optionsOf('CDLLADDERBOTTOM openAndFill', options);
+  const core = coreOf('CDLLADDERBOTTOM openAndFill', o.core);
+  const capacity = fillCapacity(cdlladderbottomLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
+  const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;
+  const stream = cdlladderbottomOpenAndFillPositional(prices.open, prices.high, prices.low, prices.close, outInteger, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outInteger.subarray(0, range.count) };
 }

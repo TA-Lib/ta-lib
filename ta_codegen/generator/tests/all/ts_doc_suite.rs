@@ -232,7 +232,8 @@ fn sweep_all() -> Sweep {
     for func in &funcs {
         let module = backends::ts::module_stem(func);
         let src = backends::ts::generate(func, &enums, registry, helpers);
-        let public: BTreeSet<String> = backends::ts::public_exports(func).into_iter().collect();
+        let mut public: BTreeSet<String> = backends::ts::public_exports(func).into_iter().collect();
+        public.extend(backends::ts::public_type_exports(func));
         expected.insert(module.clone(), public.len());
         sweep_module(&module, &src, &public, &mut sweep);
     }
@@ -283,7 +284,7 @@ fn every_public_ts_declaration_carries_a_tsdoc_block() {
     );
     let exports: usize = sweep.public_exports.values().sum();
     assert!(
-        exports >= 3 * 200 && sweep.members > 200 && sweep.params > 6000 && sweep.internal > 200,
+        exports >= 8 * 200 && sweep.members > 3000 && sweep.params > 3000 && sweep.internal > 200,
         "the sweep saw too little: {exports} public declarations, {} public members, {} params, \
          {} @internal declarations",
         sweep.members,
@@ -401,14 +402,15 @@ fn the_fill_throws_names_the_overlap_checks_the_public_frame_emits() {
     for func in &funcs {
         let src = backends::ts::generate(func, &enums, registry, helpers);
         let names = backends::ts::ts_names(&func.name);
-        let Some(entry) = src.find(&format!("\nexport function {}(\n", names.open_and_fill)) else { continue };
+        let Some(entry) = src.find(&format!("\nexport function {}(", names.open_and_fill)) else { continue };
         let doc = &src[src[..entry].rfind("/**").expect("a doc block")..entry];
         let doc = doc.split_whitespace().filter(|w| *w != "*").collect::<Vec<_>>().join(" ");
-        let public = &src[entry..entry + src[entry..].find("\n}\n").expect("the fill ends")];
-        let guarded = public.contains(".byteOffset)) {") || public.contains("OpenAndFillImpl(");
+        let at = src.find(&format!("\nexport function {}(\n", names.open_and_fill_positional)).expect("a positional fill");
+        let public = &src[at..at + src[at..].find("\n}\n").expect("the fill ends")];
+        let guarded = public.contains(".byteOffset) {\n    throw sharedMemory(");
         assert!(guarded, "{}: a fill with no overlap guard", func.name);
         assert!(
-            doc.contains("an output too short or starting where another output or a `Float64Array` input starts, or, on a history long enough to open, one sharing memory with another output or a `Float64Array` input"),
+            doc.contains("a buffer too short, of the wrong type or starting where another buffer or a `Float64Array` input starts, or, on a history long enough to open, one sharing memory with another buffer or a `Float64Array` input"),
             "{}: the fill's @throws does not scope its overlap rejection:\n{doc}",
             func.name
         );
@@ -431,10 +433,11 @@ fn the_batch_throws_names_the_overlap_checks_the_public_tier_emits() {
     for func in &funcs {
         let src = backends::ts::generate(func, &enums, registry, helpers);
         let names = backends::ts::ts_names(&func.name);
-        let entry = src.find(&format!("\nexport function {}(\n", names.public)).expect("a public batch function");
+        let entry = src.find(&format!("\nexport function {}(", names.public)).expect("a public batch function");
         let doc = &src[src[..entry].rfind("/**").expect("a doc block")..entry];
         let doc = doc.split_whitespace().filter(|w| *w != "*").collect::<Vec<_>>().join(" ");
-        let public = &src[entry..entry + src[entry..].find("\n}\n").expect("the public tier ends")];
+        let at = src.find(&format!("\nexport function {}(\n", names.positional)).expect("a positional batch tier");
+        let public = &src[at..at + src[at..].find("\n}\n").expect("the positional tier ends")];
         let body_at = src.find(&format!("\nexport function {}(\n", names.body)).expect("a body");
         let body = &src[body_at..body_at + src[body_at..].find("\n}\n").expect("the body ends")];
         let outs = &func.outputs;
@@ -449,7 +452,7 @@ fn the_batch_throws_names_the_overlap_checks_the_public_tier_emits() {
                     && body.contains(&format!("{a}.buffer === {b}.buffer && {a}.byteOffset"))
             });
         assert_eq!(emits, !pairs.is_empty(), "{}: a pair of outputs left untested", func.name);
-        assert_eq!(doc.contains("two outputs sharing memory"), emits, "{}: @throws against the output pairs", func.name);
+        assert_eq!(doc.contains("two buffers sharing memory"), emits, "{}: @throws against the output pairs", func.name);
         claimed += usize::from(emits);
 
         let emits_inputs = !func.inputs.is_empty()
@@ -459,7 +462,7 @@ fn the_batch_throws_names_the_overlap_checks_the_public_tier_emits() {
             });
         assert_eq!(emits_inputs, !func.inputs.is_empty(), "{}: an output and input pair left untested", func.name);
         assert_eq!(
-            doc.contains("an output sharing memory with a `Float64Array` input it is not"),
+            doc.contains("a buffer sharing memory with a `Float64Array` input it is not"),
             emits_inputs,
             "{}: @throws against the input pairs",
             func.name

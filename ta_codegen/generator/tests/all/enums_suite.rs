@@ -559,6 +559,49 @@ fn csharp_resolve_call_agrees_with_the_emitted_method_names() {
     }
 }
 
+/// The TypeScript key rule on the names the design spells out: `optIn` and
+/// `in` dropped, an acronym one word, `out` kept and the type word dropped
+/// when other words follow.
+#[test]
+fn ts_keys_follow_the_naming_rule() {
+    use backends::ts::{input_param_name, output_key, param_key};
+    for (c, key) in [
+        ("optInTimePeriod", "timePeriod"),
+        ("optInMAType", "maType"),
+        ("optInFastMAType", "fastMaType"),
+        ("optInNbDevUp", "nbDevUp"),
+        ("optInSlowK_MAType", "slowKMaType"),
+        ("optInROCMAType", "rocMaType"),
+        ("optInROC1Period", "roc1Period"),
+        ("optInTimePeriod1", "timePeriod1"),
+    ] {
+        assert_eq!(param_key(c), key, "{c}");
+    }
+    for (c, key) in [
+        ("outMACDSignal", "outMacdSignal"),
+        ("outRealUpperBand", "outUpperBand"),
+        ("outRealShort", "outShort"),
+        ("outPlusVI", "outPlusVi"),
+        ("outWT1", "outWt1"),
+        ("outHAOpen", "outHaOpen"),
+        ("outMAMA", "outMama"),
+        ("outReal", "outReal"),
+        ("outInteger", "outInteger"),
+    ] {
+        assert_eq!(output_key(c), key, "{c}");
+    }
+    for (c, name) in [("inReal", "real"), ("inReal0", "real0"), ("inPeriods", "periods")] {
+        assert_eq!(input_param_name(c), name, "{c}");
+    }
+    let mut keys = 0usize;
+    for name in discover_indicators() {
+        let (func, _) = load_indicator(&name);
+        backends::ts::assert_unique_keys(&func);
+        keys += func.optional_inputs.len() + func.outputs.len();
+    }
+    assert!(keys > 500, "only {keys} keys checked unique");
+}
+
 #[test]
 fn ts_resolve_call_agrees_with_the_emitted_function_names() {
     // A cross-call imports `<symbol>` from `./<module>.ts`; a resolver and an
@@ -569,17 +612,34 @@ fn ts_resolve_call_agrees_with_the_emitted_function_names() {
     for name in discover_indicators() {
         let (func, _) = load_indicator(&name);
         let names = backends::ts::ts_names(&func.name);
-        assert_eq!(registry.resolve_call(&name, Lang::Ts), names.public, "{name}");
-        assert_eq!(registry.resolve_call(&format!("{name}_lookback"), Lang::Ts), names.lookback, "{name}");
+        assert_eq!(registry.resolve_call(&name, Lang::Ts), names.positional, "{name}");
+        assert_eq!(registry.resolve_call(&format!("{name}_lookback"), Lang::Ts), names.lookback_positional, "{name}");
         let src = backends::ts::generate(&func, &enums, registry, helpers);
-        for sym in [&names.public, &names.lookback, &names.display_shift, &names.body] {
+        for sym in [
+            &names.public,
+            &names.positional,
+            &names.lookback,
+            &names.lookback_positional,
+            &names.display_shift,
+            &names.display_shift_positional,
+            &names.body,
+        ] {
             assert!(src.contains(&format!("export function {sym}(")), "{name}: no `{sym}` exported");
+        }
+        for ty in [&names.options_type, &names.result_type] {
+            assert!(src.contains(&format!("export interface {ty} {{")), "{name}: no `{ty}` exported");
         }
         let mut barrel = backends::ts::public_exports(&func);
         barrel.sort();
         let mut want = vec![names.public.clone(), names.lookback.clone(), names.display_shift.clone()];
         if func.streaming {
-            for sym in [&names.open, &names.open_and_fill, &names.open_internal] {
+            for sym in [
+                &names.open,
+                &names.open_positional,
+                &names.open_and_fill,
+                &names.open_and_fill_positional,
+                &names.open_internal,
+            ] {
                 assert!(src.contains(&format!("export function {sym}(")), "{name}: no `{sym}` exported");
             }
             let seam = format!("export function {}(", names.open_and_fill_internal);
@@ -597,6 +657,11 @@ fn ts_resolve_call_agrees_with_the_emitted_function_names() {
         }
         want.sort();
         assert_eq!(barrel, want, "{name}: the barrel must list the public names and no @internal one");
+        assert_eq!(
+            backends::ts::public_type_exports(&func),
+            vec![names.options_type.clone(), names.result_type.clone()],
+            "{name}: the barrel's types"
+        );
     }
 }
 

@@ -111,13 +111,32 @@ function batchCase(spec: Spec, data: Record<string, Float64Array>, opts: number[
   return { spec, opts, ins, outs, range };
 }
 
-/** The stream's current outputs, in batch output order. */
+/**
+ * The stream's current outputs, in batch output order. A multi-output peek or
+ * value reads into a given sink, which it must return, and into none, whose new
+ * one must hold the same bits; an update, which cannot run twice, takes a sink
+ * on even bars and none on odd ones.
+ */
 function read(c: Case, s: Stream, verb: 'update' | 'peek' | 'value', t: number): number[] {
   const bars = verb === 'value' ? [] : c.ins.map((a) => a[t]);
   if (c.spec.outClass === null) return [s[verb](...bars) as number];
-  const sink = new (L[c.spec.outClass] as new () => Record<string, number>)();
-  s[verb](...bars, sink);
-  return Object.keys(sink).map((k) => sink[k]);
+  const Out = L[c.spec.outClass] as new () => Record<string, number>;
+  const keys = Object.keys(new Out());
+  const fresh = (): number[] => {
+    const r = s[verb](...bars) as Record<string, number>;
+    assert.ok(r instanceof Out, `${c.spec.name} ${verb}: no sink, not a ${c.spec.outClass}`);
+    assert.deepEqual(Object.keys(r), keys, `${c.spec.name} ${verb}: the new sink's fields`);
+    return keys.map((k) => r[k]);
+  };
+  if (verb === 'update' && t % 2 === 1) return fresh();
+  const sink = new Out();
+  assert.equal(s[verb](...bars, sink), sink, `${c.spec.name} ${verb}: the given sink is not returned`);
+  const got = keys.map((k) => sink[k]);
+  if (verb !== 'update') {
+    const again = fresh();
+    assert.ok(got.every((x, j) => Object.is(x, again[j])), `${c.spec.name} ${verb}: ${again} without a sink, ${got} with one`);
+  }
+  return got;
 }
 
 function expectBatch(c: Case, got: number[], t: number, what: string): void {
@@ -223,55 +242,58 @@ test('OpenAndFill refuses an output sharing memory with an input or another outp
   const buf = new ArrayBuffer(8 * 3 * N);
   const input = new Float64Array(buf, 0, N);
   input.set(data.inClose);
-  const lb = lib.smaLookback(10);
+  const lb = lib.smaLookback({ timePeriod: 10 });
   const n = N - lb;
-  assertBadParam(() => lib.smaOpenAndFill(input, 10, input));
-  assertBadParam(() => lib.smaOpenAndFill(input, 10, new Float64Array(buf, 8 * (N - 1), n)));
-  assertBadParam(() => lib.smaOpenAndFill(input, 10, new Float64Array(buf, 0, n)));
+  assertBadParam(() => lib.smaOpenAndFill(input, { timePeriod: 10, outReal: input }));
+  assertBadParam(() => lib.smaOpenAndFill(input, { timePeriod: 10, outReal: new Float64Array(buf, 8 * (N - 1), n) }));
+  assertBadParam(() => lib.smaOpenAndFill(input, { timePeriod: 10, outReal: new Float64Array(buf, 0, n) }));
   const apart = new Float64Array(buf, 8 * N, n);
-  const s = lib.smaOpenAndFill(input, 10, apart);
+  const s = lib.smaOpenAndFill(input, { timePeriod: 10, outReal: apart });
   const want = new Float64Array(n);
-  lib.sma(0, N - 1, data.inClose, 10, want);
+  lib.sma(data.inClose, { timePeriod: 10, outReal: want });
   assert.ok(apart.every((x, k) => same(x, want[k])), 'a disjoint view of the same buffer fills like a fresh array');
-  assert.equal(s.outRange().count, n);
+  assert.equal(s.stream.outRange().count, n);
+  assert.ok(s.values.buffer === buf && s.values.byteOffset === apart.byteOffset && s.values.length === n, 'the fill returns a view of its buffer');
 
-  const m = N - lib.macdLookback(12, 26, 9);
+  const macdOpts = { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9 };
+  const m = N - lib.macdLookback(macdOpts);
   const shared = new Float64Array(buf, 8 * N, 2 * N);
-  assertBadParam(() => lib.macdOpenAndFill(data.inClose, 12, 26, 9, shared.subarray(0, m), shared.subarray(m - 1, 2 * m - 1), new Float64Array(m)));
-  lib.macdOpenAndFill(data.inClose, 12, 26, 9, shared.subarray(0, m), shared.subarray(m, 2 * m), new Float64Array(m));
+  assertBadParam(() => lib.macdOpenAndFill(data.inClose, { ...macdOpts, outMacd: shared.subarray(0, m), outMacdSignal: shared.subarray(m - 1, 2 * m - 1), outMacdHist: new Float64Array(m) }));
+  lib.macdOpenAndFill(data.inClose, { ...macdOpts, outMacd: shared.subarray(0, m), outMacdSignal: shared.subarray(m, 2 * m), outMacdHist: new Float64Array(m) });
 
   const ohlc = new Float64Array(buf, 0, N);
   ohlc.set(data.inOpen);
   const flags = new Int32Array(buf, 0, N);
-  assertBadParam(() => lib.cdldojiOpenAndFill(ohlc, data.inHigh, data.inLow, data.inClose, flags));
+  assertBadParam(() => lib.cdldojiOpenAndFill({ open: ohlc, high: data.inHigh, low: data.inLow, close: data.inClose }, { outInteger: flags }));
 });
 
 test('a rejected bar moves nothing, and the ceiling and history rules answer first', () => {
   const data = series(5);
-  const s = lib.smaOpen(data.inClose, 10);
+  const s = lib.smaOpen(data.inClose, { timePeriod: 10 });
   const before = s.value();
   const range = s.outRange();
   assertBadParam(() => s.update(Number.NaN));
   assertBadParam(() => s.peek(Number.POSITIVE_INFINITY));
   assert.ok(same(s.value(), before));
   assert.deepEqual(s.outRange(), range);
-  assert.throws(() => lib.smaOpen(new Float64Array(0), 10), (e: unknown) => e instanceof TALibError && e.code === 'TA_INSUFFICIENT_HISTORY');
-  assert.throws(() => lib.smaOpen(data.inClose.slice(0, 5), 10), (e: unknown) => e instanceof TALibError && e.code === 'TA_INSUFFICIENT_HISTORY');
-  assertBadParam(() => lib.smaOpen(data.inClose, 1.5));
-  assertBadParam(() => lib.smaOpen(data.inClose, 0));
+  assert.throws(() => lib.smaOpen(new Float64Array(0), { timePeriod: 10 }), (e: unknown) => e instanceof TALibError && e.code === 'TA_INSUFFICIENT_HISTORY');
+  assert.throws(() => lib.smaOpen(data.inClose.slice(0, 5), { timePeriod: 10 }), (e: unknown) => e instanceof TALibError && e.code === 'TA_INSUFFICIENT_HISTORY');
+  assertBadParam(() => lib.smaOpen(data.inClose, { timePeriod: 1.5 }));
+  assertBadParam(() => lib.smaOpen(data.inClose, { timePeriod: 0 }));
 });
 
 test('MAVP clamps a period too large for an int before it narrows, in every tier', () => {
   const data = series(6);
   const periods = data.inPeriods.map((_, i) => (i % 3 === 0 ? 1e18 : i % 3 === 1 ? 2147483648 : 3e9));
-  const lb = lib.mavpLookback(2, 30, MAType.SMA);
+  const opts = { minPeriod: 2, maxPeriod: 30, maType: MAType.SMA };
+  const lb = lib.mavpLookback(opts);
   const want = new Float64Array(N - lb);
-  lib.mavp(0, N - 1, data.inClose, periods, 2, 30, MAType.SMA, want);
+  lib.mavp(data.inClose, periods, { ...opts, outReal: want });
   const filled = new Float64Array(N - lb);
-  lib.mavpOpenAndFill(data.inClose, periods, 2, 30, MAType.SMA, filled);
+  lib.mavpOpenAndFill(data.inClose, periods, { ...opts, outReal: filled });
   assert.ok(filled.every((x, k) => same(x, want[k])), 'openAndFill');
   const h = N >> 1;
-  const s = lib.mavpOpen(data.inClose.slice(0, h), periods.slice(0, h), 2, 30, MAType.SMA);
+  const s = lib.mavpOpen(data.inClose.slice(0, h), periods.slice(0, h), opts);
   for (let t = h; t < N; t++) {
     const p = s.peek(data.inClose[t], periods[t]);
     const u = s.update(data.inClose[t], periods[t]);
@@ -279,34 +301,56 @@ test('MAVP clamps a period too large for an int before it narrows, in every tier
   }
 });
 
-test('a multi-output stream refuses an absent sink before anything moves, and takes a structural one', () => {
+test('a multi-output stream refuses a sink that is not an object before anything moves, returns a new one when none is given, and takes a structural one', () => {
   const data = series(7);
   const h = N >> 1;
   let checked = 0;
+  let overwritten = 0;
   for (const spec of SPECS) {
     if (spec.outClass === null) continue;
     const Out = L[spec.outClass] as new () => Record<string, number>;
+    const keys = Object.keys(new Out());
+    assert.ok(keys.length > 1 && keys.every((k) => k.startsWith('out') && Number.isNaN(new Out()[k])), `${spec.name}: a new sink's fields ${keys}`);
     const ins = spec.params.filter((p) => p.kind === 'input').map((p) => data[p.name]);
     const opts = spec.params.filter((p) => p.kind !== 'input' && p.kind !== 'output').map((p) => (p.kind === 'real' ? Core.REAL_DEFAULT : Core.INTEGER_DEFAULT));
     const s = spec.open(...ins.map((a) => a.slice(0, h)), ...opts) as Stream;
     const control = s.clone();
     const range = s.outRange();
     const bars = ins.map((a) => a[h]);
-    for (const bad of [undefined, null, 0]) {
+    for (const bad of [null, 0]) {
       assertBadParam(() => s.update(...bars, bad));
       assertBadParam(() => s.peek(...bars, bad));
       assertBadParam(() => s.value(bad));
     }
     assert.deepEqual(s.outRange(), range, `${spec.name}: a refused update counted the bar`);
-    const got: Record<string, number> = Object.fromEntries(Object.keys(new Out()).map((k) => [k, 0]));
     const want = new Out();
-    s.update(...bars, got);
-    control.update(...bars, want);
-    assert.deepEqual(s.outRange(), control.outRange(), spec.name);
-    for (const k of Object.keys(want)) {
-      assert.ok(same(got[k], want[k]), `${spec.name}.${k}: ${got[k]} after a refused update vs ${want[k]}`);
+    assert.equal(control.peek(...bars, want), want, `${spec.name}: peek returns its sink`);
+    for (const [verb, got] of [['peek', s.peek(...bars)], ['peek undefined', s.peek(...bars, undefined)], ['value', s.value()]] as const) {
+      const ref = verb === 'value' ? control.value(new Out()) : want;
+      assert.ok(got instanceof Out, `${spec.name} ${verb}: no sink, not a ${spec.outClass}`);
+      for (const k of keys) assert.ok(same((got as Record<string, number>)[k], (ref as Record<string, number>)[k]), `${spec.name}.${k} ${verb}`);
     }
+    assert.deepEqual(s.outRange(), range, `${spec.name}: a peek without a sink counted the bar`);
+    const twin = s.clone();
+    const got: Record<string, number> = Object.fromEntries(keys.map((k) => [k, 0]));
+    assert.equal(s.update(...bars, got), got, `${spec.name}: update returns its sink`);
+    assert.equal(control.update(...bars, want), want, `${spec.name}: update returns its sink`);
+    const fresh = twin.update(...bars) as Record<string, number>;
+    assert.ok(fresh instanceof Out, `${spec.name}: update without a sink`);
+    assert.deepEqual(s.outRange(), control.outRange(), spec.name);
+    assert.deepEqual(twin.outRange(), control.outRange(), `${spec.name}: update without a sink counts the bar`);
+    for (const k of keys) {
+      assert.ok(same(got[k], want[k]), `${spec.name}.${k}: ${got[k]} after a refused update vs ${want[k]}`);
+      assert.ok(same(fresh[k], want[k]), `${spec.name}.${k}: ${fresh[k]} without a sink vs ${want[k]}`);
+    }
+    // A peek into the sink the update filled overwrites every field.
+    const next = ins.map((a) => a[h + 1]);
+    assert.equal(s.peek(...next, got), got, `${spec.name}: peek returns the update's sink`);
+    const ahead = control.peek(...next) as Record<string, number>;
+    for (const k of keys) assert.ok(same(got[k], ahead[k]), `${spec.name}.${k}: ${got[k]} peeked into the update's sink vs ${ahead[k]}`);
+    if (keys.some((k) => !same(ahead[k], want[k]))) overwritten++;
     checked++;
   }
   assert.ok(checked > 0);
+  assert.ok(overwritten > checked / 2, `the next bar's peek changed the sink for only ${overwritten} of ${checked} functions`);
 });

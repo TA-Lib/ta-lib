@@ -12,41 +12,15 @@
  *  092926 MF,CC  First version (#472).
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link kst} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInROC1Period - Rate-of-change period of leg 1 (weight 1) (default 10;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC2Period - Rate-of-change period of leg 2 (weight 2) (default 15;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC3Period - Rate-of-change period of leg 3 (weight 3) (default 20;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC4Period - Rate-of-change period of leg 4 (weight 4) (default 30;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA1Period - Simple-moving-average period smoothing leg 1 (default
- *   10; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA2Period - Simple-moving-average period smoothing leg 2 (default
- *   10; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA3Period - Simple-moving-average period smoothing leg 3 (default
- *   10; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA4Period - Simple-moving-average period smoothing leg 4 (default
- *   15; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Simple-moving-average period of the signal line
- *   (default 9; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function kstLookback(optInROC1Period: number, optInROC2Period: number, optInROC3Period: number, optInROC4Period: number, optInSMA1Period: number, optInSMA2Period: number, optInSMA3Period: number, optInSMA4Period: number, optInSignalPeriod: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function kstLookbackPositional(optInROC1Period: number, optInROC2Period: number, optInROC3Period: number, optInROC4Period: number, optInSMA1Period: number, optInSMA2Period: number, optInSMA3Period: number, optInSMA4Period: number, optInSignalPeriod: number, _core: Core = Core.DEFAULT): number {
   if ((optInROC1Period | 0) !== optInROC1Period) {
     return -1;
   }
@@ -137,38 +111,9 @@ export function kstLookback(optInROC1Period: number, optInROC2Period: number, op
   return legMax + optInSignalPeriod - 1;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link kst}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInROC1Period - Rate-of-change period of leg 1 (weight 1) (default 10;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC2Period - Rate-of-change period of leg 2 (weight 2) (default 15;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC3Period - Rate-of-change period of leg 3 (weight 3) (default 20;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC4Period - Rate-of-change period of leg 4 (weight 4) (default 30;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA1Period - Simple-moving-average period smoothing leg 1 (default
- *   10; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA2Period - Simple-moving-average period smoothing leg 2 (default
- *   10; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA3Period - Simple-moving-average period smoothing leg 3 (default
- *   10; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA4Period - Simple-moving-average period smoothing leg 4 (default
- *   15; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Simple-moving-average period of the signal line
- *   (default 9; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function kstDisplayShift(optInROC1Period: number, optInROC2Period: number, optInROC3Period: number, optInROC4Period: number, optInSMA1Period: number, optInSMA2Period: number, optInSMA3Period: number, optInSMA4Period: number, optInSignalPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (kstLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core) < 0) {
+/** @internal */
+export function kstDisplayShiftPositional(optInROC1Period: number, optInROC2Period: number, optInROC3Period: number, optInROC4Period: number, optInSMA1Period: number, optInSMA2Period: number, optInSMA3Period: number, optInSMA4Period: number, optInSignalPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (kstLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 2) {
@@ -295,7 +240,7 @@ export function kstImpl(
    * both at or after the slot the outputs write: outKST or outKSTSignal
    * may alias inReal.
    */
-  lookbackTotal = kstLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core);
+  lookbackTotal = kstLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -608,6 +553,200 @@ export function kstImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['roc1Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['roc2Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['roc3Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['roc4Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['sma1Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['sma2Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['sma3Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['sma4Period', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['signalPeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000']] as const;
+
+/** @internal */
+export function kstPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInROC1Period: number,
+  optInROC2Period: number,
+  optInROC3Period: number,
+  optInROC4Period: number,
+  optInSMA1Period: number,
+  optInSMA2Period: number,
+  optInSMA3Period: number,
+  optInSMA4Period: number,
+  optInSignalPeriod: number,
+  outKST: Float64Array,
+  outKSTSignal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('KST', 'startIdx', startIdx);
+  endIdx = requireInt32('KST', 'endIdx', endIdx);
+  optInROC1Period = requireInt32('KST', 'roc1Period', optInROC1Period);
+  optInROC2Period = requireInt32('KST', 'roc2Period', optInROC2Period);
+  optInROC3Period = requireInt32('KST', 'roc3Period', optInROC3Period);
+  optInROC4Period = requireInt32('KST', 'roc4Period', optInROC4Period);
+  optInSMA1Period = requireInt32('KST', 'sma1Period', optInSMA1Period);
+  optInSMA2Period = requireInt32('KST', 'sma2Period', optInSMA2Period);
+  optInSMA3Period = requireInt32('KST', 'sma3Period', optInSMA3Period);
+  optInSMA4Period = requireInt32('KST', 'sma4Period', optInSMA4Period);
+  optInSignalPeriod = requireInt32('KST', 'signalPeriod', optInSignalPeriod);
+  requireIndexRange('KST', startIdx, endIdx);
+  const guardLookback = kstLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('KST', PARAM_RANGES, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
+  }
+  const guardStart = clampedStart('KST', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('KST', 'real', inReal, guardInLen);
+  requireOutput('KST', 'outKst', outKST, guardOutLen, Float64Array);
+  requireOutput('KST', 'outKstSignal', outKSTSignal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outKST, inRealF64)) {
+    throw sharedMemory('KST', 'outKst', 'real');
+  }
+  if (overlapsPartly(outKSTSignal, inRealF64)) {
+    throw sharedMemory('KST', 'outKstSignal', 'real');
+  }
+  if (overlaps(outKST, outKSTSignal)) {
+    throw sharedMemory('KST', 'outKst', 'outKstSignal');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = kstImpl(core, startIdx, endIdx, inRealF64, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outBegIdx, outNBElement, outKST, outKSTSignal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('KST', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link kst}, {@link kstLookback}, {@link kstDisplayShift},
+ * {@link kstOpen} and {@link kstOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface KstOptions {
+  /**
+   * Rate-of-change period of leg 1 (weight 1) (default 10; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  roc1Period?: number | undefined;
+  /**
+   * Rate-of-change period of leg 2 (weight 2) (default 15; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  roc2Period?: number | undefined;
+  /**
+   * Rate-of-change period of leg 3 (weight 3) (default 20; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  roc3Period?: number | undefined;
+  /**
+   * Rate-of-change period of leg 4 (weight 4) (default 30; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  roc4Period?: number | undefined;
+  /**
+   * Simple-moving-average period smoothing leg 1 (default 10; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  sma1Period?: number | undefined;
+  /**
+   * Simple-moving-average period smoothing leg 2 (default 10; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  sma2Period?: number | undefined;
+  /**
+   * Simple-moving-average period smoothing leg 3 (default 10; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  sma3Period?: number | undefined;
+  /**
+   * Simple-moving-average period smoothing leg 4 (default 15; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  sma4Period?: number | undefined;
+  /**
+   * Simple-moving-average period of the signal line (default 9; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  signalPeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outKst`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outKst?: Float64Array | undefined;
+  /**
+   * Buffer for `outKstSignal`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outKstSignal?: Float64Array | undefined;
+}
+
+/** What {@link kst} returns, and {@link kstOpenAndFill} with its stream. */
+export interface KstResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /** Know Sure Thing line. `outKst[k]` is the value at input bar `begIdx + k`. */
+  outKst: Float64Array;
+  /**
+   * Simple moving average of the line. `outKstSignal[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  outKstSignal: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link kst} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link KstOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function kstLookback(options?: KstOptions): number {
+  const o = optionsOf('KST lookback', options);
+  return kstLookbackPositional(orDefault(o.roc1Period, Core.INTEGER_DEFAULT), orDefault(o.roc2Period, Core.INTEGER_DEFAULT), orDefault(o.roc3Period, Core.INTEGER_DEFAULT), orDefault(o.roc4Period, Core.INTEGER_DEFAULT), orDefault(o.sma1Period, Core.INTEGER_DEFAULT), orDefault(o.sma2Period, Core.INTEGER_DEFAULT), orDefault(o.sma3Period, Core.INTEGER_DEFAULT), orDefault(o.sma4Period, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), coreOf('KST lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link kst}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link KstOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function kstDisplayShift(outputIdx: number, options?: KstOptions): number {
+  const o = optionsOf('KST displayShift', options);
+  return kstDisplayShiftPositional(orDefault(o.roc1Period, Core.INTEGER_DEFAULT), orDefault(o.roc2Period, Core.INTEGER_DEFAULT), orDefault(o.roc3Period, Core.INTEGER_DEFAULT), orDefault(o.roc4Period, Core.INTEGER_DEFAULT), orDefault(o.sma1Period, Core.INTEGER_DEFAULT), orDefault(o.sma2Period, Core.INTEGER_DEFAULT), orDefault(o.sma3Period, Core.INTEGER_DEFAULT), orDefault(o.sma4Period, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('KST displayShift', o.core));
+}
+
 /**
  * Know Sure Thing: Martin J. Pring's momentum oscillator, a weighted sum of four
  * smoothed rates of change with a moving-average signal line. Each leg smooths a
@@ -640,45 +779,23 @@ export function kstImpl(
  * - Pring's daily page uses a 10-day signal. The default signal period follows the
  *   charting platforms instead.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link kstLookback} is a success with
- * `count` 0.
+ * `outKst[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link kstLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Source price series (canonically the close)
- * @param optInROC1Period - Rate-of-change period of leg 1 (weight 1) (default 10;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC2Period - Rate-of-change period of leg 2 (weight 2) (default 15;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC3Period - Rate-of-change period of leg 3 (weight 3) (default 20;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC4Period - Rate-of-change period of leg 4 (weight 4) (default 30;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA1Period - Simple-moving-average period smoothing leg 1 (default
- *   10; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA2Period - Simple-moving-average period smoothing leg 2 (default
- *   10; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA3Period - Simple-moving-average period smoothing leg 3 (default
- *   10; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA4Period - Simple-moving-average period smoothing leg 4 (default
- *   15; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Simple-moving-average period of the signal line
- *   (default 9; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outKST - Know Sure Thing line. Must hold the values produced and never be
- *   empty; the input length always suffices.
- * @param outKSTSignal - Simple moving average of the line. Must hold the values
- *   produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Source price series (canonically the close)
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link KstOptions}.
+ * @returns `begIdx` and the values; see {@link KstResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output,
- *   two outputs sharing memory or an output sharing memory with a `Float64Array`
- *   input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -686,15 +803,18 @@ export function kstImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const kstOut = new Float64Array(data.length);
- * const kstSignal = new Float64Array(data.length);
- * const { begIdx, count } = kst(
- *   0, data.length - 1,
- *   data,
- *   10, 15, 20, 30, 10, 10, 10, 15, 9,
- *   kstOut, kstSignal,
- * );
- * // kstOut[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, outKst, outKstSignal } = kst(data, {
+ *   roc1Period: 10,
+ *   roc2Period: 15,
+ *   roc3Period: 20,
+ *   roc4Period: 30,
+ *   sma1Period: 10,
+ *   sma2Period: 10,
+ *   sma3Period: 10,
+ *   sma4Period: 15,
+ *   signalPeriod: 9,
+ * });
+ * // outKst[k] is the value at bar begIdx + k
  * ```
  * @see [`kstext`](https://ta-lib.org/functions/kstext)
  * @see [`roc`](https://ta-lib.org/functions/roc)
@@ -702,52 +822,28 @@ export function kstImpl(
  * @see [`coppock`](https://ta-lib.org/functions/coppock)
  * @see [`macd`](https://ta-lib.org/functions/macd)
  */
-export function kst(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInROC1Period: number,
-  optInROC2Period: number,
-  optInROC3Period: number,
-  optInROC4Period: number,
-  optInSMA1Period: number,
-  optInSMA2Period: number,
-  optInSMA3Period: number,
-  optInSMA4Period: number,
-  optInSignalPeriod: number,
-  outKST: Float64Array,
-  outKSTSignal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('KST', 'startIdx', startIdx);
-  endIdx = requireInt32('KST', 'endIdx', endIdx);
-  optInROC1Period = requireInt32('KST', 'optInROC1Period', optInROC1Period);
-  optInROC2Period = requireInt32('KST', 'optInROC2Period', optInROC2Period);
-  optInROC3Period = requireInt32('KST', 'optInROC3Period', optInROC3Period);
-  optInROC4Period = requireInt32('KST', 'optInROC4Period', optInROC4Period);
-  optInSMA1Period = requireInt32('KST', 'optInSMA1Period', optInSMA1Period);
-  optInSMA2Period = requireInt32('KST', 'optInSMA2Period', optInSMA2Period);
-  optInSMA3Period = requireInt32('KST', 'optInSMA3Period', optInSMA3Period);
-  optInSMA4Period = requireInt32('KST', 'optInSMA4Period', optInSMA4Period);
-  optInSignalPeriod = requireInt32('KST', 'optInSignalPeriod', optInSignalPeriod);
-  requireIndexRange('KST', startIdx, endIdx);
-  const guardStart = clampedStart('KST', startIdx, kstLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('KST', 'inReal', inReal, guardInLen);
-  requireOutput('KST', 'outKST', outKST, guardOutLen, Float64Array);
-  requireOutput('KST', 'outKSTSignal', outKSTSignal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outKST, inRealF64) || overlapsPartly(outKSTSignal, inRealF64) || overlaps(outKST, outKSTSignal)) {
-    throw failure('KST', RetCode.BAD_PARAM);
+export function kst(real: ArrayLike<number>, options?: KstOptions): KstResult {
+  const o = optionsOf('KST', options);
+  if (o.endIdx === undefined) {
+    requireSeries('KST', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = kstImpl(core, startIdx, endIdx, inRealF64, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outBegIdx, outNBElement, outKST, outKSTSignal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('KST', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInROC1Period = orDefault(o.roc1Period, Core.INTEGER_DEFAULT);
+  const optInROC2Period = orDefault(o.roc2Period, Core.INTEGER_DEFAULT);
+  const optInROC3Period = orDefault(o.roc3Period, Core.INTEGER_DEFAULT);
+  const optInROC4Period = orDefault(o.roc4Period, Core.INTEGER_DEFAULT);
+  const optInSMA1Period = orDefault(o.sma1Period, Core.INTEGER_DEFAULT);
+  const optInSMA2Period = orDefault(o.sma2Period, Core.INTEGER_DEFAULT);
+  const optInSMA3Period = orDefault(o.sma3Period, Core.INTEGER_DEFAULT);
+  const optInSMA4Period = orDefault(o.sma4Period, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('KST', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, kstLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core), real);
+  const outKST = o.outKst === undefined ? new Float64Array(capacity) : o.outKst;
+  const outKSTSignal = o.outKstSignal === undefined ? new Float64Array(capacity) : o.outKstSignal;
+  const range = kstPositional(startIdx, endIdx, real, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outKST, outKSTSignal, core);
+  return { begIdx: range.begIdx, outKst: outKST.subarray(0, range.count), outKstSignal: outKSTSignal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -897,20 +993,22 @@ export class KstStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inReal - The bar's `inReal` value: Source price series (canonically the
    *   close)
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link KstOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out: KstOut): void {
+  update(inReal: number, out?: KstOut): KstOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('KST update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KST update', 'KstOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -918,22 +1016,27 @@ export class KstStream {
     }
     kstStepImpl(this, inReal);
     this.outRangeCount++;
-    out.kst = this.cur_outKST;
-    out.kstSignal = this.cur_outKSTSignal;
+    if (out === undefined) {
+      out = new KstOut();
+    }
+    out.outKst = this.cur_outKST;
+    out.outKstSignal = this.cur_outKSTSignal;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inReal - The bar's `inReal` value: Source price series (canonically the
    *   close)
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link KstOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number, out: KstOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inReal: number, out?: KstOut): KstOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KST peek', 'KstOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -1096,21 +1199,31 @@ export class KstStream {
     sigTotal -= (sigRing_Idx !== pkSlot8) ? sp.cb_sigRing[sigRing_Idx] : pkVal8;
     cur_outKST = kst;
     cur_outKSTSignal = sig;
-    out.kst = cur_outKST;
-    out.kstSignal = cur_outKSTSignal;
+    if (out === undefined) {
+      out = new KstOut();
+    }
+    out.outKst = cur_outKST;
+    out.outKstSignal = cur_outKSTSignal;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link KstOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: KstOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: KstOut): KstOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KST value', 'KstOut');
     }
-    out.kst = this.cur_outKST;
-    out.kstSignal = this.cur_outKSTSignal;
+    if (out === undefined) {
+      out = new KstOut();
+    }
+    out.outKst = this.cur_outKST;
+    out.outKstSignal = this.cur_outKSTSignal;
+    return out;
   }
 
   /**
@@ -1176,14 +1289,15 @@ export class KstStream {
 }
 
 /**
- * The outputs of one KST bar, written into an object the caller owns and reuses:
- * valid until the next call that writes it.
+ * The outputs of one KST bar, as `update`, `peek` and `value` return them. Passed
+ * back to one of them, it is filled and returned again, with no allocation; it
+ * holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class KstOut {
   /** Know Sure Thing line. */
-  kst: number = 0;
+  outKst: number = NaN;
   /** Simple moving average of the line. */
-  kstSignal: number = 0;
+  outKstSignal: number = NaN;
 }
 
 function kstStepImpl(sp: KstStream, inReal: number): void {
@@ -1448,7 +1562,7 @@ function kstOpenImpl(
    * both at or after the slot the outputs write: outKST or outKSTSignal
    * may alias inReal.
    */
-  lookbackTotal = kstLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core);
+  lookbackTotal = kstLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -1884,7 +1998,10 @@ export function kstOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('KST openAndFill', inReal.length, startIdx, kstLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core));
+    throw insufficientHistory('KST openAndFill', inReal.length, startIdx, kstLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && kstLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core) < 0) {
+    throw rejectedParams('KST openAndFill', PARAM_RANGES, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
   }
   throw streamFailure('KST openAndFill', retCode);
 }
@@ -1916,55 +2033,16 @@ export function kstOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('KST open', inReal.length, startIdx, kstLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core));
+    throw insufficientHistory('KST open', inReal.length, startIdx, kstLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && kstLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core) < 0) {
+    throw rejectedParams('KST open', PARAM_RANGES, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
   }
   throw streamFailure('KST open', retCode);
 }
 
-/**
- * Opens a live KST stream over the warm-up history: `value()` starts at the last
- * history bar, bit-identical to {@link kst} there.
- *
- * @param inReal - Warm-up history. Source price series (canonically the close)
- * @param optInROC1Period - Rate-of-change period of leg 1 (weight 1) (default 10;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC2Period - Rate-of-change period of leg 2 (weight 2) (default 15;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC3Period - Rate-of-change period of leg 3 (weight 3) (default 20;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC4Period - Rate-of-change period of leg 4 (weight 4) (default 30;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA1Period - Simple-moving-average period smoothing leg 1 (default
- *   10; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA2Period - Simple-moving-average period smoothing leg 2 (default
- *   10; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA3Period - Simple-moving-average period smoothing leg 3 (default
- *   10; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA4Period - Simple-moving-average period smoothing leg 4 (default
- *   15; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Simple-moving-average period of the signal line
- *   (default 9; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `kstLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   an integer parameter that is not an int32 or a parameter outside its range.
- *
- * @example
- * ```ts
- * import { KstOut, kstOpen } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const stream = kstOpen(data, 10, 15, 20, 30, 10, 10, 10, 15, 9);
- * const peeked = new KstOut();
- * const updated = new KstOut();
- * stream.peek(100.9, peeked); // a forming bar: commits nothing
- * stream.update(100.9, updated); // the bar closes
- * ```
- */
-export function kstOpen(
+/** @internal */
+export function kstOpenPositional(
   inReal: ArrayLike<number>,
   optInROC1Period: number,
   optInROC2Period: number,
@@ -1977,77 +2055,22 @@ export function kstOpen(
   optInSignalPeriod: number,
   core: Core = Core.DEFAULT,
 ): KstStream {
-  optInROC1Period = requireInt32('KST open', 'optInROC1Period', optInROC1Period);
-  optInROC2Period = requireInt32('KST open', 'optInROC2Period', optInROC2Period);
-  optInROC3Period = requireInt32('KST open', 'optInROC3Period', optInROC3Period);
-  optInROC4Period = requireInt32('KST open', 'optInROC4Period', optInROC4Period);
-  optInSMA1Period = requireInt32('KST open', 'optInSMA1Period', optInSMA1Period);
-  optInSMA2Period = requireInt32('KST open', 'optInSMA2Period', optInSMA2Period);
-  optInSMA3Period = requireInt32('KST open', 'optInSMA3Period', optInSMA3Period);
-  optInSMA4Period = requireInt32('KST open', 'optInSMA4Period', optInSMA4Period);
-  optInSignalPeriod = requireInt32('KST open', 'optInSignalPeriod', optInSignalPeriod);
-  requireArgument('KST open', 'inReal', inReal);
+  optInROC1Period = requireInt32('KST open', 'roc1Period', optInROC1Period);
+  optInROC2Period = requireInt32('KST open', 'roc2Period', optInROC2Period);
+  optInROC3Period = requireInt32('KST open', 'roc3Period', optInROC3Period);
+  optInROC4Period = requireInt32('KST open', 'roc4Period', optInROC4Period);
+  optInSMA1Period = requireInt32('KST open', 'sma1Period', optInSMA1Period);
+  optInSMA2Period = requireInt32('KST open', 'sma2Period', optInSMA2Period);
+  optInSMA3Period = requireInt32('KST open', 'sma3Period', optInSMA3Period);
+  optInSMA4Period = requireInt32('KST open', 'sma4Period', optInSMA4Period);
+  optInSignalPeriod = requireInt32('KST open', 'signalPeriod', optInSignalPeriod);
+  requireArgument('KST open', 'real', inReal);
   requireHistory('KST open', inReal.length);
   return kstOpenInternal(core, float64(inReal), 0, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
 }
 
-/**
- * {@link kstOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link kst}. The range written is the stream's
- * `outRange()`.
- *
- * @param inReal - Warm-up history. Source price series (canonically the close)
- * @param optInROC1Period - Rate-of-change period of leg 1 (weight 1) (default 10;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC2Period - Rate-of-change period of leg 2 (weight 2) (default 15;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC3Period - Rate-of-change period of leg 3 (weight 3) (default 20;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInROC4Period - Rate-of-change period of leg 4 (weight 4) (default 30;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA1Period - Simple-moving-average period smoothing leg 1 (default
- *   10; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA2Period - Simple-moving-average period smoothing leg 2 (default
- *   10; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA3Period - Simple-moving-average period smoothing leg 3 (default
- *   10; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSMA4Period - Simple-moving-average period smoothing leg 4 (default
- *   15; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Simple-moving-average period of the signal line
- *   (default 9; range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outKST - Know Sure Thing line. Must hold `historyLen - lookback` values
- *   and share no memory with an input or another output.
- * @param outKSTSignal - Simple moving average of the line. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `kstLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   an integer parameter that is not an int32, a parameter outside its range or an
- *   output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { kstOpenAndFill } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const kstOut = new Float64Array(data.length);
- * const kstSignal = new Float64Array(data.length);
- * const stream = kstOpenAndFill(
- *   data,
- *   10, 15, 20, 30, 10, 10, 10, 15, 9,
- *   kstOut, kstSignal,
- * );
- * const { begIdx, count } = stream.outRange();
- * // kstOut[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function kstOpenAndFill(
+/** @internal */
+export function kstOpenAndFillPositional(
   inReal: ArrayLike<number>,
   optInROC1Period: number,
   optInROC2Period: number,
@@ -2062,26 +2085,154 @@ export function kstOpenAndFill(
   outKSTSignal: Float64Array,
   core: Core = Core.DEFAULT,
 ): KstStream {
-  optInROC1Period = requireInt32('KST openAndFill', 'optInROC1Period', optInROC1Period);
-  optInROC2Period = requireInt32('KST openAndFill', 'optInROC2Period', optInROC2Period);
-  optInROC3Period = requireInt32('KST openAndFill', 'optInROC3Period', optInROC3Period);
-  optInROC4Period = requireInt32('KST openAndFill', 'optInROC4Period', optInROC4Period);
-  optInSMA1Period = requireInt32('KST openAndFill', 'optInSMA1Period', optInSMA1Period);
-  optInSMA2Period = requireInt32('KST openAndFill', 'optInSMA2Period', optInSMA2Period);
-  optInSMA3Period = requireInt32('KST openAndFill', 'optInSMA3Period', optInSMA3Period);
-  optInSMA4Period = requireInt32('KST openAndFill', 'optInSMA4Period', optInSMA4Period);
-  optInSignalPeriod = requireInt32('KST openAndFill', 'optInSignalPeriod', optInSignalPeriod);
-  requireArgument('KST openAndFill', 'inReal', inReal);
+  optInROC1Period = requireInt32('KST openAndFill', 'roc1Period', optInROC1Period);
+  optInROC2Period = requireInt32('KST openAndFill', 'roc2Period', optInROC2Period);
+  optInROC3Period = requireInt32('KST openAndFill', 'roc3Period', optInROC3Period);
+  optInROC4Period = requireInt32('KST openAndFill', 'roc4Period', optInROC4Period);
+  optInSMA1Period = requireInt32('KST openAndFill', 'sma1Period', optInSMA1Period);
+  optInSMA2Period = requireInt32('KST openAndFill', 'sma2Period', optInSMA2Period);
+  optInSMA3Period = requireInt32('KST openAndFill', 'sma3Period', optInSMA3Period);
+  optInSMA4Period = requireInt32('KST openAndFill', 'sma4Period', optInSMA4Period);
+  optInSignalPeriod = requireInt32('KST openAndFill', 'signalPeriod', optInSignalPeriod);
+  requireArgument('KST openAndFill', 'real', inReal);
   requireHistory('KST openAndFill', inReal.length);
-  const guardOutLen = openFillCount('KST openAndFill', inReal.length, kstLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core));
-  requireOutput('KST openAndFill', 'outKST', outKST, guardOutLen, Float64Array);
-  requireOutput('KST openAndFill', 'outKSTSignal', outKSTSignal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outKST.buffer === inRealF64.buffer && outKST.byteOffset === inRealF64.byteOffset) || (outKSTSignal.buffer === inRealF64.buffer && outKSTSignal.byteOffset === inRealF64.byteOffset) || (outKST.buffer === outKSTSignal.buffer && outKST.byteOffset === outKSTSignal.byteOffset)) {
-    throw streamFailure('KST openAndFill', RetCode.BAD_PARAM);
+  const guardLookback = kstLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('KST openAndFill', PARAM_RANGES, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
   }
-  if (guardOutLen > 0 && (overlaps(outKST, inRealF64) || overlaps(outKSTSignal, inRealF64) || overlaps(outKST, outKSTSignal))) {
-    throw streamFailure('KST openAndFill', RetCode.BAD_PARAM);
+  const guardOutLen = openFillCount('KST openAndFill', inReal.length, guardLookback);
+  requireOutput('KST openAndFill', 'outKst', outKST, guardOutLen, Float64Array);
+  requireOutput('KST openAndFill', 'outKstSignal', outKSTSignal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outKST.buffer === inRealF64.buffer && outKST.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('KST openAndFill', 'outKst', 'real');
+  }
+  if (outKSTSignal.buffer === inRealF64.buffer && outKSTSignal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('KST openAndFill', 'outKstSignal', 'real');
+  }
+  if (outKST.buffer === outKSTSignal.buffer && outKST.byteOffset === outKSTSignal.byteOffset) {
+    throw sharedMemory('KST openAndFill', 'outKst', 'outKstSignal');
+  }
+  if (guardOutLen > 0 && overlaps(outKST, inRealF64)) {
+    throw sharedMemory('KST openAndFill', 'outKst', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outKSTSignal, inRealF64)) {
+    throw sharedMemory('KST openAndFill', 'outKstSignal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outKST, outKSTSignal)) {
+    throw sharedMemory('KST openAndFill', 'outKst', 'outKstSignal');
   }
   return kstOpenAndFillInternal(core, inRealF64, 0, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, new MInteger(), new MInteger(), outKST, outKSTSignal);
+}
+
+/**
+ * Opens a live KST stream over the warm-up history: `value()` starts at the last
+ * history bar, bit-identical to {@link kst} there.
+ *
+ * @param real - Warm-up history. Source price series (canonically the close)
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link KstOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `kstLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   an integer parameter that is not an int32 or a parameter outside its range.
+ *
+ * @example
+ * ```ts
+ * import { kstOpen } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const stream = kstOpen(data, {
+ *   roc1Period: 10,
+ *   roc2Period: 15,
+ *   roc3Period: 20,
+ *   roc4Period: 30,
+ *   sma1Period: 10,
+ *   sma2Period: 10,
+ *   sma3Period: 10,
+ *   sma4Period: 15,
+ *   signalPeriod: 9,
+ * });
+ * const peeked = stream.peek(100.9); // a forming bar: commits nothing
+ * const updated = stream.update(100.9); // the bar closes
+ * ```
+ */
+export function kstOpen(real: ArrayLike<number>, options?: KstOptions): KstStream {
+  const o = optionsOf('KST open', options);
+  const optInROC1Period = orDefault(o.roc1Period, Core.INTEGER_DEFAULT);
+  const optInROC2Period = orDefault(o.roc2Period, Core.INTEGER_DEFAULT);
+  const optInROC3Period = orDefault(o.roc3Period, Core.INTEGER_DEFAULT);
+  const optInROC4Period = orDefault(o.roc4Period, Core.INTEGER_DEFAULT);
+  const optInSMA1Period = orDefault(o.sma1Period, Core.INTEGER_DEFAULT);
+  const optInSMA2Period = orDefault(o.sma2Period, Core.INTEGER_DEFAULT);
+  const optInSMA3Period = orDefault(o.sma3Period, Core.INTEGER_DEFAULT);
+  const optInSMA4Period = orDefault(o.sma4Period, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('KST open', o.core);
+  return kstOpenPositional(real, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core);
+}
+
+/**
+ * {@link kstOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link kst}.
+ *
+ * @param real - Warm-up history. Source price series (canonically the close)
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link KstOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link kst} returns them; the range is the stream's
+ *   `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `kstLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   an integer parameter that is not an int32, a parameter outside its range or a
+ *   buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
+ *
+ * @example
+ * ```ts
+ * import { kstOpenAndFill } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const {
+ *   stream,
+ *   begIdx,
+ *   outKst,
+ *   outKstSignal,
+ * } = kstOpenAndFill(data, {
+ *   roc1Period: 10,
+ *   roc2Period: 15,
+ *   roc3Period: 20,
+ *   roc4Period: 30,
+ *   sma1Period: 10,
+ *   sma2Period: 10,
+ *   sma3Period: 10,
+ *   sma4Period: 15,
+ *   signalPeriod: 9,
+ * });
+ * // outKst[k] is the value at bar begIdx + k
+ * ```
+ */
+export function kstOpenAndFill(real: ArrayLike<number>, options?: KstOptions): KstResult & { stream: KstStream } {
+  const o = optionsOf('KST openAndFill', options);
+  const optInROC1Period = orDefault(o.roc1Period, Core.INTEGER_DEFAULT);
+  const optInROC2Period = orDefault(o.roc2Period, Core.INTEGER_DEFAULT);
+  const optInROC3Period = orDefault(o.roc3Period, Core.INTEGER_DEFAULT);
+  const optInROC4Period = orDefault(o.roc4Period, Core.INTEGER_DEFAULT);
+  const optInSMA1Period = orDefault(o.sma1Period, Core.INTEGER_DEFAULT);
+  const optInSMA2Period = orDefault(o.sma2Period, Core.INTEGER_DEFAULT);
+  const optInSMA3Period = orDefault(o.sma3Period, Core.INTEGER_DEFAULT);
+  const optInSMA4Period = orDefault(o.sma4Period, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('KST openAndFill', o.core);
+  const capacity = fillCapacity(kstLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core), real);
+  const outKST = o.outKst === undefined ? new Float64Array(capacity) : o.outKst;
+  const outKSTSignal = o.outKstSignal === undefined ? new Float64Array(capacity) : o.outKstSignal;
+  const stream = kstOpenAndFillPositional(real, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, outKST, outKSTSignal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outKst: outKST.subarray(0, range.count), outKstSignal: outKSTSignal.subarray(0, range.count) };
 }

@@ -17,24 +17,14 @@
  *  102326 MF,CC  #554 rare reset.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link vwma} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInTimePeriod - Number of bars in the weighting window (default 30;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function vwmaLookback(optInTimePeriod: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function vwmaLookbackPositional(optInTimePeriod: number, _core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -46,22 +36,9 @@ export function vwmaLookback(optInTimePeriod: number, core: Core = Core.DEFAULT)
   return optInTimePeriod - 1;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link vwma}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Number of bars in the weighting window (default 30;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function vwmaDisplayShift(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (vwmaLookback(optInTimePeriod, core) < 0) {
+/** @internal */
+export function vwmaDisplayShiftPositional(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (vwmaLookbackPositional(optInTimePeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -211,6 +188,132 @@ export function vwmaImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000']] as const;
+
+/** @internal */
+export function vwmaPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  inVolume: ArrayLike<number>,
+  optInTimePeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('VWMA', 'startIdx', startIdx);
+  endIdx = requireInt32('VWMA', 'endIdx', endIdx);
+  optInTimePeriod = requireInt32('VWMA', 'timePeriod', optInTimePeriod);
+  requireIndexRange('VWMA', startIdx, endIdx);
+  const guardLookback = vwmaLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('VWMA', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardStart = clampedStart('VWMA', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('VWMA', 'real', inReal, guardInLen);
+  requireLength('VWMA', 'prices.volume', inVolume, guardInLen);
+  requireOutput('VWMA', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  const inVolumeF64 = float64(inVolume);
+  if (overlapsPartly(outReal, inRealF64)) {
+    throw sharedMemory('VWMA', 'outReal', 'real');
+  }
+  if (overlapsPartly(outReal, inVolumeF64)) {
+    throw sharedMemory('VWMA', 'outReal', 'prices.volume');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = vwmaImpl(core, startIdx, endIdx, inRealF64, inVolumeF64, optInTimePeriod, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('VWMA', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link vwma}, {@link vwmaLookback}, {@link vwmaDisplayShift},
+ * {@link vwmaOpen} and {@link vwmaOpenAndFill}. Every key is optional: an omitted
+ * or `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface VwmaOptions {
+  /**
+   * Number of bars in the weighting window (default 30; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link vwma} returns, and {@link vwmaOpenAndFill} with its stream. */
+export interface VwmaResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Volume weighted moving average of the input. `values[k]` is the value at input
+   * bar `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link vwma} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link VwmaOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function vwmaLookback(options?: VwmaOptions): number {
+  const o = optionsOf('VWMA lookback', options);
+  return vwmaLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('VWMA lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link vwma}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link VwmaOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function vwmaDisplayShift(outputIdx: number, options?: VwmaOptions): number {
+  const o = optionsOf('VWMA displayShift', options);
+  return vwmaDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('VWMA displayShift', o.core));
+}
+
 /**
  * Volume Weighted Moving Average: the mean price over a trailing window of
  * `optInTimePeriod` bars, each bar weighted by its own volume. Heavily traded bars
@@ -237,28 +340,25 @@ export function vwmaImpl(
  *   feeds, are outside what a volume-weighted average can describe — use SMA or
  *   WMA there.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link vwmaLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link vwmaLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Source price series, close by convention.
- * @param inVolume - Volume of each bar.
- * @param optInTimePeriod - Number of bars in the weighting window (default 30;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Volume weighted moving average of the input. Must hold the
- *   values produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Source price series, close by convention.
+ * @param prices - One series per price component, all of one length. `volume`:
+ *   Volume of each bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link VwmaOptions}.
+ * @returns `begIdx` and the values; see {@link VwmaResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output
- *   or an output sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -268,46 +368,29 @@ export function vwmaImpl(
  *   100 + 10 * Math.sin(0.1 * i));
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const out = new Float64Array(data.length);
- * const { begIdx, count } = vwma(0, data.length - 1, data, volume, 30, out);
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = vwma(data, { volume }, { timePeriod: 30 });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`sma`](https://ta-lib.org/functions/sma)
  * @see [`wma`](https://ta-lib.org/functions/wma)
  * @see [`ma`](https://ta-lib.org/functions/ma)
  * @see [`obv`](https://ta-lib.org/functions/obv)
  */
-export function vwma(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  inVolume: ArrayLike<number>,
-  optInTimePeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('VWMA', 'startIdx', startIdx);
-  endIdx = requireInt32('VWMA', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('VWMA', 'optInTimePeriod', optInTimePeriod);
-  requireIndexRange('VWMA', startIdx, endIdx);
-  const guardStart = clampedStart('VWMA', startIdx, vwmaLookback(optInTimePeriod, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('VWMA', 'inReal', inReal, guardInLen);
-  requireLength('VWMA', 'inVolume', inVolume, guardInLen);
-  requireOutput('VWMA', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  const inVolumeF64 = float64(inVolume);
-  if (overlapsPartly(outReal, inRealF64) || overlapsPartly(outReal, inVolumeF64)) {
-    throw failure('VWMA', RetCode.BAD_PARAM);
+export function vwma(real: ArrayLike<number>, prices: { volume: ArrayLike<number> }, options?: VwmaOptions): VwmaResult {
+  requireArgument('VWMA', 'prices', prices);
+  const o = optionsOf('VWMA', options);
+  if (o.endIdx === undefined) {
+    requireSeries('VWMA', 'real', real);
+    requireSeries('VWMA', 'prices.volume', prices.volume);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = vwmaImpl(core, startIdx, endIdx, inRealF64, inVolumeF64, optInTimePeriod, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('VWMA', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('VWMA', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, vwmaLookbackPositional(optInTimePeriod, core), real, prices.volume);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = vwmaPositional(startIdx, endIdx, real, prices.volume, optInTimePeriod, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -590,7 +673,7 @@ function vwmaOpenImpl(
     return RetCode.INSUFFICIENT_HISTORY;
   }
   if (optInTimePeriod === 1) {
-    let fillLb = vwmaLookback(optInTimePeriod, core);
+    let fillLb = vwmaLookbackPositional(optInTimePeriod, core);
     if (startIdx > fillLb) {
       fillLb = startIdx;
     }
@@ -746,7 +829,10 @@ export function vwmaOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('VWMA openAndFill', inReal.length, startIdx, vwmaLookback(optInTimePeriod, core));
+    throw insufficientHistory('VWMA openAndFill', inReal.length, startIdx, vwmaLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && vwmaLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('VWMA openAndFill', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('VWMA openAndFill', retCode);
 }
@@ -770,26 +856,78 @@ export function vwmaOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('VWMA open', inReal.length, startIdx, vwmaLookback(optInTimePeriod, core));
+    throw insufficientHistory('VWMA open', inReal.length, startIdx, vwmaLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && vwmaLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('VWMA open', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('VWMA open', retCode);
+}
+
+/** @internal */
+export function vwmaOpenPositional(
+  inReal: ArrayLike<number>,
+  inVolume: ArrayLike<number>,
+  optInTimePeriod: number,
+  core: Core = Core.DEFAULT,
+): VwmaStream {
+  optInTimePeriod = requireInt32('VWMA open', 'timePeriod', optInTimePeriod);
+  requireArgument('VWMA open', 'real', inReal);
+  requireHistory('VWMA open', inReal.length);
+  requireArgument('VWMA open', 'prices.volume', inVolume);
+  requireHistoryLength('VWMA open', 'prices.volume', inVolume.length, inReal.length);
+  return vwmaOpenInternal(core, float64(inReal), float64(inVolume), 0, optInTimePeriod);
+}
+
+/** @internal */
+export function vwmaOpenAndFillPositional(
+  inReal: ArrayLike<number>,
+  inVolume: ArrayLike<number>,
+  optInTimePeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): VwmaStream {
+  optInTimePeriod = requireInt32('VWMA openAndFill', 'timePeriod', optInTimePeriod);
+  requireArgument('VWMA openAndFill', 'real', inReal);
+  requireHistory('VWMA openAndFill', inReal.length);
+  requireArgument('VWMA openAndFill', 'prices.volume', inVolume);
+  const guardLookback = vwmaLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('VWMA openAndFill', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardOutLen = openFillCount('VWMA openAndFill', inReal.length, guardLookback);
+  requireHistoryLength('VWMA openAndFill', 'prices.volume', inVolume.length, inReal.length);
+  requireOutput('VWMA openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  const inVolumeF64 = float64(inVolume);
+  if (outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('VWMA openAndFill', 'outReal', 'real');
+  }
+  if (outReal.buffer === inVolumeF64.buffer && outReal.byteOffset === inVolumeF64.byteOffset) {
+    throw sharedMemory('VWMA openAndFill', 'outReal', 'prices.volume');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inRealF64)) {
+    throw sharedMemory('VWMA openAndFill', 'outReal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inVolumeF64)) {
+    throw sharedMemory('VWMA openAndFill', 'outReal', 'prices.volume');
+  }
+  return vwmaOpenAndFillInternal(core, inRealF64, inVolumeF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live VWMA stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link vwma} there.
  *
- * @param inReal - Warm-up history. Source price series, close by convention. Every
- *   history has the same length.
- * @param inVolume - Warm-up history. Volume of each bar. Every history has the
- *   same length.
- * @param optInTimePeriod - Number of bars in the weighting window (default 30;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param real - Warm-up history. Source price series, close by convention.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `volume`: Volume of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link VwmaOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `vwmaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
  *   an integer parameter that is not an int32, a parameter outside its range or
  *   histories of different lengths.
  *
@@ -801,48 +939,39 @@ export function vwmaOpenInternal(
  *   100 + 10 * Math.sin(0.1 * i));
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const stream = vwmaOpen(data, volume, 30);
+ * const stream = vwmaOpen(data, { volume }, { timePeriod: 30 });
  * const peeked = stream.peek(100.9, 12345); // a forming bar: commits nothing
  * const updated = stream.update(100.9, 12345); // the bar closes
  * ```
  */
-export function vwmaOpen(
-  inReal: ArrayLike<number>,
-  inVolume: ArrayLike<number>,
-  optInTimePeriod: number,
-  core: Core = Core.DEFAULT,
-): VwmaStream {
-  optInTimePeriod = requireInt32('VWMA open', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('VWMA open', 'inReal', inReal);
-  requireHistory('VWMA open', inReal.length);
-  requireArgument('VWMA open', 'inVolume', inVolume);
-  requireHistoryLength('VWMA open', 'inVolume', inVolume.length, inReal.length);
-  return vwmaOpenInternal(core, float64(inReal), float64(inVolume), 0, optInTimePeriod);
+export function vwmaOpen(real: ArrayLike<number>, prices: { volume: ArrayLike<number> }, options?: VwmaOptions): VwmaStream {
+  requireArgument('VWMA open', 'prices', prices);
+  const o = optionsOf('VWMA open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('VWMA open', o.core);
+  return vwmaOpenPositional(real, prices.volume, optInTimePeriod, core);
 }
 
 /**
- * {@link vwmaOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link vwma}. The range written is the stream's
- * `outRange()`.
+ * {@link vwmaOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link vwma}.
  *
- * @param inReal - Warm-up history. Source price series, close by convention. Every
- *   history has the same length.
- * @param inVolume - Warm-up history. Volume of each bar. Every history has the
- *   same length.
- * @param optInTimePeriod - Number of bars in the weighting window (default 30;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Volume weighted moving average of the input. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param real - Warm-up history. Source price series, close by convention.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `volume`: Volume of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link VwmaOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link vwma} returns them; the range is the stream's
+ *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `vwmaLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
  *   an integer parameter that is not an int32, a parameter outside its range,
- *   histories of different lengths or an output too short or starting where another
- *   output or a `Float64Array` input starts, or, on a history long enough to open,
- *   one sharing memory with another output or a `Float64Array` input.
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
  *
  * @example
  * ```ts
@@ -852,33 +981,20 @@ export function vwmaOpen(
  *   100 + 10 * Math.sin(0.1 * i));
  * const volume = Float64Array.from({ length: 252 }, (_, i) =>
  *   10000 + 100 * i + 2000 * Math.sin(0.3 * i));
- * const out = new Float64Array(data.length);
- * const stream = vwmaOpenAndFill(data, volume, 30, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = vwmaOpenAndFill(data, { volume }, {
+ *   timePeriod: 30,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function vwmaOpenAndFill(
-  inReal: ArrayLike<number>,
-  inVolume: ArrayLike<number>,
-  optInTimePeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): VwmaStream {
-  optInTimePeriod = requireInt32('VWMA openAndFill', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('VWMA openAndFill', 'inReal', inReal);
-  requireHistory('VWMA openAndFill', inReal.length);
-  requireArgument('VWMA openAndFill', 'inVolume', inVolume);
-  const guardOutLen = openFillCount('VWMA openAndFill', inReal.length, vwmaLookback(optInTimePeriod, core));
-  requireHistoryLength('VWMA openAndFill', 'inVolume', inVolume.length, inReal.length);
-  requireOutput('VWMA openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  const inVolumeF64 = float64(inVolume);
-  if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) || (outReal.buffer === inVolumeF64.buffer && outReal.byteOffset === inVolumeF64.byteOffset)) {
-    throw streamFailure('VWMA openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inRealF64) || overlaps(outReal, inVolumeF64))) {
-    throw streamFailure('VWMA openAndFill', RetCode.BAD_PARAM);
-  }
-  return vwmaOpenAndFillInternal(core, inRealF64, inVolumeF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outReal);
+export function vwmaOpenAndFill(real: ArrayLike<number>, prices: { volume: ArrayLike<number> }, options?: VwmaOptions): VwmaResult & { stream: VwmaStream } {
+  requireArgument('VWMA openAndFill', 'prices', prices);
+  const o = optionsOf('VWMA openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('VWMA openAndFill', o.core);
+  const capacity = fillCapacity(vwmaLookbackPositional(optInTimePeriod, core), real, prices.volume);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = vwmaOpenAndFillPositional(real, prices.volume, optInTimePeriod, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

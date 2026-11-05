@@ -18,25 +18,14 @@
  *                and on the bar a large value leaves the window.
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link linearregIntercept} consumes before its
- * first value: the index of the first bar with a value when the whole series is
- * requested.
- *
- * @param optInTimePeriod - Window length of the regression (default 14; range 2 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function linearregInterceptLookback(optInTimePeriod: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function linearregInterceptLookbackPositional(optInTimePeriod: number, _core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -48,22 +37,9 @@ export function linearregInterceptLookback(optInTimePeriod: number, core: Core =
   return optInTimePeriod - 1;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link linearregIntercept}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Window length of the regression (default 14; range 2 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function linearregInterceptDisplayShift(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (linearregInterceptLookback(optInTimePeriod, core) < 0) {
+/** @internal */
+export function linearregInterceptDisplayShiftPositional(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (linearregInterceptLookbackPositional(optInTimePeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -130,7 +106,7 @@ export function linearregInterceptImpl(
    * TA_TSF                : Returns b+m*(period)
    */
   /* Adjust startIdx to account for the lookback period. */
-  lookbackTotal = linearregInterceptLookback(optInTimePeriod, core);
+  lookbackTotal = linearregInterceptLookbackPositional(optInTimePeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -266,52 +242,10 @@ export function linearregInterceptImpl(
   return RetCode.SUCCESS;
 }
 
-/**
- * Returns the y-intercept (b) of the least-squares regression line fitted over the
- * last optInTimePeriod values. Part of the linear-regression family (LINEARREG,
- * SLOPE, ANGLE, TSF).
- *
- * Formula and more info at
- * [ta-lib.org/functions/linearreg_intercept](https://ta-lib.org/functions/linearreg_intercept).
- *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link linearregInterceptLookback} is a
- * success with `count` 0.
- *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Input series to regress.
- * @param optInTimePeriod - Window length of the regression (default 14; range 2 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Intercept b of the fitted line at each bar. Must hold the
- *   values produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
- * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
- *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output
- *   or an output sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
- *
- * @example
- * ```ts
- * import { linearregIntercept } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const { begIdx, count } = linearregIntercept(0, data.length - 1, data, 14, out);
- * // out[k] is the value at bar begIdx + k, for k < count
- * ```
- * @see [`linearreg`](https://ta-lib.org/functions/linearreg)
- * @see [`linearregSlope`](https://ta-lib.org/functions/linearreg_slope)
- * @see [`linearregAngle`](https://ta-lib.org/functions/linearreg_angle)
- * @see [`tsf`](https://ta-lib.org/functions/tsf)
- */
-export function linearregIntercept(
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000']] as const;
+
+/** @internal */
+export function linearregInterceptPositional(
   startIdx: number,
   endIdx: number,
   inReal: ArrayLike<number>,
@@ -321,16 +255,20 @@ export function linearregIntercept(
 ): OutRange {
   startIdx = requireInt32('LINEARREG_INTERCEPT', 'startIdx', startIdx);
   endIdx = requireInt32('LINEARREG_INTERCEPT', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('LINEARREG_INTERCEPT', 'optInTimePeriod', optInTimePeriod);
+  optInTimePeriod = requireInt32('LINEARREG_INTERCEPT', 'timePeriod', optInTimePeriod);
   requireIndexRange('LINEARREG_INTERCEPT', startIdx, endIdx);
-  const guardStart = clampedStart('LINEARREG_INTERCEPT', startIdx, linearregInterceptLookback(optInTimePeriod, core));
+  const guardLookback = linearregInterceptLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('LINEARREG_INTERCEPT', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardStart = clampedStart('LINEARREG_INTERCEPT', startIdx, guardLookback);
   const guardInLen = endIdx + 1;
   const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('LINEARREG_INTERCEPT', 'inReal', inReal, guardInLen);
+  requireLength('LINEARREG_INTERCEPT', 'real', inReal, guardInLen);
   requireOutput('LINEARREG_INTERCEPT', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);
   if (overlapsPartly(outReal, inRealF64)) {
-    throw failure('LINEARREG_INTERCEPT', RetCode.BAD_PARAM);
+    throw sharedMemory('LINEARREG_INTERCEPT', 'outReal', 'real');
   }
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
@@ -339,6 +277,149 @@ export function linearregIntercept(
     throw failure('LINEARREG_INTERCEPT', retCode);
   }
   return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link linearregIntercept}, {@link linearregInterceptLookback},
+ * {@link linearregInterceptDisplayShift}, {@link linearregInterceptOpen} and
+ * {@link linearregInterceptOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface LinearregInterceptOptions {
+  /**
+   * Window length of the regression (default 14; range 2 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/**
+ * What {@link linearregIntercept} returns, and
+ * {@link linearregInterceptOpenAndFill} with its stream.
+ */
+export interface LinearregInterceptResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Intercept b of the fitted line at each bar. `values[k]` is the value at input
+   * bar `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link linearregIntercept} consumes before its
+ * first value: the index of the first bar with a value when the whole series is
+ * requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link LinearregInterceptOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function linearregInterceptLookback(options?: LinearregInterceptOptions): number {
+  const o = optionsOf('LINEARREG_INTERCEPT lookback', options);
+  return linearregInterceptLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('LINEARREG_INTERCEPT lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link linearregIntercept}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link LinearregInterceptOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function linearregInterceptDisplayShift(outputIdx: number, options?: LinearregInterceptOptions): number {
+  const o = optionsOf('LINEARREG_INTERCEPT displayShift', options);
+  return linearregInterceptDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('LINEARREG_INTERCEPT displayShift', o.core));
+}
+
+/**
+ * Returns the y-intercept (b) of the least-squares regression line fitted over the
+ * last optInTimePeriod values. Part of the linear-regression family (LINEARREG,
+ * SLOPE, ANGLE, TSF).
+ *
+ * Formula and more info at
+ * [ta-lib.org/functions/linearreg_intercept](https://ta-lib.org/functions/linearreg_intercept).
+ *
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link linearregInterceptLookback} is a success with empty outputs.
+ *
+ * @param real - Input series to regress.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link LinearregInterceptOptions}.
+ * @returns `begIdx` and the values; see {@link LinearregInterceptResult}. Each
+ *   output is a view of its buffer, the caller's or a new one.
+ * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
+ *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
+ *
+ * @example
+ * ```ts
+ * import { linearregIntercept } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const { begIdx, values } = linearregIntercept(data, { timePeriod: 14 });
+ * // values[k] is the value at bar begIdx + k
+ * ```
+ * @see [`linearreg`](https://ta-lib.org/functions/linearreg)
+ * @see [`linearregSlope`](https://ta-lib.org/functions/linearreg_slope)
+ * @see [`linearregAngle`](https://ta-lib.org/functions/linearreg_angle)
+ * @see [`tsf`](https://ta-lib.org/functions/tsf)
+ */
+export function linearregIntercept(real: ArrayLike<number>, options?: LinearregInterceptOptions): LinearregInterceptResult {
+  const o = optionsOf('LINEARREG_INTERCEPT', options);
+  if (o.endIdx === undefined) {
+    requireSeries('LINEARREG_INTERCEPT', 'real', real);
+  }
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('LINEARREG_INTERCEPT', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, linearregInterceptLookbackPositional(optInTimePeriod, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = linearregInterceptPositional(startIdx, endIdx, real, optInTimePeriod, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -749,7 +830,7 @@ function linearregInterceptOpenImpl(
    * TA_TSF                : Returns b+m*(period)
    */
   /* Adjust startIdx to account for the lookback period. */
-  lookbackTotal = linearregInterceptLookback(optInTimePeriod, core);
+  lookbackTotal = linearregInterceptLookbackPositional(optInTimePeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -930,7 +1011,10 @@ export function linearregInterceptOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('LINEARREG_INTERCEPT openAndFill', inReal.length, startIdx, linearregInterceptLookback(optInTimePeriod, core));
+    throw insufficientHistory('LINEARREG_INTERCEPT openAndFill', inReal.length, startIdx, linearregInterceptLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && linearregInterceptLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('LINEARREG_INTERCEPT openAndFill', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('LINEARREG_INTERCEPT openAndFill', retCode);
 }
@@ -953,9 +1037,50 @@ export function linearregInterceptOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('LINEARREG_INTERCEPT open', inReal.length, startIdx, linearregInterceptLookback(optInTimePeriod, core));
+    throw insufficientHistory('LINEARREG_INTERCEPT open', inReal.length, startIdx, linearregInterceptLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && linearregInterceptLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('LINEARREG_INTERCEPT open', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('LINEARREG_INTERCEPT open', retCode);
+}
+
+/** @internal */
+export function linearregInterceptOpenPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  core: Core = Core.DEFAULT,
+): LinearregInterceptStream {
+  optInTimePeriod = requireInt32('LINEARREG_INTERCEPT open', 'timePeriod', optInTimePeriod);
+  requireArgument('LINEARREG_INTERCEPT open', 'real', inReal);
+  requireHistory('LINEARREG_INTERCEPT open', inReal.length);
+  return linearregInterceptOpenInternal(core, float64(inReal), 0, optInTimePeriod);
+}
+
+/** @internal */
+export function linearregInterceptOpenAndFillPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): LinearregInterceptStream {
+  optInTimePeriod = requireInt32('LINEARREG_INTERCEPT openAndFill', 'timePeriod', optInTimePeriod);
+  requireArgument('LINEARREG_INTERCEPT openAndFill', 'real', inReal);
+  requireHistory('LINEARREG_INTERCEPT openAndFill', inReal.length);
+  const guardLookback = linearregInterceptLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('LINEARREG_INTERCEPT openAndFill', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardOutLen = openFillCount('LINEARREG_INTERCEPT openAndFill', inReal.length, guardLookback);
+  requireOutput('LINEARREG_INTERCEPT openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('LINEARREG_INTERCEPT openAndFill', 'outReal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inRealF64)) {
+    throw sharedMemory('LINEARREG_INTERCEPT openAndFill', 'outReal', 'real');
+  }
+  return linearregInterceptOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outReal);
 }
 
 /**
@@ -963,16 +1088,15 @@ export function linearregInterceptOpenInternal(
  * starts at the last history bar, bit-identical to {@link linearregIntercept}
  * there.
  *
- * @param inReal - Warm-up history. Input series to regress.
- * @param optInTimePeriod - Window length of the regression (default 14; range 2 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param real - Warm-up history. Input series to regress.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link LinearregInterceptOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `linearregInterceptLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for an integer parameter that is not an int32 or a parameter
- *   outside its range.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input, an integer parameter that is not an int32 or a
+ *   parameter outside its range.
  *
  * @example
  * ```ts
@@ -980,42 +1104,35 @@ export function linearregInterceptOpenInternal(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = linearregInterceptOpen(data, 14);
+ * const stream = linearregInterceptOpen(data, { timePeriod: 14 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
  */
-export function linearregInterceptOpen(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  core: Core = Core.DEFAULT,
-): LinearregInterceptStream {
-  optInTimePeriod = requireInt32('LINEARREG_INTERCEPT open', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('LINEARREG_INTERCEPT open', 'inReal', inReal);
-  requireHistory('LINEARREG_INTERCEPT open', inReal.length);
-  return linearregInterceptOpenInternal(core, float64(inReal), 0, optInTimePeriod);
+export function linearregInterceptOpen(real: ArrayLike<number>, options?: LinearregInterceptOptions): LinearregInterceptStream {
+  const o = optionsOf('LINEARREG_INTERCEPT open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('LINEARREG_INTERCEPT open', o.core);
+  return linearregInterceptOpenPositional(real, optInTimePeriod, core);
 }
 
 /**
- * {@link linearregInterceptOpen} that also fills the outputs over the whole
- * history in the same pass, bit-identically to {@link linearregIntercept}. The
- * range written is the stream's `outRange()`.
+ * {@link linearregInterceptOpen} that also computes the outputs over the whole
+ * history in the same pass, bit-identically to {@link linearregIntercept}.
  *
- * @param inReal - Warm-up history. Input series to regress.
- * @param optInTimePeriod - Window length of the regression (default 14; range 2 to
- *   100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Intercept b of the fitted line at each bar. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param real - Warm-up history. Input series to regress.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link LinearregInterceptOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link linearregIntercept} returns them; the range is
+ *   the stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `linearregInterceptLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for an integer parameter that is not an int32, a parameter
- *   outside its range or an output too short or starting where another output or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another output or a `Float64Array` input.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input, an integer parameter that is not an int32, a parameter
+ *   outside its range or a buffer too short, of the wrong type or starting where
+ *   another buffer or a `Float64Array` input starts, or, on a history long enough to
+ *   open, one sharing memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -1023,29 +1140,19 @@ export function linearregInterceptOpen(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const stream = linearregInterceptOpenAndFill(data, 14, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = linearregInterceptOpenAndFill(data, {
+ *   timePeriod: 14,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function linearregInterceptOpenAndFill(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): LinearregInterceptStream {
-  optInTimePeriod = requireInt32('LINEARREG_INTERCEPT openAndFill', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('LINEARREG_INTERCEPT openAndFill', 'inReal', inReal);
-  requireHistory('LINEARREG_INTERCEPT openAndFill', inReal.length);
-  const guardOutLen = openFillCount('LINEARREG_INTERCEPT openAndFill', inReal.length, linearregInterceptLookback(optInTimePeriod, core));
-  requireOutput('LINEARREG_INTERCEPT openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
-    throw streamFailure('LINEARREG_INTERCEPT openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inRealF64))) {
-    throw streamFailure('LINEARREG_INTERCEPT openAndFill', RetCode.BAD_PARAM);
-  }
-  return linearregInterceptOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outReal);
+export function linearregInterceptOpenAndFill(real: ArrayLike<number>, options?: LinearregInterceptOptions): LinearregInterceptResult & { stream: LinearregInterceptStream } {
+  const o = optionsOf('LINEARREG_INTERCEPT openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('LINEARREG_INTERCEPT openAndFill', o.core);
+  const capacity = fillCapacity(linearregInterceptLookbackPositional(optInTimePeriod, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = linearregInterceptOpenAndFillPositional(real, optInTimePeriod, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

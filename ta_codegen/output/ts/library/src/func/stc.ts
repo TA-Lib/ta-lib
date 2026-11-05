@@ -19,31 +19,16 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { emaLookback } from './ema.ts';
+import { emaLookbackPositional } from './ema.ts';
 
-/**
- * Number of leading input bars {@link stc} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * It includes `core`'s unstable period for this function.
- *
- * @param optInFastPeriod - Period of the fast EMA (default 23; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow EMA (default 50; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInCyclePeriod - Window of both stochastic stages (default 10; range 2
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function stcLookback(optInFastPeriod: number, optInSlowPeriod: number, optInCyclePeriod: number, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function stcLookbackPositional(optInFastPeriod: number, optInSlowPeriod: number, optInCyclePeriod: number, core: Core = Core.DEFAULT): number {
   if ((optInFastPeriod | 0) !== optInFastPeriod) {
     return -1;
   }
@@ -78,29 +63,12 @@ export function stcLookback(optInFastPeriod: number, optInSlowPeriod: number, op
    * then one window per stochastic stage. The two 0.5 smoothers seed on
    * their first input, so they add only the unstable period.
    */
-  return emaLookback(optInSlowPeriod, core) + ((2 * (optInCyclePeriod - 1)) | 0) + core.unstableCount(FuncUnstId.STC, (((((5 * 10) | 0) + 1) / 2) | 0) + ((3 * (optInSlowPeriod + 1)) | 0), (((((5 * 19) | 0) + 1) / 2) | 0) + ((3 * (optInSlowPeriod + 1)) | 0));
+  return emaLookbackPositional(optInSlowPeriod, core) + ((2 * (optInCyclePeriod - 1)) | 0) + core.unstableCount(FuncUnstId.STC, (((((5 * 10) | 0) + 1) / 2) | 0) + ((3 * (optInSlowPeriod + 1)) | 0), (((((5 * 19) | 0) + 1) / 2) | 0) + ((3 * (optInSlowPeriod + 1)) | 0));
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link stc}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInFastPeriod - Period of the fast EMA (default 23; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow EMA (default 50; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInCyclePeriod - Window of both stochastic stages (default 10; range 2
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function stcDisplayShift(optInFastPeriod: number, optInSlowPeriod: number, optInCyclePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core) < 0) {
+/** @internal */
+export function stcDisplayShiftPositional(optInFastPeriod: number, optInSlowPeriod: number, optInCyclePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (stcLookbackPositional(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -190,7 +158,7 @@ export function stcImpl(
     optInSlowPeriod = optInFastPeriod;
     optInFastPeriod = tempInteger;
   }
-  lookbackTotal = stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core);
+  lookbackTotal = stcLookbackPositional(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -253,7 +221,7 @@ export function stcImpl(
    * line, while TA_FUNC_UNST_STC moves the whole chain back and so warms the
    * line and both smoothers.
    */
-  lookbackSlow = emaLookback(optInSlowPeriod, core);
+  lookbackSlow = emaLookbackPositional(optInSlowPeriod, core);
   lineStart = startIdx - (lookbackTotal - lookbackSlow);
   today = startIdx - lookbackTotal;
   tempReal = 0.0;
@@ -262,7 +230,7 @@ export function stcImpl(
     tempReal += inReal[today++];
   }
   prevSlow = tempReal / optInSlowPeriod;
-  fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod, core));
+  fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookbackPositional(optInFastPeriod, core));
   prevFast = 0.0;
   i = optInFastPeriod;
   while (i-- > 0) {
@@ -698,6 +666,142 @@ export function stcImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['fastPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['slowPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['cyclePeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000']] as const;
+
+/** @internal */
+export function stcPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInFastPeriod: number,
+  optInSlowPeriod: number,
+  optInCyclePeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('STC', 'startIdx', startIdx);
+  endIdx = requireInt32('STC', 'endIdx', endIdx);
+  optInFastPeriod = requireInt32('STC', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('STC', 'slowPeriod', optInSlowPeriod);
+  optInCyclePeriod = requireInt32('STC', 'cyclePeriod', optInCyclePeriod);
+  requireIndexRange('STC', startIdx, endIdx);
+  const guardLookback = stcLookbackPositional(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('STC', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
+  }
+  const guardStart = clampedStart('STC', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('STC', 'real', inReal, guardInLen);
+  requireOutput('STC', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outReal, inRealF64)) {
+    throw sharedMemory('STC', 'outReal', 'real');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = stcImpl(core, startIdx, endIdx, inRealF64, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('STC', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link stc}, {@link stcLookback}, {@link stcDisplayShift},
+ * {@link stcOpen} and {@link stcOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface StcOptions {
+  /**
+   * Period of the fast EMA (default 23; range 2 to 100000; `Core.INTEGER_DEFAULT`
+   * selects the default).
+   */
+  fastPeriod?: number | undefined;
+  /**
+   * Period of the slow EMA (default 50; range 2 to 100000; `Core.INTEGER_DEFAULT`
+   * selects the default).
+   */
+  slowPeriod?: number | undefined;
+  /**
+   * Window of both stochastic stages (default 10; range 2 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  cyclePeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link stc} returns, and {@link stcOpenAndFill} with its stream. */
+export interface StcResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Schaff Trend Cycle, from 0 to 100. `values[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link stc} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * It includes `core`'s unstable period for this function.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link StcOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function stcLookback(options?: StcOptions): number {
+  const o = optionsOf('STC lookback', options);
+  return stcLookbackPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.cyclePeriod, Core.INTEGER_DEFAULT), coreOf('STC lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link stc}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link StcOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function stcDisplayShift(outputIdx: number, options?: StcOptions): number {
+  const o = optionsOf('STC displayShift', options);
+  return stcDisplayShiftPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.cyclePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('STC displayShift', o.core));
+}
+
 /**
  * Schaff Trend Cycle (Doug Schaff): a MACD line passed twice through a stochastic,
  * each pass smoothed by half. Bounded 0 to 100, read against 25 and 75: turning up
@@ -717,31 +821,23 @@ export function stcImpl(
  *   unstable period warms the two smoothers; the EMA unstable period warms the
  *   MACD line.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link stcLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link stcLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Input series (typically close)
- * @param optInFastPeriod - Period of the fast EMA (default 23; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow EMA (default 50; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInCyclePeriod - Window of both stochastic stages (default 10; range 2
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Schaff Trend Cycle, from 0 to 100. Must hold the values
- *   produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Input series (typically close)
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link StcOptions}.
+ * @returns `begIdx` and the values; see {@link StcResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output
- *   or an output sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -749,46 +845,32 @@ export function stcImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const { begIdx, count } = stc(0, data.length - 1, data, 23, 50, 10, out);
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = stc(data, {
+ *   fastPeriod: 23,
+ *   slowPeriod: 50,
+ *   cyclePeriod: 10,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`macd`](https://ta-lib.org/functions/macd)
  * @see [`stochf`](https://ta-lib.org/functions/stochf)
  * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)
  */
-export function stc(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInFastPeriod: number,
-  optInSlowPeriod: number,
-  optInCyclePeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('STC', 'startIdx', startIdx);
-  endIdx = requireInt32('STC', 'endIdx', endIdx);
-  optInFastPeriod = requireInt32('STC', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('STC', 'optInSlowPeriod', optInSlowPeriod);
-  optInCyclePeriod = requireInt32('STC', 'optInCyclePeriod', optInCyclePeriod);
-  requireIndexRange('STC', startIdx, endIdx);
-  const guardStart = clampedStart('STC', startIdx, stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('STC', 'inReal', inReal, guardInLen);
-  requireOutput('STC', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outReal, inRealF64)) {
-    throw failure('STC', RetCode.BAD_PARAM);
+export function stc(real: ArrayLike<number>, options?: StcOptions): StcResult {
+  const o = optionsOf('STC', options);
+  if (o.endIdx === undefined) {
+    requireSeries('STC', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = stcImpl(core, startIdx, endIdx, inRealF64, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('STC', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInCyclePeriod = orDefault(o.cyclePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('STC', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, stcLookbackPositional(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = stcPositional(startIdx, endIdx, real, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -1482,7 +1564,7 @@ function stcOpenImpl(
     optInSlowPeriod = optInFastPeriod;
     optInFastPeriod = tempInteger;
   }
-  lookbackTotal = stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core);
+  lookbackTotal = stcLookbackPositional(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -1553,7 +1635,7 @@ function stcOpenImpl(
    * line, while TA_FUNC_UNST_STC moves the whole chain back and so warms the
    * line and both smoothers.
    */
-  lookbackSlow = emaLookback(optInSlowPeriod, core);
+  lookbackSlow = emaLookbackPositional(optInSlowPeriod, core);
   lineStart = startIdx - (lookbackTotal - lookbackSlow);
   today = startIdx - lookbackTotal;
   tempReal = 0.0;
@@ -1562,7 +1644,7 @@ function stcOpenImpl(
     tempReal += inReal[today++];
   }
   prevSlow = tempReal / optInSlowPeriod;
-  fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookback(optInFastPeriod, core));
+  fastToday = startIdx - lookbackTotal + (lookbackSlow - emaLookbackPositional(optInFastPeriod, core));
   prevFast = 0.0;
   i = optInFastPeriod;
   while (i-- > 0) {
@@ -2085,7 +2167,10 @@ export function stcOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('STC openAndFill', inReal.length, startIdx, stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core));
+    throw insufficientHistory('STC openAndFill', inReal.length, startIdx, stcLookbackPositional(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && stcLookbackPositional(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core) < 0) {
+    throw rejectedParams('STC openAndFill', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
   }
   throw streamFailure('STC openAndFill', retCode);
 }
@@ -2110,27 +2195,71 @@ export function stcOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('STC open', inReal.length, startIdx, stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core));
+    throw insufficientHistory('STC open', inReal.length, startIdx, stcLookbackPositional(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && stcLookbackPositional(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core) < 0) {
+    throw rejectedParams('STC open', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
   }
   throw streamFailure('STC open', retCode);
+}
+
+/** @internal */
+export function stcOpenPositional(
+  inReal: ArrayLike<number>,
+  optInFastPeriod: number,
+  optInSlowPeriod: number,
+  optInCyclePeriod: number,
+  core: Core = Core.DEFAULT,
+): StcStream {
+  optInFastPeriod = requireInt32('STC open', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('STC open', 'slowPeriod', optInSlowPeriod);
+  optInCyclePeriod = requireInt32('STC open', 'cyclePeriod', optInCyclePeriod);
+  requireArgument('STC open', 'real', inReal);
+  requireHistory('STC open', inReal.length);
+  return stcOpenInternal(core, float64(inReal), 0, optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
+}
+
+/** @internal */
+export function stcOpenAndFillPositional(
+  inReal: ArrayLike<number>,
+  optInFastPeriod: number,
+  optInSlowPeriod: number,
+  optInCyclePeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): StcStream {
+  optInFastPeriod = requireInt32('STC openAndFill', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('STC openAndFill', 'slowPeriod', optInSlowPeriod);
+  optInCyclePeriod = requireInt32('STC openAndFill', 'cyclePeriod', optInCyclePeriod);
+  requireArgument('STC openAndFill', 'real', inReal);
+  requireHistory('STC openAndFill', inReal.length);
+  const guardLookback = stcLookbackPositional(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('STC openAndFill', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
+  }
+  const guardOutLen = openFillCount('STC openAndFill', inReal.length, guardLookback);
+  requireOutput('STC openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('STC openAndFill', 'outReal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inRealF64)) {
+    throw sharedMemory('STC openAndFill', 'outReal', 'real');
+  }
+  return stcOpenAndFillInternal(core, inRealF64, 0, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live STC stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link stc} there.
  *
- * @param inReal - Warm-up history. Input series (typically close)
- * @param optInFastPeriod - Period of the fast EMA (default 23; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow EMA (default 50; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInCyclePeriod - Window of both stochastic stages (default 10; range 2
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param real - Warm-up history. Input series (typically close)
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link StcOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `stcLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
  *   an integer parameter that is not an int32 or a parameter outside its range.
  *
  * @example
@@ -2139,50 +2268,41 @@ export function stcOpenInternal(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = stcOpen(data, 23, 50, 10);
+ * const stream = stcOpen(data, {
+ *   fastPeriod: 23,
+ *   slowPeriod: 50,
+ *   cyclePeriod: 10,
+ * });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
  */
-export function stcOpen(
-  inReal: ArrayLike<number>,
-  optInFastPeriod: number,
-  optInSlowPeriod: number,
-  optInCyclePeriod: number,
-  core: Core = Core.DEFAULT,
-): StcStream {
-  optInFastPeriod = requireInt32('STC open', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('STC open', 'optInSlowPeriod', optInSlowPeriod);
-  optInCyclePeriod = requireInt32('STC open', 'optInCyclePeriod', optInCyclePeriod);
-  requireArgument('STC open', 'inReal', inReal);
-  requireHistory('STC open', inReal.length);
-  return stcOpenInternal(core, float64(inReal), 0, optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
+export function stcOpen(real: ArrayLike<number>, options?: StcOptions): StcStream {
+  const o = optionsOf('STC open', options);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInCyclePeriod = orDefault(o.cyclePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('STC open', o.core);
+  return stcOpenPositional(real, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core);
 }
 
 /**
- * {@link stcOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link stc}. The range written is the stream's
- * `outRange()`.
+ * {@link stcOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link stc}.
  *
- * @param inReal - Warm-up history. Input series (typically close)
- * @param optInFastPeriod - Period of the fast EMA (default 23; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow EMA (default 50; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInCyclePeriod - Window of both stochastic stages (default 10; range 2
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - Schaff Trend Cycle, from 0 to 100. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param real - Warm-up history. Input series (typically close)
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link StcOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link stc} returns them; the range is the stream's
+ *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `stcLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   an integer parameter that is not an int32, a parameter outside its range or an
- *   output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   an integer parameter that is not an int32, a parameter outside its range or a
+ *   buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -2190,33 +2310,23 @@ export function stcOpen(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const stream = stcOpenAndFill(data, 23, 50, 10, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = stcOpenAndFill(data, {
+ *   fastPeriod: 23,
+ *   slowPeriod: 50,
+ *   cyclePeriod: 10,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function stcOpenAndFill(
-  inReal: ArrayLike<number>,
-  optInFastPeriod: number,
-  optInSlowPeriod: number,
-  optInCyclePeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): StcStream {
-  optInFastPeriod = requireInt32('STC openAndFill', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('STC openAndFill', 'optInSlowPeriod', optInSlowPeriod);
-  optInCyclePeriod = requireInt32('STC openAndFill', 'optInCyclePeriod', optInCyclePeriod);
-  requireArgument('STC openAndFill', 'inReal', inReal);
-  requireHistory('STC openAndFill', inReal.length);
-  const guardOutLen = openFillCount('STC openAndFill', inReal.length, stcLookback(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core));
-  requireOutput('STC openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
-    throw streamFailure('STC openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inRealF64))) {
-    throw streamFailure('STC openAndFill', RetCode.BAD_PARAM);
-  }
-  return stcOpenAndFillInternal(core, inRealF64, 0, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, new MInteger(), new MInteger(), outReal);
+export function stcOpenAndFill(real: ArrayLike<number>, options?: StcOptions): StcResult & { stream: StcStream } {
+  const o = optionsOf('STC openAndFill', options);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInCyclePeriod = orDefault(o.cyclePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('STC openAndFill', o.core);
+  const capacity = fillCapacity(stcLookbackPositional(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = stcOpenAndFillPositional(real, optInFastPeriod, optInSlowPeriod, optInCyclePeriod, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

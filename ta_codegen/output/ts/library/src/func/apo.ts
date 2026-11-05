@@ -24,32 +24,17 @@
  */
 
 import { MAType, MATypes } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { emaLookback } from './ema.ts';
-import { MaStream, ma, maLookback, maOpenAndFillInternal } from './ma.ts';
+import { emaLookbackPositional } from './ema.ts';
+import { MaStream, maLookbackPositional, maOpenAndFillInternal, maPositional } from './ma.ts';
 
-/**
- * Number of leading input bars {@link apo} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInFastPeriod - Period of the fast moving average (default 12; range 2
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow moving average (default 26; range 2
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type used for both MAs (default
- *   `MAType.EMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function apoLookback(optInFastPeriod: number, optInSlowPeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function apoLookbackPositional(optInFastPeriod: number, optInSlowPeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, core: Core = Core.DEFAULT): number {
   if ((optInFastPeriod | 0) !== optInFastPeriod) {
     return -1;
   }
@@ -75,31 +60,12 @@ export function apoLookback(optInFastPeriod: number, optInSlowPeriod: number, op
     return -1;
   }
   /* The slow MA is the key factor determining the lookback period. */
-  return maLookback((optInSlowPeriod > optInFastPeriod ? optInSlowPeriod : optInFastPeriod), (optInMAType as MAType), core);
+  return maLookbackPositional((optInSlowPeriod > optInFastPeriod ? optInSlowPeriod : optInFastPeriod), (optInMAType as MAType), core);
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link apo}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInFastPeriod - Period of the fast moving average (default 12; range 2
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow moving average (default 26; range 2
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type used for both MAs (default
- *   `MAType.EMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function apoDisplayShift(optInFastPeriod: number, optInSlowPeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (apoLookback(optInFastPeriod, optInSlowPeriod, optInMAType, core) < 0) {
+/** @internal */
+export function apoDisplayShiftPositional(optInFastPeriod: number, optInSlowPeriod: number, optInMAType: MAType | typeof Core.INTEGER_DEFAULT, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (apoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -160,7 +126,7 @@ export function apoImpl(
    * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
    * probe over every guarded core.
    */
-  if (maLookback((optInSlowPeriod > optInFastPeriod ? optInSlowPeriod : optInFastPeriod), (optInMAType as MAType), core) > endIdx) {
+  if (maLookbackPositional((optInSlowPeriod > optInFastPeriod ? optInSlowPeriod : optInFastPeriod), (optInMAType as MAType), core) > endIdx) {
     outBegIdx.value = 0;
     outNBElement.value = 0;
     return RetCode.SUCCESS;
@@ -285,16 +251,16 @@ export function apoImpl(
     if (_eSlowBeta < 0.5) {
       _eSlowBeta = 1.0 - _eSlowK;
     }
-    _eFastToday = emaLookback(optInFastPeriod, core);
+    _eFastToday = emaLookbackPositional(optInFastPeriod, core);
     if (_eFastToday < startIdx) {
       _eFastToday = startIdx;
     }
-    _eFastToday -= emaLookback(optInFastPeriod, core);
-    _eSlowStart = emaLookback(optInSlowPeriod, core);
+    _eFastToday -= emaLookbackPositional(optInFastPeriod, core);
+    _eSlowStart = emaLookbackPositional(optInSlowPeriod, core);
     if (_eSlowStart < startIdx) {
       _eSlowStart = startIdx;
     }
-    _eSlowToday = _eSlowStart - emaLookback(optInSlowPeriod, core);
+    _eSlowToday = _eSlowStart - emaLookbackPositional(optInSlowPeriod, core);
     _eFast = 0.0;
     for (_eN = 0; _eN < optInFastPeriod; _eN += 1) {
       _eFast += inReal[_eFastToday++];
@@ -394,11 +360,11 @@ export function apoImpl(
     optInFastPeriod = tempInteger;
   }
   /* Calculate the fast MA into the tempBuffer. */
-  const _xr4 = ma(startIdx, endIdx, inReal, optInFastPeriod, (optInMAType as MAType), tempBuffer, core);
+  const _xr4 = maPositional(startIdx, endIdx, inReal, optInFastPeriod, (optInMAType as MAType), tempBuffer, core);
   fastBeg.value = _xr4.begIdx;
   fastNb.value = _xr4.count;
   /* Calculate the slow MA into the output. */
-  const _xr5 = ma(startIdx, endIdx, inReal, optInSlowPeriod, (optInMAType as MAType), outReal, core);
+  const _xr5 = maPositional(startIdx, endIdx, inReal, optInSlowPeriod, (optInMAType as MAType), outReal, core);
   outBegIdx.value = _xr5.begIdx;
   outNBElement.value = _xr5.count;
   /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
@@ -411,6 +377,139 @@ export function apoImpl(
     outReal[i] = tempBuffer[i + offset] - outReal[i];
   }
   return RetCode.SUCCESS;
+}
+
+const PARAM_RANGES = [['fastPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['slowPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['maType', Core.INTEGER_DEFAULT, MATypes.Min, MATypes.Max, 'a MAType']] as const;
+
+/** @internal */
+export function apoPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInFastPeriod: number,
+  optInSlowPeriod: number,
+  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('APO', 'startIdx', startIdx);
+  endIdx = requireInt32('APO', 'endIdx', endIdx);
+  optInFastPeriod = requireInt32('APO', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('APO', 'slowPeriod', optInSlowPeriod);
+  optInMAType = requireInt32('APO', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireIndexRange('APO', startIdx, endIdx);
+  const guardLookback = apoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('APO', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInMAType);
+  }
+  const guardStart = clampedStart('APO', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('APO', 'real', inReal, guardInLen);
+  requireOutput('APO', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outReal, inRealF64)) {
+    throw sharedMemory('APO', 'outReal', 'real');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = apoImpl(core, startIdx, endIdx, inRealF64, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('APO', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link apo}, {@link apoLookback}, {@link apoDisplayShift},
+ * {@link apoOpen} and {@link apoOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface ApoOptions {
+  /**
+   * Period of the fast moving average (default 12; range 2 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  fastPeriod?: number | undefined;
+  /**
+   * Period of the slow moving average (default 26; range 2 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  slowPeriod?: number | undefined;
+  /**
+   * Moving-average type used for both MAs (default `MAType.EMA`; values: 0=SMA,
+   * 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   * 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA, 15=ALMA; `Core.INTEGER_DEFAULT` or
+   * `MAType.DEFAULT` selects the default).
+   */
+  maType?: MAType | typeof Core.INTEGER_DEFAULT | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/** What {@link apo} returns, and {@link apoOpenAndFill} with its stream. */
+export interface ApoResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /** Fast MA minus slow MA. `values[k]` is the value at input bar `begIdx + k`. */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link apo} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link ApoOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function apoLookback(options?: ApoOptions): number {
+  const o = optionsOf('APO lookback', options);
+  return apoLookbackPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), coreOf('APO lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link apo}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link ApoOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function apoDisplayShift(outputIdx: number, options?: ApoOptions): number {
+  const o = optionsOf('APO displayShift', options);
+  return apoDisplayShiftPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.maType, Core.INTEGER_DEFAULT), outputIdx, coreOf('APO displayShift', o.core));
 }
 
 /**
@@ -429,33 +528,23 @@ export function apoImpl(
  * - If the slow period is set smaller than the fast period, the two are swapped,
  *   as in `MACD`.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link apoLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link apoLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Source data series.
- * @param optInFastPeriod - Period of the fast moving average (default 12; range 2
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow moving average (default 26; range 2
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type used for both MAs (default
- *   `MAType.EMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outReal - Fast MA minus slow MA. Must hold the values produced and never
- *   be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Source data series.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link ApoOptions}.
+ * @returns `begIdx` and the values; see {@link ApoResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output
- *   or an output sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -463,14 +552,12 @@ export function apoImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const { begIdx, count } = apo(
- *   0, data.length - 1,
- *   data,
- *   12, 26, MAType.EMA,
- *   out,
- * );
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = apo(data, {
+ *   fastPeriod: 12,
+ *   slowPeriod: 26,
+ *   maType: MAType.EMA,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`ppo`](https://ta-lib.org/functions/ppo)
  * @see [`macd`](https://ta-lib.org/functions/macd)
@@ -478,38 +565,21 @@ export function apoImpl(
  * @see [`ema`](https://ta-lib.org/functions/ema)
  * @see [`sma`](https://ta-lib.org/functions/sma)
  */
-export function apo(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInFastPeriod: number,
-  optInSlowPeriod: number,
-  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('APO', 'startIdx', startIdx);
-  endIdx = requireInt32('APO', 'endIdx', endIdx);
-  optInFastPeriod = requireInt32('APO', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('APO', 'optInSlowPeriod', optInSlowPeriod);
-  optInMAType = requireInt32('APO', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireIndexRange('APO', startIdx, endIdx);
-  const guardStart = clampedStart('APO', startIdx, apoLookback(optInFastPeriod, optInSlowPeriod, optInMAType, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('APO', 'inReal', inReal, guardInLen);
-  requireOutput('APO', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outReal, inRealF64)) {
-    throw failure('APO', RetCode.BAD_PARAM);
+export function apo(real: ArrayLike<number>, options?: ApoOptions): ApoResult {
+  const o = optionsOf('APO', options);
+  if (o.endIdx === undefined) {
+    requireSeries('APO', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = apoImpl(core, startIdx, endIdx, inRealF64, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('APO', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('APO', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, apoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = apoPositional(startIdx, endIdx, real, optInFastPeriod, optInSlowPeriod, optInMAType, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -697,7 +767,7 @@ function apoOpenImpl(
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
   }
-  if (historyLen < apoLookback(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core) + 1) {
+  if (historyLen < apoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core) + 1) {
     return RetCode.INSUFFICIENT_HISTORY;
   }
   const sc_outReal = outStride === 1 ? outReal : new Float64Array(historyLen);
@@ -713,7 +783,7 @@ function apoOpenImpl(
    * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
    * probe over every guarded core.
    */
-  if (maLookback((optInSlowPeriod > optInFastPeriod ? optInSlowPeriod : optInFastPeriod), (optInMAType as MAType), core) > endIdx) {
+  if (maLookbackPositional((optInSlowPeriod > optInFastPeriod ? optInSlowPeriod : optInFastPeriod), (optInMAType as MAType), core) > endIdx) {
     outBegIdx.value = 0;
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
@@ -774,7 +844,10 @@ export function apoOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('APO openAndFill', inReal.length, startIdx, apoLookback(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core));
+    throw insufficientHistory('APO openAndFill', inReal.length, startIdx, apoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && apoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core) < 0) {
+    throw rejectedParams('APO openAndFill', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInMAType);
   }
   throw streamFailure('APO openAndFill', retCode);
 }
@@ -799,29 +872,71 @@ export function apoOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('APO open', inReal.length, startIdx, apoLookback(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core));
+    throw insufficientHistory('APO open', inReal.length, startIdx, apoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && apoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core) < 0) {
+    throw rejectedParams('APO open', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInMAType);
   }
   throw streamFailure('APO open', retCode);
+}
+
+/** @internal */
+export function apoOpenPositional(
+  inReal: ArrayLike<number>,
+  optInFastPeriod: number,
+  optInSlowPeriod: number,
+  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
+  core: Core = Core.DEFAULT,
+): ApoStream {
+  optInFastPeriod = requireInt32('APO open', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('APO open', 'slowPeriod', optInSlowPeriod);
+  optInMAType = requireInt32('APO open', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('APO open', 'real', inReal);
+  requireHistory('APO open', inReal.length);
+  return apoOpenInternal(core, float64(inReal), 0, optInFastPeriod, optInSlowPeriod, optInMAType);
+}
+
+/** @internal */
+export function apoOpenAndFillPositional(
+  inReal: ArrayLike<number>,
+  optInFastPeriod: number,
+  optInSlowPeriod: number,
+  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): ApoStream {
+  optInFastPeriod = requireInt32('APO openAndFill', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('APO openAndFill', 'slowPeriod', optInSlowPeriod);
+  optInMAType = requireInt32('APO openAndFill', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
+  requireArgument('APO openAndFill', 'real', inReal);
+  requireHistory('APO openAndFill', inReal.length);
+  const guardLookback = apoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('APO openAndFill', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInMAType);
+  }
+  const guardOutLen = openFillCount('APO openAndFill', inReal.length, guardLookback);
+  requireOutput('APO openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('APO openAndFill', 'outReal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inRealF64)) {
+    throw sharedMemory('APO openAndFill', 'outReal', 'real');
+  }
+  return apoOpenAndFillInternal(core, inRealF64, 0, optInFastPeriod, optInSlowPeriod, optInMAType, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live APO stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link apo} there.
  *
- * @param inReal - Warm-up history. Source data series.
- * @param optInFastPeriod - Period of the fast moving average (default 12; range 2
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow moving average (default 26; range 2
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type used for both MAs (default
- *   `MAType.EMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param real - Warm-up history. Source data series.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link ApoOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `apoLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
  *   an integer parameter that is not an int32 or a parameter outside its range.
  *
  * @example
@@ -830,51 +945,41 @@ export function apoOpenInternal(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = apoOpen(data, 12, 26, MAType.EMA);
+ * const stream = apoOpen(data, {
+ *   fastPeriod: 12,
+ *   slowPeriod: 26,
+ *   maType: MAType.EMA,
+ * });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
  */
-export function apoOpen(
-  inReal: ArrayLike<number>,
-  optInFastPeriod: number,
-  optInSlowPeriod: number,
-  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
-  core: Core = Core.DEFAULT,
-): ApoStream {
-  optInFastPeriod = requireInt32('APO open', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('APO open', 'optInSlowPeriod', optInSlowPeriod);
-  optInMAType = requireInt32('APO open', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('APO open', 'inReal', inReal);
-  requireHistory('APO open', inReal.length);
-  return apoOpenInternal(core, float64(inReal), 0, optInFastPeriod, optInSlowPeriod, optInMAType);
+export function apoOpen(real: ArrayLike<number>, options?: ApoOptions): ApoStream {
+  const o = optionsOf('APO open', options);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('APO open', o.core);
+  return apoOpenPositional(real, optInFastPeriod, optInSlowPeriod, optInMAType, core);
 }
 
 /**
- * {@link apoOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link apo}. The range written is the stream's
- * `outRange()`.
+ * {@link apoOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link apo}.
  *
- * @param inReal - Warm-up history. Source data series.
- * @param optInFastPeriod - Period of the fast moving average (default 12; range 2
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow moving average (default 26; range 2
- *   to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInMAType - Moving-average type used for both MAs (default
- *   `MAType.EMA`; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
- *   7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA, 14=VIDYA,
- *   15=ALMA; `Core.INTEGER_DEFAULT` or `MAType.DEFAULT` selects the default).
- * @param outReal - Fast MA minus slow MA. Must hold `historyLen - lookback` values
- *   and share no memory with an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param real - Warm-up history. Source data series.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link ApoOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link apo} returns them; the range is the stream's
+ *   `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `apoLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   an integer parameter that is not an int32, a parameter outside its range or an
- *   output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   an integer parameter that is not an int32, a parameter outside its range or a
+ *   buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -882,33 +987,23 @@ export function apoOpen(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const stream = apoOpenAndFill(data, 12, 26, MAType.EMA, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = apoOpenAndFill(data, {
+ *   fastPeriod: 12,
+ *   slowPeriod: 26,
+ *   maType: MAType.EMA,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function apoOpenAndFill(
-  inReal: ArrayLike<number>,
-  optInFastPeriod: number,
-  optInSlowPeriod: number,
-  optInMAType: MAType | typeof Core.INTEGER_DEFAULT,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): ApoStream {
-  optInFastPeriod = requireInt32('APO openAndFill', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('APO openAndFill', 'optInSlowPeriod', optInSlowPeriod);
-  optInMAType = requireInt32('APO openAndFill', 'optInMAType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
-  requireArgument('APO openAndFill', 'inReal', inReal);
-  requireHistory('APO openAndFill', inReal.length);
-  const guardOutLen = openFillCount('APO openAndFill', inReal.length, apoLookback(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core));
-  requireOutput('APO openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
-    throw streamFailure('APO openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inRealF64))) {
-    throw streamFailure('APO openAndFill', RetCode.BAD_PARAM);
-  }
-  return apoOpenAndFillInternal(core, inRealF64, 0, optInFastPeriod, optInSlowPeriod, optInMAType, new MInteger(), new MInteger(), outReal);
+export function apoOpenAndFill(real: ArrayLike<number>, options?: ApoOptions): ApoResult & { stream: ApoStream } {
+  const o = optionsOf('APO openAndFill', options);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInMAType = orDefault(o.maType, Core.INTEGER_DEFAULT);
+  const core = coreOf('APO openAndFill', o.core);
+  const capacity = fillCapacity(apoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = apoOpenAndFillPositional(real, optInFastPeriod, optInSlowPeriod, optInMAType, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

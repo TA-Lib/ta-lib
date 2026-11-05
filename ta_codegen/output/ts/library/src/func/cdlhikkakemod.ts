@@ -19,40 +19,20 @@
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link cdlhikkakemod} consumes before its first
- * value: the index of the first bar with a value when the whole series is
- * requested.
- *
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function cdlhikkakemodLookback(core: Core = Core.DEFAULT): number {
+/** @internal */
+export function cdlhikkakemodLookbackPositional(core: Core = Core.DEFAULT): number {
   const Near_avgPeriod = core.candleSettings[CandleSettingType.NEAR].avgPeriod;
   return (1 > Near_avgPeriod ? 1 : Near_avgPeriod) + 5;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link cdlhikkakemod}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function cdlhikkakemodDisplayShift(outputIdx: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function cdlhikkakemodDisplayShiftPositional(outputIdx: number, _core: Core = Core.DEFAULT): number {
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
     return -2147483648;
   }
@@ -97,7 +77,7 @@ export function cdlhikkakemodImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = cdlhikkakemodLookback(core);
+  lookbackTotal = cdlhikkakemodLookbackPositional(core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -208,6 +188,135 @@ export function cdlhikkakemodImpl(
   return RetCode.SUCCESS;
 }
 
+/** @internal */
+export function cdlhikkakemodPositional(
+  startIdx: number,
+  endIdx: number,
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outInteger: Int32Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('CDLHIKKAKEMOD', 'startIdx', startIdx);
+  endIdx = requireInt32('CDLHIKKAKEMOD', 'endIdx', endIdx);
+  requireIndexRange('CDLHIKKAKEMOD', startIdx, endIdx);
+  const guardStart = clampedStart('CDLHIKKAKEMOD', startIdx, cdlhikkakemodLookbackPositional(core));
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('CDLHIKKAKEMOD', 'prices.open', inOpen, guardInLen);
+  requireLength('CDLHIKKAKEMOD', 'prices.high', inHigh, guardInLen);
+  requireLength('CDLHIKKAKEMOD', 'prices.low', inLow, guardInLen);
+  requireLength('CDLHIKKAKEMOD', 'prices.close', inClose, guardInLen);
+  requireOutput('CDLHIKKAKEMOD', 'outInteger', outInteger, guardOutLen, Int32Array);
+  const inOpenF64 = float64(inOpen);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (overlaps(outInteger, inOpenF64)) {
+    throw sharedMemory('CDLHIKKAKEMOD', 'outInteger', 'prices.open');
+  }
+  if (overlaps(outInteger, inHighF64)) {
+    throw sharedMemory('CDLHIKKAKEMOD', 'outInteger', 'prices.high');
+  }
+  if (overlaps(outInteger, inLowF64)) {
+    throw sharedMemory('CDLHIKKAKEMOD', 'outInteger', 'prices.low');
+  }
+  if (overlaps(outInteger, inCloseF64)) {
+    throw sharedMemory('CDLHIKKAKEMOD', 'outInteger', 'prices.close');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = cdlhikkakemodImpl(core, startIdx, endIdx, inOpenF64, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outInteger);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('CDLHIKKAKEMOD', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link cdlhikkakemod}, {@link cdlhikkakemodLookback},
+ * {@link cdlhikkakemodDisplayShift}, {@link cdlhikkakemodOpen} and
+ * {@link cdlhikkakemodOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface CdlhikkakemodOptions {
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input.
+   */
+  outInteger?: Int32Array | undefined;
+}
+
+/**
+ * What {@link cdlhikkakemod} returns, and {@link cdlhikkakemodOpenAndFill} with
+ * its stream.
+ */
+export interface CdlhikkakemodResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * +100 bullish hikkake bar, -100 bearish; +200 confirmed bullish, -200 confirmed
+   * bearish; 0 otherwise. `values[k]` is the value at input bar `begIdx + k`.
+   */
+  values: Int32Array;
+}
+
+/**
+ * Number of leading input bars {@link cdlhikkakemod} consumes before its first
+ * value: the index of the first bar with a value when the whole series is
+ * requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CdlhikkakemodOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function cdlhikkakemodLookback(options?: CdlhikkakemodOptions): number {
+  const o = optionsOf('CDLHIKKAKEMOD lookback', options);
+  return cdlhikkakemodLookbackPositional(coreOf('CDLHIKKAKEMOD lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link cdlhikkakemod}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CdlhikkakemodOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function cdlhikkakemodDisplayShift(outputIdx: number, options?: CdlhikkakemodOptions): number {
+  const o = optionsOf('CDLHIKKAKEMOD displayShift', options);
+  return cdlhikkakemodDisplayShiftPositional(outputIdx, coreOf('CDLHIKKAKEMOD displayShift', o.core));
+}
+
 /**
  * A four-candle pattern: two successively narrower inside bars, then a breakout
  * bar, with the second candle closing near one extreme of its range. Bullish or
@@ -224,28 +333,24 @@ export function cdlhikkakemodImpl(
  * - A bar that is both a new setup and the confirmation of an earlier one reports
  *   the new setup; the earlier one ends unconfirmed.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link cdlhikkakemodLookback} is a success
- * with `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link cdlhikkakemodLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inOpen - Open price of each bar.
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param inClose - Close price of each bar.
- * @param outInteger - +100 bullish hikkake bar, -100 bearish; +200 confirmed
- *   bullish, -200 confirmed bearish; 0 otherwise. Must hold the values produced and
- *   never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `open`: Open
+ *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
+ *   `close`: Close price of each bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link CdlhikkakemodOptions}.
+ * @returns `begIdx` and the values; see {@link CdlhikkakemodResult}. Each output
+ *   is a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, an
- *   array too short for the range, an empty output or an output sharing memory with
- *   a `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an input too short for the range, a buffer that is empty, too short or of
+ *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -259,51 +364,27 @@ export function cdlhikkakemodImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Int32Array(open.length);
- * const { begIdx, count } = cdlhikkakemod(
- *   0, open.length - 1,
- *   open, high, low, close,
- *   out,
- * );
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = cdlhikkakemod({ open, high, low, close });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`cdlhikkake`](https://ta-lib.org/functions/cdlhikkake)
  */
-export function cdlhikkakemod(
-  startIdx: number,
-  endIdx: number,
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outInteger: Int32Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('CDLHIKKAKEMOD', 'startIdx', startIdx);
-  endIdx = requireInt32('CDLHIKKAKEMOD', 'endIdx', endIdx);
-  requireIndexRange('CDLHIKKAKEMOD', startIdx, endIdx);
-  const guardStart = clampedStart('CDLHIKKAKEMOD', startIdx, cdlhikkakemodLookback(core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('CDLHIKKAKEMOD', 'inOpen', inOpen, guardInLen);
-  requireLength('CDLHIKKAKEMOD', 'inHigh', inHigh, guardInLen);
-  requireLength('CDLHIKKAKEMOD', 'inLow', inLow, guardInLen);
-  requireLength('CDLHIKKAKEMOD', 'inClose', inClose, guardInLen);
-  requireOutput('CDLHIKKAKEMOD', 'outInteger', outInteger, guardOutLen, Int32Array);
-  const inOpenF64 = float64(inOpen);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if (overlaps(outInteger, inOpenF64) || overlaps(outInteger, inHighF64) || overlaps(outInteger, inLowF64) || overlaps(outInteger, inCloseF64)) {
-    throw failure('CDLHIKKAKEMOD', RetCode.BAD_PARAM);
+export function cdlhikkakemod(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlhikkakemodOptions): CdlhikkakemodResult {
+  requireArgument('CDLHIKKAKEMOD', 'prices', prices);
+  const o = optionsOf('CDLHIKKAKEMOD', options);
+  if (o.endIdx === undefined) {
+    requireSeries('CDLHIKKAKEMOD', 'prices.open', prices.open);
+    requireSeries('CDLHIKKAKEMOD', 'prices.high', prices.high);
+    requireSeries('CDLHIKKAKEMOD', 'prices.low', prices.low);
+    requireSeries('CDLHIKKAKEMOD', 'prices.close', prices.close);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = cdlhikkakemodImpl(core, startIdx, endIdx, inOpenF64, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outInteger);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('CDLHIKKAKEMOD', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const core = coreOf('CDLHIKKAKEMOD', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.open.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, cdlhikkakemodLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
+  const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;
+  const range = cdlhikkakemodPositional(startIdx, endIdx, prices.open, prices.high, prices.low, prices.close, outInteger, core);
+  return { begIdx: range.begIdx, values: outInteger.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -623,7 +704,7 @@ function cdlhikkakemodOpenImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = cdlhikkakemodLookback(core);
+  lookbackTotal = cdlhikkakemodLookbackPositional(core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -787,7 +868,7 @@ export function cdlhikkakemodOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('CDLHIKKAKEMOD openAndFill', inOpen.length, startIdx, cdlhikkakemodLookback(core));
+    throw insufficientHistory('CDLHIKKAKEMOD openAndFill', inOpen.length, startIdx, cdlhikkakemodLookbackPositional(core));
   }
   throw streamFailure('CDLHIKKAKEMOD openAndFill', retCode);
 }
@@ -812,29 +893,94 @@ export function cdlhikkakemodOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('CDLHIKKAKEMOD open', inOpen.length, startIdx, cdlhikkakemodLookback(core));
+    throw insufficientHistory('CDLHIKKAKEMOD open', inOpen.length, startIdx, cdlhikkakemodLookbackPositional(core));
   }
   throw streamFailure('CDLHIKKAKEMOD open', retCode);
+}
+
+/** @internal */
+export function cdlhikkakemodOpenPositional(
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  core: Core = Core.DEFAULT,
+): CdlhikkakemodStream {
+  requireArgument('CDLHIKKAKEMOD open', 'prices.open', inOpen);
+  requireHistory('CDLHIKKAKEMOD open', inOpen.length);
+  requireArgument('CDLHIKKAKEMOD open', 'prices.high', inHigh);
+  requireArgument('CDLHIKKAKEMOD open', 'prices.low', inLow);
+  requireArgument('CDLHIKKAKEMOD open', 'prices.close', inClose);
+  requireHistoryLength('CDLHIKKAKEMOD open', 'prices.high', inHigh.length, inOpen.length);
+  requireHistoryLength('CDLHIKKAKEMOD open', 'prices.low', inLow.length, inOpen.length);
+  requireHistoryLength('CDLHIKKAKEMOD open', 'prices.close', inClose.length, inOpen.length);
+  return cdlhikkakemodOpenInternal(core, float64(inOpen), float64(inHigh), float64(inLow), float64(inClose), 0);
+}
+
+/** @internal */
+export function cdlhikkakemodOpenAndFillPositional(
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outInteger: Int32Array,
+  core: Core = Core.DEFAULT,
+): CdlhikkakemodStream {
+  requireArgument('CDLHIKKAKEMOD openAndFill', 'prices.open', inOpen);
+  requireHistory('CDLHIKKAKEMOD openAndFill', inOpen.length);
+  requireArgument('CDLHIKKAKEMOD openAndFill', 'prices.high', inHigh);
+  requireArgument('CDLHIKKAKEMOD openAndFill', 'prices.low', inLow);
+  requireArgument('CDLHIKKAKEMOD openAndFill', 'prices.close', inClose);
+  const guardOutLen = openFillCount('CDLHIKKAKEMOD openAndFill', inOpen.length, cdlhikkakemodLookbackPositional(core));
+  requireHistoryLength('CDLHIKKAKEMOD openAndFill', 'prices.high', inHigh.length, inOpen.length);
+  requireHistoryLength('CDLHIKKAKEMOD openAndFill', 'prices.low', inLow.length, inOpen.length);
+  requireHistoryLength('CDLHIKKAKEMOD openAndFill', 'prices.close', inClose.length, inOpen.length);
+  requireOutput('CDLHIKKAKEMOD openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
+  const inOpenF64 = float64(inOpen);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (outInteger.buffer === inOpenF64.buffer && outInteger.byteOffset === inOpenF64.byteOffset) {
+    throw sharedMemory('CDLHIKKAKEMOD openAndFill', 'outInteger', 'prices.open');
+  }
+  if (outInteger.buffer === inHighF64.buffer && outInteger.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('CDLHIKKAKEMOD openAndFill', 'outInteger', 'prices.high');
+  }
+  if (outInteger.buffer === inLowF64.buffer && outInteger.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('CDLHIKKAKEMOD openAndFill', 'outInteger', 'prices.low');
+  }
+  if (outInteger.buffer === inCloseF64.buffer && outInteger.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('CDLHIKKAKEMOD openAndFill', 'outInteger', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inOpenF64)) {
+    throw sharedMemory('CDLHIKKAKEMOD openAndFill', 'outInteger', 'prices.open');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inHighF64)) {
+    throw sharedMemory('CDLHIKKAKEMOD openAndFill', 'outInteger', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inLowF64)) {
+    throw sharedMemory('CDLHIKKAKEMOD openAndFill', 'outInteger', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inCloseF64)) {
+    throw sharedMemory('CDLHIKKAKEMOD openAndFill', 'outInteger', 'prices.close');
+  }
+  return cdlhikkakemodOpenAndFillInternal(core, inOpenF64, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outInteger);
 }
 
 /**
  * Opens a live CDLHIKKAKEMOD stream over the warm-up history: `value()` starts at
  * the last history bar, bit-identical to {@link cdlhikkakemod} there.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
+ *   Low price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CdlhikkakemodOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlhikkakemodLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for histories of different lengths.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input or histories of different lengths.
  *
  * @example
  * ```ts
@@ -848,54 +994,37 @@ export function cdlhikkakemodOpenInternal(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = cdlhikkakemodOpen(open, high, low, close);
+ * const stream = cdlhikkakemodOpen({ open, high, low, close });
  * const peeked = stream.peek(100.2, 101.4, 99.1, 100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlhikkakemodOpen(
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  core: Core = Core.DEFAULT,
-): CdlhikkakemodStream {
-  requireArgument('CDLHIKKAKEMOD open', 'inOpen', inOpen);
-  requireHistory('CDLHIKKAKEMOD open', inOpen.length);
-  requireArgument('CDLHIKKAKEMOD open', 'inHigh', inHigh);
-  requireArgument('CDLHIKKAKEMOD open', 'inLow', inLow);
-  requireArgument('CDLHIKKAKEMOD open', 'inClose', inClose);
-  requireHistoryLength('CDLHIKKAKEMOD open', 'inHigh', inHigh.length, inOpen.length);
-  requireHistoryLength('CDLHIKKAKEMOD open', 'inLow', inLow.length, inOpen.length);
-  requireHistoryLength('CDLHIKKAKEMOD open', 'inClose', inClose.length, inOpen.length);
-  return cdlhikkakemodOpenInternal(core, float64(inOpen), float64(inHigh), float64(inLow), float64(inClose), 0);
+export function cdlhikkakemodOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlhikkakemodOptions): CdlhikkakemodStream {
+  requireArgument('CDLHIKKAKEMOD open', 'prices', prices);
+  const o = optionsOf('CDLHIKKAKEMOD open', options);
+  const core = coreOf('CDLHIKKAKEMOD open', o.core);
+  return cdlhikkakemodOpenPositional(prices.open, prices.high, prices.low, prices.close, core);
 }
 
 /**
- * {@link cdlhikkakemodOpen} that also fills the outputs over the whole history in
- * the same pass, bit-identically to {@link cdlhikkakemod}. The range written is
- * the stream's `outRange()`.
+ * {@link cdlhikkakemodOpen} that also computes the outputs over the whole history
+ * in the same pass, bit-identically to {@link cdlhikkakemod}.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param outInteger - +100 bullish hikkake bar, -100 bearish; +200 confirmed
- *   bullish, -200 confirmed bearish; 0 otherwise. Must hold `historyLen - lookback`
- *   values and share no memory with an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
+ *   Low price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link CdlhikkakemodOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link cdlhikkakemod} returns them; the range is the
+ *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlhikkakemodLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for histories of different lengths or an output too short or
- *   starting where another output or a `Float64Array` input starts, or, on a history
- *   long enough to open, one sharing memory with another output or a `Float64Array`
- *   input.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input, histories of different lengths or a buffer too short,
+ *   of the wrong type or starting where another buffer or a `Float64Array` input
+ *   starts, or, on a history long enough to open, one sharing memory with another
+ *   buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -909,39 +1038,17 @@ export function cdlhikkakemodOpen(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Int32Array(open.length);
- * const stream = cdlhikkakemodOpenAndFill(open, high, low, close, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = cdlhikkakemodOpenAndFill({ open, high, low, close });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlhikkakemodOpenAndFill(
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outInteger: Int32Array,
-  core: Core = Core.DEFAULT,
-): CdlhikkakemodStream {
-  requireArgument('CDLHIKKAKEMOD openAndFill', 'inOpen', inOpen);
-  requireHistory('CDLHIKKAKEMOD openAndFill', inOpen.length);
-  requireArgument('CDLHIKKAKEMOD openAndFill', 'inHigh', inHigh);
-  requireArgument('CDLHIKKAKEMOD openAndFill', 'inLow', inLow);
-  requireArgument('CDLHIKKAKEMOD openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('CDLHIKKAKEMOD openAndFill', inOpen.length, cdlhikkakemodLookback(core));
-  requireHistoryLength('CDLHIKKAKEMOD openAndFill', 'inHigh', inHigh.length, inOpen.length);
-  requireHistoryLength('CDLHIKKAKEMOD openAndFill', 'inLow', inLow.length, inOpen.length);
-  requireHistoryLength('CDLHIKKAKEMOD openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireOutput('CDLHIKKAKEMOD openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
-  const inOpenF64 = float64(inOpen);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if ((outInteger.buffer === inOpenF64.buffer && outInteger.byteOffset === inOpenF64.byteOffset) || (outInteger.buffer === inHighF64.buffer && outInteger.byteOffset === inHighF64.byteOffset) || (outInteger.buffer === inLowF64.buffer && outInteger.byteOffset === inLowF64.byteOffset) || (outInteger.buffer === inCloseF64.buffer && outInteger.byteOffset === inCloseF64.byteOffset)) {
-    throw streamFailure('CDLHIKKAKEMOD openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outInteger, inOpenF64) || overlaps(outInteger, inHighF64) || overlaps(outInteger, inLowF64) || overlaps(outInteger, inCloseF64))) {
-    throw streamFailure('CDLHIKKAKEMOD openAndFill', RetCode.BAD_PARAM);
-  }
-  return cdlhikkakemodOpenAndFillInternal(core, inOpenF64, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outInteger);
+export function cdlhikkakemodOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlhikkakemodOptions): CdlhikkakemodResult & { stream: CdlhikkakemodStream } {
+  requireArgument('CDLHIKKAKEMOD openAndFill', 'prices', prices);
+  const o = optionsOf('CDLHIKKAKEMOD openAndFill', options);
+  const core = coreOf('CDLHIKKAKEMOD openAndFill', o.core);
+  const capacity = fillCapacity(cdlhikkakemodLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
+  const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;
+  const stream = cdlhikkakemodOpenAndFillPositional(prices.open, prices.high, prices.low, prices.close, outInteger, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outInteger.subarray(0, range.count) };
 }

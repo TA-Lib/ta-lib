@@ -16,25 +16,16 @@
  *  080926 MF,CC  Explicit no-smoothing signal at a signal period of 1.
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { emaLookback } from './ema.ts';
+import { emaLookbackPositional } from './ema.ts';
 
-/**
- * Number of leading input bars {@link macdfix} consumes before its first value:
- * the index of the first bar with a value when the whole series is requested.
- *
- * @param optInSignalPeriod - Smoothing period for the signal line (default 9;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function macdfixLookback(optInSignalPeriod: number, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function macdfixLookbackPositional(optInSignalPeriod: number, core: Core = Core.DEFAULT): number {
   if ((optInSignalPeriod | 0) !== optInSignalPeriod) {
     return -1;
   }
@@ -48,25 +39,12 @@ export function macdfixLookback(optInSignalPeriod: number, core: Core = Core.DEF
    * (must also account for the initial data consume
    *  by the fix 26 period EMA).
    */
-  return emaLookback(26, core) + emaLookback(optInSignalPeriod, core);
+  return emaLookbackPositional(26, core) + emaLookbackPositional(optInSignalPeriod, core);
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link macdfix}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInSignalPeriod - Smoothing period for the signal line (default 9;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function macdfixDisplayShift(optInSignalPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (macdfixLookback(optInSignalPeriod, core) < 0) {
+/** @internal */
+export function macdfixDisplayShiftPositional(optInSignalPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (macdfixLookbackPositional(optInSignalPeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 3) {
@@ -145,12 +123,12 @@ export function macdfixImpl(
   if (signalBeta < 0.5) {
     signalBeta = 1.0 - signalK;
   }
-  lookbackSignal = emaLookback(optInSignalPeriod, core);
+  lookbackSignal = emaLookbackPositional(optInSignalPeriod, core);
   /* Move up the start index if there is not
    * enough initial data.
    */
   lookbackTotal = lookbackSignal;
-  lookbackTotal += emaLookback(26, core);
+  lookbackTotal += emaLookbackPositional(26, core);
   /* fixed slow period */
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
@@ -404,6 +382,162 @@ export function macdfixImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['signalPeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000']] as const;
+
+/** @internal */
+export function macdfixPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInSignalPeriod: number,
+  outMACD: Float64Array,
+  outMACDSignal: Float64Array,
+  outMACDHist: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('MACDFIX', 'startIdx', startIdx);
+  endIdx = requireInt32('MACDFIX', 'endIdx', endIdx);
+  optInSignalPeriod = requireInt32('MACDFIX', 'signalPeriod', optInSignalPeriod);
+  requireIndexRange('MACDFIX', startIdx, endIdx);
+  const guardLookback = macdfixLookbackPositional(optInSignalPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('MACDFIX', PARAM_RANGES, optInSignalPeriod);
+  }
+  const guardStart = clampedStart('MACDFIX', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('MACDFIX', 'real', inReal, guardInLen);
+  requireOutput('MACDFIX', 'outMacd', outMACD, guardOutLen, Float64Array);
+  requireOutput('MACDFIX', 'outMacdSignal', outMACDSignal, guardOutLen, Float64Array);
+  requireOutput('MACDFIX', 'outMacdHist', outMACDHist, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outMACD, inRealF64)) {
+    throw sharedMemory('MACDFIX', 'outMacd', 'real');
+  }
+  if (overlapsPartly(outMACDSignal, inRealF64)) {
+    throw sharedMemory('MACDFIX', 'outMacdSignal', 'real');
+  }
+  if (overlapsPartly(outMACDHist, inRealF64)) {
+    throw sharedMemory('MACDFIX', 'outMacdHist', 'real');
+  }
+  if (overlaps(outMACD, outMACDSignal)) {
+    throw sharedMemory('MACDFIX', 'outMacd', 'outMacdSignal');
+  }
+  if (overlaps(outMACD, outMACDHist)) {
+    throw sharedMemory('MACDFIX', 'outMacd', 'outMacdHist');
+  }
+  if (overlaps(outMACDSignal, outMACDHist)) {
+    throw sharedMemory('MACDFIX', 'outMacdSignal', 'outMacdHist');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = macdfixImpl(core, startIdx, endIdx, inRealF64, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('MACDFIX', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link macdfix}, {@link macdfixLookback},
+ * {@link macdfixDisplayShift}, {@link macdfixOpen} and {@link macdfixOpenAndFill}.
+ * Every key is optional: an omitted or `undefined` key takes its default, and a
+ * call ignores the keys it has no use for.
+ */
+export interface MacdfixOptions {
+  /**
+   * Smoothing period for the signal line (default 9; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  signalPeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outMacd`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outMacd?: Float64Array | undefined;
+  /**
+   * Buffer for `outMacdSignal`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outMacdSignal?: Float64Array | undefined;
+  /**
+   * Buffer for `outMacdHist`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outMacdHist?: Float64Array | undefined;
+}
+
+/** What {@link macdfix} returns, and {@link macdfixOpenAndFill} with its stream. */
+export interface MacdfixResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /** Fixed EMA12 minus EMA26. `outMacd[k]` is the value at input bar `begIdx + k`. */
+  outMacd: Float64Array;
+  /** EMA of the MACD line. `outMacdSignal[k]` is the value at input bar `begIdx + k`. */
+  outMacdSignal: Float64Array;
+  /** MACD minus signal. `outMacdHist[k]` is the value at input bar `begIdx + k`. */
+  outMacdHist: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link macdfix} consumes before its first value:
+ * the index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MacdfixOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function macdfixLookback(options?: MacdfixOptions): number {
+  const o = optionsOf('MACDFIX lookback', options);
+  return macdfixLookbackPositional(orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), coreOf('MACDFIX lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link macdfix}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MacdfixOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function macdfixDisplayShift(outputIdx: number, options?: MacdfixOptions): number {
+  const o = optionsOf('MACDFIX displayShift', options);
+  return macdfixDisplayShiftPositional(orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('MACDFIX displayShift', o.core));
+}
+
 /**
  * MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the
  * classic fixed smoothing factors 0.15 and 0.075), exposing only the signal
@@ -417,31 +551,23 @@ export function macdfixImpl(
  *   MACD line and the histogram is zero. Before 0.6.5 this parameter value
  *   produced misaligned output (issues #48/#59).
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link macdfixLookback} is a success with
- * `count` 0.
+ * `outMacd[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link macdfixLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - Source series (typically close)
- * @param optInSignalPeriod - Smoothing period for the signal line (default 9;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outMACD - Fixed EMA12 minus EMA26. Must hold the values produced and
- *   never be empty; the input length always suffices.
- * @param outMACDSignal - EMA of the MACD line. Must hold the values produced and
- *   never be empty; the input length always suffices.
- * @param outMACDHist - MACD minus signal. Must hold the values produced and never
- *   be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param real - Source series (typically close)
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link MacdfixOptions}.
+ * @returns `begIdx` and the values; see {@link MacdfixResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output,
- *   two outputs sharing memory or an output sharing memory with a `Float64Array`
- *   input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -449,54 +575,34 @@ export function macdfixImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const macd = new Float64Array(data.length);
- * const macdSignal = new Float64Array(data.length);
- * const macdHist = new Float64Array(data.length);
- * const { begIdx, count } = macdfix(
- *   0, data.length - 1,
- *   data,
- *   9,
- *   macd, macdSignal, macdHist,
- * );
- * // macd[k] is the value at bar begIdx + k, for k < count
+ * const {
+ *   begIdx,
+ *   outMacd,
+ *   outMacdSignal,
+ *   outMacdHist,
+ * } = macdfix(data, { signalPeriod: 9 });
+ * // outMacd[k] is the value at bar begIdx + k
  * ```
  * @see [`macd`](https://ta-lib.org/functions/macd)
  * @see [`macdext`](https://ta-lib.org/functions/macdext)
  * @see [`ema`](https://ta-lib.org/functions/ema)
  * @see [`apo`](https://ta-lib.org/functions/apo)
  */
-export function macdfix(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInSignalPeriod: number,
-  outMACD: Float64Array,
-  outMACDSignal: Float64Array,
-  outMACDHist: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('MACDFIX', 'startIdx', startIdx);
-  endIdx = requireInt32('MACDFIX', 'endIdx', endIdx);
-  optInSignalPeriod = requireInt32('MACDFIX', 'optInSignalPeriod', optInSignalPeriod);
-  requireIndexRange('MACDFIX', startIdx, endIdx);
-  const guardStart = clampedStart('MACDFIX', startIdx, macdfixLookback(optInSignalPeriod, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('MACDFIX', 'inReal', inReal, guardInLen);
-  requireOutput('MACDFIX', 'outMACD', outMACD, guardOutLen, Float64Array);
-  requireOutput('MACDFIX', 'outMACDSignal', outMACDSignal, guardOutLen, Float64Array);
-  requireOutput('MACDFIX', 'outMACDHist', outMACDHist, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outMACD, inRealF64) || overlapsPartly(outMACDSignal, inRealF64) || overlapsPartly(outMACDHist, inRealF64) || overlaps(outMACD, outMACDSignal) || overlaps(outMACD, outMACDHist) || overlaps(outMACDSignal, outMACDHist)) {
-    throw failure('MACDFIX', RetCode.BAD_PARAM);
+export function macdfix(real: ArrayLike<number>, options?: MacdfixOptions): MacdfixResult {
+  const o = optionsOf('MACDFIX', options);
+  if (o.endIdx === undefined) {
+    requireSeries('MACDFIX', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = macdfixImpl(core, startIdx, endIdx, inRealF64, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('MACDFIX', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('MACDFIX', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, macdfixLookbackPositional(optInSignalPeriod, core), real);
+  const outMACD = o.outMacd === undefined ? new Float64Array(capacity) : o.outMacd;
+  const outMACDSignal = o.outMacdSignal === undefined ? new Float64Array(capacity) : o.outMacdSignal;
+  const outMACDHist = o.outMacdHist === undefined ? new Float64Array(capacity) : o.outMacdHist;
+  const range = macdfixPositional(startIdx, endIdx, real, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist, core);
+  return { begIdx: range.begIdx, outMacd: outMACD.subarray(0, range.count), outMacdSignal: outMACDSignal.subarray(0, range.count), outMacdHist: outMACDHist.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -576,19 +682,21 @@ export class MacdfixStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inReal - The bar's `inReal` value: Source series (typically close)
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MacdfixOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out: MacdfixOut): void {
+  update(inReal: number, out?: MacdfixOut): MacdfixOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('MACDFIX update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACDFIX update', 'MacdfixOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -596,22 +704,27 @@ export class MacdfixStream {
     }
     macdfixStepImpl(this, inReal);
     this.outRangeCount++;
-    out.macd = this.cur_outMACD;
-    out.macdSignal = this.cur_outMACDSignal;
-    out.macdHist = this.cur_outMACDHist;
+    if (out === undefined) {
+      out = new MacdfixOut();
+    }
+    out.outMacd = this.cur_outMACD;
+    out.outMacdSignal = this.cur_outMACDSignal;
+    out.outMacdHist = this.cur_outMACDHist;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inReal - The bar's `inReal` value: Source series (typically close)
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MacdfixOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number, out: MacdfixOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inReal: number, out?: MacdfixOut): MacdfixOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACDFIX peek', 'MacdfixOut');
     }
     if (!Number.isFinite(inReal)) {
@@ -680,23 +793,33 @@ export class MacdfixStream {
     cur_outMACD = macdValue;
     cur_outMACDSignal = prevSignal;
     cur_outMACDHist = macdValue - prevSignal;
-    out.macd = cur_outMACD;
-    out.macdSignal = cur_outMACDSignal;
-    out.macdHist = cur_outMACDHist;
+    if (out === undefined) {
+      out = new MacdfixOut();
+    }
+    out.outMacd = cur_outMACD;
+    out.outMacdSignal = cur_outMACDSignal;
+    out.outMacdHist = cur_outMACDHist;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MacdfixOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: MacdfixOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: MacdfixOut): MacdfixOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACDFIX value', 'MacdfixOut');
     }
-    out.macd = this.cur_outMACD;
-    out.macdSignal = this.cur_outMACDSignal;
-    out.macdHist = this.cur_outMACDHist;
+    if (out === undefined) {
+      out = new MacdfixOut();
+    }
+    out.outMacd = this.cur_outMACD;
+    out.outMacdSignal = this.cur_outMACDSignal;
+    out.outMacdHist = this.cur_outMACDHist;
+    return out;
   }
 
   /**
@@ -727,16 +850,17 @@ export class MacdfixStream {
 }
 
 /**
- * The outputs of one MACDFIX bar, written into an object the caller owns and
- * reuses: valid until the next call that writes it.
+ * The outputs of one MACDFIX bar, as `update`, `peek` and `value` return them.
+ * Passed back to one of them, it is filled and returned again, with no allocation;
+ * it holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class MacdfixOut {
   /** Fixed EMA12 minus EMA26. */
-  macd: number = 0;
+  outMacd: number = NaN;
   /** EMA of the MACD line. */
-  macdSignal: number = 0;
+  outMacdSignal: number = NaN;
   /** MACD minus signal. */
-  macdHist: number = 0;
+  outMacdHist: number = NaN;
 }
 
 function macdfixStepImpl(sp: MacdfixStream, inReal: number): void {
@@ -872,12 +996,12 @@ function macdfixOpenImpl(
   if (signalBeta < 0.5) {
     signalBeta = 1.0 - signalK;
   }
-  lookbackSignal = emaLookback(optInSignalPeriod, core);
+  lookbackSignal = emaLookbackPositional(optInSignalPeriod, core);
   /* Move up the start index if there is not
    * enough initial data.
    */
   lookbackTotal = lookbackSignal;
-  lookbackTotal += emaLookback(26, core);
+  lookbackTotal += emaLookbackPositional(26, core);
   /* fixed slow period */
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
@@ -1164,7 +1288,10 @@ export function macdfixOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MACDFIX openAndFill', inReal.length, startIdx, macdfixLookback(optInSignalPeriod, core));
+    throw insufficientHistory('MACDFIX openAndFill', inReal.length, startIdx, macdfixLookbackPositional(optInSignalPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && macdfixLookbackPositional(optInSignalPeriod, core) < 0) {
+    throw rejectedParams('MACDFIX openAndFill', PARAM_RANGES, optInSignalPeriod);
   }
   throw streamFailure('MACDFIX openAndFill', retCode);
 }
@@ -1189,88 +1316,28 @@ export function macdfixOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MACDFIX open', inReal.length, startIdx, macdfixLookback(optInSignalPeriod, core));
+    throw insufficientHistory('MACDFIX open', inReal.length, startIdx, macdfixLookbackPositional(optInSignalPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && macdfixLookbackPositional(optInSignalPeriod, core) < 0) {
+    throw rejectedParams('MACDFIX open', PARAM_RANGES, optInSignalPeriod);
   }
   throw streamFailure('MACDFIX open', retCode);
 }
 
-/**
- * Opens a live MACDFIX stream over the warm-up history: `value()` starts at the
- * last history bar, bit-identical to {@link macdfix} there.
- *
- * @param inReal - Warm-up history. Source series (typically close)
- * @param optInSignalPeriod - Smoothing period for the signal line (default 9;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `macdfixLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32 or a parameter outside its range.
- *
- * @example
- * ```ts
- * import { MacdfixOut, macdfixOpen } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const stream = macdfixOpen(data, 9);
- * const peeked = new MacdfixOut();
- * const updated = new MacdfixOut();
- * stream.peek(100.9, peeked); // a forming bar: commits nothing
- * stream.update(100.9, updated); // the bar closes
- * ```
- */
-export function macdfixOpen(
+/** @internal */
+export function macdfixOpenPositional(
   inReal: ArrayLike<number>,
   optInSignalPeriod: number,
   core: Core = Core.DEFAULT,
 ): MacdfixStream {
-  optInSignalPeriod = requireInt32('MACDFIX open', 'optInSignalPeriod', optInSignalPeriod);
-  requireArgument('MACDFIX open', 'inReal', inReal);
+  optInSignalPeriod = requireInt32('MACDFIX open', 'signalPeriod', optInSignalPeriod);
+  requireArgument('MACDFIX open', 'real', inReal);
   requireHistory('MACDFIX open', inReal.length);
   return macdfixOpenInternal(core, float64(inReal), 0, optInSignalPeriod);
 }
 
-/**
- * {@link macdfixOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link macdfix}. The range written is the stream's
- * `outRange()`.
- *
- * @param inReal - Warm-up history. Source series (typically close)
- * @param optInSignalPeriod - Smoothing period for the signal line (default 9;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outMACD - Fixed EMA12 minus EMA26. Must hold `historyLen - lookback`
- *   values and share no memory with an input or another output.
- * @param outMACDSignal - EMA of the MACD line. Must hold `historyLen - lookback`
- *   values and share no memory with an input or another output.
- * @param outMACDHist - MACD minus signal. Must hold `historyLen - lookback` values
- *   and share no memory with an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `macdfixLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range or
- *   an output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { macdfixOpenAndFill } from 'ta-lib';
- *
- * const data = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
- * const macd = new Float64Array(data.length);
- * const macdSignal = new Float64Array(data.length);
- * const macdHist = new Float64Array(data.length);
- * const stream = macdfixOpenAndFill(data, 9, macd, macdSignal, macdHist);
- * const { begIdx, count } = stream.outRange();
- * // macd[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function macdfixOpenAndFill(
+/** @internal */
+export function macdfixOpenAndFillPositional(
   inReal: ArrayLike<number>,
   optInSignalPeriod: number,
   outMACD: Float64Array,
@@ -1278,19 +1345,132 @@ export function macdfixOpenAndFill(
   outMACDHist: Float64Array,
   core: Core = Core.DEFAULT,
 ): MacdfixStream {
-  optInSignalPeriod = requireInt32('MACDFIX openAndFill', 'optInSignalPeriod', optInSignalPeriod);
-  requireArgument('MACDFIX openAndFill', 'inReal', inReal);
+  optInSignalPeriod = requireInt32('MACDFIX openAndFill', 'signalPeriod', optInSignalPeriod);
+  requireArgument('MACDFIX openAndFill', 'real', inReal);
   requireHistory('MACDFIX openAndFill', inReal.length);
-  const guardOutLen = openFillCount('MACDFIX openAndFill', inReal.length, macdfixLookback(optInSignalPeriod, core));
-  requireOutput('MACDFIX openAndFill', 'outMACD', outMACD, guardOutLen, Float64Array);
-  requireOutput('MACDFIX openAndFill', 'outMACDSignal', outMACDSignal, guardOutLen, Float64Array);
-  requireOutput('MACDFIX openAndFill', 'outMACDHist', outMACDHist, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outMACD.buffer === inRealF64.buffer && outMACD.byteOffset === inRealF64.byteOffset) || (outMACDSignal.buffer === inRealF64.buffer && outMACDSignal.byteOffset === inRealF64.byteOffset) || (outMACDHist.buffer === inRealF64.buffer && outMACDHist.byteOffset === inRealF64.byteOffset) || (outMACD.buffer === outMACDSignal.buffer && outMACD.byteOffset === outMACDSignal.byteOffset) || (outMACD.buffer === outMACDHist.buffer && outMACD.byteOffset === outMACDHist.byteOffset) || (outMACDSignal.buffer === outMACDHist.buffer && outMACDSignal.byteOffset === outMACDHist.byteOffset)) {
-    throw streamFailure('MACDFIX openAndFill', RetCode.BAD_PARAM);
+  const guardLookback = macdfixLookbackPositional(optInSignalPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('MACDFIX openAndFill', PARAM_RANGES, optInSignalPeriod);
   }
-  if (guardOutLen > 0 && (overlaps(outMACD, inRealF64) || overlaps(outMACDSignal, inRealF64) || overlaps(outMACDHist, inRealF64) || overlaps(outMACD, outMACDSignal) || overlaps(outMACD, outMACDHist) || overlaps(outMACDSignal, outMACDHist))) {
-    throw streamFailure('MACDFIX openAndFill', RetCode.BAD_PARAM);
+  const guardOutLen = openFillCount('MACDFIX openAndFill', inReal.length, guardLookback);
+  requireOutput('MACDFIX openAndFill', 'outMacd', outMACD, guardOutLen, Float64Array);
+  requireOutput('MACDFIX openAndFill', 'outMacdSignal', outMACDSignal, guardOutLen, Float64Array);
+  requireOutput('MACDFIX openAndFill', 'outMacdHist', outMACDHist, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outMACD.buffer === inRealF64.buffer && outMACD.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('MACDFIX openAndFill', 'outMacd', 'real');
+  }
+  if (outMACDSignal.buffer === inRealF64.buffer && outMACDSignal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('MACDFIX openAndFill', 'outMacdSignal', 'real');
+  }
+  if (outMACDHist.buffer === inRealF64.buffer && outMACDHist.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('MACDFIX openAndFill', 'outMacdHist', 'real');
+  }
+  if (outMACD.buffer === outMACDSignal.buffer && outMACD.byteOffset === outMACDSignal.byteOffset) {
+    throw sharedMemory('MACDFIX openAndFill', 'outMacd', 'outMacdSignal');
+  }
+  if (outMACD.buffer === outMACDHist.buffer && outMACD.byteOffset === outMACDHist.byteOffset) {
+    throw sharedMemory('MACDFIX openAndFill', 'outMacd', 'outMacdHist');
+  }
+  if (outMACDSignal.buffer === outMACDHist.buffer && outMACDSignal.byteOffset === outMACDHist.byteOffset) {
+    throw sharedMemory('MACDFIX openAndFill', 'outMacdSignal', 'outMacdHist');
+  }
+  if (guardOutLen > 0 && overlaps(outMACD, inRealF64)) {
+    throw sharedMemory('MACDFIX openAndFill', 'outMacd', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDSignal, inRealF64)) {
+    throw sharedMemory('MACDFIX openAndFill', 'outMacdSignal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDHist, inRealF64)) {
+    throw sharedMemory('MACDFIX openAndFill', 'outMacdHist', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outMACD, outMACDSignal)) {
+    throw sharedMemory('MACDFIX openAndFill', 'outMacd', 'outMacdSignal');
+  }
+  if (guardOutLen > 0 && overlaps(outMACD, outMACDHist)) {
+    throw sharedMemory('MACDFIX openAndFill', 'outMacd', 'outMacdHist');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDSignal, outMACDHist)) {
+    throw sharedMemory('MACDFIX openAndFill', 'outMacdSignal', 'outMacdHist');
   }
   return macdfixOpenAndFillInternal(core, inRealF64, 0, optInSignalPeriod, new MInteger(), new MInteger(), outMACD, outMACDSignal, outMACDHist);
+}
+
+/**
+ * Opens a live MACDFIX stream over the warm-up history: `value()` starts at the
+ * last history bar, bit-identical to {@link macdfix} there.
+ *
+ * @param real - Warm-up history. Source series (typically close)
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MacdfixOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `macdfixLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32 or a parameter outside its
+ *   range.
+ *
+ * @example
+ * ```ts
+ * import { macdfixOpen } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const stream = macdfixOpen(data, { signalPeriod: 9 });
+ * const peeked = stream.peek(100.9); // a forming bar: commits nothing
+ * const updated = stream.update(100.9); // the bar closes
+ * ```
+ */
+export function macdfixOpen(real: ArrayLike<number>, options?: MacdfixOptions): MacdfixStream {
+  const o = optionsOf('MACDFIX open', options);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('MACDFIX open', o.core);
+  return macdfixOpenPositional(real, optInSignalPeriod, core);
+}
+
+/**
+ * {@link macdfixOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link macdfix}.
+ *
+ * @param real - Warm-up history. Source series (typically close)
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link MacdfixOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link macdfix} returns them; the range is the
+ *   stream's `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `macdfixLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range
+ *   or a buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
+ *
+ * @example
+ * ```ts
+ * import { macdfixOpenAndFill } from 'ta-lib';
+ *
+ * const data = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i));
+ * const {
+ *   stream,
+ *   begIdx,
+ *   outMacd,
+ *   outMacdSignal,
+ *   outMacdHist,
+ * } = macdfixOpenAndFill(data, { signalPeriod: 9 });
+ * // outMacd[k] is the value at bar begIdx + k
+ * ```
+ */
+export function macdfixOpenAndFill(real: ArrayLike<number>, options?: MacdfixOptions): MacdfixResult & { stream: MacdfixStream } {
+  const o = optionsOf('MACDFIX openAndFill', options);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('MACDFIX openAndFill', o.core);
+  const capacity = fillCapacity(macdfixLookbackPositional(optInSignalPeriod, core), real);
+  const outMACD = o.outMacd === undefined ? new Float64Array(capacity) : o.outMacd;
+  const outMACDSignal = o.outMacdSignal === undefined ? new Float64Array(capacity) : o.outMacdSignal;
+  const outMACDHist = o.outMacdHist === undefined ? new Float64Array(capacity) : o.outMacdHist;
+  const stream = macdfixOpenAndFillPositional(real, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outMacd: outMACD.subarray(0, range.count), outMacdSignal: outMACDSignal.subarray(0, range.count), outMacdHist: outMACDHist.subarray(0, range.count) };
 }

@@ -16,42 +16,22 @@
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  */
 
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { CandleSettingType, Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link cdlshootingstar} consumes before its first
- * value: the index of the first bar with a value when the whole series is
- * requested.
- *
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function cdlshootingstarLookback(core: Core = Core.DEFAULT): number {
+/** @internal */
+export function cdlshootingstarLookbackPositional(core: Core = Core.DEFAULT): number {
   const BodyShort_avgPeriod = core.candleSettings[CandleSettingType.BODY_SHORT].avgPeriod;
   const ShadowLong_avgPeriod = core.candleSettings[CandleSettingType.SHADOW_LONG].avgPeriod;
   const ShadowVeryShort_avgPeriod = core.candleSettings[CandleSettingType.SHADOW_VERY_SHORT].avgPeriod;
   return ((BodyShort_avgPeriod > ShadowLong_avgPeriod ? BodyShort_avgPeriod : ShadowLong_avgPeriod) > ShadowVeryShort_avgPeriod ? (BodyShort_avgPeriod > ShadowLong_avgPeriod ? BodyShort_avgPeriod : ShadowLong_avgPeriod) : ShadowVeryShort_avgPeriod) + 1;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link cdlshootingstar}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function cdlshootingstarDisplayShift(outputIdx: number, core: Core = Core.DEFAULT): number {
-  void core;
+/** @internal */
+export function cdlshootingstarDisplayShiftPositional(outputIdx: number, _core: Core = Core.DEFAULT): number {
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
     return -2147483648;
   }
@@ -98,7 +78,7 @@ export function cdlshootingstarImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = cdlshootingstarLookback(core);
+  lookbackTotal = cdlshootingstarLookbackPositional(core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -170,6 +150,135 @@ export function cdlshootingstarImpl(
   return RetCode.SUCCESS;
 }
 
+/** @internal */
+export function cdlshootingstarPositional(
+  startIdx: number,
+  endIdx: number,
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outInteger: Int32Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('CDLSHOOTINGSTAR', 'startIdx', startIdx);
+  endIdx = requireInt32('CDLSHOOTINGSTAR', 'endIdx', endIdx);
+  requireIndexRange('CDLSHOOTINGSTAR', startIdx, endIdx);
+  const guardStart = clampedStart('CDLSHOOTINGSTAR', startIdx, cdlshootingstarLookbackPositional(core));
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('CDLSHOOTINGSTAR', 'prices.open', inOpen, guardInLen);
+  requireLength('CDLSHOOTINGSTAR', 'prices.high', inHigh, guardInLen);
+  requireLength('CDLSHOOTINGSTAR', 'prices.low', inLow, guardInLen);
+  requireLength('CDLSHOOTINGSTAR', 'prices.close', inClose, guardInLen);
+  requireOutput('CDLSHOOTINGSTAR', 'outInteger', outInteger, guardOutLen, Int32Array);
+  const inOpenF64 = float64(inOpen);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (overlaps(outInteger, inOpenF64)) {
+    throw sharedMemory('CDLSHOOTINGSTAR', 'outInteger', 'prices.open');
+  }
+  if (overlaps(outInteger, inHighF64)) {
+    throw sharedMemory('CDLSHOOTINGSTAR', 'outInteger', 'prices.high');
+  }
+  if (overlaps(outInteger, inLowF64)) {
+    throw sharedMemory('CDLSHOOTINGSTAR', 'outInteger', 'prices.low');
+  }
+  if (overlaps(outInteger, inCloseF64)) {
+    throw sharedMemory('CDLSHOOTINGSTAR', 'outInteger', 'prices.close');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = cdlshootingstarImpl(core, startIdx, endIdx, inOpenF64, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outInteger);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('CDLSHOOTINGSTAR', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link cdlshootingstar}, {@link cdlshootingstarLookback},
+ * {@link cdlshootingstarDisplayShift}, {@link cdlshootingstarOpen} and
+ * {@link cdlshootingstarOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface CdlshootingstarOptions {
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input.
+   */
+  outInteger?: Int32Array | undefined;
+}
+
+/**
+ * What {@link cdlshootingstar} returns, and {@link cdlshootingstarOpenAndFill}
+ * with its stream.
+ */
+export interface CdlshootingstarResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * -100 when the shooting star is detected, 0 otherwise. Only ever emits negative
+   * (bearish); never +100. `values[k]` is the value at input bar `begIdx + k`.
+   */
+  values: Int32Array;
+}
+
+/**
+ * Number of leading input bars {@link cdlshootingstar} consumes before its first
+ * value: the index of the first bar with a value when the whole series is
+ * requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CdlshootingstarOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function cdlshootingstarLookback(options?: CdlshootingstarOptions): number {
+  const o = optionsOf('CDLSHOOTINGSTAR lookback', options);
+  return cdlshootingstarLookbackPositional(coreOf('CDLSHOOTINGSTAR lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link cdlshootingstar}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CdlshootingstarOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function cdlshootingstarDisplayShift(outputIdx: number, options?: CdlshootingstarOptions): number {
+  const o = optionsOf('CDLSHOOTINGSTAR displayShift', options);
+  return cdlshootingstarDisplayShiftPositional(outputIdx, coreOf('CDLSHOOTINGSTAR displayShift', o.core));
+}
+
 /**
  * Single-candle pattern: a small real body with a long upper shadow and
  * little-to-no lower shadow that gaps up from the prior candle's real body.
@@ -186,28 +295,24 @@ export function cdlshootingstarImpl(
  *   103 patterns.
  *   ([thepatternsite.com](https://thepatternsite.com/ShootingStar.html))
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link cdlshootingstarLookback} is a success
- * with `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link cdlshootingstarLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inOpen - Open price of each bar.
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param inClose - Close price of each bar.
- * @param outInteger - -100 when the shooting star is detected, 0 otherwise. Only
- *   ever emits negative (bearish); never +100. Must hold the values produced and
- *   never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `open`: Open
+ *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
+ *   `close`: Close price of each bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link CdlshootingstarOptions}.
+ * @returns `begIdx` and the values; see {@link CdlshootingstarResult}. Each output
+ *   is a view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, an
- *   array too short for the range, an empty output or an output sharing memory with
- *   a `Float64Array` input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an input too short for the range, a buffer that is empty, too short or of
+ *   the wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -221,54 +326,30 @@ export function cdlshootingstarImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Int32Array(open.length);
- * const { begIdx, count } = cdlshootingstar(
- *   0, open.length - 1,
- *   open, high, low, close,
- *   out,
- * );
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = cdlshootingstar({ open, high, low, close });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`cdlinvertedhammer`](https://ta-lib.org/functions/cdlinvertedhammer)
  * @see [`cdlhangingman`](https://ta-lib.org/functions/cdlhangingman)
  * @see [`cdlhammer`](https://ta-lib.org/functions/cdlhammer)
  * @see [`cdlgravestonedoji`](https://ta-lib.org/functions/cdlgravestonedoji)
  */
-export function cdlshootingstar(
-  startIdx: number,
-  endIdx: number,
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outInteger: Int32Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('CDLSHOOTINGSTAR', 'startIdx', startIdx);
-  endIdx = requireInt32('CDLSHOOTINGSTAR', 'endIdx', endIdx);
-  requireIndexRange('CDLSHOOTINGSTAR', startIdx, endIdx);
-  const guardStart = clampedStart('CDLSHOOTINGSTAR', startIdx, cdlshootingstarLookback(core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('CDLSHOOTINGSTAR', 'inOpen', inOpen, guardInLen);
-  requireLength('CDLSHOOTINGSTAR', 'inHigh', inHigh, guardInLen);
-  requireLength('CDLSHOOTINGSTAR', 'inLow', inLow, guardInLen);
-  requireLength('CDLSHOOTINGSTAR', 'inClose', inClose, guardInLen);
-  requireOutput('CDLSHOOTINGSTAR', 'outInteger', outInteger, guardOutLen, Int32Array);
-  const inOpenF64 = float64(inOpen);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if (overlaps(outInteger, inOpenF64) || overlaps(outInteger, inHighF64) || overlaps(outInteger, inLowF64) || overlaps(outInteger, inCloseF64)) {
-    throw failure('CDLSHOOTINGSTAR', RetCode.BAD_PARAM);
+export function cdlshootingstar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlshootingstarOptions): CdlshootingstarResult {
+  requireArgument('CDLSHOOTINGSTAR', 'prices', prices);
+  const o = optionsOf('CDLSHOOTINGSTAR', options);
+  if (o.endIdx === undefined) {
+    requireSeries('CDLSHOOTINGSTAR', 'prices.open', prices.open);
+    requireSeries('CDLSHOOTINGSTAR', 'prices.high', prices.high);
+    requireSeries('CDLSHOOTINGSTAR', 'prices.low', prices.low);
+    requireSeries('CDLSHOOTINGSTAR', 'prices.close', prices.close);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = cdlshootingstarImpl(core, startIdx, endIdx, inOpenF64, inHighF64, inLowF64, inCloseF64, outBegIdx, outNBElement, outInteger);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('CDLSHOOTINGSTAR', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const core = coreOf('CDLSHOOTINGSTAR', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.open.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, cdlshootingstarLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
+  const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;
+  const range = cdlshootingstarPositional(startIdx, endIdx, prices.open, prices.high, prices.low, prices.close, outInteger, core);
+  return { begIdx: range.begIdx, values: outInteger.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -578,7 +659,7 @@ function cdlshootingstarOpenImpl(
   /* Identify the minimum number of price bar needed
    * to calculate at least one output.
    */
-  lookbackTotal = cdlshootingstarLookback(core);
+  lookbackTotal = cdlshootingstarLookbackPositional(core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -721,7 +802,7 @@ export function cdlshootingstarOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('CDLSHOOTINGSTAR openAndFill', inOpen.length, startIdx, cdlshootingstarLookback(core));
+    throw insufficientHistory('CDLSHOOTINGSTAR openAndFill', inOpen.length, startIdx, cdlshootingstarLookbackPositional(core));
   }
   throw streamFailure('CDLSHOOTINGSTAR openAndFill', retCode);
 }
@@ -746,29 +827,94 @@ export function cdlshootingstarOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('CDLSHOOTINGSTAR open', inOpen.length, startIdx, cdlshootingstarLookback(core));
+    throw insufficientHistory('CDLSHOOTINGSTAR open', inOpen.length, startIdx, cdlshootingstarLookbackPositional(core));
   }
   throw streamFailure('CDLSHOOTINGSTAR open', retCode);
+}
+
+/** @internal */
+export function cdlshootingstarOpenPositional(
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  core: Core = Core.DEFAULT,
+): CdlshootingstarStream {
+  requireArgument('CDLSHOOTINGSTAR open', 'prices.open', inOpen);
+  requireHistory('CDLSHOOTINGSTAR open', inOpen.length);
+  requireArgument('CDLSHOOTINGSTAR open', 'prices.high', inHigh);
+  requireArgument('CDLSHOOTINGSTAR open', 'prices.low', inLow);
+  requireArgument('CDLSHOOTINGSTAR open', 'prices.close', inClose);
+  requireHistoryLength('CDLSHOOTINGSTAR open', 'prices.high', inHigh.length, inOpen.length);
+  requireHistoryLength('CDLSHOOTINGSTAR open', 'prices.low', inLow.length, inOpen.length);
+  requireHistoryLength('CDLSHOOTINGSTAR open', 'prices.close', inClose.length, inOpen.length);
+  return cdlshootingstarOpenInternal(core, float64(inOpen), float64(inHigh), float64(inLow), float64(inClose), 0);
+}
+
+/** @internal */
+export function cdlshootingstarOpenAndFillPositional(
+  inOpen: ArrayLike<number>,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  outInteger: Int32Array,
+  core: Core = Core.DEFAULT,
+): CdlshootingstarStream {
+  requireArgument('CDLSHOOTINGSTAR openAndFill', 'prices.open', inOpen);
+  requireHistory('CDLSHOOTINGSTAR openAndFill', inOpen.length);
+  requireArgument('CDLSHOOTINGSTAR openAndFill', 'prices.high', inHigh);
+  requireArgument('CDLSHOOTINGSTAR openAndFill', 'prices.low', inLow);
+  requireArgument('CDLSHOOTINGSTAR openAndFill', 'prices.close', inClose);
+  const guardOutLen = openFillCount('CDLSHOOTINGSTAR openAndFill', inOpen.length, cdlshootingstarLookbackPositional(core));
+  requireHistoryLength('CDLSHOOTINGSTAR openAndFill', 'prices.high', inHigh.length, inOpen.length);
+  requireHistoryLength('CDLSHOOTINGSTAR openAndFill', 'prices.low', inLow.length, inOpen.length);
+  requireHistoryLength('CDLSHOOTINGSTAR openAndFill', 'prices.close', inClose.length, inOpen.length);
+  requireOutput('CDLSHOOTINGSTAR openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
+  const inOpenF64 = float64(inOpen);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (outInteger.buffer === inOpenF64.buffer && outInteger.byteOffset === inOpenF64.byteOffset) {
+    throw sharedMemory('CDLSHOOTINGSTAR openAndFill', 'outInteger', 'prices.open');
+  }
+  if (outInteger.buffer === inHighF64.buffer && outInteger.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('CDLSHOOTINGSTAR openAndFill', 'outInteger', 'prices.high');
+  }
+  if (outInteger.buffer === inLowF64.buffer && outInteger.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('CDLSHOOTINGSTAR openAndFill', 'outInteger', 'prices.low');
+  }
+  if (outInteger.buffer === inCloseF64.buffer && outInteger.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('CDLSHOOTINGSTAR openAndFill', 'outInteger', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inOpenF64)) {
+    throw sharedMemory('CDLSHOOTINGSTAR openAndFill', 'outInteger', 'prices.open');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inHighF64)) {
+    throw sharedMemory('CDLSHOOTINGSTAR openAndFill', 'outInteger', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inLowF64)) {
+    throw sharedMemory('CDLSHOOTINGSTAR openAndFill', 'outInteger', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outInteger, inCloseF64)) {
+    throw sharedMemory('CDLSHOOTINGSTAR openAndFill', 'outInteger', 'prices.close');
+  }
+  return cdlshootingstarOpenAndFillInternal(core, inOpenF64, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outInteger);
 }
 
 /**
  * Opens a live CDLSHOOTINGSTAR stream over the warm-up history: `value()` starts
  * at the last history bar, bit-identical to {@link cdlshootingstar} there.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
+ *   Low price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link CdlshootingstarOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlshootingstarLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for histories of different lengths.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input or histories of different lengths.
  *
  * @example
  * ```ts
@@ -782,54 +928,37 @@ export function cdlshootingstarOpenInternal(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = cdlshootingstarOpen(open, high, low, close);
+ * const stream = cdlshootingstarOpen({ open, high, low, close });
  * const peeked = stream.peek(100.2, 101.4, 99.1, 100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlshootingstarOpen(
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  core: Core = Core.DEFAULT,
-): CdlshootingstarStream {
-  requireArgument('CDLSHOOTINGSTAR open', 'inOpen', inOpen);
-  requireHistory('CDLSHOOTINGSTAR open', inOpen.length);
-  requireArgument('CDLSHOOTINGSTAR open', 'inHigh', inHigh);
-  requireArgument('CDLSHOOTINGSTAR open', 'inLow', inLow);
-  requireArgument('CDLSHOOTINGSTAR open', 'inClose', inClose);
-  requireHistoryLength('CDLSHOOTINGSTAR open', 'inHigh', inHigh.length, inOpen.length);
-  requireHistoryLength('CDLSHOOTINGSTAR open', 'inLow', inLow.length, inOpen.length);
-  requireHistoryLength('CDLSHOOTINGSTAR open', 'inClose', inClose.length, inOpen.length);
-  return cdlshootingstarOpenInternal(core, float64(inOpen), float64(inHigh), float64(inLow), float64(inClose), 0);
+export function cdlshootingstarOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlshootingstarOptions): CdlshootingstarStream {
+  requireArgument('CDLSHOOTINGSTAR open', 'prices', prices);
+  const o = optionsOf('CDLSHOOTINGSTAR open', options);
+  const core = coreOf('CDLSHOOTINGSTAR open', o.core);
+  return cdlshootingstarOpenPositional(prices.open, prices.high, prices.low, prices.close, core);
 }
 
 /**
- * {@link cdlshootingstarOpen} that also fills the outputs over the whole history
- * in the same pass, bit-identically to {@link cdlshootingstar}. The range written
- * is the stream's `outRange()`.
+ * {@link cdlshootingstarOpen} that also computes the outputs over the whole
+ * history in the same pass, bit-identically to {@link cdlshootingstar}.
  *
- * @param inOpen - Warm-up history. Open price of each bar. Every history has the
- *   same length.
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param outInteger - -100 when the shooting star is detected, 0 otherwise. Only
- *   ever emits negative (bearish); never +100. Must hold `historyLen - lookback`
- *   values and share no memory with an input or another output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
+ *   Low price of each bar. `close`: Close price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link CdlshootingstarOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link cdlshootingstar} returns them; the range is
+ *   the stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `cdlshootingstarLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for histories of different lengths or an output too short or
- *   starting where another output or a `Float64Array` input starts, or, on a history
- *   long enough to open, one sharing memory with another output or a `Float64Array`
- *   input.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input, histories of different lengths or a buffer too short,
+ *   of the wrong type or starting where another buffer or a `Float64Array` input
+ *   starts, or, on a history long enough to open, one sharing memory with another
+ *   buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -843,39 +972,17 @@ export function cdlshootingstarOpen(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const out = new Int32Array(open.length);
- * const stream = cdlshootingstarOpenAndFill(open, high, low, close, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = cdlshootingstarOpenAndFill({ open, high, low, close });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlshootingstarOpenAndFill(
-  inOpen: ArrayLike<number>,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  outInteger: Int32Array,
-  core: Core = Core.DEFAULT,
-): CdlshootingstarStream {
-  requireArgument('CDLSHOOTINGSTAR openAndFill', 'inOpen', inOpen);
-  requireHistory('CDLSHOOTINGSTAR openAndFill', inOpen.length);
-  requireArgument('CDLSHOOTINGSTAR openAndFill', 'inHigh', inHigh);
-  requireArgument('CDLSHOOTINGSTAR openAndFill', 'inLow', inLow);
-  requireArgument('CDLSHOOTINGSTAR openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('CDLSHOOTINGSTAR openAndFill', inOpen.length, cdlshootingstarLookback(core));
-  requireHistoryLength('CDLSHOOTINGSTAR openAndFill', 'inHigh', inHigh.length, inOpen.length);
-  requireHistoryLength('CDLSHOOTINGSTAR openAndFill', 'inLow', inLow.length, inOpen.length);
-  requireHistoryLength('CDLSHOOTINGSTAR openAndFill', 'inClose', inClose.length, inOpen.length);
-  requireOutput('CDLSHOOTINGSTAR openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
-  const inOpenF64 = float64(inOpen);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if ((outInteger.buffer === inOpenF64.buffer && outInteger.byteOffset === inOpenF64.byteOffset) || (outInteger.buffer === inHighF64.buffer && outInteger.byteOffset === inHighF64.byteOffset) || (outInteger.buffer === inLowF64.buffer && outInteger.byteOffset === inLowF64.byteOffset) || (outInteger.buffer === inCloseF64.buffer && outInteger.byteOffset === inCloseF64.byteOffset)) {
-    throw streamFailure('CDLSHOOTINGSTAR openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outInteger, inOpenF64) || overlaps(outInteger, inHighF64) || overlaps(outInteger, inLowF64) || overlaps(outInteger, inCloseF64))) {
-    throw streamFailure('CDLSHOOTINGSTAR openAndFill', RetCode.BAD_PARAM);
-  }
-  return cdlshootingstarOpenAndFillInternal(core, inOpenF64, inHighF64, inLowF64, inCloseF64, 0, new MInteger(), new MInteger(), outInteger);
+export function cdlshootingstarOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlshootingstarOptions): CdlshootingstarResult & { stream: CdlshootingstarStream } {
+  requireArgument('CDLSHOOTINGSTAR openAndFill', 'prices', prices);
+  const o = optionsOf('CDLSHOOTINGSTAR openAndFill', options);
+  const core = coreOf('CDLSHOOTINGSTAR openAndFill', o.core);
+  const capacity = fillCapacity(cdlshootingstarLookbackPositional(core), prices.open, prices.high, prices.low, prices.close);
+  const outInteger = o.outInteger === undefined ? new Int32Array(capacity) : o.outInteger;
+  const stream = cdlshootingstarOpenAndFillPositional(prices.open, prices.high, prices.low, prices.close, outInteger, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outInteger.subarray(0, range.count) };
 }

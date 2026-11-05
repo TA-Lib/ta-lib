@@ -12,30 +12,17 @@
  *  103126 MF,CC  Creation (#570).
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { atrLookback } from './atr.ts';
-import { emaLookback } from './ema.ts';
+import { atrLookbackPositional } from './atr.ts';
+import { emaLookbackPositional } from './ema.ts';
 
-/**
- * Number of leading input bars {@link macdv} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInFastPeriod - Period of the fast EMA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow EMA and of the Average True Range
- *   (default 26; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Smoothing period of the signal line (default 9; range
- *   1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function macdvLookback(optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function macdvLookbackPositional(optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, core: Core = Core.DEFAULT): number {
   if ((optInFastPeriod | 0) !== optInFastPeriod) {
     return -1;
   }
@@ -78,34 +65,17 @@ export function macdvLookback(optInFastPeriod: number, optInSlowPeriod: number, 
    * here, which is what makes MACDV inherit TA_FUNC_UNST_EMA and
    * TA_FUNC_UNST_ATR from its callees.
    */
-  lookbackLine = emaLookback(optInSlowPeriod, core);
-  lookbackATR = atrLookback(optInSlowPeriod, core);
+  lookbackLine = emaLookbackPositional(optInSlowPeriod, core);
+  lookbackATR = atrLookbackPositional(optInSlowPeriod, core);
   if (lookbackATR > lookbackLine) {
     lookbackLine = lookbackATR;
   }
-  return lookbackLine + emaLookback(optInSignalPeriod, core);
+  return lookbackLine + emaLookbackPositional(optInSignalPeriod, core);
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link macdv}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInFastPeriod - Period of the fast EMA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow EMA and of the Average True Range
- *   (default 26; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Smoothing period of the signal line (default 9; range
- *   1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function macdvDisplayShift(optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core) < 0) {
+/** @internal */
+export function macdvDisplayShiftPositional(optInFastPeriod: number, optInSlowPeriod: number, optInSignalPeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (macdvLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 3) {
@@ -228,11 +198,11 @@ export function macdvImpl(
    * grows in proportion to the period.
    */
   periodScale = (optInSlowPeriod + 1);
-  lookbackSignal = emaLookback(optInSignalPeriod, core);
-  lookbackSlow = emaLookback(optInSlowPeriod, core);
-  lookbackFast = emaLookback(optInFastPeriod, core);
-  lookbackATR = atrLookback(optInSlowPeriod, core);
-  lookbackTotal = macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+  lookbackSignal = emaLookbackPositional(optInSignalPeriod, core);
+  lookbackSlow = emaLookbackPositional(optInSlowPeriod, core);
+  lookbackFast = emaLookbackPositional(optInFastPeriod, core);
+  lookbackATR = atrLookbackPositional(optInSlowPeriod, core);
+  lookbackTotal = macdvLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -678,6 +648,209 @@ export function macdvImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['fastPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['slowPeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['signalPeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000']] as const;
+
+/** @internal */
+export function macdvPositional(
+  startIdx: number,
+  endIdx: number,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInFastPeriod: number,
+  optInSlowPeriod: number,
+  optInSignalPeriod: number,
+  outMACDV: Float64Array,
+  outMACDVSignal: Float64Array,
+  outMACDVHist: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('MACDV', 'startIdx', startIdx);
+  endIdx = requireInt32('MACDV', 'endIdx', endIdx);
+  optInFastPeriod = requireInt32('MACDV', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('MACDV', 'slowPeriod', optInSlowPeriod);
+  optInSignalPeriod = requireInt32('MACDV', 'signalPeriod', optInSignalPeriod);
+  requireIndexRange('MACDV', startIdx, endIdx);
+  const guardLookback = macdvLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('MACDV', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+  }
+  const guardStart = clampedStart('MACDV', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('MACDV', 'prices.high', inHigh, guardInLen);
+  requireLength('MACDV', 'prices.low', inLow, guardInLen);
+  requireLength('MACDV', 'prices.close', inClose, guardInLen);
+  requireOutput('MACDV', 'outMacdv', outMACDV, guardOutLen, Float64Array);
+  requireOutput('MACDV', 'outMacdvSignal', outMACDVSignal, guardOutLen, Float64Array);
+  requireOutput('MACDV', 'outMacdvHist', outMACDVHist, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (overlapsPartly(outMACDV, inHighF64)) {
+    throw sharedMemory('MACDV', 'outMacdv', 'prices.high');
+  }
+  if (overlapsPartly(outMACDV, inLowF64)) {
+    throw sharedMemory('MACDV', 'outMacdv', 'prices.low');
+  }
+  if (overlapsPartly(outMACDV, inCloseF64)) {
+    throw sharedMemory('MACDV', 'outMacdv', 'prices.close');
+  }
+  if (overlapsPartly(outMACDVSignal, inHighF64)) {
+    throw sharedMemory('MACDV', 'outMacdvSignal', 'prices.high');
+  }
+  if (overlapsPartly(outMACDVSignal, inLowF64)) {
+    throw sharedMemory('MACDV', 'outMacdvSignal', 'prices.low');
+  }
+  if (overlapsPartly(outMACDVSignal, inCloseF64)) {
+    throw sharedMemory('MACDV', 'outMacdvSignal', 'prices.close');
+  }
+  if (overlapsPartly(outMACDVHist, inHighF64)) {
+    throw sharedMemory('MACDV', 'outMacdvHist', 'prices.high');
+  }
+  if (overlapsPartly(outMACDVHist, inLowF64)) {
+    throw sharedMemory('MACDV', 'outMacdvHist', 'prices.low');
+  }
+  if (overlapsPartly(outMACDVHist, inCloseF64)) {
+    throw sharedMemory('MACDV', 'outMacdvHist', 'prices.close');
+  }
+  if (overlaps(outMACDV, outMACDVSignal)) {
+    throw sharedMemory('MACDV', 'outMacdv', 'outMacdvSignal');
+  }
+  if (overlaps(outMACDV, outMACDVHist)) {
+    throw sharedMemory('MACDV', 'outMacdv', 'outMacdvHist');
+  }
+  if (overlaps(outMACDVSignal, outMACDVHist)) {
+    throw sharedMemory('MACDV', 'outMacdvSignal', 'outMacdvHist');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = macdvImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACDV, outMACDVSignal, outMACDVHist);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('MACDV', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link macdv}, {@link macdvLookback}, {@link macdvDisplayShift},
+ * {@link macdvOpen} and {@link macdvOpenAndFill}. Every key is optional: an
+ * omitted or `undefined` key takes its default, and a call ignores the keys it has
+ * no use for.
+ */
+export interface MacdvOptions {
+  /**
+   * Period of the fast EMA (default 12; range 2 to 100000; `Core.INTEGER_DEFAULT`
+   * selects the default).
+   */
+  fastPeriod?: number | undefined;
+  /**
+   * Period of the slow EMA and of the Average True Range (default 26; range 2 to
+   * 100000; `Core.INTEGER_DEFAULT` selects the default).
+   */
+  slowPeriod?: number | undefined;
+  /**
+   * Smoothing period of the signal line (default 9; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  signalPeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outMacdv`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outMacdv?: Float64Array | undefined;
+  /**
+   * Buffer for `outMacdvSignal`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outMacdvSignal?: Float64Array | undefined;
+  /**
+   * Buffer for `outMacdvHist`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outMacdvHist?: Float64Array | undefined;
+}
+
+/** What {@link macdv} returns, and {@link macdvOpenAndFill} with its stream. */
+export interface MacdvResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Fast EMA minus slow EMA, divided by the Average True Range, times 100.
+   * `outMacdv[k]` is the value at input bar `begIdx + k`.
+   */
+  outMacdv: Float64Array;
+  /**
+   * EMA of the MACD-V line. `outMacdvSignal[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  outMacdvSignal: Float64Array;
+  /**
+   * MACD-V minus signal line. `outMacdvHist[k]` is the value at input bar
+   * `begIdx + k`.
+   */
+  outMacdvHist: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link macdv} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MacdvOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function macdvLookback(options?: MacdvOptions): number {
+  const o = optionsOf('MACDV lookback', options);
+  return macdvLookbackPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), coreOf('MACDV lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link macdv}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MacdvOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function macdvDisplayShift(outputIdx: number, options?: MacdvOptions): number {
+  const o = optionsOf('MACDV displayShift', options);
+  return macdvDisplayShiftPositional(orDefault(o.fastPeriod, Core.INTEGER_DEFAULT), orDefault(o.slowPeriod, Core.INTEGER_DEFAULT), orDefault(o.signalPeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('MACDV displayShift', o.core));
+}
+
 /**
  * MACD-V, Alex Spiroglou's volatility-normalised MACD: the spread of a fast and a
  * slow EMA of the close over the Average True Range, times 100. Like MACD it comes
@@ -708,38 +881,25 @@ export function macdvImpl(
  *   upside) holds only for MACD-V minus the signal, which is what is emitted here,
  *   as for `MACD`.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link macdvLookback} is a success with
- * `count` 0.
+ * `outMacdv[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link macdvLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param inClose - Close price of each bar.
- * @param optInFastPeriod - Period of the fast EMA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow EMA and of the Average True Range
- *   (default 26; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Smoothing period of the signal line (default 9; range
- *   1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outMACDV - Fast EMA minus slow EMA, divided by the Average True Range,
- *   times 100. Must hold the values produced and never be empty; the input length
- *   always suffices.
- * @param outMACDVSignal - EMA of the MACD-V line. Must hold the values produced
- *   and never be empty; the input length always suffices.
- * @param outMACDVHist - MACD-V minus signal line. Must hold the values produced
- *   and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `high`: High
+ *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
+ *   bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link MacdvOptions}.
+ * @returns `begIdx` and the values; see {@link MacdvResult}. Each output is a view
+ *   of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output,
- *   two outputs sharing memory or an output sharing memory with a `Float64Array`
- *   input it is not. Checked before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type, two buffers sharing memory or a buffer sharing memory with a
+ *   `Float64Array` input it is not. Checked before anything is written.
  *
  * @example
  * ```ts
@@ -751,16 +911,17 @@ export function macdvImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const macdvOut = new Float64Array(high.length);
- * const macdvSignal = new Float64Array(high.length);
- * const macdvHist = new Float64Array(high.length);
- * const { begIdx, count } = macdv(
- *   0, high.length - 1,
- *   high, low, close,
- *   12, 26, 9,
- *   macdvOut, macdvSignal, macdvHist,
- * );
- * // macdvOut[k] is the value at bar begIdx + k, for k < count
+ * const {
+ *   begIdx,
+ *   outMacdv,
+ *   outMacdvSignal,
+ *   outMacdvHist,
+ * } = macdv({ high, low, close }, {
+ *   fastPeriod: 12,
+ *   slowPeriod: 26,
+ *   signalPeriod: 9,
+ * });
+ * // outMacdv[k] is the value at bar begIdx + k
  * ```
  * @see [`macd`](https://ta-lib.org/functions/macd)
  * @see [`atr`](https://ta-lib.org/functions/atr)
@@ -768,48 +929,26 @@ export function macdvImpl(
  * @see [`apo`](https://ta-lib.org/functions/apo)
  * @see [`ppo`](https://ta-lib.org/functions/ppo)
  */
-export function macdv(
-  startIdx: number,
-  endIdx: number,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInFastPeriod: number,
-  optInSlowPeriod: number,
-  optInSignalPeriod: number,
-  outMACDV: Float64Array,
-  outMACDVSignal: Float64Array,
-  outMACDVHist: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('MACDV', 'startIdx', startIdx);
-  endIdx = requireInt32('MACDV', 'endIdx', endIdx);
-  optInFastPeriod = requireInt32('MACDV', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('MACDV', 'optInSlowPeriod', optInSlowPeriod);
-  optInSignalPeriod = requireInt32('MACDV', 'optInSignalPeriod', optInSignalPeriod);
-  requireIndexRange('MACDV', startIdx, endIdx);
-  const guardStart = clampedStart('MACDV', startIdx, macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('MACDV', 'inHigh', inHigh, guardInLen);
-  requireLength('MACDV', 'inLow', inLow, guardInLen);
-  requireLength('MACDV', 'inClose', inClose, guardInLen);
-  requireOutput('MACDV', 'outMACDV', outMACDV, guardOutLen, Float64Array);
-  requireOutput('MACDV', 'outMACDVSignal', outMACDVSignal, guardOutLen, Float64Array);
-  requireOutput('MACDV', 'outMACDVHist', outMACDVHist, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if (overlapsPartly(outMACDV, inHighF64) || overlapsPartly(outMACDV, inLowF64) || overlapsPartly(outMACDV, inCloseF64) || overlapsPartly(outMACDVSignal, inHighF64) || overlapsPartly(outMACDVSignal, inLowF64) || overlapsPartly(outMACDVSignal, inCloseF64) || overlapsPartly(outMACDVHist, inHighF64) || overlapsPartly(outMACDVHist, inLowF64) || overlapsPartly(outMACDVHist, inCloseF64) || overlaps(outMACDV, outMACDVSignal) || overlaps(outMACDV, outMACDVHist) || overlaps(outMACDVSignal, outMACDVHist)) {
-    throw failure('MACDV', RetCode.BAD_PARAM);
+export function macdv(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: MacdvOptions): MacdvResult {
+  requireArgument('MACDV', 'prices', prices);
+  const o = optionsOf('MACDV', options);
+  if (o.endIdx === undefined) {
+    requireSeries('MACDV', 'prices.high', prices.high);
+    requireSeries('MACDV', 'prices.low', prices.low);
+    requireSeries('MACDV', 'prices.close', prices.close);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = macdvImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACDV, outMACDVSignal, outMACDVHist);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('MACDV', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('MACDV', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.high.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, macdvLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core), prices.high, prices.low, prices.close);
+  const outMACDV = o.outMacdv === undefined ? new Float64Array(capacity) : o.outMacdv;
+  const outMACDVSignal = o.outMacdvSignal === undefined ? new Float64Array(capacity) : o.outMacdvSignal;
+  const outMACDVHist = o.outMacdvHist === undefined ? new Float64Array(capacity) : o.outMacdvHist;
+  const range = macdvPositional(startIdx, endIdx, prices.high, prices.low, prices.close, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACDV, outMACDVSignal, outMACDVHist, core);
+  return { begIdx: range.begIdx, outMacdv: outMACDV.subarray(0, range.count), outMacdvSignal: outMACDVSignal.subarray(0, range.count), outMacdvHist: outMACDVHist.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -903,21 +1042,23 @@ export class MacdvStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inHigh - The bar's `inHigh` value: High price of each bar.
    * @param inLow - The bar's `inLow` value: Low price of each bar.
    * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MacdvOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out: MacdvOut): void {
+  update(inHigh: number, inLow: number, inClose: number, out?: MacdvOut): MacdvOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('MACDV update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACDV update', 'MacdvOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
@@ -925,24 +1066,29 @@ export class MacdvStream {
     }
     macdvStepImpl(this, inHigh, inLow, inClose);
     this.outRangeCount++;
-    out.macdv = this.cur_outMACDV;
-    out.macdvSignal = this.cur_outMACDVSignal;
-    out.macdvHist = this.cur_outMACDVHist;
+    if (out === undefined) {
+      out = new MacdvOut();
+    }
+    out.outMacdv = this.cur_outMACDV;
+    out.outMacdvSignal = this.cur_outMACDVSignal;
+    out.outMacdvHist = this.cur_outMACDVHist;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inHigh - The bar's `inHigh` value: High price of each bar.
    * @param inLow - The bar's `inLow` value: Low price of each bar.
    * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MacdvOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out: MacdvOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inHigh: number, inLow: number, inClose: number, out?: MacdvOut): MacdvOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACDV peek', 'MacdvOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
@@ -1057,23 +1203,33 @@ export class MacdvStream {
     cur_outMACDV = lineValue;
     cur_outMACDVSignal = prevSignal;
     cur_outMACDVHist = lineValue - prevSignal;
-    out.macdv = cur_outMACDV;
-    out.macdvSignal = cur_outMACDVSignal;
-    out.macdvHist = cur_outMACDVHist;
+    if (out === undefined) {
+      out = new MacdvOut();
+    }
+    out.outMacdv = cur_outMACDV;
+    out.outMacdvSignal = cur_outMACDVSignal;
+    out.outMacdvHist = cur_outMACDVHist;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link MacdvOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: MacdvOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: MacdvOut): MacdvOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACDV value', 'MacdvOut');
     }
-    out.macdv = this.cur_outMACDV;
-    out.macdvSignal = this.cur_outMACDVSignal;
-    out.macdvHist = this.cur_outMACDVHist;
+    if (out === undefined) {
+      out = new MacdvOut();
+    }
+    out.outMacdv = this.cur_outMACDV;
+    out.outMacdvSignal = this.cur_outMACDVSignal;
+    out.outMacdvHist = this.cur_outMACDVHist;
+    return out;
   }
 
   /**
@@ -1111,16 +1267,17 @@ export class MacdvStream {
 }
 
 /**
- * The outputs of one MACDV bar, written into an object the caller owns and reuses:
- * valid until the next call that writes it.
+ * The outputs of one MACDV bar, as `update`, `peek` and `value` return them.
+ * Passed back to one of them, it is filled and returned again, with no allocation;
+ * it holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class MacdvOut {
   /** Fast EMA minus slow EMA, divided by the Average True Range, times 100. */
-  macdv: number = 0;
+  outMacdv: number = NaN;
   /** EMA of the MACD-V line. */
-  macdvSignal: number = 0;
+  outMacdvSignal: number = NaN;
   /** MACD-V minus signal line. */
-  macdvHist: number = 0;
+  outMacdvHist: number = NaN;
 }
 
 function macdvStepImpl(sp: MacdvStream, inHigh: number, inLow: number, inClose: number): void {
@@ -1349,11 +1506,11 @@ function macdvOpenImpl(
    * grows in proportion to the period.
    */
   periodScale = (optInSlowPeriod + 1);
-  lookbackSignal = emaLookback(optInSignalPeriod, core);
-  lookbackSlow = emaLookback(optInSlowPeriod, core);
-  lookbackFast = emaLookback(optInFastPeriod, core);
-  lookbackATR = atrLookback(optInSlowPeriod, core);
-  lookbackTotal = macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+  lookbackSignal = emaLookbackPositional(optInSignalPeriod, core);
+  lookbackSlow = emaLookbackPositional(optInSlowPeriod, core);
+  lookbackFast = emaLookbackPositional(optInFastPeriod, core);
+  lookbackATR = atrLookbackPositional(optInSlowPeriod, core);
+  lookbackTotal = macdvLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
   /* Move up the start index if there is not
    * enough initial data.
    */
@@ -1843,7 +2000,10 @@ export function macdvOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MACDV openAndFill', inHigh.length, startIdx, macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
+    throw insufficientHistory('MACDV openAndFill', inHigh.length, startIdx, macdvLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && macdvLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core) < 0) {
+    throw rejectedParams('MACDV openAndFill', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
   }
   throw streamFailure('MACDV openAndFill', retCode);
 }
@@ -1872,53 +2032,16 @@ export function macdvOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('MACDV open', inHigh.length, startIdx, macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
+    throw insufficientHistory('MACDV open', inHigh.length, startIdx, macdvLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && macdvLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core) < 0) {
+    throw rejectedParams('MACDV open', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
   }
   throw streamFailure('MACDV open', retCode);
 }
 
-/**
- * Opens a live MACDV stream over the warm-up history: `value()` starts at the last
- * history bar, bit-identical to {@link macdv} there.
- *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param optInFastPeriod - Period of the fast EMA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow EMA and of the Average True Range
- *   (default 26; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Smoothing period of the signal line (default 9; range
- *   1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `macdvLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range or
- *   histories of different lengths.
- *
- * @example
- * ```ts
- * import { MacdvOut, macdvOpen } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = macdvOpen(high, low, close, 12, 26, 9);
- * const peeked = new MacdvOut();
- * const updated = new MacdvOut();
- * stream.peek(101.4, 99.1, 100.9, peeked); // a forming bar: commits nothing
- * stream.update(101.4, 99.1, 100.9, updated); // the bar closes
- * ```
- */
-export function macdvOpen(
+/** @internal */
+export function macdvOpenPositional(
   inHigh: ArrayLike<number>,
   inLow: ArrayLike<number>,
   inClose: ArrayLike<number>,
@@ -1927,77 +2050,20 @@ export function macdvOpen(
   optInSignalPeriod: number,
   core: Core = Core.DEFAULT,
 ): MacdvStream {
-  optInFastPeriod = requireInt32('MACDV open', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('MACDV open', 'optInSlowPeriod', optInSlowPeriod);
-  optInSignalPeriod = requireInt32('MACDV open', 'optInSignalPeriod', optInSignalPeriod);
-  requireArgument('MACDV open', 'inHigh', inHigh);
+  optInFastPeriod = requireInt32('MACDV open', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('MACDV open', 'slowPeriod', optInSlowPeriod);
+  optInSignalPeriod = requireInt32('MACDV open', 'signalPeriod', optInSignalPeriod);
+  requireArgument('MACDV open', 'prices.high', inHigh);
   requireHistory('MACDV open', inHigh.length);
-  requireArgument('MACDV open', 'inLow', inLow);
-  requireArgument('MACDV open', 'inClose', inClose);
-  requireHistoryLength('MACDV open', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('MACDV open', 'inClose', inClose.length, inHigh.length);
+  requireArgument('MACDV open', 'prices.low', inLow);
+  requireArgument('MACDV open', 'prices.close', inClose);
+  requireHistoryLength('MACDV open', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('MACDV open', 'prices.close', inClose.length, inHigh.length);
   return macdvOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
 }
 
-/**
- * {@link macdvOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link macdv}. The range written is the stream's
- * `outRange()`.
- *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param optInFastPeriod - Period of the fast EMA (default 12; range 2 to 100000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSlowPeriod - Period of the slow EMA and of the Average True Range
- *   (default 26; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInSignalPeriod - Smoothing period of the signal line (default 9; range
- *   1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param outMACDV - Fast EMA minus slow EMA, divided by the Average True Range,
- *   times 100. Must hold `historyLen - lookback` values and share no memory with an
- *   input or another output.
- * @param outMACDVSignal - EMA of the MACD-V line. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param outMACDVHist - MACD-V minus signal line. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `macdvLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
- *   for an integer parameter that is not an int32, a parameter outside its range,
- *   histories of different lengths or an output too short or starting where another
- *   output or a `Float64Array` input starts, or, on a history long enough to open,
- *   one sharing memory with another output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { macdvOpenAndFill } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const macdvOut = new Float64Array(high.length);
- * const macdvSignal = new Float64Array(high.length);
- * const macdvHist = new Float64Array(high.length);
- * const stream = macdvOpenAndFill(
- *   high, low, close,
- *   12, 26, 9,
- *   macdvOut, macdvSignal, macdvHist,
- * );
- * const { begIdx, count } = stream.outRange();
- * // macdvOut[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function macdvOpenAndFill(
+/** @internal */
+export function macdvOpenAndFillPositional(
   inHigh: ArrayLike<number>,
   inLow: ArrayLike<number>,
   inClose: ArrayLike<number>,
@@ -2009,27 +2075,203 @@ export function macdvOpenAndFill(
   outMACDVHist: Float64Array,
   core: Core = Core.DEFAULT,
 ): MacdvStream {
-  optInFastPeriod = requireInt32('MACDV openAndFill', 'optInFastPeriod', optInFastPeriod);
-  optInSlowPeriod = requireInt32('MACDV openAndFill', 'optInSlowPeriod', optInSlowPeriod);
-  optInSignalPeriod = requireInt32('MACDV openAndFill', 'optInSignalPeriod', optInSignalPeriod);
-  requireArgument('MACDV openAndFill', 'inHigh', inHigh);
+  optInFastPeriod = requireInt32('MACDV openAndFill', 'fastPeriod', optInFastPeriod);
+  optInSlowPeriod = requireInt32('MACDV openAndFill', 'slowPeriod', optInSlowPeriod);
+  optInSignalPeriod = requireInt32('MACDV openAndFill', 'signalPeriod', optInSignalPeriod);
+  requireArgument('MACDV openAndFill', 'prices.high', inHigh);
   requireHistory('MACDV openAndFill', inHigh.length);
-  requireArgument('MACDV openAndFill', 'inLow', inLow);
-  requireArgument('MACDV openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('MACDV openAndFill', inHigh.length, macdvLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core));
-  requireHistoryLength('MACDV openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('MACDV openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireOutput('MACDV openAndFill', 'outMACDV', outMACDV, guardOutLen, Float64Array);
-  requireOutput('MACDV openAndFill', 'outMACDVSignal', outMACDVSignal, guardOutLen, Float64Array);
-  requireOutput('MACDV openAndFill', 'outMACDVHist', outMACDVHist, guardOutLen, Float64Array);
+  requireArgument('MACDV openAndFill', 'prices.low', inLow);
+  requireArgument('MACDV openAndFill', 'prices.close', inClose);
+  const guardLookback = macdvLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('MACDV openAndFill', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+  }
+  const guardOutLen = openFillCount('MACDV openAndFill', inHigh.length, guardLookback);
+  requireHistoryLength('MACDV openAndFill', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('MACDV openAndFill', 'prices.close', inClose.length, inHigh.length);
+  requireOutput('MACDV openAndFill', 'outMacdv', outMACDV, guardOutLen, Float64Array);
+  requireOutput('MACDV openAndFill', 'outMacdvSignal', outMACDVSignal, guardOutLen, Float64Array);
+  requireOutput('MACDV openAndFill', 'outMacdvHist', outMACDVHist, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
-  if ((outMACDV.buffer === inHighF64.buffer && outMACDV.byteOffset === inHighF64.byteOffset) || (outMACDV.buffer === inLowF64.buffer && outMACDV.byteOffset === inLowF64.byteOffset) || (outMACDV.buffer === inCloseF64.buffer && outMACDV.byteOffset === inCloseF64.byteOffset) || (outMACDVSignal.buffer === inHighF64.buffer && outMACDVSignal.byteOffset === inHighF64.byteOffset) || (outMACDVSignal.buffer === inLowF64.buffer && outMACDVSignal.byteOffset === inLowF64.byteOffset) || (outMACDVSignal.buffer === inCloseF64.buffer && outMACDVSignal.byteOffset === inCloseF64.byteOffset) || (outMACDVHist.buffer === inHighF64.buffer && outMACDVHist.byteOffset === inHighF64.byteOffset) || (outMACDVHist.buffer === inLowF64.buffer && outMACDVHist.byteOffset === inLowF64.byteOffset) || (outMACDVHist.buffer === inCloseF64.buffer && outMACDVHist.byteOffset === inCloseF64.byteOffset) || (outMACDV.buffer === outMACDVSignal.buffer && outMACDV.byteOffset === outMACDVSignal.byteOffset) || (outMACDV.buffer === outMACDVHist.buffer && outMACDV.byteOffset === outMACDVHist.byteOffset) || (outMACDVSignal.buffer === outMACDVHist.buffer && outMACDVSignal.byteOffset === outMACDVHist.byteOffset)) {
-    throw streamFailure('MACDV openAndFill', RetCode.BAD_PARAM);
+  if (outMACDV.buffer === inHighF64.buffer && outMACDV.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdv', 'prices.high');
   }
-  if (guardOutLen > 0 && (overlaps(outMACDV, inHighF64) || overlaps(outMACDV, inLowF64) || overlaps(outMACDV, inCloseF64) || overlaps(outMACDVSignal, inHighF64) || overlaps(outMACDVSignal, inLowF64) || overlaps(outMACDVSignal, inCloseF64) || overlaps(outMACDVHist, inHighF64) || overlaps(outMACDVHist, inLowF64) || overlaps(outMACDVHist, inCloseF64) || overlaps(outMACDV, outMACDVSignal) || overlaps(outMACDV, outMACDVHist) || overlaps(outMACDVSignal, outMACDVHist))) {
-    throw streamFailure('MACDV openAndFill', RetCode.BAD_PARAM);
+  if (outMACDV.buffer === inLowF64.buffer && outMACDV.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdv', 'prices.low');
+  }
+  if (outMACDV.buffer === inCloseF64.buffer && outMACDV.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdv', 'prices.close');
+  }
+  if (outMACDVSignal.buffer === inHighF64.buffer && outMACDVSignal.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdvSignal', 'prices.high');
+  }
+  if (outMACDVSignal.buffer === inLowF64.buffer && outMACDVSignal.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdvSignal', 'prices.low');
+  }
+  if (outMACDVSignal.buffer === inCloseF64.buffer && outMACDVSignal.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdvSignal', 'prices.close');
+  }
+  if (outMACDVHist.buffer === inHighF64.buffer && outMACDVHist.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdvHist', 'prices.high');
+  }
+  if (outMACDVHist.buffer === inLowF64.buffer && outMACDVHist.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdvHist', 'prices.low');
+  }
+  if (outMACDVHist.buffer === inCloseF64.buffer && outMACDVHist.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdvHist', 'prices.close');
+  }
+  if (outMACDV.buffer === outMACDVSignal.buffer && outMACDV.byteOffset === outMACDVSignal.byteOffset) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdv', 'outMacdvSignal');
+  }
+  if (outMACDV.buffer === outMACDVHist.buffer && outMACDV.byteOffset === outMACDVHist.byteOffset) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdv', 'outMacdvHist');
+  }
+  if (outMACDVSignal.buffer === outMACDVHist.buffer && outMACDVSignal.byteOffset === outMACDVHist.byteOffset) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdvSignal', 'outMacdvHist');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDV, inHighF64)) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdv', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDV, inLowF64)) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdv', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDV, inCloseF64)) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdv', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDVSignal, inHighF64)) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdvSignal', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDVSignal, inLowF64)) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdvSignal', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDVSignal, inCloseF64)) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdvSignal', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDVHist, inHighF64)) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdvHist', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDVHist, inLowF64)) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdvHist', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDVHist, inCloseF64)) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdvHist', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDV, outMACDVSignal)) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdv', 'outMacdvSignal');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDV, outMACDVHist)) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdv', 'outMacdvHist');
+  }
+  if (guardOutLen > 0 && overlaps(outMACDVSignal, outMACDVHist)) {
+    throw sharedMemory('MACDV openAndFill', 'outMacdvSignal', 'outMacdvHist');
   }
   return macdvOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, new MInteger(), new MInteger(), outMACDV, outMACDVSignal, outMACDVHist);
+}
+
+/**
+ * Opens a live MACDV stream over the warm-up history: `value()` starts at the last
+ * history bar, bit-identical to {@link macdv} there.
+ *
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link MacdvOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `macdvLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range
+ *   or histories of different lengths.
+ *
+ * @example
+ * ```ts
+ * import { macdvOpen } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const close = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const stream = macdvOpen({ high, low, close }, {
+ *   fastPeriod: 12,
+ *   slowPeriod: 26,
+ *   signalPeriod: 9,
+ * });
+ * const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
+ * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
+ * ```
+ */
+export function macdvOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: MacdvOptions): MacdvStream {
+  requireArgument('MACDV open', 'prices', prices);
+  const o = optionsOf('MACDV open', options);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('MACDV open', o.core);
+  return macdvOpenPositional(prices.high, prices.low, prices.close, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
+}
+
+/**
+ * {@link macdvOpen} that also computes the outputs over the whole history in the
+ * same pass, bit-identically to {@link macdv}.
+ *
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link MacdvOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link macdv} returns them; the range is the stream's
+ *   `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `macdvLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM`
+ *   for options that are not an object, a `core` that is not a `Core`, an absent
+ *   input, an integer parameter that is not an int32, a parameter outside its range,
+ *   histories of different lengths or a buffer too short, of the wrong type or
+ *   starting where another buffer or a `Float64Array` input starts, or, on a history
+ *   long enough to open, one sharing memory with another buffer or a `Float64Array`
+ *   input.
+ *
+ * @example
+ * ```ts
+ * import { macdvOpenAndFill } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const close = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const {
+ *   stream,
+ *   begIdx,
+ *   outMacdv,
+ *   outMacdvSignal,
+ *   outMacdvHist,
+ * } = macdvOpenAndFill({ high, low, close }, {
+ *   fastPeriod: 12,
+ *   slowPeriod: 26,
+ *   signalPeriod: 9,
+ * });
+ * // outMacdv[k] is the value at bar begIdx + k
+ * ```
+ */
+export function macdvOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: MacdvOptions): MacdvResult & { stream: MacdvStream } {
+  requireArgument('MACDV openAndFill', 'prices', prices);
+  const o = optionsOf('MACDV openAndFill', options);
+  const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
+  const optInSlowPeriod = orDefault(o.slowPeriod, Core.INTEGER_DEFAULT);
+  const optInSignalPeriod = orDefault(o.signalPeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('MACDV openAndFill', o.core);
+  const capacity = fillCapacity(macdvLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core), prices.high, prices.low, prices.close);
+  const outMACDV = o.outMacdv === undefined ? new Float64Array(capacity) : o.outMacdv;
+  const outMACDVSignal = o.outMacdvSignal === undefined ? new Float64Array(capacity) : o.outMacdvSignal;
+  const outMACDVHist = o.outMacdvHist === undefined ? new Float64Array(capacity) : o.outMacdvHist;
+  const stream = macdvOpenAndFillPositional(prices.high, prices.low, prices.close, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACDV, outMACDVSignal, outMACDVHist, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outMacdv: outMACDV.subarray(0, range.count), outMacdvSignal: outMACDVSignal.subarray(0, range.count), outMacdvHist: outMACDVHist.subarray(0, range.count) };
 }

@@ -56,6 +56,9 @@ import { RetCode, TALibError } from '../src/runtime/errors.ts';
 import * as flags from '../src/metadata/flags.ts';
 import { OutRange } from '../src/runtime/outRange.ts';
 
+type OneFunc = Exclude<FuncUnstId, typeof FuncUnstId.ALL>;
+type OneSetting = Exclude<CandleSettingType, typeof CandleSettingType.ALL_CANDLE_SETTINGS>;
+
 function assertBadParam(fn: () => unknown): void {
   assert.throws(fn, (e: unknown) => {
     assert.ok(e instanceof TALibError);
@@ -164,16 +167,18 @@ test('unstablePeriod rejects out-of-domain periods and ids, writing nothing', ()
   const core = b.build();
   assert.equal(core.unstablePeriod(FuncUnstId.EMA), 5);
   assert.equal(core.unstablePeriods.reduce((a, p) => a + p, 0), 5);
+  // @ts-expect-error ALL names no single function, so the type refuses it as well
   assertBadParam(() => core.unstablePeriod(FuncUnstId.ALL));
-  assertBadParam(() => core.unstablePeriod(37 as FuncUnstId));
+  assertBadParam(() => core.unstablePeriod(37 as OneFunc));
 });
 
 test('candleSetting validates every argument, writing nothing on a rejection', () => {
   const b = new CoreBuilder();
   const T = CandleSettingType;
+  // @ts-expect-error ALL_CANDLE_SETTINGS names no single setting, so the type refuses it as well
   assertBadParam(() => b.candleSetting(T.ALL_CANDLE_SETTINGS, RangeType.HIGH_LOW, 5, 1));
-  assertBadParam(() => b.candleSetting(-1 as CandleSettingType, RangeType.HIGH_LOW, 5, 1));
-  assertBadParam(() => b.candleSetting(12 as CandleSettingType, RangeType.HIGH_LOW, 5, 1));
+  assertBadParam(() => b.candleSetting(-1 as OneSetting, RangeType.HIGH_LOW, 5, 1));
+  assertBadParam(() => b.candleSetting(12 as OneSetting, RangeType.HIGH_LOW, 5, 1));
   assertBadParam(() => b.candleSetting(T.NEAR, 3 as RangeType, 5, 1));
   assertBadParam(() => b.candleSetting(T.NEAR, -1 as RangeType, 5, 1));
   for (const bad of [-1, Core.INDEX_MAX + 1, 2.5, NaN]) {
@@ -192,12 +197,12 @@ test('candleSetting validates every argument, writing nothing on a rejection', (
 
 test('a -0 setting is stored as +0, so no lookback or count carries the sign', () => {
   const core = new CoreBuilder()
-    .candleSetting(-0 as CandleSettingType, -0 as RangeType, -0, 1)
+    .candleSetting(-0 as OneSetting, -0 as RangeType, -0, 1)
     .candleSetting(CandleSettingType.BODY_DOJI, RangeType.HIGH_LOW, -0, 0.1)
     .unstablePeriod(FuncUnstId.EMA, -0)
     .build();
   const s = core.candleSettings[CandleSettingType.BODY_LONG];
-  for (const v of [s.settingType, s.rangeType, s.avgPeriod, cdldojiLookback(core), core.unstablePeriod(FuncUnstId.EMA)]) {
+  for (const v of [s.settingType, s.rangeType, s.avgPeriod, cdldojiLookback({ core }), core.unstablePeriod(FuncUnstId.EMA)]) {
     assert.ok(Object.is(v, 0), `got ${Object.is(v, -0) ? '-0' : String(v)}`);
   }
 });
@@ -238,13 +243,13 @@ test('no write through a reachable property changes Core.DEFAULT or another Core
   const open = close.map((c, i) => c + ((i % 3) - 1) * 0.01);
   const high = close.map((c) => c + 1);
   const low = close.map((c) => c - 1);
-  // `undefined` takes the default parameter, so Core.DEFAULT is read at call time.
+  // An undefined `core` takes Core.DEFAULT, so Core.DEFAULT is read at call time.
   const observe = (core: Core | undefined): number[] => {
     const e = new Float64Array(n);
     const d = new Int32Array(n);
-    const er = ema(0, n - 1, close, 5, e, core);
-    const dr = cdldoji(0, n - 1, open, high, low, close, d, core);
-    return [emaLookback(5, core), cdldojiLookback(core), er.begIdx, er.count, ...e, dr.begIdx, dr.count, ...d];
+    const er = ema(close, { timePeriod: 5, outReal: e, core });
+    const dr = cdldoji({ open, high, low, close }, { outInteger: d, core });
+    return [emaLookback({ timePeriod: 5, core }), cdldojiLookback({ core }), er.begIdx, er.values.length, ...e, dr.begIdx, dr.values.length, ...d];
   };
   type Loose = Record<string, unknown>;
   const other = new CoreBuilder().build();

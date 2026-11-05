@@ -16,27 +16,15 @@
  */
 
 import { FuncUnstId } from '../enums.ts';
-import { clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, streamFailure } from '../runtime/checks.ts';
+import { batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireIndexRange, requireInt32, requireLength, requireOutput, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { fma, fmaSlow } from '../runtime/fma.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
 
-/**
- * Number of leading input bars {@link swakButter} consumes before its first value:
- * the index of the first bar with a value when the whole series is requested.
- *
- * It includes `core`'s unstable period for this function.
- *
- * @param optInTimePeriod - Cutoff period; shorter keeps more of the fast motion,
- *   longer smooths harder and lags more (default 20; range 2 to 10000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function swakButterLookback(optInTimePeriod: number, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function swakButterLookbackPositional(optInTimePeriod: number, core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -53,23 +41,9 @@ export function swakButterLookback(optInTimePeriod: number, core: Core = Core.DE
   return core.unstableCount(FuncUnstId.SWAK_BUTTER, (((((((10 + 3) * (optInTimePeriod + 2)) | 0) + 8) / 9) | 0)), (((((((19 + 3) * (optInTimePeriod + 2)) | 0) + 8) / 9) | 0)));
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link swakButter}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Cutoff period; shorter keeps more of the fast motion,
- *   longer smooths harder and lags more (default 20; range 2 to 10000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function swakButterDisplayShift(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (swakButterLookback(optInTimePeriod, core) < 0) {
+/** @internal */
+export function swakButterDisplayShiftPositional(optInTimePeriod: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (swakButterLookbackPositional(optInTimePeriod, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 1) {
@@ -119,7 +93,7 @@ export function swakButterImpl(
   }
   outBegIdx.value = 0;
   outNBElement.value = 0;
-  lookbackTotal = swakButterLookback(optInTimePeriod, core);
+  lookbackTotal = swakButterLookbackPositional(optInTimePeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -281,6 +255,132 @@ export function swakButterImpl(
   return RetCode.SUCCESS;
 }
 
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 2, 10000, 'in 2..10000']] as const;
+
+/** @internal */
+export function swakButterPositional(
+  startIdx: number,
+  endIdx: number,
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('SWAK_BUTTER', 'startIdx', startIdx);
+  endIdx = requireInt32('SWAK_BUTTER', 'endIdx', endIdx);
+  optInTimePeriod = requireInt32('SWAK_BUTTER', 'timePeriod', optInTimePeriod);
+  requireIndexRange('SWAK_BUTTER', startIdx, endIdx);
+  const guardLookback = swakButterLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('SWAK_BUTTER', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardStart = clampedStart('SWAK_BUTTER', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('SWAK_BUTTER', 'real', inReal, guardInLen);
+  requireOutput('SWAK_BUTTER', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (overlapsPartly(outReal, inRealF64)) {
+    throw sharedMemory('SWAK_BUTTER', 'outReal', 'real');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = swakButterImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, outBegIdx, outNBElement, outReal);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('SWAK_BUTTER', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link swakButter}, {@link swakButterLookback},
+ * {@link swakButterDisplayShift}, {@link swakButterOpen} and
+ * {@link swakButterOpenAndFill}. Every key is optional: an omitted or `undefined`
+ * key takes its default, and a call ignores the keys it has no use for.
+ */
+export interface SwakButterOptions {
+  /**
+   * Cutoff period; shorter keeps more of the fast motion, longer smooths harder and
+   * lags more (default 20; range 2 to 10000; `Core.INTEGER_DEFAULT` selects the
+   * default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `values`, written from index 0 and allocated when omitted. It must
+   * hold the values produced (for a batch call the input length always suffices, for
+   * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
+   * buffer or with an input; a batch call may compute in place over a `Float64Array`
+   * input of the same length.
+   */
+  outReal?: Float64Array | undefined;
+}
+
+/**
+ * What {@link swakButter} returns, and {@link swakButterOpenAndFill} with its
+ * stream.
+ */
+export interface SwakButterResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * The filtered line, on the same scale as the input. `values[k]` is the value at
+   * input bar `begIdx + k`.
+   */
+  values: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link swakButter} consumes before its first value:
+ * the index of the first bar with a value when the whole series is requested.
+ *
+ * It includes `core`'s unstable period for this function.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link SwakButterOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function swakButterLookback(options?: SwakButterOptions): number {
+  const o = optionsOf('SWAK_BUTTER lookback', options);
+  return swakButterLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), coreOf('SWAK_BUTTER lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link swakButter}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link SwakButterOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function swakButterDisplayShift(outputIdx: number, options?: SwakButterOptions): number {
+  const o = optionsOf('SWAK_BUTTER displayShift', options);
+  return swakButterDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), outputIdx, coreOf('SWAK_BUTTER displayShift', o.core));
+}
+
 /**
  * The Butterworth row of John Ehlers' Swiss Army Knife filter: the Gaussian row's
  * double real pole with two zeros added at Nyquist, giving a two-pole low-pass
@@ -298,29 +398,24 @@ export function swakButterImpl(
  * Formula and more info at
  * [ta-lib.org/functions/swak_butter](https://ta-lib.org/functions/swak_butter).
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link swakButterLookback} is a success with
- * `count` 0.
+ * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
+ * long as the number of values written, and nothing is padded. A range that ends
+ * before {@link swakButterLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inReal - The series to filter; Ehlers' default is the bar midpoint
+ * @param real - The series to filter; Ehlers' default is the bar midpoint
  *   `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
- * @param optInTimePeriod - Cutoff period; shorter keeps more of the fast motion,
- *   longer smooths harder and lags more (default 20; range 2 to 10000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - The filtered line, on the same scale as the input. Must hold
- *   the values produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link SwakButterOptions}.
+ * @returns `begIdx` and the values; see {@link SwakButterResult}. Each output is a
+ *   view of its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   parameter outside its range, an array too short for the range, an empty output
- *   or an output sharing memory with a `Float64Array` input it is not. Checked
- *   before anything is written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a parameter outside its range,
+ *   an input too short for the range, a buffer that is empty, too short or of the
+ *   wrong type or a buffer sharing memory with a `Float64Array` input it is not.
+ *   Checked before anything is written.
  *
  * @example
  * ```ts
@@ -328,42 +423,26 @@ export function swakButterImpl(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const { begIdx, count } = swakButter(0, data.length - 1, data, 20, out);
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { begIdx, values } = swakButter(data, { timePeriod: 20 });
+ * // values[k] is the value at bar begIdx + k
  * ```
  * @see [`swakGauss`](https://ta-lib.org/functions/swak_gauss)
  * @see [`ema`](https://ta-lib.org/functions/ema)
  * @see [`medprice`](https://ta-lib.org/functions/medprice)
  */
-export function swakButter(
-  startIdx: number,
-  endIdx: number,
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('SWAK_BUTTER', 'startIdx', startIdx);
-  endIdx = requireInt32('SWAK_BUTTER', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('SWAK_BUTTER', 'optInTimePeriod', optInTimePeriod);
-  requireIndexRange('SWAK_BUTTER', startIdx, endIdx);
-  const guardStart = clampedStart('SWAK_BUTTER', startIdx, swakButterLookback(optInTimePeriod, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('SWAK_BUTTER', 'inReal', inReal, guardInLen);
-  requireOutput('SWAK_BUTTER', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if (overlapsPartly(outReal, inRealF64)) {
-    throw failure('SWAK_BUTTER', RetCode.BAD_PARAM);
+export function swakButter(real: ArrayLike<number>, options?: SwakButterOptions): SwakButterResult {
+  const o = optionsOf('SWAK_BUTTER', options);
+  if (o.endIdx === undefined) {
+    requireSeries('SWAK_BUTTER', 'real', real);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = swakButterImpl(core, startIdx, endIdx, inRealF64, optInTimePeriod, outBegIdx, outNBElement, outReal);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('SWAK_BUTTER', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('SWAK_BUTTER', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? real.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, swakButterLookbackPositional(optInTimePeriod, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const range = swakButterPositional(startIdx, endIdx, real, optInTimePeriod, outReal, core);
+  return { begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -677,7 +756,7 @@ function swakButterOpenImpl(
   }
   outBegIdx.value = 0;
   outNBElement.value = 0;
-  lookbackTotal = swakButterLookback(optInTimePeriod, core);
+  lookbackTotal = swakButterLookbackPositional(optInTimePeriod, core);
   if (startIdx < lookbackTotal) {
     startIdx = lookbackTotal;
   }
@@ -866,7 +945,10 @@ export function swakButterOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('SWAK_BUTTER openAndFill', inReal.length, startIdx, swakButterLookback(optInTimePeriod, core));
+    throw insufficientHistory('SWAK_BUTTER openAndFill', inReal.length, startIdx, swakButterLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && swakButterLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('SWAK_BUTTER openAndFill', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('SWAK_BUTTER openAndFill', retCode);
 }
@@ -889,27 +971,66 @@ export function swakButterOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('SWAK_BUTTER open', inReal.length, startIdx, swakButterLookback(optInTimePeriod, core));
+    throw insufficientHistory('SWAK_BUTTER open', inReal.length, startIdx, swakButterLookbackPositional(optInTimePeriod, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && swakButterLookbackPositional(optInTimePeriod, core) < 0) {
+    throw rejectedParams('SWAK_BUTTER open', PARAM_RANGES, optInTimePeriod);
   }
   throw streamFailure('SWAK_BUTTER open', retCode);
+}
+
+/** @internal */
+export function swakButterOpenPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  core: Core = Core.DEFAULT,
+): SwakButterStream {
+  optInTimePeriod = requireInt32('SWAK_BUTTER open', 'timePeriod', optInTimePeriod);
+  requireArgument('SWAK_BUTTER open', 'real', inReal);
+  requireHistory('SWAK_BUTTER open', inReal.length);
+  return swakButterOpenInternal(core, float64(inReal), 0, optInTimePeriod);
+}
+
+/** @internal */
+export function swakButterOpenAndFillPositional(
+  inReal: ArrayLike<number>,
+  optInTimePeriod: number,
+  outReal: Float64Array,
+  core: Core = Core.DEFAULT,
+): SwakButterStream {
+  optInTimePeriod = requireInt32('SWAK_BUTTER openAndFill', 'timePeriod', optInTimePeriod);
+  requireArgument('SWAK_BUTTER openAndFill', 'real', inReal);
+  requireHistory('SWAK_BUTTER openAndFill', inReal.length);
+  const guardLookback = swakButterLookbackPositional(optInTimePeriod, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('SWAK_BUTTER openAndFill', PARAM_RANGES, optInTimePeriod);
+  }
+  const guardOutLen = openFillCount('SWAK_BUTTER openAndFill', inReal.length, guardLookback);
+  requireOutput('SWAK_BUTTER openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
+  const inRealF64 = float64(inReal);
+  if (outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset) {
+    throw sharedMemory('SWAK_BUTTER openAndFill', 'outReal', 'real');
+  }
+  if (guardOutLen > 0 && overlaps(outReal, inRealF64)) {
+    throw sharedMemory('SWAK_BUTTER openAndFill', 'outReal', 'real');
+  }
+  return swakButterOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outReal);
 }
 
 /**
  * Opens a live SWAK_BUTTER stream over the warm-up history: `value()` starts at
  * the last history bar, bit-identical to {@link swakButter} there.
  *
- * @param inReal - Warm-up history. The series to filter; Ehlers' default is the
- *   bar midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
- * @param optInTimePeriod - Cutoff period; shorter keeps more of the fast motion,
- *   longer smooths harder and lags more (default 20; range 2 to 10000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
+ * @param real - Warm-up history. The series to filter; Ehlers' default is the bar
+ *   midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link SwakButterOptions}.
  * @returns The stream, positioned on the last history bar.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `swakButterLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for an integer parameter that is not an int32 or a parameter
- *   outside its range.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input, an integer parameter that is not an int32 or a
+ *   parameter outside its range.
  *
  * @example
  * ```ts
@@ -917,44 +1038,36 @@ export function swakButterOpenInternal(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const stream = swakButterOpen(data, 20);
+ * const stream = swakButterOpen(data, { timePeriod: 20 });
  * const peeked = stream.peek(100.9); // a forming bar: commits nothing
  * const updated = stream.update(100.9); // the bar closes
  * ```
  */
-export function swakButterOpen(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  core: Core = Core.DEFAULT,
-): SwakButterStream {
-  optInTimePeriod = requireInt32('SWAK_BUTTER open', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('SWAK_BUTTER open', 'inReal', inReal);
-  requireHistory('SWAK_BUTTER open', inReal.length);
-  return swakButterOpenInternal(core, float64(inReal), 0, optInTimePeriod);
+export function swakButterOpen(real: ArrayLike<number>, options?: SwakButterOptions): SwakButterStream {
+  const o = optionsOf('SWAK_BUTTER open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('SWAK_BUTTER open', o.core);
+  return swakButterOpenPositional(real, optInTimePeriod, core);
 }
 
 /**
- * {@link swakButterOpen} that also fills the outputs over the whole history in the
- * same pass, bit-identically to {@link swakButter}. The range written is the
- * stream's `outRange()`.
+ * {@link swakButterOpen} that also computes the outputs over the whole history in
+ * the same pass, bit-identically to {@link swakButter}.
  *
- * @param inReal - Warm-up history. The series to filter; Ehlers' default is the
- *   bar midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
- * @param optInTimePeriod - Cutoff period; shorter keeps more of the fast motion,
- *   longer smooths harder and lags more (default 20; range 2 to 10000;
- *   `Core.INTEGER_DEFAULT` selects the default).
- * @param outReal - The filtered line, on the same scale as the input. Must hold
- *   `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
+ * @param real - Warm-up history. The series to filter; Ehlers' default is the bar
+ *   midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link SwakButterOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link swakButter} returns them; the range is the
+ *   stream's `outRange()`.
  * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
  *   than `swakButterLookback(...) + 1` bars, an empty one included, and
- *   `TA_BAD_PARAM` for an integer parameter that is not an int32, a parameter
- *   outside its range or an output too short or starting where another output or a
- *   `Float64Array` input starts, or, on a history long enough to open, one sharing
- *   memory with another output or a `Float64Array` input.
+ *   `TA_BAD_PARAM` for options that are not an object, a `core` that is not a
+ *   `Core`, an absent input, an integer parameter that is not an int32, a parameter
+ *   outside its range or a buffer too short, of the wrong type or starting where
+ *   another buffer or a `Float64Array` input starts, or, on a history long enough to
+ *   open, one sharing memory with another buffer or a `Float64Array` input.
  *
  * @example
  * ```ts
@@ -962,29 +1075,19 @@ export function swakButterOpen(
  *
  * const data = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
- * const out = new Float64Array(data.length);
- * const stream = swakButterOpenAndFill(data, 20, out);
- * const { begIdx, count } = stream.outRange();
- * // out[k] is the value at bar begIdx + k, for k < count
+ * const { stream, begIdx, values } = swakButterOpenAndFill(data, {
+ *   timePeriod: 20,
+ * });
+ * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function swakButterOpenAndFill(
-  inReal: ArrayLike<number>,
-  optInTimePeriod: number,
-  outReal: Float64Array,
-  core: Core = Core.DEFAULT,
-): SwakButterStream {
-  optInTimePeriod = requireInt32('SWAK_BUTTER openAndFill', 'optInTimePeriod', optInTimePeriod);
-  requireArgument('SWAK_BUTTER openAndFill', 'inReal', inReal);
-  requireHistory('SWAK_BUTTER openAndFill', inReal.length);
-  const guardOutLen = openFillCount('SWAK_BUTTER openAndFill', inReal.length, swakButterLookback(optInTimePeriod, core));
-  requireOutput('SWAK_BUTTER openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
-  const inRealF64 = float64(inReal);
-  if ((outReal.buffer === inRealF64.buffer && outReal.byteOffset === inRealF64.byteOffset)) {
-    throw streamFailure('SWAK_BUTTER openAndFill', RetCode.BAD_PARAM);
-  }
-  if (guardOutLen > 0 && (overlaps(outReal, inRealF64))) {
-    throw streamFailure('SWAK_BUTTER openAndFill', RetCode.BAD_PARAM);
-  }
-  return swakButterOpenAndFillInternal(core, inRealF64, 0, optInTimePeriod, new MInteger(), new MInteger(), outReal);
+export function swakButterOpenAndFill(real: ArrayLike<number>, options?: SwakButterOptions): SwakButterResult & { stream: SwakButterStream } {
+  const o = optionsOf('SWAK_BUTTER openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const core = coreOf('SWAK_BUTTER openAndFill', o.core);
+  const capacity = fillCapacity(swakButterLookbackPositional(optInTimePeriod, core), real);
+  const outReal = o.outReal === undefined ? new Float64Array(capacity) : o.outReal;
+  const stream = swakButterOpenAndFillPositional(real, optInTimePeriod, outReal, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, values: outReal.subarray(0, range.count) };
 }

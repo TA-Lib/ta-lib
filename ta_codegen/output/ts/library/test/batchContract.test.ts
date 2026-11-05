@@ -53,7 +53,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { type Arr, N, type Param, series } from './corpus.ts';
-import { caught, filled, type Named, namedSpecs, optsOf, outOfDomain, outputsOf, rejects, untouched } from './contract.ts';
+import { assertNamesRange, bytes, caught, filled, type Named, namedSpecs, optsOf, outOfDomain, outputsOf, rejects, untouched } from './contract.ts';
 import * as lib from '../src/index.ts';
 import { Core, MAType, RetCode } from '../src/index.ts';
 
@@ -86,33 +86,46 @@ function subLookbackEnd(s: Named): number {
   return lb > 0 ? Math.min(lb, N) - 1 : -1;
 }
 
-test('an absent array, null or undefined, is TA_BAD_PARAM naming it, on every range', () => {
+test('an absent array is TA_BAD_PARAM naming it, on every range; an undefined output is allocated instead', () => {
   const data = series(31);
   let probes = 0;
   let producingNothing = 0;
+  let allocated = 0;
   let expected = 0;
   for (const s of SPECS) {
     const e = subLookbackEnd(s);
     const arrays = s.params.filter(isArray).length;
     for (const end of e >= 0 ? [N - 1, e] : [N - 1]) {
       expected += 2 * arrays;
+      const ref = s.batchFull(0, end, ...argsOf(s, data, N, N));
       s.params.forEach((p, k) => {
         if (!isArray(p)) return;
         for (const absent of [null, undefined]) {
           const args = argsOf(s, data, N, N);
           args[k] = absent;
-          rejects(() => call(s, 0, end, args), 'TA_BAD_PARAM', `${s.fn}(0, ${end}) ${p.name}=${absent}`, `${s.fn}: ${p.name} is absent`);
+          const what = `${s.fn}(0, ${end}) ${p.name}=${absent}`;
           probes++;
           if (end !== N - 1) producingNothing++;
+          if (p.kind === 'output' && absent === undefined) {
+            // An omitted buffer is allocated: the same range and bits as the caller's.
+            const got = s.batchFull(0, end, ...args);
+            assert.deepEqual(got.range, ref.range, `${what}: range`);
+            got.outs.forEach((x, j) => assert.deepEqual(bytes(x), bytes(ref.outs[j]), `${what}: output ${j}`));
+            allocated++;
+            continue;
+          }
+          // An input is named by its public argument, an output by its buffer key.
+          rejects(() => call(s, 0, end, args), 'TA_BAD_PARAM', what, `${s.fn}: ${p.key} is absent`);
         }
       });
     }
   }
   assert.equal(probes, expected);
   assert.ok(producingNothing > SPECS.length, `only ${producingNothing} probes on a range that produces nothing`);
+  assert.equal(allocated, SPECS.reduce((n, s) => n + outputsOf(s).length * (subLookbackEnd(s) >= 0 ? 2 : 1), 0));
 });
 
-test('an empty output is an absent one, even on a range that produces nothing, where one element is enough', () => {
+test('an empty output is refused, even on a range that produces nothing, where one element is enough', () => {
   const data = series(32);
   let empty = 0;
   let controls = 0;
@@ -123,13 +136,13 @@ test('an empty output is an absent one, even on a range that produces nothing, w
       const k = s.params.indexOf(o);
       const full = argsOf(s, data, N, N);
       full[k] = filled(o, 0);
-      rejects(() => call(s, 0, N - 1, full), 'TA_BAD_PARAM', `${s.fn}: empty ${o.name}`, `${s.fn}: ${o.name} has length 0, needs ${N - lb}`);
+      rejects(() => call(s, 0, N - 1, full), 'TA_BAD_PARAM', `${s.fn}: empty ${o.name}`, `${s.fn}: ${o.key} has length 0, needs ${N - lb}`);
       empty++;
       if (e < 0) return;
       for (const none of [filled(o, 0), filled(o, 3).subarray(1, 1)]) {
         const args = argsOf(s, data, N, 1);
         args[k] = none;
-        rejects(() => call(s, 0, e, args), 'TA_BAD_PARAM', `${s.fn}(0, ${e}): empty ${o.name}`, `${s.fn}: ${o.name} is empty`);
+        rejects(() => call(s, 0, e, args), 'TA_BAD_PARAM', `${s.fn}(0, ${e}): empty ${o.name}`, `${s.fn}: ${o.key} is empty`);
         empty++;
       }
     });
@@ -154,13 +167,14 @@ test('an input that does not reach endIdx is refused on every range, one that pr
       if (p.kind !== 'input') return;
       const args = argsOf(s, data, N, N);
       args[k] = data[p.name].subarray(0, N - 1);
-      rejects(() => call(s, 0, N - 1, args), 'TA_BAD_PARAM', `${s.fn}: short ${p.name}`, `${s.fn}: ${p.name} has length ${N - 1}, needs ${N}`);
+      rejects(() => call(s, 0, N - 1, args), 'TA_BAD_PARAM', `${s.fn}: short ${p.name}`, `${s.fn}: ${p.key} has length ${N - 1}, needs ${N}`);
       full++;
       if (e < 0) return;
       expected++;
       const sub = argsOf(s, data, e + 1, 1);
       sub[k] = data[p.name].subarray(0, e);
-      rejects(() => call(s, 0, e, sub), 'TA_BAD_PARAM', `${s.fn}(0, ${e}): short ${p.name}`, `${s.fn}: ${p.name} has length ${e}, needs ${e + 1}`);
+      const msg = `${s.fn}: ${p.key} has length ${e}, needs ${e + 1}`;
+      rejects(() => call(s, 0, e, sub), 'TA_BAD_PARAM', `${s.fn}(0, ${e}): short ${p.name}`, msg);
       producingNothing++;
       probed.add(s.fn);
     });
@@ -190,7 +204,7 @@ test('each output is bounded by what the call produces, named on its own, and a 
       const k = s.params.indexOf(o);
       const args = argsOf(s, data, N, produced);
       args[k] = filled(o, produced - 1);
-      rejects(() => call(s, 0, N - 1, args), 'TA_BAD_PARAM', `${s.fn}: ${o.name} one short`, `${s.fn}: ${o.name} has length ${produced - 1}, needs ${produced}`);
+      rejects(() => call(s, 0, N - 1, args), 'TA_BAD_PARAM', `${s.fn}: ${o.name} one short`, `${s.fn}: ${o.key} has length ${produced - 1}, needs ${produced}`);
       short++;
       expectHeld(args, `${o.name} one short`);
     });
@@ -211,43 +225,178 @@ test('each output is bounded by what the call produces, named on its own, and a 
   assert.ok(short >= SPECS.length && held > 3 * SPECS.length, `${short} short outputs, ${held} rejected calls`);
 });
 
-test('an index fault outranks an absent argument, and a bad parameter outranks an absent or short buffer', () => {
+test('given an endIdx, an index fault outranks an absent or short argument and a bad parameter an absent or short buffer; with endIdx omitted, an absent input is named first', () => {
   const data = series(35);
   let index = 0;
   let param = 0;
+  let presence = 0;
   for (const s of SPECS) {
     const inK = s.params.findIndex((p) => p.kind === 'input');
     const outK = s.params.findIndex((p) => p.kind === 'output');
     const inName = s.params[inK].name;
+    const inKey = s.params[inK].key;
     const without = (k: number): unknown[] => {
       const a = argsOf(s, data, N, N);
       a[k] = null;
       return a;
     };
+    const shortIn = (): unknown[] => {
+      const a = argsOf(s, data, N, N);
+      a[inK] = data[inName].subarray(0, 1);
+      return a;
+    };
+    // Given a range, the order every backend shares: the range first.
     rejects(() => call(s, -1, N - 1, without(inK)), 'TA_OUT_OF_RANGE_START_INDEX', `${s.fn}: startIdx -1, no ${inName}`, `${s.fn}: startIdx out of range`);
-    rejects(() => call(s, 50, 10, without(outK)), 'TA_OUT_OF_RANGE_END_INDEX', `${s.fn}: endIdx < startIdx, no output`, `${s.fn}: endIdx out of range`);
     rejects(() => call(s, 0, Core.INDEX_MAX + 1, without(inK)), 'TA_OUT_OF_RANGE_END_INDEX', `${s.fn}: endIdx past INDEX_MAX, no ${inName}`, `${s.fn}: endIdx out of range`);
+    // An omitted endIdx reads the inputs' length, so an absent one is named first.
+    const omitted = undefined as unknown as number;
+    rejects(() => call(s, -1, omitted, without(inK)), 'TA_BAD_PARAM', `${s.fn}: startIdx -1, endIdx omitted, no ${inName}`, `${s.fn}: ${inKey} is absent`);
+    rejects(() => call(s, Core.INDEX_MAX + 5, omitted, without(inK)), 'TA_BAD_PARAM', `${s.fn}: startIdx past INDEX_MAX, endIdx omitted, no ${inName}`, `${s.fn}: ${inKey} is absent`);
+    presence += 2;
+    rejects(() => call(s, -1, N - 1, shortIn()), 'TA_OUT_OF_RANGE_START_INDEX', `${s.fn}: startIdx -1, short ${inName}`, `${s.fn}: startIdx out of range`);
+    rejects(() => call(s, 50, 10, without(outK)), 'TA_OUT_OF_RANGE_END_INDEX', `${s.fn}: endIdx < startIdx, no output`, `${s.fn}: endIdx out of range`);
+    rejects(() => call(s, 0, Core.INDEX_MAX + 1, shortIn()), 'TA_OUT_OF_RANGE_END_INDEX', `${s.fn}: endIdx past INDEX_MAX, short ${inName}`, `${s.fn}: endIdx out of range`);
     rejects(() => call(s, Core.INDEX_MAX + 5, Core.INDEX_MAX + 9, without(outK)), 'TA_OUT_OF_RANGE_START_INDEX', `${s.fn}: startIdx past INDEX_MAX, no output`, `${s.fn}: startIdx out of range`);
     index += 4;
-    rejects(() => call(s, 0, N - 1, without(inK)), 'TA_BAD_PARAM', `${s.fn}: a valid range reports the absent ${inName}`, `${s.fn}: ${inName} is absent`);
+    rejects(() => call(s, 0, N - 1, without(inK)), 'TA_BAD_PARAM', `${s.fn}: a valid range reports the absent ${inName}`, `${s.fn}: ${inKey} is absent`);
 
     optsOf(s).forEach((p, j) => {
       const pk = s.params.indexOf(p);
       const bad = outOfDomain(s, j);
+      const noIn = without(inK);
+      noIn[pk] = bad;
+      const whyNoIn = `${s.fn}: ${p.name}=${bad} and no ${inName}`;
+      assertNamesRange(s, j, s.fn, bad, rejects(() => call(s, 0, N - 1, noIn), 'TA_BAD_PARAM', whyNoIn), whyNoIn);
+      rejects(() => call(s, 0, omitted, noIn), 'TA_BAD_PARAM', `${s.fn}: ${p.name}=${bad}, endIdx omitted, no ${inName}`, `${s.fn}: ${inKey} is absent`);
+      presence++;
       const shortOut = argsOf(s, data, N, N);
       shortOut[outK] = filled(s.params[outK], 1);
       const emptyOut = argsOf(s, data, N, N);
       emptyOut[outK] = filled(s.params[outK], 0);
-      for (const [what, args] of [[`no ${inName}`, without(inK)], ['no output', without(outK)], ['a one-element output', shortOut], ['an empty output', emptyOut]] as const) {
+      for (const [what, args] of [[`a one-element ${inName}`, shortIn()], ['no output', without(outK)], ['a one-element output', shortOut], ['an empty output', emptyOut]] as const) {
         const a = args.slice();
         a[pk] = bad;
-        rejects(() => call(s, 0, N - 1, a), 'TA_BAD_PARAM', `${s.fn}: ${p.name}=${bad} and ${what}`, `${s.fn}: bad parameter...`);
+        const why = `${s.fn}: ${p.name}=${bad} and ${what}`;
+        assertNamesRange(s, j, s.fn, bad, rejects(() => call(s, 0, N - 1, a), 'TA_BAD_PARAM', why), why);
         param++;
       }
     });
   }
   assert.equal(index, 4 * SPECS.length);
+  assert.equal(presence, SPECS.reduce((n, s) => n + 2 + optsOf(s).length, 0));
   assert.ok(param > 4 * SPECS.length, `only ${param} parameter-order probes`);
+});
+
+test('an out-of-range parameter names its key, its value and its range at every entry point, on both sides of every integer range', () => {
+  const data = series(37);
+  let ints = 0;
+  let others = 0;
+  for (const s of SPECS) {
+    const ins = s.params.filter((p) => p.kind === 'input').map((p) => data[p.name]);
+    optsOf(s).forEach((p, k) => {
+      const values: number[] = [];
+      if (p.kind === 'int') {
+        const o = s.info.optInputs[k] as { min: number; max: number };
+        if (o.min - 1 > Core.INTEGER_MIN) values.push(o.min - 1);
+        if (o.max + 1 <= Core.INTEGER_MAX) values.push(o.max + 1);
+      } else {
+        values.push(outOfDomain(s, k));
+      }
+      for (const v of values) {
+        const opts = optsOf(s).map(sentinel);
+        opts[k] = v;
+        const what = `${s.fn}: ${p.name}=${v}`;
+        const outs = outputsOf(s).map((o) => filled(o, N));
+        assertNamesRange(s, k, s.fn, v, rejects(() => call(s, 0, N - 1, [...ins, ...opts, ...outs]), 'TA_BAD_PARAM', what), what);
+        assertNamesRange(s, k, `${s.fn} open`, v, rejects(() => s.open(...ins, ...opts), 'TA_BAD_PARAM', `${what} open`), `${what} open`);
+        assertNamesRange(s, k, `${s.fn} openAndFill`, v, rejects(() => s.fill(...ins, ...opts, ...outs), 'TA_BAD_PARAM', `${what} openAndFill`), `${what} openAndFill`);
+        if (p.kind === 'int') ints++;
+        else others++;
+      }
+    });
+  }
+  assert.ok(ints > SPECS.length, `only ${ints} integer bounds probed`);
+  assert.ok(others > 50, `only ${others} real or MAType parameters probed`);
+});
+
+test('parameters each in range but rejected together claim no range', () => {
+  const inp = series(38).inClose;
+  const cases: [string, () => unknown][] = [
+    ['MAVP', () => lib.mavp(inp, inp, { minPeriod: 20, maxPeriod: 10 })],
+    ['MAVP open', () => lib.mavpOpen(inp, inp, { minPeriod: 20, maxPeriod: 10 })],
+    ['MAVP openAndFill', () => lib.mavpOpenAndFill(inp, inp, { minPeriod: 20, maxPeriod: 10 })],
+  ];
+  for (const [entry, fn] of cases) {
+    rejects(fn, 'TA_BAD_PARAM', entry, `${entry}: minPeriod, maxPeriod, maType are each in range but rejected; see the function's documentation`);
+  }
+  const prices = { high: inp, low: inp };
+  for (const [entry, fn] of [
+    ['FRAMA', () => lib.frama(prices, { timePeriod: 15 })],
+    ['FRAMA open', () => lib.framaOpen(prices, { timePeriod: 15 })],
+    ['FRAMA openAndFill', () => lib.framaOpenAndFill(prices, { timePeriod: 15 })],
+  ] as const) {
+    rejects(fn, 'TA_BAD_PARAM', entry, `${entry}: timePeriod is in range but rejected; see the function's documentation`);
+  }
+});
+
+test('an overlap names both arrays: every pair of outputs, and every output over every input, in batch and openAndFill', () => {
+  const data = series(39);
+  let outPairs = 0;
+  let outOverIn = 0;
+  const view = (o: Param, buf: ArrayBuffer, byteOffset: number): Arr =>
+    o.int32 ? new Int32Array(buf, byteOffset, N) : new Float64Array(buf, byteOffset, N);
+  for (const s of SPECS) {
+    const ins = s.params.filter((p) => p.kind === 'input');
+    const outs = outputsOf(s);
+    const opts = optsOf(s).map(sentinel);
+    const legs = (): Float64Array[] => ins.map((p) => data[p.name]);
+    const both = (what: string, l: Float64Array[], o: Arr[], a: string, b: string): void => {
+      rejects(() => call(s, 0, N - 1, [...l, ...opts, ...o]), 'TA_BAD_PARAM', what, `${s.fn}: ${a} and ${b} share memory`);
+      rejects(() => s.fill(...l, ...opts, ...o), 'TA_BAD_PARAM', `${what} openAndFill`, `${s.fn} openAndFill: ${a} and ${b} share memory`);
+    };
+    outs.forEach((a, j) => {
+      outs.forEach((b, m) => {
+        if (m <= j) return;
+        const buf = new ArrayBuffer(N * 8);
+        const o = outs.map((q) => filled(q, N));
+        o[j] = view(a, buf, 0);
+        o[m] = view(b, buf, 0);
+        both(`${s.fn}: ${a.name} on ${b.name}`, legs(), o, a.key, b.key);
+        outPairs++;
+      });
+      ins.forEach((p, k) => {
+        const host = new Float64Array(N + 1);
+        host.set(data[p.name]);
+        const l = legs();
+        l[k] = host.subarray(0, N);
+        const o = outs.map((q) => filled(q, N));
+        o[j] = view(a, host.buffer, 8);
+        both(`${s.fn}: ${a.name} over ${p.name}`, l, o, a.key, p.key);
+        outOverIn++;
+      });
+    });
+  }
+  assert.ok(outPairs > 20, `only ${outPairs} output pairs`);
+  assert.equal(outOverIn, SPECS.reduce((n, s) => n + outputsOf(s).length * s.params.filter((p) => p.kind === 'input').length, 0));
+});
+
+test('messages name what the caller typed', () => {
+  const close = series(40).inClose;
+  const high = series(40).inHigh;
+  const cases: [() => unknown, string][] = [
+    [() => lib.sma(close, { timePeriod: 0 }), 'SMA: timePeriod must be in 1..100000, got 0'],
+    [() => lib.sma(close, { timePeriod: 1.5 }), 'SMA: timePeriod is not an int32, got 1.5'],
+    [() => lib.sma(close, { endIdx: close.length }), `SMA: real has length ${close.length}, needs ${close.length + 1}`],
+    [() => lib.ma(close, { maType: 99 as MAType }), 'MA: maType must be a MAType, got 99'],
+    [() => lib.bbands(close, { nbDevUp: Number.NaN }), 'BBANDS: nbDevUp must be in -3e37..3e37, got NaN'],
+    [() => lib.mavp(close, close, { minPeriod: 20, maxPeriod: 10 }), "MAVP: minPeriod, maxPeriod, maType are each in range but rejected; see the function's documentation"],
+    [() => lib.macd(close, { outMacd: close.slice(), outMacdSignal: undefined, outMacdHist: new Int32Array(N) as never }), 'MACD: outMacdHist is not a Float64Array'],
+    [() => { const b = new Float64Array(N); return lib.macd(close, { outMacd: b, outMacdSignal: b }); }, 'MACD: outMacd and outMacdSignal share memory'],
+    [() => lib.atr({ high, low: undefined as never, close }), 'ATR: prices.low is absent'],
+    [() => lib.atrOpen({ high, low: high.subarray(1), close }), `ATR open: prices.low has length ${N - 1}, needs ${N}`],
+    [() => lib.cdldoji({ open: close, high, low: close, close }, { outInteger: new Float64Array(N) as never }), 'CDLDOJI: outInteger is not an Int32Array'],
+  ];
+  for (const [fn, message] of cases) rejects(fn, 'TA_BAD_PARAM', message, message);
 });
 
 test('every failure carries its code, and the probes reach exactly the batch and streaming vocabulary', () => {
@@ -261,25 +410,26 @@ test('every failure carries its code, and the probes reach exactly the batch and
   const inp = data.inClose.subarray(0, 200);
   const out = new Float64Array(200);
 
-  code('OUT_OF_RANGE_START_INDEX', () => lib.sma(-1, 50, inp, 10, out), 'negative startIdx');
-  code('OUT_OF_RANGE_END_INDEX', () => lib.sma(50, 10, inp, 10, out), 'endIdx < startIdx');
-  code('BAD_PARAM', () => lib.sma(0, 50, inp, 0, out), 'an out-of-range period');
-  code('BAD_PARAM', () => lib.macd(0, 199, inp, 12, 26, 9, out, out, new Float64Array(200)), 'two outputs sharing one array');
-  code('BAD_PARAM', () => lib.sma(0, 199, null as unknown as Float64Array, 10, out), 'an absent input');
-  code('BAD_PARAM', () => lib.sma(0, 199, inp, 10, new Float64Array(3)), 'a short output');
-  code('BAD_PARAM', () => lib.ma(0, 199, inp, 10, 99 as MAType, out), 'an MA type outside its domain');
+  code('OUT_OF_RANGE_START_INDEX', () => lib.sma(inp, { startIdx: -1, endIdx: 50, timePeriod: 10, outReal: out }), 'negative startIdx');
+  code('OUT_OF_RANGE_END_INDEX', () => lib.sma(inp, { startIdx: 50, endIdx: 10, timePeriod: 10, outReal: out }), 'endIdx < startIdx');
+  code('BAD_PARAM', () => lib.sma(inp, { startIdx: 0, endIdx: 50, timePeriod: 0, outReal: out }), 'an out-of-range period');
+  code('BAD_PARAM', () => lib.macd(inp, { fastPeriod: 12, slowPeriod: 26, signalPeriod: 9, outMacd: out, outMacdSignal: out, outMacdHist: new Float64Array(200) }), 'two outputs sharing one array');
+  code('BAD_PARAM', () => lib.sma(null as unknown as Float64Array, { startIdx: 0, endIdx: 199, timePeriod: 10, outReal: out }), 'an absent input');
+  code('BAD_PARAM', () => lib.sma(new Float64Array(0), { timePeriod: 10 }), 'an empty input');
+  code('BAD_PARAM', () => lib.sma(inp, { timePeriod: 10, outReal: new Float64Array(3) }), 'a short output');
+  code('BAD_PARAM', () => lib.ma(inp, { timePeriod: 10, maType: 99 as MAType, outReal: out }), 'an MA type outside its domain');
 
-  const lb30 = lib.smaLookback(30);
-  code('INSUFFICIENT_HISTORY', () => lib.smaOpen(inp.subarray(0, lb30), 30), 'a short history');
-  code('INSUFFICIENT_HISTORY', () => lib.smaOpen(new Float64Array(0), 30), 'an empty history');
-  code('BAD_PARAM', () => lib.smaOpen(inp, 0), 'an out-of-range period at open');
-  code('BAD_PARAM', () => lib.bbandsOpenAndFill(inp, 20, 2, 2, MAType.SMA, out, out, new Float64Array(200)), 'aliased fill outputs');
-  code('BAD_PARAM', () => lib.smaOpenAndFill(inp, 30, inp), 'a fill output on its input');
-  code('BAD_PARAM', () => lib.mamaOpenAndFill(inp, 0.5, 0.05, null as unknown as Float64Array, new Float64Array(200)), 'a fill without its first output');
+  const lb30 = lib.smaLookback({ timePeriod: 30 });
+  code('INSUFFICIENT_HISTORY', () => lib.smaOpen(inp.subarray(0, lb30), { timePeriod: 30 }), 'a short history');
+  code('INSUFFICIENT_HISTORY', () => lib.smaOpen(new Float64Array(0), { timePeriod: 30 }), 'an empty history');
+  code('BAD_PARAM', () => lib.smaOpen(inp, { timePeriod: 0 }), 'an out-of-range period at open');
+  code('BAD_PARAM', () => lib.bbandsOpenAndFill(inp, { timePeriod: 20, nbDevUp: 2, nbDevDn: 2, maType: MAType.SMA, outUpperBand: out, outMiddleBand: out, outLowerBand: new Float64Array(200) }), 'aliased fill outputs');
+  code('BAD_PARAM', () => lib.smaOpenAndFill(inp, { timePeriod: 30, outReal: inp }), 'a fill output on its input');
+  code('BAD_PARAM', () => lib.mamaOpenAndFill(inp, { fastLimit: 0.5, slowLimit: 0.05, outMama: null as unknown as Float64Array, outFama: new Float64Array(200) }), 'a fill with a null first output');
 
-  rejects(() => lib.smaOpen(inp.subarray(0, lb30), 30), 'TA_INSUFFICIENT_HISTORY', 'short history message', `SMA open: history has length ${lb30}, needs ${lb30 + 1}`);
-  const maLb = lib.maLookback(10, MAType.EMA);
-  rejects(() => lib.maOpenAndFill(inp.subarray(0, maLb), 10, MAType.EMA, out), 'TA_INSUFFICIENT_HISTORY', 'MA fill', `MA openAndFill: history has length ${maLb}, needs ${maLb + 1}`);
+  rejects(() => lib.smaOpen(inp.subarray(0, lb30), { timePeriod: 30 }), 'TA_INSUFFICIENT_HISTORY', 'short history message', `SMA open: history has length ${lb30}, needs ${lb30 + 1}`);
+  const maLb = lib.maLookback({ timePeriod: 10, maType: MAType.EMA });
+  rejects(() => lib.maOpenAndFill(inp.subarray(0, maLb), { timePeriod: 10, maType: MAType.EMA, outReal: out }), 'TA_INSUFFICIENT_HISTORY', 'MA fill', `MA openAndFill: history has length ${maLb}, needs ${maLb + 1}`);
 
   assert.deepEqual(
     [RetCode.SUCCESS, RetCode.BAD_PARAM, RetCode.ALLOC_ERR, RetCode.OUT_OF_RANGE_START_INDEX, RetCode.OUT_OF_RANGE_END_INDEX, RetCode.INSUFFICIENT_HISTORY, RetCode.INTERNAL_ERROR],

@@ -63,10 +63,7 @@ export function failure(funcName: string, retCode: FailureRetCode): TALibError {
     case RetCode.OUT_OF_RANGE_END_INDEX:
       return new TALibError(retCode, where + 'endIdx out of range');
     case RetCode.BAD_PARAM:
-      return new TALibError(
-        retCode,
-        where + 'bad parameter (out-of-range optional parameter, or overlapping arrays)',
-      );
+      return new TALibError(retCode, where + 'bad parameter');
     case RetCode.ALLOC_ERR:
       return new TALibError(retCode, where + 'allocation failed');
     case RetCode.INTERNAL_ERROR:
@@ -185,7 +182,8 @@ export function requireOutput(
 ): void {
   requireLength(funcName, argName, array, required);
   if (!(array instanceof type)) {
-    throw new TALibError(RetCode.BAD_PARAM, `${funcName}: ${argName} is not a ${type.name}`);
+    const article = type === Int32Array ? 'an' : 'a';
+    throw new TALibError(RetCode.BAD_PARAM, `${funcName}: ${argName} is not ${article} ${type.name}`);
   }
 }
 
@@ -193,6 +191,13 @@ export function requireOutput(
 export function requireArgument(funcName: string, argName: string, array: unknown): void {
   if (array == null) {
     throw new TALibError(RetCode.BAD_PARAM, `${funcName}: ${argName} is absent`);
+  }
+}
+
+/** @internal A batch input: absent or empty is `TA_BAD_PARAM` (rB4). */
+export function requireSeries(funcName: string, argName: string, array: ArrayLike<number> | null | undefined): void {
+  if (array == null || array.length === 0) {
+    throw new TALibError(RetCode.BAD_PARAM, `${funcName}: ${argName} is ${array == null ? 'absent' : 'empty'}`);
   }
 }
 
@@ -227,6 +232,37 @@ export function overlaps(a: ArrayBufferView, b: ArrayBufferView): boolean {
  */
 export function overlapsPartly(out: Float64Array, input: Float64Array): boolean {
   return overlaps(out, input) && (out.byteOffset !== input.byteOffset || out.length !== input.length);
+}
+
+/** @internal Two arguments the call refused to let share memory. */
+export function sharedMemory(funcName: string, a: string, b: string): TALibError {
+  return new TALibError(RetCode.BAD_PARAM, `${funcName}: ${a} and ${b} share memory`);
+}
+
+/**
+ * @internal One parameter as its range check sees it: the options key, the
+ * default sentinel, the inclusive bounds and the accepted values as a message
+ * states them, empty for a parameter no range check covers.
+ */
+export type ParamRange = readonly [key: string, sentinel: number, min: number, max: number, accepted: string];
+
+/**
+ * @internal The rejection of parameters a lookback answered -1 for. `ranges`
+ * must list them in the order the checks run, which every range check precedes:
+ * the first value outside its range is then the reason, and with none outside
+ * only the combination can be, so no range is claimed.
+ */
+export function rejectedParams(funcName: string, ranges: readonly ParamRange[], ...values: number[]): TALibError {
+  for (let k = 0; k < ranges.length; k++) {
+    const [key, sentinel, min, max, accepted] = ranges[k];
+    const v = values[k];
+    if (accepted !== '' && v !== sentinel && !(v >= min && v <= max)) {
+      return new TALibError(RetCode.BAD_PARAM, `${funcName}: ${key} must be ${accepted}, got ${String(v)}`);
+    }
+  }
+  const keys = ranges.map((r) => r[0]);
+  const verdict = keys.length === 1 ? 'is in range but rejected' : 'are each in range but rejected';
+  return new TALibError(RetCode.BAD_PARAM, `${funcName}: ${keys.join(', ')} ${verdict}; see the function's documentation`);
 }
 
 /** @internal Every input of an opener is exactly the history's length. */
@@ -266,7 +302,91 @@ export function nonFiniteBar(funcName: string, argName: string): TALibError {
   return new TALibError(RetCode.BAD_PARAM, `${funcName}: ${argName} is not finite`);
 }
 
-/** @internal A multi-output sink that is absent or not the function's own `<N>Out`. */
+/** @internal A multi-output sink given but not an object. */
 export function badSink(funcName: string, className: string): TALibError {
   return new TALibError(RetCode.BAD_PARAM, `${funcName}: out must be a ${className}`);
+}
+
+const NO_OPTIONS = Object.freeze({});
+
+/**
+ * @internal The options object of a public call: an omitted one has every
+ * default. `null` or a primitive is a caller error, not a request for defaults.
+ */
+export function optionsOf<T extends object>(funcName: string, options: T | undefined): T {
+  if (options === undefined) {
+    return NO_OPTIONS as T;
+  }
+  if (typeof options !== 'object' || options === null) {
+    throw new TALibError(RetCode.BAD_PARAM, `${funcName}: options must be an object, got ${String(options)}`);
+  }
+  return options;
+}
+
+/**
+ * @internal `undefined` only selects `fallback`: a `null` reaches the
+ * positional tier's own check and is rejected there.
+ */
+export function orDefault<T>(value: T | undefined, fallback: T): T {
+  return value === undefined ? fallback : value;
+}
+
+/** @internal An omitted `core` is the default; anything but a `Core` is `TA_BAD_PARAM`. */
+export function coreOf(funcName: string, core: Core | undefined): Core {
+  if (core === undefined) {
+    return Core.DEFAULT;
+  }
+  if (!(core instanceof Core)) {
+    throw new TALibError(RetCode.BAD_PARAM, `${funcName}: core is not a Core`);
+  }
+  return core;
+}
+
+function isIndex(v: number): boolean {
+  return (v | 0) === v && v >= 0 && v <= Core.INDEX_MAX;
+}
+
+/**
+ * @internal Elements to allocate for a batch output the caller did not give:
+ * the count the call writes, or 1 for a call whose range or parameters the
+ * positional tier will reject, so no allocation exceeds the inputs' length.
+ * Never 0: an empty output is itself a rejection.
+ */
+export function batchCapacity(
+  startIdx: number,
+  endIdx: number,
+  lookback: number,
+  ...inputs: readonly (ArrayLike<number> | null | undefined)[]
+): number {
+  if (!isIndex(startIdx) || !isIndex(endIdx) || endIdx < startIdx || !isIndex(lookback)) {
+    return 1;
+  }
+  for (const input of inputs) {
+    if (input == null || !(input.length > endIdx)) {
+      return 1;
+    }
+  }
+  const first = startIdx > lookback ? startIdx : lookback;
+  return first > endIdx ? 1 : endIdx - first + 1;
+}
+
+/**
+ * @internal {@link batchCapacity} for an `OpenAndFill`: the history less the
+ * lookback when every input is a history of one valid length, else 1.
+ */
+export function fillCapacity(lookback: number, ...inputs: readonly (ArrayLike<number> | null | undefined)[]): number {
+  const first = inputs[0];
+  if (first == null || !isIndex(lookback)) {
+    return 1;
+  }
+  const historyLen = first.length;
+  if (!((historyLen | 0) === historyLen && historyLen > lookback && historyLen <= Core.INDEX_MAX + 1)) {
+    return 1;
+  }
+  for (const input of inputs) {
+    if (input == null || input.length !== historyLen) {
+      return 1;
+    }
+  }
+  return historyLen - lookback;
 }

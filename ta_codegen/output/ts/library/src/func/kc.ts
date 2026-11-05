@@ -12,30 +12,17 @@
  *  083126 MF,CC  First version (issue #273).
  */
 
-import { badSink, clampedStart, failure, float64, insufficientHistory, nonFiniteBar, openFillCount, overlaps, overlapsPartly, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, streamFailure } from '../runtime/checks.ts';
+import { badSink, batchCapacity, clampedStart, coreOf, failure, fillCapacity, float64, insufficientHistory, nonFiniteBar, openFillCount, optionsOf, orDefault, overlaps, overlapsPartly, rejectedParams, requireArgument, requireHistory, requireHistoryLength, requireIndexRange, requireInt32, requireLength, requireOutput, requireReal, requireSeries, sharedMemory, streamFailure } from '../runtime/checks.ts';
 import { Core } from '../runtime/core.ts';
 import { RetCode } from '../runtime/errors.ts';
 import { MInteger } from '../runtime/mInteger.ts';
 import { OutRange } from '../runtime/outRange.ts';
-import { AtrStream, atr, atrLookback as atrLookback_, atrOpenAndFillInternal } from './atr.ts';
-import { EmaStream, ema, emaLookback as emaLookback_, emaOpenAndFillInternal } from './ema.ts';
-import { TyppriceStream, typprice, typpriceOpenAndFillInternal } from './typprice.ts';
+import { AtrStream, atrLookbackPositional, atrOpenAndFillInternal, atrPositional } from './atr.ts';
+import { EmaStream, emaLookbackPositional, emaOpenAndFillInternal, emaPositional } from './ema.ts';
+import { TyppriceStream, typpriceOpenAndFillInternal, typpricePositional } from './typprice.ts';
 
-/**
- * Number of leading input bars {@link kc} consumes before its first value: the
- * index of the first bar with a value when the whole series is requested.
- *
- * @param optInTimePeriod - Smoothing period of the typical price moving average
- *   (default 20; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInATRPeriod - Smoothing period of the Average True Range (default 10;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDev - Multiplier applied to the Average True Range (default 2;
- *   `Core.REAL_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The lookback, or -1 if a parameter is out of range.
- */
-export function kcLookback(optInTimePeriod: number, optInATRPeriod: number, optInNbDev: number, core: Core = Core.DEFAULT): number {
+/** @internal */
+export function kcLookbackPositional(optInTimePeriod: number, optInATRPeriod: number, optInNbDev: number, core: Core = Core.DEFAULT): number {
   if ((optInTimePeriod | 0) !== optInTimePeriod) {
     return -1;
   }
@@ -69,31 +56,14 @@ export function kcLookback(optInTimePeriod: number, optInATRPeriod: number, optI
    * callees. Reporting the honest max keeps outBegIdx == lookback (issue #99),
    * which streaming's Open depends on.
    */
-  emaLookback = emaLookback_(optInTimePeriod, core);
-  atrLookback = atrLookback_(optInATRPeriod, core);
+  emaLookback = emaLookbackPositional(optInTimePeriod, core);
+  atrLookback = atrLookbackPositional(optInATRPeriod, core);
   return (emaLookback > atrLookback) ? emaLookback : atrLookback;
 }
 
-/**
- * How many bars ahead (positive) or behind (negative) of the bar that computed it
- * a chart draws one output of {@link kc}.
- *
- * Every output of this function is drawn at its own bar, so the answer is 0.
- *
- * @param optInTimePeriod - Smoothing period of the typical price moving average
- *   (default 20; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInATRPeriod - Smoothing period of the Average True Range (default 10;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDev - Multiplier applied to the Average True Range (default 2;
- *   `Core.REAL_DEFAULT` selects the default).
- * @param outputIdx - Position of the output in the batch signature, from 0.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The display shift, or -2147483648 if a parameter is out of range or the
- *   index names no output.
- */
-export function kcDisplayShift(optInTimePeriod: number, optInATRPeriod: number, optInNbDev: number, outputIdx: number, core: Core = Core.DEFAULT): number {
-  if (kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev, core) < 0) {
+/** @internal */
+export function kcDisplayShiftPositional(optInTimePeriod: number, optInATRPeriod: number, optInNbDev: number, outputIdx: number, core: Core = Core.DEFAULT): number {
+  if (kcLookbackPositional(optInTimePeriod, optInATRPeriod, optInNbDev, core) < 0) {
     return -2147483648;
   }
   if ((outputIdx | 0) !== outputIdx || outputIdx < 0 || outputIdx >= 3) {
@@ -154,8 +124,8 @@ export function kcImpl(
   if ((outRealUpperBand.buffer === outRealMiddleBand.buffer && outRealUpperBand.byteOffset === outRealMiddleBand.byteOffset) || (outRealUpperBand.buffer === outRealLowerBand.buffer && outRealUpperBand.byteOffset === outRealLowerBand.byteOffset) || (outRealMiddleBand.buffer === outRealLowerBand.buffer && outRealMiddleBand.byteOffset === outRealLowerBand.byteOffset)) {
     return RetCode.BAD_PARAM;
   }
-  emaLookback = emaLookback_(optInTimePeriod, core);
-  lookbackTotal = kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev, core);
+  emaLookback = emaLookbackPositional(optInTimePeriod, core);
+  lookbackTotal = kcLookbackPositional(optInTimePeriod, optInATRPeriod, optInNbDev, core);
   /* Nothing to produce: the range ends before the lookback. Return before
    * touching anything, so that a caller-supplied input which stops short of
    * endIdx is never read past its end.
@@ -177,21 +147,21 @@ export function kcImpl(
   tpStartIdx = startIdx - emaLookback;
   tempTP = new Float64Array(endIdx - tpStartIdx + 1);
   tempATR = new Float64Array(endIdx - startIdx + 1);
-  const _xr0 = typprice(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP, core);
+  const _xr0 = typpricePositional(tpStartIdx, endIdx, inHigh, inLow, inClose, tempTP, core);
   tempBegIdx.value = _xr0.begIdx;
   tempNbElement.value = _xr0.count;
   retCode = RetCode.SUCCESS;
   /* The ATR consumes the price inputs before the moving average below writes
    * the middle band, which may be aliased onto one of them.
    */
-  const _xr1 = atr(startIdx, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR, core);
+  const _xr1 = atrPositional(startIdx, endIdx, inHigh, inLow, inClose, optInATRPeriod, tempATR, core);
   tempBegIdx.value = _xr1.begIdx;
   tempNbElement.value = _xr1.count;
   retCode = RetCode.SUCCESS;
   /* tempTP is bar-tpStartIdx relative, so entering the moving average at its
    * own lookback puts its first output on startIdx, where the ATR's already is.
    */
-  const _xr2 = ema(emaLookback, endIdx - tpStartIdx, tempTP, optInTimePeriod, outRealMiddleBand, core);
+  const _xr2 = emaPositional(emaLookback, endIdx - tpStartIdx, tempTP, optInTimePeriod, outRealMiddleBand, core);
   outBegIdx.value = _xr2.begIdx;
   outNBElement.value = _xr2.count;
   retCode = RetCode.SUCCESS;
@@ -207,6 +177,209 @@ export function kcImpl(
     outRealLowerBand[i] = middle - tempReal;
   }
   return RetCode.SUCCESS;
+}
+
+const PARAM_RANGES = [['timePeriod', Core.INTEGER_DEFAULT, 2, 100000, 'in 2..100000'], ['atrPeriod', Core.INTEGER_DEFAULT, 1, 100000, 'in 1..100000'], ['nbDev', Core.REAL_DEFAULT, Core.REAL_MIN, Core.REAL_MAX, 'in -3e37..3e37']] as const;
+
+/** @internal */
+export function kcPositional(
+  startIdx: number,
+  endIdx: number,
+  inHigh: ArrayLike<number>,
+  inLow: ArrayLike<number>,
+  inClose: ArrayLike<number>,
+  optInTimePeriod: number,
+  optInATRPeriod: number,
+  optInNbDev: number,
+  outRealUpperBand: Float64Array,
+  outRealMiddleBand: Float64Array,
+  outRealLowerBand: Float64Array,
+  core: Core = Core.DEFAULT,
+): OutRange {
+  startIdx = requireInt32('KC', 'startIdx', startIdx);
+  endIdx = requireInt32('KC', 'endIdx', endIdx);
+  optInTimePeriod = requireInt32('KC', 'timePeriod', optInTimePeriod);
+  optInATRPeriod = requireInt32('KC', 'atrPeriod', optInATRPeriod);
+  optInNbDev = requireReal('KC', 'nbDev', optInNbDev);
+  requireIndexRange('KC', startIdx, endIdx);
+  const guardLookback = kcLookbackPositional(optInTimePeriod, optInATRPeriod, optInNbDev, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('KC', PARAM_RANGES, optInTimePeriod, optInATRPeriod, optInNbDev);
+  }
+  const guardStart = clampedStart('KC', startIdx, guardLookback);
+  const guardInLen = endIdx + 1;
+  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+  requireLength('KC', 'prices.high', inHigh, guardInLen);
+  requireLength('KC', 'prices.low', inLow, guardInLen);
+  requireLength('KC', 'prices.close', inClose, guardInLen);
+  requireOutput('KC', 'outUpperBand', outRealUpperBand, guardOutLen, Float64Array);
+  requireOutput('KC', 'outMiddleBand', outRealMiddleBand, guardOutLen, Float64Array);
+  requireOutput('KC', 'outLowerBand', outRealLowerBand, guardOutLen, Float64Array);
+  const inHighF64 = float64(inHigh);
+  const inLowF64 = float64(inLow);
+  const inCloseF64 = float64(inClose);
+  if (overlapsPartly(outRealUpperBand, inHighF64)) {
+    throw sharedMemory('KC', 'outUpperBand', 'prices.high');
+  }
+  if (overlapsPartly(outRealUpperBand, inLowF64)) {
+    throw sharedMemory('KC', 'outUpperBand', 'prices.low');
+  }
+  if (overlapsPartly(outRealUpperBand, inCloseF64)) {
+    throw sharedMemory('KC', 'outUpperBand', 'prices.close');
+  }
+  if (overlapsPartly(outRealMiddleBand, inHighF64)) {
+    throw sharedMemory('KC', 'outMiddleBand', 'prices.high');
+  }
+  if (overlapsPartly(outRealMiddleBand, inLowF64)) {
+    throw sharedMemory('KC', 'outMiddleBand', 'prices.low');
+  }
+  if (overlapsPartly(outRealMiddleBand, inCloseF64)) {
+    throw sharedMemory('KC', 'outMiddleBand', 'prices.close');
+  }
+  if (overlapsPartly(outRealLowerBand, inHighF64)) {
+    throw sharedMemory('KC', 'outLowerBand', 'prices.high');
+  }
+  if (overlapsPartly(outRealLowerBand, inLowF64)) {
+    throw sharedMemory('KC', 'outLowerBand', 'prices.low');
+  }
+  if (overlapsPartly(outRealLowerBand, inCloseF64)) {
+    throw sharedMemory('KC', 'outLowerBand', 'prices.close');
+  }
+  if (overlaps(outRealUpperBand, outRealMiddleBand)) {
+    throw sharedMemory('KC', 'outUpperBand', 'outMiddleBand');
+  }
+  if (overlaps(outRealUpperBand, outRealLowerBand)) {
+    throw sharedMemory('KC', 'outUpperBand', 'outLowerBand');
+  }
+  if (overlaps(outRealMiddleBand, outRealLowerBand)) {
+    throw sharedMemory('KC', 'outMiddleBand', 'outLowerBand');
+  }
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  const retCode = kcImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+  if (retCode !== RetCode.SUCCESS) {
+    throw failure('KC', retCode);
+  }
+  return new OutRange(outBegIdx.value, outNBElement.value);
+}
+
+/**
+ * Options of {@link kc}, {@link kcLookback}, {@link kcDisplayShift},
+ * {@link kcOpen} and {@link kcOpenAndFill}. Every key is optional: an omitted or
+ * `undefined` key takes its default, and a call ignores the keys it has no use
+ * for.
+ */
+export interface KcOptions {
+  /**
+   * Smoothing period of the typical price moving average (default 20; range 2 to
+   * 100000; `Core.INTEGER_DEFAULT` selects the default).
+   */
+  timePeriod?: number | undefined;
+  /**
+   * Smoothing period of the Average True Range (default 10; range 1 to 100000;
+   * `Core.INTEGER_DEFAULT` selects the default).
+   */
+  atrPeriod?: number | undefined;
+  /**
+   * Multiplier applied to the Average True Range (default 2; `Core.REAL_DEFAULT`
+   * selects the default).
+   */
+  nbDev?: number | undefined;
+  /**
+   * First bar of the requested range (default 0). Bars before it are still read as
+   * warm-up. Batch calls only.
+   */
+  startIdx?: number | undefined;
+  /**
+   * Last bar of the requested range, inclusive (default the last bar of the first
+   * input). Batch calls only.
+   */
+  endIdx?: number | undefined;
+  /**
+   * Unstable periods and candle settings to compute with; `Core.DEFAULT` when
+   * omitted.
+   */
+  core?: Core | undefined;
+  /**
+   * Buffer for `outUpperBand`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outUpperBand?: Float64Array | undefined;
+  /**
+   * Buffer for `outMiddleBand`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outMiddleBand?: Float64Array | undefined;
+  /**
+   * Buffer for `outLowerBand`, written from index 0 and allocated when omitted. It
+   * must hold the values produced (for a batch call the input length always
+   * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
+   * with another buffer or with an input; a batch call may compute in place over a
+   * `Float64Array` input of the same length.
+   */
+  outLowerBand?: Float64Array | undefined;
+}
+
+/** What {@link kc} returns, and {@link kcOpenAndFill} with its stream. */
+export interface KcResult {
+  /** Input bar of the first value; 0 when there is none. */
+  begIdx: number;
+  /**
+   * Centre line plus the scaled Average True Range. `outUpperBand[k]` is the value
+   * at input bar `begIdx + k`.
+   */
+  outUpperBand: Float64Array;
+  /**
+   * Exponential moving average of the typical price. `outMiddleBand[k]` is the value
+   * at input bar `begIdx + k`.
+   */
+  outMiddleBand: Float64Array;
+  /**
+   * Centre line minus the scaled Average True Range. `outLowerBand[k]` is the value
+   * at input bar `begIdx + k`.
+   */
+  outLowerBand: Float64Array;
+}
+
+/**
+ * Number of leading input bars {@link kc} consumes before its first value: the
+ * index of the first bar with a value when the whole series is requested.
+ *
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link KcOptions}.
+ * @returns The lookback, or `Core.LOOKBACK_INVALID` (-1) if a parameter is out of
+ *   range.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function kcLookback(options?: KcOptions): number {
+  const o = optionsOf('KC lookback', options);
+  return kcLookbackPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.atrPeriod, Core.INTEGER_DEFAULT), orDefault(o.nbDev, Core.REAL_DEFAULT), coreOf('KC lookback', o.core));
+}
+
+/**
+ * How many bars ahead (positive) or behind (negative) of the bar that computed it
+ * a chart draws one output of {@link kc}.
+ *
+ * Every output of this function is drawn at its own bar, so the answer is 0.
+ *
+ * @param outputIdx - Position of the output among the result's outputs, from 0.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link KcOptions}.
+ * @returns The display shift, or `Core.DISPLAY_SHIFT_INVALID` (-2147483648) if a
+ *   parameter is out of range or the index names no output.
+ * @throws `TALibError` with code `TA_BAD_PARAM` when `options` is not an object or
+ *   `core` is not a `Core`.
+ */
+export function kcDisplayShift(outputIdx: number, options?: KcOptions): number {
+  const o = optionsOf('KC displayShift', options);
+  return kcDisplayShiftPositional(orDefault(o.timePeriod, Core.INTEGER_DEFAULT), orDefault(o.atrPeriod, Core.INTEGER_DEFAULT), orDefault(o.nbDev, Core.REAL_DEFAULT), outputIdx, coreOf('KC displayShift', o.core));
 }
 
 /**
@@ -234,37 +407,26 @@ export function kcImpl(
  *   one converged sets that function's unstable period — `TA_FUNC_UNST_EMA` for
  *   the centre line, `TA_FUNC_UNST_ATR` for the band.
  *
- * Output `k` holds the value at input bar `begIdx + k`, for `k < count`; nothing
- * is padded. A range that ends before {@link kcLookback} is a success with `count` 0.
+ * `outUpperBand[k]` is the value at input bar `begIdx + k`; every output is
+ * exactly as long as the number of values written, and nothing is padded. A range
+ * that ends before {@link kcLookback} is a success with empty outputs.
  *
- * @param startIdx - First bar of the requested range (inclusive).
- * @param endIdx - Last bar of the requested range (inclusive).
- * @param inHigh - High price of each bar.
- * @param inLow - Low price of each bar.
- * @param inClose - Close price of each bar.
- * @param optInTimePeriod - Smoothing period of the typical price moving average
- *   (default 20; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInATRPeriod - Smoothing period of the Average True Range (default 10;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDev - Multiplier applied to the Average True Range (default 2;
- *   `Core.REAL_DEFAULT` selects the default).
- * @param outRealUpperBand - Centre line plus the scaled Average True Range. Must
- *   hold the values produced and never be empty; the input length always suffices.
- * @param outRealMiddleBand - Exponential moving average of the typical price. Must
- *   hold the values produced and never be empty; the input length always suffices.
- * @param outRealLowerBand - Centre line minus the scaled Average True Range. Must
- *   hold the values produced and never be empty; the input length always suffices.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The range written: `begIdx` is the first bar with a value, `count` how
- *   many were written.
+ * @param prices - One series per price component, all of one length. `high`: High
+ *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
+ *   bar.
+ * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
+ *   `core` and output buffers, each optional; see {@link KcOptions}.
+ * @returns `begIdx` and the values; see {@link KcResult}. Each output is a view of
+ *   its buffer, the caller's or a new one.
  * @throws `TALibError` with code `TA_OUT_OF_RANGE_START_INDEX` or
  *   `TA_OUT_OF_RANGE_END_INDEX` for a range outside `0..Core.INDEX_MAX` or ending
- *   before it starts, and `TA_BAD_PARAM` for an argument that is not an int32, a
- *   real parameter that is not a number, a parameter outside its range, an array too
- *   short for the range, an empty output, two outputs sharing memory or an output
- *   sharing memory with a `Float64Array` input it is not. Checked before anything is
- *   written.
+ *   before it starts, and `TA_BAD_PARAM` for options that are not an object, a
+ *   `core` that is not a `Core`, an absent input, a range bound that is not an
+ *   int32, an integer parameter that is not an int32, a real parameter that is not a
+ *   number, a parameter outside its range, an input too short for the range, a
+ *   buffer that is empty, too short or of the wrong type, two buffers sharing memory
+ *   or a buffer sharing memory with a `Float64Array` input it is not. Checked before
+ *   anything is written.
  *
  * @example
  * ```ts
@@ -276,16 +438,13 @@ export function kcImpl(
  *   99 + 10 * Math.sin(0.1 * i));
  * const close = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const upperBand = new Float64Array(high.length);
- * const middleBand = new Float64Array(high.length);
- * const lowerBand = new Float64Array(high.length);
- * const { begIdx, count } = kc(
- *   0, high.length - 1,
- *   high, low, close,
- *   20, 10, 2,
- *   upperBand, middleBand, lowerBand,
- * );
- * // upperBand[k] is the value at bar begIdx + k, for k < count
+ * const {
+ *   begIdx,
+ *   outUpperBand,
+ *   outMiddleBand,
+ *   outLowerBand,
+ * } = kc({ high, low, close }, { timePeriod: 20, atrPeriod: 10, nbDev: 2 });
+ * // outUpperBand[k] is the value at bar begIdx + k
  * ```
  * @see [`ema`](https://ta-lib.org/functions/ema)
  * @see [`atr`](https://ta-lib.org/functions/atr)
@@ -293,48 +452,26 @@ export function kcImpl(
  * @see [`bbands`](https://ta-lib.org/functions/bbands)
  * @see [`accbands`](https://ta-lib.org/functions/accbands)
  */
-export function kc(
-  startIdx: number,
-  endIdx: number,
-  inHigh: ArrayLike<number>,
-  inLow: ArrayLike<number>,
-  inClose: ArrayLike<number>,
-  optInTimePeriod: number,
-  optInATRPeriod: number,
-  optInNbDev: number,
-  outRealUpperBand: Float64Array,
-  outRealMiddleBand: Float64Array,
-  outRealLowerBand: Float64Array,
-  core: Core = Core.DEFAULT,
-): OutRange {
-  startIdx = requireInt32('KC', 'startIdx', startIdx);
-  endIdx = requireInt32('KC', 'endIdx', endIdx);
-  optInTimePeriod = requireInt32('KC', 'optInTimePeriod', optInTimePeriod);
-  optInATRPeriod = requireInt32('KC', 'optInATRPeriod', optInATRPeriod);
-  optInNbDev = requireReal('KC', 'optInNbDev', optInNbDev);
-  requireIndexRange('KC', startIdx, endIdx);
-  const guardStart = clampedStart('KC', startIdx, kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev, core));
-  const guardInLen = endIdx + 1;
-  const guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
-  requireLength('KC', 'inHigh', inHigh, guardInLen);
-  requireLength('KC', 'inLow', inLow, guardInLen);
-  requireLength('KC', 'inClose', inClose, guardInLen);
-  requireOutput('KC', 'outRealUpperBand', outRealUpperBand, guardOutLen, Float64Array);
-  requireOutput('KC', 'outRealMiddleBand', outRealMiddleBand, guardOutLen, Float64Array);
-  requireOutput('KC', 'outRealLowerBand', outRealLowerBand, guardOutLen, Float64Array);
-  const inHighF64 = float64(inHigh);
-  const inLowF64 = float64(inLow);
-  const inCloseF64 = float64(inClose);
-  if (overlapsPartly(outRealUpperBand, inHighF64) || overlapsPartly(outRealUpperBand, inLowF64) || overlapsPartly(outRealUpperBand, inCloseF64) || overlapsPartly(outRealMiddleBand, inHighF64) || overlapsPartly(outRealMiddleBand, inLowF64) || overlapsPartly(outRealMiddleBand, inCloseF64) || overlapsPartly(outRealLowerBand, inHighF64) || overlapsPartly(outRealLowerBand, inLowF64) || overlapsPartly(outRealLowerBand, inCloseF64) || overlaps(outRealUpperBand, outRealMiddleBand) || overlaps(outRealUpperBand, outRealLowerBand) || overlaps(outRealMiddleBand, outRealLowerBand)) {
-    throw failure('KC', RetCode.BAD_PARAM);
+export function kc(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: KcOptions): KcResult {
+  requireArgument('KC', 'prices', prices);
+  const o = optionsOf('KC', options);
+  if (o.endIdx === undefined) {
+    requireSeries('KC', 'prices.high', prices.high);
+    requireSeries('KC', 'prices.low', prices.low);
+    requireSeries('KC', 'prices.close', prices.close);
   }
-  const outBegIdx = new MInteger();
-  const outNBElement = new MInteger();
-  const retCode = kcImpl(core, startIdx, endIdx, inHighF64, inLowF64, inCloseF64, optInTimePeriod, optInATRPeriod, optInNbDev, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-  if (retCode !== RetCode.SUCCESS) {
-    throw failure('KC', retCode);
-  }
-  return new OutRange(outBegIdx.value, outNBElement.value);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInATRPeriod = orDefault(o.atrPeriod, Core.INTEGER_DEFAULT);
+  const optInNbDev = orDefault(o.nbDev, Core.REAL_DEFAULT);
+  const core = coreOf('KC', o.core);
+  const startIdx = orDefault(o.startIdx, 0);
+  const endIdx = o.endIdx === undefined ? prices.high.length - 1 : o.endIdx;
+  const capacity = batchCapacity(startIdx, endIdx, kcLookbackPositional(optInTimePeriod, optInATRPeriod, optInNbDev, core), prices.high, prices.low, prices.close);
+  const outRealUpperBand = o.outUpperBand === undefined ? new Float64Array(capacity) : o.outUpperBand;
+  const outRealMiddleBand = o.outMiddleBand === undefined ? new Float64Array(capacity) : o.outMiddleBand;
+  const outRealLowerBand = o.outLowerBand === undefined ? new Float64Array(capacity) : o.outLowerBand;
+  const range = kcPositional(startIdx, endIdx, prices.high, prices.low, prices.close, optInTimePeriod, optInATRPeriod, optInNbDev, outRealUpperBand, outRealMiddleBand, outRealLowerBand, core);
+  return { begIdx: range.begIdx, outUpperBand: outRealUpperBand.subarray(0, range.count), outMiddleBand: outRealMiddleBand.subarray(0, range.count), outLowerBand: outRealLowerBand.subarray(0, range.count) };
 }
 
 /**** Streaming API *****/
@@ -406,21 +543,23 @@ export class KcStream {
   }
 
   /**
-   * Commits one closed bar, writing the new values into `out`.
+   * Commits one closed bar and returns its outputs.
    *
    * @param inHigh - The bar's `inHigh` value: High price of each bar.
    * @param inLow - The bar's `inLow` value: Low price of each bar.
    * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link KcOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out: KcOut): void {
+  update(inHigh: number, inLow: number, inClose: number, out?: KcOut): KcOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
       throw failure('KC update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (typeof out !== 'object' || out === null) {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KC update', 'KcOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
@@ -428,24 +567,29 @@ export class KcStream {
     }
     kcStepImpl(this, inHigh, inLow, inClose);
     this.outRangeCount++;
-    out.realUpperBand = this.cur_outRealUpperBand;
-    out.realMiddleBand = this.cur_outRealMiddleBand;
-    out.realLowerBand = this.cur_outRealLowerBand;
+    if (out === undefined) {
+      out = new KcOut();
+    }
+    out.outUpperBand = this.cur_outRealUpperBand;
+    out.outMiddleBand = this.cur_outRealMiddleBand;
+    out.outLowerBand = this.cur_outRealLowerBand;
+    return out;
   }
 
   /**
-   * Writes into `out` what the next `update` with the same bar would write,
-   * committing nothing.
+   * What the next `update` with the same bar would return, committing nothing.
    *
    * @param inHigh - The bar's `inHigh` value: High price of each bar.
    * @param inLow - The bar's `inLow` value: Low price of each bar.
    * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param out - Receives the bar's outputs.
+   * @param out - Receives the outputs and is returned; a new {@link KcOut} when
+   *   omitted.
+   * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out: KcOut): void {
-    if (typeof out !== 'object' || out === null) {
+  peek(inHigh: number, inLow: number, inClose: number, out?: KcOut): KcOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KC peek', 'KcOut');
     }
     if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
@@ -466,23 +610,33 @@ export class KcStream {
     tempReal = cur_tempATR * sp.optInNbDev;
     cur_outRealUpperBand = middle + tempReal;
     cur_outRealLowerBand = middle - tempReal;
-    out.realUpperBand = cur_outRealUpperBand;
-    out.realMiddleBand = cur_outRealMiddleBand;
-    out.realLowerBand = cur_outRealLowerBand;
+    if (out === undefined) {
+      out = new KcOut();
+    }
+    out.outUpperBand = cur_outRealUpperBand;
+    out.outMiddleBand = cur_outRealMiddleBand;
+    out.outLowerBand = cur_outRealLowerBand;
+    return out;
   }
 
   /**
-   * The value at the last bar this stream counted; `peek` does not change it.
+   * The outputs at the last bar this stream counted; `peek` does not change them.
    *
-   * @param out - Receives the outputs.
+   * @param out - Receives the outputs and is returned; a new {@link KcOut} when
+   *   omitted.
+   * @returns `out`, or the new sink.
    */
-  value(out: KcOut): void {
-    if (typeof out !== 'object' || out === null) {
+  value(out?: KcOut): KcOut {
+    if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KC value', 'KcOut');
     }
-    out.realUpperBand = this.cur_outRealUpperBand;
-    out.realMiddleBand = this.cur_outRealMiddleBand;
-    out.realLowerBand = this.cur_outRealLowerBand;
+    if (out === undefined) {
+      out = new KcOut();
+    }
+    out.outUpperBand = this.cur_outRealUpperBand;
+    out.outMiddleBand = this.cur_outRealMiddleBand;
+    out.outLowerBand = this.cur_outRealLowerBand;
+    return out;
   }
 
   /**
@@ -509,16 +663,17 @@ export class KcStream {
 }
 
 /**
- * The outputs of one KC bar, written into an object the caller owns and reuses:
- * valid until the next call that writes it.
+ * The outputs of one KC bar, as `update`, `peek` and `value` return them. Passed
+ * back to one of them, it is filled and returned again, with no allocation; it
+ * holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class KcOut {
   /** Centre line plus the scaled Average True Range. */
-  realUpperBand: number = 0;
+  outUpperBand: number = NaN;
   /** Exponential moving average of the typical price. */
-  realMiddleBand: number = 0;
+  outMiddleBand: number = NaN;
   /** Centre line minus the scaled Average True Range. */
-  realLowerBand: number = 0;
+  outLowerBand: number = NaN;
 }
 
 function kcStepImpl(sp: KcStream, inHigh: number, inLow: number, inClose: number): void {
@@ -599,14 +754,14 @@ function kcOpenImpl(
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;
   }
-  if (historyLen < kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev, core) + 1) {
+  if (historyLen < kcLookbackPositional(optInTimePeriod, optInATRPeriod, optInNbDev, core) + 1) {
     return RetCode.INSUFFICIENT_HISTORY;
   }
   const sc_outRealUpperBand = outStride === 1 ? outRealUpperBand : new Float64Array(historyLen);
   const sc_outRealMiddleBand = outStride === 1 ? outRealMiddleBand : new Float64Array(historyLen);
   const sc_outRealLowerBand = outStride === 1 ? outRealLowerBand : new Float64Array(historyLen);
-  emaLookback = emaLookback_(optInTimePeriod, core);
-  lookbackTotal = kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev, core);
+  emaLookback = emaLookbackPositional(optInTimePeriod, core);
+  lookbackTotal = kcLookbackPositional(optInTimePeriod, optInATRPeriod, optInNbDev, core);
   /* Nothing to produce: the range ends before the lookback. Return before
    * touching anything, so that a caller-supplied input which stops short of
    * endIdx is never read past its end.
@@ -687,7 +842,10 @@ export function kcOpenAndFillInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('KC openAndFill', inHigh.length, startIdx, kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev, core));
+    throw insufficientHistory('KC openAndFill', inHigh.length, startIdx, kcLookbackPositional(optInTimePeriod, optInATRPeriod, optInNbDev, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && kcLookbackPositional(optInTimePeriod, optInATRPeriod, optInNbDev, core) < 0) {
+    throw rejectedParams('KC openAndFill', PARAM_RANGES, optInTimePeriod, optInATRPeriod, optInNbDev);
   }
   throw streamFailure('KC openAndFill', retCode);
 }
@@ -716,53 +874,16 @@ export function kcOpenInternal(
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {
-    throw insufficientHistory('KC open', inHigh.length, startIdx, kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev, core));
+    throw insufficientHistory('KC open', inHigh.length, startIdx, kcLookbackPositional(optInTimePeriod, optInATRPeriod, optInNbDev, core));
+  }
+  if (retCode === RetCode.BAD_PARAM && kcLookbackPositional(optInTimePeriod, optInATRPeriod, optInNbDev, core) < 0) {
+    throw rejectedParams('KC open', PARAM_RANGES, optInTimePeriod, optInATRPeriod, optInNbDev);
   }
   throw streamFailure('KC open', retCode);
 }
 
-/**
- * Opens a live KC stream over the warm-up history: `value()` starts at the last
- * history bar, bit-identical to {@link kc} there.
- *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param optInTimePeriod - Smoothing period of the typical price moving average
- *   (default 20; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInATRPeriod - Smoothing period of the Average True Range (default 10;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDev - Multiplier applied to the Average True Range (default 2;
- *   `Core.REAL_DEFAULT` selects the default).
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `kcLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range or histories of different lengths.
- *
- * @example
- * ```ts
- * import { KcOut, kcOpen } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const stream = kcOpen(high, low, close, 20, 10, 2);
- * const peeked = new KcOut();
- * const updated = new KcOut();
- * stream.peek(101.4, 99.1, 100.9, peeked); // a forming bar: commits nothing
- * stream.update(101.4, 99.1, 100.9, updated); // the bar closes
- * ```
- */
-export function kcOpen(
+/** @internal */
+export function kcOpenPositional(
   inHigh: ArrayLike<number>,
   inLow: ArrayLike<number>,
   inClose: ArrayLike<number>,
@@ -771,78 +892,20 @@ export function kcOpen(
   optInNbDev: number,
   core: Core = Core.DEFAULT,
 ): KcStream {
-  optInTimePeriod = requireInt32('KC open', 'optInTimePeriod', optInTimePeriod);
-  optInATRPeriod = requireInt32('KC open', 'optInATRPeriod', optInATRPeriod);
-  optInNbDev = requireReal('KC open', 'optInNbDev', optInNbDev);
-  requireArgument('KC open', 'inHigh', inHigh);
+  optInTimePeriod = requireInt32('KC open', 'timePeriod', optInTimePeriod);
+  optInATRPeriod = requireInt32('KC open', 'atrPeriod', optInATRPeriod);
+  optInNbDev = requireReal('KC open', 'nbDev', optInNbDev);
+  requireArgument('KC open', 'prices.high', inHigh);
   requireHistory('KC open', inHigh.length);
-  requireArgument('KC open', 'inLow', inLow);
-  requireArgument('KC open', 'inClose', inClose);
-  requireHistoryLength('KC open', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('KC open', 'inClose', inClose.length, inHigh.length);
+  requireArgument('KC open', 'prices.low', inLow);
+  requireArgument('KC open', 'prices.close', inClose);
+  requireHistoryLength('KC open', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('KC open', 'prices.close', inClose.length, inHigh.length);
   return kcOpenInternal(core, float64(inHigh), float64(inLow), float64(inClose), 0, optInTimePeriod, optInATRPeriod, optInNbDev);
 }
 
-/**
- * {@link kcOpen} that also fills the outputs over the whole history in the same
- * pass, bit-identically to {@link kc}. The range written is the stream's
- * `outRange()`.
- *
- * @param inHigh - Warm-up history. High price of each bar. Every history has the
- *   same length.
- * @param inLow - Warm-up history. Low price of each bar. Every history has the
- *   same length.
- * @param inClose - Warm-up history. Close price of each bar. Every history has the
- *   same length.
- * @param optInTimePeriod - Smoothing period of the typical price moving average
- *   (default 20; range 2 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInATRPeriod - Smoothing period of the Average True Range (default 10;
- *   range 1 to 100000; `Core.INTEGER_DEFAULT` selects the default).
- * @param optInNbDev - Multiplier applied to the Average True Range (default 2;
- *   `Core.REAL_DEFAULT` selects the default).
- * @param outRealUpperBand - Centre line plus the scaled Average True Range. Must
- *   hold `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param outRealMiddleBand - Exponential moving average of the typical price. Must
- *   hold `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param outRealLowerBand - Centre line minus the scaled Average True Range. Must
- *   hold `historyLen - lookback` values and share no memory with an input or another
- *   output.
- * @param core - Unstable periods and candle settings to compute with;
- *   `Core.DEFAULT` when omitted.
- * @returns The stream, positioned on the last history bar.
- * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
- *   than `kcLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
- *   an integer parameter that is not an int32, a real parameter that is not a
- *   number, a parameter outside its range, histories of different lengths or an
- *   output too short or starting where another output or a `Float64Array` input
- *   starts, or, on a history long enough to open, one sharing memory with another
- *   output or a `Float64Array` input.
- *
- * @example
- * ```ts
- * import { kcOpenAndFill } from 'ta-lib';
- *
- * const high = Float64Array.from({ length: 252 }, (_, i) =>
- *   101 + 10 * Math.sin(0.1 * i));
- * const low = Float64Array.from({ length: 252 }, (_, i) =>
- *   99 + 10 * Math.sin(0.1 * i));
- * const close = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
- * const upperBand = new Float64Array(high.length);
- * const middleBand = new Float64Array(high.length);
- * const lowerBand = new Float64Array(high.length);
- * const stream = kcOpenAndFill(
- *   high, low, close,
- *   20, 10, 2,
- *   upperBand, middleBand, lowerBand,
- * );
- * const { begIdx, count } = stream.outRange();
- * // upperBand[k] is the value at bar begIdx + k, for k < count
- * ```
- */
-export function kcOpenAndFill(
+/** @internal */
+export function kcOpenAndFillPositional(
   inHigh: ArrayLike<number>,
   inLow: ArrayLike<number>,
   inClose: ArrayLike<number>,
@@ -854,27 +917,203 @@ export function kcOpenAndFill(
   outRealLowerBand: Float64Array,
   core: Core = Core.DEFAULT,
 ): KcStream {
-  optInTimePeriod = requireInt32('KC openAndFill', 'optInTimePeriod', optInTimePeriod);
-  optInATRPeriod = requireInt32('KC openAndFill', 'optInATRPeriod', optInATRPeriod);
-  optInNbDev = requireReal('KC openAndFill', 'optInNbDev', optInNbDev);
-  requireArgument('KC openAndFill', 'inHigh', inHigh);
+  optInTimePeriod = requireInt32('KC openAndFill', 'timePeriod', optInTimePeriod);
+  optInATRPeriod = requireInt32('KC openAndFill', 'atrPeriod', optInATRPeriod);
+  optInNbDev = requireReal('KC openAndFill', 'nbDev', optInNbDev);
+  requireArgument('KC openAndFill', 'prices.high', inHigh);
   requireHistory('KC openAndFill', inHigh.length);
-  requireArgument('KC openAndFill', 'inLow', inLow);
-  requireArgument('KC openAndFill', 'inClose', inClose);
-  const guardOutLen = openFillCount('KC openAndFill', inHigh.length, kcLookback(optInTimePeriod, optInATRPeriod, optInNbDev, core));
-  requireHistoryLength('KC openAndFill', 'inLow', inLow.length, inHigh.length);
-  requireHistoryLength('KC openAndFill', 'inClose', inClose.length, inHigh.length);
-  requireOutput('KC openAndFill', 'outRealUpperBand', outRealUpperBand, guardOutLen, Float64Array);
-  requireOutput('KC openAndFill', 'outRealMiddleBand', outRealMiddleBand, guardOutLen, Float64Array);
-  requireOutput('KC openAndFill', 'outRealLowerBand', outRealLowerBand, guardOutLen, Float64Array);
+  requireArgument('KC openAndFill', 'prices.low', inLow);
+  requireArgument('KC openAndFill', 'prices.close', inClose);
+  const guardLookback = kcLookbackPositional(optInTimePeriod, optInATRPeriod, optInNbDev, core);
+  if (guardLookback < 0) {
+    throw rejectedParams('KC openAndFill', PARAM_RANGES, optInTimePeriod, optInATRPeriod, optInNbDev);
+  }
+  const guardOutLen = openFillCount('KC openAndFill', inHigh.length, guardLookback);
+  requireHistoryLength('KC openAndFill', 'prices.low', inLow.length, inHigh.length);
+  requireHistoryLength('KC openAndFill', 'prices.close', inClose.length, inHigh.length);
+  requireOutput('KC openAndFill', 'outUpperBand', outRealUpperBand, guardOutLen, Float64Array);
+  requireOutput('KC openAndFill', 'outMiddleBand', outRealMiddleBand, guardOutLen, Float64Array);
+  requireOutput('KC openAndFill', 'outLowerBand', outRealLowerBand, guardOutLen, Float64Array);
   const inHighF64 = float64(inHigh);
   const inLowF64 = float64(inLow);
   const inCloseF64 = float64(inClose);
-  if ((outRealUpperBand.buffer === inHighF64.buffer && outRealUpperBand.byteOffset === inHighF64.byteOffset) || (outRealUpperBand.buffer === inLowF64.buffer && outRealUpperBand.byteOffset === inLowF64.byteOffset) || (outRealUpperBand.buffer === inCloseF64.buffer && outRealUpperBand.byteOffset === inCloseF64.byteOffset) || (outRealMiddleBand.buffer === inHighF64.buffer && outRealMiddleBand.byteOffset === inHighF64.byteOffset) || (outRealMiddleBand.buffer === inLowF64.buffer && outRealMiddleBand.byteOffset === inLowF64.byteOffset) || (outRealMiddleBand.buffer === inCloseF64.buffer && outRealMiddleBand.byteOffset === inCloseF64.byteOffset) || (outRealLowerBand.buffer === inHighF64.buffer && outRealLowerBand.byteOffset === inHighF64.byteOffset) || (outRealLowerBand.buffer === inLowF64.buffer && outRealLowerBand.byteOffset === inLowF64.byteOffset) || (outRealLowerBand.buffer === inCloseF64.buffer && outRealLowerBand.byteOffset === inCloseF64.byteOffset) || (outRealUpperBand.buffer === outRealMiddleBand.buffer && outRealUpperBand.byteOffset === outRealMiddleBand.byteOffset) || (outRealUpperBand.buffer === outRealLowerBand.buffer && outRealUpperBand.byteOffset === outRealLowerBand.byteOffset) || (outRealMiddleBand.buffer === outRealLowerBand.buffer && outRealMiddleBand.byteOffset === outRealLowerBand.byteOffset)) {
-    throw streamFailure('KC openAndFill', RetCode.BAD_PARAM);
+  if (outRealUpperBand.buffer === inHighF64.buffer && outRealUpperBand.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('KC openAndFill', 'outUpperBand', 'prices.high');
   }
-  if (guardOutLen > 0 && (overlaps(outRealUpperBand, inHighF64) || overlaps(outRealUpperBand, inLowF64) || overlaps(outRealUpperBand, inCloseF64) || overlaps(outRealMiddleBand, inHighF64) || overlaps(outRealMiddleBand, inLowF64) || overlaps(outRealMiddleBand, inCloseF64) || overlaps(outRealLowerBand, inHighF64) || overlaps(outRealLowerBand, inLowF64) || overlaps(outRealLowerBand, inCloseF64) || overlaps(outRealUpperBand, outRealMiddleBand) || overlaps(outRealUpperBand, outRealLowerBand) || overlaps(outRealMiddleBand, outRealLowerBand))) {
-    throw streamFailure('KC openAndFill', RetCode.BAD_PARAM);
+  if (outRealUpperBand.buffer === inLowF64.buffer && outRealUpperBand.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('KC openAndFill', 'outUpperBand', 'prices.low');
+  }
+  if (outRealUpperBand.buffer === inCloseF64.buffer && outRealUpperBand.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('KC openAndFill', 'outUpperBand', 'prices.close');
+  }
+  if (outRealMiddleBand.buffer === inHighF64.buffer && outRealMiddleBand.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('KC openAndFill', 'outMiddleBand', 'prices.high');
+  }
+  if (outRealMiddleBand.buffer === inLowF64.buffer && outRealMiddleBand.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('KC openAndFill', 'outMiddleBand', 'prices.low');
+  }
+  if (outRealMiddleBand.buffer === inCloseF64.buffer && outRealMiddleBand.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('KC openAndFill', 'outMiddleBand', 'prices.close');
+  }
+  if (outRealLowerBand.buffer === inHighF64.buffer && outRealLowerBand.byteOffset === inHighF64.byteOffset) {
+    throw sharedMemory('KC openAndFill', 'outLowerBand', 'prices.high');
+  }
+  if (outRealLowerBand.buffer === inLowF64.buffer && outRealLowerBand.byteOffset === inLowF64.byteOffset) {
+    throw sharedMemory('KC openAndFill', 'outLowerBand', 'prices.low');
+  }
+  if (outRealLowerBand.buffer === inCloseF64.buffer && outRealLowerBand.byteOffset === inCloseF64.byteOffset) {
+    throw sharedMemory('KC openAndFill', 'outLowerBand', 'prices.close');
+  }
+  if (outRealUpperBand.buffer === outRealMiddleBand.buffer && outRealUpperBand.byteOffset === outRealMiddleBand.byteOffset) {
+    throw sharedMemory('KC openAndFill', 'outUpperBand', 'outMiddleBand');
+  }
+  if (outRealUpperBand.buffer === outRealLowerBand.buffer && outRealUpperBand.byteOffset === outRealLowerBand.byteOffset) {
+    throw sharedMemory('KC openAndFill', 'outUpperBand', 'outLowerBand');
+  }
+  if (outRealMiddleBand.buffer === outRealLowerBand.buffer && outRealMiddleBand.byteOffset === outRealLowerBand.byteOffset) {
+    throw sharedMemory('KC openAndFill', 'outMiddleBand', 'outLowerBand');
+  }
+  if (guardOutLen > 0 && overlaps(outRealUpperBand, inHighF64)) {
+    throw sharedMemory('KC openAndFill', 'outUpperBand', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outRealUpperBand, inLowF64)) {
+    throw sharedMemory('KC openAndFill', 'outUpperBand', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outRealUpperBand, inCloseF64)) {
+    throw sharedMemory('KC openAndFill', 'outUpperBand', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outRealMiddleBand, inHighF64)) {
+    throw sharedMemory('KC openAndFill', 'outMiddleBand', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outRealMiddleBand, inLowF64)) {
+    throw sharedMemory('KC openAndFill', 'outMiddleBand', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outRealMiddleBand, inCloseF64)) {
+    throw sharedMemory('KC openAndFill', 'outMiddleBand', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outRealLowerBand, inHighF64)) {
+    throw sharedMemory('KC openAndFill', 'outLowerBand', 'prices.high');
+  }
+  if (guardOutLen > 0 && overlaps(outRealLowerBand, inLowF64)) {
+    throw sharedMemory('KC openAndFill', 'outLowerBand', 'prices.low');
+  }
+  if (guardOutLen > 0 && overlaps(outRealLowerBand, inCloseF64)) {
+    throw sharedMemory('KC openAndFill', 'outLowerBand', 'prices.close');
+  }
+  if (guardOutLen > 0 && overlaps(outRealUpperBand, outRealMiddleBand)) {
+    throw sharedMemory('KC openAndFill', 'outUpperBand', 'outMiddleBand');
+  }
+  if (guardOutLen > 0 && overlaps(outRealUpperBand, outRealLowerBand)) {
+    throw sharedMemory('KC openAndFill', 'outUpperBand', 'outLowerBand');
+  }
+  if (guardOutLen > 0 && overlaps(outRealMiddleBand, outRealLowerBand)) {
+    throw sharedMemory('KC openAndFill', 'outMiddleBand', 'outLowerBand');
   }
   return kcOpenAndFillInternal(core, inHighF64, inLowF64, inCloseF64, 0, optInTimePeriod, optInATRPeriod, optInNbDev, new MInteger(), new MInteger(), outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+}
+
+/**
+ * Opens a live KC stream over the warm-up history: `value()` starts at the last
+ * history bar, bit-identical to {@link kc} there.
+ *
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
+ * @param options - The parameters and `core`; other keys are ignored. See
+ *   {@link KcOptions}.
+ * @returns The stream, positioned on the last history bar.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `kcLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   an integer parameter that is not an int32, a real parameter that is not a
+ *   number, a parameter outside its range or histories of different lengths.
+ *
+ * @example
+ * ```ts
+ * import { kcOpen } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const close = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const stream = kcOpen({ high, low, close }, {
+ *   timePeriod: 20,
+ *   atrPeriod: 10,
+ *   nbDev: 2,
+ * });
+ * const peeked = stream.peek(101.4, 99.1, 100.9); // a forming bar: commits nothing
+ * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
+ * ```
+ */
+export function kcOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: KcOptions): KcStream {
+  requireArgument('KC open', 'prices', prices);
+  const o = optionsOf('KC open', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInATRPeriod = orDefault(o.atrPeriod, Core.INTEGER_DEFAULT);
+  const optInNbDev = orDefault(o.nbDev, Core.REAL_DEFAULT);
+  const core = coreOf('KC open', o.core);
+  return kcOpenPositional(prices.high, prices.low, prices.close, optInTimePeriod, optInATRPeriod, optInNbDev, core);
+}
+
+/**
+ * {@link kcOpen} that also computes the outputs over the whole history in the same
+ * pass, bit-identically to {@link kc}.
+ *
+ * @param prices - Warm-up history. One series per price component, all of one
+ *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
+ * @param options - The parameters, `core` and output buffers; other keys are
+ *   ignored. See {@link KcOptions}.
+ * @returns The stream, positioned on the last history bar, with `begIdx` and the
+ *   values over the history as {@link kc} returns them; the range is the stream's
+ *   `outRange()`.
+ * @throws `TALibError` with code `TA_INSUFFICIENT_HISTORY` for a history shorter
+ *   than `kcLookback(...) + 1` bars, an empty one included, and `TA_BAD_PARAM` for
+ *   options that are not an object, a `core` that is not a `Core`, an absent input,
+ *   an integer parameter that is not an int32, a real parameter that is not a
+ *   number, a parameter outside its range, histories of different lengths or a
+ *   buffer too short, of the wrong type or starting where another buffer or a
+ *   `Float64Array` input starts, or, on a history long enough to open, one sharing
+ *   memory with another buffer or a `Float64Array` input.
+ *
+ * @example
+ * ```ts
+ * import { kcOpenAndFill } from 'ta-lib';
+ *
+ * const high = Float64Array.from({ length: 252 }, (_, i) =>
+ *   101 + 10 * Math.sin(0.1 * i));
+ * const low = Float64Array.from({ length: 252 }, (_, i) =>
+ *   99 + 10 * Math.sin(0.1 * i));
+ * const close = Float64Array.from({ length: 252 }, (_, i) =>
+ *   100 + 10 * Math.sin(0.1 * i) + 0.8 * Math.sin(0.7 * i));
+ * const {
+ *   stream,
+ *   begIdx,
+ *   outUpperBand,
+ *   outMiddleBand,
+ *   outLowerBand,
+ * } = kcOpenAndFill({ high, low, close }, {
+ *   timePeriod: 20,
+ *   atrPeriod: 10,
+ *   nbDev: 2,
+ * });
+ * // outUpperBand[k] is the value at bar begIdx + k
+ * ```
+ */
+export function kcOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: KcOptions): KcResult & { stream: KcStream } {
+  requireArgument('KC openAndFill', 'prices', prices);
+  const o = optionsOf('KC openAndFill', options);
+  const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
+  const optInATRPeriod = orDefault(o.atrPeriod, Core.INTEGER_DEFAULT);
+  const optInNbDev = orDefault(o.nbDev, Core.REAL_DEFAULT);
+  const core = coreOf('KC openAndFill', o.core);
+  const capacity = fillCapacity(kcLookbackPositional(optInTimePeriod, optInATRPeriod, optInNbDev, core), prices.high, prices.low, prices.close);
+  const outRealUpperBand = o.outUpperBand === undefined ? new Float64Array(capacity) : o.outUpperBand;
+  const outRealMiddleBand = o.outMiddleBand === undefined ? new Float64Array(capacity) : o.outMiddleBand;
+  const outRealLowerBand = o.outLowerBand === undefined ? new Float64Array(capacity) : o.outLowerBand;
+  const stream = kcOpenAndFillPositional(prices.high, prices.low, prices.close, optInTimePeriod, optInATRPeriod, optInNbDev, outRealUpperBand, outRealMiddleBand, outRealLowerBand, core);
+  const range = stream.outRange();
+  return { stream, begIdx: range.begIdx, outUpperBand: outRealUpperBand.subarray(0, range.count), outMiddleBand: outRealMiddleBand.subarray(0, range.count), outLowerBand: outRealLowerBand.subarray(0, range.count) };
 }
