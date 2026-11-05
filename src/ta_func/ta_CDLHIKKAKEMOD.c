@@ -139,6 +139,323 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
+   if( Near_rangeType == TA_RangeType_RealBody )
+   {
+   /* Do the calculation using tight loops. */
+   /* Add-up the initial period, except for the last value. */
+   NearPeriodTotal = 0;
+   NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx - 3 )
+   {
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2);
+      i += 1;
+   }
+   patternCount = 0;
+   patternResult = 0;
+   patternHigh = 0.0;
+   patternLow = 0.0;
+   i = startIdx - 3;
+   while( i < startIdx )
+   {
+      /* copy here the pattern recognition code below */
+      if( inHigh[i - 2] < inHigh[i - 3] &&
+          inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+          inHigh[i - 1] < inHigh[i - 2] &&
+          inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+          ((inHigh[i] < inHigh[i - 1] &&
+            inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+            inClose[i - 2] <= inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || /* (bull) 2nd: close near the low */
+           (inHigh[i] > inHigh[i - 1] &&
+            inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+            inClose[i - 2] >= inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) ) /* (bull) 2nd: close near the top */
+      {
+         patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+         patternHigh = inHigh[i - 1];
+         patternLow = inLow[i - 1];
+         patternCount = 4;
+      } else if( patternCount > 0 &&
+          ((patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+            inClose[i] > patternHigh) || /* close higher than the high of 3rd */
+           (patternResult < 0 &&
+            inClose[i] < patternLow)) )  /* close lower than the low of 3rd */
+      {
+         patternCount = 0;
+      }
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - 2);
+      NearTrailingIdx += 1;
+      if( patternCount > 0 )
+      {
+         patternCount -= 1;
+      }
+      i += 1;
+   }
+   i = startIdx;
+   /* Proceed with the calculation for the requested range.
+    * Must have:
+    * - first candle
+    * - second candle: candle with range less than first candle and close near the bottom (near the top)
+    * - third candle: lower high and higher low than 2nd
+    * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
+    * Confirmation could come in the next 3 days with:
+    * - a day that closes higher than the high (lower than the low) of the 3rd candle
+    */
+   outIdx = 0;
+   do
+   {
+      if( inHigh[i - 2] < inHigh[i - 3] &&
+          inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+          inHigh[i - 1] < inHigh[i - 2] &&
+          inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+          ((inHigh[i] < inHigh[i - 1] &&
+            inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+            inClose[i - 2] <= inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || /* (bull) 2nd: close near the low */
+           (inHigh[i] > inHigh[i - 1] &&
+            inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+            inClose[i - 2] >= inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) ) /* (bull) 2nd: close near the top */
+      {
+         patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+         patternHigh = inHigh[i - 1];
+         patternLow = inLow[i - 1];
+         patternCount = 4;
+         outInteger[outIdx++] = patternResult;
+      } else if( patternCount > 0 &&
+          ((patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+            inClose[i] > patternHigh) || /* close higher than the high of 3rd */
+           (patternResult < 0 &&
+            inClose[i] < patternLow)) )  /* close lower than the low of 3rd */
+      {
+         outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+         patternCount = 0;
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - 2);
+      NearTrailingIdx += 1;
+      if( patternCount > 0 )
+      {
+         patternCount -= 1;
+      }
+      i += 1;
+   } while( i <= endIdx );
+   /* All done. Indicate the output limits and return. */
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else if( Near_rangeType == TA_RangeType_HighLow )
+   {
+   /* Do the calculation using tight loops. */
+   /* Add-up the initial period, except for the last value. */
+   NearPeriodTotal = 0;
+   NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx - 3 )
+   {
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2);
+      i += 1;
+   }
+   patternCount = 0;
+   patternResult = 0;
+   patternHigh = 0.0;
+   patternLow = 0.0;
+   i = startIdx - 3;
+   while( i < startIdx )
+   {
+      /* copy here the pattern recognition code below */
+      if( inHigh[i - 2] < inHigh[i - 3] &&
+          inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+          inHigh[i - 1] < inHigh[i - 2] &&
+          inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+          ((inHigh[i] < inHigh[i - 1] &&
+            inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+            inClose[i - 2] <= inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || /* (bull) 2nd: close near the low */
+           (inHigh[i] > inHigh[i - 1] &&
+            inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+            inClose[i - 2] >= inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) ) /* (bull) 2nd: close near the top */
+      {
+         patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+         patternHigh = inHigh[i - 1];
+         patternLow = inLow[i - 1];
+         patternCount = 4;
+      } else if( patternCount > 0 &&
+          ((patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+            inClose[i] > patternHigh) || /* close higher than the high of 3rd */
+           (patternResult < 0 &&
+            inClose[i] < patternLow)) )  /* close lower than the low of 3rd */
+      {
+         patternCount = 0;
+      }
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - 2);
+      NearTrailingIdx += 1;
+      if( patternCount > 0 )
+      {
+         patternCount -= 1;
+      }
+      i += 1;
+   }
+   i = startIdx;
+   /* Proceed with the calculation for the requested range.
+    * Must have:
+    * - first candle
+    * - second candle: candle with range less than first candle and close near the bottom (near the top)
+    * - third candle: lower high and higher low than 2nd
+    * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
+    * Confirmation could come in the next 3 days with:
+    * - a day that closes higher than the high (lower than the low) of the 3rd candle
+    */
+   outIdx = 0;
+   do
+   {
+      if( inHigh[i - 2] < inHigh[i - 3] &&
+          inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+          inHigh[i - 1] < inHigh[i - 2] &&
+          inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+          ((inHigh[i] < inHigh[i - 1] &&
+            inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+            inClose[i - 2] <= inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || /* (bull) 2nd: close near the low */
+           (inHigh[i] > inHigh[i - 1] &&
+            inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+            inClose[i - 2] >= inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) ) /* (bull) 2nd: close near the top */
+      {
+         patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+         patternHigh = inHigh[i - 1];
+         patternLow = inLow[i - 1];
+         patternCount = 4;
+         outInteger[outIdx++] = patternResult;
+      } else if( patternCount > 0 &&
+          ((patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+            inClose[i] > patternHigh) || /* close higher than the high of 3rd */
+           (patternResult < 0 &&
+            inClose[i] < patternLow)) )  /* close lower than the low of 3rd */
+      {
+         outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+         patternCount = 0;
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - 2);
+      NearTrailingIdx += 1;
+      if( patternCount > 0 )
+      {
+         patternCount -= 1;
+      }
+      i += 1;
+   } while( i <= endIdx );
+   /* All done. Indicate the output limits and return. */
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else if( Near_rangeType == TA_RangeType_Shadows )
+   {
+   /* Do the calculation using tight loops. */
+   /* Add-up the initial period, except for the last value. */
+   NearPeriodTotal = 0;
+   NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx - 3 )
+   {
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2);
+      i += 1;
+   }
+   patternCount = 0;
+   patternResult = 0;
+   patternHigh = 0.0;
+   patternLow = 0.0;
+   i = startIdx - 3;
+   while( i < startIdx )
+   {
+      /* copy here the pattern recognition code below */
+      if( inHigh[i - 2] < inHigh[i - 3] &&
+          inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+          inHigh[i - 1] < inHigh[i - 2] &&
+          inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+          ((inHigh[i] < inHigh[i - 1] &&
+            inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+            inClose[i - 2] <= inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || /* (bull) 2nd: close near the low */
+           (inHigh[i] > inHigh[i - 1] &&
+            inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+            inClose[i - 2] >= inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) ) /* (bull) 2nd: close near the top */
+      {
+         patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+         patternHigh = inHigh[i - 1];
+         patternLow = inLow[i - 1];
+         patternCount = 4;
+      } else if( patternCount > 0 &&
+          ((patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+            inClose[i] > patternHigh) || /* close higher than the high of 3rd */
+           (patternResult < 0 &&
+            inClose[i] < patternLow)) )  /* close lower than the low of 3rd */
+      {
+         patternCount = 0;
+      }
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - 2);
+      NearTrailingIdx += 1;
+      if( patternCount > 0 )
+      {
+         patternCount -= 1;
+      }
+      i += 1;
+   }
+   i = startIdx;
+   /* Proceed with the calculation for the requested range.
+    * Must have:
+    * - first candle
+    * - second candle: candle with range less than first candle and close near the bottom (near the top)
+    * - third candle: lower high and higher low than 2nd
+    * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
+    * Confirmation could come in the next 3 days with:
+    * - a day that closes higher than the high (lower than the low) of the 3rd candle
+    */
+   outIdx = 0;
+   do
+   {
+      if( inHigh[i - 2] < inHigh[i - 3] &&
+          inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+          inHigh[i - 1] < inHigh[i - 2] &&
+          inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+          ((inHigh[i] < inHigh[i - 1] &&
+            inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+            inClose[i - 2] <= inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || /* (bull) 2nd: close near the low */
+           (inHigh[i] > inHigh[i - 1] &&
+            inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+            inClose[i - 2] >= inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) ) /* (bull) 2nd: close near the top */
+      {
+         patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+         patternHigh = inHigh[i - 1];
+         patternLow = inLow[i - 1];
+         patternCount = 4;
+         outInteger[outIdx++] = patternResult;
+      } else if( patternCount > 0 &&
+          ((patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+            inClose[i] > patternHigh) || /* close higher than the high of 3rd */
+           (patternResult < 0 &&
+            inClose[i] < patternLow)) )  /* close lower than the low of 3rd */
+      {
+         outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+         patternCount = 0;
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - 2);
+      NearTrailingIdx += 1;
+      if( patternCount > 0 )
+      {
+         patternCount -= 1;
+      }
+      i += 1;
+   } while( i <= endIdx );
+   /* All done. Indicate the output limits and return. */
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else
+   {
    /* Do the calculation using tight loops. */
    /* Add-up the initial period, except for the last value. */
    NearPeriodTotal = 0;
@@ -241,6 +558,7 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD( int    startIdx,
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
    return TA_SUCCESS;
+   }
 }
 
 TA_RetCode TA_S_CDLHIKKAKEMOD( int    startIdx,
@@ -295,6 +613,206 @@ TA_RetCode TA_S_CDLHIKKAKEMOD( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
+   if( Near_rangeType == TA_RangeType_RealBody )
+   {
+   NearPeriodTotal = 0;
+   NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx - 3 )
+   {
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2);
+      i += 1;
+   }
+   patternCount = 0;
+   patternResult = 0;
+   patternHigh = 0.0;
+   patternLow = 0.0;
+   i = startIdx - 3;
+   while( i < startIdx )
+   {
+      if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && (((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || ((double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) )
+      {
+         patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
+         patternHigh = (double)inHigh[i - 1];
+         patternLow = (double)inLow[i - 1];
+         patternCount = 4;
+      } else if( patternCount > 0 && ((patternResult > 0 && (double)inClose[i] > patternHigh) || (patternResult < 0 && (double)inClose[i] < patternLow)) )
+      {
+         patternCount = 0;
+      }
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - 2);
+      NearTrailingIdx += 1;
+      if( patternCount > 0 )
+      {
+         patternCount -= 1;
+      }
+      i += 1;
+   }
+   i = startIdx;
+   outIdx = 0;
+   do
+   {
+      if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && (((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || ((double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) )
+      {
+         patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
+         patternHigh = (double)inHigh[i - 1];
+         patternLow = (double)inLow[i - 1];
+         patternCount = 4;
+         outInteger[outIdx++] = patternResult;
+      } else if( patternCount > 0 && ((patternResult > 0 && (double)inClose[i] > patternHigh) || (patternResult < 0 && (double)inClose[i] < patternLow)) )
+      {
+         outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+         patternCount = 0;
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - 2);
+      NearTrailingIdx += 1;
+      if( patternCount > 0 )
+      {
+         patternCount -= 1;
+      }
+      i += 1;
+   } while( i <= endIdx );
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else if( Near_rangeType == TA_RangeType_HighLow )
+   {
+   NearPeriodTotal = 0;
+   NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx - 3 )
+   {
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2);
+      i += 1;
+   }
+   patternCount = 0;
+   patternResult = 0;
+   patternHigh = 0.0;
+   patternLow = 0.0;
+   i = startIdx - 3;
+   while( i < startIdx )
+   {
+      if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && (((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || ((double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) )
+      {
+         patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
+         patternHigh = (double)inHigh[i - 1];
+         patternLow = (double)inLow[i - 1];
+         patternCount = 4;
+      } else if( patternCount > 0 && ((patternResult > 0 && (double)inClose[i] > patternHigh) || (patternResult < 0 && (double)inClose[i] < patternLow)) )
+      {
+         patternCount = 0;
+      }
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - 2);
+      NearTrailingIdx += 1;
+      if( patternCount > 0 )
+      {
+         patternCount -= 1;
+      }
+      i += 1;
+   }
+   i = startIdx;
+   outIdx = 0;
+   do
+   {
+      if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && (((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || ((double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) )
+      {
+         patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
+         patternHigh = (double)inHigh[i - 1];
+         patternLow = (double)inLow[i - 1];
+         patternCount = 4;
+         outInteger[outIdx++] = patternResult;
+      } else if( patternCount > 0 && ((patternResult > 0 && (double)inClose[i] > patternHigh) || (patternResult < 0 && (double)inClose[i] < patternLow)) )
+      {
+         outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+         patternCount = 0;
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - 2);
+      NearTrailingIdx += 1;
+      if( patternCount > 0 )
+      {
+         patternCount -= 1;
+      }
+      i += 1;
+   } while( i <= endIdx );
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else if( Near_rangeType == TA_RangeType_Shadows )
+   {
+   NearPeriodTotal = 0;
+   NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx - 3 )
+   {
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2);
+      i += 1;
+   }
+   patternCount = 0;
+   patternResult = 0;
+   patternHigh = 0.0;
+   patternLow = 0.0;
+   i = startIdx - 3;
+   while( i < startIdx )
+   {
+      if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && (((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || ((double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) )
+      {
+         patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
+         patternHigh = (double)inHigh[i - 1];
+         patternLow = (double)inLow[i - 1];
+         patternCount = 4;
+      } else if( patternCount > 0 && ((patternResult > 0 && (double)inClose[i] > patternHigh) || (patternResult < 0 && (double)inClose[i] < patternLow)) )
+      {
+         patternCount = 0;
+      }
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - 2);
+      NearTrailingIdx += 1;
+      if( patternCount > 0 )
+      {
+         patternCount -= 1;
+      }
+      i += 1;
+   }
+   i = startIdx;
+   outIdx = 0;
+   do
+   {
+      if( (double)inHigh[i - 2] < (double)inHigh[i - 3] && (double)inLow[i - 2] > (double)inLow[i - 3] && (double)inHigh[i - 1] < (double)inHigh[i - 2] && (double)inLow[i - 1] > (double)inLow[i - 2] && (((double)inHigh[i] < (double)inHigh[i - 1] && (double)inLow[i] < (double)inLow[i - 1] && (double)inClose[i - 2] <= (double)inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || ((double)inHigh[i] > (double)inHigh[i - 1] && (double)inLow[i] > (double)inLow[i - 1] && (double)inClose[i - 2] >= (double)inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) )
+      {
+         patternResult = 100 * (((double)inHigh[i] < (double)inHigh[i - 1]) ? 1 : -1);
+         patternHigh = (double)inHigh[i - 1];
+         patternLow = (double)inLow[i - 1];
+         patternCount = 4;
+         outInteger[outIdx++] = patternResult;
+      } else if( patternCount > 0 && ((patternResult > 0 && (double)inClose[i] > patternHigh) || (patternResult < 0 && (double)inClose[i] < patternLow)) )
+      {
+         outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+         patternCount = 0;
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - 2);
+      NearTrailingIdx += 1;
+      if( patternCount > 0 )
+      {
+         patternCount -= 1;
+      }
+      i += 1;
+   } while( i <= endIdx );
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else
+   {
    NearPeriodTotal = 0;
    NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
    i = NearTrailingIdx;
@@ -358,6 +876,7 @@ TA_RetCode TA_S_CDLHIKKAKEMOD( int    startIdx,
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
    return TA_SUCCESS;
+   }
 }
 
 /**** Streaming API *****/
@@ -494,6 +1013,431 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLHIKKAKEMOD_OpenBody( struct TA_CDLHIKKAKE
          *outNBElement= 0;
          return TA_INSUFFICIENT_HISTORY;
       }
+      if( Near_rangeType == TA_RangeType_RealBody )
+      {
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      NearPeriodTotal = 0;
+      NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+      i = NearTrailingIdx;
+      while( i < startIdx - 3 )
+      {
+         NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2);
+         i += 1;
+      }
+      patternCount = 0;
+      patternResult = 0;
+      patternHigh = 0.0;
+      patternLow = 0.0;
+      i = startIdx - 3;
+      while( i < startIdx )
+      {
+         /* copy here the pattern recognition code below */
+         if( inHigh[i - 2] < inHigh[i - 3] &&
+             inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+             inHigh[i - 1] < inHigh[i - 2] &&
+             inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+             ((inHigh[i] < inHigh[i - 1] &&
+               inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+               inClose[i - 2] <= inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || /* (bull) 2nd: close near the low */
+              (inHigh[i] > inHigh[i - 1] &&
+               inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+               inClose[i - 2] >= inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) ) /* (bull) 2nd: close near the top */
+         {
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+            patternHigh = inHigh[i - 1];
+            patternLow = inLow[i - 1];
+            patternCount = 4;
+         } else if( patternCount > 0 &&
+             ((patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+               inClose[i] > patternHigh) || /* close higher than the high of 3rd */
+              (patternResult < 0 &&
+               inClose[i] < patternLow)) )  /* close lower than the low of 3rd */
+         {
+            patternCount = 0;
+         }
+         NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - 2);
+         NearTrailingIdx += 1;
+         if( patternCount > 0 )
+         {
+            patternCount -= 1;
+         }
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - first candle
+       * - second candle: candle with range less than first candle and close near the bottom (near the top)
+       * - third candle: lower high and higher low than 2nd
+       * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
+       * Confirmation could come in the next 3 days with:
+       * - a day that closes higher than the high (lower than the low) of the 3rd candle
+       */
+      outIdx = 0;
+      do
+      {
+         if( inHigh[i - 2] < inHigh[i - 3] &&
+             inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+             inHigh[i - 1] < inHigh[i - 2] &&
+             inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+             ((inHigh[i] < inHigh[i - 1] &&
+               inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+               inClose[i - 2] <= inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || /* (bull) 2nd: close near the low */
+              (inHigh[i] > inHigh[i - 1] &&
+               inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+               inClose[i - 2] >= inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) ) /* (bull) 2nd: close near the top */
+         {
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+            patternHigh = inHigh[i - 1];
+            patternLow = inLow[i - 1];
+            patternCount = 4;
+            outInteger[outIdx++ * outStride] = patternResult;
+         } else if( patternCount > 0 &&
+             ((patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+               inClose[i] > patternHigh) || /* close higher than the high of 3rd */
+              (patternResult < 0 &&
+               inClose[i] < patternLow)) )  /* close lower than the low of 3rd */
+         {
+            outInteger[outIdx++ * outStride] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+            patternCount = 0;
+         } else 
+         {
+            outInteger[outIdx++ * outStride] = 0;
+         }
+         NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - 2);
+         NearTrailingIdx += 1;
+         if( patternCount > 0 )
+         {
+            patternCount -= 1;
+         }
+         i += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDLHIKKAKEMOD_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->NearPeriodTotal = NearPeriodTotal;
+      sp->patternResult = patternResult;
+      sp->patternCount = patternCount;
+      sp->patternHigh = patternHigh;
+      sp->patternLow = patternLow;
+      sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
+      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 3;
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLHIKKAKEMOD_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(252); }
+      { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
+        sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_NearTrailingIdx_derived ) { TA_CDLHIKKAKEMOD_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_NearTrailingIdx_derived[fillJ % sp->ringCap_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
+        }
+      }
+      sp->ringPos_NearTrailingIdx = historyLen % sp->ringCap_NearTrailingIdx;
+      sp->lag1_inOpen = inOpen[historyLen - 1];
+      sp->lag2_inOpen = inOpen[historyLen - 2];
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag2_inHigh = inHigh[historyLen - 2];
+      sp->lag3_inHigh = inHigh[historyLen - 3];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag2_inLow = inLow[historyLen - 2];
+      sp->lag3_inLow = inLow[historyLen - 3];
+      sp->lag1_inClose = inClose[historyLen - 1];
+      sp->lag2_inClose = inClose[historyLen - 2];
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
+      *stream = sp;
+      return TA_SUCCESS;
+      }
+      else if( Near_rangeType == TA_RangeType_HighLow )
+      {
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      NearPeriodTotal = 0;
+      NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+      i = NearTrailingIdx;
+      while( i < startIdx - 3 )
+      {
+         NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2);
+         i += 1;
+      }
+      patternCount = 0;
+      patternResult = 0;
+      patternHigh = 0.0;
+      patternLow = 0.0;
+      i = startIdx - 3;
+      while( i < startIdx )
+      {
+         /* copy here the pattern recognition code below */
+         if( inHigh[i - 2] < inHigh[i - 3] &&
+             inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+             inHigh[i - 1] < inHigh[i - 2] &&
+             inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+             ((inHigh[i] < inHigh[i - 1] &&
+               inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+               inClose[i - 2] <= inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || /* (bull) 2nd: close near the low */
+              (inHigh[i] > inHigh[i - 1] &&
+               inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+               inClose[i - 2] >= inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) ) /* (bull) 2nd: close near the top */
+         {
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+            patternHigh = inHigh[i - 1];
+            patternLow = inLow[i - 1];
+            patternCount = 4;
+         } else if( patternCount > 0 &&
+             ((patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+               inClose[i] > patternHigh) || /* close higher than the high of 3rd */
+              (patternResult < 0 &&
+               inClose[i] < patternLow)) )  /* close lower than the low of 3rd */
+         {
+            patternCount = 0;
+         }
+         NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - 2);
+         NearTrailingIdx += 1;
+         if( patternCount > 0 )
+         {
+            patternCount -= 1;
+         }
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - first candle
+       * - second candle: candle with range less than first candle and close near the bottom (near the top)
+       * - third candle: lower high and higher low than 2nd
+       * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
+       * Confirmation could come in the next 3 days with:
+       * - a day that closes higher than the high (lower than the low) of the 3rd candle
+       */
+      outIdx = 0;
+      do
+      {
+         if( inHigh[i - 2] < inHigh[i - 3] &&
+             inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+             inHigh[i - 1] < inHigh[i - 2] &&
+             inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+             ((inHigh[i] < inHigh[i - 1] &&
+               inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+               inClose[i - 2] <= inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || /* (bull) 2nd: close near the low */
+              (inHigh[i] > inHigh[i - 1] &&
+               inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+               inClose[i - 2] >= inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) ) /* (bull) 2nd: close near the top */
+         {
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+            patternHigh = inHigh[i - 1];
+            patternLow = inLow[i - 1];
+            patternCount = 4;
+            outInteger[outIdx++ * outStride] = patternResult;
+         } else if( patternCount > 0 &&
+             ((patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+               inClose[i] > patternHigh) || /* close higher than the high of 3rd */
+              (patternResult < 0 &&
+               inClose[i] < patternLow)) )  /* close lower than the low of 3rd */
+         {
+            outInteger[outIdx++ * outStride] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+            patternCount = 0;
+         } else 
+         {
+            outInteger[outIdx++ * outStride] = 0;
+         }
+         NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - 2);
+         NearTrailingIdx += 1;
+         if( patternCount > 0 )
+         {
+            patternCount -= 1;
+         }
+         i += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDLHIKKAKEMOD_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->NearPeriodTotal = NearPeriodTotal;
+      sp->patternResult = patternResult;
+      sp->patternCount = patternCount;
+      sp->patternHigh = patternHigh;
+      sp->patternLow = patternLow;
+      sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
+      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 3;
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLHIKKAKEMOD_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(252); }
+      { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
+        sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_NearTrailingIdx_derived ) { TA_CDLHIKKAKEMOD_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_NearTrailingIdx_derived[fillJ % sp->ringCap_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
+        }
+      }
+      sp->ringPos_NearTrailingIdx = historyLen % sp->ringCap_NearTrailingIdx;
+      sp->lag1_inOpen = inOpen[historyLen - 1];
+      sp->lag2_inOpen = inOpen[historyLen - 2];
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag2_inHigh = inHigh[historyLen - 2];
+      sp->lag3_inHigh = inHigh[historyLen - 3];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag2_inLow = inLow[historyLen - 2];
+      sp->lag3_inLow = inLow[historyLen - 3];
+      sp->lag1_inClose = inClose[historyLen - 1];
+      sp->lag2_inClose = inClose[historyLen - 2];
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
+      *stream = sp;
+      return TA_SUCCESS;
+      }
+      else if( Near_rangeType == TA_RangeType_Shadows )
+      {
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      NearPeriodTotal = 0;
+      NearTrailingIdx = startIdx - 3 - Near_avgPeriod;
+      i = NearTrailingIdx;
+      while( i < startIdx - 3 )
+      {
+         NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2);
+         i += 1;
+      }
+      patternCount = 0;
+      patternResult = 0;
+      patternHigh = 0.0;
+      patternLow = 0.0;
+      i = startIdx - 3;
+      while( i < startIdx )
+      {
+         /* copy here the pattern recognition code below */
+         if( inHigh[i - 2] < inHigh[i - 3] &&
+             inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+             inHigh[i - 1] < inHigh[i - 2] &&
+             inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+             ((inHigh[i] < inHigh[i - 1] &&
+               inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+               inClose[i - 2] <= inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || /* (bull) 2nd: close near the low */
+              (inHigh[i] > inHigh[i - 1] &&
+               inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+               inClose[i - 2] >= inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) ) /* (bull) 2nd: close near the top */
+         {
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+            patternHigh = inHigh[i - 1];
+            patternLow = inLow[i - 1];
+            patternCount = 4;
+         } else if( patternCount > 0 &&
+             ((patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+               inClose[i] > patternHigh) || /* close higher than the high of 3rd */
+              (patternResult < 0 &&
+               inClose[i] < patternLow)) )  /* close lower than the low of 3rd */
+         {
+            patternCount = 0;
+         }
+         NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - 2);
+         NearTrailingIdx += 1;
+         if( patternCount > 0 )
+         {
+            patternCount -= 1;
+         }
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - first candle
+       * - second candle: candle with range less than first candle and close near the bottom (near the top)
+       * - third candle: lower high and higher low than 2nd
+       * - fourth candle: lower high and lower low (higher high and higher low) than 3rd
+       * Confirmation could come in the next 3 days with:
+       * - a day that closes higher than the high (lower than the low) of the 3rd candle
+       */
+      outIdx = 0;
+      do
+      {
+         if( inHigh[i - 2] < inHigh[i - 3] &&
+             inLow[i - 2] > inLow[i - 3] &&   /* 2nd: lower high and higher low than 1st */
+             inHigh[i - 1] < inHigh[i - 2] &&
+             inLow[i - 1] > inLow[i - 2] &&   /* 3rd: lower high and higher low than 2nd */
+             ((inHigh[i] < inHigh[i - 1] &&
+               inLow[i] < inLow[i - 1] &&     /* (bull) 4th: lower high and lower low */
+               inClose[i - 2] <= inLow[i - 2] + TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2)) || /* (bull) 2nd: close near the low */
+              (inHigh[i] > inHigh[i - 1] &&
+               inLow[i] > inLow[i - 1] &&     /* (bear) 4th: higher high and higher low */
+               inClose[i - 2] >= inHigh[i - 2] - TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 2))) ) /* (bull) 2nd: close near the top */
+         {
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : -1);
+            patternHigh = inHigh[i - 1];
+            patternLow = inLow[i - 1];
+            patternCount = 4;
+            outInteger[outIdx++ * outStride] = patternResult;
+         } else if( patternCount > 0 &&
+             ((patternResult > 0 &&         /* search for confirmation if modified hikkake was no more than 3 bars ago */
+               inClose[i] > patternHigh) || /* close higher than the high of 3rd */
+              (patternResult < 0 &&
+               inClose[i] < patternLow)) )  /* close lower than the low of 3rd */
+         {
+            outInteger[outIdx++ * outStride] = patternResult + 100 * ((patternResult > 0) ? 1 : -1);
+            patternCount = 0;
+         } else 
+         {
+            outInteger[outIdx++ * outStride] = 0;
+         }
+         NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - 2);
+         NearTrailingIdx += 1;
+         if( patternCount > 0 )
+         {
+            patternCount -= 1;
+         }
+         i += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDLHIKKAKEMOD_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->NearPeriodTotal = NearPeriodTotal;
+      sp->patternResult = patternResult;
+      sp->patternCount = patternCount;
+      sp->patternHigh = patternHigh;
+      sp->patternLow = patternLow;
+      sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
+      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 3;
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLHIKKAKEMOD_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(252); }
+      { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
+        sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_NearTrailingIdx_derived ) { TA_CDLHIKKAKEMOD_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_NearTrailingIdx_derived[fillJ % sp->ringCap_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
+        }
+      }
+      sp->ringPos_NearTrailingIdx = historyLen % sp->ringCap_NearTrailingIdx;
+      sp->lag1_inOpen = inOpen[historyLen - 1];
+      sp->lag2_inOpen = inOpen[historyLen - 2];
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag2_inHigh = inHigh[historyLen - 2];
+      sp->lag3_inHigh = inHigh[historyLen - 3];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag2_inLow = inLow[historyLen - 2];
+      sp->lag3_inLow = inLow[historyLen - 3];
+      sp->lag1_inClose = inClose[historyLen - 1];
+      sp->lag2_inClose = inClose[historyLen - 2];
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
+      *stream = sp;
+      return TA_SUCCESS;
+      }
+      else
+      {
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
       NearPeriodTotal = 0;
@@ -632,6 +1576,7 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLHIKKAKEMOD_OpenBody( struct TA_CDLHIKKAKE
       sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
+      }
    }
 }
 

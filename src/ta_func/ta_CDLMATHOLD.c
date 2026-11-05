@@ -145,6 +145,83 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
+   if( BodyLong_rangeType == TA_RangeType_RealBody && BodyShort_rangeType == TA_RangeType_RealBody )
+   {
+   /* Do the calculation using tight loops. */
+   /* Add-up the initial period, except for the last value. */
+   BodyPeriodTotal[4] = 0;
+   BodyPeriodTotal[3] = 0;
+   BodyPeriodTotal[2] = 0;
+   BodyPeriodTotal[1] = 0;
+   BodyPeriodTotal[0] = 0;
+   BodyShortTrailingIdx = startIdx - BodyShort_avgPeriod;
+   BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod;
+   i = BodyShortTrailingIdx;
+   while( i < startIdx )
+   {
+      BodyPeriodTotal[3] = BodyPeriodTotal[3] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 3);
+      BodyPeriodTotal[2] = BodyPeriodTotal[2] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2);
+      BodyPeriodTotal[1] = BodyPeriodTotal[1] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1);
+      i += 1;
+   }
+   i = BodyLongTrailingIdx;
+   while( i < startIdx )
+   {
+      BodyPeriodTotal[4] = BodyPeriodTotal[4] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 4);
+      i += 1;
+   }
+   i = startIdx;
+   /* Proceed with the calculation for the requested range.
+    * Must have:
+    * - first candle: long white candle
+    * - upside gap between the first and the second bodies
+    * - second candle: small black candle
+    * - third and fourth candles: falling small real body candlesticks (commonly black) that hold within the long
+    *   white candle's body and are higher than the reaction days of the rising three methods
+    * - fifth candle: white candle that opens above the previous small candle's close and closes higher than the
+    *   high of the highest reaction day
+    * The meaning of "short" and "long" is specified with TA_SetCandleSettings;
+    * "hold within" means "a part of the real body must be within";
+    * optInPenetration is the maximum percentage of the first white body the reaction days can penetrate (it is
+    * to specify how much the reaction days should be "higher than the reaction days of the rising three methods")
+    */
+   outIdx = 0;
+   do
+   {
+      if( (((inClose[i - 4] >= inOpen[i - 4]) + /* white, black, 2 black or white, white */
+          (!(inClose[i - 3] >= inOpen[i - 3])) + (inClose[i] >= inOpen[i])) == 3) )
+      {
+         outInteger[outIdx++] = ((100) & -(int)((((inOpen[i - 3] > inOpen[i - 4]) & (inOpen[i - 3] > inClose[i - 4]) & (inClose[i - 3] > inOpen[i - 4]) & (inClose[i - 3] > inClose[i - 4])) & /* upside gap 1st to 2nd */
+             ((inOpen[i - 2] < inClose[i - 4]) | (inClose[i - 2] < inClose[i - 4])) & /* 3rd to 4th hold within 1st: a part of the real body must be within 1st real body */
+             ((inOpen[i - 1] < inClose[i - 4]) | (inClose[i - 1] < inClose[i - 4])) & ((inOpen[i - 2] > inClose[i - 4] - fabs(inClose[i - 4] - inOpen[i - 4]) * optInPenetration) & (inClose[i - 2] > inClose[i - 4] - fabs(inClose[i - 4] - inOpen[i - 4]) * optInPenetration)) & /* reaction days penetrate first body less than optInPenetration percent */
+             (inOpen[i - 1] > inClose[i - 4] - fabs(inClose[i - 4] - inOpen[i - 4]) * optInPenetration) & (inClose[i - 1] > inClose[i - 4] - fabs(inClose[i - 4] - inOpen[i - 4]) * optInPenetration) & ((inClose[i - 2] < inOpen[i - 3]) & (inOpen[i - 2] < inOpen[i - 3])) & /* 2nd to 4th are falling */
+             ((inClose[i - 1] < inClose[i - 2]) | (inClose[i - 1] < inOpen[i - 2])) & ((inOpen[i - 1] < inClose[i - 2]) | (inOpen[i - 1] < inOpen[i - 2])) & (inOpen[i] > inClose[i - 1]) & /* 5th opens above the prior close */
+             ((inClose[i] > inHigh[i - 3]) & (inClose[i] > inHigh[i - 2]) & (inClose[i] > inHigh[i - 1])) & /* 5th closes above the highest high of the reaction days */
+             (fabs(inClose[i - 4] - inOpen[i - 4]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyPeriodTotal[4],i - 4)) & /* 1st long, then 3 small */
+             (fabs(inClose[i - 3] - inOpen[i - 3]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal[3],i - 3)) & (fabs(inClose[i - 2] - inOpen[i - 2]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal[2],i - 2)) & (fabs(inClose[i - 1] - inOpen[i - 1]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal[1],i - 1)))));
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      BodyPeriodTotal[4] = BodyPeriodTotal[4] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 4) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx - 4));
+      for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
+      {
+         BodyPeriodTotal[totIdx] = BodyPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyShortTrailingIdx - totIdx));
+      }
+      i += 1;
+      BodyShortTrailingIdx += 1;
+      BodyLongTrailingIdx += 1;
+   } while( i <= endIdx );
+   /* All done. Indicate the output limits and return. */
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else
+   {
    /* Do the calculation using tight loops. */
    /* Add-up the initial period, except for the last value. */
    BodyPeriodTotal[4] = 0;
@@ -217,6 +294,7 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD( int    startIdx,
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
    return TA_SUCCESS;
+   }
 }
 
 TA_RetCode TA_S_CDLMATHOLD( int    startIdx,
@@ -277,6 +355,55 @@ TA_RetCode TA_S_CDLMATHOLD( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
+   if( BodyLong_rangeType == TA_RangeType_RealBody && BodyShort_rangeType == TA_RangeType_RealBody )
+   {
+   BodyPeriodTotal[4] = 0;
+   BodyPeriodTotal[3] = 0;
+   BodyPeriodTotal[2] = 0;
+   BodyPeriodTotal[1] = 0;
+   BodyPeriodTotal[0] = 0;
+   BodyShortTrailingIdx = startIdx - BodyShort_avgPeriod;
+   BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod;
+   i = BodyShortTrailingIdx;
+   while( i < startIdx )
+   {
+      BodyPeriodTotal[3] = BodyPeriodTotal[3] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 3);
+      BodyPeriodTotal[2] = BodyPeriodTotal[2] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2);
+      BodyPeriodTotal[1] = BodyPeriodTotal[1] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1);
+      i += 1;
+   }
+   i = BodyLongTrailingIdx;
+   while( i < startIdx )
+   {
+      BodyPeriodTotal[4] = BodyPeriodTotal[4] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 4);
+      i += 1;
+   }
+   i = startIdx;
+   outIdx = 0;
+   do
+   {
+      if( ((((double)inClose[i - 4] >= (double)inOpen[i - 4]) + (!((double)inClose[i - 3] >= (double)inOpen[i - 3])) + ((double)inClose[i] >= (double)inOpen[i])) == 3) )
+      {
+         outInteger[outIdx++] = ((100) & -(int)((((double)inOpen[i - 3] > (double)inOpen[i - 4]) & ((double)inOpen[i - 3] > (double)inClose[i - 4]) & ((double)inClose[i - 3] > (double)inOpen[i - 4]) & ((double)inClose[i - 3] > (double)inClose[i - 4]) & (((double)inOpen[i - 2] < (double)inClose[i - 4]) | ((double)inClose[i - 2] < (double)inClose[i - 4])) & (((double)inOpen[i - 1] < (double)inClose[i - 4]) | ((double)inClose[i - 1] < (double)inClose[i - 4])) & ((double)inOpen[i - 2] > (double)inClose[i - 4] - fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) * optInPenetration) & ((double)inClose[i - 2] > (double)inClose[i - 4] - fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) * optInPenetration) & ((double)inOpen[i - 1] > (double)inClose[i - 4] - fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) * optInPenetration) & ((double)inClose[i - 1] > (double)inClose[i - 4] - fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) * optInPenetration) & ((double)inClose[i - 2] < (double)inOpen[i - 3]) & ((double)inOpen[i - 2] < (double)inOpen[i - 3]) & (((double)inClose[i - 1] < (double)inClose[i - 2]) | ((double)inClose[i - 1] < (double)inOpen[i - 2])) & (((double)inOpen[i - 1] < (double)inClose[i - 2]) | ((double)inOpen[i - 1] < (double)inOpen[i - 2])) & ((double)inOpen[i] > (double)inClose[i - 1]) & ((double)inClose[i] > (double)inHigh[i - 3]) & ((double)inClose[i] > (double)inHigh[i - 2]) & ((double)inClose[i] > (double)inHigh[i - 1]) & (fabs((double)inClose[i - 4] - (double)inOpen[i - 4]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyPeriodTotal[4],i - 4)) & (fabs((double)inClose[i - 3] - (double)inOpen[i - 3]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal[3],i - 3)) & (fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal[2],i - 2)) & (fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal[1],i - 1)))));
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      BodyPeriodTotal[4] = BodyPeriodTotal[4] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 4) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx - 4));
+      for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
+      {
+         BodyPeriodTotal[totIdx] = BodyPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyShortTrailingIdx - totIdx));
+      }
+      i += 1;
+      BodyShortTrailingIdx += 1;
+      BodyLongTrailingIdx += 1;
+   } while( i <= endIdx );
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else
+   {
    BodyPeriodTotal[4] = 0;
    BodyPeriodTotal[3] = 0;
    BodyPeriodTotal[2] = 0;
@@ -321,6 +448,7 @@ TA_RetCode TA_S_CDLMATHOLD( int    startIdx,
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
    return TA_SUCCESS;
+   }
 }
 
 /**** Streaming API *****/
@@ -479,6 +607,146 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLMATHOLD_OpenBody( struct TA_CDLMATHOLD_St
          *outNBElement= 0;
          return TA_INSUFFICIENT_HISTORY;
       }
+      if( BodyLong_rangeType == TA_RangeType_RealBody && BodyShort_rangeType == TA_RangeType_RealBody )
+      {
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      BodyPeriodTotal[4] = 0;
+      BodyPeriodTotal[3] = 0;
+      BodyPeriodTotal[2] = 0;
+      BodyPeriodTotal[1] = 0;
+      BodyPeriodTotal[0] = 0;
+      BodyShortTrailingIdx = startIdx - BodyShort_avgPeriod;
+      BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod;
+      i = BodyShortTrailingIdx;
+      while( i < startIdx )
+      {
+         BodyPeriodTotal[3] = BodyPeriodTotal[3] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 3);
+         BodyPeriodTotal[2] = BodyPeriodTotal[2] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2);
+         BodyPeriodTotal[1] = BodyPeriodTotal[1] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1);
+         i += 1;
+      }
+      i = BodyLongTrailingIdx;
+      while( i < startIdx )
+      {
+         BodyPeriodTotal[4] = BodyPeriodTotal[4] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 4);
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - first candle: long white candle
+       * - upside gap between the first and the second bodies
+       * - second candle: small black candle
+       * - third and fourth candles: falling small real body candlesticks (commonly black) that hold within the long
+       *   white candle's body and are higher than the reaction days of the rising three methods
+       * - fifth candle: white candle that opens above the previous small candle's close and closes higher than the
+       *   high of the highest reaction day
+       * The meaning of "short" and "long" is specified with TA_SetCandleSettings;
+       * "hold within" means "a part of the real body must be within";
+       * optInPenetration is the maximum percentage of the first white body the reaction days can penetrate (it is
+       * to specify how much the reaction days should be "higher than the reaction days of the rising three methods")
+       */
+      outIdx = 0;
+      do
+      {
+         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == 1 &&  /* white, black, 2 black or white, white */
+             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 )
+         {
+            if( ((min(inOpen[i - 3],inClose[i - 3]) > max(inOpen[i - 4],inClose[i - 4])) ? 1 : 0) && /* upside gap 1st to 2nd */
+                min(inOpen[i - 2],inClose[i - 2]) < inClose[i - 4] &&                    /* 3rd to 4th hold within 1st: a part of the real body must be within 1st real body */
+                min(inOpen[i - 1],inClose[i - 1]) < inClose[i - 4] &&
+                min(inOpen[i - 2],inClose[i - 2]) > inClose[i - 4] - fabs(inClose[i - 4] - inOpen[i - 4]) * optInPenetration && /* reaction days penetrate first body less than optInPenetration percent */
+                min(inOpen[i - 1],inClose[i - 1]) > inClose[i - 4] - fabs(inClose[i - 4] - inOpen[i - 4]) * optInPenetration &&
+                max(inClose[i - 2],inOpen[i - 2]) < inOpen[i - 3] &&                     /* 2nd to 4th are falling */
+                max(inClose[i - 1],inOpen[i - 1]) < max(inClose[i - 2],inOpen[i - 2]) &&
+                inOpen[i] > inClose[i - 1] &&                                            /* 5th opens above the prior close */
+                inClose[i] > max(max(inHigh[i - 3],inHigh[i - 2]),inHigh[i - 1]) &&      /* 5th closes above the highest high of the reaction days */
+                fabs(inClose[i - 4] - inOpen[i - 4]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyPeriodTotal[4],i - 4) && /* 1st long, then 3 small */
+                fabs(inClose[i - 3] - inOpen[i - 3]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal[3],i - 3) &&
+                fabs(inClose[i - 2] - inOpen[i - 2]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal[2],i - 2) &&
+                fabs(inClose[i - 1] - inOpen[i - 1]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal[1],i - 1) )
+            {
+               outInteger[outIdx++ * outStride] = 100;
+            } else 
+            {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+         } else 
+         {
+            outInteger[outIdx++ * outStride] = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyPeriodTotal[4] = BodyPeriodTotal[4] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 4) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx - 4));
+         for( totIdx = 3; totIdx >= 1; totIdx -= 1 )
+         {
+            BodyPeriodTotal[totIdx] = BodyPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyShortTrailingIdx - totIdx));
+         }
+         i += 1;
+         BodyShortTrailingIdx += 1;
+         BodyLongTrailingIdx += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDLMATHOLD_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInPenetration = optInPenetration;
+      memcpy( sp->BodyPeriodTotal, BodyPeriodTotal, sizeof( sp->BodyPeriodTotal ) );
+      sp->ringLag_BodyLongTrailingIdx = (int)(i - BodyLongTrailingIdx);
+      sp->ringCap_BodyLongTrailingIdx = sp->ringLag_BodyLongTrailingIdx + 5;
+      if( sp->ringLag_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLMATHOLD_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(274); }
+      { size_t allocN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
+        sp->ring_BodyLongTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_BodyLongTrailingIdx_derived ) { TA_CDLMATHOLD_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_BodyLongTrailingIdx_derived[fillJ % sp->ringCap_BodyLongTrailingIdx] = TA_STREAM_CANDLERANGE(BodyLong,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
+        }
+      }
+      sp->ringPos_BodyLongTrailingIdx = historyLen % sp->ringCap_BodyLongTrailingIdx;
+      sp->ringLag_BodyShortTrailingIdx = (int)(i - BodyShortTrailingIdx);
+      sp->ringCap_BodyShortTrailingIdx = sp->ringLag_BodyShortTrailingIdx + 4;
+      if( sp->ringLag_BodyShortTrailingIdx < 0 || sp->ringCap_BodyShortTrailingIdx > historyLen ) { TA_CDLMATHOLD_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(275); }
+      { size_t allocN = (size_t)(sp->ringCap_BodyShortTrailingIdx > 0 ? sp->ringCap_BodyShortTrailingIdx : 1);
+        sp->ring_BodyShortTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_BodyShortTrailingIdx_derived ) { TA_CDLMATHOLD_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_BodyShortTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_BodyShortTrailingIdx_derived[fillJ % sp->ringCap_BodyShortTrailingIdx] = TA_STREAM_CANDLERANGE(BodyShort,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
+        }
+      }
+      sp->ringPos_BodyShortTrailingIdx = historyLen % sp->ringCap_BodyShortTrailingIdx;
+      sp->lag1_inOpen = inOpen[historyLen - 1];
+      sp->lag2_inOpen = inOpen[historyLen - 2];
+      sp->lag3_inOpen = inOpen[historyLen - 3];
+      sp->lag4_inOpen = inOpen[historyLen - 4];
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag2_inHigh = inHigh[historyLen - 2];
+      sp->lag3_inHigh = inHigh[historyLen - 3];
+      sp->lag4_inHigh = inHigh[historyLen - 4];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag2_inLow = inLow[historyLen - 2];
+      sp->lag3_inLow = inLow[historyLen - 3];
+      sp->lag4_inLow = inLow[historyLen - 4];
+      sp->lag1_inClose = inClose[historyLen - 1];
+      sp->lag2_inClose = inClose[historyLen - 2];
+      sp->lag3_inClose = inClose[historyLen - 3];
+      sp->lag4_inClose = inClose[historyLen - 4];
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
+      *stream = sp;
+      return TA_SUCCESS;
+      }
+      else
+      {
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
       BodyPeriodTotal[4] = 0;
@@ -614,6 +882,7 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLMATHOLD_OpenBody( struct TA_CDLMATHOLD_St
       sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
+      }
    }
 }
 

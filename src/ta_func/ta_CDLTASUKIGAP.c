@@ -128,6 +128,179 @@ TA_LIB_API TA_RetCode TA_CDLTASUKIGAP( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
+   if( Near_rangeType == TA_RangeType_RealBody )
+   {
+   /* Do the calculation using tight loops. */
+   /* Add-up the initial period, except for the last value. */
+   NearPeriodTotal = 0;
+   NearTrailingIdx = startIdx - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx )
+   {
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1);
+      i += 1;
+   }
+   i = startIdx;
+   /* Proceed with the calculation for the requested range.
+    * Must have:
+    * - upside (downside) gap
+    * - first candle after the window: white (black) candlestick
+    * - second candle: black (white) candlestick that opens within the previous real body and closes under (above)
+    *   the previous real body inside the gap
+    * - the size of two real bodies should be near the same
+    * The meaning of "near" is specified with TA_SetCandleSettings
+    */
+   outIdx = 0;
+   do
+   {
+      if( (((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) + /* upside gap */
+          (inClose[i - 1] >= inOpen[i - 1]) +   /* 1st: white */
+          (!(inClose[i] >= inOpen[i]))) == 3) ) /* 2nd: black */
+      {
+         outInteger[outIdx++] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) & -(int)(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & /* that opens within the white rb */
+             (inClose[i] < inOpen[i - 1]) & /* and closes under the white rb */
+             ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & /* inside the gap */
+             (fabs(fabs(inClose[i - 1] - inOpen[i - 1]) - fabs(inClose[i] - inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1))))); /* size of 2 rb near the same */
+      } else if( (((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2]))) + /* downside gap */
+          (!(inClose[i - 1] >= inOpen[i - 1])) + /* 1st: black */
+          (inClose[i] >= inOpen[i])) == 3) )     /* 2nd: white */
+      {
+         outInteger[outIdx++] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) & -(int)(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & /* that opens within the black rb */
+             (inClose[i] > inOpen[i - 1]) & /* and closes above the black rb */
+             ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & /* inside the gap */
+             (fabs(fabs(inClose[i - 1] - inOpen[i - 1]) - fabs(inClose[i] - inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1))))); /* size of 2 rb near the same */
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - 1);
+      i += 1;
+      NearTrailingIdx += 1;
+   } while( i <= endIdx );
+   /* All done. Indicate the output limits and return. */
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else if( Near_rangeType == TA_RangeType_HighLow )
+   {
+   /* Do the calculation using tight loops. */
+   /* Add-up the initial period, except for the last value. */
+   NearPeriodTotal = 0;
+   NearTrailingIdx = startIdx - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx )
+   {
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 1);
+      i += 1;
+   }
+   i = startIdx;
+   /* Proceed with the calculation for the requested range.
+    * Must have:
+    * - upside (downside) gap
+    * - first candle after the window: white (black) candlestick
+    * - second candle: black (white) candlestick that opens within the previous real body and closes under (above)
+    *   the previous real body inside the gap
+    * - the size of two real bodies should be near the same
+    * The meaning of "near" is specified with TA_SetCandleSettings
+    */
+   outIdx = 0;
+   do
+   {
+      if( (((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) + /* upside gap */
+          (inClose[i - 1] >= inOpen[i - 1]) +   /* 1st: white */
+          (!(inClose[i] >= inOpen[i]))) == 3) ) /* 2nd: black */
+      {
+         outInteger[outIdx++] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) & -(int)(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & /* that opens within the white rb */
+             (inClose[i] < inOpen[i - 1]) & /* and closes under the white rb */
+             ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & /* inside the gap */
+             (fabs(fabs(inClose[i - 1] - inOpen[i - 1]) - fabs(inClose[i] - inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1))))); /* size of 2 rb near the same */
+      } else if( (((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2]))) + /* downside gap */
+          (!(inClose[i - 1] >= inOpen[i - 1])) + /* 1st: black */
+          (inClose[i] >= inOpen[i])) == 3) )     /* 2nd: white */
+      {
+         outInteger[outIdx++] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) & -(int)(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & /* that opens within the black rb */
+             (inClose[i] > inOpen[i - 1]) & /* and closes above the black rb */
+             ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & /* inside the gap */
+             (fabs(fabs(inClose[i - 1] - inOpen[i - 1]) - fabs(inClose[i] - inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1))))); /* size of 2 rb near the same */
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 1) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - 1);
+      i += 1;
+      NearTrailingIdx += 1;
+   } while( i <= endIdx );
+   /* All done. Indicate the output limits and return. */
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else if( Near_rangeType == TA_RangeType_Shadows )
+   {
+   /* Do the calculation using tight loops. */
+   /* Add-up the initial period, except for the last value. */
+   NearPeriodTotal = 0;
+   NearTrailingIdx = startIdx - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx )
+   {
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 1);
+      i += 1;
+   }
+   i = startIdx;
+   /* Proceed with the calculation for the requested range.
+    * Must have:
+    * - upside (downside) gap
+    * - first candle after the window: white (black) candlestick
+    * - second candle: black (white) candlestick that opens within the previous real body and closes under (above)
+    *   the previous real body inside the gap
+    * - the size of two real bodies should be near the same
+    * The meaning of "near" is specified with TA_SetCandleSettings
+    */
+   outIdx = 0;
+   do
+   {
+      if( (((((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) + /* upside gap */
+          (inClose[i - 1] >= inOpen[i - 1]) +   /* 1st: white */
+          (!(inClose[i] >= inOpen[i]))) == 3) ) /* 2nd: black */
+      {
+         outInteger[outIdx++] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) & -(int)(((inOpen[i] < inClose[i - 1]) & (inOpen[i] > inOpen[i - 1]) & /* that opens within the white rb */
+             (inClose[i] < inOpen[i - 1]) & /* and closes under the white rb */
+             ((inClose[i] > inClose[i - 2]) & (inClose[i] > inOpen[i - 2])) & /* inside the gap */
+             (fabs(fabs(inClose[i - 1] - inOpen[i - 1]) - fabs(inClose[i] - inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1))))); /* size of 2 rb near the same */
+      } else if( (((((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2]))) + /* downside gap */
+          (!(inClose[i - 1] >= inOpen[i - 1])) + /* 1st: black */
+          (inClose[i] >= inOpen[i])) == 3) )     /* 2nd: white */
+      {
+         outInteger[outIdx++] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) & -(int)(((inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & /* that opens within the black rb */
+             (inClose[i] > inOpen[i - 1]) & /* and closes above the black rb */
+             ((inClose[i] < inClose[i - 2]) & (inClose[i] < inOpen[i - 2])) & /* inside the gap */
+             (fabs(fabs(inClose[i - 1] - inOpen[i - 1]) - fabs(inClose[i] - inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1))))); /* size of 2 rb near the same */
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 1) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - 1);
+      i += 1;
+      NearTrailingIdx += 1;
+   } while( i <= endIdx );
+   /* All done. Indicate the output limits and return. */
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else
+   {
    /* Do the calculation using tight loops. */
    /* Add-up the initial period, except for the last value. */
    NearPeriodTotal = 0;
@@ -182,6 +355,7 @@ TA_LIB_API TA_RetCode TA_CDLTASUKIGAP( int    startIdx,
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
    return TA_SUCCESS;
+   }
 }
 
 TA_RetCode TA_S_CDLTASUKIGAP( int    startIdx,
@@ -232,6 +406,104 @@ TA_RetCode TA_S_CDLTASUKIGAP( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
+   if( Near_rangeType == TA_RangeType_RealBody )
+   {
+   NearPeriodTotal = 0;
+   NearTrailingIdx = startIdx - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx )
+   {
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1);
+      i += 1;
+   }
+   i = startIdx;
+   outIdx = 0;
+   do
+   {
+      if( ((((((double)inOpen[i - 1] > (double)inOpen[i - 2]) & ((double)inOpen[i - 1] > (double)inClose[i - 2]) & ((double)inClose[i - 1] > (double)inOpen[i - 2]) & ((double)inClose[i - 1] > (double)inClose[i - 2]))) + ((double)inClose[i - 1] >= (double)inOpen[i - 1]) + (!((double)inClose[i] >= (double)inOpen[i]))) == 3) )
+      {
+         outInteger[outIdx++] = (((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 100) & -(int)((((double)inOpen[i] < (double)inClose[i - 1]) & ((double)inOpen[i] > (double)inOpen[i - 1]) & ((double)inClose[i] < (double)inOpen[i - 1]) & ((double)inClose[i] > (double)inClose[i - 2]) & ((double)inClose[i] > (double)inOpen[i - 2]) & (fabs(fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) - fabs((double)inClose[i] - (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1)))));
+      } else if( ((((((double)inOpen[i - 1] < (double)inOpen[i - 2]) & ((double)inOpen[i - 1] < (double)inClose[i - 2]) & ((double)inClose[i - 1] < (double)inOpen[i - 2]) & ((double)inClose[i - 1] < (double)inClose[i - 2]))) + (!((double)inClose[i - 1] >= (double)inOpen[i - 1])) + ((double)inClose[i] >= (double)inOpen[i])) == 3) )
+      {
+         outInteger[outIdx++] = (((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 100) & -(int)((((double)inOpen[i] < (double)inOpen[i - 1]) & ((double)inOpen[i] > (double)inClose[i - 1]) & ((double)inClose[i] > (double)inOpen[i - 1]) & ((double)inClose[i] < (double)inClose[i - 2]) & ((double)inClose[i] < (double)inOpen[i - 2]) & (fabs(fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) - fabs((double)inClose[i] - (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1)))));
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - 1);
+      i += 1;
+      NearTrailingIdx += 1;
+   } while( i <= endIdx );
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else if( Near_rangeType == TA_RangeType_HighLow )
+   {
+   NearPeriodTotal = 0;
+   NearTrailingIdx = startIdx - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx )
+   {
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 1);
+      i += 1;
+   }
+   i = startIdx;
+   outIdx = 0;
+   do
+   {
+      if( ((((((double)inOpen[i - 1] > (double)inOpen[i - 2]) & ((double)inOpen[i - 1] > (double)inClose[i - 2]) & ((double)inClose[i - 1] > (double)inOpen[i - 2]) & ((double)inClose[i - 1] > (double)inClose[i - 2]))) + ((double)inClose[i - 1] >= (double)inOpen[i - 1]) + (!((double)inClose[i] >= (double)inOpen[i]))) == 3) )
+      {
+         outInteger[outIdx++] = (((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 100) & -(int)((((double)inOpen[i] < (double)inClose[i - 1]) & ((double)inOpen[i] > (double)inOpen[i - 1]) & ((double)inClose[i] < (double)inOpen[i - 1]) & ((double)inClose[i] > (double)inClose[i - 2]) & ((double)inClose[i] > (double)inOpen[i - 2]) & (fabs(fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) - fabs((double)inClose[i] - (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1)))));
+      } else if( ((((((double)inOpen[i - 1] < (double)inOpen[i - 2]) & ((double)inOpen[i - 1] < (double)inClose[i - 2]) & ((double)inClose[i - 1] < (double)inOpen[i - 2]) & ((double)inClose[i - 1] < (double)inClose[i - 2]))) + (!((double)inClose[i - 1] >= (double)inOpen[i - 1])) + ((double)inClose[i] >= (double)inOpen[i])) == 3) )
+      {
+         outInteger[outIdx++] = (((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 100) & -(int)((((double)inOpen[i] < (double)inOpen[i - 1]) & ((double)inOpen[i] > (double)inClose[i - 1]) & ((double)inClose[i] > (double)inOpen[i - 1]) & ((double)inClose[i] < (double)inClose[i - 2]) & ((double)inClose[i] < (double)inOpen[i - 2]) & (fabs(fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) - fabs((double)inClose[i] - (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1)))));
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 1) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - 1);
+      i += 1;
+      NearTrailingIdx += 1;
+   } while( i <= endIdx );
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else if( Near_rangeType == TA_RangeType_Shadows )
+   {
+   NearPeriodTotal = 0;
+   NearTrailingIdx = startIdx - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx )
+   {
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 1);
+      i += 1;
+   }
+   i = startIdx;
+   outIdx = 0;
+   do
+   {
+      if( ((((((double)inOpen[i - 1] > (double)inOpen[i - 2]) & ((double)inOpen[i - 1] > (double)inClose[i - 2]) & ((double)inClose[i - 1] > (double)inOpen[i - 2]) & ((double)inClose[i - 1] > (double)inClose[i - 2]))) + ((double)inClose[i - 1] >= (double)inOpen[i - 1]) + (!((double)inClose[i] >= (double)inOpen[i]))) == 3) )
+      {
+         outInteger[outIdx++] = (((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 100) & -(int)((((double)inOpen[i] < (double)inClose[i - 1]) & ((double)inOpen[i] > (double)inOpen[i - 1]) & ((double)inClose[i] < (double)inOpen[i - 1]) & ((double)inClose[i] > (double)inClose[i - 2]) & ((double)inClose[i] > (double)inOpen[i - 2]) & (fabs(fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) - fabs((double)inClose[i] - (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1)))));
+      } else if( ((((((double)inOpen[i - 1] < (double)inOpen[i - 2]) & ((double)inOpen[i - 1] < (double)inClose[i - 2]) & ((double)inClose[i - 1] < (double)inOpen[i - 2]) & ((double)inClose[i - 1] < (double)inClose[i - 2]))) + (!((double)inClose[i - 1] >= (double)inOpen[i - 1])) + ((double)inClose[i] >= (double)inOpen[i])) == 3) )
+      {
+         outInteger[outIdx++] = (((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 100) & -(int)((((double)inOpen[i] < (double)inOpen[i - 1]) & ((double)inOpen[i] > (double)inClose[i - 1]) & ((double)inClose[i] > (double)inOpen[i - 1]) & ((double)inClose[i] < (double)inClose[i - 2]) & ((double)inClose[i] < (double)inOpen[i - 2]) & (fabs(fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) - fabs((double)inClose[i] - (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1)))));
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 1) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - 1);
+      i += 1;
+      NearTrailingIdx += 1;
+   } while( i <= endIdx );
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else
+   {
    NearPeriodTotal = 0;
    NearTrailingIdx = startIdx - Near_avgPeriod;
    i = NearTrailingIdx;
@@ -261,6 +533,7 @@ TA_RetCode TA_S_CDLTASUKIGAP( int    startIdx,
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
    return TA_SUCCESS;
+   }
 }
 
 /**** Streaming API *****/
@@ -382,6 +655,305 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLTASUKIGAP_OpenBody( struct TA_CDLTASUKIGA
          *outNBElement= 0;
          return TA_INSUFFICIENT_HISTORY;
       }
+      if( Near_rangeType == TA_RangeType_RealBody )
+      {
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      NearPeriodTotal = 0;
+      NearTrailingIdx = startIdx - Near_avgPeriod;
+      i = NearTrailingIdx;
+      while( i < startIdx )
+      {
+         NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1);
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - upside (downside) gap
+       * - first candle after the window: white (black) candlestick
+       * - second candle: black (white) candlestick that opens within the previous real body and closes under (above)
+       *   the previous real body inside the gap
+       * - the size of two real bodies should be near the same
+       * The meaning of "near" is specified with TA_SetCandleSettings
+       */
+      outIdx = 0;
+      do
+      {
+         if( ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* upside gap */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 && /* 1st: white */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 )         /* 2nd: black */
+         {
+            if( inOpen[i] < inClose[i - 1] &&
+                inOpen[i] > inOpen[i - 1] &&                      /* that opens within the white rb */
+                inClose[i] < inOpen[i - 1] &&                     /* and closes under the white rb */
+                inClose[i] > max(inClose[i - 2],inOpen[i - 2]) && /* inside the gap */
+                fabs(fabs(inClose[i - 1] - inOpen[i - 1]) - fabs(inClose[i] - inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1) ) /* size of 2 rb near the same */
+            {
+               outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+            } else 
+            {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+         } else if( ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* downside gap */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st: black */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 )           /* 2nd: white */
+         {
+            if( inOpen[i] < inOpen[i - 1] &&
+                inOpen[i] > inClose[i - 1] &&                     /* that opens within the black rb */
+                inClose[i] > inOpen[i - 1] &&                     /* and closes above the black rb */
+                inClose[i] < min(inClose[i - 2],inOpen[i - 2]) && /* inside the gap */
+                fabs(fabs(inClose[i - 1] - inOpen[i - 1]) - fabs(inClose[i] - inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1) ) /* size of 2 rb near the same */
+            {
+               outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+            } else 
+            {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+         } else 
+         {
+            outInteger[outIdx++ * outStride] = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 1) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - 1);
+         i += 1;
+         NearTrailingIdx += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDLTASUKIGAP_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->NearPeriodTotal = NearPeriodTotal;
+      sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
+      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 2;
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLTASUKIGAP_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(306); }
+      { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
+        sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_NearTrailingIdx_derived ) { TA_CDLTASUKIGAP_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_NearTrailingIdx_derived[fillJ % sp->ringCap_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
+        }
+      }
+      sp->ringPos_NearTrailingIdx = historyLen % sp->ringCap_NearTrailingIdx;
+      sp->lag1_inOpen = inOpen[historyLen - 1];
+      sp->lag2_inOpen = inOpen[historyLen - 2];
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag1_inClose = inClose[historyLen - 1];
+      sp->lag2_inClose = inClose[historyLen - 2];
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
+      *stream = sp;
+      return TA_SUCCESS;
+      }
+      else if( Near_rangeType == TA_RangeType_HighLow )
+      {
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      NearPeriodTotal = 0;
+      NearTrailingIdx = startIdx - Near_avgPeriod;
+      i = NearTrailingIdx;
+      while( i < startIdx )
+      {
+         NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 1);
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - upside (downside) gap
+       * - first candle after the window: white (black) candlestick
+       * - second candle: black (white) candlestick that opens within the previous real body and closes under (above)
+       *   the previous real body inside the gap
+       * - the size of two real bodies should be near the same
+       * The meaning of "near" is specified with TA_SetCandleSettings
+       */
+      outIdx = 0;
+      do
+      {
+         if( ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* upside gap */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 && /* 1st: white */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 )         /* 2nd: black */
+         {
+            if( inOpen[i] < inClose[i - 1] &&
+                inOpen[i] > inOpen[i - 1] &&                      /* that opens within the white rb */
+                inClose[i] < inOpen[i - 1] &&                     /* and closes under the white rb */
+                inClose[i] > max(inClose[i - 2],inOpen[i - 2]) && /* inside the gap */
+                fabs(fabs(inClose[i - 1] - inOpen[i - 1]) - fabs(inClose[i] - inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1) ) /* size of 2 rb near the same */
+            {
+               outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+            } else 
+            {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+         } else if( ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* downside gap */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st: black */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 )           /* 2nd: white */
+         {
+            if( inOpen[i] < inOpen[i - 1] &&
+                inOpen[i] > inClose[i - 1] &&                     /* that opens within the black rb */
+                inClose[i] > inOpen[i - 1] &&                     /* and closes above the black rb */
+                inClose[i] < min(inClose[i - 2],inOpen[i - 2]) && /* inside the gap */
+                fabs(fabs(inClose[i - 1] - inOpen[i - 1]) - fabs(inClose[i] - inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1) ) /* size of 2 rb near the same */
+            {
+               outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+            } else 
+            {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+         } else 
+         {
+            outInteger[outIdx++ * outStride] = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 1) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - 1);
+         i += 1;
+         NearTrailingIdx += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDLTASUKIGAP_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->NearPeriodTotal = NearPeriodTotal;
+      sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
+      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 2;
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLTASUKIGAP_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(306); }
+      { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
+        sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_NearTrailingIdx_derived ) { TA_CDLTASUKIGAP_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_NearTrailingIdx_derived[fillJ % sp->ringCap_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
+        }
+      }
+      sp->ringPos_NearTrailingIdx = historyLen % sp->ringCap_NearTrailingIdx;
+      sp->lag1_inOpen = inOpen[historyLen - 1];
+      sp->lag2_inOpen = inOpen[historyLen - 2];
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag1_inClose = inClose[historyLen - 1];
+      sp->lag2_inClose = inClose[historyLen - 2];
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
+      *stream = sp;
+      return TA_SUCCESS;
+      }
+      else if( Near_rangeType == TA_RangeType_Shadows )
+      {
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      NearPeriodTotal = 0;
+      NearTrailingIdx = startIdx - Near_avgPeriod;
+      i = NearTrailingIdx;
+      while( i < startIdx )
+      {
+         NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 1);
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - upside (downside) gap
+       * - first candle after the window: white (black) candlestick
+       * - second candle: black (white) candlestick that opens within the previous real body and closes under (above)
+       *   the previous real body inside the gap
+       * - the size of two real bodies should be near the same
+       * The meaning of "near" is specified with TA_SetCandleSettings
+       */
+      outIdx = 0;
+      do
+      {
+         if( ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* upside gap */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 && /* 1st: white */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 )         /* 2nd: black */
+         {
+            if( inOpen[i] < inClose[i - 1] &&
+                inOpen[i] > inOpen[i - 1] &&                      /* that opens within the white rb */
+                inClose[i] < inOpen[i - 1] &&                     /* and closes under the white rb */
+                inClose[i] > max(inClose[i - 2],inOpen[i - 2]) && /* inside the gap */
+                fabs(fabs(inClose[i - 1] - inOpen[i - 1]) - fabs(inClose[i] - inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1) ) /* size of 2 rb near the same */
+            {
+               outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+            } else 
+            {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+         } else if( ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* downside gap */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st: black */
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 )           /* 2nd: white */
+         {
+            if( inOpen[i] < inOpen[i - 1] &&
+                inOpen[i] > inClose[i - 1] &&                     /* that opens within the black rb */
+                inClose[i] > inOpen[i - 1] &&                     /* and closes above the black rb */
+                inClose[i] < min(inClose[i - 2],inOpen[i - 2]) && /* inside the gap */
+                fabs(fabs(inClose[i - 1] - inOpen[i - 1]) - fabs(inClose[i] - inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1) ) /* size of 2 rb near the same */
+            {
+               outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+            } else 
+            {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+         } else 
+         {
+            outInteger[outIdx++ * outStride] = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         NearPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 1) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - 1);
+         i += 1;
+         NearTrailingIdx += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDLTASUKIGAP_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->NearPeriodTotal = NearPeriodTotal;
+      sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
+      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 2;
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLTASUKIGAP_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(306); }
+      { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
+        sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_NearTrailingIdx_derived ) { TA_CDLTASUKIGAP_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_NearTrailingIdx_derived[fillJ % sp->ringCap_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
+        }
+      }
+      sp->ringPos_NearTrailingIdx = historyLen % sp->ringCap_NearTrailingIdx;
+      sp->lag1_inOpen = inOpen[historyLen - 1];
+      sp->lag2_inOpen = inOpen[historyLen - 2];
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag1_inClose = inClose[historyLen - 1];
+      sp->lag2_inClose = inClose[historyLen - 2];
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
+      *stream = sp;
+      return TA_SUCCESS;
+      }
+      else
+      {
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
       NearPeriodTotal = 0;
@@ -478,6 +1050,7 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLTASUKIGAP_OpenBody( struct TA_CDLTASUKIGA
       sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
+      }
    }
 }
 

@@ -129,6 +129,182 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
+   if( Near_rangeType == TA_RangeType_RealBody )
+   {
+   /* Do the calculation using tight loops. */
+   /* Add-up the initial period, except for the last value. */
+   NearPeriodTotal[3] = 0;
+   NearPeriodTotal[2] = 0;
+   NearTrailingIdx = startIdx - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx )
+   {
+      NearPeriodTotal[3] = NearPeriodTotal[3] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 3);
+      NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2);
+      i += 1;
+   }
+   i = startIdx;
+   /* Proceed with the calculation for the requested range.
+    * Must have:
+    * - three white soldiers (three black crows): three white (black) candlesticks with consecutively higher (lower) closes,
+    * each opening within or near the previous real body
+    * - fourth candle: black (white) candle that opens above (below) prior candle's close and closes below (above)
+    * the first candle's open
+    * The meaning of "near" is specified with TA_SetCandleSettings
+    */
+   outIdx = 0;
+   do
+   {
+      if( ((((inClose[i - 3] >= inOpen[i - 3]) == (inClose[i - 2] >= inOpen[i - 2])) + /* three with same color */
+          ((inClose[i - 2] >= inOpen[i - 2]) == (inClose[i - 1] >= inOpen[i - 1])) + ((inClose[i] >= inOpen[i]) != (inClose[i - 1] >= inOpen[i - 1]))) == 3) ) /* 4th opposite color */
+      {
+         outInteger[outIdx++] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) & -(int)(((inOpen[i - 2] >= min(inOpen[i - 3],inClose[i - 3]) - TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & /* 2nd opens within/near 1st rb */
+             (inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & (inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & /* 3rd opens within/near 2nd rb */
+             (inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & (((inClose[i - 1] >= inOpen[i - 1]) & /* if three white */
+             (inClose[i - 1] > inClose[i - 2]) & (inClose[i - 2] > inClose[i - 3]) & /* consecutive higher closes */
+             (inOpen[i] > inClose[i - 1]) &          /* 4th opens above prior close */
+             (inClose[i] < inOpen[i - 3])) |         /* 4th closes below 1st open */
+             ((!(inClose[i - 1] >= inOpen[i - 1])) & /* if three black */
+             (inClose[i - 1] < inClose[i - 2]) & (inClose[i - 2] < inClose[i - 3]) & /* consecutive lower closes */
+             (inOpen[i] < inClose[i - 1]) &          /* 4th opens below prior close */
+             (inClose[i] > inOpen[i - 3]))))));      /* 4th closes above 1st open */
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
+      {
+         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - totIdx));
+      }
+      i += 1;
+      NearTrailingIdx += 1;
+   } while( i <= endIdx );
+   /* All done. Indicate the output limits and return. */
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else if( Near_rangeType == TA_RangeType_HighLow )
+   {
+   /* Do the calculation using tight loops. */
+   /* Add-up the initial period, except for the last value. */
+   NearPeriodTotal[3] = 0;
+   NearPeriodTotal[2] = 0;
+   NearTrailingIdx = startIdx - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx )
+   {
+      NearPeriodTotal[3] = NearPeriodTotal[3] + TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 3);
+      NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2);
+      i += 1;
+   }
+   i = startIdx;
+   /* Proceed with the calculation for the requested range.
+    * Must have:
+    * - three white soldiers (three black crows): three white (black) candlesticks with consecutively higher (lower) closes,
+    * each opening within or near the previous real body
+    * - fourth candle: black (white) candle that opens above (below) prior candle's close and closes below (above)
+    * the first candle's open
+    * The meaning of "near" is specified with TA_SetCandleSettings
+    */
+   outIdx = 0;
+   do
+   {
+      if( ((((inClose[i - 3] >= inOpen[i - 3]) == (inClose[i - 2] >= inOpen[i - 2])) + /* three with same color */
+          ((inClose[i - 2] >= inOpen[i - 2]) == (inClose[i - 1] >= inOpen[i - 1])) + ((inClose[i] >= inOpen[i]) != (inClose[i - 1] >= inOpen[i - 1]))) == 3) ) /* 4th opposite color */
+      {
+         outInteger[outIdx++] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) & -(int)(((inOpen[i - 2] >= min(inOpen[i - 3],inClose[i - 3]) - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & /* 2nd opens within/near 1st rb */
+             (inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & (inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & /* 3rd opens within/near 2nd rb */
+             (inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & (((inClose[i - 1] >= inOpen[i - 1]) & /* if three white */
+             (inClose[i - 1] > inClose[i - 2]) & (inClose[i - 2] > inClose[i - 3]) & /* consecutive higher closes */
+             (inOpen[i] > inClose[i - 1]) &          /* 4th opens above prior close */
+             (inClose[i] < inOpen[i - 3])) |         /* 4th closes below 1st open */
+             ((!(inClose[i - 1] >= inOpen[i - 1])) & /* if three black */
+             (inClose[i - 1] < inClose[i - 2]) & (inClose[i - 2] < inClose[i - 3]) & /* consecutive lower closes */
+             (inOpen[i] < inClose[i - 1]) &          /* 4th opens below prior close */
+             (inClose[i] > inOpen[i - 3]))))));      /* 4th closes above 1st open */
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
+      {
+         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - totIdx));
+      }
+      i += 1;
+      NearTrailingIdx += 1;
+   } while( i <= endIdx );
+   /* All done. Indicate the output limits and return. */
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else if( Near_rangeType == TA_RangeType_Shadows )
+   {
+   /* Do the calculation using tight loops. */
+   /* Add-up the initial period, except for the last value. */
+   NearPeriodTotal[3] = 0;
+   NearPeriodTotal[2] = 0;
+   NearTrailingIdx = startIdx - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx )
+   {
+      NearPeriodTotal[3] = NearPeriodTotal[3] + TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 3);
+      NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2);
+      i += 1;
+   }
+   i = startIdx;
+   /* Proceed with the calculation for the requested range.
+    * Must have:
+    * - three white soldiers (three black crows): three white (black) candlesticks with consecutively higher (lower) closes,
+    * each opening within or near the previous real body
+    * - fourth candle: black (white) candle that opens above (below) prior candle's close and closes below (above)
+    * the first candle's open
+    * The meaning of "near" is specified with TA_SetCandleSettings
+    */
+   outIdx = 0;
+   do
+   {
+      if( ((((inClose[i - 3] >= inOpen[i - 3]) == (inClose[i - 2] >= inOpen[i - 2])) + /* three with same color */
+          ((inClose[i - 2] >= inOpen[i - 2]) == (inClose[i - 1] >= inOpen[i - 1])) + ((inClose[i] >= inOpen[i]) != (inClose[i - 1] >= inOpen[i - 1]))) == 3) ) /* 4th opposite color */
+      {
+         outInteger[outIdx++] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) & -(int)(((inOpen[i - 2] >= min(inOpen[i - 3],inClose[i - 3]) - TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & /* 2nd opens within/near 1st rb */
+             (inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & (inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & /* 3rd opens within/near 2nd rb */
+             (inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & (((inClose[i - 1] >= inOpen[i - 1]) & /* if three white */
+             (inClose[i - 1] > inClose[i - 2]) & (inClose[i - 2] > inClose[i - 3]) & /* consecutive higher closes */
+             (inOpen[i] > inClose[i - 1]) &          /* 4th opens above prior close */
+             (inClose[i] < inOpen[i - 3])) |         /* 4th closes below 1st open */
+             ((!(inClose[i - 1] >= inOpen[i - 1])) & /* if three black */
+             (inClose[i - 1] < inClose[i - 2]) & (inClose[i - 2] < inClose[i - 3]) & /* consecutive lower closes */
+             (inOpen[i] < inClose[i - 1]) &          /* 4th opens below prior close */
+             (inClose[i] > inOpen[i - 3]))))));      /* 4th closes above 1st open */
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
+      {
+         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - totIdx));
+      }
+      i += 1;
+      NearTrailingIdx += 1;
+   } while( i <= endIdx );
+   /* All done. Indicate the output limits and return. */
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else
+   {
    /* Do the calculation using tight loops. */
    /* Add-up the initial period, except for the last value. */
    NearPeriodTotal[3] = 0;
@@ -184,6 +360,7 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
    return TA_SUCCESS;
+   }
 }
 
 TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
@@ -235,6 +412,110 @@ TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
+   if( Near_rangeType == TA_RangeType_RealBody )
+   {
+   NearPeriodTotal[3] = 0;
+   NearPeriodTotal[2] = 0;
+   NearTrailingIdx = startIdx - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx )
+   {
+      NearPeriodTotal[3] = NearPeriodTotal[3] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 3);
+      NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2);
+      i += 1;
+   }
+   i = startIdx;
+   outIdx = 0;
+   do
+   {
+      if( (((((double)inClose[i - 3] >= (double)inOpen[i - 3]) == ((double)inClose[i - 2] >= (double)inOpen[i - 2])) + (((double)inClose[i - 2] >= (double)inOpen[i - 2]) == ((double)inClose[i - 1] >= (double)inOpen[i - 1])) + (((double)inClose[i] >= (double)inOpen[i]) != ((double)inClose[i - 1] >= (double)inOpen[i - 1]))) == 3) )
+      {
+         outInteger[outIdx++] = (((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 100) & -(int)((((double)inOpen[i - 2] >= min((double)inOpen[i - 3],(double)inClose[i - 3]) - TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & ((double)inOpen[i - 2] <= max((double)inOpen[i - 3],(double)inClose[i - 3]) + TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & ((double)inOpen[i - 1] >= min((double)inOpen[i - 2],(double)inClose[i - 2]) - TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & ((double)inOpen[i - 1] <= max((double)inOpen[i - 2],(double)inClose[i - 2]) + TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & ((((double)inClose[i - 1] >= (double)inOpen[i - 1]) & ((double)inClose[i - 1] > (double)inClose[i - 2]) & ((double)inClose[i - 2] > (double)inClose[i - 3]) & ((double)inOpen[i] > (double)inClose[i - 1]) & ((double)inClose[i] < (double)inOpen[i - 3])) | ((!((double)inClose[i - 1] >= (double)inOpen[i - 1])) & ((double)inClose[i - 1] < (double)inClose[i - 2]) & ((double)inClose[i - 2] < (double)inClose[i - 3]) & ((double)inOpen[i] < (double)inClose[i - 1]) & ((double)inClose[i] > (double)inOpen[i - 3]))))));
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
+      {
+         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - totIdx));
+      }
+      i += 1;
+      NearTrailingIdx += 1;
+   } while( i <= endIdx );
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else if( Near_rangeType == TA_RangeType_HighLow )
+   {
+   NearPeriodTotal[3] = 0;
+   NearPeriodTotal[2] = 0;
+   NearTrailingIdx = startIdx - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx )
+   {
+      NearPeriodTotal[3] = NearPeriodTotal[3] + TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 3);
+      NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2);
+      i += 1;
+   }
+   i = startIdx;
+   outIdx = 0;
+   do
+   {
+      if( (((((double)inClose[i - 3] >= (double)inOpen[i - 3]) == ((double)inClose[i - 2] >= (double)inOpen[i - 2])) + (((double)inClose[i - 2] >= (double)inOpen[i - 2]) == ((double)inClose[i - 1] >= (double)inOpen[i - 1])) + (((double)inClose[i] >= (double)inOpen[i]) != ((double)inClose[i - 1] >= (double)inOpen[i - 1]))) == 3) )
+      {
+         outInteger[outIdx++] = (((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 100) & -(int)((((double)inOpen[i - 2] >= min((double)inOpen[i - 3],(double)inClose[i - 3]) - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & ((double)inOpen[i - 2] <= max((double)inOpen[i - 3],(double)inClose[i - 3]) + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & ((double)inOpen[i - 1] >= min((double)inOpen[i - 2],(double)inClose[i - 2]) - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & ((double)inOpen[i - 1] <= max((double)inOpen[i - 2],(double)inClose[i - 2]) + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & ((((double)inClose[i - 1] >= (double)inOpen[i - 1]) & ((double)inClose[i - 1] > (double)inClose[i - 2]) & ((double)inClose[i - 2] > (double)inClose[i - 3]) & ((double)inOpen[i] > (double)inClose[i - 1]) & ((double)inClose[i] < (double)inOpen[i - 3])) | ((!((double)inClose[i - 1] >= (double)inOpen[i - 1])) & ((double)inClose[i - 1] < (double)inClose[i - 2]) & ((double)inClose[i - 2] < (double)inClose[i - 3]) & ((double)inOpen[i] < (double)inClose[i - 1]) & ((double)inClose[i] > (double)inOpen[i - 3]))))));
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
+      {
+         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - totIdx));
+      }
+      i += 1;
+      NearTrailingIdx += 1;
+   } while( i <= endIdx );
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else if( Near_rangeType == TA_RangeType_Shadows )
+   {
+   NearPeriodTotal[3] = 0;
+   NearPeriodTotal[2] = 0;
+   NearTrailingIdx = startIdx - Near_avgPeriod;
+   i = NearTrailingIdx;
+   while( i < startIdx )
+   {
+      NearPeriodTotal[3] = NearPeriodTotal[3] + TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 3);
+      NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2);
+      i += 1;
+   }
+   i = startIdx;
+   outIdx = 0;
+   do
+   {
+      if( (((((double)inClose[i - 3] >= (double)inOpen[i - 3]) == ((double)inClose[i - 2] >= (double)inOpen[i - 2])) + (((double)inClose[i - 2] >= (double)inOpen[i - 2]) == ((double)inClose[i - 1] >= (double)inOpen[i - 1])) + (((double)inClose[i] >= (double)inOpen[i]) != ((double)inClose[i - 1] >= (double)inOpen[i - 1]))) == 3) )
+      {
+         outInteger[outIdx++] = (((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? 1 : -1) * 100) & -(int)((((double)inOpen[i - 2] >= min((double)inOpen[i - 3],(double)inClose[i - 3]) - TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & ((double)inOpen[i - 2] <= max((double)inOpen[i - 3],(double)inClose[i - 3]) + TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & ((double)inOpen[i - 1] >= min((double)inOpen[i - 2],(double)inClose[i - 2]) - TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & ((double)inOpen[i - 1] <= max((double)inOpen[i - 2],(double)inClose[i - 2]) + TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & ((((double)inClose[i - 1] >= (double)inOpen[i - 1]) & ((double)inClose[i - 1] > (double)inClose[i - 2]) & ((double)inClose[i - 2] > (double)inClose[i - 3]) & ((double)inOpen[i] > (double)inClose[i - 1]) & ((double)inClose[i] < (double)inOpen[i - 3])) | ((!((double)inClose[i - 1] >= (double)inOpen[i - 1])) & ((double)inClose[i - 1] < (double)inClose[i - 2]) & ((double)inClose[i - 2] < (double)inClose[i - 3]) & ((double)inOpen[i] < (double)inClose[i - 1]) & ((double)inClose[i] > (double)inOpen[i - 3]))))));
+      } else 
+      {
+         outInteger[outIdx++] = 0;
+      }
+      for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
+      {
+         NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - totIdx));
+      }
+      i += 1;
+      NearTrailingIdx += 1;
+   } while( i <= endIdx );
+   *outNBElement= outIdx;
+   *outBegIdx= startIdx;
+   return TA_SUCCESS;
+   }
+   else
+   {
    NearPeriodTotal[3] = 0;
    NearPeriodTotal[2] = 0;
    NearTrailingIdx = startIdx - Near_avgPeriod;
@@ -266,6 +547,7 @@ TA_RetCode TA_S_CDL3LINESTRIKE( int    startIdx,
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
    return TA_SUCCESS;
+   }
 }
 
 /**** Streaming API *****/
@@ -399,6 +681,317 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
          *outNBElement= 0;
          return TA_INSUFFICIENT_HISTORY;
       }
+      if( Near_rangeType == TA_RangeType_RealBody )
+      {
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      NearPeriodTotal[3] = 0;
+      NearPeriodTotal[2] = 0;
+      NearTrailingIdx = startIdx - Near_avgPeriod;
+      i = NearTrailingIdx;
+      while( i < startIdx )
+      {
+         NearPeriodTotal[3] = NearPeriodTotal[3] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 3);
+         NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - 2);
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - three white soldiers (three black crows): three white (black) candlesticks with consecutively higher (lower) closes,
+       * each opening within or near the previous real body
+       * - fourth candle: black (white) candle that opens above (below) prior candle's close and closes below (above)
+       * the first candle's open
+       * The meaning of "near" is specified with TA_SetCandleSettings
+       */
+      outIdx = 0;
+      do
+      {
+         if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) && /* three with same color */
+             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) &&
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) ) /* 4th opposite color */
+         {
+            if( inOpen[i - 2] >= min(inOpen[i - 3],inClose[i - 3]) - TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3) && /* 2nd opens within/near 1st rb */
+                inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3) &&
+                inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2) && /* 3rd opens within/near 2nd rb */
+                inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2) &&
+                ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* if three white */
+                  inClose[i - 1] > inClose[i - 2] &&
+                  inClose[i - 2] > inClose[i - 3] &&                    /* consecutive higher closes */
+                  inOpen[i] > inClose[i - 1] &&                         /* 4th opens above prior close */
+                  inClose[i] < inOpen[i - 3]) ||                        /* 4th closes below 1st open */
+                 (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* if three black */
+                  inClose[i - 1] < inClose[i - 2] &&
+                  inClose[i - 2] < inClose[i - 3] &&                    /* consecutive lower closes */
+                  inOpen[i] < inClose[i - 1] &&                         /* 4th opens below prior close */
+                  inClose[i] > inOpen[i - 3])) )                        /* 4th closes above 1st open */
+            {
+               outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+            } else 
+            {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+         } else 
+         {
+            outInteger[outIdx++ * outStride] = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
+         {
+            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_RealBody,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - totIdx));
+         }
+         i += 1;
+         NearTrailingIdx += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDL3LINESTRIKE_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      memcpy( sp->NearPeriodTotal, NearPeriodTotal, sizeof( sp->NearPeriodTotal ) );
+      sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
+      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 4;
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDL3LINESTRIKE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(198); }
+      { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
+        sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_NearTrailingIdx_derived ) { TA_CDL3LINESTRIKE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_NearTrailingIdx_derived[fillJ % sp->ringCap_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
+        }
+      }
+      sp->ringPos_NearTrailingIdx = historyLen % sp->ringCap_NearTrailingIdx;
+      sp->lag1_inOpen = inOpen[historyLen - 1];
+      sp->lag2_inOpen = inOpen[historyLen - 2];
+      sp->lag3_inOpen = inOpen[historyLen - 3];
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag2_inHigh = inHigh[historyLen - 2];
+      sp->lag3_inHigh = inHigh[historyLen - 3];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag2_inLow = inLow[historyLen - 2];
+      sp->lag3_inLow = inLow[historyLen - 3];
+      sp->lag1_inClose = inClose[historyLen - 1];
+      sp->lag2_inClose = inClose[historyLen - 2];
+      sp->lag3_inClose = inClose[historyLen - 3];
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
+      *stream = sp;
+      return TA_SUCCESS;
+      }
+      else if( Near_rangeType == TA_RangeType_HighLow )
+      {
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      NearPeriodTotal[3] = 0;
+      NearPeriodTotal[2] = 0;
+      NearTrailingIdx = startIdx - Near_avgPeriod;
+      i = NearTrailingIdx;
+      while( i < startIdx )
+      {
+         NearPeriodTotal[3] = NearPeriodTotal[3] + TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 3);
+         NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - 2);
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - three white soldiers (three black crows): three white (black) candlesticks with consecutively higher (lower) closes,
+       * each opening within or near the previous real body
+       * - fourth candle: black (white) candle that opens above (below) prior candle's close and closes below (above)
+       * the first candle's open
+       * The meaning of "near" is specified with TA_SetCandleSettings
+       */
+      outIdx = 0;
+      do
+      {
+         if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) && /* three with same color */
+             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) &&
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) ) /* 4th opposite color */
+         {
+            if( inOpen[i - 2] >= min(inOpen[i - 3],inClose[i - 3]) - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3) && /* 2nd opens within/near 1st rb */
+                inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3) &&
+                inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2) && /* 3rd opens within/near 2nd rb */
+                inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2) &&
+                ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* if three white */
+                  inClose[i - 1] > inClose[i - 2] &&
+                  inClose[i - 2] > inClose[i - 3] &&                    /* consecutive higher closes */
+                  inOpen[i] > inClose[i - 1] &&                         /* 4th opens above prior close */
+                  inClose[i] < inOpen[i - 3]) ||                        /* 4th closes below 1st open */
+                 (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* if three black */
+                  inClose[i - 1] < inClose[i - 2] &&
+                  inClose[i - 2] < inClose[i - 3] &&                    /* consecutive lower closes */
+                  inOpen[i] < inClose[i - 1] &&                         /* 4th opens below prior close */
+                  inClose[i] > inOpen[i - 3])) )                        /* 4th closes above 1st open */
+            {
+               outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+            } else 
+            {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+         } else 
+         {
+            outInteger[outIdx++ * outStride] = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
+         {
+            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_HighLow,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - totIdx));
+         }
+         i += 1;
+         NearTrailingIdx += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDL3LINESTRIKE_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      memcpy( sp->NearPeriodTotal, NearPeriodTotal, sizeof( sp->NearPeriodTotal ) );
+      sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
+      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 4;
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDL3LINESTRIKE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(198); }
+      { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
+        sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_NearTrailingIdx_derived ) { TA_CDL3LINESTRIKE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_NearTrailingIdx_derived[fillJ % sp->ringCap_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
+        }
+      }
+      sp->ringPos_NearTrailingIdx = historyLen % sp->ringCap_NearTrailingIdx;
+      sp->lag1_inOpen = inOpen[historyLen - 1];
+      sp->lag2_inOpen = inOpen[historyLen - 2];
+      sp->lag3_inOpen = inOpen[historyLen - 3];
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag2_inHigh = inHigh[historyLen - 2];
+      sp->lag3_inHigh = inHigh[historyLen - 3];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag2_inLow = inLow[historyLen - 2];
+      sp->lag3_inLow = inLow[historyLen - 3];
+      sp->lag1_inClose = inClose[historyLen - 1];
+      sp->lag2_inClose = inClose[historyLen - 2];
+      sp->lag3_inClose = inClose[historyLen - 3];
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
+      *stream = sp;
+      return TA_SUCCESS;
+      }
+      else if( Near_rangeType == TA_RangeType_Shadows )
+      {
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      NearPeriodTotal[3] = 0;
+      NearPeriodTotal[2] = 0;
+      NearTrailingIdx = startIdx - Near_avgPeriod;
+      i = NearTrailingIdx;
+      while( i < startIdx )
+      {
+         NearPeriodTotal[3] = NearPeriodTotal[3] + TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 3);
+         NearPeriodTotal[2] = NearPeriodTotal[2] + TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - 2);
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - three white soldiers (three black crows): three white (black) candlesticks with consecutively higher (lower) closes,
+       * each opening within or near the previous real body
+       * - fourth candle: black (white) candle that opens above (below) prior candle's close and closes below (above)
+       * the first candle's open
+       * The meaning of "near" is specified with TA_SetCandleSettings
+       */
+      outIdx = 0;
+      do
+      {
+         if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) && /* three with same color */
+             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) &&
+             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) ) /* 4th opposite color */
+         {
+            if( inOpen[i - 2] >= min(inOpen[i - 3],inClose[i - 3]) - TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3) && /* 2nd opens within/near 1st rb */
+                inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3) &&
+                inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2) && /* 3rd opens within/near 2nd rb */
+                inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2) &&
+                ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* if three white */
+                  inClose[i - 1] > inClose[i - 2] &&
+                  inClose[i - 2] > inClose[i - 3] &&                    /* consecutive higher closes */
+                  inOpen[i] > inClose[i - 1] &&                         /* 4th opens above prior close */
+                  inClose[i] < inOpen[i - 3]) ||                        /* 4th closes below 1st open */
+                 (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* if three black */
+                  inClose[i - 1] < inClose[i - 2] &&
+                  inClose[i - 2] < inClose[i - 3] &&                    /* consecutive lower closes */
+                  inOpen[i] < inClose[i - 1] &&                         /* 4th opens below prior close */
+                  inClose[i] > inOpen[i - 3])) )                        /* 4th closes above 1st open */
+            {
+               outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
+            } else 
+            {
+               outInteger[outIdx++ * outStride] = 0;
+            }
+         } else 
+         {
+            outInteger[outIdx++ * outStride] = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
+         {
+            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (TA_CANDLERANGE_OF(TA_RangeType_Shadows,i - totIdx) - TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - totIdx));
+         }
+         i += 1;
+         NearTrailingIdx += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      *outNBElement= outIdx;
+      *outBegIdx= startIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_CDL3LINESTRIKE_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      memcpy( sp->NearPeriodTotal, NearPeriodTotal, sizeof( sp->NearPeriodTotal ) );
+      sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
+      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 4;
+      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDL3LINESTRIKE_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(198); }
+      { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
+        sp->ring_NearTrailingIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_NearTrailingIdx_derived ) { TA_CDL3LINESTRIKE_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_NearTrailingIdx_derived[fillJ % sp->ringCap_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen[fillJ],inHigh[fillJ],inLow[fillJ],inClose[fillJ]);
+        }
+      }
+      sp->ringPos_NearTrailingIdx = historyLen % sp->ringCap_NearTrailingIdx;
+      sp->lag1_inOpen = inOpen[historyLen - 1];
+      sp->lag2_inOpen = inOpen[historyLen - 2];
+      sp->lag3_inOpen = inOpen[historyLen - 3];
+      sp->lag1_inHigh = inHigh[historyLen - 1];
+      sp->lag2_inHigh = inHigh[historyLen - 2];
+      sp->lag3_inHigh = inHigh[historyLen - 3];
+      sp->lag1_inLow = inLow[historyLen - 1];
+      sp->lag2_inLow = inLow[historyLen - 2];
+      sp->lag3_inLow = inLow[historyLen - 3];
+      sp->lag1_inClose = inClose[historyLen - 1];
+      sp->lag2_inClose = inClose[historyLen - 2];
+      sp->lag3_inClose = inClose[historyLen - 3];
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
+      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
+      *stream = sp;
+      return TA_SUCCESS;
+      }
+      else
+      {
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
       NearPeriodTotal[3] = 0;
@@ -499,6 +1092,7 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
       sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
+      }
    }
 }
 
