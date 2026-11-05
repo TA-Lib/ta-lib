@@ -8,29 +8,22 @@
 
 use std::fmt::Write as _;
 
-/// The default range type of each candle setting (`TA_CANDLE_DEFAULT_SETTINGS`).
-const DEFAULT_RANGE: &[(&str, &str)] = &[
-    ("BodyLong", "TA_RangeType_RealBody"),
-    ("BodyVeryLong", "TA_RangeType_RealBody"),
-    ("BodyShort", "TA_RangeType_RealBody"),
-    ("BodyDoji", "TA_RangeType_HighLow"),
-    ("ShadowLong", "TA_RangeType_RealBody"),
-    ("ShadowVeryLong", "TA_RangeType_RealBody"),
-    ("ShadowShort", "TA_RangeType_Shadows"),
-    ("ShadowVeryShort", "TA_RangeType_HighLow"),
-    ("Near", "TA_RangeType_HighLow"),
-    ("Far", "TA_RangeType_HighLow"),
-    ("Equal", "TA_RangeType_HighLow"),
-];
-
 const RANGE_TYPES: &[&str] = &["TA_RangeType_RealBody", "TA_RangeType_HighLow", "TA_RangeType_Shadows"];
 
-fn default_range(setting: &str) -> &'static str {
-    DEFAULT_RANGE
-        .iter()
-        .find(|(s, _)| *s == setting)
-        .map(|(_, r)| *r)
-        .unwrap_or_else(|| panic!("no default range type for candle setting {setting}"))
+/// The library's own defaults table, so the copy can never assume a default the
+/// library does not ship.
+const GLOBALS_C: &str = include_str!("../../../../src/ta_common/ta_global.c");
+
+fn default_range(setting: &str) -> String {
+    let entry = format!("{{ TA_{setting}, TA_RangeType_");
+    let at = GLOBALS_C
+        .find(&entry)
+        .unwrap_or_else(|| panic!("no {setting} row in TA_CANDLE_DEFAULT_SETTINGS (src/ta_common/ta_global.c)"));
+    let ty = &GLOBALS_C[at + entry.len()..];
+    let ty = &ty[..ty.find(',').expect("a defaults row continues after its range type")];
+    let name = format!("TA_RangeType_{ty}");
+    assert!(RANGE_TYPES.contains(&name.as_str()), "{setting}: unknown default range type {name}");
+    name
 }
 
 /// The setting a `TA_Globals->candleSettings[...]` read line unpacks, and whether
@@ -173,7 +166,7 @@ pub fn specialize(text: &str) -> String {
             used.iter().map(|s| format!("{s}_rangeType == {}", default_range(s))).collect();
         let mut fast = rest.clone();
         for s in &used {
-            fast = replace_ident(&fast, &format!("{s}_rangeType"), default_range(s));
+            fast = replace_ident(&fast, &format!("{s}_rangeType"), &default_range(s));
         }
         let _ = writeln!(out, "{indent}if( {} )\n{indent}{{", guard.join(" && "));
         out.push_str(&fast);

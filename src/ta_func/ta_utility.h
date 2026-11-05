@@ -373,6 +373,18 @@
    #define TA_ZERO_IF_LT(a, b, x) (((a) < (b)) ? 0.0 : (x))
 #endif
 
+/* `c >= o ? c : o` and `c >= o ? o : c` as maxsd/minsd, which a candle's colour
+ * test, a coin flip on real prices, cannot be compiled back into a branch from.
+ * Same bits but on a NaN operand (the operand order is load-bearing). */
+#if defined( __SSE2__ ) || defined( _M_X64 ) || ( defined( _M_IX86_FP ) && _M_IX86_FP >= 2 )
+   #include <emmintrin.h>
+   #define TA_COLOR_MAX(c, o) _mm_cvtsd_f64( _mm_max_sd( _mm_set_sd( (double)(o) ), _mm_set_sd( (double)(c) ) ) )
+   #define TA_COLOR_MIN(c, o) _mm_cvtsd_f64( _mm_min_sd( _mm_set_sd( (double)(c) ), _mm_set_sd( (double)(o) ) ) )
+#else
+   #define TA_COLOR_MAX(c, o) ( (c) >= (o) ? (double)(c) : (double)(o) )
+   #define TA_COLOR_MIN(c, o) ( (c) >= (o) ? (double)(o) : (double)(c) )
+#endif
+
 /* Candlestick macros (used by candlestick functions, where the parameters are always called inClose, inOpen, etc.
  * Don't use i++ or func(i) with these macros !
  */
@@ -382,8 +394,8 @@
  * variants, PR #33's "double throughout" for the single-precision ones (#138).
  * The >= tests need no cast: float->double is order-preserving. */
 #define TA_REALBODY(IDX)        ( std_fabs( (double)inClose[IDX] - (double)inOpen[IDX] ) )
-#define TA_UPPERSHADOW(IDX)     ( (double)inHigh[IDX] - ( inClose[IDX] >= inOpen[IDX] ? (double)inClose[IDX] : (double)inOpen[IDX] ) )
-#define TA_LOWERSHADOW(IDX)     ( ( inClose[IDX] >= inOpen[IDX] ? (double)inOpen[IDX] : (double)inClose[IDX] ) - (double)inLow[IDX] )
+#define TA_UPPERSHADOW(IDX)     ( (double)inHigh[IDX] - TA_COLOR_MAX( inClose[IDX], inOpen[IDX] ) )
+#define TA_LOWERSHADOW(IDX)     ( TA_COLOR_MIN( inClose[IDX], inOpen[IDX] ) - (double)inLow[IDX] )
 #define TA_HIGHLOWRANGE(IDX)    ( (double)inHigh[IDX] - (double)inLow[IDX] )
 #define TA_CANDLECOLOR(IDX)     ( inClose[IDX] >= inOpen[IDX] ? 1 : -1 )
 
@@ -420,8 +432,8 @@
  * streams lose bit-exactness with batch on the affected range type.
  */
 #define TA_STREAM_REALBODY(O,H,L,C)     ( std_fabs( (double)(C) - (double)(O) ) )
-#define TA_STREAM_UPPERSHADOW(O,H,L,C)  ( (double)(H) - ( (C) >= (O) ? (double)(C) : (double)(O) ) )
-#define TA_STREAM_LOWERSHADOW(O,H,L,C)  ( ( (C) >= (O) ? (double)(O) : (double)(C) ) - (double)(L) )
+#define TA_STREAM_UPPERSHADOW(O,H,L,C)  ( (double)(H) - TA_COLOR_MAX( (C), (O) ) )
+#define TA_STREAM_LOWERSHADOW(O,H,L,C)  ( TA_COLOR_MIN( (C), (O) ) - (double)(L) )
 #define TA_STREAM_HIGHLOWRANGE(O,H,L,C) ( (double)(H) - (double)(L) )
 #define TA_STREAM_CANDLERANGE(SET,O,H,L,C) \
     ( TA_CANDLERANGETYPE(SET) == TA_RangeType_RealBody ? TA_STREAM_REALBODY(O,H,L,C) : \
