@@ -1,0 +1,26 @@
+name: image-jdk
+description: >-
+  Put the runner image's own JDK 21 on JAVA_HOME and PATH. Nothing is
+  downloaded, so a slow apt mirror cannot stall the job; keep JDKs off apt.
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        ARCH: ${{ runner.arch }}
+      run: |
+        set -euo pipefail
+        case "$ARCH" in
+          X64)   var=JAVA_HOME_21_X64 ;;
+          ARM64) var=JAVA_HOME_21_arm64 ;;
+          *)     echo "::error::No JDK 21 variable known for runner arch '$ARCH'."; exit 1 ;;
+        esac
+        home="${!var:-}"
+        if [ ! -x "$home/bin/javac" ]; then
+          echo "::error::The runner image no longer carries a JDK 21 at \$$var; install one in this action."
+          exit 1
+        fi
+        echo "JAVA_HOME=$home" >> "$GITHUB_ENV"
+        echo "$home/bin" >> "$GITHUB_PATH"
+        "$home/bin/javac" -version

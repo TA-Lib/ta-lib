@@ -117,11 +117,11 @@ jobs:
         if: runner.os == 'Linux'
         uses: ./.github/actions/apt-install
         with:
+          cache: false
           # One install per line, matching the grouping this job has always
           # used; merging them breaks gcc-13-*-linux-gnu resolution.
           packages: |
             automake libtool autogen
-            openjdk-21-jdk
             gcc-multilib
             gcc-i686-linux-gnu
             gcc-aarch64-linux-gnu
@@ -509,14 +509,7 @@ jobs:
 
       # /usr/bin/java is a stub on macOS, so the JDK has to be named.
       - name: Select the JDK 21 of the runner image
-        shell: bash
-        run: |
-          if [ ! -x "${JAVA_HOME_21_arm64:-}/bin/javac" ]; then
-            echo "::error::The runner image no longer carries a JDK 21 at JAVA_HOME_21_arm64; install one here (the Linux jobs use openjdk-21-jdk)."
-            exit 1
-          fi
-          echo "JAVA_HOME=$JAVA_HOME_21_arm64" >> "$GITHUB_ENV"
-          echo "$JAVA_HOME_21_arm64/bin" >> "$GITHUB_PATH"
+        uses: ./.github/actions/image-jdk
 
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6
@@ -694,9 +687,7 @@ jobs:
           python-version: "3.x"
 
       - name: Install JDK
-        uses: ./.github/actions/apt-install
-        with:
-          packages: openjdk-21-jdk
+        uses: ./.github/actions/image-jdk
 
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6
@@ -777,9 +768,7 @@ jobs:
           python-version: "3.x"
 
       - name: Install JDK
-        uses: ./.github/actions/apt-install
-        with:
-          packages: openjdk-21-jdk
+        uses: ./.github/actions/image-jdk
 
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6
@@ -814,9 +803,7 @@ jobs:
           ref: ${{ job.workflow_sha }}
 
       - name: Install JDK
-        uses: ./.github/actions/apt-install
-        with:
-          packages: openjdk-21-jdk
+        uses: ./.github/actions/image-jdk
 
       - name: Build the publishable jars and run every suite against them
         shell: bash
@@ -1812,9 +1799,7 @@ jobs:
           python-version: "3.x"
 
       - name: Install JDK
-        uses: ./.github/actions/apt-install
-        with:
-          packages: openjdk-21-jdk
+        uses: ./.github/actions/image-jdk
 
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6
@@ -2327,6 +2312,7 @@ jobs:
         if: steps.decide.outputs.measure == 'true'
         uses: ./.github/actions/apt-install
         with:
+          cache: false
           packages: |
             valgrind
 
