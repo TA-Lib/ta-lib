@@ -14,6 +14,7 @@
  *  110104 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *  103126 MF,CC  Pre-check the cheap tests in an outer if, the candle averages inside
+ *  110626 MF,CC  Opt out of the range-type copy, which slows this body
  */
 
    /**

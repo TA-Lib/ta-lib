@@ -10397,6 +10397,7 @@ mod tests {
             private_extra_params: vec![],
             private_param_init: vec![],
             has_explicit_private: false,
+            opt_outs: vec![],
             header_comments: vec![],
             doc: None,
             streaming: false,

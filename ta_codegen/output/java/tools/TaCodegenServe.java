@@ -62786,6 +62786,7 @@ class Core {
      *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
      *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
+     *  110626 MF,CC  Opt out of the range-type copy, which slows this body
      */
 
        /**
@@ -72204,6 +72205,7 @@ class Core {
      *  022005 AC     Creation
      *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
+     *  110626 MF,CC  Opt out of the range-type copy, which slows this body
      */
 
        /**
@@ -73048,6 +73050,7 @@ class Core {
      *  110104 AC     Creation
      *  100426 MF,CC  Remove the outInteger comment, which misstated the values
      *  103126 MF,CC  Pre-check the cheap tests in an outer if, the candle averages inside
+     *  110626 MF,CC  Opt out of the range-type copy, which slows this body
      */
 
        /**
@@ -234760,7 +234763,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "cac9d5dee7eb34ca";
+    static final String SPLICED_GENCODE_DIGEST = "fd1a59454c485534";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

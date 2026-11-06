@@ -67,7 +67,7 @@ pub struct Pragma {
 
 /// Directive names the generator answers to. Anything else written as `NAME=`
 /// is an error rather than a silently ignored comment.
-const PRAGMA_DIRECTIVES: &[&str] = &["TA_ALT"];
+const PRAGMA_DIRECTIVES: &[&str] = &["TA_ALT", "TA_OPT_OUT"];
 
 /// One captured comment: the index of the token it precedes, its cleaned
 /// content lines, and whether it shares a source line with the token before it.
@@ -118,6 +118,7 @@ pub fn wire_parsed_source(func_def: &mut crate::ir::FuncDef, parsed: &ParsedCSou
         .find(|f| !f.name.ends_with("_private") && !is_alt_name(&f.name))
         .expect("C source must contain at least one function");
     func_def.alternates = alternates;
+    func_def.opt_outs = wire_opt_outs(func_def, parsed, &guarded.name);
     func_def.body.clone_from(&guarded.body);
     func_def.lookback = Some(crate::ir::LookbackExpr::Code(parsed.lookback_body.clone()));
     wire_display_shift(func_def, parsed);
@@ -396,6 +397,34 @@ fn wire_display_shift(func_def: &mut crate::ir::FuncDef, parsed: &ParsedCSource)
         crate::ir::DISPLAY_SHIFT_INDEX_PARAM
     );
     func_def.display_shift = Some(ds.body.clone());
+}
+
+/// `TA_OPT_OUT` belongs on the shipped function's signature; anywhere else it
+/// would be silently inert.
+fn wire_opt_outs(func_def: &crate::ir::FuncDef, parsed: &ParsedCSource, base: &str) -> Vec<crate::ir::OptOut> {
+    let is_opt_out = |p: &&Pragma| p.name == "TA_OPT_OUT";
+    let mut elsewhere = parsed
+        .functions
+        .iter()
+        .filter(|f| f.name != base)
+        .flat_map(|f| f.pragmas.iter())
+        .chain(parsed.lookback_pragmas.iter())
+        .chain(parsed.display_shift.iter().flat_map(|d| d.pragmas.iter()));
+    if let Some(p) = elsewhere.find(is_opt_out) {
+        panic!("{}: `PRAGMA TA_OPT_OUT=` at line {} is not on `{base}`'s signature", func_def.name, p.line);
+    }
+    let base_fn = parsed.functions.iter().find(|f| f.name == base).expect("base function");
+    let mut out = Vec::new();
+    for p in base_fn.pragmas.iter().filter(is_opt_out) {
+        let v = p.value.as_deref().unwrap_or_default();
+        let o = crate::ir::OptOut::from_name(v).unwrap_or_else(|| {
+            let known: Vec<&str> = crate::ir::OptOut::NAMES.iter().map(|(n, _)| *n).collect();
+            panic!("{}: line {}: unknown TA_OPT_OUT `{v}` (known: {})", func_def.name, p.line, known.join(", "))
+        });
+        assert!(!out.contains(&o), "{}: line {}: TA_OPT_OUT={v} given twice", func_def.name, p.line);
+        out.push(o);
+    }
+    out
 }
 
 fn reject_ta_alt(pragmas: &[Pragma], who: &str, func_def: &crate::ir::FuncDef) {

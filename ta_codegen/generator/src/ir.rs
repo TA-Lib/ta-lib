@@ -27,6 +27,8 @@ pub struct FuncDef {
     pub private_param_init: Vec<(String, Expr)>,
     /// True when the C source explicitly defines foo_private().
     pub has_explicit_private: bool,
+    /// Optimizations this function's source turns off (`PRAGMA TA_OPT_OUT=`).
+    pub opt_outs: Vec<OptOut>,
     /// File-level comment blocks that preceded the first function in the input
     /// `.c` (e.g. the `List of contributors` / `Change history` block). Emitted
     /// verbatim after the generated banner, before the function definitions.
@@ -982,4 +984,23 @@ pub struct HelperDef {
 pub struct HelperParam {
     pub name: String,
     pub var_type: VarType,
+}
+
+/// The generator's per-function exceptions: each is an optimization a function's
+/// input `.c` may turn off with `/* PRAGMA TA_OPT_OUT=<NAME> <why> */` above its
+/// signature. Only opt-outs exist, so no optimization can be limited to a list of
+/// functions; keep every exception here.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OptOut {
+    /// C: the candlestick body's copies with each range type folded in. Worth
+    /// turning off only where timing shows the compiler already splits the loop.
+    RangeTypeCopy,
+}
+
+impl OptOut {
+    pub const NAMES: &[(&str, OptOut)] = &[("RANGE_TYPE_COPY", OptOut::RangeTypeCopy)];
+
+    pub fn from_name(name: &str) -> Option<OptOut> {
+        Self::NAMES.iter().find(|(n, _)| *n == name).map(|(_, o)| *o)
+    }
 }

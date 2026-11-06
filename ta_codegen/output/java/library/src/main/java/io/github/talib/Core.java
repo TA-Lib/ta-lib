@@ -63144,6 +63144,7 @@ public final class Core {
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
+ *  110626 MF,CC  Opt out of the range-type copy, which slows this body
  */
 
    /**
@@ -72562,6 +72563,7 @@ public final class Core {
  *  022005 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
+ *  110626 MF,CC  Opt out of the range-type copy, which slows this body
  */
 
    /**
@@ -73406,6 +73408,7 @@ public final class Core {
  *  110104 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *  103126 MF,CC  Pre-check the cheap tests in an outer if, the candle averages inside
+ *  110626 MF,CC  Opt out of the range-type copy, which slows this body
  */
 
    /**

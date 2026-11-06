@@ -305,6 +305,20 @@ first word is `PRAGMA` addresses the generator and is stripped from every backen
 output, several may precede one signature, and an unrecognized name **without** an
 `=` is free-form prose the generator ignores.
 
+## Opting out of an optimization — `PRAGMA TA_OPT_OUT`
+
+```c
+/* PRAGMA TA_OPT_OUT=RANGE_TYPE_COPY timed slower with it: ... */
+TA_RetCode cdlunique3river(int startIdx, int endIdx, ...
+```
+
+Above the shipped function's signature, it turns off one generator optimization
+for this function. The `OptOut` enum in `ta_codegen/generator/src/ir.rs` is the
+complete list of what can be turned off; `git grep 'PRAGMA TA_OPT_OUT'
+ta_codegen/input` lists every function that does. There is no opt-in: an
+optimization that pays only for a named set of functions is not general enough
+to ship. Give the measured reason after the value, and keep the list short.
+
 ## What the logic file is NOT
 
 - Not a macro template — no `#include`, no preprocessor `#if defined(_RUST)`, no

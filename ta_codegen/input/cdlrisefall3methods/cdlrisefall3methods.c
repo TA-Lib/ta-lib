@@ -15,6 +15,7 @@
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *  103126 MF,CC  Nest the cheap, selective pre-check conjuncts in an outer if
  *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
+ *  110626 MF,CC  Opt out of the range-type copy, which slows this body
  *
  */
 
@@ -23,6 +24,7 @@ int cdlrisefall3methods_lookback(void)
    return max( BodyShort_avgPeriod, BodyLong_avgPeriod ) + 4;
 }
 
+/* PRAGMA TA_OPT_OUT=RANGE_TYPE_COPY timed slower with it: the compiler already splits this loop by range type */
 TA_RetCode cdlrisefall3methods(int startIdx, int endIdx,
    const double inOpen[],
    const double inHigh[],

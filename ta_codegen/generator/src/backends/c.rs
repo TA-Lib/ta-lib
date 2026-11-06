@@ -442,7 +442,10 @@ pub fn generate(
     }
     // Last, over the finished file: the emitters above place their `(void)x;`
     // before they know what the body will read (see `c_hygiene`).
-    super::c_hygiene::scrub_void_casts(&super::c_candle_defaults::specialize(&out))
+    if !func.opt_outs.contains(&crate::ir::OptOut::RangeTypeCopy) {
+        out = super::c_candle_defaults::specialize(&out);
+    }
+    super::c_hygiene::scrub_void_casts(&out)
 }
 
 /// Render a C variable declaration (`type name`, including pointer and array
