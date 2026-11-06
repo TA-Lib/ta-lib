@@ -32,8 +32,8 @@ A plain `./mvnw package` needs neither.
 
 ## Publishing
 
-(JP1) Confirm the "nightly main" run for the commit being published was green
-with **no skipped job**. It is the only CI that builds these jars.
+(JP1) Confirm both main nightlies were green on the commit being published
+(`scripts/nightly_status.py --branch main --sha <commit>`) with **no skipped job**. It is the only CI that builds these jars.
 
 (JP2) Build and sign, always through the committed wrapper rather than an
 installed `mvn`:

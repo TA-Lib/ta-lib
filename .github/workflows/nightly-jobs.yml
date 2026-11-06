@@ -1,4 +1,4 @@
-# Every nightly job, for BOTH branches. dev-nightly-tests.yml and
+# Every nightly job but the macOS ones (macos-jobs.yml), for BOTH branches. dev-nightly-tests.yml and
 # main-nightly-tests.yml hold the crons and pin this file at their own branch,
 # and every checkout below takes `job.workflow_sha`, so the definition and the
 # tree it tests are always the same commit.
@@ -320,302 +320,6 @@ jobs:
         shell: bash
         run: |
           $PYTHON $GITHUB_WORKSPACE/scripts/sync-website.py --check --warn-only
-
-  # First-ever clang + ARM64 + macOS coverage of the generated C: build with
-  # the default Apple toolchain and run the full C reference suite. Kept
-  # separate from the dist 'test' job (macOS produces no dist assets); the
-  # C hero philosophy applies — this needs no Rust/Java/.NET toolchain.
-  test-macos:
-    name: Test macos-latest (clang, ARM64)
-    runs-on: macos-latest
-    timeout-minutes: 90
-    continue-on-error: true # macos-gate decides
-    permissions:
-      contents: read
-
-    steps:
-      - name: Record that this macOS job started
-        shell: bash
-        run: mkdir -p "$RUNNER_TEMP/macos-run" && echo "$GITHUB_RUN_ATTEMPT" > "$RUNNER_TEMP/macos-run/started"
-
-      - name: Upload the 'started' record for macos-gate
-        uses: actions/upload-artifact@v7
-        with:
-          name: macos-run-test-macos-started
-          path: ${{ runner.temp }}/macos-run/started
-          retention-days: 1
-          overwrite: true
-
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ job.workflow_sha }}
-
-      - name: Build (CMake, AppleClang)
-        shell: bash
-        run: |
-          mkdir -p cmake-build && cd cmake-build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
-          cmake --build . -j 3
-
-      # Through ctest, the hook a packager runs: proves the registration too.
-      - name: Run C regression suite
-        shell: bash
-        run: ctest --test-dir cmake-build --output-on-failure --no-tests=error
-
-      # scripts/abi.py measures the export table with `nm -D` over the ELF
-      # `cmake-build/libta-lib.so`, so it reads NOTHING here and says so. Mach-O is the
-      # other half of #400's claim: -fvisibility=hidden is the whole mechanism on
-      # this platform (there is no linker map -- target_clones is glibc-only, so
-      # no resolver is emitted), and nothing else in CI ever looks at the dylib.
-      - name: Public surface is narrowed on Mach-O too
-        shell: bash
-        run: |
-          set -euo pipefail
-          dylib=$(ls cmake-build/libta-lib.*.dylib 2>/dev/null | head -1)
-          if [ -z "$dylib" ]; then
-            echo "::error::No dylib under cmake-build/ -- this gate measured nothing."
-            exit 1
-          fi
-          # Mach-O prefixes every C symbol with an underscore; strip it once.
-          nm -gU "$dylib" | awk '{print $NF}' | sed 's/^_//' | sort -u > exported.txt
-          sed -n 's/^function .*[ *]\([A-Za-z_][A-Za-z0-9_]*\)(.*/\1/p' ABI.manifest \
-            | sort -u > declared.txt
-          # TA_Globals is exported although no installed header declares it --
-          # src/ta_common/ta_global.h says why. Nothing else may be.
-          echo TA_Globals >> declared.txt
-          sort -u declared.txt -o declared.txt
-          n_exp=$(wc -l < exported.txt); n_dec=$(wc -l < declared.txt)
-          echo "dylib exports $n_exp; headers declare $n_dec (incl. TA_Globals)"
-          if [ "$n_exp" -lt 100 ] || [ "$n_dec" -lt 100 ]; then
-            echo "::error::One of the two lists is implausibly short ($n_exp/$n_dec) -- the parse moved, and comparing against an empty set would read green."
-            exit 1
-          fi
-          extra=$(comm -23 exported.txt declared.txt)
-          missing=$(comm -13 exported.txt declared.txt)
-          rc=0
-          if [ -n "$extra" ]; then
-            echo "::error::The dylib exports $(echo "$extra" | wc -l) symbol(s) no header declares -- -fvisibility=hidden did not apply on AppleClang."
-            echo "$extra" | head -20
-            rc=1
-          fi
-          if [ -n "$missing" ]; then
-            echo "::error::$(echo "$missing" | wc -l) declared symbol(s) are NOT in the dylib -- a consumer linking them gets an undefined reference."
-            echo "$missing" | head -20
-            rc=1
-          fi
-          if [ "$rc" -eq 0 ]; then
-            echo "Mach-O export table is exactly the declared surface ($n_exp symbols)."
-          fi
-          exit $rc
-
-      # The only autotools build in CI whose build directory is not the source
-      # directory, and the only distcheck: a build-relative path, a file missing
-      # from the tarball or one left behind by clean fails here and nowhere else.
-      - name: Build and distcheck (autotools, out of tree)
-        shell: bash
-        run: |
-          set -euo pipefail
-          brew install autoconf automake libtool
-          autoreconf -fi
-          mkdir at-build && cd at-build
-          ../configure
-          make -j 3
-          # distcheck runs `make check`; a lost TESTS line would pass untested.
-          make -j 3 distcheck VERBOSE=1 2>&1 | tee distcheck.log
-          grep -q '^# PASS: *1$' distcheck.log
-
-      # The install name is what a Mach-O program records at link time, so it
-      # carries the ABI generation here the way DT_SONAME does on ELF.
-      - name: Install name carries the ABI generation, in both build systems
-        shell: bash
-        run: |
-          set -euo pipefail
-          n=$(sed -n 's/^soname libta-lib\.so\.\([0-9][0-9]*\)$/\1/p' ABI.manifest)
-          if [ -z "$n" ]; then
-            echo "::error::ABI.manifest has no 'soname libta-lib.so.N' line -- this gate measured nothing."
-            exit 1
-          fi
-          want="libta-lib.$n.dylib"
-          rc=0
-          first=""
-          for lib in cmake-build/libta-lib.dylib at-build/src/.libs/libta-lib.dylib; do
-            id=$(otool -D "$lib" | sed -n 2p)
-            versions=$(otool -L "$lib" | sed -n 2p | sed -n 's/.*(\(compatibility version .*\))$/\1/p')
-            echo "$lib: $id ($versions)"
-            if [ "$(basename "$id")" != "$want" ]; then
-              echo "::error::$lib has install name '$id'; ABI.manifest says the ABI generation is $n, so it must end in $want."
-              rc=1
-            fi
-            if [ -z "$versions" ]; then
-              echo "::error::No compatibility version read off $lib -- the otool parse moved."
-              rc=1
-            fi
-            if [ -z "$first" ]; then
-              first="$versions"
-            elif [ "$versions" != "$first" ]; then
-              echo "::error::CMake and autotools stamp different dylib versions ('$first' vs '$versions'); dyld refuses a library whose compatibility version is below the one a program was linked against."
-              rc=1
-            fi
-          done
-          exit $rc
-
-      - name: Record that this macOS job passed
-        shell: bash
-        run: mkdir -p "$RUNNER_TEMP/macos-run" && echo "$GITHUB_RUN_ATTEMPT" > "$RUNNER_TEMP/macos-run/passed"
-
-      - name: Upload the 'passed' record for macos-gate
-        uses: actions/upload-artifact@v7
-        with:
-          name: macos-run-test-macos-passed
-          path: ${{ runner.temp }}/macos-run/passed
-          retention-days: 1
-          overwrite: true
-
-  # Every other run of the Rust, Java and C# servers against the C library is on
-  # Linux. Here the C side is AppleClang with libSystem's math, and the JVM and
-  # the .NET JIT are the macOS arm64 ones.
-  macos-cross-language:
-    name: macOS arm64 (all langs vs in-process C)
-    runs-on: macos-latest
-    timeout-minutes: 90
-    continue-on-error: true # macos-gate decides
-    permissions:
-      contents: read
-
-    steps:
-      - name: Record that this macOS job started
-        shell: bash
-        run: mkdir -p "$RUNNER_TEMP/macos-run" && echo "$GITHUB_RUN_ATTEMPT" > "$RUNNER_TEMP/macos-run/started"
-
-      - name: Upload the 'started' record for macos-gate
-        uses: actions/upload-artifact@v7
-        with:
-          name: macos-run-macos-cross-language-started
-          path: ${{ runner.temp }}/macos-run/started
-          retention-days: 1
-          overwrite: true
-
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ job.workflow_sha }}
-          fetch-depth: 0 # the release tags the ta_ref members pin
-
-      - name: Install Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.x"
-
-      # /usr/bin/java is a stub on macOS, so the JDK has to be named.
-      - name: Select the JDK 21 of the runner image
-        uses: ./.github/actions/image-jdk
-
-      - name: Install .NET SDK
-        uses: actions/setup-dotnet@v6
-        with:
-          global-json-file: global.json
-
-      - name: Install Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: 22
-
-      - name: Every function in every language vs the in-process C library
-        shell: bash
-        run: python3 scripts/build.py regtest
-
-      - name: Bitwise parity of each language server vs the in-process C library
-        shell: bash
-        run: python3 scripts/build.py xlang-hash
-
-      - name: Run the Java and C# suites
-        shell: bash
-        run: python3 scripts/build.py libraries
-
-      # arm64-linux runs this under GCC; AppleClang is the other compiler on a
-      # target where FMA is baseline.
-      - name: Fuzz current library vs each frozen release
-        shell: bash
-        run: python3 scripts/build.py ref
-
-      - name: Record that this macOS job passed
-        shell: bash
-        run: mkdir -p "$RUNNER_TEMP/macos-run" && echo "$GITHUB_RUN_ATTEMPT" > "$RUNNER_TEMP/macos-run/passed"
-
-      - name: Upload the 'passed' record for macos-gate
-        uses: actions/upload-artifact@v7
-        with:
-          name: macos-run-macos-cross-language-passed
-          path: ${{ runner.temp }}/macos-run/passed
-          retention-days: 1
-          overwrite: true
-
-  # GitHub's macOS pool can go hours without a runner. The macOS jobs are
-  # continue-on-error so that cannot redden the run; this gate reddens it for
-  # a macOS job that ran and failed, and for one with no pass in 72 h. The
-  # record names are the contract: `macos-run-<matrix.job>-started|passed`.
-  macos-gate:
-    name: "macOS ${{ matrix.job }}: passed, or no runner and a pass within 72 h"
-    needs: [test-macos, macos-cross-language, rust-other-os]
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-
-    strategy:
-      fail-fast: false
-      matrix:
-        job: [test-macos, macos-cross-language, rust-macos]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ job.workflow_sha }}
-
-      # Both nightlies are scheduled on main's ref, so the cache cannot tell
-      # them apart; the definition's pin can.
-      - name: Which branch is this run for
-        shell: bash
-        env:
-          WF_REF: ${{ job.workflow_ref }}
-        run: |
-          case "$WF_REF" in
-            */nightly-jobs.yml@refs/heads/*) ;;
-            *) echo "::error::defined by '$WF_REF', which is not a branch pin of nightly-jobs.yml."
-               exit 1 ;;
-          esac
-          echo "NIGHTLY_BRANCH=${WF_REF##*@refs/heads/}" >> "$GITHUB_ENV"
-
-      - name: Download this run's records of the job
-        uses: actions/download-artifact@v8
-        with:
-          pattern: macos-run-${{ matrix.job }}-*
-          path: ${{ runner.temp }}/records
-          merge-multiple: true
-
-      - name: Restore the last recorded pass
-        uses: actions/cache/restore@v6
-        with:
-          path: macos-pass-record
-          key: macos-pass-${{ env.NIGHTLY_BRANCH }}-${{ matrix.job }}-${{ github.run_id }}
-          restore-keys: macos-pass-${{ env.NIGHTLY_BRANCH }}-${{ matrix.job }}-
-
-      - name: Decide
-        id: decide
-        shell: bash
-        run: >-
-          python3 scripts/macos_runner_gate.py nightly --job '${{ matrix.job }}'
-          --records "$RUNNER_TEMP/records" --pass-record macos-pass-record --hours 72
-
-      - name: Record this pass
-        if: steps.decide.outputs.passed == 'true'
-        uses: actions/cache/save@v6
-        with:
-          path: macos-pass-record
-          key: macos-pass-${{ env.NIGHTLY_BRANCH }}-${{ matrix.job }}-${{ github.run_id }}
 
   # The only thing anywhere that LINKS the Windows DLL. The dist tests check
   # that ta-lib.dll and ta-lib.lib exist as files (scripts/install_tests/msi.py),
@@ -1315,37 +1019,22 @@ jobs:
         working-directory: ta_codegen/output/rust
         run: cargo semver-checks -p ta-lib
 
-  # No other job runs the crate's own tests off Linux, and none compiles it
-  # on Windows (#179 E6). `--lib --doc` together
+  # The crate's own tests on Windows, where nothing else compiles it (#179 E6);
+  # rust-macos in macos-jobs.yml is the macOS leg. `--lib --doc` together
   # is rejected by cargo, hence two `cargo test` invocations.
   rust-other-os:
     name: Rust on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
-    continue-on-error: ${{ startsWith(matrix.os, 'macos') }} # macos-gate decides
     permissions:
       contents: read
 
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, macos-latest]
+        os: [windows-2022]
 
     steps:
-      - name: Record that this macOS job started
-        if: startsWith(matrix.os, 'macos')
-        shell: bash
-        run: mkdir -p "$RUNNER_TEMP/macos-run" && echo "$GITHUB_RUN_ATTEMPT" > "$RUNNER_TEMP/macos-run/started"
-
-      - name: Upload the 'started' record for macos-gate
-        if: startsWith(matrix.os, 'macos')
-        uses: actions/upload-artifact@v7
-        with:
-          name: macos-run-rust-macos-started
-          path: ${{ runner.temp }}/macos-run/started
-          retention-days: 1
-          overwrite: true
-
       - name: Checkout
         uses: actions/checkout@v7
         with:
@@ -1378,20 +1067,6 @@ jobs:
       - name: Run the crate's doctests
         shell: bash
         run: cargo test --doc -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
-
-      - name: Record that this macOS job passed
-        if: startsWith(matrix.os, 'macos')
-        shell: bash
-        run: mkdir -p "$RUNNER_TEMP/macos-run" && echo "$GITHUB_RUN_ATTEMPT" > "$RUNNER_TEMP/macos-run/passed"
-
-      - name: Upload the 'passed' record for macos-gate
-        if: startsWith(matrix.os, 'macos')
-        uses: actions/upload-artifact@v7
-        with:
-          name: macos-run-rust-macos-passed
-          path: ${{ runner.temp }}/macos-run/passed
-          retention-days: 1
-          overwrite: true
 
   # The two publishable crates declare a `rust-version`, and only this job
   # compiles the pair at ta-lib's -- every other Rust step runs on the pinned

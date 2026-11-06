@@ -59,9 +59,9 @@ switch.
 
 (NP1) Pre-flight.
 
-The nightly runs the C# jobs, including the ones a local machine cannot. Confirm its latest
-run is green on the commit being tagged, then run these anyway: the nightly can predate that
-commit.
+The nightlies run the C# jobs, including the ones a local machine cannot. Confirm both are
+green on the commit being tagged (`scripts/nightly_status.py --branch main --sha <commit>`),
+then run these anyway.
 
 From a clean worktree detached at the release tag `v<version>`:
 

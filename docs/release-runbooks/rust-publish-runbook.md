@@ -80,10 +80,11 @@ release possible when a maintainer is unavailable.
 
 (RP1) Pre-flight.
 
-`main nightly tests` runs these gates against `main` every night, plus the ones a local
-machine cannot: the debug-profile overflow sweep, the MSRV floor, arm64, Windows and macOS.
-Confirm its latest run is green on the commit being tagged. Run the gates below anyway: the
-nightly can predate that commit, and the release path itself compiles no Rust.
+`main nightly tests` and `main macOS nightly tests` run these gates against `main` every
+night, plus the ones a local machine cannot: the debug-profile overflow sweep, the MSRV floor,
+arm64, Windows and macOS. Confirm both are green on the commit being tagged
+(`scripts/nightly_status.py --branch main --sha <commit>`). Run the gates below anyway: the
+release path itself compiles no Rust.
 
 From a clean worktree detached at the release tag `v<version>`:
 

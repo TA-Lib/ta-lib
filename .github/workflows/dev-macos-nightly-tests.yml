@@ -1,0 +1,17 @@
+# The macOS half of the dev nightly; every job lives in macos-jobs.yml. A
+# scheduled run takes its definition from the default branch, so the @dev pin
+# below is what keeps the jobs and the tree they test on the same branch.
+
+name: dev macOS nightly tests
+
+on:
+  schedule:
+    - cron: "0 5 * * *" # every day 5AM
+
+  workflow_dispatch:
+
+jobs:
+  macos:
+    permissions:
+      contents: read
+    uses: TA-Lib/ta-lib/.github/workflows/macos-jobs.yml@dev

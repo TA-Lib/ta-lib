@@ -591,7 +591,7 @@ are rows like any other: their ceiling is the share measured, not zero.
 rV1: `scripts/abi.py check`, the PR gate's "Public C ABI matches ABI.manifest"
 step (`pr-codegen-gate.yml`), measures the installed headers' declarations
 against `ABI.released` and refuses a removed or changed one without a new N;
-`nightly-jobs.yml` checks the soname and the macOS install name against the N
+`nightly-jobs.yml` checks the soname and `macos-jobs.yml` the macOS install name against the N
 in `ABI.manifest`.
 
 rV2: `testEnumValueContract` pins C's numbers. `MAType` reaches every language

@@ -17,11 +17,11 @@ Any dev with permission to merge to main branch can do a release.
 
 (CP3) Push to the dev branch.
 
-(CP4) Manually trig the "nightly dev" Github action. This will regenerate and test for **all** platforms. If you do not trig it, it will get run anyway once per day.
+(CP4) Manually trig the "dev nightly tests" and "dev macOS nightly tests" Github actions. Together they regenerate and test for **all** platforms. If you do not trig them, they run anyway once per day.
 
-(CP5) Merge dev into main with "./scripts/merge.py". At this point, the main branch is the release candidate with all the assets under "dist" folder.
+(CP5) Merge dev into main with "./scripts/merge.py", which refuses unless both dev nightlies passed on dev. At this point, the main branch is the release candidate with all the assets under "dist" folder.
 
-(CP6) Manually trig the "nightly main" Github action. This will perform a last round of check prior to alloweing for the release. If you do not trig it, it will get run anyway once per day.
+(CP6) Manually trig the "main nightly tests" and "main macOS nightly tests" Github actions. They perform a last round of checks prior to allowing the release, and Release (step 1) refuses unless both passed on main's HEAD. If you do not trig them, they run anyway once per day.
 
 (CP7) Manually trig the "Release (step-1)" Github action on main branch. This will tag, generate a draft release and attach all assets from the dist/ directory.
 

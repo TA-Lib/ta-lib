@@ -11,6 +11,7 @@ import argparse
 import subprocess
 import sys
 
+import nightly_status
 import sync
 from utilities.common import verify_git_repo, run_command
 from utilities.versions import check_sources_digest
@@ -30,10 +31,11 @@ def parse_args():
             "or 'git switch --detach origin/dev' in any worktree). It refuses\n"
             "unless the committed TA_LIB_SOURCES_DIGEST matches the sources,\n"
             "i.e. the dev-nightly job has already regenerated and committed the\n"
-            "dist assets, scripts/sync.py has nothing left to change, and main\n"
+            "dist assets, both dev nightlies (Linux/Windows and macOS)\n"
+            "passed on it, scripts/sync.py has nothing left to change, and main\n"
             "has no commit that dev lacks."
         ),
-        epilog="Usage: run it with no arguments, after a green dev nightly.",
+        epilog="Usage: run it with no arguments, after both dev nightlies are green.",
     )
     parser.parse_args()
 
@@ -79,6 +81,12 @@ def main():
         print(f"This tree is not at origin/dev ({dev[:9]}).")
         print("On the dev branch: push or pull until it matches origin/dev.")
         print("In any other worktree: git switch --detach origin/dev")
+        sys.exit(1)
+
+    print("Checking that every dev nightly passed on this commit...")
+    if not nightly_status.check('dev', dev, allow_tail=True, waive_absent_from='origin/main'):
+        print("Error: dev is not green. Re-run the red nightly on dev, wait for it, "
+              "then re-run this merge.")
         sys.exit(1)
 
     # Not redundant with the "sync.py changed these files" check below: this

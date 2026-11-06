@@ -23,7 +23,7 @@ concurrency:
 # Pushes the release tag and creates/updates the draft release + its assets.
 permissions:
   contents: write
-  actions: read # macOS check below reads main nightly's jobs
+  actions: read # the nightly check below reads main's nightly runs
 
 jobs:
   process_draft_release:
@@ -69,14 +69,12 @@ jobs:
             *)   echo "::error::Could not check whether ${TAG} is published (HTTP ${code})."; exit 1 ;;
           esac
 
-      # The nightlies tolerate a day or more with no macOS runner; a release
-      # does not, so it wants a macOS pass on the very commit it tags.
-      - name: Refuse unless every macOS job of main's nightly passed on this commit
+      - name: Refuse unless every nightly of main passed on this commit
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          "$PYTHON" "$GITHUB_WORKSPACE/scripts/macos_runner_gate.py" release --sha "$(git rev-parse HEAD)"
+          "$PYTHON" "$GITHUB_WORKSPACE/scripts/nightly_status.py" --branch main --sha "$(git rev-parse HEAD)"
 
       # Restore the release packages from the asset pool BEFORE the pre-release
       # gate. That gate verifies each package against the sha256 recorded in its

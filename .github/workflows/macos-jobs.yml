@@ -1,0 +1,222 @@
+# Every macOS nightly job, for BOTH branches; main-macos-nightly-tests.yml and
+# dev-macos-nightly-tests.yml pin it at their own branch, as the Linux and
+# Windows nightlies pin nightly-jobs.yml. A separate run because GitHub's macOS
+# arm64 pool can leave a job unacquired, which fails its whole run: that must
+# not redden the other nightly. scripts/nightly_status.py requires both runs
+# green before a merge to main or a release.
+
+name: macOS nightly jobs
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  # First-ever clang + ARM64 + macOS coverage of the generated C: build with
+  # the default Apple toolchain and run the full C reference suite. Kept
+  # separate from the dist 'test' job (macOS produces no dist assets); the
+  # C hero philosophy applies — this needs no Rust/Java/.NET toolchain.
+  test-macos:
+    name: Test macos-latest (clang, ARM64)
+    runs-on: macos-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Build (CMake, AppleClang)
+        shell: bash
+        run: |
+          mkdir -p cmake-build && cd cmake-build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake --build . -j 3
+
+      # Through ctest, the hook a packager runs: proves the registration too.
+      - name: Run C regression suite
+        shell: bash
+        run: ctest --test-dir cmake-build --output-on-failure --no-tests=error
+
+      # scripts/abi.py measures the export table with `nm -D` over the ELF
+      # `cmake-build/libta-lib.so`, so it reads NOTHING here and says so. Mach-O is the
+      # other half of #400's claim: -fvisibility=hidden is the whole mechanism on
+      # this platform (there is no linker map -- target_clones is glibc-only, so
+      # no resolver is emitted), and nothing else in CI ever looks at the dylib.
+      - name: Public surface is narrowed on Mach-O too
+        shell: bash
+        run: |
+          set -euo pipefail
+          dylib=$(ls cmake-build/libta-lib.*.dylib 2>/dev/null | head -1)
+          if [ -z "$dylib" ]; then
+            echo "::error::No dylib under cmake-build/ -- this gate measured nothing."
+            exit 1
+          fi
+          # Mach-O prefixes every C symbol with an underscore; strip it once.
+          nm -gU "$dylib" | awk '{print $NF}' | sed 's/^_//' | sort -u > exported.txt
+          sed -n 's/^function .*[ *]\([A-Za-z_][A-Za-z0-9_]*\)(.*/\1/p' ABI.manifest \
+            | sort -u > declared.txt
+          # TA_Globals is exported although no installed header declares it --
+          # src/ta_common/ta_global.h says why. Nothing else may be.
+          echo TA_Globals >> declared.txt
+          sort -u declared.txt -o declared.txt
+          n_exp=$(wc -l < exported.txt); n_dec=$(wc -l < declared.txt)
+          echo "dylib exports $n_exp; headers declare $n_dec (incl. TA_Globals)"
+          if [ "$n_exp" -lt 100 ] || [ "$n_dec" -lt 100 ]; then
+            echo "::error::One of the two lists is implausibly short ($n_exp/$n_dec) -- the parse moved, and comparing against an empty set would read green."
+            exit 1
+          fi
+          extra=$(comm -23 exported.txt declared.txt)
+          missing=$(comm -13 exported.txt declared.txt)
+          rc=0
+          if [ -n "$extra" ]; then
+            echo "::error::The dylib exports $(echo "$extra" | wc -l) symbol(s) no header declares -- -fvisibility=hidden did not apply on AppleClang."
+            echo "$extra" | head -20
+            rc=1
+          fi
+          if [ -n "$missing" ]; then
+            echo "::error::$(echo "$missing" | wc -l) declared symbol(s) are NOT in the dylib -- a consumer linking them gets an undefined reference."
+            echo "$missing" | head -20
+            rc=1
+          fi
+          if [ "$rc" -eq 0 ]; then
+            echo "Mach-O export table is exactly the declared surface ($n_exp symbols)."
+          fi
+          exit $rc
+
+      # The only autotools build in CI whose build directory is not the source
+      # directory, and the only distcheck: a build-relative path, a file missing
+      # from the tarball or one left behind by clean fails here and nowhere else.
+      - name: Build and distcheck (autotools, out of tree)
+        shell: bash
+        run: |
+          set -euo pipefail
+          brew install autoconf automake libtool
+          autoreconf -fi
+          mkdir at-build && cd at-build
+          ../configure
+          make -j 3
+          # distcheck runs `make check`; a lost TESTS line would pass untested.
+          make -j 3 distcheck VERBOSE=1 2>&1 | tee distcheck.log
+          grep -q '^# PASS: *1$' distcheck.log
+
+      # The install name is what a Mach-O program records at link time, so it
+      # carries the ABI generation here the way DT_SONAME does on ELF.
+      - name: Install name carries the ABI generation, in both build systems
+        shell: bash
+        run: |
+          set -euo pipefail
+          n=$(sed -n 's/^soname libta-lib\.so\.\([0-9][0-9]*\)$/\1/p' ABI.manifest)
+          if [ -z "$n" ]; then
+            echo "::error::ABI.manifest has no 'soname libta-lib.so.N' line -- this gate measured nothing."
+            exit 1
+          fi
+          want="libta-lib.$n.dylib"
+          rc=0
+          first=""
+          for lib in cmake-build/libta-lib.dylib at-build/src/.libs/libta-lib.dylib; do
+            id=$(otool -D "$lib" | sed -n 2p)
+            versions=$(otool -L "$lib" | sed -n 2p | sed -n 's/.*(\(compatibility version .*\))$/\1/p')
+            echo "$lib: $id ($versions)"
+            if [ "$(basename "$id")" != "$want" ]; then
+              echo "::error::$lib has install name '$id'; ABI.manifest says the ABI generation is $n, so it must end in $want."
+              rc=1
+            fi
+            if [ -z "$versions" ]; then
+              echo "::error::No compatibility version read off $lib -- the otool parse moved."
+              rc=1
+            fi
+            if [ -z "$first" ]; then
+              first="$versions"
+            elif [ "$versions" != "$first" ]; then
+              echo "::error::CMake and autotools stamp different dylib versions ('$first' vs '$versions'); dyld refuses a library whose compatibility version is below the one a program was linked against."
+              rc=1
+            fi
+          done
+          exit $rc
+
+  # Every other run of the Rust, Java and C# servers against the C library is on
+  # Linux. Here the C side is AppleClang with libSystem's math, and the JVM and
+  # the .NET JIT are the macOS arm64 ones.
+  macos-cross-language:
+    name: macOS arm64 (all langs vs in-process C)
+    runs-on: macos-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ job.workflow_sha }}
+          fetch-depth: 0 # the release tags the ta_ref members pin
+
+      - name: Install Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      # /usr/bin/java is a stub on macOS, so the JDK has to be named.
+      - name: Select the JDK 21 of the runner image
+        uses: ./.github/actions/image-jdk
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Install Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Every function in every language vs the in-process C library
+        shell: bash
+        run: python3 scripts/build.py regtest
+
+      - name: Bitwise parity of each language server vs the in-process C library
+        shell: bash
+        run: python3 scripts/build.py xlang-hash
+
+      - name: Run the Java and C# suites
+        shell: bash
+        run: python3 scripts/build.py libraries
+
+      # arm64-linux runs this under GCC; AppleClang is the other compiler on a
+      # target where FMA is baseline.
+      - name: Fuzz current library vs each frozen release
+        shell: bash
+        run: python3 scripts/build.py ref
+
+  # The Rust crate's own tests on macOS; rust-other-os in nightly-jobs.yml is
+  # the Windows leg.
+  rust-macos:
+    name: Rust on macos-latest
+    runs-on: macos-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ job.workflow_sha }}
+
+      - name: Compile the publishable crates
+        shell: bash
+        run: cargo check -p ta-lib -p ta-lib-dispatch --manifest-path ta_codegen/output/rust/Cargo.toml
+
+      - name: Run the crate's unit tests
+        shell: bash
+        run: cargo test --lib -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml
+
+      - name: Run the crate's doctests
+        shell: bash
+        run: cargo test --doc -p ta-lib --manifest-path ta_codegen/output/rust/Cargo.toml

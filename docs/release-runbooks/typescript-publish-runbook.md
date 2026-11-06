@@ -58,8 +58,8 @@ workflow by **file name**, so that workflow is written first and this runbook th
 (TP1) Pre-flight.
 
 The nightly's `typescript` job runs the package gate on every Node major CI supports. Confirm
-its latest run is green on the commit being tagged, then run these anyway: the nightly can
-predate that commit.
+both main nightlies are green on the commit being tagged
+(`scripts/nightly_status.py --branch main --sha <commit>`), then run these anyway.
 
 From a clean worktree detached at the release tag `v<version>`:
 
