@@ -449,16 +449,13 @@ public partial class Core
       int i = 0;
       int historyLen = inReal0.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( inReal1.Length != inReal0.Length ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -525,9 +522,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public DivStream DivOpen( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1 )
    {
-      if( inReal0.IsEmpty ) throw new InsufficientHistoryException("DIV open: history is empty", nameof(inReal0));
       if( inReal0.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "DIV open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inReal1.IsEmpty ) throw new TALibArgumentException("DIV open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      if( !inReal0.IsEmpty ) {
+         if( inReal1.IsEmpty ) throw new TALibArgumentException("DIV open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      }
       RequireHistoryLength("DIV", "open", "inReal1", inReal1.Length, inReal0.Length);
       return DivOpenInternal(inReal0, inReal1, 0);
    }
@@ -561,9 +559,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public DivStream DivOpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, Span<double> outReal )
    {
-      if( inReal0.IsEmpty ) throw new InsufficientHistoryException("DIV openAndFill: history is empty", nameof(inReal0));
       if( inReal0.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "DIV openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inReal1.IsEmpty ) throw new TALibArgumentException("DIV openAndFill: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      if( !inReal0.IsEmpty ) {
+         if( inReal1.IsEmpty ) throw new TALibArgumentException("DIV openAndFill: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("DIV", "openAndFill", inReal0.Length, DivLookback());
       RequireHistoryLength("DIV", "openAndFill", "inReal1", inReal1.Length, inReal0.Length);
       RequireFillLength("DIV", "openAndFill", "outReal", outReal.Length, guardOutLen);

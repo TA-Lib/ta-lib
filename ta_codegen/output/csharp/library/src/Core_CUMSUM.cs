@@ -478,13 +478,10 @@ public partial class Core
       int outIdx = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -568,7 +565,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CumsumStream CumsumOpen( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("CUMSUM open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "CUMSUM open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return CumsumOpenInternal(inReal, 0);
    }
@@ -602,7 +598,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CumsumStream CumsumOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("CUMSUM openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "CUMSUM openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("CUMSUM", "openAndFill", inReal.Length, CumsumLookback());
       RequireFillLength("CUMSUM", "openAndFill", "outReal", outReal.Length, guardOutLen);

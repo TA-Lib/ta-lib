@@ -437,13 +437,10 @@ public partial class Core
       int i = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -508,7 +505,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public ExpStream ExpOpen( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("EXP open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "EXP open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return ExpOpenInternal(inReal, 0);
    }
@@ -541,7 +537,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public ExpStream ExpOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("EXP openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "EXP openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("EXP", "openAndFill", inReal.Length, ExpLookback());
       RequireFillLength("EXP", "openAndFill", "outReal", outReal.Length, guardOutLen);

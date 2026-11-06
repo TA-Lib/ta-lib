@@ -746,9 +746,6 @@ impl Core {
     fn kstext_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, mut optInROC1Period: i32, mut optInROC2Period: i32, mut optInROC3Period: i32, mut optInROC4Period: i32, mut optInMA1Period: i32, mut optInMA2Period: i32, mut optInMA3Period: i32, mut optInMA4Period: i32, mut optInSignalPeriod: i32, mut optInROCMAType: MAType, mut optInSignalMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outKST: &mut [f64], outKSTSignal: &mut [f64], outStride: usize,
     ) -> Result<KstextStream, RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::InsufficientHistory);
-        }
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
@@ -804,13 +801,13 @@ impl Core {
             optInSignalMAType = MAType::SMA;
         }
         let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        if startIdx > endIdx {
+        if startIdx >= historyLen {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut owned_sc_outKST: Vec<f64> =
@@ -1082,9 +1079,6 @@ impl Core {
     pub fn kstext_open_and_fill(
         &self, inReal: &[f64], mut optInROC1Period: i32, mut optInROC2Period: i32, mut optInROC3Period: i32, mut optInROC4Period: i32, mut optInMA1Period: i32, mut optInMA2Period: i32, mut optInMA3Period: i32, mut optInMA4Period: i32, mut optInSignalPeriod: i32, mut optInROCMAType: MAType, mut optInSignalMAType: MAType, outKST: &mut [f64], outKSTSignal: &mut [f64],
     ) -> Result<(KstextStream, OutRange), RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::InsufficientHistory);
-        }
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }

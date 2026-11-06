@@ -3202,7 +3202,7 @@ static TA_RetCode TA_PERCENTILE_OpenImpl( struct TA_PERCENTILE_Stream **stream, 
       optInPercentile = 50;
    else if( !(optInPercentile >= 0e0 && optInPercentile <= 1e2) )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

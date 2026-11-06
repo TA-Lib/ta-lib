@@ -517,9 +517,6 @@ impl Core {
     pub(crate) fn minmax_open_impl(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMin: &mut [f64], outMax: &mut [f64], outStride: usize,
     ) -> Result<MinmaxStream, RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::InsufficientHistory);
-        }
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
@@ -529,13 +526,13 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        if startIdx > endIdx {
+        if startIdx >= historyLen {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut highest: f64 = 0.0_f64;
@@ -748,9 +745,6 @@ impl Core {
     pub fn minmax_open_and_fill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outMin: &mut [f64], outMax: &mut [f64],
     ) -> Result<(MinmaxStream, OutRange), RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::InsufficientHistory);
-        }
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }

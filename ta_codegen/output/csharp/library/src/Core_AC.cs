@@ -929,9 +929,6 @@ public partial class Core
       int maxIdx_oscBuffer = (32)-1;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -953,7 +950,7 @@ public partial class Core
       } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1199,9 +1196,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public AcStream AcOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("AC open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "AC open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("AC open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("AC open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       RequireHistoryLength("AC", "open", "inLow", inLow.Length, inHigh.Length);
       return AcOpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
@@ -1243,9 +1241,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public AcStream AcOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("AC openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "AC openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("AC openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("AC openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("AC", "openAndFill", inHigh.Length, AcLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
       RequireHistoryLength("AC", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("AC", "openAndFill", "outReal", outReal.Length, guardOutLen);

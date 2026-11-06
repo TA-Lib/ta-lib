@@ -626,7 +626,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_SUPERTREND_OpenImpl( struct TA_SUPERTREN
       optInMultiplier = 3;
    else if( !(optInMultiplier >= 0e0 && optInMultiplier <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

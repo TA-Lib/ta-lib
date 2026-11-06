@@ -1153,9 +1153,6 @@ public partial class Core
       int i = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1214,7 +1211,7 @@ public partial class Core
       } else if( (int)optInSignalMAType < MATypes.Min || (int)optInSignalMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1453,7 +1450,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public KstextStream KstextOpen( ReadOnlySpan<double> inReal, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("KSTEXT open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "KSTEXT open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return KstextOpenInternal(inReal, 0, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
    }
@@ -1511,7 +1507,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public KstextStream KstextOpenAndFill( ReadOnlySpan<double> inReal, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType, Span<double> outKST, Span<double> outKSTSignal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("KSTEXT openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "KSTEXT openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("KSTEXT", "openAndFill", inReal.Length, KstextLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType));
       RequireFillLength("KSTEXT", "openAndFill", "outKST", outKST.Length, guardOutLen);

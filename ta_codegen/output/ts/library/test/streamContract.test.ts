@@ -188,29 +188,29 @@ function claiming(n: number): ArrayLike<number> {
   return { length: n } as ArrayLike<number>;
 }
 
-test('an empty history is a short history ahead of every leg presence, length and output check, an absent leg is named once a bar is there, and one past INDEX_MAX + 1 bars is the end-index fault', () => {
+test('an empty history is a short history answered after every leg presence, length, parameter and output check, an absent leg is named, and one past INDEX_MAX + 1 bars is the end-index fault', () => {
   let probes = 0;
   let legs = 0;
   let inclusive = 0;
   for (const s of SPECS) {
     const opts = dflt(s);
+    const lb = s.lookback(...opts) as number;
     const ins = inputsOf(s);
     const none = outputsOf(s).map(() => null);
+    const outs = outputsOf(s).map((o) => filled(o, 1));
     const empty = ins.map(() => new Float64Array(0));
-    rejects(() => s.open(...empty, ...opts), 'TA_INSUFFICIENT_HISTORY', `${s.fn} open: empty`, `${s.fn} open: history shorter than lookback + 1`);
-    rejects(() => s.fill(...empty, ...opts, ...none), 'TA_INSUFFICIENT_HISTORY', `${s.fn} openAndFill: empty, no outputs`, `${s.fn} openAndFill: history shorter than lookback + 1`);
+    rejects(() => s.open(...empty, ...opts), 'TA_INSUFFICIENT_HISTORY', `${s.fn} open: empty`, `${s.fn} open: history has length 0, needs ${lb + 1}`);
+    rejects(() => s.fill(...empty, ...opts, ...outs), 'TA_INSUFFICIENT_HISTORY', `${s.fn} openAndFill: empty`, `${s.fn} openAndFill: history has length 0, needs ${lb + 1}`);
+    rejects(() => s.fill(...empty, ...opts, ...none), 'TA_BAD_PARAM', `${s.fn} openAndFill: empty, no outputs`, `${s.fn} openAndFill: ${outputsOf(s)[0].key} is absent`);
     if (ins.length > 1) {
-      // As in every backend, an empty history outranks an absent leg.
-      const firstOnly = ins.map((_, k) => (k === 0 ? new Float64Array(0) : null));
-      rejects(() => s.open(...firstOnly, ...opts), 'TA_INSUFFICIENT_HISTORY', `${s.fn} open: empty history, absent legs`, `${s.fn} open: history shorter than lookback + 1`);
-      rejects(() => s.fill(...firstOnly, ...opts, ...none), 'TA_INSUFFICIENT_HISTORY', `${s.fn} openAndFill: empty history, absent legs`, `${s.fn} openAndFill: history shorter than lookback + 1`);
-      // A one-bar history is past that check, so the absent leg is named.
-      const oneBar = ins.map((_, k) => (k === 0 ? new Float64Array(1) : null));
-      rejects(() => s.open(...oneBar, ...opts), 'TA_BAD_PARAM', `${s.fn} open: one bar, absent legs`, `${s.fn} open: ${ins[1].key} is absent`);
-      rejects(() => s.fill(...oneBar, ...opts, ...none), 'TA_BAD_PARAM', `${s.fn} openAndFill: one bar, absent legs`, `${s.fn} openAndFill: ${ins[1].key} is absent`);
+      for (const n of [0, 1]) {
+        const absentLegs = ins.map((_, k) => (k === 0 ? new Float64Array(n) : null));
+        rejects(() => s.open(...absentLegs, ...opts), 'TA_BAD_PARAM', `${s.fn} open: ${n} bars, absent legs`, `${s.fn} open: ${ins[1].key} is absent`);
+        rejects(() => s.fill(...absentLegs, ...opts, ...none), 'TA_BAD_PARAM', `${s.fn} openAndFill: ${n} bars, absent legs`, `${s.fn} openAndFill: ${ins[1].key} is absent`);
+      }
       const firstEmpty = ins.map((_, k) => new Float64Array(k === 0 ? 0 : 5));
-      rejects(() => s.open(...firstEmpty, ...opts), 'TA_INSUFFICIENT_HISTORY', `${s.fn} open: empty history, longer legs`, `${s.fn} open: history shorter than lookback + 1`);
-      rejects(() => s.fill(...firstEmpty, ...opts, ...none), 'TA_INSUFFICIENT_HISTORY', `${s.fn} openAndFill: empty history, longer legs`, `${s.fn} openAndFill: history shorter than lookback + 1`);
+      rejects(() => s.open(...firstEmpty, ...opts), 'TA_BAD_PARAM', `${s.fn} open: empty history, longer legs`, `${s.fn} open: ${ins[1].key} has length 5, needs 0`);
+      rejects(() => s.fill(...firstEmpty, ...opts, ...outs), 'TA_BAD_PARAM', `${s.fn} openAndFill: empty history, longer legs`, `${s.fn} openAndFill: ${ins[1].key} has length 5, needs 0`);
       legs++;
     }
     const past = ins.map(() => claiming(Core.INDEX_MAX + 2));

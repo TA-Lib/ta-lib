@@ -468,7 +468,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_ATR_OpenImpl( struct TA_ATR_Stream **str
       optInTimePeriod = 14;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

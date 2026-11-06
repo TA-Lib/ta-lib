@@ -1506,7 +1506,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_HT_TRENDMODE_OpenImpl( struct TA_HT_TREN
    *stream = NULL;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inReal || !outInteger ) return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

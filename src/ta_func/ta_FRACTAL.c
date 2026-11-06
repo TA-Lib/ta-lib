@@ -554,7 +554,7 @@ static TA_RetCode TA_FRACTAL_OpenImpl( struct TA_FRACTAL_Stream **stream, const 
       optInRightBars = 2;
    else if( (int)optInRightBars < 1 || (int)optInRightBars > 100000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

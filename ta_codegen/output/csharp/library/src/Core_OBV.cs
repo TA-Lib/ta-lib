@@ -495,16 +495,13 @@ public partial class Core
       double prevOBV = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( inVolume.Length != inReal.Length ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -583,9 +580,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public ObvStream ObvOpen( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("OBV open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "OBV open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inVolume.IsEmpty ) throw new TALibArgumentException("OBV open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( !inReal.IsEmpty ) {
+         if( inVolume.IsEmpty ) throw new TALibArgumentException("OBV open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      }
       RequireHistoryLength("OBV", "open", "inVolume", inVolume.Length, inReal.Length);
       return ObvOpenInternal(inReal, inVolume, 0);
    }
@@ -619,9 +617,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public ObvStream ObvOpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("OBV openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "OBV openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inVolume.IsEmpty ) throw new TALibArgumentException("OBV openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( !inReal.IsEmpty ) {
+         if( inVolume.IsEmpty ) throw new TALibArgumentException("OBV openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("OBV", "openAndFill", inReal.Length, ObvLookback());
       RequireHistoryLength("OBV", "openAndFill", "inVolume", inVolume.Length, inReal.Length);
       RequireFillLength("OBV", "openAndFill", "outReal", outReal.Length, guardOutLen);

@@ -728,16 +728,13 @@ public partial class Core
       int lookbackTotal = 0;
       int historyLen = inOpen.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( inHigh.Length != inOpen.Length || inLow.Length != inOpen.Length || inClose.Length != inOpen.Length ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -917,11 +914,12 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public Cdlunique3riverStream Cdlunique3riverOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new InsufficientHistoryException("CDLUNIQUE3RIVER open: history is empty", nameof(inOpen));
       if( inOpen.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLUNIQUE3RIVER open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLUNIQUE3RIVER open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLUNIQUE3RIVER open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLUNIQUE3RIVER open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inOpen.IsEmpty ) {
+         if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLUNIQUE3RIVER open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+         if( inLow.IsEmpty ) throw new TALibArgumentException("CDLUNIQUE3RIVER open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("CDLUNIQUE3RIVER open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       RequireHistoryLength("CDLUNIQUE3RIVER", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLUNIQUE3RIVER", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLUNIQUE3RIVER", "open", "inClose", inClose.Length, inOpen.Length);
@@ -962,11 +960,12 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public Cdlunique3riverStream Cdlunique3riverOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new InsufficientHistoryException("CDLUNIQUE3RIVER openAndFill: history is empty", nameof(inOpen));
       if( inOpen.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLUNIQUE3RIVER openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLUNIQUE3RIVER openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLUNIQUE3RIVER openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLUNIQUE3RIVER openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inOpen.IsEmpty ) {
+         if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLUNIQUE3RIVER openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+         if( inLow.IsEmpty ) throw new TALibArgumentException("CDLUNIQUE3RIVER openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("CDLUNIQUE3RIVER openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("CDLUNIQUE3RIVER", "openAndFill", inOpen.Length, Cdlunique3riverLookback());
       RequireHistoryLength("CDLUNIQUE3RIVER", "openAndFill", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLUNIQUE3RIVER", "openAndFill", "inLow", inLow.Length, inOpen.Length);

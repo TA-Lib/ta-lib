@@ -1060,9 +1060,6 @@ public partial class Core
       Span<double> tempBuffer;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1086,7 +1083,7 @@ public partial class Core
       } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1212,7 +1209,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public BbwStream BbwOpen( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("BBW open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "BBW open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return BbwOpenInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
    }
@@ -1253,7 +1249,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public BbwStream BbwOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("BBW openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "BBW openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("BBW", "openAndFill", inReal.Length, BbwLookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
       RequireFillLength("BBW", "openAndFill", "outReal", outReal.Length, guardOutLen);

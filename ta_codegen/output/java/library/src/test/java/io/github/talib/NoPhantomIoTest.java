@@ -1013,10 +1013,7 @@ public class NoPhantomIoTest {
                 // The documented failure path, first: a history one bar short of
                 // lookback + 1 must be refused, and refused BEFORE anything is
                 // written -- so with zero-length outputs the refusal must still be
-                // the documented exception and never an out-of-bounds. (At a
-                // lookback of 0 the short history is empty, which the opener
-                // rejects ahead of its other checks; either refusal proves the
-                // same thing.)
+                // the documented exception and never an out-of-bounds.
                 //
                 // The discriminator is the carried code, not the type: what the
                 // library raises implements TALibFailure, and a write past the

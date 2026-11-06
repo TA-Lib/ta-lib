@@ -1418,7 +1418,7 @@ pub fn api_leg_args(func: &FuncDef, names: &[String]) -> Vec<String> {
 /// every series present and non-empty, or it would report an index the caller
 /// never passed; given an `endIdx`, the positional tier checks in the order
 /// every backend shares (the range first). An opener leaves its legs to the
-/// positional tier, whose order puts an empty history ahead of an absent leg.
+/// positional tier, whose order puts rS2 ahead of an absent leg.
 /// Then each parameter (an omitted one as its sentinel) and `core`.
 pub(crate) fn api_prologue(func: &FuncDef, entry: &str, batch: bool) -> String {
     let mut s = String::new();

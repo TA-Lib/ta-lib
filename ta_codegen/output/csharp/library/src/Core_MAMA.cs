@@ -1690,9 +1690,6 @@ public partial class Core
       double prevPhase = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1706,7 +1703,7 @@ public partial class Core
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -2126,7 +2123,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MamaStream MamaOpen( ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MAMA open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MAMA open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return MamaOpenInternal(inReal, 0, optInFastLimit, optInSlowLimit);
    }
@@ -2165,7 +2161,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MamaStream MamaOpenAndFill( ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit, Span<double> outMAMA, Span<double> outFAMA )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MAMA openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MAMA openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MAMA", "openAndFill", inReal.Length, MamaLookback(optInFastLimit, optInSlowLimit));
       RequireFillLength("MAMA", "openAndFill", "outMAMA", outMAMA.Length, guardOutLen);

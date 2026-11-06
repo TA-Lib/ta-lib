@@ -212,21 +212,16 @@ fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
     assert!(checked >= 200, "only {checked} public fills inspected");
 }
 
-/// An empty history (rule rS7) on EVERY C# public opener — corpus-wide, for the
+/// Rule rS2, then rS4 and rS5, on EVERY C# public opener — corpus-wide, for the
 /// same reason as the Java gate below.
 ///
-/// C# is the backend where the probe/corpus gap is widest. Its live empty-history
-/// rejection is the public frame's `IsEmpty` throw, not the core's `historyLen < 1` return, which
-/// the frame makes unreachable from the public API — so
-/// `scripts/check_stream_retcodes.py`, which reads the core, is not evidence
-/// about the surface a caller touches. `StreamApiTest` probes it on `SMA`; this
-/// is what covers the other 175.
-///
-/// Two clauses, because the first input means something the others do not: it
-/// carries the history, so empty THERE is rS7; a later one is a length
-/// disagreement, which is the catch-all like every other argument fault.
+/// An empty FIRST input is the history's rS7, which the core's anchor guard
+/// answers after every argument check, so the public frame must not refuse it:
+/// a frame-level `IsEmpty` throw would answer it ahead of rS3, rS4 and rS5. A
+/// later empty input beside a non-empty history is absent, which is the
+/// catch-all like every other argument fault.
 #[test]
-fn csharp_public_openers_reject_an_empty_history_as_insufficient() {
+fn csharp_public_openers_leave_an_empty_history_to_the_core() {
     let registry = make_registry();
     let helpers = common::make_helpers();
     let enums = load_enums();
@@ -250,11 +245,37 @@ fn csharp_public_openers_reject_an_empty_history_as_insufficient() {
                 .unwrap_or_else(|| panic!("{}: no public {verb}", func.name));
             let body = &src[at..];
             let history = &inputs[0];
+            let body = &body[..body.find("\n   }\n").unwrap_or(body.len())];
+            assert!(
+                !body.contains(&format!("if( {history}.IsEmpty ) throw")),
+                "{}: {verb} refuses an empty history ahead of the argument checks",
+                func.name
+            );
+            // A later empty input is absent only beside a non-empty history:
+            // beside an empty one it has the right length, and rS7 answers.
+            let gate = format!("if( !{history}.IsEmpty ) {{");
+            if inputs.len() > 1 {
+                let at_gate = body.find(&gate).unwrap_or_else(|| {
+                    panic!("{}: {verb} refuses an empty later input beside an empty history", func.name)
+                });
+                for extra in &inputs[1..] {
+                    let other = format!("if( {extra}.IsEmpty ) throw");
+                    let at_other = body.find(&other).unwrap_or_else(|| panic!("{}: {verb} does not check `{extra}`", func.name));
+                    let close = body[at_gate..].find("\n      }").map_or(body.len(), |c| at_gate + c);
+                    assert!(
+                        at_gate < at_other && at_other < close,
+                        "{}: {verb} checks `{extra}` outside the non-empty-history gate",
+                        func.name
+                    );
+                }
+            } else {
+                assert!(!body.contains(&gate), "{}: {verb} gates on a history with no other input", func.name);
+            }
             let s1 = format!(
-                "if( {history}.IsEmpty ) throw new InsufficientHistoryException(\"{base} {verb}: history is empty\", nameof({history}));"
+                "if( {history}.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof({history}), \"{base} {verb}: history is longer than IndexMax + 1\", RetCode.OutOfRangeEndIndex);"
             );
             let at_s1 = body.find(&s1).unwrap_or_else(|| {
-                panic!("{}: {verb} does not answer rS7 on an empty history", func.name)
+                panic!("{}: {verb} does not answer rS2 on the history", func.name)
             });
             for extra in &inputs[1..] {
                 let other = format!(
@@ -321,7 +342,7 @@ fn csharp_public_openers_reject_an_empty_history_as_insufficient() {
 /// that is not there), and **everything else** follows it — the remaining price
 /// legs as much as the outputs. A one-sided version that only pinned the outputs
 /// would pass against a frame that checks every leg up front, which reports the
-/// leg where C reports the empty history.
+/// leg where C reports a history longer than `INDEX_MAX + 1`.
 ///
 /// An output is checked with `requireLength`, not `requireArgument`: one call
 /// carries rS4 and rS5, exactly as the batch wrapper's does. Requiring the
@@ -533,13 +554,7 @@ fn ts_public_openers_type_test_then_the_index_pair_then_the_buffers() {
                     let scope = body_after(&src, impl_at);
                     let clause = scope.find(" && (overlaps(").unwrap_or_else(|| panic!("{f}: no overlap guard on its fill body"));
                     let g = scope[..clause].rfind('\n').map_or(0, |i| i + 1);
-                    let empty = "if (historyLen < 1) {\n    return RetCode.INSUFFICIENT_HISTORY;";
-                    let past_empty = scope.find(empty).unwrap_or_else(|| panic!("{f}: a fill body with no empty-history check"))
-                        + empty.len();
-                    let insufficient = scope[past_empty..]
-                        .find("return RetCode.INSUFFICIENT_HISTORY")
-                        .map(|i| past_empty + i)
-                        .unwrap_or_else(|| panic!("{f}: a fill body with no history check"));
+                    let insufficient = scope.find("return RetCode.INSUFFICIENT_HISTORY").unwrap_or_else(|| panic!("{f}: a fill body with no history check"));
                     assert!(g < insufficient, "{f}: the overlap guard follows the history check it is conditioned on");
                     let guard = scope[g..].lines().next().unwrap_or_default();
                     assert!(
@@ -751,11 +766,14 @@ fn strip_comments(s: &str) -> String {
 /// bars was an ASan stack-buffer-overflow; the same call panicked in Rust,
 /// where the count is `usize`.
 ///
+/// The same guard is rule rS7 for an empty history, so no separate emptiness
+/// check may precede it: that would answer rS7 ahead of rS3 and rS4.
+///
 /// Two ORDER assertions, because presence alone is the weaker half of this and
 /// a guard in the wrong place is exactly the bug:
 ///
-///   * after the history-emptiness check — `historyLen - 1` is evaluated by the
-///     guard itself, and in Rust `historyLen` is a `usize`;
+///   * in Rust, before anything evaluates `historyLen - 1`, which underflows
+///     on an empty history;
 ///   * before the first loop in the body — a guard the loop has already run
 ///     past protects nothing.
 #[test]
@@ -794,13 +812,14 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
     let helpers = common::make_helpers();
     let enums = load_enums();
 
-    // guard text, the emptiness check it must follow, and the signature marker
-    let specs: [(&str, &str, &str); 5] = [
-        ("C", "if( startIdx > historyLen - 1 )", "if( historyLen < 1 ) return TA_INSUFFICIENT_HISTORY;"),
-        ("Rust", "if startIdx > endIdx {", ".is_empty()"),
-        ("Java", "if( startIdx > endIdx ) {", "historyLen < 1"),
-        ("C#", "if( startIdx > endIdx ) {", "historyLen < 1"),
-        ("TS", "if (startIdx > endIdx) {", "historyLen < 1"),
+    // guard text, the emptiness check that must not exist, and the arm-level
+    // guard a managed DualMode body relies on instead (C and Rust hoist theirs)
+    let specs: [(&str, &str, &str, Option<&str>); 5] = [
+        ("C", "if( startIdx >= historyLen )", "historyLen < 1", None),
+        ("Rust", "if startIdx >= historyLen {", ".is_empty()", None),
+        ("Java", "if( startIdx >= historyLen ) {", "historyLen < 1", Some("if( startIdx > endIdx ) {")),
+        ("C#", "if( startIdx >= historyLen ) {", "historyLen < 1", Some("if( startIdx > endIdx ) {")),
+        ("TS", "if (startIdx >= historyLen) {", "historyLen < 1", Some("if (startIdx > endIdx) {")),
     ];
     // Per backend: the definition keyword, which is what tells a definition
     // from a call site, and the `_OpenImpl` marker in that backend's own casing
@@ -832,19 +851,24 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
         ];
 
         for (b, src) in sources.iter().enumerate() {
-            let (lang, guard, empty_check) = specs[b];
+            let (lang, guard, empty_check, arm_guard) = specs[b];
             for body in open_impls(src, shapes[b]) {
                 if body.is_empty() {
                     continue;
                 }
                 let body = &strip_comments(body);
-                let g = body.find(guard).unwrap_or_else(|| {
+                let g = body.find(guard).or_else(|| arm_guard.and_then(|a| body.find(a))).unwrap_or_else(|| {
                     panic!("{lang} {}_OpenImpl: no anchor guard — an anchor past the history would run the body's loop with a negative count", func.name)
                 });
-                if let Some(e) = body.find(empty_check) {
+                assert!(
+                    !body[..g].contains(empty_check),
+                    "{lang} {}_OpenImpl: an emptiness check answers rS7 ahead of the argument checks",
+                    func.name
+                );
+                if let Some(e) = body.find("historyLen - 1").filter(|_| lang == "Rust") {
                     assert!(
-                        e < g,
-                        "{lang} {}_OpenImpl: the anchor guard evaluates the history length, so it must come after the emptiness check",
+                        g < e,
+                        "{lang} {}_OpenImpl: `historyLen - 1` is evaluated before the anchor guard rejects an empty history",
                         func.name
                     );
                 }

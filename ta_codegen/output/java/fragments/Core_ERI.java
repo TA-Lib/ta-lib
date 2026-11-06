@@ -644,9 +644,6 @@
    {
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.INSUFFICIENT_HISTORY;
-      }
       if( historyLen > INDEX_MAX + 1 ) {
          return RetCode.OUT_OF_RANGE_END_INDEX;
       }
@@ -853,11 +850,10 @@
     * to {@link Core#eri} at that bar.
     * <p>The history must hold at least {@code eriLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+    * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-    * as in the batch API). An EMPTY history throws
-    * {@link InsufficientHistoryException} too, and a null argument
-    * {@link IllegalArgumentException}, both ahead of everything above.
+    * as in the batch API). A null argument throws
+    * {@link IllegalArgumentException}, ahead of everything above.
     */
    public EriStream eriOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {

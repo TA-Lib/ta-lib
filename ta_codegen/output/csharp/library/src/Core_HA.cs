@@ -789,16 +789,13 @@ public partial class Core
       double tempClose = 0;
       int historyLen = inOpen.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( inHigh.Length != inOpen.Length || inLow.Length != inOpen.Length || inClose.Length != inOpen.Length ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -946,11 +943,12 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public HaStream HaOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new InsufficientHistoryException("HA open: history is empty", nameof(inOpen));
       if( inOpen.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "HA open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TALibArgumentException("HA open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("HA open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("HA open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inOpen.IsEmpty ) {
+         if( inHigh.IsEmpty ) throw new TALibArgumentException("HA open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+         if( inLow.IsEmpty ) throw new TALibArgumentException("HA open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("HA open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       RequireHistoryLength("HA", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("HA", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("HA", "open", "inClose", inClose.Length, inOpen.Length);
@@ -994,11 +992,12 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public HaStream HaOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outHAOpen, Span<double> outHAHigh, Span<double> outHALow, Span<double> outHAClose )
    {
-      if( inOpen.IsEmpty ) throw new InsufficientHistoryException("HA openAndFill: history is empty", nameof(inOpen));
       if( inOpen.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "HA openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TALibArgumentException("HA openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("HA openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("HA openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inOpen.IsEmpty ) {
+         if( inHigh.IsEmpty ) throw new TALibArgumentException("HA openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+         if( inLow.IsEmpty ) throw new TALibArgumentException("HA openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("HA openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("HA", "openAndFill", inOpen.Length, HaLookback());
       RequireHistoryLength("HA", "openAndFill", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("HA", "openAndFill", "inLow", inLow.Length, inOpen.Length);

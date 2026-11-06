@@ -823,9 +823,6 @@ public partial class Core
       int lookbackTotal = 0;
       int historyLen = inOpen.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -837,7 +834,7 @@ public partial class Core
       } else if( !(optInPenetration >= 0e0 && optInPenetration <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1049,11 +1046,12 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CdleveningdojistarStream CdleveningdojistarOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration )
    {
-      if( inOpen.IsEmpty ) throw new InsufficientHistoryException("CDLEVENINGDOJISTAR open: history is empty", nameof(inOpen));
       if( inOpen.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLEVENINGDOJISTAR open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLEVENINGDOJISTAR open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLEVENINGDOJISTAR open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLEVENINGDOJISTAR open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inOpen.IsEmpty ) {
+         if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLEVENINGDOJISTAR open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+         if( inLow.IsEmpty ) throw new TALibArgumentException("CDLEVENINGDOJISTAR open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("CDLEVENINGDOJISTAR open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       RequireHistoryLength("CDLEVENINGDOJISTAR", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLEVENINGDOJISTAR", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLEVENINGDOJISTAR", "open", "inClose", inClose.Length, inOpen.Length);
@@ -1096,11 +1094,12 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CdleveningdojistarStream CdleveningdojistarOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new InsufficientHistoryException("CDLEVENINGDOJISTAR openAndFill: history is empty", nameof(inOpen));
       if( inOpen.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLEVENINGDOJISTAR openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLEVENINGDOJISTAR openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLEVENINGDOJISTAR openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLEVENINGDOJISTAR openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inOpen.IsEmpty ) {
+         if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLEVENINGDOJISTAR openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+         if( inLow.IsEmpty ) throw new TALibArgumentException("CDLEVENINGDOJISTAR openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("CDLEVENINGDOJISTAR openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("CDLEVENINGDOJISTAR", "openAndFill", inOpen.Length, CdleveningdojistarLookback(optInPenetration));
       RequireHistoryLength("CDLEVENINGDOJISTAR", "openAndFill", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLEVENINGDOJISTAR", "openAndFill", "inLow", inLow.Length, inOpen.Length);

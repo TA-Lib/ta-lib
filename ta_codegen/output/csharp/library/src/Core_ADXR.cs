@@ -601,9 +601,6 @@ public partial class Core
       RetCode retCode;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -615,7 +612,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -742,10 +739,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public AdxrStream AdxrOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("ADXR open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ADXR open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("ADXR open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("ADXR open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("ADXR open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("ADXR open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       RequireHistoryLength("ADXR", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("ADXR", "open", "inClose", inClose.Length, inHigh.Length);
       return AdxrOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
@@ -783,10 +781,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public AdxrStream AdxrOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("ADXR openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ADXR openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("ADXR openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("ADXR openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("ADXR openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("ADXR openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("ADXR", "openAndFill", inHigh.Length, AdxrLookback(optInTimePeriod));
       RequireHistoryLength("ADXR", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("ADXR", "openAndFill", "inClose", inClose.Length, inHigh.Length);

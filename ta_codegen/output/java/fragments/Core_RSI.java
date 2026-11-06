@@ -652,9 +652,6 @@
       double tempValue2 = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.INSUFFICIENT_HISTORY;
-      }
       if( historyLen > INDEX_MAX + 1 ) {
          return RetCode.OUT_OF_RANGE_END_INDEX;
       }
@@ -663,7 +660,7 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BAD_PARAM;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY;
@@ -832,11 +829,10 @@
     * to {@link Core#rsi} at that bar.
     * <p>The history must hold at least {@code rsiLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+    * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-    * as in the batch API). An EMPTY history throws
-    * {@link InsufficientHistoryException} too, and a null argument
-    * {@link IllegalArgumentException}, both ahead of everything above.
+    * as in the batch API). A null argument throws
+    * {@link IllegalArgumentException}, ahead of everything above.
     */
    public RsiStream rsiOpen( double inReal[], int optInTimePeriod )
    {

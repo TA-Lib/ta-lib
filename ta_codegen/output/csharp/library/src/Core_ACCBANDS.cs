@@ -829,9 +829,6 @@ public partial class Core
       int lookbackTotal = 0;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -843,7 +840,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1033,10 +1030,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public AccbandsStream AccbandsOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("ACCBANDS open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ACCBANDS open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("ACCBANDS open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("ACCBANDS open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("ACCBANDS open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("ACCBANDS open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       RequireHistoryLength("ACCBANDS", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("ACCBANDS", "open", "inClose", inClose.Length, inHigh.Length);
       return AccbandsOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
@@ -1078,10 +1076,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public AccbandsStream AccbandsOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("ACCBANDS openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ACCBANDS openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("ACCBANDS openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("ACCBANDS openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("ACCBANDS openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("ACCBANDS openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("ACCBANDS", "openAndFill", inHigh.Length, AccbandsLookback(optInTimePeriod));
       RequireHistoryLength("ACCBANDS", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("ACCBANDS", "openAndFill", "inClose", inClose.Length, inHigh.Length);

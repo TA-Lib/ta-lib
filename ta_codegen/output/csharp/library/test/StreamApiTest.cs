@@ -596,28 +596,27 @@ public static class StreamApiTest
                      RetCode.InsufficientHistory,
                      "SmaOpen(empty) carries InsufficientHistory");
 
-        // It names the offending parameter — the core's own rejection travels
-        // through a shared ladder that has no argument to name — and the empty
-        // history is evaluated first: this call is also an absent output, and
-        // the empty history is still what it reports.
+        // It names the offending parameter. An empty history is answered after
+        // every argument check, so with an absent output too it is the output
+        // this call reports.
         _checks++;
         try
         {
             core.SmaOpenAndFill(null!, 14, null!);
             _failures++;
-            Console.WriteLine("  FAIL: expected an empty-input rejection");
+            Console.WriteLine("  FAIL: expected an absent-output rejection");
         }
         catch (ArgumentException e)
         {
-            if (e.ParamName != "inReal")
+            if (e.ParamName != "outReal")
             {
                 _failures++;
-                Console.WriteLine($"  FAIL: reported \"{e.ParamName}\", expected \"inReal\"");
+                Console.WriteLine($"  FAIL: reported \"{e.ParamName}\", expected \"outReal\"");
             }
-            if ((e as ITALibFailure)?.RetCode != RetCode.InsufficientHistory)
+            if ((e as ITALibFailure)?.RetCode != RetCode.BadParam)
             {
                 _failures++;
-                Console.WriteLine("  FAIL: a null output pre-empted the empty history");
+                Console.WriteLine("  FAIL: the empty history pre-empted an absent output");
             }
         }
     }
@@ -1721,26 +1720,39 @@ public static class StreamApiTest
         StreamAccepts(() => core.BbandsOpen(input, 20, 2.0, 2.0, last), $"BbandsOpen({last})");
     }
 
-    /// <summary>An empty history ahead of every other opener check: it is a short
-    /// history (rule rS7) whatever else is wrong with the call.</summary>
-    private static void AnEmptyHistoryOutranksAnEmptyArgument()
+    /// <summary>An empty history is a short history (rule rS7), answered after
+    /// every other opener check.</summary>
+    private static void AnEmptyHistoryIsAShortHistory()
     {
         var core = new Core();
         double[] empty = [];
         double[] input = Closes(252);
+        double[] outReal = new double[252];
 
-        CheckRetCode(() => core.CdldojiOpen(empty, empty, empty, empty), RetCode.InsufficientHistory,
-            "a candlestick reaches it through four empty legs", "CDLDOJI open: ");
-        CheckRetCode(() => core.CdldojiOpen(empty, input, input, input), RetCode.InsufficientHistory,
-            "an empty history outranks the legs' length disagreement", "CDLDOJI open: ");
+        CheckRetCode(() => core.SmaOpenAndFill(empty, 30, outReal), RetCode.InsufficientHistory,
+            "the fill answers it", "SMA openAndFill: ");
         CheckRetCode(() => core.MaOpen(empty, 30, MAType.EMA), RetCode.InsufficientHistory,
             "the dispatch tier answers it too", "MA open: ");
-        CheckRetCode(() => core.MaOpen(empty, 30, (MAType)999), RetCode.InsufficientHistory,
-            "an empty history outranks an out-of-domain MAType", "MA open: ");
-        CheckRetCode(() => core.SmaOpenAndFill(empty, 0, empty), RetCode.InsufficientHistory,
-            "an empty history outranks a bad parameter and an empty output", "SMA openAndFill: ");
-        CheckRetCode(() => core.MavpOpen(empty, input, 2, 30, MAType.SMA), RetCode.InsufficientHistory,
+        // Beside an empty history an empty leg has the history's length.
+        CheckThrows<InsufficientHistoryException>(
+            () => core.CdldojiOpen(empty, empty, empty, empty), "a candlestick on four empty legs");
+        CheckRetCode(() => core.CdldojiOpenAndFill(empty, empty, empty, empty, new int[252]), RetCode.InsufficientHistory,
+            "a candlestick fill on four empty legs", "CDLDOJI openAndFill: ");
+        CheckRetCode(() => core.MavpOpen(empty, empty, 2, 30, MAType.SMA), RetCode.InsufficientHistory,
             "the period bank answers it too", "MAVP open: ");
+
+        // Every argument check outranks it. Beside a non-empty history an empty
+        // leg is an absent one.
+        CheckRetCode(() => core.CdldojiOpen(input, empty, input, input), RetCode.BadParam,
+            "an empty leg beside a full history is absent", "CDLDOJI open: inHigh is empty");
+        CheckRetCode(() => core.CdldojiOpen(empty, input, input, input), RetCode.BadParam,
+            "the legs' length disagreement outranks the empty history", "CDLDOJI open: ");
+        CheckRetCode(() => core.MaOpen(empty, 30, (MAType)999), RetCode.BadParam,
+            "an out-of-domain MAType outranks the empty history", "MA open: ");
+        CheckRetCode(() => core.SmaOpenAndFill(empty, 0, outReal), RetCode.BadParam,
+            "a bad parameter outranks the empty history", "SMA openAndFill: ");
+        CheckRetCode(() => core.SmaOpenAndFill(empty, 30, empty), RetCode.BadParam,
+            "an empty output outranks the empty history", "SMA openAndFill: outReal is empty");
 
         // A one-bar history reaches the warm-up check, after the arguments.
         CheckThrows<InsufficientHistoryException>(
@@ -2106,7 +2118,7 @@ public static class StreamApiTest
         NullArgumentsAreNamed();
         AHistoryPastTheIndexDomainIsAnIndexFault();
         OpenersCheckTheirArguments();
-        AnEmptyHistoryOutranksAnEmptyArgument();
+        AnEmptyHistoryIsAShortHistory();
         TheFillOutputBoundFromBothSides();
         TheFillOutputBoundHoldsOnEveryTier();
         // Literal floors, HERE and not inside the methods above: a floor that

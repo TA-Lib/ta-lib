@@ -749,9 +749,6 @@ public partial class Core
       int outNbElement1 = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -775,7 +772,7 @@ public partial class Core
       } else if( (int)optInFastD_MAType < MATypes.Min || (int)optInFastD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -923,7 +920,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public StochrsiStream StochrsiOpen( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("STOCHRSI open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "STOCHRSI open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return StochrsiOpenInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
    }
@@ -967,7 +963,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public StochrsiStream StochrsiOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, Span<double> outFastK, Span<double> outFastD )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("STOCHRSI openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "STOCHRSI openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("STOCHRSI", "openAndFill", inReal.Length, StochrsiLookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType));
       RequireFillLength("STOCHRSI", "openAndFill", "outFastK", outFastK.Length, guardOutLen);

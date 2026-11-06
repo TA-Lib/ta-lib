@@ -948,9 +948,6 @@ public partial class Core
       MAType tempMAType;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -984,7 +981,7 @@ public partial class Core
       } else if( (int)optInSignalMAType < MATypes.Min || (int)optInSignalMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1162,7 +1159,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MacdextStream MacdextOpen( ReadOnlySpan<double> inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MACDEXT open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MACDEXT open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return MacdextOpenInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
    }
@@ -1211,7 +1207,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MacdextStream MacdextOpenAndFill( ReadOnlySpan<double> inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MACDEXT openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MACDEXT openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MACDEXT", "openAndFill", inReal.Length, MacdextLookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
       RequireFillLength("MACDEXT", "openAndFill", "outMACD", outMACD.Length, guardOutLen);

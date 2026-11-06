@@ -724,7 +724,7 @@ static TA_RetCode TA_CRSI_OpenImpl( struct TA_CRSI_Stream **stream, const double
       optInRankPeriod = 100;
    else if( (int)optInRankPeriod < 2 || (int)optInRankPeriod > 10000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

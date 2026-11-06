@@ -1030,9 +1030,6 @@ public partial class Core
    private RetCode MaOpenImpl( MaStream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType )
    {
       int historyLen = inReal.Length;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1193,9 +1190,6 @@ public partial class Core
       outBegIdx = 0;
       outNBElement = 0;
       int historyLen = inReal.Length;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1361,9 +1355,6 @@ public partial class Core
       outBegIdx = 0;
       outNBElement = 0;
       int historyLen = inReal.Length;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1530,7 +1521,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MaStream MaOpen( ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MA open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MA open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return MaOpenInternal(inReal, 0, optInTimePeriod, optInMAType);
    }
@@ -1567,7 +1557,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MaStream MaOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MA openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MA openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MA", "openAndFill", inReal.Length, MaLookback(optInTimePeriod, optInMAType));
       RequireFillLength("MA", "openAndFill", "outReal", outReal.Length, guardOutLen);

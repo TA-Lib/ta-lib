@@ -943,9 +943,6 @@ public partial class Core
       double prevVIDYA = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -959,7 +956,7 @@ public partial class Core
       } else if( optInCMOPeriod < 2 || optInCMOPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1197,7 +1194,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public VidyaStream VidyaOpen( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInCMOPeriod )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("VIDYA open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "VIDYA open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return VidyaOpenInternal(inReal, 0, optInTimePeriod, optInCMOPeriod);
    }
@@ -1235,7 +1231,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public VidyaStream VidyaOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInCMOPeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("VIDYA openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "VIDYA openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("VIDYA", "openAndFill", inReal.Length, VidyaLookback(optInTimePeriod, optInCMOPeriod));
       RequireFillLength("VIDYA", "openAndFill", "outReal", outReal.Length, guardOutLen);

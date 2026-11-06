@@ -863,9 +863,6 @@ public partial class Core
       int nSecond = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -879,7 +876,7 @@ public partial class Core
       } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1089,7 +1086,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public TsiStream TsiOpen( ReadOnlySpan<double> inReal, int optInFirstPeriod, int optInSecondPeriod )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("TSI open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "TSI open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return TsiOpenInternal(inReal, 0, optInFirstPeriod, optInSecondPeriod);
    }
@@ -1127,7 +1123,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public TsiStream TsiOpenAndFill( ReadOnlySpan<double> inReal, int optInFirstPeriod, int optInSecondPeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("TSI openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "TSI openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("TSI", "openAndFill", inReal.Length, TsiLookback(optInFirstPeriod, optInSecondPeriod));
       RequireFillLength("TSI", "openAndFill", "outReal", outReal.Length, guardOutLen);

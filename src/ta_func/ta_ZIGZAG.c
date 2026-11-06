@@ -577,7 +577,7 @@ static TA_RetCode TA_ZIGZAG_OpenImpl( struct TA_ZIGZAG_Stream **stream, const do
       optInMinTrendLength = 1;
    else if( (int)optInMinTrendLength < 1 || (int)optInMinTrendLength > 100000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

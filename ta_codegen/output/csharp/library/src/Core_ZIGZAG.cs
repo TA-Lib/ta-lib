@@ -872,9 +872,6 @@ public partial class Core
       double pivot = 0;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -891,7 +888,7 @@ public partial class Core
       } else if( optInMinTrendLength < 1 || optInMinTrendLength > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1045,9 +1042,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public ZigzagStream ZigzagOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInSensitivity, int optInMinTrendLength )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("ZIGZAG open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ZIGZAG open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("ZIGZAG open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("ZIGZAG open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       RequireHistoryLength("ZIGZAG", "open", "inLow", inLow.Length, inHigh.Length);
       return ZigzagOpenInternal(inHigh, inLow, 0, optInSensitivity, optInMinTrendLength);
    }
@@ -1089,9 +1087,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public ZigzagStream ZigzagOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInSensitivity, int optInMinTrendLength, Span<double> outZigZag, Span<int> outTrend, Span<int> outPivotIdx )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("ZIGZAG openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ZIGZAG openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("ZIGZAG openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("ZIGZAG openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("ZIGZAG", "openAndFill", inHigh.Length, ZigzagLookback(optInSensitivity, optInMinTrendLength));
       RequireHistoryLength("ZIGZAG", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("ZIGZAG", "openAndFill", "outZigZag", outZigZag.Length, guardOutLen);

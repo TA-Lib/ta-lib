@@ -927,9 +927,6 @@
    private RetCode maOpenImpl( MaStream sp, double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType )
    {
       int historyLen = inReal.length;
-      if( historyLen < 1 ) {
-         return RetCode.INSUFFICIENT_HISTORY;
-      }
       if( historyLen > INDEX_MAX + 1 ) {
          return RetCode.OUT_OF_RANGE_END_INDEX;
       }
@@ -1100,9 +1097,6 @@
    private RetCode maOpenAndFillImpl( MaStream sp, double inReal[], int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int historyLen = inReal.length;
-      if( historyLen < 1 ) {
-         return RetCode.INSUFFICIENT_HISTORY;
-      }
       if( historyLen > INDEX_MAX + 1 ) {
          return RetCode.OUT_OF_RANGE_END_INDEX;
       }
@@ -1275,9 +1269,6 @@
    private RetCode maOpenAndFillInternalImpl( MaStream sp, double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int historyLen = inReal.length;
-      if( historyLen < 1 ) {
-         return RetCode.INSUFFICIENT_HISTORY;
-      }
       if( historyLen > INDEX_MAX + 1 ) {
          return RetCode.OUT_OF_RANGE_END_INDEX;
       }
@@ -1439,11 +1430,10 @@
     * to {@link Core#ma} at that bar.
     * <p>The history must hold at least {@code maLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+    * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
-    * parameter's documented default, as in the batch API). An EMPTY history throws
-    * {@link InsufficientHistoryException} too, and a null argument
-    * {@link IllegalArgumentException}, both ahead of everything above.
+    * parameter's documented default, as in the batch API). A null argument throws
+    * {@link IllegalArgumentException}, ahead of everything above.
     */
    public MaStream maOpen( double inReal[], int optInTimePeriod, MAType optInMAType )
    {

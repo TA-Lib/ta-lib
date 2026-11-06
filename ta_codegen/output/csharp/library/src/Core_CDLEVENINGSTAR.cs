@@ -769,9 +769,6 @@ public partial class Core
       int lookbackTotal = 0;
       int historyLen = inOpen.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -783,7 +780,7 @@ public partial class Core
       } else if( !(optInPenetration >= 0e0 && optInPenetration <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -973,11 +970,12 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CdleveningstarStream CdleveningstarOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration )
    {
-      if( inOpen.IsEmpty ) throw new InsufficientHistoryException("CDLEVENINGSTAR open: history is empty", nameof(inOpen));
       if( inOpen.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLEVENINGSTAR open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLEVENINGSTAR open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLEVENINGSTAR open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLEVENINGSTAR open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inOpen.IsEmpty ) {
+         if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLEVENINGSTAR open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+         if( inLow.IsEmpty ) throw new TALibArgumentException("CDLEVENINGSTAR open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("CDLEVENINGSTAR open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       RequireHistoryLength("CDLEVENINGSTAR", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLEVENINGSTAR", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLEVENINGSTAR", "open", "inClose", inClose.Length, inOpen.Length);
@@ -1019,11 +1017,12 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CdleveningstarStream CdleveningstarOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new InsufficientHistoryException("CDLEVENINGSTAR openAndFill: history is empty", nameof(inOpen));
       if( inOpen.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLEVENINGSTAR openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLEVENINGSTAR openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLEVENINGSTAR openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLEVENINGSTAR openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inOpen.IsEmpty ) {
+         if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLEVENINGSTAR openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+         if( inLow.IsEmpty ) throw new TALibArgumentException("CDLEVENINGSTAR openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("CDLEVENINGSTAR openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("CDLEVENINGSTAR", "openAndFill", inOpen.Length, CdleveningstarLookback(optInPenetration));
       RequireHistoryLength("CDLEVENINGSTAR", "openAndFill", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLEVENINGSTAR", "openAndFill", "inLow", inLow.Length, inOpen.Length);

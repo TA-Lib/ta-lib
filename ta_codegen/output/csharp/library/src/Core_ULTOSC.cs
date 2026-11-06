@@ -1236,9 +1236,6 @@ public partial class Core
       int maxIdx_term = (32)-1;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1260,7 +1257,7 @@ public partial class Core
       } else if( optInTimePeriod3 < 1 || optInTimePeriod3 > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1559,10 +1556,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public UltoscStream UltoscOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("ULTOSC open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ULTOSC open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("ULTOSC open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("ULTOSC open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("ULTOSC open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("ULTOSC open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       RequireHistoryLength("ULTOSC", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("ULTOSC", "open", "inClose", inClose.Length, inHigh.Length);
       return UltoscOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
@@ -1604,10 +1602,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public UltoscStream UltoscOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("ULTOSC openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ULTOSC openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("ULTOSC openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("ULTOSC openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("ULTOSC openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("ULTOSC openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("ULTOSC", "openAndFill", inHigh.Length, UltoscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3));
       RequireHistoryLength("ULTOSC", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("ULTOSC", "openAndFill", "inClose", inClose.Length, inHigh.Length);

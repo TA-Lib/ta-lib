@@ -839,20 +839,17 @@ impl Core {
     fn ht_phasor_open_impl_scalar(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInPhase: &mut [f64], outQuadrature: &mut [f64], outStride: usize,
     ) -> Result<HtPhasorStream, RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::InsufficientHistory);
-        }
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        if startIdx > endIdx {
+        if startIdx >= historyLen {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
@@ -1315,9 +1312,6 @@ impl Core {
     pub fn ht_phasor_open_and_fill(
         &self, inReal: &[f64], outInPhase: &mut [f64], outQuadrature: &mut [f64],
     ) -> Result<(HtPhasorStream, OutRange), RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::InsufficientHistory);
-        }
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }

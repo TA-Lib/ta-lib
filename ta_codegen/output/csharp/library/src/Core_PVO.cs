@@ -1128,9 +1128,6 @@ public partial class Core
       int i = 0;
       int historyLen = inVolume.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1149,7 +1146,7 @@ public partial class Core
       } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1311,7 +1308,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public PvoStream PvoOpen( ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
-      if( inVolume.IsEmpty ) throw new InsufficientHistoryException("PVO open: history is empty", nameof(inVolume));
       if( inVolume.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inVolume), "PVO open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return PvoOpenInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
@@ -1350,7 +1346,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public PvoStream PvoOpenAndFill( ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, Span<double> outReal )
    {
-      if( inVolume.IsEmpty ) throw new InsufficientHistoryException("PVO openAndFill: history is empty", nameof(inVolume));
       if( inVolume.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inVolume), "PVO openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("PVO", "openAndFill", inVolume.Length, PvoLookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       RequireFillLength("PVO", "openAndFill", "outReal", outReal.Length, guardOutLen);

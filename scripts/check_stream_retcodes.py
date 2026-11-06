@@ -9,8 +9,9 @@ Rule rS7 (https://ta-lib.org/spec/streaming/#rs7): a streaming
 must be distinguishable from `TA_BAD_PARAM`, which always means the call itself
 is wrong.
 
-An EMPTY history is rS7 too, but is emitted as its own arm ahead of every
-presence check (#268), so it is scanned separately.
+An EMPTY history is rS7 too. No arm of its own answers it: the anchor guard
+`startIdx >= historyLen`, after every argument check, does, so that guard is
+scanned separately.
 
 Why a structural check and not a probe. The condition is emitted from every
 backend independently at half a dozen sites each -- a transcribed early return, an
@@ -45,8 +46,8 @@ import sys
 #             what makes this a non-circular invariant rather than a restatement
 #             of whatever the emitter happens to produce.
 #
-# The `historyLen < 1` arm -- an EMPTY history -- is a different emission and is
-# scanned separately below.
+# The anchor guard -- what answers an EMPTY history -- is a different emission
+# and is scanned separately below.
 #
 # The floors are LITERAL, and per backend and per shape. A floor derived from
 # what the scan finds moves with it, and would let every arm vanish while still
@@ -86,28 +87,29 @@ BACKENDS = [
 ]
 
 
-# The same idea over the EMPTY-history arm: it is emitted once per entry point in
-# every backend, ahead of the presence checks, so a site that answers anything
-# but rS7's code has to be loud. Same literal floors, same reason.
+# The same idea over the anchor guard, which is what answers an EMPTY history:
+# it is emitted once per strided `_OpenImpl` in every backend, so a site that
+# answers anything but rS7's code has to be loud. Same literal floors, same
+# reason.
 EMPTY_ARMS = [
     ("C", os.path.join("src", "ta_func"), ".c", "TA_INSUFFICIENT_HISTORY",
-     re.compile(r"if\(\s*historyLen\s*<\s*1\s*\)\s*return\s+(TA_\w+)\s*;"), 500),
+     re.compile(r"if\(\s*startIdx\s*>=\s*historyLen\s*\)[\s\S]{0,120}?return\s+(TA_\w+)\s*;"), 230),
 
     ("Rust", os.path.join("ta_codegen", "output", "rust", "library", "src", "ta_func"), ".rs",
      "InsufficientHistory",
-     re.compile(r"if\s+\w+\.is_empty\(\)\s*\{\s*\n\s*return\s+Err\(RetCode::(\w+)\)\s*;"), 170),
+     re.compile(r"if\s+startIdx\s*>=\s*historyLen\s*\{[\s\S]{0,160}?return\s+Err\(RetCode::(\w+)\)\s*;"), 230),
 
     ("Java", os.path.join("ta_codegen", "output", "java", "fragments"), ".java",
      "INSUFFICIENT_HISTORY",
-     re.compile(r"if\(\s*historyLen\s*<\s*1\s*\)\s*\{\s*\n\s*return\s+RetCode\.(\w+)\s*;"), 170),
+     re.compile(r"if\(\s*startIdx\s*>=\s*historyLen\s*\)\s*\{[\s\S]{0,160}?return\s+RetCode\.(\w+)\s*;"), 220),
 
     ("C#", os.path.join("ta_codegen", "output", "csharp", "library", "src"), ".cs",
      "InsufficientHistory",
-     re.compile(r"if\(\s*historyLen\s*<\s*1\s*\)\s*\{\s*\n\s*return\s+RetCode\.(\w+)\s*;"), 170),
+     re.compile(r"if\(\s*startIdx\s*>=\s*historyLen\s*\)\s*\{[\s\S]{0,160}?return\s+RetCode\.(\w+)\s*;"), 220),
 
     ("TypeScript", os.path.join("ta_codegen", "output", "ts", "library", "src", "func"), ".ts",
      "INSUFFICIENT_HISTORY",
-     re.compile(r"if\s*\(\s*historyLen\s*<\s*1\s*\)\s*\{\s*\n\s*return\s+RetCode\.(\w+)\s*;"), 170),
+     re.compile(r"if\s*\(\s*startIdx\s*>=\s*historyLen\s*\)\s*\{[\s\S]{0,160}?return\s+RetCode\.(\w+)\s*;"), 220),
 ]
 
 
@@ -177,14 +179,14 @@ def check_empty_history_retcodes(root_dir: str) -> bool:
             print(f"Error: {label}: {wrong[0]}")
             return False
         if found < floor:
-            print(f"Error: {label}: {found} empty-history arm(s) matched, expected at "
+            print(f"Error: {label}: {found} anchor guard(s) matched, expected at "
                   f"least {floor}. The emitted shape changed and this check is now "
                   f"looking at less than it was written to look at -- fix the pattern, "
                   f"do not lower the floor.")
             ok = False
             continue
         if wrong:
-            print(f"Error: {label}: {len(wrong)} empty-history arm(s) do not answer "
+            print(f"Error: {label}: {len(wrong)} anchor guard(s) do not answer "
                   f"{expected} (rule rS7):")
             for w in wrong[:12]:
                 print(f"         {w}")
@@ -192,7 +194,7 @@ def check_empty_history_retcodes(root_dir: str) -> bool:
                 print(f"         ... and {len(wrong) - 12} more")
             ok = False
             continue
-        print(f"  {label}: {found} arm(s), all on {expected}. OK.")
+        print(f"  {label}: {found} guard(s), all on {expected}. OK.")
     return ok
 
 

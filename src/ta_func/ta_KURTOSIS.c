@@ -652,7 +652,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KURTOSIS_OpenImpl( struct TA_KURTOSIS_St
       optInTimePeriod = 30;
    else if( (int)optInTimePeriod < 4 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

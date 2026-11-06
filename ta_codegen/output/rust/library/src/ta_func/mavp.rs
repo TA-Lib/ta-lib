@@ -666,9 +666,6 @@ impl Core {
     pub(crate) fn mavp_open_internal(
         &self, inReal: &[f64], inPeriods: &[f64], startIdx: usize, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType,
     ) -> Result<(MavpStream, f64), RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::InsufficientHistory);
-        }
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
@@ -818,9 +815,6 @@ impl Core {
     pub fn mavp_open_and_fill(
         &self, inReal: &[f64], inPeriods: &[f64], mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType, outReal: &mut [f64],
     ) -> Result<(MavpStream, OutRange), RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::InsufficientHistory);
-        }
         if inReal.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }

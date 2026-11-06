@@ -652,7 +652,7 @@ static TA_RetCode TA_ALMA_OpenImpl( struct TA_ALMA_Stream **stream, const double
       optInOffset = 0.85;
    else if( !(optInOffset >= 0e0 && optInOffset <= 1e0) )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

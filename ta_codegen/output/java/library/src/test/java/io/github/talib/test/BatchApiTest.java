@@ -1014,18 +1014,13 @@ public class BatchApiTest {
     }
 
     /**
-     * An empty history is rule rS7, and its order: it runs ahead of every
-     * presence check, answering {@code INSUFFICIENT_HISTORY}
-     * (https://ta-lib.org/spec/streaming/#rs7).
-     *
-     * <p>The order is the part worth a case of its own: the third call below is
-     * BOTH an empty history and an absent output, and the empty history is what
-     * it has to report. A null HISTORY is the one thing that cannot outrank —
-     * a length is not readable from an array that is not there — which is the
-     * last case, and the reason this rule is stated as "ahead of every presence
-     * check" rather than "first".
+     * An empty history is rule rS7, a history too short to open, and is answered
+     * where any short history is: after every argument check
+     * (https://ta-lib.org/spec/streaming/#rs7). A null HISTORY is the one
+     * argument checked ahead of the history's length, since a length is not
+     * readable from an array that is not there.
      */
-    static void anEmptyHistoryOutranksAnAbsentArgument() {
+    static void anEmptyHistoryIsAShortHistory() {
         final double[] empty = new double[0];
         final double[] out = new double[252];
 
@@ -1038,37 +1033,31 @@ public class BatchApiTest {
             "an empty history is a short history on the fill too", "SMA openAndFill");
         emptyReject++;
         checkThrows(InsufficientHistoryException.class,
-            () -> Core.DEFAULT.smaOpenAndFill(empty, 30, null),
-            "an empty history outranks a null output", "SMA openAndFill");
-        emptyReject++;
-        checkThrows(InsufficientHistoryException.class,
             () -> Core.DEFAULT.cdldojiOpen(empty, empty, empty, empty),
             "a candlestick reaches it through four legs", "CDLDOJI open");
-        emptyReject++;
-        // The leg that is NOT the history is an ordinary argument, so it is
-        // checked after the history — the same call reports the empty history in C.
-        checkThrows(InsufficientHistoryException.class,
-            () -> Core.DEFAULT.cdldojiOpen(empty, null, empty, empty),
-            "an empty history outranks a null leg", "CDLDOJI open");
         emptyReject++;
         checkThrows(InsufficientHistoryException.class,
             () -> Core.DEFAULT.maOpen(empty, 30, MAType.EMA),
             "the dispatch tier answers it too", "MA open");
         emptyReject++;
-
+        checkThrows(InsufficientHistoryException.class,
+            () -> Core.DEFAULT.mavpOpen(empty, empty, 2, 30, MAType.SMA),
+            "the period bank answers it too", "MAVP open");
+        emptyReject++;
         check(codeOf(() -> Core.DEFAULT.smaOpen(empty, 30)) == RetCode.INSUFFICIENT_HISTORY,
             "an empty history carries InsufficientHistory");
+        emptyReject++;
 
-        // A short history that is NOT empty is checked after the arguments:
-        // this is what keeps the order cases above about EMPTY.
-        checkThrows(InsufficientHistoryException.class,
-            () -> Core.DEFAULT.smaOpen(new double[1], 30),
-            "a one-bar history reaches the warm-up check");
+        // Every argument check outranks it, as it outranks any short history.
+        check(codeOf(() -> Core.DEFAULT.smaOpenAndFill(empty, 30, null)) == RetCode.BAD_PARAM,
+            "a null output outranks an empty history");
+        check(codeOf(() -> Core.DEFAULT.smaOpen(empty, 0)) == RetCode.BAD_PARAM,
+            "a bad parameter outranks an empty history");
+        check(codeOf(() -> Core.DEFAULT.cdldojiOpen(empty, null, empty, empty)) == RetCode.BAD_PARAM,
+            "a null leg outranks an empty history");
         check(codeOf(() -> Core.DEFAULT.smaOpenAndFill(new double[1], 30, null)) == RetCode.BAD_PARAM,
             "a null output outranks a one-bar history");
 
-        // The exception: a null history is an absent argument, because its
-        // length is what the rule above is about.
         checkThrows(IllegalArgumentException.class,
             () -> Core.DEFAULT.smaOpen(null, 30),
             "a null history is an absent argument, not an empty one",
@@ -1252,7 +1241,7 @@ public class BatchApiTest {
         aNullEnumLookbackIsMinusOne();
         anEmptyOutputIsAnAbsentOne();
         streamingOpenersCheckTheirArguments();
-        anEmptyHistoryOutranksAnAbsentArgument();
+        anEmptyHistoryIsAShortHistory();
         theFillOutputBoundFromBothSides();
         theFillOutputBoundHoldsOnEveryTier();
 

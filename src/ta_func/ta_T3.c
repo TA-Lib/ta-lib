@@ -507,7 +507,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_T3_OpenImpl( struct TA_T3_Stream **strea
       optInVFactor = 0.7;
    else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

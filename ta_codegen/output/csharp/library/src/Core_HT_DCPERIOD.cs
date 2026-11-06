@@ -1508,13 +1508,10 @@ public partial class Core
       double smoothPeriod = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1894,7 +1891,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public HtDcperiodStream HtDcperiodOpen( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("HT_DCPERIOD open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_DCPERIOD open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return HtDcperiodOpenInternal(inReal, 0);
    }
@@ -1928,7 +1924,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public HtDcperiodStream HtDcperiodOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("HT_DCPERIOD openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_DCPERIOD openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("HT_DCPERIOD", "openAndFill", inReal.Length, HtDcperiodLookback());
       RequireFillLength("HT_DCPERIOD", "openAndFill", "outReal", outReal.Length, guardOutLen);

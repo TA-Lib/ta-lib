@@ -854,9 +854,6 @@ public partial class Core
       int optInSlowPeriod = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -865,7 +862,7 @@ public partial class Core
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1083,7 +1080,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MacdfixStream MacdfixOpen( ReadOnlySpan<double> inReal, int optInSignalPeriod )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MACDFIX open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MACDFIX open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return MacdfixOpenInternal(inReal, 0, optInSignalPeriod);
    }
@@ -1122,7 +1118,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MacdfixStream MacdfixOpenAndFill( ReadOnlySpan<double> inReal, int optInSignalPeriod, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MACDFIX openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MACDFIX openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MACDFIX", "openAndFill", inReal.Length, MacdfixLookback(optInSignalPeriod));
       RequireFillLength("MACDFIX", "openAndFill", "outMACD", outMACD.Length, guardOutLen);

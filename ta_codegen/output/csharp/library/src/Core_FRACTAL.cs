@@ -810,9 +810,6 @@ public partial class Core
       double tempLow = 0;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -829,7 +826,7 @@ public partial class Core
       } else if( optInRightBars < 1 || optInRightBars > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -961,9 +958,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public FractalStream FractalOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInLeftBars, int optInRightBars )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("FRACTAL open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "FRACTAL open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("FRACTAL open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("FRACTAL open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       RequireHistoryLength("FRACTAL", "open", "inLow", inLow.Length, inHigh.Length);
       return FractalOpenInternal(inHigh, inLow, 0, optInLeftBars, optInRightBars);
    }
@@ -1005,9 +1003,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public FractalStream FractalOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInLeftBars, int optInRightBars, Span<int> outSwingHigh, Span<int> outSwingLow )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("FRACTAL openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "FRACTAL openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("FRACTAL openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("FRACTAL openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("FRACTAL", "openAndFill", inHigh.Length, FractalLookback(optInLeftBars, optInRightBars));
       RequireHistoryLength("FRACTAL", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("FRACTAL", "openAndFill", "outSwingHigh", outSwingHigh.Length, guardOutLen);

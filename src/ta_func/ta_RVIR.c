@@ -487,7 +487,7 @@ static TA_RetCode TA_RVIR_OpenImpl( struct TA_RVIR_Stream **stream, const double
       optInStdDevPeriod = 10;
    else if( (int)optInStdDevPeriod < 2 || (int)optInStdDevPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

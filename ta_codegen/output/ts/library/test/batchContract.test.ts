@@ -422,6 +422,7 @@ test('every failure carries its code, and the probes reach exactly the batch and
   const lb30 = lib.smaLookback({ timePeriod: 30 });
   code('INSUFFICIENT_HISTORY', () => lib.smaOpen(inp.subarray(0, lb30), { timePeriod: 30 }), 'a short history');
   code('INSUFFICIENT_HISTORY', () => lib.smaOpen(new Float64Array(0), { timePeriod: 30 }), 'an empty history');
+  code('BAD_PARAM', () => lib.smaOpen(new Float64Array(0), { timePeriod: 0 }), 'an out-of-range period on an empty history');
   code('BAD_PARAM', () => lib.smaOpen(inp, { timePeriod: 0 }), 'an out-of-range period at open');
   code('BAD_PARAM', () => lib.bbandsOpenAndFill(inp, { timePeriod: 20, nbDevUp: 2, nbDevDn: 2, maType: MAType.SMA, outUpperBand: out, outMiddleBand: out, outLowerBand: new Float64Array(200) }), 'aliased fill outputs');
   code('BAD_PARAM', () => lib.smaOpenAndFill(inp, { timePeriod: 30, outReal: inp }), 'a fill output on its input');

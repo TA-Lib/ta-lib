@@ -433,13 +433,10 @@ public partial class Core
       int i = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -505,7 +502,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CeilStream CeilOpen( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("CEIL open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "CEIL open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return CeilOpenInternal(inReal, 0);
    }
@@ -538,7 +534,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CeilStream CeilOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("CEIL openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "CEIL openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("CEIL", "openAndFill", inReal.Length, CeilLookback());
       RequireFillLength("CEIL", "openAndFill", "outReal", outReal.Length, guardOutLen);

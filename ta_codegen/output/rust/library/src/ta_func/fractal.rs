@@ -470,9 +470,6 @@ impl Core {
     pub(crate) fn fractal_open_impl(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInLeftBars: i32, mut optInRightBars: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outSwingHigh: &mut [i32], outSwingLow: &mut [i32], outStride: usize,
     ) -> Result<FractalStream, RetCode> {
-        if inHigh.is_empty() {
-            return Err(RetCode::InsufficientHistory);
-        }
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
@@ -490,13 +487,13 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inHigh.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        if startIdx > endIdx {
+        if startIdx >= historyLen {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut today: usize = 0_usize;
@@ -655,9 +652,6 @@ impl Core {
     pub fn fractal_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInLeftBars: i32, mut optInRightBars: i32, outSwingHigh: &mut [i32], outSwingLow: &mut [i32],
     ) -> Result<(FractalStream, OutRange), RetCode> {
-        if inHigh.is_empty() {
-            return Err(RetCode::InsufficientHistory);
-        }
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }

@@ -702,9 +702,6 @@ public partial class Core
       outNBElement = 0;
       int historyLen = inClose.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -967,9 +964,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public EfiStream EfiOpen( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod )
    {
-      if( inClose.IsEmpty ) throw new InsufficientHistoryException("EFI open: history is empty", nameof(inClose));
       if( inClose.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inClose), "EFI open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inVolume.IsEmpty ) throw new TALibArgumentException("EFI open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( !inClose.IsEmpty ) {
+         if( inVolume.IsEmpty ) throw new TALibArgumentException("EFI open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      }
       RequireHistoryLength("EFI", "open", "inVolume", inVolume.Length, inClose.Length);
       return EfiOpenInternal(inClose, inVolume, 0, optInTimePeriod);
    }
@@ -1005,9 +1003,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public EfiStream EfiOpenAndFill( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
    {
-      if( inClose.IsEmpty ) throw new InsufficientHistoryException("EFI openAndFill: history is empty", nameof(inClose));
       if( inClose.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inClose), "EFI openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inVolume.IsEmpty ) throw new TALibArgumentException("EFI openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( !inClose.IsEmpty ) {
+         if( inVolume.IsEmpty ) throw new TALibArgumentException("EFI openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("EFI", "openAndFill", inClose.Length, EfiLookback(optInTimePeriod));
       RequireHistoryLength("EFI", "openAndFill", "inVolume", inVolume.Length, inClose.Length);
       RequireFillLength("EFI", "openAndFill", "outReal", outReal.Length, guardOutLen);

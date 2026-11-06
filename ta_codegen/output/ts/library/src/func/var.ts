@@ -774,9 +774,6 @@ function varOpenImpl(
   let barsSinceReseed = 0;
   const historyLen = inReal.length;
   let endIdx = historyLen - 1;
-  if (historyLen < 1) {
-    return RetCode.INSUFFICIENT_HISTORY;
-  }
   if (historyLen > Core.INDEX_MAX + 1) {
     return RetCode.OUT_OF_RANGE_END_INDEX;
   }
@@ -790,7 +787,7 @@ function varOpenImpl(
   } else if (!(optInNbDev >= Core.REAL_MIN && optInNbDev <= Core.REAL_MAX)) {
     return RetCode.BAD_PARAM;
   }
-  if (startIdx > endIdx) {
+  if (startIdx >= historyLen) {
     outBegIdx.value = 0;
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;

@@ -1119,9 +1119,6 @@ public partial class Core
       double band = 0;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1138,7 +1135,7 @@ public partial class Core
       } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1402,10 +1399,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CeStream CeOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, double optInMultiplier )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("CE open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "CE open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("CE open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("CE open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("CE open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("CE open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       RequireHistoryLength("CE", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("CE", "open", "inClose", inClose.Length, inHigh.Length);
       return CeOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInMultiplier);
@@ -1449,10 +1447,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CeStream CeOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, double optInMultiplier, Span<double> outRealLong, Span<double> outRealShort )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("CE openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "CE openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("CE openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("CE openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("CE openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("CE openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("CE", "openAndFill", inHigh.Length, CeLookback(optInTimePeriod, optInMultiplier));
       RequireHistoryLength("CE", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("CE", "openAndFill", "inClose", inClose.Length, inHigh.Length);

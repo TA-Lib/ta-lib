@@ -417,16 +417,13 @@
       double range = 0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.INSUFFICIENT_HISTORY;
-      }
       if( historyLen > INDEX_MAX + 1 ) {
          return RetCode.OUT_OF_RANGE_END_INDEX;
       }
       if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
          return RetCode.BAD_PARAM;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return RetCode.INSUFFICIENT_HISTORY;
@@ -495,9 +492,8 @@
     * to {@link Core#ibs} at that bar.
     * <p>The history must hold at least {@code ibsLookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. An EMPTY history throws
-    * {@link InsufficientHistoryException} too, and a null argument
-    * {@link IllegalArgumentException}, both ahead of everything above.
+    * thrown, an empty history included. A null argument throws
+    * {@link IllegalArgumentException}, ahead of everything above.
     */
    public IbsStream ibsOpen( double inHigh[], double inLow[], double inClose[] )
    {

@@ -1479,9 +1479,6 @@ public partial class Core
       outNBElement = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -2149,7 +2146,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public HmaStream HmaOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("HMA open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HMA open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return HmaOpenInternal(inReal, 0, optInTimePeriod);
    }
@@ -2185,7 +2181,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public HmaStream HmaOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("HMA openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HMA openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("HMA", "openAndFill", inReal.Length, HmaLookback(optInTimePeriod));
       RequireFillLength("HMA", "openAndFill", "outReal", outReal.Length, guardOutLen);

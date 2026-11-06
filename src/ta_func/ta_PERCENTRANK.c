@@ -351,7 +351,7 @@ static TA_RetCode TA_PERCENTRANK_OpenImpl( struct TA_PERCENTRANK_Stream **stream
       optInTimePeriod = 100;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

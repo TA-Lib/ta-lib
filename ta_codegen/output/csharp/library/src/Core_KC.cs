@@ -790,9 +790,6 @@ public partial class Core
       Span<double> tempATR;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -814,7 +811,7 @@ public partial class Core
       } else if( !(optInNbDev >= RealMin && optInNbDev <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -958,10 +955,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public KcStream KcOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, int optInATRPeriod, double optInNbDev )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("KC open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "KC open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("KC open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("KC open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("KC open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("KC open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       RequireHistoryLength("KC", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("KC", "open", "inClose", inClose.Length, inHigh.Length);
       return KcOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInATRPeriod, optInNbDev);
@@ -1007,10 +1005,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public KcStream KcOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, int optInATRPeriod, double optInNbDev, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("KC openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "KC openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("KC openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("KC openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("KC openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("KC openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("KC", "openAndFill", inHigh.Length, KcLookback(optInTimePeriod, optInATRPeriod, optInNbDev));
       RequireHistoryLength("KC", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("KC", "openAndFill", "inClose", inClose.Length, inHigh.Length);

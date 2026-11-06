@@ -830,9 +830,6 @@ public partial class Core
       int i = 0;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -844,7 +841,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1029,9 +1026,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public DonchianStream DonchianOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("DONCHIAN open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "DONCHIAN open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("DONCHIAN open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("DONCHIAN open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       RequireHistoryLength("DONCHIAN", "open", "inLow", inLow.Length, inHigh.Length);
       return DonchianOpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
@@ -1071,9 +1069,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public DonchianStream DonchianOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("DONCHIAN openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "DONCHIAN openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("DONCHIAN openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("DONCHIAN openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("DONCHIAN", "openAndFill", inHigh.Length, DonchianLookback(optInTimePeriod));
       RequireHistoryLength("DONCHIAN", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("DONCHIAN", "openAndFill", "outRealUpperBand", outRealUpperBand.Length, guardOutLen);

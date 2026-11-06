@@ -1523,9 +1523,6 @@ public partial class Core
       int maxIdx_sigRing = (30)-1;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1574,7 +1571,7 @@ public partial class Core
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1938,7 +1935,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public KstStream KstOpen( ReadOnlySpan<double> inReal, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInSMA1Period, int optInSMA2Period, int optInSMA3Period, int optInSMA4Period, int optInSignalPeriod )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("KST open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "KST open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return KstOpenInternal(inReal, 0, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
    }
@@ -1992,7 +1988,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public KstStream KstOpenAndFill( ReadOnlySpan<double> inReal, int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInSMA1Period, int optInSMA2Period, int optInSMA3Period, int optInSMA4Period, int optInSignalPeriod, Span<double> outKST, Span<double> outKSTSignal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("KST openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "KST openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("KST", "openAndFill", inReal.Length, KstLookback(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod));
       RequireFillLength("KST", "openAndFill", "outKST", outKST.Length, guardOutLen);

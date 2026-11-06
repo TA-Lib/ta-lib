@@ -782,9 +782,6 @@ function mavpOpenImpl(
 ): RetCode {
   const core = sp.core;
   const historyLen = inReal.length;
-  if (historyLen < 1) {
-    return RetCode.INSUFFICIENT_HISTORY;
-  }
   if (historyLen > Core.INDEX_MAX + 1) {
     return RetCode.OUT_OF_RANGE_END_INDEX;
   }
@@ -889,9 +886,6 @@ function mavpOpenAndFillImpl(
 ): RetCode {
   const core = sp.core;
   const historyLen = inReal.length;
-  if (historyLen < 1) {
-    return RetCode.INSUFFICIENT_HISTORY;
-  }
   if (historyLen > Core.INDEX_MAX + 1) {
     return RetCode.OUT_OF_RANGE_END_INDEX;
   }

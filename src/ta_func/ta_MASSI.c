@@ -552,7 +552,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_MASSI_OpenImpl( struct TA_MASSI_Stream *
       optInSlowPeriod = 25;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

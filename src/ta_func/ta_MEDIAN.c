@@ -1069,7 +1069,7 @@ static TA_RetCode TA_MEDIAN_OpenImpl( struct TA_MEDIAN_Stream **stream, const do
       optInTimePeriod = 30;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

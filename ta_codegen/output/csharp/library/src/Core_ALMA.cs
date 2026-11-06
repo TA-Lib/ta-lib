@@ -809,9 +809,6 @@ public partial class Core
       int maxIdx_weights = (30)-1;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -830,7 +827,7 @@ public partial class Core
       } else if( !(optInOffset >= 0e0 && optInOffset <= 1e0) ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -996,7 +993,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public AlmaStream AlmaOpen( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInSigma, double optInOffset )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("ALMA open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "ALMA open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return AlmaOpenInternal(inReal, 0, optInTimePeriod, optInSigma, optInOffset);
    }
@@ -1036,7 +1032,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public AlmaStream AlmaOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInSigma, double optInOffset, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("ALMA openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "ALMA openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("ALMA", "openAndFill", inReal.Length, AlmaLookback(optInTimePeriod, optInSigma, optInOffset));
       RequireFillLength("ALMA", "openAndFill", "outReal", outReal.Length, guardOutLen);

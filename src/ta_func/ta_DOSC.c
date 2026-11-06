@@ -762,7 +762,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_DOSC_OpenImpl( struct TA_DOSC_Stream **s
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 2 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

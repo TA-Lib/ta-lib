@@ -703,9 +703,6 @@ public partial class Core
       double y2 = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -714,7 +711,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -857,7 +854,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public SwakButterStream SwakButterOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("SWAK_BUTTER open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "SWAK_BUTTER open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return SwakButterOpenInternal(inReal, 0, optInTimePeriod);
    }
@@ -895,7 +891,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public SwakButterStream SwakButterOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("SWAK_BUTTER openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "SWAK_BUTTER openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("SWAK_BUTTER", "openAndFill", inReal.Length, SwakButterLookback(optInTimePeriod));
       RequireFillLength("SWAK_BUTTER", "openAndFill", "outReal", outReal.Length, guardOutLen);

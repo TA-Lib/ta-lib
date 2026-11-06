@@ -443,16 +443,13 @@ public partial class Core
       int i = 0;
       int historyLen = inReal0.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( inReal1.Length != inReal0.Length ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -519,9 +516,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public AddStream AddOpen( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1 )
    {
-      if( inReal0.IsEmpty ) throw new InsufficientHistoryException("ADD open: history is empty", nameof(inReal0));
       if( inReal0.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "ADD open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inReal1.IsEmpty ) throw new TALibArgumentException("ADD open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      if( !inReal0.IsEmpty ) {
+         if( inReal1.IsEmpty ) throw new TALibArgumentException("ADD open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      }
       RequireHistoryLength("ADD", "open", "inReal1", inReal1.Length, inReal0.Length);
       return AddOpenInternal(inReal0, inReal1, 0);
    }
@@ -555,9 +553,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public AddStream AddOpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, Span<double> outReal )
    {
-      if( inReal0.IsEmpty ) throw new InsufficientHistoryException("ADD openAndFill: history is empty", nameof(inReal0));
       if( inReal0.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "ADD openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inReal1.IsEmpty ) throw new TALibArgumentException("ADD openAndFill: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      if( !inReal0.IsEmpty ) {
+         if( inReal1.IsEmpty ) throw new TALibArgumentException("ADD openAndFill: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("ADD", "openAndFill", inReal0.Length, AddLookback());
       RequireHistoryLength("ADD", "openAndFill", "inReal1", inReal1.Length, inReal0.Length);
       RequireFillLength("ADD", "openAndFill", "outReal", outReal.Length, guardOutLen);

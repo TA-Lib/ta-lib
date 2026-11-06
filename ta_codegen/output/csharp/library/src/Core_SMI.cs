@@ -1363,9 +1363,6 @@ public partial class Core
       int nSignal = 0;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1392,7 +1389,7 @@ public partial class Core
       } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1742,10 +1739,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public SmiStream SmiOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("SMI open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "SMI open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("SMI open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("SMI open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("SMI open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("SMI open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       RequireHistoryLength("SMI", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("SMI", "open", "inClose", inClose.Length, inHigh.Length);
       return SmiOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -1791,10 +1789,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public SmiStream SmiOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, Span<double> outSMI, Span<double> outSMISignal )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("SMI openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "SMI openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("SMI openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("SMI openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("SMI openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("SMI openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("SMI", "openAndFill", inHigh.Length, SmiLookback(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
       RequireHistoryLength("SMI", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("SMI", "openAndFill", "inClose", inClose.Length, inHigh.Length);

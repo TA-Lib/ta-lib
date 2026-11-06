@@ -435,15 +435,10 @@ static ErrorNumber testStreamShortHistory( void )
    /* The LOWER half of the history bound: an empty history is
     * TA_INSUFFICIENT_HISTORY (https://ta-lib.org/spec/streaming/#rs7).
     *
-    * What is worth the probe is the ORDER, not the code alone. Unlike a short
-    * non-empty history, an empty one is evaluated ahead of every presence check,
-    * so a call that is BOTH an absent output and an empty history reports this
-    * rather than TA_BAD_PARAM; until #268 it reported the absent output, and a
-    * caller who fixed that argument got the same rejection back for a reason
-    * nothing had mentioned. The one check that still precedes it is the handle, and for a reason no
-    * ordering choice can remove: `*stream = NULL` is how "no handle on any
-    * failure" is published, and there is nowhere to publish it without one.
-    * That case is the last control below. */
+    * What is worth the probe is the ORDER, not the code alone. Like a short
+    * non-empty history, an empty one is answered after every presence check,
+    * so a call that is BOTH an absent argument and an empty history reports
+    * TA_BAD_PARAM. */
    {
       TA_SMA_Stream     *sst = NULL;
       TA_MA_Stream      *mst = NULL;
@@ -462,7 +457,7 @@ static ErrorNumber testStreamShortHistory( void )
       cases[1].rc   = TA_SMA_OpenAndFill( &sst, bars, 0, 30, &beg, &nb, out );
       cases[2].name = "TA_SMA_Open(historyLen=-1)";
       cases[2].rc   = TA_SMA_Open( &sst, bars, -1, 30, &v );
-      /* The order claim: each of these is also an rS4 rejection. */
+      /* The order claim: each of these is also an rS4 rejection, which wins. */
       cases[3].name = "TA_SMA_Open(historyLen=0, outReal=NULL)";
       cases[3].rc   = TA_SMA_Open( &sst, bars, 0, 30, NULL );
       cases[4].name = "TA_SMA_OpenAndFill(historyLen=0, outBegIdx=NULL)";
@@ -499,7 +494,7 @@ static ErrorNumber testStreamShortHistory( void )
       shEmpty++;
 
       /* Controls. A history of exactly one bar reaches the warm-up check, and
-       * only after the presence checks; the handle still answers first. */
+       * only after the presence checks; the handle answers first. */
       if( TA_SMA_Open( &sst, bars, 1, 30, &v ) != TA_INSUFFICIENT_HISTORY )
       {
          printf( "\nFailed: a one-bar history did not reach the warm-up check\n" );

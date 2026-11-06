@@ -1192,7 +1192,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_MAMA_OpenImpl( struct TA_MAMA_Stream **s
       optInSlowLimit = 0.05;
    else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

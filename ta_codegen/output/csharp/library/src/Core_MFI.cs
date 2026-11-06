@@ -881,9 +881,6 @@ public partial class Core
       int maxIdx_mflow = (50)-1;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -895,7 +892,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1110,11 +1107,12 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MfiStream MfiOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("MFI open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "MFI open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("MFI open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("MFI open: inClose is empty", nameof(inClose), RetCode.BadParam);
-      if( inVolume.IsEmpty ) throw new TALibArgumentException("MFI open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("MFI open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("MFI open: inClose is empty", nameof(inClose), RetCode.BadParam);
+         if( inVolume.IsEmpty ) throw new TALibArgumentException("MFI open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      }
       RequireHistoryLength("MFI", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("MFI", "open", "inClose", inClose.Length, inHigh.Length);
       RequireHistoryLength("MFI", "open", "inVolume", inVolume.Length, inHigh.Length);
@@ -1154,11 +1152,12 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MfiStream MfiOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("MFI openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "MFI openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("MFI openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("MFI openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
-      if( inVolume.IsEmpty ) throw new TALibArgumentException("MFI openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("MFI openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("MFI openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+         if( inVolume.IsEmpty ) throw new TALibArgumentException("MFI openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("MFI", "openAndFill", inHigh.Length, MfiLookback(optInTimePeriod));
       RequireHistoryLength("MFI", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("MFI", "openAndFill", "inClose", inClose.Length, inHigh.Length);

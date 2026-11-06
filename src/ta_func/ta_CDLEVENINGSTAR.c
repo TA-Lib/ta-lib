@@ -807,7 +807,7 @@ static TA_RetCode TA_CDLEVENINGSTAR_OpenImpl( struct TA_CDLEVENINGSTAR_Stream **
       optInPenetration = 0.3;
    else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

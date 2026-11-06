@@ -720,16 +720,13 @@ public partial class Core
       int lookbackTotal = 0;
       int historyLen = inOpen.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( inHigh.Length != inOpen.Length || inLow.Length != inOpen.Length || inClose.Length != inOpen.Length ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -899,11 +896,12 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CdltasukigapStream CdltasukigapOpen( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new InsufficientHistoryException("CDLTASUKIGAP open: history is empty", nameof(inOpen));
       if( inOpen.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLTASUKIGAP open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLTASUKIGAP open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLTASUKIGAP open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLTASUKIGAP open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inOpen.IsEmpty ) {
+         if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLTASUKIGAP open: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+         if( inLow.IsEmpty ) throw new TALibArgumentException("CDLTASUKIGAP open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("CDLTASUKIGAP open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       RequireHistoryLength("CDLTASUKIGAP", "open", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLTASUKIGAP", "open", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLTASUKIGAP", "open", "inClose", inClose.Length, inOpen.Length);
@@ -945,11 +943,12 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CdltasukigapStream CdltasukigapOpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new InsufficientHistoryException("CDLTASUKIGAP openAndFill: history is empty", nameof(inOpen));
       if( inOpen.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inOpen), "CDLTASUKIGAP openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLTASUKIGAP openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("CDLTASUKIGAP openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("CDLTASUKIGAP openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inOpen.IsEmpty ) {
+         if( inHigh.IsEmpty ) throw new TALibArgumentException("CDLTASUKIGAP openAndFill: inHigh is empty", nameof(inHigh), RetCode.BadParam);
+         if( inLow.IsEmpty ) throw new TALibArgumentException("CDLTASUKIGAP openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("CDLTASUKIGAP openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("CDLTASUKIGAP", "openAndFill", inOpen.Length, CdltasukigapLookback());
       RequireHistoryLength("CDLTASUKIGAP", "openAndFill", "inHigh", inHigh.Length, inOpen.Length);
       RequireHistoryLength("CDLTASUKIGAP", "openAndFill", "inLow", inLow.Length, inOpen.Length);

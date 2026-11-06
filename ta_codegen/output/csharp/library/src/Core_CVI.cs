@@ -734,9 +734,6 @@ public partial class Core
       int maxIdx_emaRing = (32)-1;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -753,7 +750,7 @@ public partial class Core
       } else if( optInROCPeriod < 1 || optInROCPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -908,9 +905,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CviStream CviOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, int optInROCPeriod )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("CVI open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "CVI open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("CVI open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("CVI open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       RequireHistoryLength("CVI", "open", "inLow", inLow.Length, inHigh.Length);
       return CviOpenInternal(inHigh, inLow, 0, optInTimePeriod, optInROCPeriod);
    }
@@ -948,9 +946,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CviStream CviOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, int optInROCPeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("CVI openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "CVI openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("CVI openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("CVI openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("CVI", "openAndFill", inHigh.Length, CviLookback(optInTimePeriod, optInROCPeriod));
       RequireHistoryLength("CVI", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("CVI", "openAndFill", "outReal", outReal.Length, guardOutLen);

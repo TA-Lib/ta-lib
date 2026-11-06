@@ -197,9 +197,6 @@ class Core {
     }
 
     static void requireHistory(String funcName, int historyLen) {
-        if (historyLen < 1) {
-            throw failure(funcName, RetCode.INSUFFICIENT_HISTORY);
-        }
         if (historyLen > INDEX_MAX + 1) {
             throw failure(funcName, RetCode.OUT_OF_RANGE_END_INDEX);
         }
@@ -1073,9 +1070,6 @@ class Core {
           int maxIdx_oscBuffer = (32)-1;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -1097,7 +1091,7 @@ class Core {
           } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -1322,11 +1316,10 @@ class Core {
         * to {@link Core#ac} at that bar.
         * <p>The history must hold at least {@code acLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AcStream acOpen( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
        {
@@ -2107,9 +2100,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -2121,7 +2111,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -2293,11 +2283,10 @@ class Core {
         * to {@link Core#accbands} at that bar.
         * <p>The history must hold at least {@code accbandsLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AccbandsStream accbandsOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
@@ -2688,13 +2677,10 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -2747,9 +2733,8 @@ class Core {
         * to {@link Core#acos} at that bar.
         * <p>The history must hold at least {@code acosLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AcosStream acosOpen( double inReal[] )
        {
@@ -3238,16 +3223,13 @@ class Core {
           double ad = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -3329,9 +3311,8 @@ class Core {
         * to {@link Core#ad} at that bar.
         * <p>The history must hold at least {@code adLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AdStream adOpen( double inHigh[], double inLow[], double inClose[], double inVolume[] )
        {
@@ -3724,16 +3705,13 @@ class Core {
           int i = 0;
           int historyLen = inReal0.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inReal1.length != inReal0.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -3786,9 +3764,8 @@ class Core {
         * to {@link Core#add} at that bar.
         * <p>The history must hold at least {@code addLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AddStream addOpen( double inReal0[], double inReal1[] )
        {
@@ -4494,9 +4471,6 @@ class Core {
           double ad = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -4513,7 +4487,7 @@ class Core {
           } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -4668,11 +4642,10 @@ class Core {
         * to {@link Core#adosc} at that bar.
         * <p>The history must hold at least {@code adoscLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AdoscStream adoscOpen( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod )
        {
@@ -5273,9 +5246,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -5287,7 +5257,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -5409,11 +5379,10 @@ class Core {
         * to {@link Core#adr} at that bar.
         * <p>The history must hold at least {@code adrLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AdrStream adrOpen( double inHigh[], double inLow[], int optInTimePeriod )
        {
@@ -6579,9 +6548,6 @@ class Core {
           int i = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -6593,7 +6559,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -6992,11 +6958,10 @@ class Core {
         * to {@link Core#adx} at that bar.
         * <p>The history must hold at least {@code adxLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AdxStream adxOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
@@ -7540,9 +7505,6 @@ class Core {
           RetCode retCode;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -7554,7 +7516,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -7663,11 +7625,10 @@ class Core {
         * to {@link Core#adxr} at that bar.
         * <p>The history must hold at least {@code adxrLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AdxrStream adxrOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
@@ -8424,9 +8385,6 @@ class Core {
           int maxIdx_weights = (30)-1;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -8445,7 +8403,7 @@ class Core {
           } else if( !(optInOffset >= 0e0 && optInOffset <= 1e0) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -8591,11 +8549,10 @@ class Core {
         * to {@link Core#alma} at that bar.
         * <p>The history must hold at least {@code almaLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AlmaStream almaOpen( double inReal[], int optInTimePeriod, double optInSigma, double optInOffset )
        {
@@ -9328,9 +9285,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -9347,7 +9301,7 @@ class Core {
           } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -9519,11 +9473,10 @@ class Core {
         * to {@link Core#ao} at that bar.
         * <p>The history must hold at least {@code aoLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AoStream aoOpen( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod )
        {
@@ -10409,9 +10362,6 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -10428,7 +10378,7 @@ class Core {
           if( optInMAType == MAType.DEFAULT ) {
              optInMAType = MAType.EMA;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -10535,11 +10485,10 @@ class Core {
         * to {@link Core#apo} at that bar.
         * <p>The history must hold at least {@code apoLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public ApoStream apoOpen( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
        {
@@ -11287,9 +11236,6 @@ class Core {
           int i = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -11301,7 +11247,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -11456,11 +11402,10 @@ class Core {
         * to {@link Core#aroon} at that bar.
         * <p>The history must hold at least {@code aroonLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AroonStream aroonOpen( double inHigh[], double inLow[], int optInTimePeriod )
        {
@@ -12192,9 +12137,6 @@ class Core {
           int i = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -12206,7 +12148,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -12373,11 +12315,10 @@ class Core {
         * to {@link Core#aroonosc} at that bar.
         * <p>The history must hold at least {@code aroonoscLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AroonoscStream aroonoscOpen( double inHigh[], double inLow[], int optInTimePeriod )
        {
@@ -13019,9 +12960,6 @@ class Core {
           double sum = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -13033,7 +12971,7 @@ class Core {
           } else if( !(optInLimitMove >= 1e-8 && optInLimitMove <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -13123,11 +13061,10 @@ class Core {
         * to {@link Core#asi} at that bar.
         * <p>The history must hold at least {@code asiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AsiStream asiOpen( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInLimitMove )
        {
@@ -13522,13 +13459,10 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -13581,9 +13515,8 @@ class Core {
         * to {@link Core#asin} at that bar.
         * <p>The history must hold at least {@code asinLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AsinStream asinOpen( double inReal[] )
        {
@@ -13957,13 +13890,10 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -14017,9 +13947,8 @@ class Core {
         * to {@link Core#atan} at that bar.
         * <p>The history must hold at least {@code atanLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AtanStream atanOpen( double inReal[] )
        {
@@ -14741,9 +14670,6 @@ class Core {
           double tempHT = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -14755,7 +14681,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -14935,11 +14861,10 @@ class Core {
         * to {@link Core#atr} at that bar.
         * <p>The history must hold at least {@code atrLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AtrStream atrOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
@@ -15448,9 +15373,6 @@ class Core {
           int lookback = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -15459,7 +15381,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -15548,11 +15470,10 @@ class Core {
         * to {@link Core#avgdev} at that bar.
         * <p>The history must hold at least {@code avgdevLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AvgdevStream avgdevOpen( double inReal[], int optInTimePeriod )
        {
@@ -15960,16 +15881,13 @@ class Core {
           int i = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -16024,9 +15942,8 @@ class Core {
         * to {@link Core#avgprice} at that bar.
         * <p>The history must hold at least {@code avgpriceLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public AvgpriceStream avgpriceOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -17139,9 +17056,6 @@ class Core {
           double[] tempBuffer2;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -17163,7 +17077,7 @@ class Core {
           if( optInMAType == MAType.DEFAULT ) {
              optInMAType = MAType.SMA;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -17303,12 +17217,11 @@ class Core {
         * to {@link Core#bbands} at that bar.
         * <p>The history must hold at least {@code bbandsLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE}, {@link Core#REAL_DEFAULT} and
         * {@link MAType#DEFAULT} select a parameter's documented default, as in
-        * the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public BbandsStream bbandsOpen( double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
        {
@@ -18304,9 +18217,6 @@ class Core {
           double[] tempBuffer;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -18328,7 +18238,7 @@ class Core {
           if( optInMAType == MAType.DEFAULT ) {
              optInMAType = MAType.SMA;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -18431,12 +18341,11 @@ class Core {
         * to {@link Core#bbw} at that bar.
         * <p>The history must hold at least {@code bbwLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE}, {@link Core#REAL_DEFAULT} and
         * {@link MAType#DEFAULT} select a parameter's documented default, as in
-        * the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public BbwStream bbwOpen( double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
        {
@@ -19836,9 +19745,6 @@ class Core {
           int nbInitialElementNeeded = 0;
           int historyLen = inReal0.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -19850,7 +19756,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -20236,11 +20142,10 @@ class Core {
         * to {@link Core#beta} at that bar.
         * <p>The history must hold at least {@code betaLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public BetaStream betaOpen( double inReal0[], double inReal1[], int optInTimePeriod )
        {
@@ -20689,16 +20594,13 @@ class Core {
           double tempReal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -20764,9 +20666,8 @@ class Core {
         * to {@link Core#bop} at that bar.
         * <p>The history must hold at least {@code bopLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public BopStream bopOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -21681,9 +21582,6 @@ class Core {
           int maxIdx_circBuffer = (30)-1;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -21695,7 +21593,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -21898,11 +21796,10 @@ class Core {
         * to {@link Core#cci} at that bar.
         * <p>The history must hold at least {@code cciLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CciStream cciOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
@@ -22510,16 +22407,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -22654,9 +22548,8 @@ class Core {
         * to {@link Core#cdl2crows} at that bar.
         * <p>The history must hold at least {@code cdl2crowsLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public Cdl2crowsStream cdl2crowsOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -23361,16 +23254,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -23534,9 +23424,8 @@ class Core {
         * to {@link Core#cdl3blackcrows} at that bar.
         * <p>The history must hold at least {@code cdl3blackcrowsLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public Cdl3blackcrowsStream cdl3blackcrowsOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -24216,16 +24105,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -24388,9 +24274,8 @@ class Core {
         * to {@link Core#cdl3inside} at that bar.
         * <p>The history must hold at least {@code cdl3insideLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public Cdl3insideStream cdl3insideOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -25083,16 +24968,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -25252,9 +25134,8 @@ class Core {
         * to {@link Core#cdl3linestrike} at that bar.
         * <p>The history must hold at least {@code cdl3linestrikeLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public Cdl3linestrikeStream cdl3linestrikeOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -25788,16 +25669,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -25896,9 +25774,8 @@ class Core {
         * to {@link Core#cdl3outside} at that bar.
         * <p>The history must hold at least {@code cdl3outsideLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public Cdl3outsideStream cdl3outsideOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -26761,16 +26638,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -27011,9 +26885,8 @@ class Core {
         * to {@link Core#cdl3starsinsouth} at that bar.
         * <p>The history must hold at least {@code cdl3starsinsouthLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public Cdl3starsinsouthStream cdl3starsinsouthOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -27984,16 +27857,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -28268,9 +28138,8 @@ class Core {
         * to {@link Core#cdl3whitesoldiers} at that bar.
         * <p>The history must hold at least {@code cdl3whitesoldiersLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public Cdl3whitesoldiersStream cdl3whitesoldiersOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -29059,9 +28928,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -29073,7 +28939,7 @@ class Core {
           } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -29273,11 +29139,10 @@ class Core {
         * to {@link Core#cdlabandonedbaby} at that bar.
         * <p>The history must hold at least {@code cdlabandonedbabyLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlabandonedbabyStream cdlabandonedbabyOpen( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
        {
@@ -30364,16 +30229,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -30693,9 +30555,8 @@ class Core {
         * to {@link Core#cdladvanceblock} at that bar.
         * <p>The history must hold at least {@code cdladvanceblockLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdladvanceblockStream cdladvanceblockOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -31330,16 +31191,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -31487,9 +31345,8 @@ class Core {
         * to {@link Core#cdlbelthold} at that bar.
         * <p>The history must hold at least {@code cdlbeltholdLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlbeltholdStream cdlbeltholdOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -32160,16 +32017,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -32326,9 +32180,8 @@ class Core {
         * to {@link Core#cdlbreakaway} at that bar.
         * <p>The history must hold at least {@code cdlbreakawayLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlbreakawayStream cdlbreakawayOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -32959,16 +32812,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -33116,9 +32966,8 @@ class Core {
         * to {@link Core#cdlclosingmarubozu} at that bar.
         * <p>The history must hold at least {@code cdlclosingmarubozuLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlclosingmarubozuStream cdlclosingmarubozuOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -33818,16 +33667,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -33992,9 +33838,8 @@ class Core {
         * to {@link Core#cdlconcealbabyswall} at that bar.
         * <p>The history must hold at least {@code cdlconcealbabyswallLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlconcealbabyswallStream cdlconcealbabyswallOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -34682,16 +34527,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -34857,9 +34699,8 @@ class Core {
         * to {@link Core#cdlcounterattack} at that bar.
         * <p>The history must hold at least {@code cdlcounterattackLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlcounterattackStream cdlcounterattackOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -35487,9 +35328,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -35501,7 +35339,7 @@ class Core {
           } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -35632,11 +35470,10 @@ class Core {
         * to {@link Core#cdldarkcloudcover} at that bar.
         * <p>The history must hold at least {@code cdldarkcloudcoverLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdldarkcloudcoverStream cdldarkcloudcoverOpen( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
        {
@@ -36180,16 +36017,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -36304,9 +36138,8 @@ class Core {
         * to {@link Core#cdldoji} at that bar.
         * <p>The history must hold at least {@code cdldojiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdldojiStream cdldojiOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -36964,16 +36797,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -37126,9 +36956,8 @@ class Core {
         * to {@link Core#cdldojistar} at that bar.
         * <p>The history must hold at least {@code cdldojistarLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdldojistarStream cdldojistarOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -37757,16 +37586,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -37911,9 +37737,8 @@ class Core {
         * to {@link Core#cdldragonflydoji} at that bar.
         * <p>The history must hold at least {@code cdldragonflydojiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdldragonflydojiStream cdldragonflydojiOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -38466,16 +38291,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -38577,9 +38399,8 @@ class Core {
         * to {@link Core#cdlengulfing} at that bar.
         * <p>The history must hold at least {@code cdlengulfingLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlengulfingStream cdlengulfingOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -39347,9 +39168,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -39361,7 +39179,7 @@ class Core {
           } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -39553,11 +39371,10 @@ class Core {
         * to {@link Core#cdleveningdojistar} at that bar.
         * <p>The history must hold at least {@code cdleveningdojistarLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdleveningdojistarStream cdleveningdojistarOpen( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
        {
@@ -40278,9 +40095,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -40292,7 +40106,7 @@ class Core {
           } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -40462,11 +40276,10 @@ class Core {
         * to {@link Core#cdleveningstar} at that bar.
         * <p>The history must hold at least {@code cdleveningstarLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdleveningstarStream cdleveningstarOpen( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
        {
@@ -41138,16 +40951,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -41314,9 +41124,8 @@ class Core {
         * to {@link Core#cdlgapsidesidewhite} at that bar.
         * <p>The history must hold at least {@code cdlgapsidesidewhiteLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlgapsidesidewhiteStream cdlgapsidesidewhiteOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -41945,16 +41754,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -42099,9 +41905,8 @@ class Core {
         * to {@link Core#cdlgravestonedoji} at that bar.
         * <p>The history must hold at least {@code cdlgravestonedojiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlgravestonedojiStream cdlgravestonedojiOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -42869,16 +42674,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -43088,9 +42890,8 @@ class Core {
         * to {@link Core#cdlhammer} at that bar.
         * <p>The history must hold at least {@code cdlhammerLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlhammerStream cdlhammerOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -43862,16 +43663,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -44081,9 +43879,8 @@ class Core {
         * to {@link Core#cdlhangingman} at that bar.
         * <p>The history must hold at least {@code cdlhangingmanLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlhangingmanStream cdlhangingmanOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -44779,16 +44576,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -44953,9 +44747,8 @@ class Core {
         * to {@link Core#cdlharami} at that bar.
         * <p>The history must hold at least {@code cdlharamiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlharamiStream cdlharamiOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -45650,16 +45443,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -45823,9 +45613,8 @@ class Core {
         * to {@link Core#cdlharamicross} at that bar.
         * <p>The history must hold at least {@code cdlharamicrossLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlharamicrossStream cdlharamicrossOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -46447,16 +46236,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -46599,9 +46385,8 @@ class Core {
         * to {@link Core#cdlhighwave} at that bar.
         * <p>The history must hold at least {@code cdlhighwaveLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlhighwaveStream cdlhighwaveOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -47255,16 +47040,13 @@ class Core {
           double savedLow = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -47413,9 +47195,8 @@ class Core {
         * to {@link Core#cdlhikkake} at that bar.
         * <p>The history must hold at least {@code cdlhikkakeLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlhikkakeStream cdlhikkakeOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -48169,16 +47950,13 @@ class Core {
           double patternLow = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -48376,9 +48154,8 @@ class Core {
         * to {@link Core#cdlhikkakemod} at that bar.
         * <p>The history must hold at least {@code cdlhikkakemodLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlhikkakemodStream cdlhikkakemodOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -49024,16 +48801,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -49189,9 +48963,8 @@ class Core {
         * to {@link Core#cdlhomingpigeon} at that bar.
         * <p>The history must hold at least {@code cdlhomingpigeonLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlhomingpigeonStream cdlhomingpigeonOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -49983,16 +49756,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -50192,9 +49962,8 @@ class Core {
         * to {@link Core#cdlidentical3crows} at that bar.
         * <p>The history must hold at least {@code cdlidentical3crowsLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public Cdlidentical3crowsStream cdlidentical3crowsOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -50845,16 +50614,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -51012,9 +50778,8 @@ class Core {
         * to {@link Core#cdlinneck} at that bar.
         * <p>The history must hold at least {@code cdlinneckLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlinneckStream cdlinneckOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -51713,16 +51478,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -51901,9 +51663,8 @@ class Core {
         * to {@link Core#cdlinvertedhammer} at that bar.
         * <p>The history must hold at least {@code cdlinvertedhammerLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlinvertedhammerStream cdlinvertedhammerOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -52649,16 +52410,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -52840,9 +52598,8 @@ class Core {
         * to {@link Core#cdlkicking} at that bar.
         * <p>The history must hold at least {@code cdlkickingLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlkickingStream cdlkickingOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -53584,16 +53341,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -53775,9 +53529,8 @@ class Core {
         * to {@link Core#cdlkickingbylength} at that bar.
         * <p>The history must hold at least {@code cdlkickingbylengthLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlkickingbylengthStream cdlkickingbylengthOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -54404,16 +54157,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -54554,9 +54304,8 @@ class Core {
         * to {@link Core#cdlladderbottom} at that bar.
         * <p>The history must hold at least {@code cdlladderbottomLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlladderbottomStream cdlladderbottomOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -55178,16 +54927,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -55331,9 +55077,8 @@ class Core {
         * to {@link Core#cdllongleggeddoji} at that bar.
         * <p>The history must hold at least {@code cdllongleggeddojiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdllongleggeddojiStream cdllongleggeddojiOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -55943,16 +55688,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -56095,9 +55837,8 @@ class Core {
         * to {@link Core#cdllongline} at that bar.
         * <p>The history must hold at least {@code cdllonglineLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdllonglineStream cdllonglineOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -56711,16 +56452,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -56863,9 +56601,8 @@ class Core {
         * to {@link Core#cdlmarubozu} at that bar.
         * <p>The history must hold at least {@code cdlmarubozuLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlmarubozuStream cdlmarubozuOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -57442,16 +57179,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -57577,9 +57311,8 @@ class Core {
         * to {@link Core#cdlmatchinglow} at that bar.
         * <p>The history must hold at least {@code cdlmatchinglowLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlmatchinglowStream cdlmatchinglowOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -58406,9 +58139,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -58420,7 +58150,7 @@ class Core {
           } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -58629,11 +58359,10 @@ class Core {
         * to {@link Core#cdlmathold} at that bar.
         * <p>The history must hold at least {@code cdlmatholdLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlmatholdStream cdlmatholdOpen( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
        {
@@ -59409,9 +59138,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -59423,7 +59149,7 @@ class Core {
           } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -59615,11 +59341,10 @@ class Core {
         * to {@link Core#cdlmorningdojistar} at that bar.
         * <p>The history must hold at least {@code cdlmorningdojistarLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlmorningdojistarStream cdlmorningdojistarOpen( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
        {
@@ -60342,9 +60067,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -60356,7 +60078,7 @@ class Core {
           } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -60526,11 +60248,10 @@ class Core {
         * to {@link Core#cdlmorningstar} at that bar.
         * <p>The history must hold at least {@code cdlmorningstarLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlmorningstarStream cdlmorningstarOpen( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
        {
@@ -61177,16 +60898,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -61344,9 +61062,8 @@ class Core {
         * to {@link Core#cdlonneck} at that bar.
         * <p>The history must hold at least {@code cdlonneckLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlonneckStream cdlonneckOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -61979,16 +61696,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -62127,9 +61841,8 @@ class Core {
         * to {@link Core#cdlpiercing} at that bar.
         * <p>The history must hold at least {@code cdlpiercingLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlpiercingStream cdlpiercingOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -62827,16 +62540,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -63014,9 +62724,8 @@ class Core {
         * to {@link Core#cdlrickshawman} at that bar.
         * <p>The history must hold at least {@code cdlrickshawmanLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlrickshawmanStream cdlrickshawmanOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -63821,16 +63530,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -64039,9 +63745,8 @@ class Core {
         * to {@link Core#cdlrisefall3methods} at that bar.
         * <p>The history must hold at least {@code cdlrisefall3methodsLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public Cdlrisefall3methodsStream cdlrisefall3methodsOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -64753,16 +64458,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -64948,9 +64650,8 @@ class Core {
         * to {@link Core#cdlseparatinglines} at that bar.
         * <p>The history must hold at least {@code cdlseparatinglinesLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlseparatinglinesStream cdlseparatinglinesOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -65653,16 +65354,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -65841,9 +65539,8 @@ class Core {
         * to {@link Core#cdlshootingstar} at that bar.
         * <p>The history must hold at least {@code cdlshootingstarLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlshootingstarStream cdlshootingstarOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -66451,16 +66148,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -66603,9 +66297,8 @@ class Core {
         * to {@link Core#cdlshortline} at that bar.
         * <p>The history must hold at least {@code cdlshortlineLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlshortlineStream cdlshortlineOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -67151,16 +66844,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -67275,9 +66965,8 @@ class Core {
         * to {@link Core#cdlspinningtop} at that bar.
         * <p>The history must hold at least {@code cdlspinningtopLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlspinningtopStream cdlspinningtopOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -68170,16 +67859,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -68433,9 +68119,8 @@ class Core {
         * to {@link Core#cdlstalledpattern} at that bar.
         * <p>The history must hold at least {@code cdlstalledpatternLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlstalledpatternStream cdlstalledpatternOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -69032,16 +68717,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -69174,9 +68856,8 @@ class Core {
         * to {@link Core#cdlsticksandwich} at that bar.
         * <p>The history must hold at least {@code cdlsticksandwichLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlsticksandwichStream cdlsticksandwichOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -69861,16 +69542,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -70043,9 +69721,8 @@ class Core {
         * to {@link Core#cdltakuri} at that bar.
         * <p>The history must hold at least {@code cdltakuriLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdltakuriStream cdltakuriOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -70712,16 +70389,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -70874,9 +70548,8 @@ class Core {
         * to {@link Core#cdltasukigap} at that bar.
         * <p>The history must hold at least {@code cdltasukigapLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdltasukigapStream cdltasukigapOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -71530,16 +71203,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -71698,9 +71368,8 @@ class Core {
         * to {@link Core#cdlthrusting} at that bar.
         * <p>The history must hold at least {@code cdlthrustingLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdlthrustingStream cdlthrustingOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -72330,16 +71999,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -72477,9 +72143,8 @@ class Core {
         * to {@link Core#cdltristar} at that bar.
         * <p>The history must hold at least {@code cdltristarLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CdltristarStream cdltristarOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -73153,16 +72818,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -73325,9 +72987,8 @@ class Core {
         * to {@link Core#cdlunique3river} at that bar.
         * <p>The history must hold at least {@code cdlunique3riverLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public Cdlunique3riverStream cdlunique3riverOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -74002,16 +73663,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -74175,9 +73833,8 @@ class Core {
         * to {@link Core#cdlupsidegap2crows} at that bar.
         * <p>The history must hold at least {@code cdlupsidegap2crowsLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public Cdlupsidegap2crowsStream cdlupsidegap2crowsOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -74720,16 +74377,13 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -74832,9 +74486,8 @@ class Core {
         * to {@link Core#cdlxsidegap3methods} at that bar.
         * <p>The history must hold at least {@code cdlxsidegap3methodsLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public Cdlxsidegap3methodsStream cdlxsidegap3methodsOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -76000,9 +75653,6 @@ class Core {
           double band = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -76019,7 +75669,7 @@ class Core {
           } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -76291,11 +75941,10 @@ class Core {
         * to {@link Core#ce} at that bar.
         * <p>The history must hold at least {@code ceLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CeStream ceOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double optInMultiplier )
        {
@@ -76675,13 +76324,10 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -76734,9 +76380,8 @@ class Core {
         * to {@link Core#ceil} at that bar.
         * <p>The history must hold at least {@code ceilLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CeilStream ceilOpen( double inReal[] )
        {
@@ -78675,9 +78320,6 @@ class Core {
           double numC = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -78686,7 +78328,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -79139,11 +78781,10 @@ class Core {
         * to {@link Core#cg} at that bar.
         * <p>The history must hold at least {@code cgLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CgStream cgOpen( double inReal[], int optInTimePeriod )
        {
@@ -79852,9 +79493,6 @@ class Core {
           double trueLow = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -79866,7 +79504,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -79991,11 +79629,10 @@ class Core {
         * to {@link Core#chop} at that bar.
         * <p>The history must hold at least {@code chopLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public ChopStream chopOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
@@ -80721,9 +80358,6 @@ class Core {
           double trueLow = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -80735,7 +80369,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -80863,11 +80497,10 @@ class Core {
         * to {@link Core#choptr} at that bar.
         * <p>The history must hold at least {@code choptrLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public ChoptrStream choptrOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
@@ -82520,9 +82153,6 @@ class Core {
           double lowStop = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -82544,7 +82174,7 @@ class Core {
           } else if( optInStopPeriod < 1 || optInStopPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -82997,11 +82627,10 @@ class Core {
         * to {@link Core#cksp} at that bar.
         * <p>The history must hold at least {@code ckspLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CkspStream ckspOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double optInMultiplier, int optInStopPeriod )
        {
@@ -83804,9 +83433,6 @@ class Core {
           int maxIdx_mfv = (50)-1;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -83818,7 +83444,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -83990,11 +83616,10 @@ class Core {
         * to {@link Core#cmf} at that bar.
         * <p>The history must hold at least {@code cmfLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CmfStream cmfOpen( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod )
        {
@@ -84648,9 +84273,6 @@ class Core {
           double tempValue2 = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -84659,7 +84281,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -84812,11 +84434,10 @@ class Core {
         * to {@link Core#cmo} at that bar.
         * <p>The history must hold at least {@code cmoLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CmoStream cmoOpen( double inReal[], int optInTimePeriod )
        {
@@ -85568,9 +85189,6 @@ class Core {
           double trailingValue = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -85579,7 +85197,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -85769,11 +85387,10 @@ class Core {
         * to {@link Core#cmou} at that bar.
         * <p>The history must hold at least {@code cmouLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CmouStream cmouOpen( double inReal[], int optInTimePeriod )
        {
@@ -86733,9 +86350,6 @@ class Core {
           int maxIdx_sRing = (50)-1;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -86754,7 +86368,7 @@ class Core {
           } else if( optInROC2Period < 1 || optInROC2Period > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -86992,11 +86606,10 @@ class Core {
         * to {@link Core#coppock} at that bar.
         * <p>The history must hold at least {@code coppockLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CoppockStream coppockOpen( double inReal[], int optInWMAPeriod, int optInROC1Period, int optInROC2Period )
        {
@@ -88256,9 +87869,6 @@ class Core {
           int barsSinceReseed = 0;
           int historyLen = inReal0.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -88270,7 +87880,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -88580,11 +88190,10 @@ class Core {
         * to {@link Core#correl} at that bar.
         * <p>The history must hold at least {@code correlLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CorrelStream correlOpen( double inReal0[], double inReal1[], int optInTimePeriod )
        {
@@ -88963,13 +88572,10 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -89022,9 +88628,8 @@ class Core {
         * to {@link Core#cos} at that bar.
         * <p>The history must hold at least {@code cosLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CosStream cosOpen( double inReal[] )
        {
@@ -89405,13 +89010,10 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -89464,9 +89066,8 @@ class Core {
         * to {@link Core#cosh} at that bar.
         * <p>The history must hold at least {@code coshLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CoshStream coshOpen( double inReal[] )
        {
@@ -90167,9 +89768,6 @@ class Core {
           double streak = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -90188,7 +89786,7 @@ class Core {
           } else if( optInRankPeriod < 2 || optInRankPeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -90310,11 +89908,10 @@ class Core {
         * to {@link Core#crsi} at that bar.
         * <p>The history must hold at least {@code crsiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CrsiStream crsiOpen( double inReal[], int optInTimePeriod, int optInStreakPeriod, int optInRankPeriod )
        {
@@ -91310,9 +90907,6 @@ class Core {
           int barsSinceReseed = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -91321,7 +90915,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -91561,11 +91155,10 @@ class Core {
         * to {@link Core#cti} at that bar.
         * <p>The history must hold at least {@code ctiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CtiStream ctiOpen( double inReal[], int optInTimePeriod )
        {
@@ -91985,13 +91578,10 @@ class Core {
           int outIdx = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -92062,9 +91652,8 @@ class Core {
         * to {@link Core#cumsum} at that bar.
         * <p>The history must hold at least {@code cumsumLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CumsumStream cumsumOpen( double inReal[] )
        {
@@ -92745,9 +92334,6 @@ class Core {
           int maxIdx_emaRing = (32)-1;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -92764,7 +92350,7 @@ class Core {
           } else if( optInROCPeriod < 1 || optInROCPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -92900,11 +92486,10 @@ class Core {
         * to {@link Core#cvi} at that bar.
         * <p>The history must hold at least {@code cviLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public CviStream cviOpen( double inHigh[], double inLow[], int optInTimePeriod, int optInROCPeriod )
        {
@@ -93546,9 +93131,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -93557,7 +93139,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -93737,11 +93319,10 @@ class Core {
         * to {@link Core#dema} at that bar.
         * <p>The history must hold at least {@code demaLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public DemaStream demaOpen( double inReal[], int optInTimePeriod )
        {
@@ -94144,16 +93725,13 @@ class Core {
           int i = 0;
           int historyLen = inReal0.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inReal1.length != inReal0.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -94206,9 +93784,8 @@ class Core {
         * to {@link Core#div} at that bar.
         * <p>The history must hold at least {@code divLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public DivStream divOpen( double inReal0[], double inReal1[] )
        {
@@ -94989,9 +94566,6 @@ class Core {
           int i = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -95003,7 +94577,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -95171,11 +94745,10 @@ class Core {
         * to {@link Core#donchian} at that bar.
         * <p>The history must hold at least {@code donchianLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public DonchianStream donchianOpen( double inHigh[], double inLow[], int optInTimePeriod )
        {
@@ -96225,9 +95798,6 @@ class Core {
           int maxIdx_dsBuffer = (32)-1;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -96251,7 +95821,7 @@ class Core {
           } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -96511,11 +96081,10 @@ class Core {
         * to {@link Core#dosc} at that bar.
         * <p>The history must hold at least {@code doscLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public DoscStream doscOpen( double inReal[], int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod )
        {
@@ -97100,9 +96669,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -97111,7 +96677,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -97226,11 +96792,10 @@ class Core {
         * to {@link Core#dpo} at that bar.
         * <p>The history must hold at least {@code dpoLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public DpoStream dpoOpen( double inReal[], int optInTimePeriod )
        {
@@ -98285,9 +97850,6 @@ class Core {
           int i = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -98299,7 +97861,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -98635,11 +98197,10 @@ class Core {
         * to {@link Core#dx} at that bar.
         * <p>The history must hold at least {@code dxLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public DxStream dxOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
@@ -99287,9 +98848,6 @@ class Core {
        {
           int historyLen = inClose.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -99535,11 +99093,10 @@ class Core {
         * to {@link Core#efi} at that bar.
         * <p>The history must hold at least {@code efiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public EfiStream efiOpen( double inClose[], double inVolume[], int optInTimePeriod )
        {
@@ -100114,9 +99671,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -100125,7 +99679,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -100251,11 +99805,10 @@ class Core {
         * to {@link Core#ema} at that bar.
         * <p>The history must hold at least {@code emaLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public EmaStream emaOpen( double inReal[], int optInTimePeriod )
        {
@@ -100980,9 +100533,6 @@ class Core {
           int maxIdx_rawBuffer = (50)-1;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -100999,7 +100549,7 @@ class Core {
           } else if( !(optInVolumeDivisor >= 1e0 && optInVolumeDivisor <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -101129,11 +100679,10 @@ class Core {
         * to {@link Core#emv} at that bar.
         * <p>The history must hold at least {@code emvLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public EmvStream emvOpen( double inHigh[], double inLow[], double inVolume[], int optInTimePeriod, double optInVolumeDivisor )
        {
@@ -101868,9 +101417,6 @@ class Core {
           double trailingValue = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -101879,7 +101425,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -102061,11 +101607,10 @@ class Core {
         * to {@link Core#er} at that bar.
         * <p>The history must hold at least {@code erLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public ErStream erOpen( double inReal[], int optInTimePeriod )
        {
@@ -102743,9 +102288,6 @@ class Core {
        {
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -102952,11 +102494,10 @@ class Core {
         * to {@link Core#eri} at that bar.
         * <p>The history must hold at least {@code eriLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public EriStream eriOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
@@ -103344,13 +102885,10 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -103403,9 +102941,8 @@ class Core {
         * to {@link Core#exp} at that bar.
         * <p>The history must hold at least {@code expLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public ExpStream expOpen( double inReal[] )
        {
@@ -104374,9 +103911,6 @@ class Core {
           int i = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -104388,7 +103922,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -104589,11 +104123,10 @@ class Core {
         * to {@link Core#fisher} at that bar.
         * <p>The history must hold at least {@code fisherLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public FisherStream fisherOpen( double inHigh[], double inLow[], int optInTimePeriod )
        {
@@ -104969,13 +104502,10 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -105028,9 +104558,8 @@ class Core {
         * to {@link Core#floor} at that bar.
         * <p>The history must hold at least {@code floorLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public FloorStream floorOpen( double inReal[] )
        {
@@ -105779,9 +105308,6 @@ class Core {
           double sumAbs = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -105790,7 +105316,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -105952,11 +105478,10 @@ class Core {
         * to {@link Core#fosc} at that bar.
         * <p>The history must hold at least {@code foscLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public FoscStream foscOpen( double inReal[], int optInTimePeriod )
        {
@@ -106734,9 +106259,6 @@ class Core {
           double tempLow = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -106753,7 +106275,7 @@ class Core {
           } else if( optInRightBars < 1 || optInRightBars > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -106870,11 +106392,10 @@ class Core {
         * to {@link Core#fractal} at that bar.
         * <p>The history must hold at least {@code fractalLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public FractalStream fractalOpen( double inHigh[], double inLow[], int optInLeftBars, int optInRightBars )
        {
@@ -107867,9 +107388,6 @@ class Core {
           int seedIdx = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -107881,7 +107399,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -108113,11 +107631,10 @@ class Core {
         * to {@link Core#frama} at that bar.
         * <p>The history must hold at least {@code framaLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public FramaStream framaOpen( double inHigh[], double inLow[], int optInTimePeriod )
        {
@@ -108910,16 +108427,13 @@ class Core {
           double tempClose = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -109067,9 +108581,8 @@ class Core {
         * to {@link Core#ha} at that bar.
         * <p>The history must hold at least {@code haLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public HaStream haOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
@@ -110498,9 +110011,6 @@ class Core {
        {
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -111152,11 +110662,10 @@ class Core {
         * to {@link Core#hma} at that bar.
         * <p>The history must hold at least {@code hmaLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public HmaStream hmaOpen( double inReal[], int optInTimePeriod )
        {
@@ -112875,13 +112384,10 @@ class Core {
           double smoothPeriod = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -113248,9 +112754,8 @@ class Core {
         * to {@link Core#htDcperiod} at that bar.
         * <p>The history must hold at least {@code htDcperiodLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public HtDcperiodStream htDcperiodOpen( double inReal[] )
        {
@@ -114968,13 +114473,10 @@ class Core {
           double realPart = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -115414,9 +114916,8 @@ class Core {
         * to {@link Core#htDcphase} at that bar.
         * <p>The history must hold at least {@code htDcphaseLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public HtDcphaseStream htDcphaseOpen( double inReal[] )
        {
@@ -116856,13 +116357,10 @@ class Core {
           double todayValue = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -117234,9 +116732,8 @@ class Core {
         * to {@link Core#htPhasor} at that bar.
         * <p>The history must hold at least {@code htPhasorLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public HtPhasorStream htPhasorOpen( double inReal[] )
        {
@@ -119011,13 +118508,10 @@ class Core {
           double realPart = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -119462,9 +118956,8 @@ class Core {
         * to {@link Core#htSine} at that bar.
         * <p>The history must hold at least {@code htSineLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public HtSineStream htSineOpen( double inReal[] )
        {
@@ -121097,13 +120590,10 @@ class Core {
           double DCPeriod = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -121522,9 +121012,8 @@ class Core {
         * to {@link Core#htTrendline} at that bar.
         * <p>The history must hold at least {@code htTrendlineLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public HtTrendlineStream htTrendlineOpen( double inReal[] )
        {
@@ -123576,13 +123065,10 @@ class Core {
           double leadSine = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -124109,9 +123595,8 @@ class Core {
         * to {@link Core#htTrendmode} at that bar.
         * <p>The history must hold at least {@code htTrendmodeLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public HtTrendmodeStream htTrendmodeOpen( double inReal[] )
        {
@@ -124562,16 +124047,13 @@ class Core {
           double range = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -124640,9 +124122,8 @@ class Core {
         * to {@link Core#ibs} at that bar.
         * <p>The history must hold at least {@code ibsLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public IbsStream ibsOpen( double inHigh[], double inLow[], double inClose[] )
        {
@@ -125400,9 +124881,6 @@ class Core {
           double[] tempK;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -125424,7 +124902,7 @@ class Core {
           } else if( optInSenkouBPeriod < 2 || optInSenkouBPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -125535,11 +125013,10 @@ class Core {
         * to {@link Core#ichimoku} at that bar.
         * <p>The history must hold at least {@code ichimokuLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public IchimokuStream ichimokuOpen( double inHigh[], double inLow[], int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod )
        {
@@ -126089,9 +125566,6 @@ class Core {
           int outIdx = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -126103,7 +125577,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -126199,11 +125673,10 @@ class Core {
         * to {@link Core#imi} at that bar.
         * <p>The history must hold at least {@code imiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public ImiStream imiOpen( double inOpen[], double inClose[], int optInTimePeriod )
        {
@@ -127127,9 +126600,6 @@ class Core {
           double trailingValue = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -127138,7 +126608,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -127413,11 +126883,10 @@ class Core {
         * to {@link Core#kama} at that bar.
         * <p>The history must hold at least {@code kamaLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public KamaStream kamaOpen( double inReal[], int optInTimePeriod )
        {
@@ -128262,9 +127731,6 @@ class Core {
           double[] tempATR;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -128286,7 +127752,7 @@ class Core {
           } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -128405,11 +127871,10 @@ class Core {
         * to {@link Core#kc} at that bar.
         * <p>The history must hold at least {@code kcLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public KcStream kcOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, int optInATRPeriod, double optInNbDev )
        {
@@ -129140,9 +128605,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -129170,7 +128632,7 @@ class Core {
           if( optInSlowD_MAType == MAType.DEFAULT ) {
              optInSlowD_MAType = MAType.RMA;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -129262,11 +128724,10 @@ class Core {
         * to {@link Core#kdj} at that bar.
         * <p>The history must hold at least {@code kdjLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public KdjStream kdjOpen( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
        {
@@ -130769,9 +130230,6 @@ class Core {
           int maxIdx_sigRing = (30)-1;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -130820,7 +130278,7 @@ class Core {
           } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -131152,11 +130610,10 @@ class Core {
         * to {@link Core#kst} at that bar.
         * <p>The history must hold at least {@code kstLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public KstStream kstOpen( double inReal[], int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInSMA1Period, int optInSMA2Period, int optInSMA3Period, int optInSMA4Period, int optInSignalPeriod )
        {
@@ -132251,9 +131708,6 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -132308,7 +131762,7 @@ class Core {
           if( optInSignalMAType == MAType.DEFAULT ) {
              optInSignalMAType = MAType.SMA;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -132496,11 +131950,10 @@ class Core {
         * to {@link Core#kstext} at that bar.
         * <p>The history must hold at least {@code kstextLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public KstextStream kstextOpen( double inReal[], int optInROC1Period, int optInROC2Period, int optInROC3Period, int optInROC4Period, int optInMA1Period, int optInMA2Period, int optInMA3Period, int optInMA4Period, int optInSignalPeriod, MAType optInROCMAType, MAType optInSignalMAType )
        {
@@ -133537,9 +132990,6 @@ class Core {
           int reseedPeriod = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -133548,7 +132998,7 @@ class Core {
           } else if( optInTimePeriod < 4 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -133777,11 +133227,10 @@ class Core {
         * to {@link Core#kurtosis} at that bar.
         * <p>The history must hold at least {@code kurtosisLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public KurtosisStream kurtosisOpen( double inReal[], int optInTimePeriod )
        {
@@ -134776,9 +134225,6 @@ class Core {
           int outIdx = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -134800,7 +134246,7 @@ class Core {
           } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -135015,11 +134461,10 @@ class Core {
         * to {@link Core#kvo} at that bar.
         * <p>The history must hold at least {@code kvoLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public KvoStream kvoOpen( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
        {
@@ -135922,9 +135367,6 @@ class Core {
           double sumAbs = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -135933,7 +135375,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -136159,11 +135601,10 @@ class Core {
         * to {@link Core#linearreg} at that bar.
         * <p>The history must hold at least {@code linearregLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public LinearregStream linearregOpen( double inReal[], int optInTimePeriod )
        {
@@ -137049,9 +136490,6 @@ class Core {
           double sumAbs = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -137060,7 +136498,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -137284,11 +136722,10 @@ class Core {
         * to {@link Core#linearregAngle} at that bar.
         * <p>The history must hold at least {@code linearregAngleLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public LinearregAngleStream linearregAngleOpen( double inReal[], int optInTimePeriod )
        {
@@ -138167,9 +137604,6 @@ class Core {
           double sumAbs = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -138178,7 +137612,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -138402,11 +137836,10 @@ class Core {
         * to {@link Core#linearregIntercept} at that bar.
         * <p>The history must hold at least {@code linearregInterceptLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public LinearregInterceptStream linearregInterceptOpen( double inReal[], int optInTimePeriod )
        {
@@ -139276,9 +138709,6 @@ class Core {
           double sumAbs = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -139287,7 +138717,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -139509,11 +138939,10 @@ class Core {
         * to {@link Core#linearregSlope} at that bar.
         * <p>The history must hold at least {@code linearregSlopeLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public LinearregSlopeStream linearregSlopeOpen( double inReal[], int optInTimePeriod )
        {
@@ -139894,13 +139323,10 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -139953,9 +139379,8 @@ class Core {
         * to {@link Core#ln} at that bar.
         * <p>The history must hold at least {@code lnLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public LnStream lnOpen( double inReal[] )
        {
@@ -140334,13 +139759,10 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -140393,9 +139815,8 @@ class Core {
         * to {@link Core#log10} at that bar.
         * <p>The history must hold at least {@code log10Lookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public Log10Stream log10Open( double inReal[] )
        {
@@ -141356,9 +140777,6 @@ class Core {
        private RetCode maOpenImpl( MaStream sp, double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType )
        {
           int historyLen = inReal.length;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -141529,9 +140947,6 @@ class Core {
        private RetCode maOpenAndFillImpl( MaStream sp, double inReal[], int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
        {
           int historyLen = inReal.length;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -141704,9 +141119,6 @@ class Core {
        private RetCode maOpenAndFillInternalImpl( MaStream sp, double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
        {
           int historyLen = inReal.length;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -141868,11 +141280,10 @@ class Core {
         * to {@link Core#ma} at that bar.
         * <p>The history must hold at least {@code maLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MaStream maOpen( double inReal[], int optInTimePeriod, MAType optInMAType )
        {
@@ -142977,9 +142388,6 @@ class Core {
           int fastToday = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -142998,7 +142406,7 @@ class Core {
           } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -143229,11 +142637,10 @@ class Core {
         * to {@link Core#macd} at that bar.
         * <p>The history must hold at least {@code macdLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MacdStream macdOpen( double inReal[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
        {
@@ -144121,9 +143528,6 @@ class Core {
           MAType tempMAType;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -144151,7 +143555,7 @@ class Core {
           if( optInSignalMAType == MAType.DEFAULT ) {
              optInSignalMAType = MAType.SMA;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -144301,11 +143705,10 @@ class Core {
         * to {@link Core#macdext} at that bar.
         * <p>The history must hold at least {@code macdextLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MacdextStream macdextOpen( double inReal[], int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
        {
@@ -145124,9 +144527,6 @@ class Core {
           int optInSlowPeriod = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -145135,7 +144535,7 @@ class Core {
           } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -145338,11 +144738,10 @@ class Core {
         * to {@link Core#macdfix} at that bar.
         * <p>The history must hold at least {@code macdfixLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MacdfixStream macdfixOpen( double inReal[], int optInSignalPeriod )
        {
@@ -146672,9 +146071,6 @@ class Core {
           int lineIdx = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -146696,7 +146092,7 @@ class Core {
           } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -147055,11 +146451,10 @@ class Core {
         * to {@link Core#macdv} at that bar.
         * <p>The history must hold at least {@code macdvLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MacdvStream macdvOpen( double inHigh[], double inLow[], double inClose[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
        {
@@ -148728,9 +148123,6 @@ class Core {
           double prevPhase = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -148744,7 +148136,7 @@ class Core {
           } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -149151,11 +148543,10 @@ class Core {
         * to {@link Core#mama} at that bar.
         * <p>The history must hold at least {@code mamaLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MamaStream mamaOpen( double inReal[], double optInFastLimit, double optInSlowLimit )
        {
@@ -149976,16 +149367,13 @@ class Core {
           int i = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inLow.length != inHigh.length || inVolume.length != inHigh.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -150067,9 +149455,8 @@ class Core {
         * to {@link Core#marketfi} at that bar.
         * <p>The history must hold at least {@code marketfiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MarketfiStream marketfiOpen( double inHigh[], double inLow[], double inVolume[] )
        {
@@ -150888,9 +150275,6 @@ class Core {
           int maxIdx_ratioRing = (32)-1;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -150907,7 +150291,7 @@ class Core {
           } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -151093,11 +150477,10 @@ class Core {
         * to {@link Core#massi} at that bar.
         * <p>The history must hold at least {@code massiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MassiStream massiOpen( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod )
        {
@@ -152053,9 +151436,6 @@ class Core {
        private RetCode mavpOpenImpl( MavpStream sp, double inReal[], double inPeriods[], int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
        {
           int historyLen = inReal.length;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -152150,9 +151530,6 @@ class Core {
        private RetCode mavpOpenAndFillImpl( MavpStream sp, double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
        {
           int historyLen = inReal.length;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -152280,11 +151657,10 @@ class Core {
         * to {@link Core#mavp} at that bar.
         * <p>The history must hold at least {@code mavpLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MavpStream mavpOpen( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
        {
@@ -153164,9 +152540,6 @@ class Core {
           int highestIdx = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -153175,7 +152548,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -153305,11 +152678,10 @@ class Core {
         * to {@link Core#max} at that bar.
         * <p>The history must hold at least {@code maxLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MaxStream maxOpen( double inReal[], int optInTimePeriod )
        {
@@ -153892,9 +153264,6 @@ class Core {
           int highestIdx = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -153903,7 +153272,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -154023,11 +153392,10 @@ class Core {
         * to {@link Core#maxindex} at that bar.
         * <p>The history must hold at least {@code maxindexLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MaxindexStream maxindexOpen( double inReal[], int optInTimePeriod )
        {
@@ -154588,9 +153956,6 @@ class Core {
           double period = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -154599,7 +153964,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -154696,11 +154061,10 @@ class Core {
         * to {@link Core#mcgd} at that bar.
         * <p>The history must hold at least {@code mcgdLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public McgdStream mcgdOpen( double inReal[], int optInTimePeriod )
        {
@@ -155662,9 +155026,6 @@ class Core {
           int maxIdx_sorted = (30)-1;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -155673,7 +155034,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -155906,11 +155267,10 @@ class Core {
         * to {@link Core#median} at that bar.
         * <p>The history must hold at least {@code medianLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MedianStream medianOpen( double inReal[], int optInTimePeriod )
        {
@@ -156307,16 +155667,13 @@ class Core {
           int i = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inLow.length != inHigh.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -156376,9 +155733,8 @@ class Core {
         * to {@link Core#medprice} at that bar.
         * <p>The history must hold at least {@code medpriceLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MedpriceStream medpriceOpen( double inHigh[], double inLow[] )
        {
@@ -157197,9 +156553,6 @@ class Core {
           int maxIdx_mflow = (50)-1;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -157211,7 +156564,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -157407,11 +156760,10 @@ class Core {
         * to {@link Core#mfi} at that bar.
         * <p>The history must hold at least {@code mfiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MfiStream mfiOpen( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod )
        {
@@ -158460,9 +157812,6 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -158471,7 +157820,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -158635,11 +157984,10 @@ class Core {
         * to {@link Core#midpoint} at that bar.
         * <p>The history must hold at least {@code midpointLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MidpointStream midpointOpen( double inReal[], int optInTimePeriod )
        {
@@ -159708,9 +159056,6 @@ class Core {
           int i = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -159722,7 +159067,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -159887,11 +159232,10 @@ class Core {
         * to {@link Core#midprice} at that bar.
         * <p>The history must hold at least {@code midpriceLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MidpriceStream midpriceOpen( double inHigh[], double inLow[], int optInTimePeriod )
        {
@@ -160759,9 +160103,6 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -160770,7 +160111,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -160898,11 +160239,10 @@ class Core {
         * to {@link Core#min} at that bar.
         * <p>The history must hold at least {@code minLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MinStream minOpen( double inReal[], int optInTimePeriod )
        {
@@ -161485,9 +160825,6 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -161496,7 +160833,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -161616,11 +160953,10 @@ class Core {
         * to {@link Core#minindex} at that bar.
         * <p>The history must hold at least {@code minindexLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MinindexStream minindexOpen( double inReal[], int optInTimePeriod )
        {
@@ -162718,9 +162054,6 @@ class Core {
           int lowestIdx = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -162729,7 +162062,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -162890,11 +162223,10 @@ class Core {
         * to {@link Core#minmax} at that bar.
         * <p>The history must hold at least {@code minmaxLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MinmaxStream minmaxOpen( double inReal[], int optInTimePeriod )
        {
@@ -163612,9 +162944,6 @@ class Core {
           int lowestIdx = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -163623,7 +162952,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -163767,11 +163096,10 @@ class Core {
         * to {@link Core#minmaxindex} at that bar.
         * <p>The history must hold at least {@code minmaxindexLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MinmaxindexStream minmaxindexOpen( double inReal[], int optInTimePeriod )
        {
@@ -164866,9 +164194,6 @@ class Core {
        {
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -165374,11 +164699,10 @@ class Core {
         * to {@link Core#minusDi} at that bar.
         * <p>The history must hold at least {@code minusDiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MinusDiStream minusDiOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
@@ -166168,9 +165492,6 @@ class Core {
        {
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -166518,11 +165839,10 @@ class Core {
         * to {@link Core#minusDm} at that bar.
         * <p>The history must hold at least {@code minusDmLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MinusDmStream minusDmOpen( double inHigh[], double inLow[], int optInTimePeriod )
        {
@@ -167017,9 +166337,6 @@ class Core {
           int trailingIdx = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -167028,7 +166345,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -167143,11 +166460,10 @@ class Core {
         * to {@link Core#mom} at that bar.
         * <p>The history must hold at least {@code momLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MomStream momOpen( double inReal[], int optInTimePeriod )
        {
@@ -167536,16 +166852,13 @@ class Core {
           int i = 0;
           int historyLen = inReal0.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inReal1.length != inReal0.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -167602,9 +166915,8 @@ class Core {
         * to {@link Core#mult} at that bar.
         * <p>The history must hold at least {@code multLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public MultStream multOpen( double inReal0[], double inReal1[] )
        {
@@ -168431,9 +167743,6 @@ class Core {
           double tempHT = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -168445,7 +167754,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -168668,11 +167977,10 @@ class Core {
         * to {@link Core#natr} at that bar.
         * <p>The history must hold at least {@code natrLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public NatrStream natrOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
@@ -169203,16 +168511,13 @@ class Core {
           double tempNVI = 0;
           int historyLen = inClose.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inVolume.length != inClose.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -169301,9 +168606,8 @@ class Core {
         * to {@link Core#nvi} at that bar.
         * <p>The history must hold at least {@code nviLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public NviStream nviOpen( double inClose[], double inVolume[] )
        {
@@ -169738,16 +169042,13 @@ class Core {
           double prevOBV = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inVolume.length != inReal.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -169812,9 +169113,8 @@ class Core {
         * to {@link Core#obv} at that bar.
         * <p>The history must hold at least {@code obvLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public ObvStream obvOpen( double inReal[], double inVolume[] )
        {
@@ -170858,9 +170158,6 @@ class Core {
           double[] tempX;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -170882,7 +170179,7 @@ class Core {
           if( optInMAType == MAType.DEFAULT ) {
              optInMAType = MAType.SMA;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -170996,12 +170293,11 @@ class Core {
         * to {@link Core#percentb} at that bar.
         * <p>The history must hold at least {@code percentbLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE}, {@link Core#REAL_DEFAULT} and
         * {@link MAType#DEFAULT} select a parameter's documented default, as in
-        * the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public PercentbStream percentbOpen( double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
        {
@@ -171919,9 +171215,6 @@ class Core {
           int maxIdx_sorted = (100)-1;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -171935,7 +171228,7 @@ class Core {
           } else if( !(optInPercentile >= 0e0 && optInPercentile <= 1e2) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -172156,11 +171449,10 @@ class Core {
         * to {@link Core#percentile} at that bar.
         * <p>The history must hold at least {@code percentileLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public PercentileStream percentileOpen( double inReal[], int optInTimePeriod, double optInPercentile )
        {
@@ -172703,9 +171995,6 @@ class Core {
           double current = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -172714,7 +172003,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -172801,11 +172090,10 @@ class Core {
         * to {@link Core#percentrank} at that bar.
         * <p>The history must hold at least {@code percentrankLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public PercentrankStream percentrankOpen( double inReal[], int optInTimePeriod )
        {
@@ -173899,9 +173187,6 @@ class Core {
        {
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -174407,11 +173692,10 @@ class Core {
         * to {@link Core#plusDi} at that bar.
         * <p>The history must hold at least {@code plusDiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public PlusDiStream plusDiOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
@@ -175203,9 +174487,6 @@ class Core {
        {
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -175553,11 +174834,10 @@ class Core {
         * to {@link Core#plusDm} at that bar.
         * <p>The history must hold at least {@code plusDmLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public PlusDmStream plusDmOpen( double inHigh[], double inLow[], int optInTimePeriod )
        {
@@ -176622,9 +175902,6 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -176641,7 +175918,7 @@ class Core {
           if( optInMAType == MAType.DEFAULT ) {
              optInMAType = MAType.EMA;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -176784,11 +176061,10 @@ class Core {
         * to {@link Core#ppo} at that bar.
         * <p>The history must hold at least {@code ppoLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public PpoStream ppoOpen( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
        {
@@ -178205,9 +177481,6 @@ class Core {
           int n2 = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -178224,7 +177497,7 @@ class Core {
           } else if( optInEMAPeriod < 1 || optInEMAPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -178497,11 +177770,10 @@ class Core {
         * to {@link Core#pso} at that bar.
         * <p>The history must hold at least {@code psoLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public PsoStream psoOpen( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInEMAPeriod )
        {
@@ -179032,16 +178304,13 @@ class Core {
           double tempPVI = 0;
           int historyLen = inClose.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inVolume.length != inClose.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -179130,9 +178399,8 @@ class Core {
         * to {@link Core#pvi} at that bar.
         * <p>The history must hold at least {@code pviLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public PviStream pviOpen( double inClose[], double inVolume[] )
        {
@@ -180193,9 +179461,6 @@ class Core {
           int i = 0;
           int historyLen = inVolume.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -180212,7 +179477,7 @@ class Core {
           if( optInMAType == MAType.DEFAULT ) {
              optInMAType = MAType.EMA;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -180355,11 +179620,10 @@ class Core {
         * to {@link Core#pvo} at that bar.
         * <p>The history must hold at least {@code pvoLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public PvoStream pvoOpen( double inVolume[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
        {
@@ -180831,16 +180095,13 @@ class Core {
           double tempClose = 0;
           int historyLen = inClose.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inVolume.length != inClose.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -180907,9 +180168,8 @@ class Core {
         * to {@link Core#pvt} at that bar.
         * <p>The history must hold at least {@code pvtLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public PvtStream pvtOpen( double inClose[], double inVolume[] )
        {
@@ -181469,9 +180729,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -181483,7 +180740,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -181607,11 +180864,10 @@ class Core {
         * to {@link Core#qstick} at that bar.
         * <p>The history must hold at least {@code qstickLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public QstickStream qstickOpen( double inOpen[], double inClose[], int optInTimePeriod )
        {
@@ -182197,9 +181453,6 @@ class Core {
           double wBeta = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -182208,7 +181461,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -182318,11 +181571,10 @@ class Core {
         * to {@link Core#rma} at that bar.
         * <p>The history must hold at least {@code rmaLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public RmaStream rmaOpen( double inReal[], int optInTimePeriod )
        {
@@ -182861,9 +182113,6 @@ class Core {
           double tempReal = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -182872,7 +182121,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -182990,11 +182239,10 @@ class Core {
         * to {@link Core#roc} at that bar.
         * <p>The history must hold at least {@code rocLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public RocStream rocOpen( double inReal[], int optInTimePeriod )
        {
@@ -183519,9 +182767,6 @@ class Core {
           double tempReal = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -183530,7 +182775,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -183648,11 +182893,10 @@ class Core {
         * to {@link Core#rocp} at that bar.
         * <p>The history must hold at least {@code rocpLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public RocpStream rocpOpen( double inReal[], int optInTimePeriod )
        {
@@ -184179,9 +183423,6 @@ class Core {
           double tempReal = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -184190,7 +183431,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -184308,11 +183549,10 @@ class Core {
         * to {@link Core#rocr} at that bar.
         * <p>The history must hold at least {@code rocrLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public RocrStream rocrOpen( double inReal[], int optInTimePeriod )
        {
@@ -184841,9 +184081,6 @@ class Core {
           double tempReal = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -184852,7 +184089,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -184970,11 +184207,10 @@ class Core {
         * to {@link Core#rocr100} at that bar.
         * <p>The history must hold at least {@code rocr100Lookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public Rocr100Stream rocr100Open( double inReal[], int optInTimePeriod )
        {
@@ -185884,9 +185120,6 @@ class Core {
           int maxIdx_termRing = (32)-1;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -185903,7 +185136,7 @@ class Core {
           } else if( !(optInAnnualization >= 0e0 && optInAnnualization <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -186092,11 +185325,10 @@ class Core {
         * to {@link Core#rogerssatchell} at that bar.
         * <p>The history must hold at least {@code rogerssatchellLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public RogerssatchellStream rogerssatchellOpen( double inOpen[], double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double optInAnnualization )
        {
@@ -186794,9 +186026,6 @@ class Core {
           double tempValue2 = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -186805,7 +186034,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -186974,11 +186203,10 @@ class Core {
         * to {@link Core#rsi} at that bar.
         * <p>The history must hold at least {@code rsiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public RsiStream rsiOpen( double inReal[], int optInTimePeriod )
        {
@@ -188220,9 +187448,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -188236,7 +187461,7 @@ class Core {
           } else if( optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -188574,11 +187799,10 @@ class Core {
         * to {@link Core#rvi} at that bar.
         * <p>The history must hold at least {@code rviLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public RviStream rviOpen( double inReal[], int optInTimePeriod, int optInStdDevPeriod )
        {
@@ -189149,9 +188373,6 @@ class Core {
           MInteger tempNbElement = new MInteger();
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -189168,7 +188389,7 @@ class Core {
           } else if( optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -189279,11 +188500,10 @@ class Core {
         * to {@link Core#rvir} at that bar.
         * <p>The history must hold at least {@code rvirLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public RvirStream rvirOpen( double inHigh[], double inLow[], int optInTimePeriod, int optInStdDevPeriod )
        {
@@ -189890,9 +189110,6 @@ class Core {
           int liveIn = 0;
           int historyLen = inVolume.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -189901,7 +189118,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -190019,11 +189236,10 @@ class Core {
         * to {@link Core#rvol} at that bar.
         * <p>The history must hold at least {@code rvolLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public RvolStream rvolOpen( double inVolume[], int optInTimePeriod )
        {
@@ -191081,9 +190297,6 @@ class Core {
           double[] ep_temp = new double[1];
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -191100,7 +190313,7 @@ class Core {
           } else if( !(optInMaximum >= 0e0 && optInMaximum <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -191368,11 +190581,10 @@ class Core {
         * to {@link Core#sar} at that bar.
         * <p>The history must hold at least {@code sarLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public SarStream sarOpen( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum )
        {
@@ -192721,9 +191933,6 @@ class Core {
           double[] ep_temp = new double[1];
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -192770,7 +191979,7 @@ class Core {
           } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -193102,11 +192311,10 @@ class Core {
         * to {@link Core#sarext} at that bar.
         * <p>The history must hold at least {@code sarextLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public SarextStream sarextOpen( double inHigh[], double inLow[], double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
        {
@@ -193770,9 +192978,6 @@ class Core {
           double swing = 0;
           int historyLen = inOpen.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -193784,7 +192989,7 @@ class Core {
           } else if( !(optInLimitMove >= 1e-8 && optInLimitMove <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -193880,11 +193085,10 @@ class Core {
         * to {@link Core#si} at that bar.
         * <p>The history must hold at least {@code siLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public SiStream siOpen( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInLimitMove )
        {
@@ -194269,13 +193473,10 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -194328,9 +193529,8 @@ class Core {
         * to {@link Core#sin} at that bar.
         * <p>The history must hold at least {@code sinLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public SinStream sinOpen( double inReal[] )
        {
@@ -194709,13 +193909,10 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -194768,9 +193965,8 @@ class Core {
         * to {@link Core#sinh} at that bar.
         * <p>The history must hold at least {@code sinhLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public SinhStream sinhOpen( double inReal[] )
        {
@@ -195724,9 +194920,6 @@ class Core {
           int reseedPeriod = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -195735,7 +194928,7 @@ class Core {
           } else if( optInTimePeriod < 3 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -195940,11 +195133,10 @@ class Core {
         * to {@link Core#skew} at that bar.
         * <p>The history must hold at least {@code skewLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public SkewStream skewOpen( double inReal[], int optInTimePeriod )
        {
@@ -196472,9 +195664,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -196483,7 +195672,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -196587,11 +195776,10 @@ class Core {
         * to {@link Core#sma} at that bar.
         * <p>The history must hold at least {@code smaLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public SmaStream smaOpen( double inReal[], int optInTimePeriod )
        {
@@ -197936,9 +197124,6 @@ class Core {
           int nSignal = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -197965,7 +197150,7 @@ class Core {
           } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -198291,11 +197476,10 @@ class Core {
         * to {@link Core#smi} at that bar.
         * <p>The history must hold at least {@code smiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public SmiStream smiOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
        {
@@ -198677,13 +197861,10 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -198736,9 +197917,8 @@ class Core {
         * to {@link Core#sqrt} at that bar.
         * <p>The history must hold at least {@code sqrtLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public SqrtStream sqrtOpen( double inReal[] )
        {
@@ -199795,9 +198975,6 @@ class Core {
           double band = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -199834,7 +199011,7 @@ class Core {
           } else if( !(optInFactorNarrow >= 0e0 && optInFactorNarrow <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -200037,11 +199214,10 @@ class Core {
         * to {@link Core#sqzmom} at that bar.
         * <p>The history must hold at least {@code sqzmomLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public SqzmomStream sqzmomOpen( double inHigh[], double inLow[], double inClose[], int optInBBPeriod, double optInNbDev, int optInKCPeriod, double optInFactorWide, double optInFactorNormal, double optInFactorNarrow )
        {
@@ -201670,9 +200846,6 @@ class Core {
           int nPF = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -201691,7 +200864,7 @@ class Core {
           } else if( optInCyclePeriod < 2 || optInCyclePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -202147,11 +201320,10 @@ class Core {
         * to {@link Core#stc} at that bar.
         * <p>The history must hold at least {@code stcLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public StcStream stcOpen( double inReal[], int optInFastPeriod, int optInSlowPeriod, int optInCyclePeriod )
        {
@@ -202669,9 +201841,6 @@ class Core {
           RetCode retCode;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -202685,7 +201854,7 @@ class Core {
           } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -202785,11 +201954,10 @@ class Core {
         * to {@link Core#stddev} at that bar.
         * <p>The history must hold at least {@code stddevLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public StddevStream stddevOpen( double inReal[], int optInTimePeriod, double optInNbDev )
        {
@@ -203888,9 +203056,6 @@ class Core {
           int bufferIsAllocated = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -203918,7 +203083,7 @@ class Core {
           if( optInSlowD_MAType == MAType.DEFAULT ) {
              optInSlowD_MAType = MAType.SMA;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -204192,11 +203357,10 @@ class Core {
         * to {@link Core#stoch} at that bar.
         * <p>The history must hold at least {@code stochLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public StochStream stochOpen( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
        {
@@ -205213,9 +204377,6 @@ class Core {
           int bufferIsAllocated = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -205235,7 +204396,7 @@ class Core {
           if( optInFastD_MAType == MAType.DEFAULT ) {
              optInFastD_MAType = MAType.SMA;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -205493,11 +204654,10 @@ class Core {
         * to {@link Core#stochf} at that bar.
         * <p>The history must hold at least {@code stochfLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public StochfStream stochfOpen( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
        {
@@ -206209,9 +205369,6 @@ class Core {
           MInteger outNbElement1 = new MInteger();
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -206233,7 +205390,7 @@ class Core {
           if( optInFastD_MAType == MAType.DEFAULT ) {
              optInFastD_MAType = MAType.SMA;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -206356,11 +205513,10 @@ class Core {
         * to {@link Core#stochrsi} at that bar.
         * <p>The history must hold at least {@code stochrsiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public StochrsiStream stochrsiOpen( double inReal[], int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
        {
@@ -206745,16 +205901,13 @@ class Core {
           int i = 0;
           int historyLen = inReal0.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inReal1.length != inReal0.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -206808,9 +205961,8 @@ class Core {
         * to {@link Core#sub} at that bar.
         * <p>The history must hold at least {@code subLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public SubStream subOpen( double inReal0[], double inReal1[] )
        {
@@ -207310,9 +206462,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -207321,7 +206470,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -207421,11 +206570,10 @@ class Core {
         * to {@link Core#sum} at that bar.
         * <p>The history must hold at least {@code sumLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public SumStream sumOpen( double inReal[], int optInTimePeriod )
        {
@@ -208412,9 +207560,6 @@ class Core {
           double prevClose = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -208431,7 +207576,7 @@ class Core {
           } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -208634,11 +207779,10 @@ class Core {
         * to {@link Core#supertrend} at that bar.
         * <p>The history must hold at least {@code supertrendLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public SupertrendStream supertrendOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double optInMultiplier )
        {
@@ -209281,9 +208425,6 @@ class Core {
           double y2 = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -209292,7 +208433,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -209419,11 +208560,10 @@ class Core {
         * to {@link Core#swak2php} at that bar.
         * <p>The history must hold at least {@code swak2phpLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public Swak2phpStream swak2phpOpen( double inReal[], int optInTimePeriod )
        {
@@ -210102,9 +209242,6 @@ class Core {
           double y2 = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -210118,7 +209255,7 @@ class Core {
           } else if( !(optInDelta >= 5e-2 && optInDelta <= 5e-1) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -210248,11 +209385,10 @@ class Core {
         * to {@link Core#swakBp} at that bar.
         * <p>The history must hold at least {@code swakBpLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public SwakBpStream swakBpOpen( double inReal[], int optInTimePeriod, double optInDelta )
        {
@@ -210894,9 +210030,6 @@ class Core {
           double y2 = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -210905,7 +210038,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -211030,11 +210163,10 @@ class Core {
         * to {@link Core#swakButter} at that bar.
         * <p>The history must hold at least {@code swakButterLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public SwakButterStream swakButterOpen( double inReal[], int optInTimePeriod )
        {
@@ -211637,9 +210769,6 @@ class Core {
           double y2 = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -211648,7 +210777,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 10000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -211760,11 +210889,10 @@ class Core {
         * to {@link Core#swakGauss} at that bar.
         * <p>The history must hold at least {@code swakGaussLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public SwakGaussStream swakGaussOpen( double inReal[], int optInTimePeriod )
        {
@@ -212369,9 +211497,6 @@ class Core {
           double y1 = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -212380,7 +211505,7 @@ class Core {
           } else if( optInTimePeriod < 5 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -212501,11 +211626,10 @@ class Core {
         * to {@link Core#swakHp} at that bar.
         * <p>The history must hold at least {@code swakHpLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public SwakHpStream swakHpOpen( double inReal[], int optInTimePeriod )
        {
@@ -213287,9 +212411,6 @@ class Core {
           double tempReal = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -213303,7 +212424,7 @@ class Core {
           } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -213511,11 +212632,10 @@ class Core {
         * to {@link Core#t3} at that bar.
         * <p>The history must hold at least {@code t3Lookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public T3Stream t3Open( double inReal[], int optInTimePeriod, double optInVFactor )
        {
@@ -213904,13 +213024,10 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -213963,9 +213080,8 @@ class Core {
         * to {@link Core#tan} at that bar.
         * <p>The history must hold at least {@code tanLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public TanStream tanOpen( double inReal[] )
        {
@@ -214338,13 +213454,10 @@ class Core {
           int i = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -214397,9 +213510,8 @@ class Core {
         * to {@link Core#tanh} at that bar.
         * <p>The history must hold at least {@code tanhLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public TanhStream tanhOpen( double inReal[] )
        {
@@ -215083,9 +214195,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -215094,7 +214203,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -215299,11 +214408,10 @@ class Core {
         * to {@link Core#tema} at that bar.
         * <p>The history must hold at least {@code temaLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public TemaStream temaOpen( double inReal[], int optInTimePeriod )
        {
@@ -215846,16 +214954,13 @@ class Core {
           double tempHT = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -215951,9 +215056,8 @@ class Core {
         * to {@link Core#trange} at that bar.
         * <p>The history must hold at least {@code trangeLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public TrangeStream trangeOpen( double inHigh[], double inLow[], double inClose[] )
        {
@@ -216871,9 +215975,6 @@ class Core {
        {
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -217355,11 +216456,10 @@ class Core {
         * to {@link Core#trima} at that bar.
         * <p>The history must hold at least {@code trimaLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public TrimaStream trimaOpen( double inReal[], int optInTimePeriod )
        {
@@ -218110,9 +217210,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -218121,7 +217218,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -218276,11 +217373,10 @@ class Core {
         * to {@link Core#trix} at that bar.
         * <p>The history must hold at least {@code trixLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public TrixStream trixOpen( double inReal[], int optInTimePeriod )
        {
@@ -219172,9 +218268,6 @@ class Core {
           double sumAbs = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -219183,7 +218276,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -219409,11 +218502,10 @@ class Core {
         * to {@link Core#tsf} at that bar.
         * <p>The history must hold at least {@code tsfLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public TsfStream tsfOpen( double inReal[], int optInTimePeriod )
        {
@@ -220226,9 +219318,6 @@ class Core {
           int nSecond = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -220242,7 +219331,7 @@ class Core {
           } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -220434,11 +219523,10 @@ class Core {
         * to {@link Core#tsi} at that bar.
         * <p>The history must hold at least {@code tsiLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public TsiStream tsiOpen( double inReal[], int optInFirstPeriod, int optInSecondPeriod )
        {
@@ -220836,16 +219924,13 @@ class Core {
           int i = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -220900,9 +219985,8 @@ class Core {
         * to {@link Core#typprice} at that bar.
         * <p>The history must hold at least {@code typpriceLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public TyppriceStream typpriceOpen( double inHigh[], double inLow[], double inClose[] )
        {
@@ -222106,9 +221190,6 @@ class Core {
           int maxIdx_term = (32)-1;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -222130,7 +221211,7 @@ class Core {
           } else if( optInTimePeriod3 < 1 || optInTimePeriod3 > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -222415,11 +221496,10 @@ class Core {
         * to {@link Core#ultosc} at that bar.
         * <p>The history must hold at least {@code ultoscLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public UltoscStream ultoscOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
        {
@@ -223322,9 +222402,6 @@ class Core {
           int barsSinceReseed = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -223338,7 +222415,7 @@ class Core {
           } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -223537,11 +222614,10 @@ class Core {
         * to {@link Core#var} at that bar.
         * <p>The history must hold at least {@code varLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public VarStream varOpen( double inReal[], int optInTimePeriod, double optInNbDev )
        {
@@ -224164,9 +223240,6 @@ class Core {
           double tempReal = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -224175,7 +223248,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -224283,11 +223356,10 @@ class Core {
         * to {@link Core#vhf} at that bar.
         * <p>The history must hold at least {@code vhfLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public VhfStream vhfOpen( double inReal[], int optInTimePeriod )
        {
@@ -225170,9 +224242,6 @@ class Core {
           double prevVIDYA = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -225186,7 +224255,7 @@ class Core {
           } else if( optInCMOPeriod < 2 || optInCMOPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -225406,11 +224475,10 @@ class Core {
         * to {@link Core#vidya} at that bar.
         * <p>The history must hold at least {@code vidyaLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public VidyaStream vidyaOpen( double inReal[], int optInTimePeriod, int optInCMOPeriod )
        {
@@ -226507,9 +225575,6 @@ class Core {
           double tempCY = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -226521,7 +225586,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -226751,11 +225816,10 @@ class Core {
         * to {@link Core#vortex} at that bar.
         * <p>The history must hold at least {@code vortexLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public VortexStream vortexOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
@@ -227519,16 +226583,13 @@ class Core {
           int i = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -227684,9 +226745,8 @@ class Core {
         * to {@link Core#vwap} at that bar.
         * <p>The history must hold at least {@code vwapLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public VwapStream vwapOpen( double inHigh[], double inLow[], double inClose[], double inVolume[] )
        {
@@ -228435,9 +227495,6 @@ class Core {
           int zeroCount = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -228449,7 +227506,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -228629,11 +227686,10 @@ class Core {
         * to {@link Core#vwma} at that bar.
         * <p>The history must hold at least {@code vwmaLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public VwmaStream vwmaOpen( double inReal[], double inVolume[], int optInTimePeriod )
        {
@@ -229190,16 +228246,13 @@ class Core {
           int outIdx = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -229311,9 +228364,8 @@ class Core {
         * to {@link Core#wad} at that bar.
         * <p>The history must hold at least {@code wadLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public WadStream wadOpen( double inHigh[], double inLow[], double inClose[] )
        {
@@ -230375,9 +229427,6 @@ class Core {
           int maxIdx_wtBuffer = (32)-1;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -230399,7 +229448,7 @@ class Core {
           } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -230666,11 +229715,10 @@ class Core {
         * to {@link Core#wavetrend} at that bar.
         * <p>The history must hold at least {@code wavetrendLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public WavetrendStream wavetrendOpen( double inHigh[], double inLow[], double inClose[], int optInChannelPeriod, int optInAveragePeriod, int optInSignalPeriod )
        {
@@ -231077,16 +230125,13 @@ class Core {
           int i = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
           if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -231141,9 +230186,8 @@ class Core {
         * to {@link Core#wclprice} at that bar.
         * <p>The history must hold at least {@code wclpriceLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * thrown, an empty history included. A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public WclpriceStream wclpriceOpen( double inHigh[], double inLow[], double inClose[] )
        {
@@ -232362,9 +231406,6 @@ class Core {
           int i = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -232376,7 +231417,7 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -232552,11 +231593,10 @@ class Core {
         * to {@link Core#willr} at that bar.
         * <p>The history must hold at least {@code willrLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public WillrStream willrOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
@@ -233436,9 +232476,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -233447,7 +232484,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -233694,11 +232731,10 @@ class Core {
         * to {@link Core#wma} at that bar.
         * <p>The history must hold at least {@code wmaLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public WmaStream wmaOpen( double inReal[], int optInTimePeriod )
        {
@@ -234710,9 +233746,6 @@ class Core {
           double pivot = 0;
           int historyLen = inHigh.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -234729,7 +233762,7 @@ class Core {
           } else if( optInMinTrendLength < 1 || optInMinTrendLength > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -234864,11 +233897,10 @@ class Core {
         * to {@link Core#zigzag} at that bar.
         * <p>The history must hold at least {@code zigzagLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Core#REAL_DEFAULT} and {@link Integer#MIN_VALUE} select a
-        * parameter's documented default, as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public ZigzagStream zigzagOpen( double inHigh[], double inLow[], double optInSensitivity, int optInMinTrendLength )
        {
@@ -235510,9 +234542,6 @@ class Core {
           int lookbackTotal = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
-          if( historyLen < 1 ) {
-             return RetCode.INSUFFICIENT_HISTORY;
-          }
           if( historyLen > INDEX_MAX + 1 ) {
              return RetCode.OUT_OF_RANGE_END_INDEX;
           }
@@ -235521,7 +234550,7 @@ class Core {
           } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
              return RetCode.BAD_PARAM;
           }
-          if( startIdx > endIdx ) {
+          if( startIdx >= historyLen ) {
              outBegIdx.value = 0;
              outNBElement.value = 0;
              return RetCode.INSUFFICIENT_HISTORY;
@@ -235664,11 +234693,10 @@ class Core {
         * to {@link Core#zlema} at that bar.
         * <p>The history must hold at least {@code zlemaLookback(...) + 1} bars
         * (unstable-period aware), or {@link InsufficientHistoryException} is
-        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
         * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
-        * as in the batch API). An EMPTY history throws
-        * {@link InsufficientHistoryException} too, and a null argument
-        * {@link IllegalArgumentException}, both ahead of everything above.
+        * as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
         */
        public ZlemaStream zlemaOpen( double inReal[], int optInTimePeriod )
        {
@@ -235732,7 +234760,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "1cd919927bdf2ea5";
+    static final String SPLICED_GENCODE_DIGEST = "cac9d5dee7eb34ca";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

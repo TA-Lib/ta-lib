@@ -1412,7 +1412,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_CKSP_OpenImpl( struct TA_CKSP_Stream **s
       optInStopPeriod = 9;
    else if( (int)optInStopPeriod < 1 || (int)optInStopPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

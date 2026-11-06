@@ -1149,9 +1149,6 @@ function hmaOpenImpl(
   const core = sp.core;
   const historyLen = inReal.length;
   let endIdx = historyLen - 1;
-  if (historyLen < 1) {
-    return RetCode.INSUFFICIENT_HISTORY;
-  }
   if (historyLen > Core.INDEX_MAX + 1) {
     return RetCode.OUT_OF_RANGE_END_INDEX;
   }

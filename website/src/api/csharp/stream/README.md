@@ -121,9 +121,9 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 |---|---|
 | A history longer than `Core.IndexMax + 1` bars | `ArgumentOutOfRangeException` carrying `RetCode.OutOfRangeEndIndex` |
 | An optional parameter outside its documented range, a non-finite real parameter included | `ArgumentException` |
-| An input series whose length differs from the history's | `ArgumentException` naming it |
+| An input series after the first that is empty (a null array included) beside a non-empty history, or whose length differs from the history's | `ArgumentException` naming it |
 | (`OpenAndFill`) an output shorter than the values the fill writes, or the same buffer as an input or another output | `ArgumentException` |
-| Fewer than `lookback + 1` history bars, zero bars or a null array included | `InsufficientHistoryException` |
+| Fewer than `lookback + 1` history bars, zero bars or a null array included; checked after every row above | `InsufficientHistoryException` |
 | A non-finite bar (NaN or ±Inf) | `ArgumentException` naming the input |
 | A bar past `Core.IndexMax`, the last index the batch API addresses | `ArgumentException` carrying `RetCode.OutOfRangeEndIndex` |
 

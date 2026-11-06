@@ -437,13 +437,10 @@ public partial class Core
       int i = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -508,7 +505,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public Log10Stream Log10Open( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("LOG10 open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "LOG10 open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return Log10OpenInternal(inReal, 0);
    }
@@ -541,7 +537,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public Log10Stream Log10OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("LOG10 openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "LOG10 openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("LOG10", "openAndFill", inReal.Length, Log10Lookback());
       RequireFillLength("LOG10", "openAndFill", "outReal", outReal.Length, guardOutLen);

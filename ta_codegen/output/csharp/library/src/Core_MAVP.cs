@@ -1047,9 +1047,6 @@ public partial class Core
    private RetCode MavpOpenImpl( MavpStream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       int historyLen = inReal.Length;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1148,9 +1145,6 @@ public partial class Core
       outBegIdx = 0;
       outNBElement = 0;
       int historyLen = inReal.Length;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1316,9 +1310,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MavpStream MavpOpen( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MAVP open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MAVP open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inPeriods.IsEmpty ) throw new TALibArgumentException("MAVP open: inPeriods is empty", nameof(inPeriods), RetCode.BadParam);
+      if( !inReal.IsEmpty ) {
+         if( inPeriods.IsEmpty ) throw new TALibArgumentException("MAVP open: inPeriods is empty", nameof(inPeriods), RetCode.BadParam);
+      }
       RequireHistoryLength("MAVP", "open", "inPeriods", inPeriods.Length, inReal.Length);
       return MavpOpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
@@ -1358,9 +1353,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MavpStream MavpOpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MAVP openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MAVP openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inPeriods.IsEmpty ) throw new TALibArgumentException("MAVP openAndFill: inPeriods is empty", nameof(inPeriods), RetCode.BadParam);
+      if( !inReal.IsEmpty ) {
+         if( inPeriods.IsEmpty ) throw new TALibArgumentException("MAVP openAndFill: inPeriods is empty", nameof(inPeriods), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("MAVP", "openAndFill", inReal.Length, MavpLookback(optInMinPeriod, optInMaxPeriod, optInMAType));
       RequireHistoryLength("MAVP", "openAndFill", "inPeriods", inPeriods.Length, inReal.Length);
       RequireFillLength("MAVP", "openAndFill", "outReal", outReal.Length, guardOutLen);

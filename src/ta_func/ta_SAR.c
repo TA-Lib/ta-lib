@@ -766,7 +766,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_SAR_OpenImpl( struct TA_SAR_Stream **str
       optInMaximum = 0.2;
    else if( !(optInMaximum >= 0e0 && optInMaximum <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

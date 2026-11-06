@@ -458,7 +458,7 @@ static TA_RetCode TA_SI_OpenImpl( struct TA_SI_Stream **stream, const double inO
       optInLimitMove = 3;
    else if( !(optInLimitMove >= 1e-8 && optInLimitMove <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

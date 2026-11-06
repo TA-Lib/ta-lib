@@ -1299,7 +1299,7 @@ static TA_RetCode TA_SQZMOM_OpenImpl( struct TA_SQZMOM_Stream **stream, const do
       optInFactorNarrow = 1;
    else if( !(optInFactorNarrow >= 0e0 && optInFactorNarrow <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

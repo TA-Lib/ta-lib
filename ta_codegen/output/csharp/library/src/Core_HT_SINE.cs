@@ -1832,13 +1832,10 @@ public partial class Core
       double realPart = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -2295,7 +2292,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public HtSineStream HtSineOpen( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("HT_SINE open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_SINE open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return HtSineOpenInternal(inReal, 0);
    }
@@ -2330,7 +2326,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public HtSineStream HtSineOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outSine, Span<double> outLeadSine )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("HT_SINE openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_SINE openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("HT_SINE", "openAndFill", inReal.Length, HtSineLookback());
       RequireFillLength("HT_SINE", "openAndFill", "outSine", outSine.Length, guardOutLen);

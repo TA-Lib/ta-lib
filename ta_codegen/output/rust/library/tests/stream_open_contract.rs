@@ -1,9 +1,8 @@
 //! An empty history for the Rust streaming openers: rule rS7
 //! (`https://ta-lib.org/spec/streaming/#rs7`), issue #268.
 //!
-//! The empty history and rS2 run first, ahead of every other check, answering
-//! `InsufficientHistory` and `OutOfRangeEndIndex`, so an empty history answers
-//! `InsufficientHistory` rather than the catch-all.
+//! An empty history answers `InsufficientHistory`, after every argument check,
+//! like any history too short to open.
 //!
 //! No cross-language gate reaches it. The JSON-RPC servers hand every opener the
 //! full series, so a backend that went back to `BadParam` here stays green in
@@ -33,11 +32,11 @@ fn an_empty_history_is_insufficient() {
         core.sma_open_and_fill(&empty, 30, &mut out).err(),
         Some(RetCode::InsufficientHistory)
     );
-    // Ahead of every other check: this call is also a bad parameter and an
-    // absent output.
+    // After every argument check: a bad parameter or an absent output wins.
+    assert_eq!(core.sma_open(&empty, 0).err(), Some(RetCode::BadParam));
     assert_eq!(
-        core.sma_open_and_fill(&empty, 0, &mut []).err(),
-        Some(RetCode::InsufficientHistory)
+        core.sma_open_and_fill(&empty, 30, &mut []).err(),
+        Some(RetCode::BadParam)
     );
     // A candlestick reaches it through four legs, and the dispatch tier and the
     // period bank hand-roll their own prologue.
@@ -52,6 +51,10 @@ fn an_empty_history_is_insufficient() {
     assert_eq!(
         core.mavp_open(&empty, &empty, 2, 30, MAType::SMA).err(),
         Some(RetCode::InsufficientHistory)
+    );
+    assert_eq!(
+        core.mavp_open(&empty, &empty, 30, 2, MAType::SMA).err(),
+        Some(RetCode::BadParam)
     );
 }
 
@@ -104,7 +107,7 @@ fn the_other_rejections_keep_their_own_codes() {
     assert_eq!(core.sma_open(&data, 0).err(), Some(RetCode::BadParam));
     // So is a second input of a different length — `historyLen` is the FIRST
     // input's, so a later one disagreeing is an argument fault, not an empty
-    // history. This is the half the emptiness check used to be fused with.
+    // history.
     assert_eq!(
         core.stoch_open(&data, &data[..100], &data, 5, 3, MAType::SMA, 3, MAType::SMA).err(),
         Some(RetCode::BadParam)

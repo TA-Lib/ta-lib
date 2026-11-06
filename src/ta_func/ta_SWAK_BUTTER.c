@@ -351,7 +351,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_SWAK_BUTTER_OpenImpl( struct TA_SWAK_BUT
       optInTimePeriod = 20;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 10000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

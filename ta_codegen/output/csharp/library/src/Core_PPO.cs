@@ -1130,9 +1130,6 @@ public partial class Core
       int i = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1151,7 +1148,7 @@ public partial class Core
       } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1313,7 +1310,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public PpoStream PpoOpen( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("PPO open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "PPO open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return PpoOpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
@@ -1352,7 +1348,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public PpoStream PpoOpenAndFill( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("PPO openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "PPO openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("PPO", "openAndFill", inReal.Length, PpoLookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       RequireFillLength("PPO", "openAndFill", "outReal", outReal.Length, guardOutLen);

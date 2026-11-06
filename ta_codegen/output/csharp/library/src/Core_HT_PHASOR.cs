@@ -1495,13 +1495,10 @@ public partial class Core
       double todayValue = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1885,7 +1882,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public HtPhasorStream HtPhasorOpen( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("HT_PHASOR open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_PHASOR open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return HtPhasorOpenInternal(inReal, 0);
    }
@@ -1921,7 +1917,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public HtPhasorStream HtPhasorOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outInPhase, Span<double> outQuadrature )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("HT_PHASOR openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_PHASOR openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("HT_PHASOR", "openAndFill", inReal.Length, HtPhasorLookback());
       RequireFillLength("HT_PHASOR", "openAndFill", "outInPhase", outInPhase.Length, guardOutLen);

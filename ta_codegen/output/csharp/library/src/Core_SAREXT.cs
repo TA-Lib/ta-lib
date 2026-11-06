@@ -1395,9 +1395,6 @@ public partial class Core
       double[] ep_temp = new double[1];
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1444,7 +1441,7 @@ public partial class Core
       } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1803,9 +1800,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public SarextStream SarextOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("SAREXT open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "SAREXT open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("SAREXT open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("SAREXT open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       RequireHistoryLength("SAREXT", "open", "inLow", inLow.Length, inHigh.Length);
       return SarextOpenInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
    }
@@ -1855,9 +1853,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public SarextStream SarextOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("SAREXT openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "SAREXT openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("SAREXT openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("SAREXT openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("SAREXT", "openAndFill", inHigh.Length, SarextLookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
       RequireHistoryLength("SAREXT", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("SAREXT", "openAndFill", "outReal", outReal.Length, guardOutLen);

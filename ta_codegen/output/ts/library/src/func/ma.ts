@@ -785,9 +785,6 @@ function maOpenImpl(
 ): RetCode {
   const core = sp.core;
   const historyLen = inReal.length;
-  if (historyLen < 1) {
-    return RetCode.INSUFFICIENT_HISTORY;
-  }
   if (historyLen > Core.INDEX_MAX + 1) {
     return RetCode.OUT_OF_RANGE_END_INDEX;
   }
@@ -970,9 +967,6 @@ function maOpenAndFillImpl(
 ): RetCode {
   const core = sp.core;
   const historyLen = inReal.length;
-  if (historyLen < 1) {
-    return RetCode.INSUFFICIENT_HISTORY;
-  }
   if (historyLen > Core.INDEX_MAX + 1) {
     return RetCode.OUT_OF_RANGE_END_INDEX;
   }
@@ -1159,9 +1153,6 @@ function maOpenAndFillInternalImpl(
 ): RetCode {
   const core = sp.core;
   const historyLen = inReal.length;
-  if (historyLen < 1) {
-    return RetCode.INSUFFICIENT_HISTORY;
-  }
   if (historyLen > Core.INDEX_MAX + 1) {
     return RetCode.OUT_OF_RANGE_END_INDEX;
   }

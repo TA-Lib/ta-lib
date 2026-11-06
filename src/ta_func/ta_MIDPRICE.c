@@ -828,7 +828,7 @@ static TA_RetCode TA_MIDPRICE_OpenImpl( struct TA_MIDPRICE_Stream **stream, cons
       optInTimePeriod = 14;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

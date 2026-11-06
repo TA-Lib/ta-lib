@@ -736,9 +736,6 @@ public partial class Core
       double y2 = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -752,7 +749,7 @@ public partial class Core
       } else if( !(optInDelta >= 5e-2 && optInDelta <= 5e-1) ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -901,7 +898,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public SwakBpStream SwakBpOpen( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInDelta )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("SWAK_BP open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "SWAK_BP open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return SwakBpOpenInternal(inReal, 0, optInTimePeriod, optInDelta);
    }
@@ -940,7 +936,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public SwakBpStream SwakBpOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInDelta, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("SWAK_BP openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "SWAK_BP openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("SWAK_BP", "openAndFill", inReal.Length, SwakBpLookback(optInTimePeriod, optInDelta));
       RequireFillLength("SWAK_BP", "openAndFill", "outReal", outReal.Length, guardOutLen);

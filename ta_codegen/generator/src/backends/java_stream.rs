@@ -1025,8 +1025,8 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
     );
     let _ = writeln!(o, "      public {vt} update( {sig_bars}{sink} ) {{");
     // rU4 first, then rU2 before rU3: the index domain ahead of the call's
-    // arguments, as an opener answers its history bounds ahead of rS4; and an
-    // absent sink is a fault in the call, not in the bar.
+    // arguments, as an opener answers rS2 ahead of rS4; and an absent sink is a
+    // fault in the call, not in the bar.
     o.push_str(&out_range_ceiling_guard(func, "         ", "update"));
     o.push_str(&require_sink(func, "         ", "update"));
     o.push_str(&finite_bar_check(func, "         ", "update"));
@@ -1948,9 +1948,10 @@ fn emit_open_prologue(
 /// The anchor has to land inside the history — see `c_stream::emit_anchor_guard`
 /// for why the transcribed bodies cannot be relied on for this (only 137 of 174
 /// carry TA-Lib's "make sure there is still something to evaluate" preamble, and
-/// the rest run `while nbBar != 0` on a count that went negative).
+/// the rest run `while nbBar != 0` on a count that went negative). At anchor 0 it
+/// is rule rS7 for an empty history.
 fn emit_anchor_guard(o: &mut String) {
-    let _ = writeln!(o, "      if( startIdx > endIdx ) {{");
+    let _ = writeln!(o, "      if( startIdx >= historyLen ) {{");
     let _ = writeln!(o, "         outBegIdx.value = 0;");
     let _ = writeln!(o, "         outNBElement.value = 0;");
     let _ = writeln!(o, "         return RetCode.INSUFFICIENT_HISTORY;");
@@ -2020,14 +2021,8 @@ fn emit_open_head(o: &mut String, func: &FuncDef, _outputs: &[String]) {
 fn emit_open_validation(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<String, EnumDef>) {
     let inputs = streaming::input_array_names(func);
     let first = &inputs[0];
-    // An empty history (rS7) and rS2 run first, ahead of every presence check
-    // but the history's own, answering INSUFFICIENT_HISTORY and
-    // OUT_OF_RANGE_END_INDEX (https://ta-lib.org/spec/streaming/#rs2).
-    // `historyLen` is the FIRST input's length, so a later input of a different
-    // length is an argument disagreement, not an empty history.
-    let _ = writeln!(o, "      if( historyLen < 1 ) {{");
-    let _ = writeln!(o, "         return RetCode.INSUFFICIENT_HISTORY;");
-    let _ = writeln!(o, "      }}");
+    // An empty history is not refused here: it is rule rS7, answered after
+    // every argument check by the anchor guard or the tier's own history check.
     // The fill covers bars 0..historyLen-1, so its last bar is an index like any
     // other and INDEX_MAX bounds it too (#180). Without this the streaming
     // entry points would compute over exactly the ranges the batch call refuses,
@@ -2595,22 +2590,19 @@ fn emit_open_internal_seam(
 
 }
 
-/// Rule rS4 at the PUBLIC opener, with the history bounds (an empty history,
-/// rS7; rS2) in the middle of it.
+/// Rule rS4 at the PUBLIC opener, with rule rS2 in the middle of it.
 ///
-/// **Exactly one presence check precedes the pair**: the FIRST input's, because
+/// **Exactly one presence check precedes rS2**: the FIRST input's, because
 /// that is the array `historyLen` is read from and a length cannot be taken from
 /// an array that is not there. Every other argument — the remaining price legs
-/// included — is checked after, which is the specified order (rule rS4's note,
-/// `https://ta-lib.org/spec/streaming/#rs4`; footnote [4] of
-/// `docs/spec-conformance.md`). Checking them all up
-/// front reads as tidier and is wrong: a candlestick opened on an empty history
-/// with one null leg would report the leg, where C reports the empty history.
+/// included — is checked after, as C checks `historyLen` ahead of its NULL
+/// tests (footnote [4] of `docs/spec-conformance.md`). An empty history is
+/// rule rS7, left to the core, which answers it after every argument check.
 ///
-/// `<N>OpenImpl` answers the pair too; this runs first only to fix the ORDER,
+/// `<N>OpenImpl` answers rS2 too; this runs first only to fix the ORDER,
 /// exactly as `Core.requireIndexRange` does in the batch tier. Without it a
-/// null output pre-empted the empty history, and a null input reached
-/// `inReal.length` and surfaced as a bare `NullPointerException` naming nothing.
+/// null input reached `inReal.length` and surfaced as a bare
+/// `NullPointerException` naming nothing.
 fn emit_public_open_guards(o: &mut String, func: &FuncDef, verb: &str, with_outputs: bool) {
     let n = func.name.to_uppercase();
     let inputs = streaming::input_array_names(func);
@@ -2706,9 +2698,8 @@ fn emit_public_open_doc(
          \x20   * to {{@link Core#{base}}} at that bar.\n\
          \x20   * <p>The history must hold at least {{@code {base}Lookback(...) + 1}} bars\n\
          \x20   * (unstable-period aware), or {{@link InsufficientHistoryException}} is\n\
-         \x20   * thrown.{params} An EMPTY history throws\n\
-         \x20   * {{@link InsufficientHistoryException}} too, and a null argument\n\
-         \x20   * {{@link IllegalArgumentException}}, both ahead of everything above.\n\
+         \x20   * thrown, an empty history included.{params} A null argument throws\n\
+         \x20   * {{@link IllegalArgumentException}}, ahead of everything above.\n\
          \x20   */"
     );
 }

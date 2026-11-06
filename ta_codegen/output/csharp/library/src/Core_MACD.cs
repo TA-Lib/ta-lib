@@ -979,9 +979,6 @@ public partial class Core
       int fastToday = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1000,7 +997,7 @@ public partial class Core
       } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1250,7 +1247,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MacdStream MacdOpen( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MACD open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MACD open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return MacdOpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
@@ -1293,7 +1289,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MacdStream MacdOpenAndFill( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MACD openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MACD openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MACD", "openAndFill", inReal.Length, MacdLookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
       RequireFillLength("MACD", "openAndFill", "outMACD", outMACD.Length, guardOutLen);

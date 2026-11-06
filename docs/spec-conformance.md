@@ -63,7 +63,8 @@ instead.
 
 [2] A C# span cannot be null. A null array converts to an empty span, and an
 empty span is the absent argument: rB4 or rS4 for an input or an output, rS7
-for a stream's history.
+for a stream's history. A stream's later input beside an empty history has the
+history's length, so that call answers rS7 too.
 
 [3] C has no sizes to check against: a property of the ABI, not a defect.
 
@@ -90,16 +91,18 @@ tiers throw through. Rust's `RetCode::InternalError` has no field for an id.
 The openers do not scan the history for non-finite values (rationale: finite
 inputs).
 
-[4] An empty history is answered ahead of every presence check, and each
-backend's one check ahead of it differs because each is a precondition for
-evaluating the history's length rather than an argument competing with it. C
-publishes "no handle on any failure" through `*stream`, and has nowhere to
-publish it without one. Java cannot read a length from an array that is not
-there. A Rust slice cannot be absent, and a C# null array arrives as an empty
-span, so rS7 is how an absent history is reported (footnote [2]).
+[4] An empty history is answered at rS7's place, after rS2, rS3 and every
+presence check, by the same anchor guard that answers any too-short history.
+rS2 runs ahead of every presence check, and each backend's one check ahead of
+it differs because each is a precondition for evaluating the history's length
+rather than an argument competing with it. C publishes "no handle on any
+failure" through `*stream`, and has nowhere to publish it without one. Java
+cannot read a length from an array that is not there. A Rust slice cannot be
+absent, and a C# null array arrives as an empty span, so rS7 is how an absent
+history is reported (footnote [2]).
 
 [5] The bound is in each opener's own prologue (Java and C# answer it from the
-same frame as the empty history). C takes `historyLen` as a bare `int`, so its
+public frame, ahead of the other legs' presence checks). C takes `historyLen` as a bare `int`, so its
 probe needs no array. Rust probes it on a zeroed vector of `INDEX_MAX + 2` elements that is
 never read (`tests/stream_open_contract.rs`, 64-bit targets), and C# on a span
 that claims that length over one element (`StreamApiTest`); both rest on the
@@ -348,23 +351,25 @@ ACCBANDS's first two `OpenAndFill` outputs on a history of lookback bars
 
 `testStreamShortHistory` drives the empty history, rS2's rejecting side and rS7
 in C: 9, 3 and 8 rejections, with rS7's 16 controls. Three of the empty-history
-cases are *also* an absent argument, which is what makes them about the order
-and not only the code.
+cases are *also* an absent argument and answer `TA_BAD_PARAM`, which is what
+makes them about the order and not only the code.
 `testBatchArgumentContract` drives rS4 with rB4's own argument shapes plus the
 handle: 14 rejections and 5 controls, counted apart from rB4's. `BatchApiTest`
 does the same for Java, and adds the empty history's; `StreamApiTest` covers rS4
-in C#, where the condition is a zero-length span and so is an empty history. In
+in C#, where the condition is a zero-length span on a later input beside a
+non-empty history. In
 Rust `tests/stream_open_contract.rs` covers the empty history, rS2 and rS4's
 empty output. Java's `BatchApiTest`
 asserts `BAD_PARAM`, not only the exception type, at each rS4 rejection and at
 an `OpenAndFill` output placed on its input (rS6).
 
-`scripts/check_stream_retcodes.py` carries rS7, the empty history included, over
-the whole generated corpus in all four backends; a probe names one function, and this is what covers
-the rest. It reads the *core's* arm, which in Java and C# the public frame makes
-unreachable, so those two frames are covered corpus-wide by
-`java_public_openers_check_arguments_then_the_index_pair` and
-`csharp_public_openers_reject_an_empty_history_as_insufficient` instead.
+`scripts/check_stream_retcodes.py` carries rS7, the empty history's anchor guard
+included, over the whole generated corpus in every backend; a probe names one
+function, and this is what covers the rest.
+`every_open_pass_rejects_an_anchor_past_the_history` pins that no emptiness check
+answers ahead of that guard, and
+`csharp_public_openers_leave_an_empty_history_to_the_core` that no C# public
+frame does.
 `an_opener_never_answers_the_code_its_sub_call_handed_back` pins rS7 for composed
 openers in the three ported backends; C is outside that sweep (rationale rS7).
 
@@ -741,8 +746,8 @@ mistake, and a caller cannot cheaply tell whether a call will produce nothing.
 buffer behind a success or behind `TA_INSUFFICIENT_HISTORY`. C sees only `NULL`:
 a buffer of no capacity is invisible there, as every length is.
 
-A stream's empty history is not part of it: it answers rS7, ahead of rS4, as
-`historyLen < 1` sits ahead of C's NULL checks.
+A stream's empty history is not part of it: it answers rS7, after rS3 and
+rS4, like any history too short to open.
 
 ### rB5, rS5: C
 
@@ -937,7 +942,7 @@ elements today, but a composed indicator that made one would hand C's caller
 rU4 is rS2 read one bar at a time: the next bar's index is `begIdx + count`, and
 once that leaves `[0, INDEX_MAX]` the handle is being asked for a bar the batch
 tier refuses to address, permanently. It is evaluated where the opener
-evaluates the empty history and rS2, ahead of every presence check with only the
+evaluates rS2, ahead of every presence check with only the
 handle's own null test in front of it, because it is the same fault read on the same domain,
 and a caller who fixed the argument the presence check named would only get rU4
 back. `Peek` is exempt for performance; it commits no bar.
@@ -1024,9 +1029,9 @@ Each ✅ rests on two independent checks; neither alone is enough.
    | C# batch: clamp, then every length check, then the core | every function, both overloads |
    | C# cores carrying an overlap guard wherever one is expressible | no core unguarded where the type expresses it |
    | Short-history arm reports `TA_INSUFFICIENT_HISTORY` | every streaming function, per backend, no backend mixing it with anything else |
-   | Empty-history arm reports `TA_INSUFFICIENT_HISTORY` | every opener arm in all four backends, no backend mixing it with anything else |
-   | Java public opener: the history's null test, then the history bounds, then every other argument | every `Open` and `OpenAndFill` |
-   | C# public opener: an empty history is `InsufficientHistoryException`, ahead of every other input | every `Open` and `OpenAndFill` |
+   | Anchor guard, which answers an empty history, reports `TA_INSUFFICIENT_HISTORY` | every strided `_OpenImpl` in every backend, no backend mixing it with anything else |
+   | Java public opener: the history's null test, then rS2, then every other argument | every `Open` and `OpenAndFill` |
+   | C# public opener: rS2 on the history, then every other input; no emptiness check on the history | every `Open` and `OpenAndFill` |
    | Rust/Java/C# public `OpenAndFill`: every output bounded by `historyLen - <N>_Lookback(...)` | every one, per backend |
 
    The "both overloads" rows are every definition in `ta_codegen/input/` taken
@@ -1075,7 +1080,7 @@ implemented but not covered by a CI probe; the rule's own footnote says which.
 | ~~9~~ | Rust, Java, C# | rS5 | *Fixed.* `OpenAndFill` validated no output capacity, so an undersized output faulted inside the fill with the buffer already partly written. The public frame now bounds every output by `historyLen - <N>_Lookback(...)`. (C still cannot: no sizes.) |
 | ~~10~~ | C | | *Obsolete.* `TA_SetCompatibility` accepted any value; #388 removed the behaviour it selected, and the pair is kept declared and inert. |
 | ~~11~~ | C#, Rust | rB6 | *Fixed.* Two distinct **empty** output buffers were rejected as aliased in C# and Rust and accepted in C and Java, measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs. Both then accepted them (#262). Superseded 2026-10-02: an empty output is absent (rB4), so the call is refused in Rust, Java and C#. |
-| ~~13~~ | all | rS7 | *Fixed.* An empty history answered `TA_BAD_PARAM` where the spec gives it a code of its own, and C checked argument presence ahead of the history bounds. All four openers now answer them ahead of every presence check, except for the one check each language makes a precondition of reading the length (footnote [4]). |
+| ~~13~~ | all | rS7 | *Fixed.* An empty history answered `TA_BAD_PARAM` where the spec gives it a code of its own, and C checked argument presence ahead of the history bounds. Every opener now answers it with rS7's code, after the argument checks, and rS2 ahead of every presence check except the one each language makes a precondition of reading the length (footnote [4]). |
 | ~~14~~ | Java | rL2, rL3, rL11 | *Fixed.* A lookback call did not check a null MA type: `maLookback(1, null)` returned 0 and `maLookback(2, null)` threw `NullPointerException` from its `switch`, and every lookback with an MA-type parameter did the same. Each now returns -1, as rB3 rejects the batch call. |
 | ~~15~~ | C# | rB6, rS6 | *Fixed.* One zero-length array passed as two outputs, on a range that produces no values, answered `TA_SUCCESS` in C# (`Overlaps` is false for an empty span) and `TA_BAD_PARAM` in C and Java. Ruled 2026-10-01: outputs must be different buffers in every language. C#'s batch and `OpenAndFill` guards now also reject two empty outputs on the same non-null reference. |
 

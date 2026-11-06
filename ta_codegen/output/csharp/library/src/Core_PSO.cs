@@ -1076,9 +1076,6 @@ public partial class Core
       int n2 = 0;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1095,7 +1092,7 @@ public partial class Core
       } else if( optInEMAPeriod < 1 || optInEMAPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1388,10 +1385,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public PsoStream PsoOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInEMAPeriod )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("PSO open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "PSO open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("PSO open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("PSO open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("PSO open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("PSO open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       RequireHistoryLength("PSO", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("PSO", "open", "inClose", inClose.Length, inHigh.Length);
       return PsoOpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInEMAPeriod);
@@ -1431,10 +1429,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public PsoStream PsoOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInEMAPeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("PSO openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "PSO openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("PSO openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("PSO openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("PSO openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("PSO openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("PSO", "openAndFill", inHigh.Length, PsoLookback(optInFastK_Period, optInEMAPeriod));
       RequireHistoryLength("PSO", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("PSO", "openAndFill", "inClose", inClose.Length, inHigh.Length);

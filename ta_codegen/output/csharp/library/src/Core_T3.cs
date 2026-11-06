@@ -841,9 +841,6 @@ public partial class Core
       double tempReal = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -857,7 +854,7 @@ public partial class Core
       } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1082,7 +1079,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public T3Stream T3Open( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInVFactor )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("T3 open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "T3 open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return T3OpenInternal(inReal, 0, optInTimePeriod, optInVFactor);
    }
@@ -1119,7 +1115,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public T3Stream T3OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInVFactor, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("T3 openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "T3 openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("T3", "openAndFill", inReal.Length, T3Lookback(optInTimePeriod, optInVFactor));
       RequireFillLength("T3", "openAndFill", "outReal", outReal.Length, guardOutLen);

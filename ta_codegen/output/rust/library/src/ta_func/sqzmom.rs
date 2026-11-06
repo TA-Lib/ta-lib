@@ -665,9 +665,6 @@ impl Core {
     pub(crate) fn sqzmom_open_impl(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInBBPeriod: i32, mut optInNbDev: f64, mut optInKCPeriod: i32, mut optInFactorWide: f64, mut optInFactorNormal: f64, mut optInFactorNarrow: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMomentum: &mut [f64], outSqueeze: &mut [i32], outStride: usize,
     ) -> Result<SqzmomStream, RetCode> {
-        if inHigh.is_empty() {
-            return Err(RetCode::InsufficientHistory);
-        }
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
@@ -705,13 +702,13 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inHigh.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        if startIdx > endIdx {
+        if startIdx >= historyLen {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut owned_sc_outMomentum: Vec<f64> =
@@ -995,9 +992,6 @@ impl Core {
     pub fn sqzmom_open_and_fill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInBBPeriod: i32, mut optInNbDev: f64, mut optInKCPeriod: i32, mut optInFactorWide: f64, mut optInFactorNormal: f64, mut optInFactorNarrow: f64, outMomentum: &mut [f64], outSqueeze: &mut [i32],
     ) -> Result<(SqzmomStream, OutRange), RetCode> {
-        if inHigh.is_empty() {
-            return Err(RetCode::InsufficientHistory);
-        }
         if inHigh.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }

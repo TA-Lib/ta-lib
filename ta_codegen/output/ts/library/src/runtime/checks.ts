@@ -202,14 +202,11 @@ export function requireSeries(funcName: string, argName: string, array: ArrayLik
 }
 
 /**
- * @internal An opener's history must hold 1 to `INDEX_MAX + 1` bars; an empty
- * one is a short history. Not {@link requireIndexRange} over
- * `[0, historyLen - 1]`, which reports an empty history as the end index.
+ * @internal An opener's history holds at most `INDEX_MAX + 1` bars (rS2). An
+ * empty one passes: it is a short history (rS7), which the core answers after
+ * every argument check.
  */
 export function requireHistory(funcName: string, historyLen: number): void {
-  if (historyLen < 1) {
-    throw failure(funcName, RetCode.INSUFFICIENT_HISTORY);
-  }
   if (historyLen > Core.INDEX_MAX + 1) {
     throw failure(funcName, RetCode.OUT_OF_RANGE_END_INDEX);
   }

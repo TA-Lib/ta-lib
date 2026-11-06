@@ -586,9 +586,6 @@ function siOpenImpl(
   let swing = 0;
   const historyLen = inOpen.length;
   let endIdx = historyLen - 1;
-  if (historyLen < 1) {
-    return RetCode.INSUFFICIENT_HISTORY;
-  }
   if (historyLen > Core.INDEX_MAX + 1) {
     return RetCode.OUT_OF_RANGE_END_INDEX;
   }
@@ -600,7 +597,7 @@ function siOpenImpl(
   } else if (!(optInLimitMove >= 1e-8 && optInLimitMove <= Core.REAL_MAX)) {
     return RetCode.BAD_PARAM;
   }
-  if (startIdx > endIdx) {
+  if (startIdx >= historyLen) {
     outBegIdx.value = 0;
     outNBElement.value = 0;
     return RetCode.INSUFFICIENT_HISTORY;

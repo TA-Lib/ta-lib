@@ -798,9 +798,6 @@ public partial class Core
       Span<double> tempK;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -822,7 +819,7 @@ public partial class Core
       } else if( optInSenkouBPeriod < 2 || optInSenkouBPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -959,9 +956,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public IchimokuStream IchimokuOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("ICHIMOKU open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ICHIMOKU open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("ICHIMOKU open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("ICHIMOKU open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       RequireHistoryLength("ICHIMOKU", "open", "inLow", inLow.Length, inHigh.Length);
       return IchimokuOpenInternal(inHigh, inLow, 0, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
    }
@@ -1007,9 +1005,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public IchimokuStream IchimokuOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTenkanPeriod, int optInKijunPeriod, int optInSenkouBPeriod, Span<double> outTenkanSen, Span<double> outKijunSen, Span<double> outSenkouSpanA, Span<double> outSenkouSpanB )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("ICHIMOKU openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "ICHIMOKU openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("ICHIMOKU openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("ICHIMOKU openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("ICHIMOKU", "openAndFill", inHigh.Length, IchimokuLookback(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod));
       RequireHistoryLength("ICHIMOKU", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("ICHIMOKU", "openAndFill", "outTenkanSen", outTenkanSen.Length, guardOutLen);

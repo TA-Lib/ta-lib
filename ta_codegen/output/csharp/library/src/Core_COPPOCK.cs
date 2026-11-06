@@ -1023,9 +1023,6 @@ public partial class Core
       int maxIdx_sRing = (50)-1;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1044,7 +1041,7 @@ public partial class Core
       } else if( optInROC2Period < 1 || optInROC2Period > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1302,7 +1299,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CoppockStream CoppockOpen( ReadOnlySpan<double> inReal, int optInWMAPeriod, int optInROC1Period, int optInROC2Period )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("COPPOCK open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "COPPOCK open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return CoppockOpenInternal(inReal, 0, optInWMAPeriod, optInROC1Period, optInROC2Period);
    }
@@ -1342,7 +1338,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CoppockStream CoppockOpenAndFill( ReadOnlySpan<double> inReal, int optInWMAPeriod, int optInROC1Period, int optInROC2Period, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("COPPOCK openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "COPPOCK openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("COPPOCK", "openAndFill", inReal.Length, CoppockLookback(optInWMAPeriod, optInROC1Period, optInROC2Period));
       RequireFillLength("COPPOCK", "openAndFill", "outReal", outReal.Length, guardOutLen);

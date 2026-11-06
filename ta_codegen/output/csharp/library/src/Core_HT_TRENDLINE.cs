@@ -1703,13 +1703,10 @@ public partial class Core
       double DCPeriod = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -2141,7 +2138,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public HtTrendlineStream HtTrendlineOpen( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("HT_TRENDLINE open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDLINE open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return HtTrendlineOpenInternal(inReal, 0);
    }
@@ -2176,7 +2172,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public HtTrendlineStream HtTrendlineOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("HT_TRENDLINE openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDLINE openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("HT_TRENDLINE", "openAndFill", inReal.Length, HtTrendlineLookback());
       RequireFillLength("HT_TRENDLINE", "openAndFill", "outReal", outReal.Length, guardOutLen);

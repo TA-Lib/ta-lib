@@ -799,9 +799,6 @@ public partial class Core
       int i = 0;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -813,7 +810,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -985,9 +982,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public AroonStream AroonOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("AROON open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "AROON open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("AROON open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("AROON open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       RequireHistoryLength("AROON", "open", "inLow", inLow.Length, inHigh.Length);
       return AroonOpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
@@ -1025,9 +1023,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public AroonStream AroonOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outAroonDown, Span<double> outAroonUp )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("AROON openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "AROON openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("AROON openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("AROON openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("AROON", "openAndFill", inHigh.Length, AroonLookback(optInTimePeriod));
       RequireHistoryLength("AROON", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("AROON", "openAndFill", "outAroonDown", outAroonDown.Length, guardOutLen);

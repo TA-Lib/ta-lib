@@ -1448,9 +1448,6 @@ public partial class Core
       int nbInitialElementNeeded = 0;
       int historyLen = inReal0.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1462,7 +1459,7 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1865,9 +1862,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public BetaStream BetaOpen( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod )
    {
-      if( inReal0.IsEmpty ) throw new InsufficientHistoryException("BETA open: history is empty", nameof(inReal0));
       if( inReal0.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "BETA open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inReal1.IsEmpty ) throw new TALibArgumentException("BETA open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      if( !inReal0.IsEmpty ) {
+         if( inReal1.IsEmpty ) throw new TALibArgumentException("BETA open: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      }
       RequireHistoryLength("BETA", "open", "inReal1", inReal1.Length, inReal0.Length);
       return BetaOpenInternal(inReal0, inReal1, 0, optInTimePeriod);
    }
@@ -1905,9 +1903,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public BetaStream BetaOpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal0.IsEmpty ) throw new InsufficientHistoryException("BETA openAndFill: history is empty", nameof(inReal0));
       if( inReal0.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal0), "BETA openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inReal1.IsEmpty ) throw new TALibArgumentException("BETA openAndFill: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      if( !inReal0.IsEmpty ) {
+         if( inReal1.IsEmpty ) throw new TALibArgumentException("BETA openAndFill: inReal1 is empty", nameof(inReal1), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("BETA", "openAndFill", inReal0.Length, BetaLookback(optInTimePeriod));
       RequireHistoryLength("BETA", "openAndFill", "inReal1", inReal1.Length, inReal0.Length);
       RequireFillLength("BETA", "openAndFill", "outReal", outReal.Length, guardOutLen);

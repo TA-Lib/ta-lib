@@ -462,16 +462,13 @@ public partial class Core
       int i = 0;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( inLow.Length != inHigh.Length || inClose.Length != inHigh.Length ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -541,10 +538,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public TyppriceStream TyppriceOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("TYPPRICE open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "TYPPRICE open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("TYPPRICE open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("TYPPRICE open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("TYPPRICE open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("TYPPRICE open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       RequireHistoryLength("TYPPRICE", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("TYPPRICE", "open", "inClose", inClose.Length, inHigh.Length);
       return TyppriceOpenInternal(inHigh, inLow, inClose, 0);
@@ -580,10 +578,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public TyppriceStream TyppriceOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("TYPPRICE openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "TYPPRICE openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("TYPPRICE openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("TYPPRICE openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("TYPPRICE openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("TYPPRICE openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("TYPPRICE", "openAndFill", inHigh.Length, TyppriceLookback());
       RequireHistoryLength("TYPPRICE", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("TYPPRICE", "openAndFill", "inClose", inClose.Length, inHigh.Length);

@@ -1073,9 +1073,6 @@ public partial class Core
       int bufferIsAllocated = 0;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1097,7 +1094,7 @@ public partial class Core
       } else if( (int)optInFastD_MAType < MATypes.Min || (int)optInFastD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1380,10 +1377,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public StochfStream StochfOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("STOCHF open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "STOCHF open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("STOCHF open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("STOCHF open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("STOCHF open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("STOCHF open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       RequireHistoryLength("STOCHF", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("STOCHF", "open", "inClose", inClose.Length, inHigh.Length);
       return StochfOpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -1427,10 +1425,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public StochfStream StochfOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, Span<double> outFastK, Span<double> outFastD )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("STOCHF openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "STOCHF openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("STOCHF openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("STOCHF openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("STOCHF openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("STOCHF openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("STOCHF", "openAndFill", inHigh.Length, StochfLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType));
       RequireHistoryLength("STOCHF", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("STOCHF", "openAndFill", "inClose", inClose.Length, inHigh.Length);

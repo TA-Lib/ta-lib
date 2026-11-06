@@ -423,21 +423,19 @@ fn finite_bar_check(func: &FuncDef, indent: &str, fail: &str) -> String {
     format!("{indent}if( {} ) return {fail};\n", conds.join(" || "))
 }
 
-/// An empty history (rule rS7) and rule rS2 run first, ahead of every presence
-/// check, answering `TA_INSUFFICIENT_HISTORY` and `TA_OUT_OF_RANGE_END_INDEX`
-/// (`https://ta-lib.org/spec/streaming/#rs2`). Only `!stream` may precede them: the
-/// "`*stream` is NULL on any failure" contract is published through that
-/// pointer, so it is a precondition for reporting anything at all rather than an
-/// argument competing with the pair.
+/// Rule rS2 runs first, ahead of every presence check, answering
+/// `TA_OUT_OF_RANGE_END_INDEX` (`https://ta-lib.org/spec/streaming/#rs2`). Only
+/// `!stream` may precede it: the "`*stream` is NULL on any failure" contract is
+/// published through that pointer, so it is a precondition for reporting
+/// anything at all rather than an argument competing with the bound. An empty
+/// history is rS7, answered last by [`emit_anchor_guard`].
 ///
 /// The ceiling is `TA_INDEX_MAX + 1` because the implied `endIdx` is
 /// `historyLen - 1`. Without it the streaming entry points would compute over
 /// exactly the ranges the batch call refuses, and the two are required to agree
 /// bit for bit (#180).
 fn index_pair_guards() -> &'static str {
-    concat!(
-        "   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;\n"
-    )
+    "   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;\n"
 }
 
 /// Rule rU4 — [`index_pair_guards`] read on a live handle, one bar at a time.
@@ -5844,8 +5842,9 @@ fn emit_open_validation(o: &mut String, func: &FuncDef, enums: &HashMap<String, 
 /// change any behaviour that was already defined: the preamble's clamp only
 /// ever moves `startIdx` UP, so `startIdx > endIdx` before the clamp implies it
 /// after — this fires exactly where that preamble would have, returns the same
-/// code, and writes the same out-meta. For the public entry points it is inert
-/// (they pass `startIdx = 0`, and `historyLen < 1` is already rejected above).
+/// code, and writes the same out-meta. For the public entry points (`startIdx`
+/// 0) it is rule rS7 for an empty history, after the presence and parameter
+/// checks. Keep it `>=`: `startIdx > historyLen - 1` overflows at `INT_MIN`.
 ///
 /// A negative `startIdx` is deliberately NOT rejected here: no caller in the
 /// tree can produce one (every call site passes a literal `0`, a pass-through
@@ -5853,7 +5852,7 @@ fn emit_open_validation(o: &mut String, func: &FuncDef, enums: &HashMap<String, 
 /// parameter `usize`, so a guard for it would be unreachable in C and
 /// inexpressible in the backend it would have to match.
 fn emit_anchor_guard(o: &mut String) {
-    let _ = writeln!(o, "   if( startIdx > historyLen - 1 )");
+    let _ = writeln!(o, "   if( startIdx >= historyLen )");
     let _ = writeln!(o, "   {{");
     let _ = writeln!(o, "      *outBegIdx = 0;");
     let _ = writeln!(o, "      *outNBElement = 0;");

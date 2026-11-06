@@ -830,7 +830,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_PSO_OpenImpl( struct TA_PSO_Stream **str
       optInEMAPeriod = 5;
    else if( (int)optInEMAPeriod < 1 || (int)optInEMAPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

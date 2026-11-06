@@ -1004,7 +1004,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_SAREXT_OpenImpl( struct TA_SAREXT_Stream
       optInAccelerationMaxShort = 0.2;
    else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

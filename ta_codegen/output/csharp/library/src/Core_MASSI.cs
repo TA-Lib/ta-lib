@@ -872,9 +872,6 @@ public partial class Core
       int maxIdx_ratioRing = (32)-1;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -891,7 +888,7 @@ public partial class Core
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1096,9 +1093,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MassiStream MassiOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInFastPeriod, int optInSlowPeriod )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("MASSI open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "MASSI open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("MASSI open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("MASSI open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       RequireHistoryLength("MASSI", "open", "inLow", inLow.Length, inHigh.Length);
       return MassiOpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod);
    }
@@ -1136,9 +1134,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MassiStream MassiOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInFastPeriod, int optInSlowPeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("MASSI openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "MASSI openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("MASSI openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("MASSI openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("MASSI", "openAndFill", inHigh.Length, MassiLookback(optInFastPeriod, optInSlowPeriod));
       RequireHistoryLength("MASSI", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("MASSI", "openAndFill", "outReal", outReal.Length, guardOutLen);

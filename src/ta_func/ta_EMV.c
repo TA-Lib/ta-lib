@@ -580,7 +580,7 @@ static TA_RetCode TA_EMV_OpenImpl( struct TA_EMV_Stream **stream, const double i
       optInVolumeDivisor = 10000;
    else if( !(optInVolumeDivisor >= 1e0 && optInVolumeDivisor <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

@@ -1049,9 +1049,6 @@ public partial class Core
       int barsSinceReseed = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1060,7 +1057,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1315,7 +1312,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CtiStream CtiOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("CTI open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "CTI open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return CtiOpenInternal(inReal, 0, optInTimePeriod);
    }
@@ -1350,7 +1346,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CtiStream CtiOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("CTI openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "CTI openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("CTI", "openAndFill", inReal.Length, CtiLookback(optInTimePeriod));
       RequireFillLength("CTI", "openAndFill", "outReal", outReal.Length, guardOutLen);

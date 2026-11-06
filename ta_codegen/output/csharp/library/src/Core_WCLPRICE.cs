@@ -462,16 +462,13 @@ public partial class Core
       int i = 0;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( inLow.Length != inHigh.Length || inClose.Length != inHigh.Length ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -541,10 +538,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public WclpriceStream WclpriceOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("WCLPRICE open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "WCLPRICE open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("WCLPRICE open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("WCLPRICE open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("WCLPRICE open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("WCLPRICE open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       RequireHistoryLength("WCLPRICE", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("WCLPRICE", "open", "inClose", inClose.Length, inHigh.Length);
       return WclpriceOpenInternal(inHigh, inLow, inClose, 0);
@@ -580,10 +578,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public WclpriceStream WclpriceOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("WCLPRICE openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "WCLPRICE openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("WCLPRICE openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("WCLPRICE openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("WCLPRICE openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("WCLPRICE openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("WCLPRICE", "openAndFill", inHigh.Length, WclpriceLookback());
       RequireHistoryLength("WCLPRICE", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("WCLPRICE", "openAndFill", "inClose", inClose.Length, inHigh.Length);

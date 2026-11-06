@@ -263,7 +263,7 @@ static TA_RetCode TA_BOP_OpenImpl( struct TA_BOP_Stream **stream, const double i
    *stream = NULL;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

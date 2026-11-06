@@ -1116,9 +1116,6 @@ public partial class Core
       double[] ep_temp = new double[1];
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1135,7 +1132,7 @@ public partial class Core
       } else if( !(optInMaximum >= 0e0 && optInMaximum <= RealMax) ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1422,9 +1419,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public SarStream SarOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInAcceleration, double optInMaximum )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("SAR open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "SAR open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("SAR open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("SAR open: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       RequireHistoryLength("SAR", "open", "inLow", inLow.Length, inHigh.Length);
       return SarOpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum);
    }
@@ -1462,9 +1460,10 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public SarStream SarOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInAcceleration, double optInMaximum, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("SAR openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "SAR openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("SAR openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("SAR openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("SAR", "openAndFill", inHigh.Length, SarLookback(optInAcceleration, optInMaximum));
       RequireHistoryLength("SAR", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("SAR", "openAndFill", "outReal", outReal.Length, guardOutLen);

@@ -771,9 +771,6 @@ public partial class Core
       int lowestIdx = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -782,7 +779,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -942,7 +939,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MinmaxindexStream MinmaxindexOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MINMAXINDEX open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MINMAXINDEX open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return MinmaxindexOpenInternal(inReal, 0, optInTimePeriod);
    }
@@ -981,7 +977,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MinmaxindexStream MinmaxindexOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<int> outMinIdx, Span<int> outMaxIdx )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("MINMAXINDEX openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "MINMAXINDEX openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MINMAXINDEX", "openAndFill", inReal.Length, MinmaxindexLookback(optInTimePeriod));
       RequireFillLength("MINMAXINDEX", "openAndFill", "outMinIdx", outMinIdx.Length, guardOutLen);

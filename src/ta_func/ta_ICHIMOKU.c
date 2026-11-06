@@ -671,7 +671,7 @@ static TA_RetCode TA_ICHIMOKU_OpenImpl( struct TA_ICHIMOKU_Stream **stream, cons
       optInSenkouBPeriod = 52;
    else if( (int)optInSenkouBPeriod < 2 || (int)optInSenkouBPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

@@ -2124,13 +2124,10 @@ public partial class Core
       double leadSine = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -2670,7 +2667,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public HtTrendmodeStream HtTrendmodeOpen( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("HT_TRENDMODE open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDMODE open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return HtTrendmodeOpenInternal(inReal, 0);
    }
@@ -2705,7 +2701,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public HtTrendmodeStream HtTrendmodeOpenAndFill( ReadOnlySpan<double> inReal, Span<int> outInteger )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("HT_TRENDMODE openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDMODE openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("HT_TRENDMODE", "openAndFill", inReal.Length, HtTrendmodeLookback());
       RequireFillLength("HT_TRENDMODE", "openAndFill", "outInteger", outInteger.Length, guardOutLen);

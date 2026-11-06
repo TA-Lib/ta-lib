@@ -437,13 +437,10 @@ public partial class Core
       int i = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -508,7 +505,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public SinhStream SinhOpen( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("SINH open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "SINH open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return SinhOpenInternal(inReal, 0);
    }
@@ -541,7 +537,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public SinhStream SinhOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("SINH openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "SINH openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("SINH", "openAndFill", inReal.Length, SinhLookback());
       RequireFillLength("SINH", "openAndFill", "outReal", outReal.Length, guardOutLen);

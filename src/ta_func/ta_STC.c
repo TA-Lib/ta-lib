@@ -1489,7 +1489,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_STC_OpenImpl( struct TA_STC_Stream **str
       optInCyclePeriod = 10;
    else if( (int)optInCyclePeriod < 2 || (int)optInCyclePeriod > 100000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

@@ -515,7 +515,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_TSI_OpenImpl( struct TA_TSI_Stream **str
       optInSecondPeriod = 13;
    else if( (int)optInSecondPeriod < 2 || (int)optInSecondPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

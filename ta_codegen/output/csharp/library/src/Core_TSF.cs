@@ -951,9 +951,6 @@ public partial class Core
       double sumAbs = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -962,7 +959,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1204,7 +1201,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public TsfStream TsfOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("TSF open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "TSF open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return TsfOpenInternal(inReal, 0, optInTimePeriod);
    }
@@ -1240,7 +1236,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public TsfStream TsfOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("TSF openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "TSF openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("TSF", "openAndFill", inReal.Length, TsfLookback(optInTimePeriod));
       RequireFillLength("TSF", "openAndFill", "outReal", outReal.Length, guardOutLen);

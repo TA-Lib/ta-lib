@@ -2001,9 +2001,10 @@ fn emit_open_prologue(
 /// The anchor has to land inside the history — see `c_stream::emit_anchor_guard`
 /// for why the transcribed bodies cannot be relied on for this (only 137 of 174
 /// carry TA-Lib's "make sure there is still something to evaluate" preamble, and
-/// the rest run `while nbBar != 0` on a count that went negative).
+/// the rest run `while nbBar != 0` on a count that went negative). At anchor 0 it
+/// is rule rS7 for an empty history.
 fn emit_anchor_guard(o: &mut String) {
-    let _ = writeln!(o, "      if( startIdx > endIdx ) {{");
+    let _ = writeln!(o, "      if( startIdx >= historyLen ) {{");
     let _ = writeln!(o, "         outBegIdx = 0;");
     let _ = writeln!(o, "         outNBElement = 0;");
     let _ = writeln!(o, "         return RetCode.InsufficientHistory;");
@@ -2081,14 +2082,8 @@ fn emit_open_validation(
 ) {
     let inputs = streaming::input_array_names(func);
     let first = &inputs[0];
-    // An empty history (rS7) and rS2 run first, ahead of every other check,
-    // answering InsufficientHistory and OutOfRangeEndIndex
-    // (https://ta-lib.org/spec/streaming/#rs2). `historyLen` is the FIRST input's
-    // length, so a later input of a different length is an argument
-    // disagreement, not an empty history.
-    let _ = writeln!(o, "      if( historyLen < 1 ) {{");
-    let _ = writeln!(o, "         return RetCode.InsufficientHistory;");
-    let _ = writeln!(o, "      }}");
+    // An empty history is not refused here: it is rule rS7, answered after
+    // every argument check by the anchor guard or the tier's own history check.
     // The fill covers bars 0..historyLen-1, so its last bar is an index like any
     // other and IndexMax bounds it too (#180). Without this the streaming entry
     // points would compute over exactly the ranges the batch call refuses, and
@@ -2651,31 +2646,31 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef, merged: b
     let _ = writeln!(o, "   }}");
 }
 
-/// The PUBLIC opener's input guards. An empty input means two different things
-/// by position: the FIRST input carries the history, so empty there is rule rS7's
-/// short history; any other input is then a length disagreement, which is
-/// `BadParam` like every other argument fault.
-///
-/// The history bounds are answered here rather than left to the core so they
-/// are evaluated ahead of the aliasing guard below, which would otherwise see
-/// two empty spans and name the wrong problem. `OpenInternal` is the composition seam and is
-/// reached only with generator-created arrays, so it stays unchecked.
-fn public_open_empty_guards(n: &str, verb: &str, inputs: &[String]) -> String {
+/// The PUBLIC opener's input guards: rule rS2 on the history, then rule rS4 on
+/// every other input. An empty input means two different things by position:
+/// the FIRST input carries the history, so empty there is rule rS7's short
+/// history, which the core answers after every argument check. Any other input
+/// empty beside a non-empty history is absent, `BadParam` like every other
+/// argument fault; beside an empty history it has the history's length, so the
+/// call reaches rS7 as it does in every other backend. `OpenInternal` is the
+/// composition seam and is reached only with generator-created arrays, so it
+/// stays unchecked.
+fn public_open_input_guards(n: &str, verb: &str, inputs: &[String]) -> String {
     let mut s = String::new();
     let first = &inputs[0];
     let _ = writeln!(
         s,
-        "      if( {first}.IsEmpty ) throw new InsufficientHistoryException(\"{n} {verb}: history is empty\", nameof({first}));"
-    );
-    let _ = writeln!(
-        s,
         "      if( {first}.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof({first}), \"{n} {verb}: history is longer than IndexMax + 1\", RetCode.OutOfRangeEndIndex);"
     );
-    for input in &inputs[1..] {
-        let _ = writeln!(
-            s,
-            "      if( {input}.IsEmpty ) throw new TALibArgumentException(\"{n} {verb}: {input} is empty\", nameof({input}), RetCode.BadParam);"
-        );
+    if inputs.len() > 1 {
+        let _ = writeln!(s, "      if( !{first}.IsEmpty ) {{");
+        for input in &inputs[1..] {
+            let _ = writeln!(
+                s,
+                "         if( {input}.IsEmpty ) throw new TALibArgumentException(\"{n} {verb}: {input} is empty\", nameof({input}), RetCode.BadParam);"
+            );
+        }
+        let _ = writeln!(s, "      }}");
     }
     s
 }
@@ -2902,7 +2897,7 @@ fn emit_open_wrappers(
         in_sig.join(", ")
     );
     let _ = writeln!(o, "   {{");
-    o.push_str(&public_open_empty_guards(&n, "open", &in_fwd));
+    o.push_str(&public_open_input_guards(&n, "open", &in_fwd));
     o.push_str(&history_length_guards(func, &n, "open"));
     let _ = writeln!(
         o,
@@ -2997,7 +2992,7 @@ fn emit_open_wrappers(
         fill_sig.join(", ")
     );
     let _ = writeln!(o, "   {{");
-    o.push_str(&public_open_empty_guards(&n, "openAndFill", &in_fwd));
+    o.push_str(&public_open_input_guards(&n, "openAndFill", &in_fwd));
     o.push_str(&public_open_fill_capacity(func, &n, &in_fwd[0]));
     if merged {
         // The guard the anchored seam deliberately omits: every composed

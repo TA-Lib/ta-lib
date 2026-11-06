@@ -1514,9 +1514,6 @@ public partial class Core
       double lowStop = 0;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1538,7 +1535,7 @@ public partial class Core
       } else if( optInStopPeriod < 1 || optInStopPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1949,10 +1946,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CkspStream CkspOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, double optInMultiplier, int optInStopPeriod )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("CKSP open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "CKSP open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("CKSP open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("CKSP open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("CKSP open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("CKSP open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       RequireHistoryLength("CKSP", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("CKSP", "open", "inClose", inClose.Length, inHigh.Length);
       return CkspOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInMultiplier, optInStopPeriod);
@@ -1996,10 +1994,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CkspStream CkspOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, double optInMultiplier, int optInStopPeriod, Span<double> outHighStop, Span<double> outLowStop )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("CKSP openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "CKSP openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("CKSP openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("CKSP openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("CKSP openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("CKSP openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("CKSP", "openAndFill", inHigh.Length, CkspLookback(optInTimePeriod, optInMultiplier, optInStopPeriod));
       RequireHistoryLength("CKSP", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("CKSP", "openAndFill", "inClose", inClose.Length, inHigh.Length);

@@ -542,16 +542,13 @@ public partial class Core
       int i = 0;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       if( inLow.Length != inHigh.Length || inVolume.Length != inHigh.Length ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -648,10 +645,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MarketfiStream MarketfiOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("MARKETFI open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "MARKETFI open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("MARKETFI open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inVolume.IsEmpty ) throw new TALibArgumentException("MARKETFI open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("MARKETFI open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inVolume.IsEmpty ) throw new TALibArgumentException("MARKETFI open: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      }
       RequireHistoryLength("MARKETFI", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("MARKETFI", "open", "inVolume", inVolume.Length, inHigh.Length);
       return MarketfiOpenInternal(inHigh, inLow, inVolume, 0);
@@ -687,10 +685,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MarketfiStream MarketfiOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("MARKETFI openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "MARKETFI openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("MARKETFI openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inVolume.IsEmpty ) throw new TALibArgumentException("MARKETFI openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("MARKETFI openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inVolume.IsEmpty ) throw new TALibArgumentException("MARKETFI openAndFill: inVolume is empty", nameof(inVolume), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("MARKETFI", "openAndFill", inHigh.Length, MarketfiLookback());
       RequireHistoryLength("MARKETFI", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("MARKETFI", "openAndFill", "inVolume", inVolume.Length, inHigh.Length);

@@ -994,9 +994,6 @@ public partial class Core
       int maxIdx_sorted = (100)-1;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1010,7 +1007,7 @@ public partial class Core
       } else if( !(optInPercentile >= 0e0 && optInPercentile <= 1e2) ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1250,7 +1247,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public PercentileStream PercentileOpen( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInPercentile )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("PERCENTILE open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "PERCENTILE open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return PercentileOpenInternal(inReal, 0, optInTimePeriod, optInPercentile);
    }
@@ -1289,7 +1285,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public PercentileStream PercentileOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInPercentile, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("PERCENTILE openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "PERCENTILE openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("PERCENTILE", "openAndFill", inReal.Length, PercentileLookback(optInTimePeriod, optInPercentile));
       RequireFillLength("PERCENTILE", "openAndFill", "outReal", outReal.Length, guardOutLen);

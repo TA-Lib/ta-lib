@@ -424,7 +424,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_CVI_OpenImpl( struct TA_CVI_Stream **str
       optInROCPeriod = 10;
    else if( (int)optInROCPeriod < 1 || (int)optInROCPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

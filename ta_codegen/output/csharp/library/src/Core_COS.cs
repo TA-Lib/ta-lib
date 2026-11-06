@@ -435,13 +435,10 @@ public partial class Core
       int i = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -507,7 +504,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CosStream CosOpen( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("COS open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "COS open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return CosOpenInternal(inReal, 0);
    }
@@ -541,7 +537,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public CosStream CosOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("COS openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "COS openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("COS", "openAndFill", inReal.Length, CosLookback());
       RequireFillLength("COS", "openAndFill", "outReal", outReal.Length, guardOutLen);

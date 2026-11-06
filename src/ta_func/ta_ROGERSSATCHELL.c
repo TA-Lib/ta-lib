@@ -819,7 +819,7 @@ static TA_RetCode TA_ROGERSSATCHELL_OpenImpl( struct TA_ROGERSSATCHELL_Stream **
       optInAnnualization = 252;
    else if( !(optInAnnualization >= 0e0 && optInAnnualization <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

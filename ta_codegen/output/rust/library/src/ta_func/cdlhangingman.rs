@@ -833,9 +833,6 @@ impl Core {
     pub(crate) fn cdlhangingman_open_impl(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
     ) -> Result<CdlhangingmanStream, RetCode> {
-        if inOpen.is_empty() {
-            return Err(RetCode::InsufficientHistory);
-        }
         if inOpen.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
@@ -843,13 +840,13 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inOpen.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        if startIdx > endIdx {
+        if startIdx >= historyLen {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut BodyPeriodTotal: f64 = 0.0_f64;
@@ -1192,9 +1189,6 @@ impl Core {
     pub fn cdlhangingman_open_and_fill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outInteger: &mut [i32],
     ) -> Result<(CdlhangingmanStream, OutRange), RetCode> {
-        if inOpen.is_empty() {
-            return Err(RetCode::InsufficientHistory);
-        }
         if inOpen.len() > Self::INDEX_MAX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }

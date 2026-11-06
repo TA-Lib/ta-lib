@@ -1143,7 +1143,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_KST_OpenImpl( struct TA_KST_Stream **str
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

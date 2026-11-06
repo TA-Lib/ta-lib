@@ -41,7 +41,7 @@ mavp(closes, periods, { minPeriod: 2, maxPeriod: 30 })
 - **Parameter keys.** C's name without `optIn`, in camelCase by the word split of [rJ1](../website/src/spec/README.md#rj1): `timePeriod`, `nbDevUp`, `maType`, `fastDMaType`.
 - **Range.** `startIdx` defaults to 0 and `endIdx` to the last bar of the first input. `endIdx` is inclusive, as in every TA-Lib API; the TSDoc says so because `slice` is not. Bars before `startIdx` are still read as warm-up, which slicing the input would lose.
 - **`core`** defaults to `Core.DEFAULT`.
-- **First fault.** What only TypeScript has comes first: that a price object exists and that `options` is an object; then, for a batch call with `endIdx` omitted, each series present and non-empty, because the default reads their lengths; then `core`. Every backend's order follows: the range first, and in an opener an empty history ahead of an absent leg. [rE1](../website/src/spec/errors/README.md#re1) leaves the order of several faults open.
+- **First fault.** What only TypeScript has comes first: that a price object exists and that `options` is an object; then, for a batch call with `endIdx` omitted, each series present and non-empty, because the default reads their lengths; then `core`. Every backend's order follows: the range first, and in an opener the history's upper bound (rS2) ahead of an absent leg, and an empty history after every argument check. [rE1](../website/src/spec/errors/README.md#re1) leaves the order of several faults open.
 - **`core`** that is not a `Core` is `TA_BAD_PARAM` at every entry point; lookback and display shift throw for it and for options that are not an object, and answer a rejected parameter with their invalid constant.
 - **Function names** keep the rule every backend shares (`cdlengulfing`, `stochrsi`, `var_`).
 - **Speed.** The timed benchmark request calls the body, so the options object is on no measured path. A caller who passes every buffer allocates no output (A7).
@@ -111,7 +111,7 @@ m.update(101.5, sink);                                 // fills and returns sink
 ## 8. Errors and C leftovers
 
 - A rejected call throws `TALibError`; `code` is C's name as a string and `retCode` C's number, compared against the exported `RetCode`.
-- **Empty history** (A16): every backend's opener answers `historyLen < 1` with `TA_INSUFFICIENT_HISTORY` ([rS7](../website/src/spec/streaming/README.md#rs7)), ahead of a check on any input after the first. This is the spec's rule, not a TypeScript Caveat.
+- **Empty history** (A16): every backend's opener answers an empty history with `TA_INSUFFICIENT_HISTORY` ([rS7](../website/src/spec/streaming/README.md#rs7)), after every argument check, like any too-short history. This is the spec's rule, not a TypeScript Caveat.
 - **Messages** name the parameter, its value and its range (`SMA: timePeriod must be in 1..100000, got 0`); overlap gets its own (`MACD: outMacd and outMacdSignal share memory`). Messages are not API.
 - **No C leftovers:** no `FuncUnstId.UNUSED_*`; no `ALL` or `ALL_CANDLE_SETTINGS` where a parameter only throws on them; hover text in plain terms ("Exponential moving average", not "The `TA_MAType_EMA` moving average").
 

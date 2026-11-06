@@ -1091,9 +1091,6 @@ public partial class Core
       int maxIdx_dsBuffer = (32)-1;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1117,7 +1114,7 @@ public partial class Core
       } else if( optInSignalPeriod < 2 || optInSignalPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1398,7 +1395,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public DoscStream DoscOpen( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("DOSC open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "DOSC open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return DoscOpenInternal(inReal, 0, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);
    }
@@ -1439,7 +1435,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public DoscStream DoscOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFirstPeriod, int optInSecondPeriod, int optInSignalPeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("DOSC openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "DOSC openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("DOSC", "openAndFill", inReal.Length, DoscLookback(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod));
       RequireFillLength("DOSC", "openAndFill", "outReal", outReal.Length, guardOutLen);

@@ -378,7 +378,7 @@ static TA_FMA_STEP_INLINE TA_RetCode TA_SWAK_BP_OpenImpl( struct TA_SWAK_BP_Stre
       optInDelta = 0.1;
    else if( !(optInDelta >= 5e-2 && optInDelta <= 5e-1) )
       return TA_BAD_PARAM;
-   if( startIdx > historyLen - 1 )
+   if( startIdx >= historyLen )
    {
       *outBegIdx = 0;
       *outNBElement = 0;

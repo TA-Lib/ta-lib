@@ -1109,9 +1109,6 @@ public partial class Core
       outNBElement = 0;
       int historyLen = inHigh.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1619,10 +1616,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MinusDiStream MinusDiOpen( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("MINUS_DI open: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "MINUS_DI open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("MINUS_DI open: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("MINUS_DI open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("MINUS_DI open: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("MINUS_DI open: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       RequireHistoryLength("MINUS_DI", "open", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("MINUS_DI", "open", "inClose", inClose.Length, inHigh.Length);
       return MinusDiOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
@@ -1660,10 +1658,11 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public MinusDiStream MinusDiOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new InsufficientHistoryException("MINUS_DI openAndFill: history is empty", nameof(inHigh));
       if( inHigh.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inHigh), "MINUS_DI openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
-      if( inLow.IsEmpty ) throw new TALibArgumentException("MINUS_DI openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
-      if( inClose.IsEmpty ) throw new TALibArgumentException("MINUS_DI openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( !inHigh.IsEmpty ) {
+         if( inLow.IsEmpty ) throw new TALibArgumentException("MINUS_DI openAndFill: inLow is empty", nameof(inLow), RetCode.BadParam);
+         if( inClose.IsEmpty ) throw new TALibArgumentException("MINUS_DI openAndFill: inClose is empty", nameof(inClose), RetCode.BadParam);
+      }
       int guardOutLen = OpenFillCount("MINUS_DI", "openAndFill", inHigh.Length, MinusDiLookback(optInTimePeriod));
       RequireHistoryLength("MINUS_DI", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("MINUS_DI", "openAndFill", "inClose", inClose.Length, inHigh.Length);

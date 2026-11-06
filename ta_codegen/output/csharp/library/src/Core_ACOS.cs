@@ -439,13 +439,10 @@ public partial class Core
       int i = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -510,7 +507,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public AcosStream AcosOpen( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("ACOS open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "ACOS open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return AcosOpenInternal(inReal, 0);
    }
@@ -543,7 +539,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public AcosStream AcosOpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("ACOS openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "ACOS openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("ACOS", "openAndFill", inReal.Length, AcosLookback());
       RequireFillLength("ACOS", "openAndFill", "outReal", outReal.Length, guardOutLen);

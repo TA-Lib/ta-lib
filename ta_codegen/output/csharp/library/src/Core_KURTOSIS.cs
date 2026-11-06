@@ -1075,9 +1075,6 @@ public partial class Core
       int reseedPeriod = 0;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.InsufficientHistory;
-      }
       if( historyLen > IndexMax + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1086,7 +1083,7 @@ public partial class Core
       } else if( optInTimePeriod < 4 || optInTimePeriod > 10000 ) {
          return RetCode.BadParam;
       }
-      if( startIdx > endIdx ) {
+      if( startIdx >= historyLen ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.InsufficientHistory;
@@ -1326,7 +1323,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public KurtosisStream KurtosisOpen( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("KURTOSIS open: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "KURTOSIS open: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       return KurtosisOpenInternal(inReal, 0, optInTimePeriod);
    }
@@ -1362,7 +1358,6 @@ public partial class Core
    /// fault an opener can have (rule rS2).</exception>
    public KurtosisStream KurtosisOpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new InsufficientHistoryException("KURTOSIS openAndFill: history is empty", nameof(inReal));
       if( inReal.Length > IndexMax + 1 ) throw new TALibArgumentOutOfRangeException(nameof(inReal), "KURTOSIS openAndFill: history is longer than IndexMax + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("KURTOSIS", "openAndFill", inReal.Length, KurtosisLookback(optInTimePeriod));
       RequireFillLength("KURTOSIS", "openAndFill", "outReal", outReal.Length, guardOutLen);
