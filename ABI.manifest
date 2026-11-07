@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 4:0:3
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 3174
+function-count 3187
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -2231,6 +2231,16 @@ function TA_RetCode TA_SMI_OutRange(const TA_SMI_Stream *, int *, int *)
 function TA_RetCode TA_SMI_Peek(const TA_SMI_Stream *, double, double, double, double *, double *)
 function TA_RetCode TA_SMI_Update(TA_SMI_Stream *, double, double, double, double *, double *)
 function TA_RetCode TA_SMI_Value(const TA_SMI_Stream *, double *, double *)
+function TA_RetCode TA_SORTINO(int, int, const double *, int, double, double, int *, int *, double *)
+function TA_RetCode TA_SORTINO_Advance(TA_SORTINO_Stream *)
+function TA_RetCode TA_SORTINO_Clone(const TA_SORTINO_Stream *, TA_SORTINO_Stream **)
+function TA_RetCode TA_SORTINO_Close(TA_SORTINO_Stream *)
+function TA_RetCode TA_SORTINO_Open(TA_SORTINO_Stream **, const double *, int, int, double, double, double *)
+function TA_RetCode TA_SORTINO_OpenAndFill(TA_SORTINO_Stream **, const double *, int, int, double, double, int *, int *, double *)
+function TA_RetCode TA_SORTINO_OutRange(const TA_SORTINO_Stream *, int *, int *)
+function TA_RetCode TA_SORTINO_Peek(const TA_SORTINO_Stream *, double, double *)
+function TA_RetCode TA_SORTINO_Update(TA_SORTINO_Stream *, double, double *)
+function TA_RetCode TA_SORTINO_Value(const TA_SORTINO_Stream *, double *)
 function TA_RetCode TA_SQRT(int, int, const double *, int *, int *, double *)
 function TA_RetCode TA_SQRT_Advance(TA_SQRT_Stream *)
 function TA_RetCode TA_SQRT_Clone(const TA_SQRT_Stream *, TA_SQRT_Stream **)
@@ -2583,6 +2593,7 @@ function TA_RetCode TA_S_SINH(int, int, const float *, int *, int *, double *)
 function TA_RetCode TA_S_SKEW(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_SMA(int, int, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_SMI(int, int, const float *, const float *, const float *, int, int, int, int, int *, int *, double *, double *)
+function TA_RetCode TA_S_SORTINO(int, int, const float *, int, double, double, int *, int *, double *)
 function TA_RetCode TA_S_SQRT(int, int, const float *, int *, int *, double *)
 function TA_RetCode TA_S_SQZMOM(int, int, const float *, const float *, const float *, int, double, int, double, double, double, int *, int *, double *, int *)
 function TA_RetCode TA_S_STC(int, int, const float *, int, int, int, int *, int *, double *)
@@ -3286,6 +3297,8 @@ function int TA_SMA_DisplayShift(int, int)
 function int TA_SMA_Lookback(int)
 function int TA_SMI_DisplayShift(int, int, int, int, int)
 function int TA_SMI_Lookback(int, int, int, int)
+function int TA_SORTINO_DisplayShift(int, double, double, int)
+function int TA_SORTINO_Lookback(int, double, double)
 function int TA_SQRT_DisplayShift(int)
 function int TA_SQRT_Lookback(void)
 function int TA_SQZMOM_DisplayShift(int, double, int, double, double, double, int)

@@ -256,6 +256,7 @@ scripts/build.py libraries       # the jar asserts your function is on the packa
 cd bin && ./ta_regtest --function=<NAME>              # your hand-written legs
 cd bin && ./ta_regtest --codegen --function=<NAME>    # + the sweep and server_verify, all four languages
 cd bin && ./ta_regtest --xlang-hash --function=<NAME> # the same compare over the seeded fuzz corpus
+scripts/sync.py                  # ABI.manifest + sources digest; regen-check skips it, abi.py check gates it
 scripts/build.py check-source-lists
 scripts/build.py regen-check     # THE PR GATE: regenerating must change nothing
 scripts/build.py clippy          # -D warnings over BOTH crates, incl. the generated one
