@@ -604,17 +604,12 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLINVERTEDHAMMER_OpenBody( struct TA_CDLINV
       outIdx = 0;
       do
       {
-         if( ((max(inOpen[i],inClose[i]) < min(inOpen[i - 1],inClose[i - 1])) ? 1 : 0) ) /* gap down */
+         if( (((inOpen[i] < inOpen[i - 1]) + /* gap down */
+             (inOpen[i] < inClose[i - 1]) + (inClose[i] < inOpen[i - 1]) + (inClose[i] < inClose[i - 1])) == 4) )
          {
-            if( fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i) && /* small rb */
-                (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i) && /* long upper shadow */
-                (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i) ) /* very short lower shadow */
-            {
-               outInteger[outIdx++ * outStride] = 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((100) & -(int)(((fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i)) & /* small rb */
+                ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long upper shadow */
+                ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))))); /* very short lower shadow */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -721,17 +716,12 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLINVERTEDHAMMER_OpenBody( struct TA_CDLINV
       outIdx = 0;
       do
       {
-         if( ((max(inOpen[i],inClose[i]) < min(inOpen[i - 1],inClose[i - 1])) ? 1 : 0) ) /* gap down */
+         if( (((inOpen[i] < inOpen[i - 1]) + /* gap down */
+             (inOpen[i] < inClose[i - 1]) + (inClose[i] < inOpen[i - 1]) + (inClose[i] < inClose[i - 1])) == 4) )
          {
-            if( fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i) && /* small rb */
-                (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i) && /* long upper shadow */
-                (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i) ) /* very short lower shadow */
-            {
-               outInteger[outIdx++ * outStride] = 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((100) & -(int)(((fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i)) & /* small rb */
+                ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long upper shadow */
+                ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))))); /* very short lower shadow */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;

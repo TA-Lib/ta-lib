@@ -560,17 +560,11 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCOUNTERATTACK_OpenBody( struct TA_CDLCOUN
       BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx - 1);
       do
       {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) && /* opposite candles */
-             fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1) && /* 1st long */
-             fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i) && /* 2nd long */
-             inClose[i] <= inClose[i - 1] + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1) && /* equal closes */
-             inClose[i] >= inClose[i - 1] - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1) )
-         {
-            outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
-         } else 
-         {
-            outInteger[outIdx++ * outStride] = 0;
-         }
+         outInteger[outIdx++ * outStride] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)((((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i])) & /* opposite candles */
+             (fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1)) & /* 1st long */
+             (fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i)) & /* 2nd long */
+             (inClose[i] <= inClose[i - 1] + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1)) & /* equal closes */
+             (inClose[i] >= inClose[i - 1] - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1)))));
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
@@ -664,17 +658,11 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCOUNTERATTACK_OpenBody( struct TA_CDLCOUN
       BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx - 1);
       do
       {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) && /* opposite candles */
-             fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1) && /* 1st long */
-             fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i) && /* 2nd long */
-             inClose[i] <= inClose[i - 1] + TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1) && /* equal closes */
-             inClose[i] >= inClose[i - 1] - TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1) )
-         {
-            outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
-         } else 
-         {
-            outInteger[outIdx++ * outStride] = 0;
-         }
+         outInteger[outIdx++ * outStride] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)((((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i])) & /* opposite candles */
+             (fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1)) & /* 1st long */
+             (fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i)) & /* 2nd long */
+             (inClose[i] <= inClose[i - 1] + TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1)) & /* equal closes */
+             (inClose[i] >= inClose[i - 1] - TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1)))));
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */

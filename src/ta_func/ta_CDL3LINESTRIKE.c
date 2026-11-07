@@ -756,30 +756,19 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
       NearPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,NearTrailingIdx - 3);
       do
       {
-         if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) && /* three with same color */
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) &&
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) ) /* 4th opposite color */
+         if( ((((inClose[i - 3] >= inOpen[i - 3]) == (inClose[i - 2] >= inOpen[i - 2])) + /* three with same color */
+             ((inClose[i - 2] >= inOpen[i - 2]) == (inClose[i - 1] >= inOpen[i - 1])) + ((inClose[i] >= inOpen[i]) != (inClose[i - 1] >= inOpen[i - 1]))) == 3) ) /* 4th opposite color */
          {
-            if( inOpen[i - 2] >= min(inOpen[i - 3],inClose[i - 3]) - TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3) && /* 2nd opens within/near 1st rb */
-                inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3) &&
-                inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2) && /* 3rd opens within/near 2nd rb */
-                inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2) &&
-                ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* if three white */
-                  inClose[i - 1] > inClose[i - 2] &&
-                  inClose[i - 2] > inClose[i - 3] &&                    /* consecutive higher closes */
-                  inOpen[i] > inClose[i - 1] &&                         /* 4th opens above prior close */
-                  inClose[i] < inOpen[i - 3]) ||                        /* 4th closes below 1st open */
-                 (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* if three black */
-                  inClose[i - 1] < inClose[i - 2] &&
-                  inClose[i - 2] < inClose[i - 3] &&                    /* consecutive lower closes */
-                  inOpen[i] < inClose[i - 1] &&                         /* 4th opens below prior close */
-                  inClose[i] > inOpen[i - 3])) )                        /* 4th closes above 1st open */
-            {
-               outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) & -(int)(((inOpen[i - 2] >= min(inOpen[i - 3],inClose[i - 3]) - TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & /* 2nd opens within/near 1st rb */
+                (inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & (inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & /* 3rd opens within/near 2nd rb */
+                (inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & (((inClose[i - 1] >= inOpen[i - 1]) & /* if three white */
+                (inClose[i - 1] > inClose[i - 2]) & (inClose[i - 2] > inClose[i - 3]) & /* consecutive higher closes */
+                (inOpen[i] > inClose[i - 1]) &          /* 4th opens above prior close */
+                (inClose[i] < inOpen[i - 3])) |         /* 4th closes below 1st open */
+                ((!(inClose[i - 1] >= inOpen[i - 1])) & /* if three black */
+                (inClose[i - 1] < inClose[i - 2]) & (inClose[i - 2] < inClose[i - 3]) & /* consecutive lower closes */
+                (inOpen[i] < inClose[i - 1]) &          /* 4th opens below prior close */
+                (inClose[i] > inOpen[i - 3]))))));      /* 4th closes above 1st open */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -865,30 +854,19 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
       NearPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,NearTrailingIdx - 3);
       do
       {
-         if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) && /* three with same color */
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) &&
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) ) /* 4th opposite color */
+         if( ((((inClose[i - 3] >= inOpen[i - 3]) == (inClose[i - 2] >= inOpen[i - 2])) + /* three with same color */
+             ((inClose[i - 2] >= inOpen[i - 2]) == (inClose[i - 1] >= inOpen[i - 1])) + ((inClose[i] >= inOpen[i]) != (inClose[i - 1] >= inOpen[i - 1]))) == 3) ) /* 4th opposite color */
          {
-            if( inOpen[i - 2] >= min(inOpen[i - 3],inClose[i - 3]) - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3) && /* 2nd opens within/near 1st rb */
-                inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3) &&
-                inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2) && /* 3rd opens within/near 2nd rb */
-                inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2) &&
-                ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* if three white */
-                  inClose[i - 1] > inClose[i - 2] &&
-                  inClose[i - 2] > inClose[i - 3] &&                    /* consecutive higher closes */
-                  inOpen[i] > inClose[i - 1] &&                         /* 4th opens above prior close */
-                  inClose[i] < inOpen[i - 3]) ||                        /* 4th closes below 1st open */
-                 (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* if three black */
-                  inClose[i - 1] < inClose[i - 2] &&
-                  inClose[i - 2] < inClose[i - 3] &&                    /* consecutive lower closes */
-                  inOpen[i] < inClose[i - 1] &&                         /* 4th opens below prior close */
-                  inClose[i] > inOpen[i - 3])) )                        /* 4th closes above 1st open */
-            {
-               outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) & -(int)(((inOpen[i - 2] >= min(inOpen[i - 3],inClose[i - 3]) - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & /* 2nd opens within/near 1st rb */
+                (inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & (inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & /* 3rd opens within/near 2nd rb */
+                (inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & (((inClose[i - 1] >= inOpen[i - 1]) & /* if three white */
+                (inClose[i - 1] > inClose[i - 2]) & (inClose[i - 2] > inClose[i - 3]) & /* consecutive higher closes */
+                (inOpen[i] > inClose[i - 1]) &          /* 4th opens above prior close */
+                (inClose[i] < inOpen[i - 3])) |         /* 4th closes below 1st open */
+                ((!(inClose[i - 1] >= inOpen[i - 1])) & /* if three black */
+                (inClose[i - 1] < inClose[i - 2]) & (inClose[i - 2] < inClose[i - 3]) & /* consecutive lower closes */
+                (inOpen[i] < inClose[i - 1]) &          /* 4th opens below prior close */
+                (inClose[i] > inOpen[i - 3]))))));      /* 4th closes above 1st open */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -974,30 +952,19 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
       NearPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,NearTrailingIdx - 3);
       do
       {
-         if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) && /* three with same color */
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) &&
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) ) /* 4th opposite color */
+         if( ((((inClose[i - 3] >= inOpen[i - 3]) == (inClose[i - 2] >= inOpen[i - 2])) + /* three with same color */
+             ((inClose[i - 2] >= inOpen[i - 2]) == (inClose[i - 1] >= inOpen[i - 1])) + ((inClose[i] >= inOpen[i]) != (inClose[i - 1] >= inOpen[i - 1]))) == 3) ) /* 4th opposite color */
          {
-            if( inOpen[i - 2] >= min(inOpen[i - 3],inClose[i - 3]) - TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3) && /* 2nd opens within/near 1st rb */
-                inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3) &&
-                inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2) && /* 3rd opens within/near 2nd rb */
-                inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2) &&
-                ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* if three white */
-                  inClose[i - 1] > inClose[i - 2] &&
-                  inClose[i - 2] > inClose[i - 3] &&                    /* consecutive higher closes */
-                  inOpen[i] > inClose[i - 1] &&                         /* 4th opens above prior close */
-                  inClose[i] < inOpen[i - 3]) ||                        /* 4th closes below 1st open */
-                 (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* if three black */
-                  inClose[i - 1] < inClose[i - 2] &&
-                  inClose[i - 2] < inClose[i - 3] &&                    /* consecutive lower closes */
-                  inOpen[i] < inClose[i - 1] &&                         /* 4th opens below prior close */
-                  inClose[i] > inOpen[i - 3])) )                        /* 4th closes above 1st open */
-            {
-               outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) & -(int)(((inOpen[i - 2] >= min(inOpen[i - 3],inClose[i - 3]) - TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & /* 2nd opens within/near 1st rb */
+                (inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & (inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & /* 3rd opens within/near 2nd rb */
+                (inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & (((inClose[i - 1] >= inOpen[i - 1]) & /* if three white */
+                (inClose[i - 1] > inClose[i - 2]) & (inClose[i - 2] > inClose[i - 3]) & /* consecutive higher closes */
+                (inOpen[i] > inClose[i - 1]) &          /* 4th opens above prior close */
+                (inClose[i] < inOpen[i - 3])) |         /* 4th closes below 1st open */
+                ((!(inClose[i - 1] >= inOpen[i - 1])) & /* if three black */
+                (inClose[i - 1] < inClose[i - 2]) & (inClose[i - 2] < inClose[i - 3]) & /* consecutive lower closes */
+                (inOpen[i] < inClose[i - 1]) &          /* 4th opens below prior close */
+                (inClose[i] > inOpen[i - 3]))))));      /* 4th closes above 1st open */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -1083,30 +1050,19 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3LINESTRIKE_OpenBody( struct TA_CDL3LINES
       NearPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(Near_rangeType,NearTrailingIdx - 3);
       do
       {
-         if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) && /* three with same color */
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) &&
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) ) /* 4th opposite color */
+         if( ((((inClose[i - 3] >= inOpen[i - 3]) == (inClose[i - 2] >= inOpen[i - 2])) + /* three with same color */
+             ((inClose[i - 2] >= inOpen[i - 2]) == (inClose[i - 1] >= inOpen[i - 1])) + ((inClose[i] >= inOpen[i]) != (inClose[i - 1] >= inOpen[i - 1]))) == 3) ) /* 4th opposite color */
          {
-            if( inOpen[i - 2] >= min(inOpen[i - 3],inClose[i - 3]) - TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3) && /* 2nd opens within/near 1st rb */
-                inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3) &&
-                inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2) && /* 3rd opens within/near 2nd rb */
-                inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2) &&
-                ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* if three white */
-                  inClose[i - 1] > inClose[i - 2] &&
-                  inClose[i - 2] > inClose[i - 3] &&                    /* consecutive higher closes */
-                  inOpen[i] > inClose[i - 1] &&                         /* 4th opens above prior close */
-                  inClose[i] < inOpen[i - 3]) ||                        /* 4th closes below 1st open */
-                 (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* if three black */
-                  inClose[i - 1] < inClose[i - 2] &&
-                  inClose[i - 2] < inClose[i - 3] &&                    /* consecutive lower closes */
-                  inOpen[i] < inClose[i - 1] &&                         /* 4th opens below prior close */
-                  inClose[i] > inOpen[i - 3])) )                        /* 4th closes above 1st open */
-            {
-               outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) & -(int)(((inOpen[i - 2] >= min(inOpen[i - 3],inClose[i - 3]) - TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & /* 2nd opens within/near 1st rb */
+                (inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal[3],i - 3)) & (inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & /* 3rd opens within/near 2nd rb */
+                (inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal[2],i - 2)) & (((inClose[i - 1] >= inOpen[i - 1]) & /* if three white */
+                (inClose[i - 1] > inClose[i - 2]) & (inClose[i - 2] > inClose[i - 3]) & /* consecutive higher closes */
+                (inOpen[i] > inClose[i - 1]) &          /* 4th opens above prior close */
+                (inClose[i] < inOpen[i - 3])) |         /* 4th closes below 1st open */
+                ((!(inClose[i - 1] >= inOpen[i - 1])) & /* if three black */
+                (inClose[i - 1] < inClose[i - 2]) & (inClose[i - 2] < inClose[i - 3]) & /* consecutive lower closes */
+                (inOpen[i] < inClose[i - 1]) &          /* 4th opens below prior close */
+                (inClose[i] > inOpen[i - 3]))))));      /* 4th closes above 1st open */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;

@@ -654,20 +654,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLMORNINGDOJISTAR_OpenBody( struct TA_CDLMO
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* black */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* white real body */
-             ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) ) /* gapping down */
+         if( (((!(inClose[i - 2] >= inOpen[i - 2])) + /* black */
+             (inClose[i] >= inOpen[i]) +              /* white real body */
+             (((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) == 3) ) /* gapping down */
          {
-            if( inClose[i] > fma(fabs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && /* closing well within 1st rb */
-                fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2) && /* 1st: long */
-                fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i - 1) && /* 2nd: doji */
-                fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i) ) /* 3rd: longer than short */
-            {
-               outInteger[outIdx++ * outStride] = 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((100) & -(int)(((inClose[i] > fma(fabs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2])) & /* closing well within 1st rb */
+                (fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & /* 1st: long */
+                (fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i - 1)) & /* 2nd: doji */
+                (fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i))))); /* 3rd: longer than short */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -784,20 +778,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLMORNINGDOJISTAR_OpenBody( struct TA_CDLMO
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* black */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* white real body */
-             ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) ) /* gapping down */
+         if( (((!(inClose[i - 2] >= inOpen[i - 2])) + /* black */
+             (inClose[i] >= inOpen[i]) +              /* white real body */
+             (((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2])))) == 3) ) /* gapping down */
          {
-            if( inClose[i] > fma(fabs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && /* closing well within 1st rb */
-                fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2) && /* 1st: long */
-                fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i - 1) && /* 2nd: doji */
-                fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i) ) /* 3rd: longer than short */
-            {
-               outInteger[outIdx++ * outStride] = 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((100) & -(int)(((inClose[i] > fma(fabs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2])) & /* closing well within 1st rb */
+                (fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & /* 1st: long */
+                (fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i - 1)) & /* 2nd: doji */
+                (fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i))))); /* 3rd: longer than short */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;

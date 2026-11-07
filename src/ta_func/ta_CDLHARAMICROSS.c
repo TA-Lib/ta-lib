@@ -540,26 +540,13 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLHARAMICROSS_OpenBody( struct TA_CDLHARAMI
       outIdx = 0;
       do
       {
-         if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1) ) /* 1st: long */
+         if( (((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1)) + /* 1st: long */
+             (fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i))) == 2) ) /* 2nd: doji */
          {
-            if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) ) /* 2nd: doji */
-            {
-               if( max(inClose[i],inOpen[i]) < max(inClose[i - 1],inOpen[i - 1]) && /* 2nd is engulfed by 1st */
-                   min(inClose[i],inOpen[i]) > min(inClose[i - 1],inOpen[i - 1]) )
-               {
-                  outInteger[outIdx++ * outStride] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
-               } else if( max(inClose[i],inOpen[i]) <= max(inClose[i - 1],inOpen[i - 1]) && /* 2nd is engulfed by 1st */
-                   min(inClose[i],inOpen[i]) >= min(inClose[i - 1],inOpen[i - 1]) )  /* (one end of real body can match; engulfing guaranteed by "long" and "doji") */
-               {
-                  outInteger[outIdx++ * outStride] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 80;
-               } else 
-               {
-                  outInteger[outIdx++ * outStride] = 0;
-               }
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((-((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) ^ (((((-((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 80) & -(int)(((((inClose[i] <= inClose[i - 1]) | (inClose[i] <= inOpen[i - 1])) & ((inOpen[i] <= inClose[i - 1]) | (inOpen[i] <= inOpen[i - 1]))) & /* 2nd is engulfed by 1st */
+                (((inClose[i] >= inClose[i - 1]) | (inClose[i] >= inOpen[i - 1])) & ((inOpen[i] >= inClose[i - 1]) | (inOpen[i] >= inOpen[i - 1]))))))) ^ /* (one end of real body can match; engulfing guaranteed by "long" and "doji") */
+                (-((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100)) & ((int)(((((inClose[i] < inClose[i - 1]) | (inClose[i] < inOpen[i - 1])) & ((inOpen[i] < inClose[i - 1]) | (inOpen[i] < inOpen[i - 1]))) & /* 2nd is engulfed by 1st */
+                ((inClose[i] > inClose[i - 1]) | (inClose[i] > inOpen[i - 1])) & ((inOpen[i] > inClose[i - 1]) | (inOpen[i] > inOpen[i - 1])))) - 1)));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -645,26 +632,13 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLHARAMICROSS_OpenBody( struct TA_CDLHARAMI
       outIdx = 0;
       do
       {
-         if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1) ) /* 1st: long */
+         if( (((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1)) + /* 1st: long */
+             (fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i))) == 2) ) /* 2nd: doji */
          {
-            if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) ) /* 2nd: doji */
-            {
-               if( max(inClose[i],inOpen[i]) < max(inClose[i - 1],inOpen[i - 1]) && /* 2nd is engulfed by 1st */
-                   min(inClose[i],inOpen[i]) > min(inClose[i - 1],inOpen[i - 1]) )
-               {
-                  outInteger[outIdx++ * outStride] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
-               } else if( max(inClose[i],inOpen[i]) <= max(inClose[i - 1],inOpen[i - 1]) && /* 2nd is engulfed by 1st */
-                   min(inClose[i],inOpen[i]) >= min(inClose[i - 1],inOpen[i - 1]) )  /* (one end of real body can match; engulfing guaranteed by "long" and "doji") */
-               {
-                  outInteger[outIdx++ * outStride] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 80;
-               } else 
-               {
-                  outInteger[outIdx++ * outStride] = 0;
-               }
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((-((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) ^ (((((-((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 80) & -(int)(((((inClose[i] <= inClose[i - 1]) | (inClose[i] <= inOpen[i - 1])) & ((inOpen[i] <= inClose[i - 1]) | (inOpen[i] <= inOpen[i - 1]))) & /* 2nd is engulfed by 1st */
+                (((inClose[i] >= inClose[i - 1]) | (inClose[i] >= inOpen[i - 1])) & ((inOpen[i] >= inClose[i - 1]) | (inOpen[i] >= inOpen[i - 1]))))))) ^ /* (one end of real body can match; engulfing guaranteed by "long" and "doji") */
+                (-((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100)) & ((int)(((((inClose[i] < inClose[i - 1]) | (inClose[i] < inOpen[i - 1])) & ((inOpen[i] < inClose[i - 1]) | (inOpen[i] < inOpen[i - 1]))) & /* 2nd is engulfed by 1st */
+                ((inClose[i] > inClose[i - 1]) | (inClose[i] > inOpen[i - 1])) & ((inOpen[i] > inClose[i - 1]) | (inOpen[i] > inOpen[i - 1])))) - 1)));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;

@@ -663,16 +663,10 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLHAMMER_OpenBody( struct TA_CDLHAMMER_Stre
       outIdx = 0;
       do
       {
-         if( fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i) && /* small rb */
-             (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i) && /* long lower shadow */
-             (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i) && /* very short upper shadow */
-             min(inClose[i],inOpen[i]) <= inLow[i - 1] + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1) ) /* rb near the prior candle's lows */
-         {
-            outInteger[outIdx++ * outStride] = 100;
-         } else 
-         {
-            outInteger[outIdx++ * outStride] = 0;
-         }
+         outInteger[outIdx++ * outStride] = ((100) & -(int)(((fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i)) & /* small rb */
+             ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long lower shadow */
+             ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)) & /* very short upper shadow */
+             ((inClose[i] <= inLow[i - 1] + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1)) | (inOpen[i] <= inLow[i - 1] + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1)))))); /* rb near the prior candle's lows */
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
@@ -800,16 +794,10 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLHAMMER_OpenBody( struct TA_CDLHAMMER_Stre
       outIdx = 0;
       do
       {
-         if( fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i) && /* small rb */
-             (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i) && /* long lower shadow */
-             (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i) && /* very short upper shadow */
-             min(inClose[i],inOpen[i]) <= inLow[i - 1] + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1) ) /* rb near the prior candle's lows */
-         {
-            outInteger[outIdx++ * outStride] = 100;
-         } else 
-         {
-            outInteger[outIdx++ * outStride] = 0;
-         }
+         outInteger[outIdx++ * outStride] = ((100) & -(int)(((fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i)) & /* small rb */
+             ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long lower shadow */
+             ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)) & /* very short upper shadow */
+             ((inClose[i] <= inLow[i - 1] + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1)) | (inOpen[i] <= inLow[i - 1] + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i - 1)))))); /* rb near the prior candle's lows */
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */

@@ -623,25 +623,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLLADDERBOTTOM_OpenBody( struct TA_CDLLADDE
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
-             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 )  /* 3 black candlesticks */
+         if( (((!(inClose[i - 4] >= inOpen[i - 4])) + (!(inClose[i - 3] >= inOpen[i - 3])) + (!(inClose[i - 2] >= inOpen[i - 2]))) == 3) ) /* 3 black candlesticks */
          {
-            if( inOpen[i - 4] > inOpen[i - 3] &&
-                inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
-                inClose[i - 4] > inClose[i - 3] &&
-                inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
-                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
-                (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i - 1) &&
-                ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
-                inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
-                inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
-            {
-               outInteger[outIdx++ * outStride] = 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((100) & -(int)(((inOpen[i - 4] > inOpen[i - 3]) & (inOpen[i - 3] > inOpen[i - 2]) & /* with consecutively lower opens */
+                (inClose[i - 4] > inClose[i - 3]) & (inClose[i - 3] > inClose[i - 2]) & /* and closes */
+                (!(inClose[i - 1] >= inOpen[i - 1])) & /* 4th: black with an upper shadow */
+                ((inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i - 1)) & (inClose[i] >= inOpen[i]) & /* 5th: white */
+                (inOpen[i] > inOpen[i - 1]) &          /* that opens above prior candle's body */
+                (inClose[i] > inHigh[i - 1]))));       /* and closes above prior candle's high */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -713,25 +702,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLLADDERBOTTOM_OpenBody( struct TA_CDLLADDE
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
-             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 )  /* 3 black candlesticks */
+         if( (((!(inClose[i - 4] >= inOpen[i - 4])) + (!(inClose[i - 3] >= inOpen[i - 3])) + (!(inClose[i - 2] >= inOpen[i - 2]))) == 3) ) /* 3 black candlesticks */
          {
-            if( inOpen[i - 4] > inOpen[i - 3] &&
-                inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
-                inClose[i - 4] > inClose[i - 3] &&
-                inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
-                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
-                (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i - 1) &&
-                ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
-                inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
-                inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
-            {
-               outInteger[outIdx++ * outStride] = 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((100) & -(int)(((inOpen[i - 4] > inOpen[i - 3]) & (inOpen[i - 3] > inOpen[i - 2]) & /* with consecutively lower opens */
+                (inClose[i - 4] > inClose[i - 3]) & (inClose[i - 3] > inClose[i - 2]) & /* and closes */
+                (!(inClose[i - 1] >= inOpen[i - 1])) & /* 4th: black with an upper shadow */
+                ((inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i - 1)) & (inClose[i] >= inOpen[i]) & /* 5th: white */
+                (inOpen[i] > inOpen[i - 1]) &          /* that opens above prior candle's body */
+                (inClose[i] > inHigh[i - 1]))));       /* and closes above prior candle's high */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -803,25 +781,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLLADDERBOTTOM_OpenBody( struct TA_CDLLADDE
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
-             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 )  /* 3 black candlesticks */
+         if( (((!(inClose[i - 4] >= inOpen[i - 4])) + (!(inClose[i - 3] >= inOpen[i - 3])) + (!(inClose[i - 2] >= inOpen[i - 2]))) == 3) ) /* 3 black candlesticks */
          {
-            if( inOpen[i - 4] > inOpen[i - 3] &&
-                inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
-                inClose[i - 4] > inClose[i - 3] &&
-                inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
-                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
-                (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i - 1) &&
-                ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
-                inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
-                inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
-            {
-               outInteger[outIdx++ * outStride] = 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((100) & -(int)(((inOpen[i - 4] > inOpen[i - 3]) & (inOpen[i - 3] > inOpen[i - 2]) & /* with consecutively lower opens */
+                (inClose[i - 4] > inClose[i - 3]) & (inClose[i - 3] > inClose[i - 2]) & /* and closes */
+                (!(inClose[i - 1] >= inOpen[i - 1])) & /* 4th: black with an upper shadow */
+                ((inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i - 1)) & (inClose[i] >= inOpen[i]) & /* 5th: white */
+                (inOpen[i] > inOpen[i - 1]) &          /* that opens above prior candle's body */
+                (inClose[i] > inHigh[i - 1]))));       /* and closes above prior candle's high */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -893,25 +860,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLLADDERBOTTOM_OpenBody( struct TA_CDLLADDE
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 &&
-             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == -1 &&
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 )  /* 3 black candlesticks */
+         if( (((!(inClose[i - 4] >= inOpen[i - 4])) + (!(inClose[i - 3] >= inOpen[i - 3])) + (!(inClose[i - 2] >= inOpen[i - 2]))) == 3) ) /* 3 black candlesticks */
          {
-            if( inOpen[i - 4] > inOpen[i - 3] &&
-                inOpen[i - 3] > inOpen[i - 2] &&                      /* with consecutively lower opens */
-                inClose[i - 4] > inClose[i - 3] &&
-                inClose[i - 3] > inClose[i - 2] &&                    /* and closes */
-                ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 4th: black with an upper shadow */
-                (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i - 1) &&
-                ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 5th: white */
-                inOpen[i] > inOpen[i - 1] &&                          /* that opens above prior candle's body */
-                inClose[i] > inHigh[i - 1] )                          /* and closes above prior candle's high */
-            {
-               outInteger[outIdx++ * outStride] = 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((100) & -(int)(((inOpen[i - 4] > inOpen[i - 3]) & (inOpen[i - 3] > inOpen[i - 2]) & /* with consecutively lower opens */
+                (inClose[i - 4] > inClose[i - 3]) & (inClose[i - 3] > inClose[i - 2]) & /* and closes */
+                (!(inClose[i - 1] >= inOpen[i - 1])) & /* 4th: black with an upper shadow */
+                ((inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i - 1)) & (inClose[i] >= inOpen[i]) & /* 5th: white */
+                (inOpen[i] > inOpen[i - 1]) &          /* that opens above prior candle's body */
+                (inClose[i] > inHigh[i - 1]))));       /* and closes above prior candle's high */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;

@@ -710,20 +710,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLPIERCING_OpenBody( struct TA_CDLPIERCING_
       BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx - 1);
       do
       {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st: black */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 2nd: white */
-             inOpen[i] < inLow[i - 1] )                            /* open below prior low */
+         if( (((!(inClose[i - 1] >= inOpen[i - 1])) + /* 1st: black */
+             (inClose[i] >= inOpen[i]) +              /* 2nd: white */
+             (inOpen[i] < inLow[i - 1])) == 3) )      /* open below prior low */
          {
-            if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1) && /* long */
-                fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i) && /* long */
-                inClose[i] < inOpen[i - 1] && /* close within prior body */
-                inClose[i] > fma(fabs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]) ) /* above midpoint */
-            {
-               outInteger[outIdx++ * outStride] = 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((100) & -(int)(((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1)) & /* long */
+                (fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i)) & /* long */
+                (inClose[i] < inOpen[i - 1]) & /* close within prior body */
+                (inClose[i] > fma(fabs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]))))); /* above midpoint */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -799,20 +793,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLPIERCING_OpenBody( struct TA_CDLPIERCING_
       BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,BodyLongTrailingIdx - 1);
       do
       {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st: black */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 2nd: white */
-             inOpen[i] < inLow[i - 1] )                            /* open below prior low */
+         if( (((!(inClose[i - 1] >= inOpen[i - 1])) + /* 1st: black */
+             (inClose[i] >= inOpen[i]) +              /* 2nd: white */
+             (inOpen[i] < inLow[i - 1])) == 3) )      /* open below prior low */
          {
-            if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1) && /* long */
-                fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i) && /* long */
-                inClose[i] < inOpen[i - 1] && /* close within prior body */
-                inClose[i] > fma(fabs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]) ) /* above midpoint */
-            {
-               outInteger[outIdx++ * outStride] = 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((100) & -(int)(((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1)) & /* long */
+                (fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i)) & /* long */
+                (inClose[i] < inOpen[i - 1]) & /* close within prior body */
+                (inClose[i] > fma(fabs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]))))); /* above midpoint */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -888,20 +876,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLPIERCING_OpenBody( struct TA_CDLPIERCING_
       BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_Shadows,BodyLongTrailingIdx - 1);
       do
       {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st: black */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 2nd: white */
-             inOpen[i] < inLow[i - 1] )                            /* open below prior low */
+         if( (((!(inClose[i - 1] >= inOpen[i - 1])) + /* 1st: black */
+             (inClose[i] >= inOpen[i]) +              /* 2nd: white */
+             (inOpen[i] < inLow[i - 1])) == 3) )      /* open below prior low */
          {
-            if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1) && /* long */
-                fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i) && /* long */
-                inClose[i] < inOpen[i - 1] && /* close within prior body */
-                inClose[i] > fma(fabs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]) ) /* above midpoint */
-            {
-               outInteger[outIdx++ * outStride] = 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((100) & -(int)(((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1)) & /* long */
+                (fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i)) & /* long */
+                (inClose[i] < inOpen[i - 1]) & /* close within prior body */
+                (inClose[i] > fma(fabs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]))))); /* above midpoint */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -977,20 +959,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLPIERCING_OpenBody( struct TA_CDLPIERCING_
       BodyLongPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx - 1);
       do
       {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st: black */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 2nd: white */
-             inOpen[i] < inLow[i - 1] )                            /* open below prior low */
+         if( (((!(inClose[i - 1] >= inOpen[i - 1])) + /* 1st: black */
+             (inClose[i] >= inOpen[i]) +              /* 2nd: white */
+             (inOpen[i] < inLow[i - 1])) == 3) )      /* open below prior low */
          {
-            if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1) && /* long */
-                fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i) && /* long */
-                inClose[i] < inOpen[i - 1] && /* close within prior body */
-                inClose[i] > fma(fabs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]) ) /* above midpoint */
-            {
-               outInteger[outIdx++ * outStride] = 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((100) & -(int)(((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1)) & /* long */
+                (fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i)) & /* long */
+                (inClose[i] < inOpen[i - 1]) & /* close within prior body */
+                (inClose[i] > fma(fabs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]))))); /* above midpoint */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;

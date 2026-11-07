@@ -175,7 +175,7 @@ fn output_writes_are_stride_scaled() {
     let src = stream_c("cdlhammer");
     let core = strip_comments(&open_body(&src, "CDLHAMMER"));
     assert!(
-        core.contains("outInteger[outIdx++ * outStride] = 100;"),
+        core.contains("outInteger[outIdx++ * outStride] = "),
         "per-bar output writes scale by outStride, got:\n{core}"
     );
     assert!(

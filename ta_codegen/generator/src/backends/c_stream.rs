@@ -5353,11 +5353,13 @@ fn emit_open_arm(
     let n = uname(func);
     // --- transcribed batch body ----------------------------------------------
     let _ = writeln!(o, "\n   {{");
-    let open_body = build_open_body_from(model, body);
+    let selected = super::eager_select::rewrite(body, &super::eager_select::Declared::of(func), &func.outputs, helpers);
+    let open_body = build_open_body_from(model, &selected);
     let mut open_body_c = String::new();
     for s in &open_body {
         open_body_c.push_str(&render_statement(s, 6, false, enums, registry, helpers, counter));
     }
+    let open_body_c = super::eager_select::lay_out(&open_body_c, true);
     let open_settings = crate::candle_settings::detect_candle_settings(body);
     if !open_settings.is_empty() {
         o.push_str(&emit_used_candle_unpacking(&open_settings, &open_body_c, 6));

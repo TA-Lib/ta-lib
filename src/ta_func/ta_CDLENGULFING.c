@@ -284,30 +284,9 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLENGULFING_OpenBody( struct TA_CDLENGULFIN
       outIdx = 0;
       do
       {
-         if( (((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&
-              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* white engulfs black */
-              ((inClose[i] >= inOpen[i - 1] &&
-                inOpen[i] < inClose[i - 1]) ||
-               (inClose[i] > inOpen[i - 1] &&
-                inOpen[i] <= inClose[i - 1]))) ||
-             (((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&
-              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&  /* black engulfs white */
-              ((inOpen[i] >= inClose[i - 1] &&
-                inClose[i] < inOpen[i - 1]) ||
-               (inOpen[i] > inClose[i - 1] &&
-                inClose[i] <= inOpen[i - 1]))) )
-         {
-            if( inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] )
-            {
-               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 80;
-            }
-         } else 
-         {
-            outInteger[outIdx++ * outStride] = 0;
-         }
+         outInteger[outIdx++ * outStride] = ((((((inClose[i] >= inOpen[i]) ? 1 : -1) * 80) ^ (((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) ^ (((inClose[i] >= inOpen[i]) ? 1 : -1) * 80)) & -(int)(((inOpen[i] != inClose[i - 1]) & (inClose[i] != inOpen[i - 1])))))) & -(int)((((inClose[i] >= inOpen[i]) & (!(inClose[i - 1] >= inOpen[i - 1])) & /* white engulfs black */
+             (((inClose[i] >= inOpen[i - 1]) & (inOpen[i] < inClose[i - 1])) | ((inClose[i] > inOpen[i - 1]) & (inOpen[i] <= inClose[i - 1])))) | ((!(inClose[i] >= inOpen[i])) & (inClose[i - 1] >= inOpen[i - 1]) & /* black engulfs white */
+             (((inOpen[i] >= inClose[i - 1]) & (inClose[i] < inOpen[i - 1])) | ((inOpen[i] > inClose[i - 1]) & (inClose[i] <= inOpen[i - 1])))))));
          i += 1;
       } while( i <= endIdx );
       /* All done. Indicate the output limits and return. */

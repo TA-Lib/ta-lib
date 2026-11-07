@@ -650,25 +650,19 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLABANDONEDBABY_OpenBody( struct TA_CDLABAN
       outIdx = 0;
       do
       {
-         if( fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2) && /* 1st: long */
-             fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i - 1) && /* 2nd: doji */
-             fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i) && /* 3rd: longer than short */
-             ((((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* 1st white */
-               ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* 3rd black */
-               inClose[i] < inClose[i - 2] - fabs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && /* 3rd closes well within 1st rb */
-               ((inLow[i - 1] > inHigh[i - 2]) ? 1 : 0) &&           /* upside gap between 1st and 2nd */
-               ((inHigh[i] < inLow[i - 1]) ? 1 : 0)) ||              /* downside gap between 2nd and 3rd */
-              (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 1st black */
-               ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 3rd white */
-               inClose[i] > fma(fabs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && /* 3rd closes well within 1st rb */
-               ((inHigh[i - 1] < inLow[i - 2]) ? 1 : 0) &&           /* downside gap between 1st and 2nd */
-               ((inLow[i] > inHigh[i - 1]) ? 1 : 0))) )              /* upside gap between 2nd and 3rd */
-         {
-            outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
-         } else 
-         {
-            outInteger[outIdx++ * outStride] = 0;
-         }
+         outInteger[outIdx++ * outStride] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & /* 1st: long */
+             (fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i - 1)) & /* 2nd: doji */
+             (fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i)) & /* 3rd: longer than short */
+             (((inClose[i - 2] >= inOpen[i - 2]) &   /* 1st white */
+             (!(inClose[i] >= inOpen[i])) &          /* 3rd black */
+             (inClose[i] < inClose[i - 2] - fabs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration) & /* 3rd closes well within 1st rb */
+             (inLow[i - 1] > inHigh[i - 2]) &        /* upside gap between 1st and 2nd */
+             (inHigh[i] < inLow[i - 1])) |           /* downside gap between 2nd and 3rd */
+             ((!(inClose[i - 2] >= inOpen[i - 2])) & /* 1st black */
+             (inClose[i] >= inOpen[i]) &             /* 3rd white */
+             (inClose[i] > fma(fabs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2])) & /* 3rd closes well within 1st rb */
+             (inHigh[i - 1] < inLow[i - 2]) &        /* downside gap between 1st and 2nd */
+             (inLow[i] > inHigh[i - 1]))))));        /* upside gap between 2nd and 3rd */
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
@@ -783,25 +777,19 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLABANDONEDBABY_OpenBody( struct TA_CDLABAN
       outIdx = 0;
       do
       {
-         if( fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2) && /* 1st: long */
-             fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i - 1) && /* 2nd: doji */
-             fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i) && /* 3rd: longer than short */
-             ((((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* 1st white */
-               ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* 3rd black */
-               inClose[i] < inClose[i - 2] - fabs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && /* 3rd closes well within 1st rb */
-               ((inLow[i - 1] > inHigh[i - 2]) ? 1 : 0) &&           /* upside gap between 1st and 2nd */
-               ((inHigh[i] < inLow[i - 1]) ? 1 : 0)) ||              /* downside gap between 2nd and 3rd */
-              (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 1st black */
-               ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 3rd white */
-               inClose[i] > fma(fabs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && /* 3rd closes well within 1st rb */
-               ((inHigh[i - 1] < inLow[i - 2]) ? 1 : 0) &&           /* downside gap between 1st and 2nd */
-               ((inLow[i] > inHigh[i - 1]) ? 1 : 0))) )              /* upside gap between 2nd and 3rd */
-         {
-            outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
-         } else 
-         {
-            outInteger[outIdx++ * outStride] = 0;
-         }
+         outInteger[outIdx++ * outStride] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & /* 1st: long */
+             (fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i - 1)) & /* 2nd: doji */
+             (fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i)) & /* 3rd: longer than short */
+             (((inClose[i - 2] >= inOpen[i - 2]) &   /* 1st white */
+             (!(inClose[i] >= inOpen[i])) &          /* 3rd black */
+             (inClose[i] < inClose[i - 2] - fabs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration) & /* 3rd closes well within 1st rb */
+             (inLow[i - 1] > inHigh[i - 2]) &        /* upside gap between 1st and 2nd */
+             (inHigh[i] < inLow[i - 1])) |           /* downside gap between 2nd and 3rd */
+             ((!(inClose[i - 2] >= inOpen[i - 2])) & /* 1st black */
+             (inClose[i] >= inOpen[i]) &             /* 3rd white */
+             (inClose[i] > fma(fabs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2])) & /* 3rd closes well within 1st rb */
+             (inHigh[i - 1] < inLow[i - 2]) &        /* downside gap between 1st and 2nd */
+             (inLow[i] > inHigh[i - 1]))))));        /* upside gap between 2nd and 3rd */
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */

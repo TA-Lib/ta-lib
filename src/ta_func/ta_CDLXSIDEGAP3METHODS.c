@@ -293,22 +293,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLXSIDEGAP3METHODS_OpenBody( struct TA_CDLX
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) && /* 1st and 2nd of same color */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) && /* 3rd opposite color */
-             inOpen[i] < max(inClose[i - 1],inOpen[i - 1]) &&        /* 3rd opens within 2nd rb */
-             inOpen[i] > min(inClose[i - 1],inOpen[i - 1]) &&
-             inClose[i] < max(inClose[i - 2],inOpen[i - 2]) &&       /* 3rd closes within 1st rb */
-             inClose[i] > min(inClose[i - 2],inOpen[i - 2]) &&
-             ((((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* when 1st is white */
-               ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0)) || /* upside gap */
-              (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* when 1st is black */
-               ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0))) ) /* downside gap */
-         {
-            outInteger[outIdx++ * outStride] = ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) * 100;
-         } else 
-         {
-            outInteger[outIdx++ * outStride] = 0;
-         }
+         outInteger[outIdx++ * outStride] = ((((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) * 100) & -(int)((((inClose[i - 2] >= inOpen[i - 2]) == (inClose[i - 1] >= inOpen[i - 1])) & /* 1st and 2nd of same color */
+             ((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i])) & /* 3rd opposite color */
+             ((inOpen[i] < inClose[i - 1]) | (inOpen[i] < inOpen[i - 1])) & /* 3rd opens within 2nd rb */
+             ((inOpen[i] > inClose[i - 1]) | (inOpen[i] > inOpen[i - 1])) & ((inClose[i] < inClose[i - 2]) | (inClose[i] < inOpen[i - 2])) & /* 3rd closes within 1st rb */
+             ((inClose[i] > inClose[i - 2]) | (inClose[i] > inOpen[i - 2])) & (((inClose[i - 2] >= inOpen[i - 2]) & /* when 1st is white */
+             ((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2]))) | /* upside gap */
+             ((!(inClose[i - 2] >= inOpen[i - 2])) & /* when 1st is black */
+             ((inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i - 1] < inClose[i - 2]))))))); /* downside gap */
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */

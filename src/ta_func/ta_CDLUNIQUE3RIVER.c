@@ -447,22 +447,15 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLUNIQUE3RIVER_OpenBody( struct TA_CDLUNIQU
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* black */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 2nd: black */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 )           /* white */
+         if( (((!(inClose[i - 2] >= inOpen[i - 2])) + /* black */
+             (!(inClose[i - 1] >= inOpen[i - 1])) +   /* 2nd: black */
+             (inClose[i] >= inOpen[i])) == 3) )       /* white */
          {
-            if( inClose[i - 1] > inClose[i - 2] &&
-                inOpen[i - 1] <= inOpen[i - 2] &&  /* harami */
-                inLow[i - 1] < inLow[i - 2] &&     /* lower low */
-                inOpen[i] > inLow[i - 1] &&        /* open not lower */
-                fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2) && /* 1st: long */
-                fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i) ) /* 3rd: short */
-            {
-               outInteger[outIdx++ * outStride] = 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((100) & -(int)(((inClose[i - 1] > inClose[i - 2]) & (inOpen[i - 1] <= inOpen[i - 2]) & /* harami */
+                (inLow[i - 1] < inLow[i - 2]) & /* lower low */
+                (inOpen[i] > inLow[i - 1]) &    /* open not lower */
+                (fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & /* 1st: long */
+                (fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i))))); /* 3rd: short */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;

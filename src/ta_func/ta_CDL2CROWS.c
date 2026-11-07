@@ -624,22 +624,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL2CROWS_OpenBody( struct TA_CDL2CROWS_Stre
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* 1st: white */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 2nd: black */
-             ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) ) /* gapping up */
+         if( (((inClose[i - 2] >= inOpen[i - 2]) +  /* 1st: white */
+             (!(inClose[i - 1] >= inOpen[i - 1])) + /* 2nd: black */
+             (((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) == 3) ) /* gapping up */
          {
-            if( fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2) && /* long */
-                ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 && /* 3rd: black */
-                inOpen[i] < inOpen[i - 1] &&
-                inOpen[i] > inClose[i - 1] &&                 /* opening within 2nd rb */
-                inClose[i] > inOpen[i - 2] &&
-                inClose[i] < inClose[i - 2] )                 /* closing within 1st rb */
-            {
-               outInteger[outIdx++ * outStride] = -100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((-100) & -(int)(((fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & /* long */
+                (!(inClose[i] >= inOpen[i])) & /* 3rd: black */
+                (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & /* opening within 2nd rb */
+                (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])))); /* closing within 1st rb */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -709,22 +701,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL2CROWS_OpenBody( struct TA_CDL2CROWS_Stre
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* 1st: white */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 2nd: black */
-             ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) ) /* gapping up */
+         if( (((inClose[i - 2] >= inOpen[i - 2]) +  /* 1st: white */
+             (!(inClose[i - 1] >= inOpen[i - 1])) + /* 2nd: black */
+             (((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) == 3) ) /* gapping up */
          {
-            if( fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2) && /* long */
-                ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 && /* 3rd: black */
-                inOpen[i] < inOpen[i - 1] &&
-                inOpen[i] > inClose[i - 1] &&                 /* opening within 2nd rb */
-                inClose[i] > inOpen[i - 2] &&
-                inClose[i] < inClose[i - 2] )                 /* closing within 1st rb */
-            {
-               outInteger[outIdx++ * outStride] = -100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((-100) & -(int)(((fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & /* long */
+                (!(inClose[i] >= inOpen[i])) & /* 3rd: black */
+                (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & /* opening within 2nd rb */
+                (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])))); /* closing within 1st rb */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -794,22 +778,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL2CROWS_OpenBody( struct TA_CDL2CROWS_Stre
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* 1st: white */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 2nd: black */
-             ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) ) /* gapping up */
+         if( (((inClose[i - 2] >= inOpen[i - 2]) +  /* 1st: white */
+             (!(inClose[i - 1] >= inOpen[i - 1])) + /* 2nd: black */
+             (((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) == 3) ) /* gapping up */
          {
-            if( fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2) && /* long */
-                ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 && /* 3rd: black */
-                inOpen[i] < inOpen[i - 1] &&
-                inOpen[i] > inClose[i - 1] &&                 /* opening within 2nd rb */
-                inClose[i] > inOpen[i - 2] &&
-                inClose[i] < inClose[i - 2] )                 /* closing within 1st rb */
-            {
-               outInteger[outIdx++ * outStride] = -100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((-100) & -(int)(((fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & /* long */
+                (!(inClose[i] >= inOpen[i])) & /* 3rd: black */
+                (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & /* opening within 2nd rb */
+                (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])))); /* closing within 1st rb */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -879,22 +855,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL2CROWS_OpenBody( struct TA_CDL2CROWS_Stre
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* 1st: white */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 2nd: black */
-             ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) ) /* gapping up */
+         if( (((inClose[i - 2] >= inOpen[i - 2]) +  /* 1st: white */
+             (!(inClose[i - 1] >= inOpen[i - 1])) + /* 2nd: black */
+             (((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) == 3) ) /* gapping up */
          {
-            if( fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2) && /* long */
-                ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 && /* 3rd: black */
-                inOpen[i] < inOpen[i - 1] &&
-                inOpen[i] > inClose[i - 1] &&                 /* opening within 2nd rb */
-                inClose[i] > inOpen[i - 2] &&
-                inClose[i] < inClose[i - 2] )                 /* closing within 1st rb */
-            {
-               outInteger[outIdx++ * outStride] = -100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((-100) & -(int)(((fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & /* long */
+                (!(inClose[i] >= inOpen[i])) & /* 3rd: black */
+                (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & /* opening within 2nd rb */
+                (inClose[i] > inOpen[i - 2]) & (inClose[i] < inClose[i - 2])))); /* closing within 1st rb */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;

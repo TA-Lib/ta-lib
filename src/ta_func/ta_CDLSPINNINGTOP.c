@@ -507,13 +507,7 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLSPINNINGTOP_OpenBody( struct TA_CDLSPINNI
       outIdx = 0;
       do
       {
-         if( (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > fabs(inClose[i] - inOpen[i]) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > fabs(inClose[i] - inOpen[i]) && fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i) )
-         {
-            outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
-         } else 
-         {
-            outInteger[outIdx++ * outStride] = 0;
-         }
+         outInteger[outIdx++ * outStride] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)((((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > fabs(inClose[i] - inOpen[i])) & ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > fabs(inClose[i] - inOpen[i])) & (fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i)))));
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
@@ -568,13 +562,7 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLSPINNINGTOP_OpenBody( struct TA_CDLSPINNI
       outIdx = 0;
       do
       {
-         if( (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > fabs(inClose[i] - inOpen[i]) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > fabs(inClose[i] - inOpen[i]) && fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i) )
-         {
-            outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
-         } else 
-         {
-            outInteger[outIdx++ * outStride] = 0;
-         }
+         outInteger[outIdx++ * outStride] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)((((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > fabs(inClose[i] - inOpen[i])) & ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > fabs(inClose[i] - inOpen[i])) & (fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i)))));
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
@@ -629,13 +617,7 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLSPINNINGTOP_OpenBody( struct TA_CDLSPINNI
       outIdx = 0;
       do
       {
-         if( (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > fabs(inClose[i] - inOpen[i]) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > fabs(inClose[i] - inOpen[i]) && fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i) )
-         {
-            outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
-         } else 
-         {
-            outInteger[outIdx++ * outStride] = 0;
-         }
+         outInteger[outIdx++ * outStride] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)((((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > fabs(inClose[i] - inOpen[i])) & ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > fabs(inClose[i] - inOpen[i])) & (fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i)))));
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
@@ -690,13 +672,7 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLSPINNINGTOP_OpenBody( struct TA_CDLSPINNI
       outIdx = 0;
       do
       {
-         if( (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > fabs(inClose[i] - inOpen[i]) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > fabs(inClose[i] - inOpen[i]) && fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i) )
-         {
-            outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
-         } else 
-         {
-            outInteger[outIdx++ * outStride] = 0;
-         }
+         outInteger[outIdx++ * outStride] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)((((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > fabs(inClose[i] - inOpen[i])) & ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > fabs(inClose[i] - inOpen[i])) & (fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal,i)))));
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */

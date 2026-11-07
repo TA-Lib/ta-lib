@@ -494,18 +494,10 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLDOJISTAR_OpenBody( struct TA_CDLDOJISTAR_
       outIdx = 0;
       do
       {
-         if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1) && /* 1st: long real body */
-             fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) && /* 2nd: doji */
-             ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&
-               ((min(inOpen[i],inClose[i]) > max(inOpen[i - 1],inClose[i - 1])) ? 1 : 0)) || /* that gaps up if 1st is white */
-              (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 &&
-               ((max(inOpen[i],inClose[i]) < min(inOpen[i - 1],inClose[i - 1])) ? 1 : 0))) ) /* or down if 1st is black */
-         {
-            outInteger[outIdx++ * outStride] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
-         } else 
-         {
-            outInteger[outIdx++ * outStride] = 0;
-         }
+         outInteger[outIdx++ * outStride] = ((-((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) & -(int)(((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1)) & /* 1st: long real body */
+             (fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i)) & /* 2nd: doji */
+             (((inClose[i - 1] >= inOpen[i - 1]) & ((inOpen[i] > inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & (inClose[i] > inOpen[i - 1]) & (inClose[i] > inClose[i - 1]))) | /* that gaps up if 1st is white */
+             ((!(inClose[i - 1] >= inOpen[i - 1])) & ((inOpen[i] < inOpen[i - 1]) & (inOpen[i] < inClose[i - 1]) & (inClose[i] < inOpen[i - 1]) & (inClose[i] < inClose[i - 1]))))))); /* or down if 1st is black */
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
@@ -586,18 +578,10 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLDOJISTAR_OpenBody( struct TA_CDLDOJISTAR_
       outIdx = 0;
       do
       {
-         if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1) && /* 1st: long real body */
-             fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) && /* 2nd: doji */
-             ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&
-               ((min(inOpen[i],inClose[i]) > max(inOpen[i - 1],inClose[i - 1])) ? 1 : 0)) || /* that gaps up if 1st is white */
-              (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 &&
-               ((max(inOpen[i],inClose[i]) < min(inOpen[i - 1],inClose[i - 1])) ? 1 : 0))) ) /* or down if 1st is black */
-         {
-            outInteger[outIdx++ * outStride] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
-         } else 
-         {
-            outInteger[outIdx++ * outStride] = 0;
-         }
+         outInteger[outIdx++ * outStride] = ((-((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) & -(int)(((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1)) & /* 1st: long real body */
+             (fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i)) & /* 2nd: doji */
+             (((inClose[i - 1] >= inOpen[i - 1]) & ((inOpen[i] > inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & (inClose[i] > inOpen[i - 1]) & (inClose[i] > inClose[i - 1]))) | /* that gaps up if 1st is white */
+             ((!(inClose[i - 1] >= inOpen[i - 1])) & ((inOpen[i] < inOpen[i - 1]) & (inOpen[i] < inClose[i - 1]) & (inClose[i] < inOpen[i - 1]) & (inClose[i] < inClose[i - 1]))))))); /* or down if 1st is black */
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */

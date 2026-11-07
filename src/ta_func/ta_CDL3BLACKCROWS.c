@@ -830,27 +830,19 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3BLACKCROWS_OpenBody( struct TA_CDL3BLACK
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == 1 &&  /* white */
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 1st black */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 )  /* 2nd black */
+         if( (((inClose[i - 3] >= inOpen[i - 3]) +         /* white */
+             (!(inClose[i - 2] >= inOpen[i - 2])) +        /* 1st black */
+             (!(inClose[i - 1] >= inOpen[i - 1]))) == 3) ) /* 2nd black */
          {
-            if( ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 && /* 3rd black */
-                inOpen[i - 1] < inOpen[i - 2] &&
-                inOpen[i - 1] > inClose[i - 2] &&             /* 2nd black opens within 1st black's rb */
-                inOpen[i] < inOpen[i - 1] &&
-                inOpen[i] > inClose[i - 1] &&                 /* 3rd black opens within 2nd black's rb */
-                inHigh[i - 3] > inClose[i - 2] &&             /* 1st black closes under prior candle's high */
-                inClose[i - 2] > inClose[i - 1] &&            /* three declining */
-                inClose[i - 1] > inClose[i] &&                /* three declining */
-                (((inClose[i - 2] >= inOpen[i - 2]) ? inOpen[i - 2] : inClose[i - 2]) - inLow[i - 2]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[2],i - 2) && /* very short lower shadow */
-                (((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1) && /* very short lower shadow */
-                (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i) ) /* very short lower shadow */
-            {
-               outInteger[outIdx++ * outStride] = -100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((-100) & -(int)(((!(inClose[i] >= inOpen[i])) & /* 3rd black */
+                (inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & /* 2nd black opens within 1st black's rb */
+                (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & /* 3rd black opens within 2nd black's rb */
+                (inHigh[i - 3] > inClose[i - 2]) &  /* 1st black closes under prior candle's high */
+                (inClose[i - 2] > inClose[i - 1]) & /* three declining */
+                (inClose[i - 1] > inClose[i]) &     /* three declining */
+                ((((inClose[i - 2] >= inOpen[i - 2]) ? inOpen[i - 2] : inClose[i - 2]) - inLow[i - 2]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[2],i - 2)) & /* very short lower shadow */
+                ((((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & /* very short lower shadow */
+                ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i))))); /* very short lower shadow */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -944,27 +936,19 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3BLACKCROWS_OpenBody( struct TA_CDL3BLACK
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == 1 &&  /* white */
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 1st black */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 )  /* 2nd black */
+         if( (((inClose[i - 3] >= inOpen[i - 3]) +         /* white */
+             (!(inClose[i - 2] >= inOpen[i - 2])) +        /* 1st black */
+             (!(inClose[i - 1] >= inOpen[i - 1]))) == 3) ) /* 2nd black */
          {
-            if( ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 && /* 3rd black */
-                inOpen[i - 1] < inOpen[i - 2] &&
-                inOpen[i - 1] > inClose[i - 2] &&             /* 2nd black opens within 1st black's rb */
-                inOpen[i] < inOpen[i - 1] &&
-                inOpen[i] > inClose[i - 1] &&                 /* 3rd black opens within 2nd black's rb */
-                inHigh[i - 3] > inClose[i - 2] &&             /* 1st black closes under prior candle's high */
-                inClose[i - 2] > inClose[i - 1] &&            /* three declining */
-                inClose[i - 1] > inClose[i] &&                /* three declining */
-                (((inClose[i - 2] >= inOpen[i - 2]) ? inOpen[i - 2] : inClose[i - 2]) - inLow[i - 2]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[2],i - 2) && /* very short lower shadow */
-                (((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1) && /* very short lower shadow */
-                (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i) ) /* very short lower shadow */
-            {
-               outInteger[outIdx++ * outStride] = -100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((-100) & -(int)(((!(inClose[i] >= inOpen[i])) & /* 3rd black */
+                (inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & /* 2nd black opens within 1st black's rb */
+                (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & /* 3rd black opens within 2nd black's rb */
+                (inHigh[i - 3] > inClose[i - 2]) &  /* 1st black closes under prior candle's high */
+                (inClose[i - 2] > inClose[i - 1]) & /* three declining */
+                (inClose[i - 1] > inClose[i]) &     /* three declining */
+                ((((inClose[i - 2] >= inOpen[i - 2]) ? inOpen[i - 2] : inClose[i - 2]) - inLow[i - 2]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[2],i - 2)) & /* very short lower shadow */
+                ((((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & /* very short lower shadow */
+                ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i))))); /* very short lower shadow */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -1058,27 +1042,19 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3BLACKCROWS_OpenBody( struct TA_CDL3BLACK
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == 1 &&  /* white */
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 1st black */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 )  /* 2nd black */
+         if( (((inClose[i - 3] >= inOpen[i - 3]) +         /* white */
+             (!(inClose[i - 2] >= inOpen[i - 2])) +        /* 1st black */
+             (!(inClose[i - 1] >= inOpen[i - 1]))) == 3) ) /* 2nd black */
          {
-            if( ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 && /* 3rd black */
-                inOpen[i - 1] < inOpen[i - 2] &&
-                inOpen[i - 1] > inClose[i - 2] &&             /* 2nd black opens within 1st black's rb */
-                inOpen[i] < inOpen[i - 1] &&
-                inOpen[i] > inClose[i - 1] &&                 /* 3rd black opens within 2nd black's rb */
-                inHigh[i - 3] > inClose[i - 2] &&             /* 1st black closes under prior candle's high */
-                inClose[i - 2] > inClose[i - 1] &&            /* three declining */
-                inClose[i - 1] > inClose[i] &&                /* three declining */
-                (((inClose[i - 2] >= inOpen[i - 2]) ? inOpen[i - 2] : inClose[i - 2]) - inLow[i - 2]) < TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[2],i - 2) && /* very short lower shadow */
-                (((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) < TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1) && /* very short lower shadow */
-                (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i) ) /* very short lower shadow */
-            {
-               outInteger[outIdx++ * outStride] = -100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((-100) & -(int)(((!(inClose[i] >= inOpen[i])) & /* 3rd black */
+                (inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & /* 2nd black opens within 1st black's rb */
+                (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & /* 3rd black opens within 2nd black's rb */
+                (inHigh[i - 3] > inClose[i - 2]) &  /* 1st black closes under prior candle's high */
+                (inClose[i - 2] > inClose[i - 1]) & /* three declining */
+                (inClose[i - 1] > inClose[i]) &     /* three declining */
+                ((((inClose[i - 2] >= inOpen[i - 2]) ? inOpen[i - 2] : inClose[i - 2]) - inLow[i - 2]) < TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[2],i - 2)) & /* very short lower shadow */
+                ((((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) < TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & /* very short lower shadow */
+                ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i))))); /* very short lower shadow */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -1172,27 +1148,19 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3BLACKCROWS_OpenBody( struct TA_CDL3BLACK
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == 1 &&  /* white */
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* 1st black */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 )  /* 2nd black */
+         if( (((inClose[i - 3] >= inOpen[i - 3]) +         /* white */
+             (!(inClose[i - 2] >= inOpen[i - 2])) +        /* 1st black */
+             (!(inClose[i - 1] >= inOpen[i - 1]))) == 3) ) /* 2nd black */
          {
-            if( ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 && /* 3rd black */
-                inOpen[i - 1] < inOpen[i - 2] &&
-                inOpen[i - 1] > inClose[i - 2] &&             /* 2nd black opens within 1st black's rb */
-                inOpen[i] < inOpen[i - 1] &&
-                inOpen[i] > inClose[i - 1] &&                 /* 3rd black opens within 2nd black's rb */
-                inHigh[i - 3] > inClose[i - 2] &&             /* 1st black closes under prior candle's high */
-                inClose[i - 2] > inClose[i - 1] &&            /* three declining */
-                inClose[i - 1] > inClose[i] &&                /* three declining */
-                (((inClose[i - 2] >= inOpen[i - 2]) ? inOpen[i - 2] : inClose[i - 2]) - inLow[i - 2]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[2],i - 2) && /* very short lower shadow */
-                (((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1) && /* very short lower shadow */
-                (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i) ) /* very short lower shadow */
-            {
-               outInteger[outIdx++ * outStride] = -100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((-100) & -(int)(((!(inClose[i] >= inOpen[i])) & /* 3rd black */
+                (inOpen[i - 1] < inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & /* 2nd black opens within 1st black's rb */
+                (inOpen[i] < inOpen[i - 1]) & (inOpen[i] > inClose[i - 1]) & /* 3rd black opens within 2nd black's rb */
+                (inHigh[i - 3] > inClose[i - 2]) &  /* 1st black closes under prior candle's high */
+                (inClose[i - 2] > inClose[i - 1]) & /* three declining */
+                (inClose[i - 1] > inClose[i]) &     /* three declining */
+                ((((inClose[i - 2] >= inOpen[i - 2]) ? inOpen[i - 2] : inClose[i - 2]) - inLow[i - 2]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[2],i - 2)) & /* very short lower shadow */
+                ((((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & /* very short lower shadow */
+                ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i))))); /* very short lower shadow */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;

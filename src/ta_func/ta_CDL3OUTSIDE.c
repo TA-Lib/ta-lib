@@ -281,22 +281,10 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3OUTSIDE_OpenBody( struct TA_CDL3OUTSIDE_
       outIdx = 0;
       do
       {
-         if( (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&
-              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == -1 && /* white engulfs black */
-              inClose[i - 1] > inOpen[i - 2] &&
-              inOpen[i - 1] < inClose[i - 2] &&
-              inClose[i] > inClose[i - 1]) ||                       /* third candle higher */
-             (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 &&
-              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* black engulfs white */
-              inOpen[i - 1] > inClose[i - 2] &&
-              inClose[i - 1] < inOpen[i - 2] &&
-              inClose[i] < inClose[i - 1]) )                        /* third candle lower */
-         {
-            outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
-         } else 
-         {
-            outInteger[outIdx++ * outStride] = 0;
-         }
+         outInteger[outIdx++ * outStride] = ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) & -(int)((((inClose[i - 1] >= inOpen[i - 1]) & (!(inClose[i - 2] >= inOpen[i - 2])) & /* white engulfs black */
+             (inClose[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] < inClose[i - 2]) & (inClose[i] > inClose[i - 1])) | /* third candle higher */
+             ((!(inClose[i - 1] >= inOpen[i - 1])) & (inClose[i - 2] >= inOpen[i - 2]) & /* black engulfs white */
+             (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] < inOpen[i - 2]) & (inClose[i] < inClose[i - 1]))))); /* third candle lower */
          i += 1;
       } while( i <= endIdx );
       /* All done. Indicate the output limits and return. */

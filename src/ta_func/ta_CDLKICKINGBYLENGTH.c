@@ -663,24 +663,13 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLKICKINGBYLENGTH_OpenBody( struct TA_CDLKI
       ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx - 1);
       do
       {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) && /* opposite candles */
-             ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* gap */
-               ((inLow[i] > inHigh[i - 1]) ? 1 : 0)) ||
-              (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&
-               ((inHigh[i] < inLow[i - 1]) ? 1 : 0))) )
+         if( ((((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i])) + /* opposite candles */
+             ((((!(inClose[i - 1] >= inOpen[i - 1])) & /* gap */
+             (inLow[i] > inHigh[i - 1])) | ((inClose[i - 1] >= inOpen[i - 1]) & (inHigh[i] < inLow[i - 1]))))) == 2) )
          {
-            if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1) && /* 1st marubozu */
-                (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1) &&
-                (((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1) &&
-                fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i) && /* 2nd marubozu */
-                (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i) &&
-                (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i) )
-            {
-               outInteger[outIdx++ * outStride] = ((inClose[(fabs(inClose[i] - inOpen[i]) > fabs(inClose[i - 1] - inOpen[i - 1])) ? i : i - 1] >= inOpen[(fabs(inClose[i] - inOpen[i]) > fabs(inClose[i - 1] - inOpen[i - 1])) ? i : i - 1]) ? 1 : -1) * 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1)) & /* 1st marubozu */
+                ((inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & ((((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & (fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i)) & /* 2nd marubozu */
+                ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)))) ? (((inClose[(fabs(inClose[i] - inOpen[i]) > fabs(inClose[i - 1] - inOpen[i - 1])) ? i : i - 1] >= inOpen[(fabs(inClose[i] - inOpen[i]) > fabs(inClose[i - 1] - inOpen[i - 1])) ? i : i - 1]) ? 1 : -1) * 100) : (0));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -789,24 +778,13 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLKICKINGBYLENGTH_OpenBody( struct TA_CDLKI
       ShadowVeryShortPeriodTotalTrailRange1 = TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx - 1);
       do
       {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) && /* opposite candles */
-             ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* gap */
-               ((inLow[i] > inHigh[i - 1]) ? 1 : 0)) ||
-              (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 &&
-               ((inHigh[i] < inLow[i - 1]) ? 1 : 0))) )
+         if( ((((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i])) + /* opposite candles */
+             ((((!(inClose[i - 1] >= inOpen[i - 1])) & /* gap */
+             (inLow[i] > inHigh[i - 1])) | ((inClose[i - 1] >= inOpen[i - 1]) & (inHigh[i] < inLow[i - 1]))))) == 2) )
          {
-            if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1) && /* 1st marubozu */
-                (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1) &&
-                (((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1) &&
-                fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i) && /* 2nd marubozu */
-                (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i) &&
-                (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i) )
-            {
-               outInteger[outIdx++ * outStride] = ((inClose[(fabs(inClose[i] - inOpen[i]) > fabs(inClose[i - 1] - inOpen[i - 1])) ? i : i - 1] >= inOpen[(fabs(inClose[i] - inOpen[i]) > fabs(inClose[i - 1] - inOpen[i - 1])) ? i : i - 1]) ? 1 : -1) * 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[1],i - 1)) & /* 1st marubozu */
+                ((inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & ((((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & (fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal[0],i)) & /* 2nd marubozu */
+                ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)))) ? (((inClose[(fabs(inClose[i] - inOpen[i]) > fabs(inClose[i - 1] - inOpen[i - 1])) ? i : i - 1] >= inOpen[(fabs(inClose[i] - inOpen[i]) > fabs(inClose[i - 1] - inOpen[i - 1])) ? i : i - 1]) ? 1 : -1) * 100) : (0));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;

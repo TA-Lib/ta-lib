@@ -328,13 +328,7 @@ static TA_OPEN_INLINE TA_RetCode TA_ROC_OpenBody( struct TA_ROC_Stream **stream,
       while( inIdx <= endIdx )
       {
          tempReal = inReal[trailingIdx++];
-         if( tempReal != 0.0 )
-         {
-            outReal[outIdx++ * outStride] = (inReal[inIdx] / tempReal - 1.0) * 100.0;
-         } else 
-         {
-            outReal[outIdx++ * outStride] = 0.0;
-         }
+         outReal[outIdx++ * outStride] = ((tempReal != 0.0) ? ((inReal[inIdx] / tempReal - 1.0) * 100.0) : (0.0));
          inIdx += 1;
       }
       /* Set output limits. */

@@ -550,32 +550,15 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLRISEFALL3METHODS_OpenBody( struct TA_CDLR
       BodyPeriodTotalTrailRange3 = TA_CANDLERANGE_OF(BodyShort_rangeType,BodyShortTrailingIdx - 3);
       do
       {
-         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) && /* white, 3 black, white  ||  black, 3 white, black */
-             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) &&
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) )
+         if( ((((inClose[i - 4] >= inOpen[i - 4]) != (inClose[i - 3] >= inOpen[i - 3])) + /* white, 3 black, white  ||  black, 3 white, black */
+             ((inClose[i - 3] >= inOpen[i - 3]) == (inClose[i - 2] >= inOpen[i - 2])) + ((inClose[i - 2] >= inOpen[i - 2]) == (inClose[i - 1] >= inOpen[i - 1]))) == 3) )
          {
-            if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) &&
-                min(inOpen[i - 3],inClose[i - 3]) < inHigh[i - 4] && /* 2nd to 4th hold within 1st: a part of the real body must be within 1st range */
-                max(inOpen[i - 3],inClose[i - 3]) > inLow[i - 4] &&
-                min(inOpen[i - 2],inClose[i - 2]) < inHigh[i - 4] &&
-                max(inOpen[i - 2],inClose[i - 2]) > inLow[i - 4] &&
-                min(inOpen[i - 1],inClose[i - 1]) < inHigh[i - 4] &&
-                max(inOpen[i - 1],inClose[i - 1]) > inLow[i - 4] &&
-                inClose[i - 2] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) < inClose[i - 3] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) && /* 2nd to 4th are falling (rising) */
-                inClose[i - 1] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) < inClose[i - 2] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) &&
-                inOpen[i] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) > inClose[i - 1] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) && /* 5th opens above (below) the prior close */
-                inClose[i] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) > inClose[i - 4] * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) && /* 5th closes above (below) the 1st close */
-                fabs(inClose[i - 4] - inOpen[i - 4]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyPeriodTotal[4],i - 4) && /* 1st long, then 3 small, 5th long */
-                fabs(inClose[i - 3] - inOpen[i - 3]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal[3],i - 3) &&
-                fabs(inClose[i - 2] - inOpen[i - 2]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal[2],i - 2) &&
-                fabs(inClose[i - 1] - inOpen[i - 1]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal[1],i - 1) &&
-                fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyPeriodTotal[0],i) )
-            {
-               outInteger[outIdx++ * outStride] = 100 * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1);
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((100 * ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1)) & -(int)((((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i])) & ((inOpen[i - 3] < inHigh[i - 4]) | (inClose[i - 3] < inHigh[i - 4])) & /* 2nd to 4th hold within 1st: a part of the real body must be within 1st range */
+                ((inOpen[i - 3] > inLow[i - 4]) | (inClose[i - 3] > inLow[i - 4])) & ((inOpen[i - 2] < inHigh[i - 4]) | (inClose[i - 2] < inHigh[i - 4])) & ((inOpen[i - 2] > inLow[i - 4]) | (inClose[i - 2] > inLow[i - 4])) & ((inOpen[i - 1] < inHigh[i - 4]) | (inClose[i - 1] < inHigh[i - 4])) & ((inOpen[i - 1] > inLow[i - 4]) | (inClose[i - 1] > inLow[i - 4])) & (((inClose[i - 4] >= inOpen[i - 4]) & (inClose[i - 2] < inClose[i - 3])) | ((!(inClose[i - 4] >= inOpen[i - 4])) & (inClose[i - 3] < inClose[i - 2]))) & /* 2nd to 4th are falling (rising) */
+                (((inClose[i - 4] >= inOpen[i - 4]) & (inClose[i - 1] < inClose[i - 2])) | ((!(inClose[i - 4] >= inOpen[i - 4])) & (inClose[i - 2] < inClose[i - 1]))) & (((inClose[i - 4] >= inOpen[i - 4]) & (inOpen[i] > inClose[i - 1])) | ((!(inClose[i - 4] >= inOpen[i - 4])) & (inClose[i - 1] > inOpen[i]))) & /* 5th opens above (below) the prior close */
+                (((inClose[i - 4] >= inOpen[i - 4]) & (inClose[i] > inClose[i - 4])) | ((!(inClose[i - 4] >= inOpen[i - 4])) & (inClose[i - 4] > inClose[i]))) & /* 5th closes above (below) the 1st close */
+                (fabs(inClose[i - 4] - inOpen[i - 4]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyPeriodTotal[4],i - 4)) & /* 1st long, then 3 small, 5th long */
+                (fabs(inClose[i - 3] - inOpen[i - 3]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal[3],i - 3)) & (fabs(inClose[i - 2] - inOpen[i - 2]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal[2],i - 2)) & (fabs(inClose[i - 1] - inOpen[i - 1]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyPeriodTotal[1],i - 1)) & (fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyPeriodTotal[0],i)))));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;

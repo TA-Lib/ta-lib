@@ -218,13 +218,7 @@ static TA_OPEN_INLINE TA_RetCode TA_BOP_OpenBody( struct TA_BOP_Stream **stream,
           * (issue #253).
           */
          tempReal = inHigh[i] - inLow[i];
-         if( tempReal <= 0.0 )
-         {
-            outReal[outIdx++ * outStride] = 0.0;
-         } else 
-         {
-            outReal[outIdx++ * outStride] = (inClose[i] - inOpen[i]) / tempReal;
-         }
+         outReal[outIdx++ * outStride] = ((tempReal <= 0.0) ? (0.0) : ((inClose[i] - inOpen[i]) / tempReal));
       }
       *outNBElement= outIdx;
       *outBegIdx= startIdx;

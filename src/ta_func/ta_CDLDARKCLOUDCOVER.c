@@ -624,19 +624,13 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLDARKCLOUDCOVER_OpenBody( struct TA_CDLDAR
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 && /* 1st: white */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&        /* 2nd: black */
-             inOpen[i] > inHigh[i - 1] )                          /* open above prior high */
+         if( (((inClose[i - 1] >= inOpen[i - 1]) + /* 1st: white */
+             (!(inClose[i] >= inOpen[i])) +        /* 2nd: black */
+             (inOpen[i] > inHigh[i - 1])) == 3) )  /* open above prior high */
          {
-            if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1) && /* long */
-                inClose[i] > inOpen[i - 1] && /* close within prior body */
-                inClose[i] < inClose[i - 1] - fabs(inClose[i - 1] - inOpen[i - 1]) * optInPenetration )
-            {
-               outInteger[outIdx++ * outStride] = -100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((-100) & -(int)(((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1)) & /* long */
+                (inClose[i] > inOpen[i - 1]) & /* close within prior body */
+                (inClose[i] < inClose[i - 1] - fabs(inClose[i - 1] - inOpen[i - 1]) * optInPenetration))));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -704,19 +698,13 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLDARKCLOUDCOVER_OpenBody( struct TA_CDLDAR
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 && /* 1st: white */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&        /* 2nd: black */
-             inOpen[i] > inHigh[i - 1] )                          /* open above prior high */
+         if( (((inClose[i - 1] >= inOpen[i - 1]) + /* 1st: white */
+             (!(inClose[i] >= inOpen[i])) +        /* 2nd: black */
+             (inOpen[i] > inHigh[i - 1])) == 3) )  /* open above prior high */
          {
-            if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1) && /* long */
-                inClose[i] > inOpen[i - 1] && /* close within prior body */
-                inClose[i] < inClose[i - 1] - fabs(inClose[i - 1] - inOpen[i - 1]) * optInPenetration )
-            {
-               outInteger[outIdx++ * outStride] = -100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((-100) & -(int)(((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1)) & /* long */
+                (inClose[i] > inOpen[i - 1]) & /* close within prior body */
+                (inClose[i] < inClose[i - 1] - fabs(inClose[i - 1] - inOpen[i - 1]) * optInPenetration))));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -784,19 +772,13 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLDARKCLOUDCOVER_OpenBody( struct TA_CDLDAR
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 && /* 1st: white */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&        /* 2nd: black */
-             inOpen[i] > inHigh[i - 1] )                          /* open above prior high */
+         if( (((inClose[i - 1] >= inOpen[i - 1]) + /* 1st: white */
+             (!(inClose[i] >= inOpen[i])) +        /* 2nd: black */
+             (inOpen[i] > inHigh[i - 1])) == 3) )  /* open above prior high */
          {
-            if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1) && /* long */
-                inClose[i] > inOpen[i - 1] && /* close within prior body */
-                inClose[i] < inClose[i - 1] - fabs(inClose[i - 1] - inOpen[i - 1]) * optInPenetration )
-            {
-               outInteger[outIdx++ * outStride] = -100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((-100) & -(int)(((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1)) & /* long */
+                (inClose[i] > inOpen[i - 1]) & /* close within prior body */
+                (inClose[i] < inClose[i - 1] - fabs(inClose[i - 1] - inOpen[i - 1]) * optInPenetration))));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -864,19 +846,13 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLDARKCLOUDCOVER_OpenBody( struct TA_CDLDAR
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == 1 && /* 1st: white */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&        /* 2nd: black */
-             inOpen[i] > inHigh[i - 1] )                          /* open above prior high */
+         if( (((inClose[i - 1] >= inOpen[i - 1]) + /* 1st: white */
+             (!(inClose[i] >= inOpen[i])) +        /* 2nd: black */
+             (inOpen[i] > inHigh[i - 1])) == 3) )  /* open above prior high */
          {
-            if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1) && /* long */
-                inClose[i] > inOpen[i - 1] && /* close within prior body */
-                inClose[i] < inClose[i - 1] - fabs(inClose[i - 1] - inOpen[i - 1]) * optInPenetration )
-            {
-               outInteger[outIdx++ * outStride] = -100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((-100) & -(int)(((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1)) & /* long */
+                (inClose[i] > inOpen[i - 1]) & /* close within prior body */
+                (inClose[i] < inClose[i - 1] - fabs(inClose[i - 1] - inOpen[i - 1]) * optInPenetration))));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;

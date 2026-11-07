@@ -240,13 +240,7 @@ static TA_OPEN_INLINE TA_RetCode TA_MARKETFI_OpenBody( struct TA_MARKETFI_Stream
           * unbounded volume scale. Same reasoning as the prevClose guard in
           * ta_codegen/input/nvi/nvi.c.
           */
-         if( inVolume[i] != 0.0 )
-         {
-            outReal[outIdx++ * outStride] = (inHigh[i] - inLow[i]) / inVolume[i];
-         } else 
-         {
-            outReal[outIdx++ * outStride] = 0.0;
-         }
+         outReal[outIdx++ * outStride] = ((inVolume[i] != 0.0) ? ((inHigh[i] - inLow[i]) / inVolume[i]) : (0.0));
       }
       *outBegIdx= startIdx;
       *outNBElement= outIdx;

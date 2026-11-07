@@ -677,33 +677,20 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLBREAKAWAY_OpenBody( struct TA_CDLBREAKAWA
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) && /* 1st, 2nd, 4th same color, 5th opposite */
-             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) &&
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) )
+         if( ((((inClose[i - 4] >= inOpen[i - 4]) == (inClose[i - 3] >= inOpen[i - 3])) + /* 1st, 2nd, 4th same color, 5th opposite */
+             ((inClose[i - 3] >= inOpen[i - 3]) == (inClose[i - 1] >= inOpen[i - 1])) + ((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i]))) == 3) )
          {
-            if( fabs(inClose[i - 4] - inOpen[i - 4]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 4) && /* 1st long */
-                ((((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 && /* when 1st is black: */
-                  ((max(inOpen[i - 3],inClose[i - 3]) < min(inOpen[i - 4],inClose[i - 4])) ? 1 : 0) && /* 2nd gaps down */
-                  inHigh[i - 2] < inHigh[i - 3] &&
-                  inLow[i - 2] < inLow[i - 3] &&                        /* 3rd has lower high and low than 2nd */
-                  inHigh[i - 1] < inHigh[i - 2] &&
-                  inLow[i - 1] < inLow[i - 2] &&                        /* 4th has lower high and low than 3rd */
-                  inClose[i] > inOpen[i - 3] &&
-                  inClose[i] < inClose[i - 4]) ||                       /* 5th closes inside the gap */
-                 (((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == 1 &&  /* when 1st is white: */
-                  ((min(inOpen[i - 3],inClose[i - 3]) > max(inOpen[i - 4],inClose[i - 4])) ? 1 : 0) && /* 2nd gaps up */
-                  inHigh[i - 2] > inHigh[i - 3] &&
-                  inLow[i - 2] > inLow[i - 3] &&                        /* 3rd has higher high and low than 2nd */
-                  inHigh[i - 1] > inHigh[i - 2] &&
-                  inLow[i - 1] > inLow[i - 2] &&                        /* 4th has higher high and low than 3rd */
-                  inClose[i] < inOpen[i - 3] &&
-                  inClose[i] > inClose[i - 4])) )                       /* 5th closes inside the gap */
-            {
-               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs(inClose[i - 4] - inOpen[i - 4]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 4)) & /* 1st long */
+                (((!(inClose[i - 4] >= inOpen[i - 4])) & /* when 1st is black: */
+                ((inOpen[i - 3] < inOpen[i - 4]) & (inOpen[i - 3] < inClose[i - 4]) & (inClose[i - 3] < inOpen[i - 4]) & (inClose[i - 3] < inClose[i - 4])) & /* 2nd gaps down */
+                (inHigh[i - 2] < inHigh[i - 3]) & (inLow[i - 2] < inLow[i - 3]) & /* 3rd has lower high and low than 2nd */
+                (inHigh[i - 1] < inHigh[i - 2]) & (inLow[i - 1] < inLow[i - 2]) & /* 4th has lower high and low than 3rd */
+                (inClose[i] > inOpen[i - 3]) & (inClose[i] < inClose[i - 4])) | /* 5th closes inside the gap */
+                ((inClose[i - 4] >= inOpen[i - 4]) &     /* when 1st is white: */
+                ((inOpen[i - 3] > inOpen[i - 4]) & (inOpen[i - 3] > inClose[i - 4]) & (inClose[i - 3] > inOpen[i - 4]) & (inClose[i - 3] > inClose[i - 4])) & /* 2nd gaps up */
+                (inHigh[i - 2] > inHigh[i - 3]) & (inLow[i - 2] > inLow[i - 3]) & /* 3rd has higher high and low than 2nd */
+                (inHigh[i - 1] > inHigh[i - 2]) & (inLow[i - 1] > inLow[i - 2]) & /* 4th has higher high and low than 3rd */
+                (inClose[i] < inOpen[i - 3]) & (inClose[i] > inClose[i - 4])))))); /* 5th closes inside the gap */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -783,33 +770,20 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLBREAKAWAY_OpenBody( struct TA_CDLBREAKAWA
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) && /* 1st, 2nd, 4th same color, 5th opposite */
-             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) &&
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) )
+         if( ((((inClose[i - 4] >= inOpen[i - 4]) == (inClose[i - 3] >= inOpen[i - 3])) + /* 1st, 2nd, 4th same color, 5th opposite */
+             ((inClose[i - 3] >= inOpen[i - 3]) == (inClose[i - 1] >= inOpen[i - 1])) + ((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i]))) == 3) )
          {
-            if( fabs(inClose[i - 4] - inOpen[i - 4]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 4) && /* 1st long */
-                ((((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 && /* when 1st is black: */
-                  ((max(inOpen[i - 3],inClose[i - 3]) < min(inOpen[i - 4],inClose[i - 4])) ? 1 : 0) && /* 2nd gaps down */
-                  inHigh[i - 2] < inHigh[i - 3] &&
-                  inLow[i - 2] < inLow[i - 3] &&                        /* 3rd has lower high and low than 2nd */
-                  inHigh[i - 1] < inHigh[i - 2] &&
-                  inLow[i - 1] < inLow[i - 2] &&                        /* 4th has lower high and low than 3rd */
-                  inClose[i] > inOpen[i - 3] &&
-                  inClose[i] < inClose[i - 4]) ||                       /* 5th closes inside the gap */
-                 (((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == 1 &&  /* when 1st is white: */
-                  ((min(inOpen[i - 3],inClose[i - 3]) > max(inOpen[i - 4],inClose[i - 4])) ? 1 : 0) && /* 2nd gaps up */
-                  inHigh[i - 2] > inHigh[i - 3] &&
-                  inLow[i - 2] > inLow[i - 3] &&                        /* 3rd has higher high and low than 2nd */
-                  inHigh[i - 1] > inHigh[i - 2] &&
-                  inLow[i - 1] > inLow[i - 2] &&                        /* 4th has higher high and low than 3rd */
-                  inClose[i] < inOpen[i - 3] &&
-                  inClose[i] > inClose[i - 4])) )                       /* 5th closes inside the gap */
-            {
-               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs(inClose[i - 4] - inOpen[i - 4]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 4)) & /* 1st long */
+                (((!(inClose[i - 4] >= inOpen[i - 4])) & /* when 1st is black: */
+                ((inOpen[i - 3] < inOpen[i - 4]) & (inOpen[i - 3] < inClose[i - 4]) & (inClose[i - 3] < inOpen[i - 4]) & (inClose[i - 3] < inClose[i - 4])) & /* 2nd gaps down */
+                (inHigh[i - 2] < inHigh[i - 3]) & (inLow[i - 2] < inLow[i - 3]) & /* 3rd has lower high and low than 2nd */
+                (inHigh[i - 1] < inHigh[i - 2]) & (inLow[i - 1] < inLow[i - 2]) & /* 4th has lower high and low than 3rd */
+                (inClose[i] > inOpen[i - 3]) & (inClose[i] < inClose[i - 4])) | /* 5th closes inside the gap */
+                ((inClose[i - 4] >= inOpen[i - 4]) &     /* when 1st is white: */
+                ((inOpen[i - 3] > inOpen[i - 4]) & (inOpen[i - 3] > inClose[i - 4]) & (inClose[i - 3] > inOpen[i - 4]) & (inClose[i - 3] > inClose[i - 4])) & /* 2nd gaps up */
+                (inHigh[i - 2] > inHigh[i - 3]) & (inLow[i - 2] > inLow[i - 3]) & /* 3rd has higher high and low than 2nd */
+                (inHigh[i - 1] > inHigh[i - 2]) & (inLow[i - 1] > inLow[i - 2]) & /* 4th has higher high and low than 3rd */
+                (inClose[i] < inOpen[i - 3]) & (inClose[i] > inClose[i - 4])))))); /* 5th closes inside the gap */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -889,33 +863,20 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLBREAKAWAY_OpenBody( struct TA_CDLBREAKAWA
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) && /* 1st, 2nd, 4th same color, 5th opposite */
-             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) &&
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) )
+         if( ((((inClose[i - 4] >= inOpen[i - 4]) == (inClose[i - 3] >= inOpen[i - 3])) + /* 1st, 2nd, 4th same color, 5th opposite */
+             ((inClose[i - 3] >= inOpen[i - 3]) == (inClose[i - 1] >= inOpen[i - 1])) + ((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i]))) == 3) )
          {
-            if( fabs(inClose[i - 4] - inOpen[i - 4]) > TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 4) && /* 1st long */
-                ((((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 && /* when 1st is black: */
-                  ((max(inOpen[i - 3],inClose[i - 3]) < min(inOpen[i - 4],inClose[i - 4])) ? 1 : 0) && /* 2nd gaps down */
-                  inHigh[i - 2] < inHigh[i - 3] &&
-                  inLow[i - 2] < inLow[i - 3] &&                        /* 3rd has lower high and low than 2nd */
-                  inHigh[i - 1] < inHigh[i - 2] &&
-                  inLow[i - 1] < inLow[i - 2] &&                        /* 4th has lower high and low than 3rd */
-                  inClose[i] > inOpen[i - 3] &&
-                  inClose[i] < inClose[i - 4]) ||                       /* 5th closes inside the gap */
-                 (((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == 1 &&  /* when 1st is white: */
-                  ((min(inOpen[i - 3],inClose[i - 3]) > max(inOpen[i - 4],inClose[i - 4])) ? 1 : 0) && /* 2nd gaps up */
-                  inHigh[i - 2] > inHigh[i - 3] &&
-                  inLow[i - 2] > inLow[i - 3] &&                        /* 3rd has higher high and low than 2nd */
-                  inHigh[i - 1] > inHigh[i - 2] &&
-                  inLow[i - 1] > inLow[i - 2] &&                        /* 4th has higher high and low than 3rd */
-                  inClose[i] < inOpen[i - 3] &&
-                  inClose[i] > inClose[i - 4])) )                       /* 5th closes inside the gap */
-            {
-               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs(inClose[i - 4] - inOpen[i - 4]) > TA_CANDLEAVERAGE_OF(TA_RangeType_Shadows,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 4)) & /* 1st long */
+                (((!(inClose[i - 4] >= inOpen[i - 4])) & /* when 1st is black: */
+                ((inOpen[i - 3] < inOpen[i - 4]) & (inOpen[i - 3] < inClose[i - 4]) & (inClose[i - 3] < inOpen[i - 4]) & (inClose[i - 3] < inClose[i - 4])) & /* 2nd gaps down */
+                (inHigh[i - 2] < inHigh[i - 3]) & (inLow[i - 2] < inLow[i - 3]) & /* 3rd has lower high and low than 2nd */
+                (inHigh[i - 1] < inHigh[i - 2]) & (inLow[i - 1] < inLow[i - 2]) & /* 4th has lower high and low than 3rd */
+                (inClose[i] > inOpen[i - 3]) & (inClose[i] < inClose[i - 4])) | /* 5th closes inside the gap */
+                ((inClose[i - 4] >= inOpen[i - 4]) &     /* when 1st is white: */
+                ((inOpen[i - 3] > inOpen[i - 4]) & (inOpen[i - 3] > inClose[i - 4]) & (inClose[i - 3] > inOpen[i - 4]) & (inClose[i - 3] > inClose[i - 4])) & /* 2nd gaps up */
+                (inHigh[i - 2] > inHigh[i - 3]) & (inLow[i - 2] > inLow[i - 3]) & /* 3rd has higher high and low than 2nd */
+                (inHigh[i - 1] > inHigh[i - 2]) & (inLow[i - 1] > inLow[i - 2]) & /* 4th has higher high and low than 3rd */
+                (inClose[i] < inOpen[i - 3]) & (inClose[i] > inClose[i - 4])))))); /* 5th closes inside the gap */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -995,33 +956,20 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLBREAKAWAY_OpenBody( struct TA_CDLBREAKAWA
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) && /* 1st, 2nd, 4th same color, 5th opposite */
-             ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : -1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) &&
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -((inClose[i] >= inOpen[i]) ? 1 : -1) )
+         if( ((((inClose[i - 4] >= inOpen[i - 4]) == (inClose[i - 3] >= inOpen[i - 3])) + /* 1st, 2nd, 4th same color, 5th opposite */
+             ((inClose[i - 3] >= inOpen[i - 3]) == (inClose[i - 1] >= inOpen[i - 1])) + ((inClose[i - 1] >= inOpen[i - 1]) != (inClose[i] >= inOpen[i]))) == 3) )
          {
-            if( fabs(inClose[i - 4] - inOpen[i - 4]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 4) && /* 1st long */
-                ((((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == -1 && /* when 1st is black: */
-                  ((max(inOpen[i - 3],inClose[i - 3]) < min(inOpen[i - 4],inClose[i - 4])) ? 1 : 0) && /* 2nd gaps down */
-                  inHigh[i - 2] < inHigh[i - 3] &&
-                  inLow[i - 2] < inLow[i - 3] &&                        /* 3rd has lower high and low than 2nd */
-                  inHigh[i - 1] < inHigh[i - 2] &&
-                  inLow[i - 1] < inLow[i - 2] &&                        /* 4th has lower high and low than 3rd */
-                  inClose[i] > inOpen[i - 3] &&
-                  inClose[i] < inClose[i - 4]) ||                       /* 5th closes inside the gap */
-                 (((inClose[i - 4] >= inOpen[i - 4]) ? 1 : -1) == 1 &&  /* when 1st is white: */
-                  ((min(inOpen[i - 3],inClose[i - 3]) > max(inOpen[i - 4],inClose[i - 4])) ? 1 : 0) && /* 2nd gaps up */
-                  inHigh[i - 2] > inHigh[i - 3] &&
-                  inLow[i - 2] > inLow[i - 3] &&                        /* 3rd has higher high and low than 2nd */
-                  inHigh[i - 1] > inHigh[i - 2] &&
-                  inLow[i - 1] > inLow[i - 2] &&                        /* 4th has higher high and low than 3rd */
-                  inClose[i] < inOpen[i - 3] &&
-                  inClose[i] > inClose[i - 4])) )                       /* 5th closes inside the gap */
-            {
-               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : -1) * 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs(inClose[i - 4] - inOpen[i - 4]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 4)) & /* 1st long */
+                (((!(inClose[i - 4] >= inOpen[i - 4])) & /* when 1st is black: */
+                ((inOpen[i - 3] < inOpen[i - 4]) & (inOpen[i - 3] < inClose[i - 4]) & (inClose[i - 3] < inOpen[i - 4]) & (inClose[i - 3] < inClose[i - 4])) & /* 2nd gaps down */
+                (inHigh[i - 2] < inHigh[i - 3]) & (inLow[i - 2] < inLow[i - 3]) & /* 3rd has lower high and low than 2nd */
+                (inHigh[i - 1] < inHigh[i - 2]) & (inLow[i - 1] < inLow[i - 2]) & /* 4th has lower high and low than 3rd */
+                (inClose[i] > inOpen[i - 3]) & (inClose[i] < inClose[i - 4])) | /* 5th closes inside the gap */
+                ((inClose[i - 4] >= inOpen[i - 4]) &     /* when 1st is white: */
+                ((inOpen[i - 3] > inOpen[i - 4]) & (inOpen[i - 3] > inClose[i - 4]) & (inClose[i - 3] > inOpen[i - 4]) & (inClose[i - 3] > inClose[i - 4])) & /* 2nd gaps up */
+                (inHigh[i - 2] > inHigh[i - 3]) & (inLow[i - 2] > inLow[i - 3]) & /* 3rd has higher high and low than 2nd */
+                (inHigh[i - 1] > inHigh[i - 2]) & (inLow[i - 1] > inLow[i - 2]) & /* 4th has higher high and low than 3rd */
+                (inClose[i] < inOpen[i - 3]) & (inClose[i] > inClose[i - 4])))))); /* 5th closes inside the gap */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;

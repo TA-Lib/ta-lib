@@ -525,19 +525,13 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLINNECK_OpenBody( struct TA_CDLINNECK_Stre
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st: black */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 2nd: white */
-             inOpen[i] < inLow[i - 1] )                            /* open below prior low */
+         if( (((!(inClose[i - 1] >= inOpen[i - 1])) + /* 1st: black */
+             (inClose[i] >= inOpen[i]) +              /* 2nd: white */
+             (inOpen[i] < inLow[i - 1])) == 3) )      /* open below prior low */
          {
-            if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1) && /* long */
-                inClose[i] <= inClose[i - 1] + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1) && /* close slightly into prior body */
-                inClose[i] >= inClose[i - 1] )
-            {
-               outInteger[outIdx++ * outStride] = -100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((-100) & -(int)(((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1)) & /* long */
+                (inClose[i] <= inClose[i - 1] + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1)) & /* close slightly into prior body */
+                (inClose[i] >= inClose[i - 1]))));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -625,19 +619,13 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLINNECK_OpenBody( struct TA_CDLINNECK_Stre
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st: black */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == 1 &&          /* 2nd: white */
-             inOpen[i] < inLow[i - 1] )                            /* open below prior low */
+         if( (((!(inClose[i - 1] >= inOpen[i - 1])) + /* 1st: black */
+             (inClose[i] >= inOpen[i]) +              /* 2nd: white */
+             (inOpen[i] < inLow[i - 1])) == 3) )      /* open below prior low */
          {
-            if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1) && /* long */
-                inClose[i] <= inClose[i - 1] + TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1) && /* close slightly into prior body */
-                inClose[i] >= inClose[i - 1] )
-            {
-               outInteger[outIdx++ * outStride] = -100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((-100) & -(int)(((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1)) & /* long */
+                (inClose[i] <= inClose[i - 1] + TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1)) & /* close slightly into prior body */
+                (inClose[i] >= inClose[i - 1]))));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;

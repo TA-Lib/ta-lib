@@ -541,29 +541,12 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLHARAMI_OpenBody( struct TA_CDLHARAMI_Stre
       outIdx = 0;
       do
       {
-         if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1) ) /* 1st: long */
+         if( (((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1)) + /* 1st: long */
+             (fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i))) == 2) ) /* 2nd: short */
          {
-            if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i) ) /* 2nd: short */
-            {
-               /* 2nd is engulfed by 1st */
-               if( max(inClose[i],inOpen[i]) < max(inClose[i - 1],inOpen[i - 1]) && min(inClose[i],inOpen[i]) > min(inClose[i - 1],inOpen[i - 1]) )
-               {
-                  outInteger[outIdx++ * outStride] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
-                  /* 2nd is engulfed by 1st
-                   * (one end of real body can match;
-                   * engulfing guaranteed by "long" and "short")
-                   */
-               } else if( max(inClose[i],inOpen[i]) <= max(inClose[i - 1],inOpen[i - 1]) && min(inClose[i],inOpen[i]) >= min(inClose[i - 1],inOpen[i - 1]) )
-               {
-                  outInteger[outIdx++ * outStride] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 80;
-               } else 
-               {
-                  outInteger[outIdx++ * outStride] = 0;
-               }
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            /* 2nd is engulfed by 1st */
+            outInteger[outIdx++ * outStride] = ((-((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) ^ /* 2nd is engulfed by 1st (one end of real body can match; engulfing guaranteed by "long" and "short") */
+                (((((-((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 80) & -(int)((((inClose[i] <= inClose[i - 1]) | (inClose[i] <= inOpen[i - 1])) & ((inOpen[i] <= inClose[i - 1]) | (inOpen[i] <= inOpen[i - 1])) & ((inClose[i] >= inClose[i - 1]) | (inClose[i] >= inOpen[i - 1])) & ((inOpen[i] >= inClose[i - 1]) | (inOpen[i] >= inOpen[i - 1])))))) ^ (-((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100)) & ((int)((((inClose[i] < inClose[i - 1]) | (inClose[i] < inOpen[i - 1])) & ((inOpen[i] < inClose[i - 1]) | (inOpen[i] < inOpen[i - 1])) & ((inClose[i] > inClose[i - 1]) | (inClose[i] > inOpen[i - 1])) & ((inOpen[i] > inClose[i - 1]) | (inOpen[i] > inOpen[i - 1])))) - 1)));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -649,29 +632,12 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLHARAMI_OpenBody( struct TA_CDLHARAMI_Stre
       outIdx = 0;
       do
       {
-         if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1) ) /* 1st: long */
+         if( (((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1)) + /* 1st: long */
+             (fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i))) == 2) ) /* 2nd: short */
          {
-            if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i) ) /* 2nd: short */
-            {
-               /* 2nd is engulfed by 1st */
-               if( max(inClose[i],inOpen[i]) < max(inClose[i - 1],inOpen[i - 1]) && min(inClose[i],inOpen[i]) > min(inClose[i - 1],inOpen[i - 1]) )
-               {
-                  outInteger[outIdx++ * outStride] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100;
-                  /* 2nd is engulfed by 1st
-                   * (one end of real body can match;
-                   * engulfing guaranteed by "long" and "short")
-                   */
-               } else if( max(inClose[i],inOpen[i]) <= max(inClose[i - 1],inOpen[i - 1]) && min(inClose[i],inOpen[i]) >= min(inClose[i - 1],inOpen[i - 1]) )
-               {
-                  outInteger[outIdx++ * outStride] = -((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 80;
-               } else 
-               {
-                  outInteger[outIdx++ * outStride] = 0;
-               }
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            /* 2nd is engulfed by 1st */
+            outInteger[outIdx++ * outStride] = ((-((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100) ^ /* 2nd is engulfed by 1st (one end of real body can match; engulfing guaranteed by "long" and "short") */
+                (((((-((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 80) & -(int)((((inClose[i] <= inClose[i - 1]) | (inClose[i] <= inOpen[i - 1])) & ((inOpen[i] <= inClose[i - 1]) | (inOpen[i] <= inOpen[i - 1])) & ((inClose[i] >= inClose[i - 1]) | (inClose[i] >= inOpen[i - 1])) & ((inOpen[i] >= inClose[i - 1]) | (inOpen[i] >= inOpen[i - 1])))))) ^ (-((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) * 100)) & ((int)((((inClose[i] < inClose[i - 1]) | (inClose[i] < inOpen[i - 1])) & ((inOpen[i] < inClose[i - 1]) | (inOpen[i] < inOpen[i - 1])) & ((inClose[i] > inClose[i - 1]) | (inClose[i] > inOpen[i - 1])) & ((inOpen[i] > inClose[i - 1]) | (inOpen[i] > inOpen[i - 1])))) - 1)));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;

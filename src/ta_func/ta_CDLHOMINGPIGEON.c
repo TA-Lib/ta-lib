@@ -528,19 +528,13 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLHOMINGPIGEON_OpenBody( struct TA_CDLHOMIN
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st black */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* 2nd black */
-             inClose[i] > inClose[i - 1] )                         /* 2nd engulfed by 1st */
+         if( (((!(inClose[i - 1] >= inOpen[i - 1])) + /* 1st black */
+             (!(inClose[i] >= inOpen[i])) +           /* 2nd black */
+             (inClose[i] > inClose[i - 1])) == 3) )   /* 2nd engulfed by 1st */
          {
-            if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1) && /* 1st long */
-                fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i) && /* 2nd short */
-                inOpen[i] < inOpen[i - 1] )
-            {
-               outInteger[outIdx++ * outStride] = 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((100) & -(int)(((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1)) & /* 1st long */
+                (fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i)) & /* 2nd short */
+                (inOpen[i] < inOpen[i - 1]))));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -627,19 +621,13 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLHOMINGPIGEON_OpenBody( struct TA_CDLHOMIN
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 1st black */
-             ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 &&         /* 2nd black */
-             inClose[i] > inClose[i - 1] )                         /* 2nd engulfed by 1st */
+         if( (((!(inClose[i - 1] >= inOpen[i - 1])) + /* 1st black */
+             (!(inClose[i] >= inOpen[i])) +           /* 2nd black */
+             (inClose[i] > inClose[i - 1])) == 3) )   /* 2nd engulfed by 1st */
          {
-            if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1) && /* 1st long */
-                fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i) && /* 2nd short */
-                inOpen[i] < inOpen[i - 1] )
-            {
-               outInteger[outIdx++ * outStride] = 100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((100) & -(int)(((fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 1)) & /* 1st long */
+                (fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i)) & /* 2nd short */
+                (inOpen[i] < inOpen[i - 1]))));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;

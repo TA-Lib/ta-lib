@@ -449,22 +449,15 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLUPSIDEGAP2CROWS_OpenBody( struct TA_CDLUP
       outIdx = 0;
       do
       {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : -1) == 1 &&  /* 1st: white */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : -1) == -1 && /* 2nd: black */
-             ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) ) /* gapping up */
+         if( (((inClose[i - 2] >= inOpen[i - 2]) +  /* 1st: white */
+             (!(inClose[i - 1] >= inOpen[i - 1])) + /* 2nd: black */
+             (((inOpen[i - 1] > inOpen[i - 2]) & (inOpen[i - 1] > inClose[i - 2]) & (inClose[i - 1] > inOpen[i - 2]) & (inClose[i - 1] > inClose[i - 2])))) == 3) ) /* gapping up */
          {
-            if( fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2) && /* long */
-                fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i - 1) && /* short */
-                ((inClose[i] >= inOpen[i]) ? 1 : -1) == -1 && /* 3rd: black */
-                inOpen[i] > inOpen[i - 1] &&
-                inClose[i] < inClose[i - 1] &&                /* 3rd: engulfing prior rb */
-                inClose[i] > inClose[i - 2] )                 /* closing above 1st */
-            {
-               outInteger[outIdx++ * outStride] = -100;
-            } else 
-            {
-               outInteger[outIdx++ * outStride] = 0;
-            }
+            outInteger[outIdx++ * outStride] = ((-100) & -(int)(((fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & /* long */
+                (fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i - 1)) & /* short */
+                (!(inClose[i] >= inOpen[i])) &    /* 3rd: black */
+                (inOpen[i] > inOpen[i - 1]) & (inClose[i] < inClose[i - 1]) & /* 3rd: engulfing prior rb */
+                (inClose[i] > inClose[i - 2])))); /* closing above 1st */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
