@@ -128,6 +128,23 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     [
       { type: OutputType.REAL, paramName: 'outReal', flags: 0x00000001 },
     ]),
+  FuncInfo.of('ALLIGATOR', 'Overlap Studies', 'Williams Alligator', 0x03000002,
+    [
+      { type: InputType.PRICE, paramName: 'inPriceHL', flags: 0x00000006 },
+    ],
+    [
+      { type: OptInputType.INTEGER_RANGE, paramName: 'optInJawPeriod', flags: 0x00000000, displayName: 'Jaw Period', hint: 'Time period for the jaw line', defaultValue: 13.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
+      { type: OptInputType.INTEGER_RANGE, paramName: 'optInJawShift', flags: 0x00000000, displayName: 'Jaw Shift', hint: 'Bars ahead the jaw line is drawn', defaultValue: 8.0, min: 0, max: 100000, suggestedStart: 0, suggestedEnd: 30, suggestedIncrement: 1 },
+      { type: OptInputType.INTEGER_RANGE, paramName: 'optInTeethPeriod', flags: 0x00000000, displayName: 'Teeth Period', hint: 'Time period for the teeth line', defaultValue: 8.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
+      { type: OptInputType.INTEGER_RANGE, paramName: 'optInTeethShift', flags: 0x00000000, displayName: 'Teeth Shift', hint: 'Bars ahead the teeth line is drawn', defaultValue: 5.0, min: 0, max: 100000, suggestedStart: 0, suggestedEnd: 30, suggestedIncrement: 1 },
+      { type: OptInputType.INTEGER_RANGE, paramName: 'optInLipsPeriod', flags: 0x00000000, displayName: 'Lips Period', hint: 'Time period for the lips line', defaultValue: 5.0, min: 1, max: 100000, suggestedStart: 1, suggestedEnd: 200, suggestedIncrement: 1 },
+      { type: OptInputType.INTEGER_RANGE, paramName: 'optInLipsShift', flags: 0x00000000, displayName: 'Lips Shift', hint: 'Bars ahead the lips line is drawn', defaultValue: 3.0, min: 0, max: 100000, suggestedStart: 0, suggestedEnd: 30, suggestedIncrement: 1 },
+    ],
+    [
+      { type: OutputType.REAL, paramName: 'outJaw', flags: 0x00004001 },
+      { type: OutputType.REAL, paramName: 'outTeeth', flags: 0x00004001 },
+      { type: OutputType.REAL, paramName: 'outLips', flags: 0x00004001 },
+    ]),
   FuncInfo.of('ALMA', 'Overlap Studies', 'Arnaud Legoux Moving Average', 0x03000005,
     [
       { type: InputType.REAL, paramName: 'inReal', flags: 0x00000000 },

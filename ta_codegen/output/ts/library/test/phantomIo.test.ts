@@ -49,6 +49,7 @@ import * as m_adosc from '../src/func/adosc.ts';
 import * as m_adr from '../src/func/adr.ts';
 import * as m_adx from '../src/func/adx.ts';
 import * as m_adxr from '../src/func/adxr.ts';
+import * as m_alligator from '../src/func/alligator.ts';
 import * as m_alma from '../src/func/alma.ts';
 import * as m_ao from '../src/func/ao.ts';
 import * as m_apo from '../src/func/apo.ts';
@@ -604,6 +605,20 @@ const PROBES: Probe[] = [
     vectors: [
       ['defaults', Core.INTEGER_DEFAULT],
       ['minimums', 2],
+    ],
+  },
+  {
+    name: 'ALLIGATOR',
+    batch: m_alligator.alligatorPositional,
+    body: m_alligator.alligatorImpl,
+    lookback: m_alligator.alligatorLookbackPositional,
+    open: m_alligator.alligatorOpenPositional,
+    fill: m_alligator.alligatorOpenAndFillPositional,
+    ins: ['high', 'low'],
+    outs: ['f', 'f', 'f'],
+    vectors: [
+      ['defaults', Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT, Core.INTEGER_DEFAULT],
+      ['minimums', 1, 0, 1, 0, 1, 0],
     ],
   },
   {
@@ -4385,7 +4400,7 @@ const PROBES: Probe[] = [
   },
 ];
 
-const CORPUS = 242;
+const CORPUS = 243;
 
 test('the sweep covers every function module', () => {
   const modules = readdirSync(new URL('../src/func/', import.meta.url)).filter((f) => f.endsWith('.ts')).length;

@@ -291,6 +291,43 @@ int TA_ADXR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 {
    return TA_ADXR_DisplayShift( params->optIn[0].data.optInInteger, outputIdx );
 }
+TA_RetCode TA_ALLIGATOR_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_ALLIGATOR(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->optIn[0].data.optInInteger, /* optInJawPeriod*/
+               params->optIn[1].data.optInInteger, /* optInJawShift*/
+               params->optIn[2].data.optInInteger, /* optInTeethPeriod*/
+               params->optIn[3].data.optInInteger, /* optInTeethShift*/
+               params->optIn[4].data.optInInteger, /* optInLipsPeriod*/
+               params->optIn[5].data.optInInteger, /* optInLipsShift*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal, /*  outJaw */
+               params->out[1].data.outReal, /*  outTeeth */
+               params->out[2].data.outReal /*  outLips */
+               );
+}
+unsigned int TA_ALLIGATOR_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_ALLIGATOR_Lookback(params->optIn[0].data.optInInteger, /* optInJawPeriod*/
+                    params->optIn[1].data.optInInteger, /* optInJawShift*/
+                    params->optIn[2].data.optInInteger, /* optInTeethPeriod*/
+                    params->optIn[3].data.optInInteger, /* optInTeethShift*/
+                    params->optIn[4].data.optInInteger, /* optInLipsPeriod*/
+                    params->optIn[5].data.optInInteger /* optInLipsShift*/ );
+}
+int TA_ALLIGATOR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_ALLIGATOR_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, params->optIn[3].data.optInInteger, params->optIn[4].data.optInInteger, params->optIn[5].data.optInInteger, outputIdx );
+}
 TA_RetCode TA_ALMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

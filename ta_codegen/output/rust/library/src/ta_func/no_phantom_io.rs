@@ -1160,6 +1160,93 @@ fn legs_ADXR(r: &mut Report) {
     r.legs_done("ADXR", 3);
 }
 
+const V_ALLIGATOR: &[(&str, i32, i32, i32, i32, i32, i32)] = &[
+    ("defaults", i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN, i32::MIN),
+    ("minimums", 1i32, 0i32, 1i32, 0i32, 1i32, 0i32),
+];
+
+fn sub_ALLIGATOR(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift) in V_ALLIGATOR {
+        let Ok(lb) = core.alligator_lookback(optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift) else { continue; };
+        r.control("ALLIGATOR", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outJaw: Vec<f64> = Vec::with_capacity(1);
+            let mut outTeeth: Vec<f64> = Vec::with_capacity(1);
+            let mut outLips: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.alligator_impl(0, lb, &inHigh, &inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, &mut _b, &mut _n, &mut outJaw, &mut outTeeth, &mut outLips);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("ALLIGATOR", label); continue; }
+        r.quiet("ALLIGATOR", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outJaw: Vec<f64> = Vec::with_capacity(1);
+            let mut outTeeth: Vec<f64> = Vec::with_capacity(1);
+            let mut outLips: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.alligator_impl(0, lb - 1, &inHigh, &inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, &mut _b, &mut _n, &mut outJaw, &mut outTeeth, &mut outLips);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_ALLIGATOR(r: &mut Report) {
+    let core = Core::new();
+    let optInJawPeriod = i32::MIN;
+    let optInJawShift = i32::MIN;
+    let optInTeethPeriod = i32::MIN;
+    let optInTeethShift = i32::MIN;
+    let optInLipsPeriod = i32::MIN;
+    let optInLipsShift = i32::MIN;
+    let Ok(lb) = core.alligator_lookback(optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift) else { r.no_legs("ALLIGATOR"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outJaw: Vec<f64> = vec![Default::default(); 5];
+        let mut outTeeth: Vec<f64> = vec![Default::default(); 5];
+        let mut outLips: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ALLIGATOR", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.alligator_impl(startIdx, endIdx, &inHigh, &inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, &mut _b, &mut _n, &mut outJaw, &mut outTeeth, &mut outLips);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outJaw: Vec<f64> = vec![Default::default(); 5];
+        let mut outTeeth: Vec<f64> = vec![Default::default(); 5];
+        let mut outLips: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ALLIGATOR", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.alligator_impl(startIdx, endIdx, &inHigh, &inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, &mut _b, &mut _n, &mut outJaw, &mut outTeeth, &mut outLips);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let mut outJaw: Vec<f64> = vec![Default::default(); 5];
+        let mut outTeeth: Vec<f64> = vec![Default::default(); 5];
+        let mut outLips: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ALLIGATOR", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.alligator_impl(startIdx, endIdx, &inHigh, &inLow, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, &mut _b, &mut _n, &mut outJaw, &mut outTeeth, &mut outLips);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("ALLIGATOR", 2);
+}
+
 const V_ALMA: &[(&str, i32, f64, f64)] = &[
     ("defaults", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT),
     ("minimums", 1i32, 0.01f64, 0.0f64),
@@ -20328,6 +20415,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("ADR", sub_ADR, legs_ADR),
     ("ADX", sub_ADX, legs_ADX),
     ("ADXR", sub_ADXR, legs_ADXR),
+    ("ALLIGATOR", sub_ALLIGATOR, legs_ALLIGATOR),
     ("ALMA", sub_ALMA, legs_ALMA),
     ("AO", sub_AO, legs_AO),
     ("APO", sub_APO, legs_APO),
@@ -20599,7 +20687,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 242, "probe count");
+    assert_eq!(PROBES.len(), 243, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

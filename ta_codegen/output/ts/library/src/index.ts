@@ -57,6 +57,8 @@ export { adx, adxLookback, adxDisplayShift, adxOpen, adxOpenAndFill, AdxStream }
 export type { AdxOptions, AdxResult } from './func/adx.ts';
 export { adxr, adxrLookback, adxrDisplayShift, adxrOpen, adxrOpenAndFill, AdxrStream } from './func/adxr.ts';
 export type { AdxrOptions, AdxrResult } from './func/adxr.ts';
+export { alligator, alligatorLookback, alligatorDisplayShift, alligatorOpen, alligatorOpenAndFill, AlligatorStream, AlligatorOut } from './func/alligator.ts';
+export type { AlligatorOptions, AlligatorResult } from './func/alligator.ts';
 export { alma, almaLookback, almaDisplayShift, almaOpen, almaOpenAndFill, AlmaStream } from './func/alma.ts';
 export type { AlmaOptions, AlmaResult } from './func/alma.ts';
 export { ao, aoLookback, aoDisplayShift, aoOpen, aoOpenAndFill, AoStream } from './func/ao.ts';

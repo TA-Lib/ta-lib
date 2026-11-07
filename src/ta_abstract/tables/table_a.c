@@ -345,6 +345,158 @@ DEF_FUNCTION( ADXR,
              );
 /* ADXR END */
 
+/* ALLIGATOR BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_ALLIGATOR_JawPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInJawPeriod",
+   0,
+
+   "Jaw Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   13,
+   "Time period for the jaw line",
+
+   NULL
+};
+
+static const TA_IntegerRange TA_DEF_ALLIGATOR_JawShift =
+{
+   0,
+   100000,
+   0,
+   30,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_ALLIGATOR_JawShift =
+{
+   TA_OptInput_IntegerRange,
+   "optInJawShift",
+   0,
+
+   "Jaw Shift",
+   (const void *)&TA_DEF_ALLIGATOR_JawShift,
+   8,
+   "Bars ahead the jaw line is drawn",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_ALLIGATOR_TeethPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTeethPeriod",
+   0,
+
+   "Teeth Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   8,
+   "Time period for the teeth line",
+
+   NULL
+};
+
+static const TA_IntegerRange TA_DEF_ALLIGATOR_TeethShift =
+{
+   0,
+   100000,
+   0,
+   30,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_ALLIGATOR_TeethShift =
+{
+   TA_OptInput_IntegerRange,
+   "optInTeethShift",
+   0,
+
+   "Teeth Shift",
+   (const void *)&TA_DEF_ALLIGATOR_TeethShift,
+   5,
+   "Bars ahead the teeth line is drawn",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_ALLIGATOR_LipsPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInLipsPeriod",
+   0,
+
+   "Lips Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   5,
+   "Time period for the lips line",
+
+   NULL
+};
+
+static const TA_IntegerRange TA_DEF_ALLIGATOR_LipsShift =
+{
+   0,
+   100000,
+   0,
+   30,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_ALLIGATOR_LipsShift =
+{
+   TA_OptInput_IntegerRange,
+   "optInLipsShift",
+   0,
+
+   "Lips Shift",
+   (const void *)&TA_DEF_ALLIGATOR_LipsShift,
+   3,
+   "Bars ahead the lips line is drawn",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ALLIGATOR_outJaw =
+                               { TA_Output_Real, "outJaw", TA_OUT_LINE | TA_OUT_DISPLAY_SHIFT };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ALLIGATOR_outTeeth =
+                               { TA_Output_Real, "outTeeth", TA_OUT_LINE | TA_OUT_DISPLAY_SHIFT };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ALLIGATOR_outLips =
+                               { TA_Output_Real, "outLips", TA_OUT_LINE | TA_OUT_DISPLAY_SHIFT };
+
+static const TA_InputParameterInfo    *TA_ALLIGATOR_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_ALLIGATOR_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_ALLIGATOR_outJaw,
+  &TA_DEF_UI_Output_Real_ALLIGATOR_outTeeth,
+  &TA_DEF_UI_Output_Real_ALLIGATOR_outLips,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_ALLIGATOR_OptInputs[] =
+{ &TA_DEF_UI_D_ALLIGATOR_JawPeriod,
+  &TA_DEF_UI_D_ALLIGATOR_JawShift,
+  &TA_DEF_UI_D_ALLIGATOR_TeethPeriod,
+  &TA_DEF_UI_D_ALLIGATOR_TeethShift,
+  &TA_DEF_UI_D_ALLIGATOR_LipsPeriod,
+  &TA_DEF_UI_D_ALLIGATOR_LipsShift,
+  NULL
+};
+
+DEF_FUNCTION( ALLIGATOR,
+              TA_GroupId_OverlapStudies,
+              "Williams Alligator",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_DISPLAY_SHIFT
+             );
+/* ALLIGATOR END */
+
 /* ALMA BEGIN */
 static const TA_OptInputParameterInfo TA_DEF_UI_D_ALMA_TimePeriod =
 {
@@ -772,6 +924,7 @@ const TA_FuncDef *TA_DEF_TableA[] =
    ADD_TO_TABLE(ADR),
    ADD_TO_TABLE(ADX),
    ADD_TO_TABLE(ADXR),
+   ADD_TO_TABLE(ALLIGATOR),
    ADD_TO_TABLE(ALMA),
    ADD_TO_TABLE(AO),
    ADD_TO_TABLE(APO),

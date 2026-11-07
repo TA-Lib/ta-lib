@@ -173,6 +173,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["ALLIGATOR"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.AlligatorImpl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.IntOpt(4), c.IntOpt(5), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
+            return new CallOutcome(rc, b, n);
+        },
         ["ALMA"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.AlmaImpl(
@@ -1630,6 +1636,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), Narrow(c.Price(0, PriceComponents.Close)), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["ALLIGATOR"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.AlligatorImpl(
+                startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.IntOpt(4), c.IntOpt(5), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
+            return new CallOutcome(rc, b, n);
+        },
         ["ALMA"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.AlmaImpl(
@@ -3042,6 +3054,7 @@ internal static class NoPhantomIoBinder
         ["ADR"] = static (core, c) => core.AdrOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0)),
         ["ADX"] = static (core, c) => core.AdxOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
         ["ADXR"] = static (core, c) => core.AdxrOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0)),
+        ["ALLIGATOR"] = static (core, c) => core.AlligatorOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.IntOpt(4), c.IntOpt(5)),
         ["ALMA"] = static (core, c) => core.AlmaOpen(c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2)),
         ["AO"] = static (core, c) => core.AoOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1)),
         ["APO"] = static (core, c) => core.ApoOpen(c.Series(0), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),

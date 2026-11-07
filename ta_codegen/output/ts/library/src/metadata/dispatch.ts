@@ -46,6 +46,7 @@ import * as ADOSC from '../func/adosc.ts';
 import * as ADR from '../func/adr.ts';
 import * as ADX from '../func/adx.ts';
 import * as ADXR from '../func/adxr.ts';
+import * as ALLIGATOR from '../func/alligator.ts';
 import * as ALMA from '../func/alma.ts';
 import * as AO from '../func/ao.ts';
 import * as APO from '../func/apo.ts';
@@ -333,6 +334,11 @@ export const DISPATCH: ReadonlyMap<string, Thunks> = new Map<string, Thunks>([
     lookback: (h) => ADXR.adxrLookbackPositional(h.opts[0], h.core),
     displayShift: (h, o) => ADXR.adxrDisplayShiftPositional(h.opts[0], o, h.core),
     call: (h, s, e) => ADXR.adxrPositional(s, e, h.prices[0]![1]!, h.prices[0]![2]!, h.prices[0]![3]!, h.opts[0], h.outputs[0] as Float64Array, h.core),
+  }],
+  ['ALLIGATOR', {
+    lookback: (h) => ALLIGATOR.alligatorLookbackPositional(h.opts[0], h.opts[1], h.opts[2], h.opts[3], h.opts[4], h.opts[5], h.core),
+    displayShift: (h, o) => ALLIGATOR.alligatorDisplayShiftPositional(h.opts[0], h.opts[1], h.opts[2], h.opts[3], h.opts[4], h.opts[5], o, h.core),
+    call: (h, s, e) => ALLIGATOR.alligatorPositional(s, e, h.prices[0]![1]!, h.prices[0]![2]!, h.opts[0], h.opts[1], h.opts[2], h.opts[3], h.opts[4], h.opts[5], h.outputs[0] as Float64Array, h.outputs[1] as Float64Array, h.outputs[2] as Float64Array, h.core),
   }],
   ['ALMA', {
     lookback: (h) => ALMA.almaLookbackPositional(h.opts[0], h.opts[1], h.opts[2], h.core),

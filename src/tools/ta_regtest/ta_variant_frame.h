@@ -502,6 +502,66 @@ static const TA_VOptSpec TA_VOpt_ADXR[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
+static TA_RetCode TA_ALLIGATOR_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_ALLIGATOR(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               (int)optIn[0] /* optInJawPeriod */,
+               (int)optIn[1] /* optInJawShift */,
+               (int)optIn[2] /* optInTeethPeriod */,
+               (int)optIn[3] /* optInTeethShift */,
+               (int)optIn[4] /* optInLipsPeriod */,
+               (int)optIn[5] /* optInLipsShift */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outJaw */,
+               outReal[1] /* outTeeth */,
+               outReal[2] /* outLips */
+               );
+}
+static TA_RetCode TA_ALLIGATOR_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_ALLIGATOR(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               (int)optIn[0] /* optInJawPeriod */,
+               (int)optIn[1] /* optInJawShift */,
+               (int)optIn[2] /* optInTeethPeriod */,
+               (int)optIn[3] /* optInTeethShift */,
+               (int)optIn[4] /* optInLipsPeriod */,
+               (int)optIn[5] /* optInLipsShift */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outJaw */,
+               outReal[1] /* outTeeth */,
+               outReal[2] /* outLips */
+               );
+}
+
+static const TA_VInputKind TA_VIn_ALLIGATOR[] = { TA_VIN_HIGH, TA_VIN_LOW };
+static const int TA_VOutIsInt_ALLIGATOR[] = { 0, 0, 0 };
+static const TA_VOptSpec TA_VOpt_ALLIGATOR[] = {
+   { "optInJawPeriod", TA_VOPT_INT, 1.0, 100000.0, 13.0 },
+   { "optInJawShift", TA_VOPT_INT, 0.0, 100000.0, 8.0 },
+   { "optInTeethPeriod", TA_VOPT_INT, 1.0, 100000.0, 8.0 },
+   { "optInTeethShift", TA_VOPT_INT, 0.0, 100000.0, 5.0 },
+   { "optInLipsPeriod", TA_VOPT_INT, 1.0, 100000.0, 5.0 },
+   { "optInLipsShift", TA_VOPT_INT, 0.0, 100000.0, 3.0 },
+};
+
 static TA_RetCode TA_ALMA_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10392,6 +10452,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      3, TA_VIn_ADX, 1, TA_VOpt_ADX, 1, TA_VOutIsInt_ADX, 0 },
    { "ADXR", TA_ADXR_VFrameD, TA_ADXR_VFrameS,
      3, TA_VIn_ADXR, 1, TA_VOpt_ADXR, 1, TA_VOutIsInt_ADXR, 0 },
+   { "ALLIGATOR", TA_ALLIGATOR_VFrameD, TA_ALLIGATOR_VFrameS,
+     2, TA_VIn_ALLIGATOR, 6, TA_VOpt_ALLIGATOR, 3, TA_VOutIsInt_ALLIGATOR, 0 },
    { "ALMA", TA_ALMA_VFrameD, TA_ALMA_VFrameS,
      1, TA_VIn_ALMA, 3, TA_VOpt_ALMA, 1, TA_VOutIsInt_ALMA, 0 },
    { "AO", TA_AO_VFrameD, TA_AO_VFrameS,
@@ -10860,6 +10922,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 242
+#define TA_VARIANT_TABLE_SIZE 243
 
 #endif /* TA_VARIANT_FRAME_H */

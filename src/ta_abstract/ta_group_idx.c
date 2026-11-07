@@ -49,6 +49,7 @@ extern const TA_FuncDef TA_DEF_ADOSC;
 extern const TA_FuncDef TA_DEF_ADR;
 extern const TA_FuncDef TA_DEF_ADX;
 extern const TA_FuncDef TA_DEF_ADXR;
+extern const TA_FuncDef TA_DEF_ALLIGATOR;
 extern const TA_FuncDef TA_DEF_ALMA;
 extern const TA_FuncDef TA_DEF_AO;
 extern const TA_FuncDef TA_DEF_APO;
@@ -320,6 +321,7 @@ NULL };
 
 const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_ACCBANDS,
+&TA_DEF_ALLIGATOR,
 &TA_DEF_ALMA,
 &TA_DEF_BBANDS,
 &TA_DEF_CE,

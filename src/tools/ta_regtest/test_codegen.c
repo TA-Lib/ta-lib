@@ -912,6 +912,9 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * ~1e-13. Without this row it classifies EPSILON and the range gate fails
      * it by 5.8%. */
     {"RVIR",         TA_FUNC_UNST_RVI},
+    /* ALLIGATOR's three legs are TA_RMA of the median price, each seeded at its
+     * own lookback, so one RMA row warms all three. */
+    {"ALLIGATOR",    TA_FUNC_UNST_RMA},
     {"CKSP",         TA_FUNC_UNST_ATR},
     {"CE",           TA_FUNC_UNST_ATR},
     /* SUPERTREND is listed for the SECOND consumer of this map, not the first.

@@ -2056,7 +2056,10 @@ fn composed_sub_call_destination_funcs() {
     // Membership alone would not tell the next author WHICH invariant to keep:
     // no two of these are safe for the same reason. The reason is recorded with
     // each entry and printed on failure. (Reasons proved by kevinlincg, #205.)
-    let expected: [(&str, &str); 17] = [
+    let expected: [(&str, &str); 18] = [
+        ("ALLIGATOR", "each rma writes one of the three lines and is entered at lookbackTotal \
+                 over a median buffer that begins lookbackTotal bars before startIdx, so it \
+                 clamps nothing: its count is endIdx-startIdx+1, the count ALLIGATOR returns"),
         ("APO", "sub-call uses optInSlowPeriod and the body swaps so slow == max(slow,fast); \
                  the swap is load-bearing -- see apo_family_period_swap_is_a_write_bound_precondition"),
         ("BBW", "as KDJ -- var is handed outBegIdx/outNBElement themselves and BBW returns them \

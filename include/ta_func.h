@@ -892,6 +892,129 @@ TA_LIB_API TA_RetCode TA_ADXR_Advance( TA_ADXR_Stream *stream );
 TA_LIB_API TA_RetCode TA_ADXR_Clone( const TA_ADXR_Stream *stream, TA_ADXR_Stream **clone );
 
 /*
+ * TA_ALLIGATOR - Williams Alligator
+ * 
+ * Input  = High, Low
+ * Output = double, double, double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInJawPeriod:(From 1 to 100000)
+ *    Time period for the jaw line
+ * 
+ * optInJawShift:(From 0 to 100000)
+ *    Bars ahead the jaw line is drawn
+ * 
+ * optInTeethPeriod:(From 1 to 100000)
+ *    Time period for the teeth line
+ * 
+ * optInTeethShift:(From 0 to 100000)
+ *    Bars ahead the teeth line is drawn
+ * 
+ * optInLipsPeriod:(From 1 to 100000)
+ *    Time period for the lips line
+ * 
+ * optInLipsShift:(From 0 to 100000)
+ *    Bars ahead the lips line is drawn
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_ALLIGATOR( int    startIdx,
+                                    int    endIdx,
+                                               const double inHigh[],
+                                               const double inLow[],
+                                               int           optInJawPeriod, /* From 1 to 100000 */
+                                               int           optInJawShift, /* From 0 to 100000 */
+                                               int           optInTeethPeriod, /* From 1 to 100000 */
+                                               int           optInTeethShift, /* From 0 to 100000 */
+                                               int           optInLipsPeriod, /* From 1 to 100000 */
+                                               int           optInLipsShift, /* From 0 to 100000 */
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               double        outJaw[],
+                                               double        outTeeth[],
+                                               double        outLips[] );
+
+TA_LIB_API TA_RetCode TA_S_ALLIGATOR( int    startIdx,
+                                      int    endIdx,
+                                                 const float  inHigh[],
+                                                 const float  inLow[],
+                                                 int           optInJawPeriod, /* From 1 to 100000 */
+                                                 int           optInJawShift, /* From 0 to 100000 */
+                                                 int           optInTeethPeriod, /* From 1 to 100000 */
+                                                 int           optInTeethShift, /* From 0 to 100000 */
+                                                 int           optInLipsPeriod, /* From 1 to 100000 */
+                                                 int           optInLipsShift, /* From 0 to 100000 */
+                                                 int          *outBegIdx,
+                                                 int          *outNBElement,
+                                                 double        outJaw[],
+                                                 double        outTeeth[],
+                                                 double        outLips[] );
+
+TA_LIB_API int TA_ALLIGATOR_Lookback( int           optInJawPeriod, /* From 1 to 100000 */
+                                               int           optInJawShift, /* From 0 to 100000 */
+                                               int           optInTeethPeriod, /* From 1 to 100000 */
+                                               int           optInTeethShift, /* From 0 to 100000 */
+                                               int           optInLipsPeriod, /* From 1 to 100000 */
+                                               int           optInLipsShift );  /* From 0 to 100000 */
+TA_LIB_API int TA_ALLIGATOR_DisplayShift( int optInJawPeriod, int optInJawShift, int optInTeethPeriod, int optInTeethShift, int optInLipsPeriod, int optInLipsShift, int outputIdx );
+
+
+
+/*
+ * Streaming API for TA_ALLIGATOR: incremental per-bar evaluation.
+ */
+typedef struct TA_ALLIGATOR_Stream TA_ALLIGATOR_Stream;
+
+TA_LIB_API TA_RetCode TA_ALLIGATOR_Open( TA_ALLIGATOR_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInJawPeriod, int optInJawShift, int optInTeethPeriod, int optInTeethShift, int optInLipsPeriod, int optInLipsShift, double *outJaw, double *outTeeth, double *outLips );
+
+TA_LIB_API TA_RetCode TA_ALLIGATOR_Update( TA_ALLIGATOR_Stream *stream, double inHigh, double inLow, double *outJaw, double *outTeeth, double *outLips );
+
+TA_LIB_API TA_RetCode TA_ALLIGATOR_Peek( const TA_ALLIGATOR_Stream *stream, double inHigh, double inLow, double *outJaw, double *outTeeth, double *outLips );
+
+TA_LIB_API TA_RetCode TA_ALLIGATOR_Close( TA_ALLIGATOR_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_ALLIGATOR( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_ALLIGATOR_OpenAndFill( TA_ALLIGATOR_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInJawPeriod, int optInJawShift, int optInTeethPeriod, int optInTeethShift, int optInLipsPeriod, int optInLipsShift, int *outBegIdx, int *outNBElement, double outJaw[], double outTeeth[], double outLips[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_ALLIGATOR_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_ALLIGATOR_Value( const TA_ALLIGATOR_Stream *stream, double *outJaw, double *outTeeth, double *outLips );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_ALLIGATOR reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_ALLIGATOR_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_ALLIGATOR_OutRange( const TA_ALLIGATOR_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_ALLIGATOR_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_ALLIGATOR_Advance( TA_ALLIGATOR_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_ALLIGATOR_Clone( const TA_ALLIGATOR_Stream *stream, TA_ALLIGATOR_Stream **clone );
+
+/*
  * TA_ALMA - Arnaud Legoux Moving Average
  * 
  * Input  = double

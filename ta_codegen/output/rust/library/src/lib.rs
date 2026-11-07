@@ -245,9 +245,10 @@
 //! * [`WAVETREND`](Core::wavetrend) — WaveTrend Oscillator
 //! * [`WILLR`](Core::willr) — Williams' %R
 //!
-//! ## Overlap Studies (35)
+//! ## Overlap Studies (36)
 //!
 //! * [`ACCBANDS`](Core::accbands) — Acceleration Bands
+//! * [`ALLIGATOR`](Core::alligator) — Williams Alligator
 //! * [`ALMA`](Core::alma) — Arnaud Legoux Moving Average
 //! * [`BBANDS`](Core::bbands) — Bollinger Bands
 //! * [`CE`](Core::ce) — Chandelier Exit

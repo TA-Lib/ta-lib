@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 4:0:3
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 3187
+function-count 3200
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -283,6 +283,16 @@ function TA_RetCode TA_AD_OutRange(const TA_AD_Stream *, int *, int *)
 function TA_RetCode TA_AD_Peek(const TA_AD_Stream *, double, double, double, double, double *)
 function TA_RetCode TA_AD_Update(TA_AD_Stream *, double, double, double, double, double *)
 function TA_RetCode TA_AD_Value(const TA_AD_Stream *, double *)
+function TA_RetCode TA_ALLIGATOR(int, int, const double *, const double *, int, int, int, int, int, int, int *, int *, double *, double *, double *)
+function TA_RetCode TA_ALLIGATOR_Advance(TA_ALLIGATOR_Stream *)
+function TA_RetCode TA_ALLIGATOR_Clone(const TA_ALLIGATOR_Stream *, TA_ALLIGATOR_Stream **)
+function TA_RetCode TA_ALLIGATOR_Close(TA_ALLIGATOR_Stream *)
+function TA_RetCode TA_ALLIGATOR_Open(TA_ALLIGATOR_Stream **, const double *, const double *, int, int, int, int, int, int, int, double *, double *, double *)
+function TA_RetCode TA_ALLIGATOR_OpenAndFill(TA_ALLIGATOR_Stream **, const double *, const double *, int, int, int, int, int, int, int, int *, int *, double *, double *, double *)
+function TA_RetCode TA_ALLIGATOR_OutRange(const TA_ALLIGATOR_Stream *, int *, int *)
+function TA_RetCode TA_ALLIGATOR_Peek(const TA_ALLIGATOR_Stream *, double, double, double *, double *, double *)
+function TA_RetCode TA_ALLIGATOR_Update(TA_ALLIGATOR_Stream *, double, double, double *, double *, double *)
+function TA_RetCode TA_ALLIGATOR_Value(const TA_ALLIGATOR_Stream *, double *, double *, double *)
 function TA_RetCode TA_ALMA(int, int, const double *, int, double, double, int *, int *, double *)
 function TA_RetCode TA_ALMA_Advance(TA_ALMA_Stream *)
 function TA_RetCode TA_ALMA_Clone(const TA_ALMA_Stream *, TA_ALMA_Stream **)
@@ -2400,6 +2410,7 @@ function TA_RetCode TA_S_ADOSC(int, int, const float *, const float *, const flo
 function TA_RetCode TA_S_ADR(int, int, const float *, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_ADX(int, int, const float *, const float *, const float *, int, int *, int *, double *)
 function TA_RetCode TA_S_ADXR(int, int, const float *, const float *, const float *, int, int *, int *, double *)
+function TA_RetCode TA_S_ALLIGATOR(int, int, const float *, const float *, int, int, int, int, int, int, int *, int *, double *, double *, double *)
 function TA_RetCode TA_S_ALMA(int, int, const float *, int, double, double, int *, int *, double *)
 function TA_RetCode TA_S_AO(int, int, const float *, const float *, int, int, int *, int *, double *)
 function TA_RetCode TA_S_APO(int, int, const float *, int, int, TA_MAType, int *, int *, double *)
@@ -2911,6 +2922,8 @@ function int TA_ADX_DisplayShift(int, int)
 function int TA_ADX_Lookback(int)
 function int TA_AD_DisplayShift(int)
 function int TA_AD_Lookback(void)
+function int TA_ALLIGATOR_DisplayShift(int, int, int, int, int, int, int)
+function int TA_ALLIGATOR_Lookback(int, int, int, int, int, int)
 function int TA_ALMA_DisplayShift(int, double, double, int)
 function int TA_ALMA_Lookback(int, double, double)
 function int TA_AO_DisplayShift(int, int, int)

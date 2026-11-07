@@ -119,6 +119,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 ## Overlap Studies
 
 - [ACCBANDS](/functions/accbands.md) — Acceleration Bands
+- [ALLIGATOR](/functions/alligator.md) — Williams Alligator
 - [ALMA](/functions/alma.md) — Arnaud Legoux Moving Average
 - [BBANDS](/functions/bbands.md) — Bollinger Bands
 - [CE](/functions/ce.md) — Chandelier Exit

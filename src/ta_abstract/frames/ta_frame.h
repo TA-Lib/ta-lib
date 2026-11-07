@@ -146,6 +146,17 @@ unsigned int TA_ADXR_FramePPLB( const TA_ParamHolderPriv *params )
 int TA_ADXR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 ;
 
+TA_RetCode TA_ALLIGATOR_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_ALLIGATOR_FramePPLB( const TA_ParamHolderPriv *params )
+;
+int TA_ALLIGATOR_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+;
+
 TA_RetCode TA_ALMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

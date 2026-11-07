@@ -37,12 +37,12 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  MAType, accbands, accbandsOpen, accbandsOpenAndFill, alma, almaOpen,
-  almaOpenAndFill, bbands, bbandsOpen, bbandsOpenAndFill, ce, ceOpen,
-  ceOpenAndFill, cksp, ckspOpen, ckspOpenAndFill, dema, demaOpen,
-  demaOpenAndFill, donchian, donchianOpen, donchianOpenAndFill, ema, emaOpen,
-  emaOpenAndFill, frama, framaOpen, framaOpenAndFill, hma, hmaOpen,
-  hmaOpenAndFill, htTrendline, htTrendlineOpen, htTrendlineOpenAndFill,
+  MAType, accbands, accbandsOpen, accbandsOpenAndFill, alligator, alligatorOpen,
+  alligatorOpenAndFill, alma, almaOpen, almaOpenAndFill, bbands, bbandsOpen,
+  bbandsOpenAndFill, ce, ceOpen, ceOpenAndFill, cksp, ckspOpen, ckspOpenAndFill,
+  dema, demaOpen, demaOpenAndFill, donchian, donchianOpen, donchianOpenAndFill,
+  ema, emaOpen, emaOpenAndFill, frama, framaOpen, framaOpenAndFill, hma,
+  hmaOpen, hmaOpenAndFill, htTrendline, htTrendlineOpen, htTrendlineOpenAndFill,
   ichimoku, ichimokuOpen, ichimokuOpenAndFill, kama, kamaOpen, kamaOpenAndFill,
   kc, kcOpen, kcOpenAndFill, ma, maOpen, maOpenAndFill, mama, mamaOpen,
   mamaOpenAndFill, mavp, mavpOpen, mavpOpenAndFill, mcgd, mcgdOpen,
@@ -124,6 +124,92 @@ test('ACCBANDS: accbandsOpenAndFill example', () => {
     assert.ok(Object.is(outUpperBand[k], batch.outUpperBand[k]));
     assert.ok(Object.is(outMiddleBand[k], batch.outMiddleBand[k]));
     assert.ok(Object.is(outLowerBand[k], batch.outLowerBand[k]));
+  }
+});
+
+test('ALLIGATOR: alligator example', () => {
+  const high = Float64Array.from({ length: 252 }, (_, i) =>
+    101 + 10 * Math.sin(0.1 * i));
+  const low = Float64Array.from({ length: 252 }, (_, i) =>
+    99 + 10 * Math.sin(0.1 * i));
+  const { begIdx, outJaw, outTeeth, outLips } = alligator({ high, low }, {
+    jawPeriod: 13,
+    jawShift: 8,
+    teethPeriod: 8,
+    teethShift: 5,
+    lipsPeriod: 5,
+    lipsShift: 3,
+  });
+  // outJaw[k] is the value at bar begIdx + k
+
+  const count = outJaw.length;
+  assert.ok(count > 0);
+  assert.equal(begIdx + count, high.length);
+  assert.equal(outTeeth.length, count);
+  assert.equal(outLips.length, count);
+  assert.ok(outJaw.every(Number.isFinite));
+});
+
+test('ALLIGATOR: alligatorOpen example', () => {
+  const high = Float64Array.from({ length: 252 }, (_, i) =>
+    101 + 10 * Math.sin(0.1 * i));
+  const low = Float64Array.from({ length: 252 }, (_, i) =>
+    99 + 10 * Math.sin(0.1 * i));
+  const stream = alligatorOpen({ high, low }, {
+    jawPeriod: 13,
+    jawShift: 8,
+    teethPeriod: 8,
+    teethShift: 5,
+    lipsPeriod: 5,
+    lipsShift: 3,
+  });
+  const peeked = stream.peek(101.4, 99.1); // a forming bar: commits nothing
+  const updated = stream.update(101.4, 99.1); // the bar closes
+
+  assert.ok(Object.is(peeked.outJaw, updated.outJaw));
+  assert.ok(Object.is(peeked.outTeeth, updated.outTeeth));
+  assert.ok(Object.is(peeked.outLips, updated.outLips));
+  const range = stream.outRange();
+  assert.equal(range.begIdx + range.count, high.length + 1);
+});
+
+test('ALLIGATOR: alligatorOpenAndFill example', () => {
+  const high = Float64Array.from({ length: 252 }, (_, i) =>
+    101 + 10 * Math.sin(0.1 * i));
+  const low = Float64Array.from({ length: 252 }, (_, i) =>
+    99 + 10 * Math.sin(0.1 * i));
+  const {
+    stream,
+    begIdx,
+    outJaw,
+    outTeeth,
+    outLips,
+  } = alligatorOpenAndFill({ high, low }, {
+    jawPeriod: 13,
+    jawShift: 8,
+    teethPeriod: 8,
+    teethShift: 5,
+    lipsPeriod: 5,
+    lipsShift: 3,
+  });
+  // outJaw[k] is the value at bar begIdx + k
+
+  const range = stream.outRange();
+  const batch = alligator({ high, low }, {
+    jawPeriod: 13,
+    jawShift: 8,
+    teethPeriod: 8,
+    teethShift: 5,
+    lipsPeriod: 5,
+    lipsShift: 3,
+  });
+  assert.deepEqual([begIdx, outJaw.length], [range.begIdx, range.count]);
+  assert.deepEqual([begIdx, outJaw.length], [batch.begIdx, batch.outJaw.length]);
+  assert.ok(outJaw.length > 0);
+  for (let k = 0; k < outJaw.length; k++) {
+    assert.ok(Object.is(outJaw[k], batch.outJaw[k]));
+    assert.ok(Object.is(outTeeth[k], batch.outTeeth[k]));
+    assert.ok(Object.is(outLips[k], batch.outLips[k]));
   }
 });
 

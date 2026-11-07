@@ -129,6 +129,7 @@ public final class Functions {
       put(m, f_ADR());
       put(m, f_ADX());
       put(m, f_ADXR());
+      put(m, f_ALLIGATOR());
       put(m, f_ALMA());
       put(m, f_AO());
       put(m, f_APO());
@@ -528,6 +529,51 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_ALLIGATOR() {
+      return new FuncInfo(
+         "ALLIGATOR", "Overlap Studies", "Williams Alligator", 0x03000002,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInJawPeriod", 0x00000000,
+               "Jaw Period", "Time period for the jaw line", 13.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInJawShift", 0x00000000,
+               "Jaw Shift", "Bars ahead the jaw line is drawn", 8.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               0, 100000, 0, 30, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTeethPeriod", 0x00000000,
+               "Teeth Period", "Time period for the teeth line", 8.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTeethShift", 0x00000000,
+               "Teeth Shift", "Bars ahead the teeth line is drawn", 5.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               0, 100000, 0, 30, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInLipsPeriod", 0x00000000,
+               "Lips Period", "Time period for the lips line", 5.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInLipsShift", 0x00000000,
+               "Lips Shift", "Bars ahead the lips line is drawn", 3.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               0, 100000, 0, 30, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outJaw", 0x00004001),
+            new OutputInfo(OutputType.REAL, "outTeeth", 0x00004001),
+            new OutputInfo(OutputType.REAL, "outLips", 0x00004001)
          ));
    }
 
