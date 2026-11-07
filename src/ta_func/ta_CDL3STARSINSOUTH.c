@@ -212,14 +212,14 @@ TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH( int    startIdx,
           (!(inClose[i] >= inOpen[i]))) == 3) )    /* 3rd black */
       {
          outInteger[outIdx++] = ((100) & -(int)(((fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & /* 1st: long */
-             ((((inClose[i - 2] >= inOpen[i - 2]) ? inOpen[i - 2] : inClose[i - 2]) - inLow[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i - 2)) & /* with long lower shadow */
+             ((TA_COLOR_MIN(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i - 2)) & /* with long lower shadow */
              (fabs(inClose[i - 1] - inOpen[i - 1]) < fabs(inClose[i - 2] - inOpen[i - 2])) & /* 2nd: smaller candle */
              (inOpen[i - 1] > inClose[i - 2]) & (inOpen[i - 1] <= inHigh[i - 2]) & /* that opens higher but within 1st range */
              (inLow[i - 1] < inClose[i - 2]) & /* and trades lower than 1st close */
              (inLow[i - 1] >= inLow[i - 2]) &  /* but not lower than 1st low */
-             ((((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & /* and has a lower shadow */
+             ((TA_COLOR_MIN(inClose[i - 1], inOpen[i - 1]) - inLow[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & /* and has a lower shadow */
              (fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i)) & /* 3rd: small marubozu */
-             ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & (inLow[i] > inLow[i - 1]) & (inHigh[i] < inHigh[i - 1])))); /* engulfed by prior candle's range */
+             ((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & ((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & (inLow[i] > inLow[i - 1]) & (inHigh[i] < inHigh[i - 1])))); /* engulfed by prior candle's range */
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -304,14 +304,14 @@ TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH( int    startIdx,
           (!(inClose[i] >= inOpen[i]))) == 3) )    /* 3rd black */
       {
          outInteger[outIdx++] = ((100) & -(int)(((fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & /* 1st: long */
-             ((((inClose[i - 2] >= inOpen[i - 2]) ? inOpen[i - 2] : inClose[i - 2]) - inLow[i - 2]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i - 2)) & /* with long lower shadow */
+             ((TA_COLOR_MIN(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i - 2)) & /* with long lower shadow */
              (fabs(inClose[i - 1] - inOpen[i - 1]) < fabs(inClose[i - 2] - inOpen[i - 2])) & /* 2nd: smaller candle */
              (inOpen[i - 1] > inClose[i - 2]) & (inOpen[i - 1] <= inHigh[i - 2]) & /* that opens higher but within 1st range */
              (inLow[i - 1] < inClose[i - 2]) & /* and trades lower than 1st close */
              (inLow[i - 1] >= inLow[i - 2]) &  /* but not lower than 1st low */
-             ((((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) > TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & /* and has a lower shadow */
+             ((TA_COLOR_MIN(inClose[i - 1], inOpen[i - 1]) - inLow[i - 1]) > TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & /* and has a lower shadow */
              (fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i)) & /* 3rd: small marubozu */
-             ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & (inLow[i] > inLow[i - 1]) & (inHigh[i] < inHigh[i - 1])))); /* engulfed by prior candle's range */
+             ((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & ((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & (inLow[i] > inLow[i - 1]) & (inHigh[i] < inHigh[i - 1])))); /* engulfed by prior candle's range */
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -452,7 +452,7 @@ TA_RetCode TA_S_CDL3STARSINSOUTH( int    startIdx,
    {
       if( (((!((double)inClose[i - 2] >= (double)inOpen[i - 2])) + (!((double)inClose[i - 1] >= (double)inOpen[i - 1])) + (!((double)inClose[i] >= (double)inOpen[i]))) == 3) )
       {
-         outInteger[outIdx++] = ((100) & -(int)(((fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & (((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? (double)inOpen[i - 2] : (double)inClose[i - 2]) - (double)inLow[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i - 2)) & (fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) < fabs((double)inClose[i - 2] - (double)inOpen[i - 2])) & ((double)inOpen[i - 1] > (double)inClose[i - 2]) & ((double)inOpen[i - 1] <= (double)inHigh[i - 2]) & ((double)inLow[i - 1] < (double)inClose[i - 2]) & ((double)inLow[i - 1] >= (double)inLow[i - 2]) & (((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? (double)inOpen[i - 1] : (double)inClose[i - 1]) - (double)inLow[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & (fabs((double)inClose[i] - (double)inOpen[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i)) & (((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & (((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & ((double)inLow[i] > (double)inLow[i - 1]) & ((double)inHigh[i] < (double)inHigh[i - 1]))));
+         outInteger[outIdx++] = ((100) & -(int)(((fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & ((TA_COLOR_MIN((double)inClose[i - 2], (double)inOpen[i - 2]) - (double)inLow[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i - 2)) & (fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) < fabs((double)inClose[i - 2] - (double)inOpen[i - 2])) & ((double)inOpen[i - 1] > (double)inClose[i - 2]) & ((double)inOpen[i - 1] <= (double)inHigh[i - 2]) & ((double)inLow[i - 1] < (double)inClose[i - 2]) & ((double)inLow[i - 1] >= (double)inLow[i - 2]) & ((TA_COLOR_MIN((double)inClose[i - 1], (double)inOpen[i - 1]) - (double)inLow[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & (fabs((double)inClose[i] - (double)inOpen[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i)) & ((TA_COLOR_MIN((double)inClose[i], (double)inOpen[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & (((double)inHigh[i] - TA_COLOR_MAX((double)inClose[i], (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & ((double)inLow[i] > (double)inLow[i - 1]) & ((double)inHigh[i] < (double)inHigh[i - 1]))));
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -520,7 +520,7 @@ TA_RetCode TA_S_CDL3STARSINSOUTH( int    startIdx,
    {
       if( (((!((double)inClose[i - 2] >= (double)inOpen[i - 2])) + (!((double)inClose[i - 1] >= (double)inOpen[i - 1])) + (!((double)inClose[i] >= (double)inOpen[i]))) == 3) )
       {
-         outInteger[outIdx++] = ((100) & -(int)(((fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & (((((double)inClose[i - 2] >= (double)inOpen[i - 2]) ? (double)inOpen[i - 2] : (double)inClose[i - 2]) - (double)inLow[i - 2]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i - 2)) & (fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) < fabs((double)inClose[i - 2] - (double)inOpen[i - 2])) & ((double)inOpen[i - 1] > (double)inClose[i - 2]) & ((double)inOpen[i - 1] <= (double)inHigh[i - 2]) & ((double)inLow[i - 1] < (double)inClose[i - 2]) & ((double)inLow[i - 1] >= (double)inLow[i - 2]) & (((((double)inClose[i - 1] >= (double)inOpen[i - 1]) ? (double)inOpen[i - 1] : (double)inClose[i - 1]) - (double)inLow[i - 1]) > TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & (fabs((double)inClose[i] - (double)inOpen[i]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i)) & (((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & (((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & ((double)inLow[i] > (double)inLow[i - 1]) & ((double)inHigh[i] < (double)inHigh[i - 1]))));
+         outInteger[outIdx++] = ((100) & -(int)(((fabs((double)inClose[i - 2] - (double)inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & ((TA_COLOR_MIN((double)inClose[i - 2], (double)inOpen[i - 2]) - (double)inLow[i - 2]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i - 2)) & (fabs((double)inClose[i - 1] - (double)inOpen[i - 1]) < fabs((double)inClose[i - 2] - (double)inOpen[i - 2])) & ((double)inOpen[i - 1] > (double)inClose[i - 2]) & ((double)inOpen[i - 1] <= (double)inHigh[i - 2]) & ((double)inLow[i - 1] < (double)inClose[i - 2]) & ((double)inLow[i - 1] >= (double)inLow[i - 2]) & ((TA_COLOR_MIN((double)inClose[i - 1], (double)inOpen[i - 1]) - (double)inLow[i - 1]) > TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & (fabs((double)inClose[i] - (double)inOpen[i]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i)) & ((TA_COLOR_MIN((double)inClose[i], (double)inOpen[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & (((double)inHigh[i] - TA_COLOR_MAX((double)inClose[i], (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & ((double)inLow[i] > (double)inLow[i - 1]) & ((double)inHigh[i] < (double)inHigh[i - 1]))));
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -616,16 +616,16 @@ static void TA_CDL3STARSINSOUTH_StepImpl( struct TA_CDL3STARSINSOUTH_Stream *sp,
        ((inClose >= inOpen) ? 1 : -1) == -1 )                    /* 3rd black */
    {
       if( fabs(sp->lag2_inClose - sp->lag2_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: long */
-          (((sp->lag2_inClose >= sp->lag2_inOpen) ? sp->lag2_inOpen : sp->lag2_inClose) - sp->lag2_inLow) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* with long lower shadow */
+          (TA_COLOR_MIN(sp->lag2_inClose, sp->lag2_inOpen) - sp->lag2_inLow) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* with long lower shadow */
           fabs(sp->lag1_inClose - sp->lag1_inOpen) < fabs(sp->lag2_inClose - sp->lag2_inOpen) && /* 2nd: smaller candle */
           sp->lag1_inOpen > sp->lag2_inClose &&
           sp->lag1_inOpen <= sp->lag2_inHigh && /* that opens higher but within 1st range */
           sp->lag1_inLow < sp->lag2_inClose &&  /* and trades lower than 1st close */
           sp->lag1_inLow >= sp->lag2_inLow &&   /* but not lower than 1st low */
-          (((sp->lag1_inClose >= sp->lag1_inOpen) ? sp->lag1_inOpen : sp->lag1_inClose) - sp->lag1_inLow) > TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) && /* and has a lower shadow */
+          (TA_COLOR_MIN(sp->lag1_inClose, sp->lag1_inOpen) - sp->lag1_inLow) > TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) && /* and has a lower shadow */
           fabs(inClose - inOpen) < TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyShortPeriodTotal,inOpen,inHigh,inLow,inClose) && /* 3rd: small marubozu */
-          (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) &&
-          (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) &&
+          (TA_COLOR_MIN(inClose, inOpen) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) &&
+          (inHigh - TA_COLOR_MAX(inClose, inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) &&
           inLow > sp->lag1_inLow &&
           inHigh < sp->lag1_inHigh )            /* engulfed by prior candle's range */
       {
@@ -793,14 +793,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3STARSINSOUTH_OpenBody( struct TA_CDL3STA
              (!(inClose[i] >= inOpen[i]))) == 3) )    /* 3rd black */
          {
             outInteger[outIdx++ * outStride] = ((100) & -(int)(((fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & /* 1st: long */
-                ((((inClose[i - 2] >= inOpen[i - 2]) ? inOpen[i - 2] : inClose[i - 2]) - inLow[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i - 2)) & /* with long lower shadow */
+                ((TA_COLOR_MIN(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i - 2)) & /* with long lower shadow */
                 (fabs(inClose[i - 1] - inOpen[i - 1]) < fabs(inClose[i - 2] - inOpen[i - 2])) & /* 2nd: smaller candle */
                 (inOpen[i - 1] > inClose[i - 2]) & (inOpen[i - 1] <= inHigh[i - 2]) & /* that opens higher but within 1st range */
                 (inLow[i - 1] < inClose[i - 2]) & /* and trades lower than 1st close */
                 (inLow[i - 1] >= inLow[i - 2]) &  /* but not lower than 1st low */
-                ((((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & /* and has a lower shadow */
+                ((TA_COLOR_MIN(inClose[i - 1], inOpen[i - 1]) - inLow[i - 1]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & /* and has a lower shadow */
                 (fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i)) & /* 3rd: small marubozu */
-                ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & (inLow[i] > inLow[i - 1]) & (inHigh[i] < inHigh[i - 1])))); /* engulfed by prior candle's range */
+                ((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & ((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & (inLow[i] > inLow[i - 1]) & (inHigh[i] < inHigh[i - 1])))); /* engulfed by prior candle's range */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -954,14 +954,14 @@ static TA_OPEN_INLINE TA_RetCode TA_CDL3STARSINSOUTH_OpenBody( struct TA_CDL3STA
              (!(inClose[i] >= inOpen[i]))) == 3) )    /* 3rd black */
          {
             outInteger[outIdx++ * outStride] = ((100) & -(int)(((fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i - 2)) & /* 1st: long */
-                ((((inClose[i - 2] >= inOpen[i - 2]) ? inOpen[i - 2] : inClose[i - 2]) - inLow[i - 2]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i - 2)) & /* with long lower shadow */
+                ((TA_COLOR_MIN(inClose[i - 2], inOpen[i - 2]) - inLow[i - 2]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i - 2)) & /* with long lower shadow */
                 (fabs(inClose[i - 1] - inOpen[i - 1]) < fabs(inClose[i - 2] - inOpen[i - 2])) & /* 2nd: smaller candle */
                 (inOpen[i - 1] > inClose[i - 2]) & (inOpen[i - 1] <= inHigh[i - 2]) & /* that opens higher but within 1st range */
                 (inLow[i - 1] < inClose[i - 2]) & /* and trades lower than 1st close */
                 (inLow[i - 1] >= inLow[i - 2]) &  /* but not lower than 1st low */
-                ((((inClose[i - 1] >= inOpen[i - 1]) ? inOpen[i - 1] : inClose[i - 1]) - inLow[i - 1]) > TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & /* and has a lower shadow */
+                ((TA_COLOR_MIN(inClose[i - 1], inOpen[i - 1]) - inLow[i - 1]) > TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[1],i - 1)) & /* and has a lower shadow */
                 (fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE_OF(BodyShort_rangeType,BodyShort_avgPeriod,BodyShort_factor,BodyShortPeriodTotal,i)) & /* 3rd: small marubozu */
-                ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & (inLow[i] > inLow[i - 1]) & (inHigh[i] < inHigh[i - 1])))); /* engulfed by prior candle's range */
+                ((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & ((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal[0],i)) & (inLow[i] > inLow[i - 1]) & (inHigh[i] < inHigh[i - 1])))); /* engulfed by prior candle's range */
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -1156,16 +1156,16 @@ TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_Peek( const TA_CDL3STARSINSOUTH_Stream
        ((inClose >= inOpen) ? 1 : -1) == -1 )                    /* 3rd black */
    {
       if( fabs(sp->lag2_inClose - sp->lag2_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: long */
-          (((sp->lag2_inClose >= sp->lag2_inOpen) ? sp->lag2_inOpen : sp->lag2_inClose) - sp->lag2_inLow) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* with long lower shadow */
+          (TA_COLOR_MIN(sp->lag2_inClose, sp->lag2_inOpen) - sp->lag2_inLow) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* with long lower shadow */
           fabs(sp->lag1_inClose - sp->lag1_inOpen) < fabs(sp->lag2_inClose - sp->lag2_inOpen) && /* 2nd: smaller candle */
           sp->lag1_inOpen > sp->lag2_inClose &&
           sp->lag1_inOpen <= sp->lag2_inHigh && /* that opens higher but within 1st range */
           sp->lag1_inLow < sp->lag2_inClose &&  /* and trades lower than 1st close */
           sp->lag1_inLow >= sp->lag2_inLow &&   /* but not lower than 1st low */
-          (((sp->lag1_inClose >= sp->lag1_inOpen) ? sp->lag1_inOpen : sp->lag1_inClose) - sp->lag1_inLow) > TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) && /* and has a lower shadow */
+          (TA_COLOR_MIN(sp->lag1_inClose, sp->lag1_inOpen) - sp->lag1_inLow) > TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) && /* and has a lower shadow */
           fabs(inClose - inOpen) < TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyShortPeriodTotal,inOpen,inHigh,inLow,inClose) && /* 3rd: small marubozu */
-          (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) &&
-          (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) &&
+          (TA_COLOR_MIN(inClose, inOpen) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) &&
+          (inHigh - TA_COLOR_MAX(inClose, inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) &&
           inLow > sp->lag1_inLow &&
           inHigh < sp->lag1_inHigh )            /* engulfed by prior candle's range */
       {

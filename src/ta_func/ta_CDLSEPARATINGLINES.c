@@ -188,8 +188,8 @@ TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES( int    startIdx,
       {
          outInteger[outIdx++] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i)) & /* belt hold: long body */
              (((inClose[i] >= inOpen[i]) & /* with no lower shadow if bullish */
-             ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!(inClose[i] >= inOpen[i])) & /* with no upper shadow if bearish */
-             ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
+             ((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!(inClose[i] >= inOpen[i])) & /* with no upper shadow if bearish */
+             ((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -254,8 +254,8 @@ TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES( int    startIdx,
       {
          outInteger[outIdx++] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i)) & /* belt hold: long body */
              (((inClose[i] >= inOpen[i]) & /* with no lower shadow if bullish */
-             ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!(inClose[i] >= inOpen[i])) & /* with no upper shadow if bearish */
-             ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
+             ((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!(inClose[i] >= inOpen[i])) & /* with no upper shadow if bearish */
+             ((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -368,7 +368,7 @@ TA_RetCode TA_S_CDLSEPARATINGLINES( int    startIdx,
    {
       if( (((((double)inClose[i - 1] >= (double)inOpen[i - 1]) != ((double)inClose[i] >= (double)inOpen[i])) + ((double)inOpen[i] <= (double)inOpen[i - 1] + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1)) + ((double)inOpen[i] >= (double)inOpen[i - 1] - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1))) == 3) )
       {
-         outInteger[outIdx++] = (((((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i)) & ((((double)inClose[i] >= (double)inOpen[i]) & (((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!((double)inClose[i] >= (double)inOpen[i])) & (((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
+         outInteger[outIdx++] = (((((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i)) & ((((double)inClose[i] >= (double)inOpen[i]) & ((TA_COLOR_MIN((double)inClose[i], (double)inOpen[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!((double)inClose[i] >= (double)inOpen[i])) & (((double)inHigh[i] - TA_COLOR_MAX((double)inClose[i], (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -417,7 +417,7 @@ TA_RetCode TA_S_CDLSEPARATINGLINES( int    startIdx,
    {
       if( (((((double)inClose[i - 1] >= (double)inOpen[i - 1]) != ((double)inClose[i] >= (double)inOpen[i])) + ((double)inOpen[i] <= (double)inOpen[i - 1] + TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1)) + ((double)inOpen[i] >= (double)inOpen[i - 1] - TA_CANDLEAVERAGE_OF(Equal_rangeType,Equal_avgPeriod,Equal_factor,EqualPeriodTotal,i - 1))) == 3) )
       {
-         outInteger[outIdx++] = (((((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i)) & ((((double)inClose[i] >= (double)inOpen[i]) & (((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!((double)inClose[i] >= (double)inOpen[i])) & (((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
+         outInteger[outIdx++] = (((((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i)) & ((((double)inClose[i] >= (double)inOpen[i]) & ((TA_COLOR_MIN((double)inClose[i], (double)inOpen[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!((double)inClose[i] >= (double)inOpen[i])) & (((double)inHigh[i] - TA_COLOR_MAX((double)inClose[i], (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -491,9 +491,9 @@ static void TA_CDLSEPARATINGLINES_StepImpl( struct TA_CDLSEPARATINGLINES_Stream 
    {
       if( fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* belt hold: long body */
           ((((inClose >= inOpen) ? 1 : -1) == 1 &&  /* with no lower shadow if bullish */
-            (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose)) ||
+            (TA_COLOR_MIN(inClose, inOpen) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose)) ||
            (((inClose >= inOpen) ? 1 : -1) == -1 && /* with no upper shadow if bearish */
-            (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose))) )
+            (inHigh - TA_COLOR_MAX(inClose, inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose))) )
       {
          *outInteger= ((inClose >= inOpen) ? 1 : -1) * 100;
       } else 
@@ -622,8 +622,8 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLSEPARATINGLINES_OpenBody( struct TA_CDLSE
          {
             outInteger[outIdx++ * outStride] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i)) & /* belt hold: long body */
                 (((inClose[i] >= inOpen[i]) & /* with no lower shadow if bullish */
-                ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!(inClose[i] >= inOpen[i])) & /* with no upper shadow if bearish */
-                ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
+                ((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!(inClose[i] >= inOpen[i])) & /* with no upper shadow if bearish */
+                ((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -738,8 +738,8 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLSEPARATINGLINES_OpenBody( struct TA_CDLSE
          {
             outInteger[outIdx++ * outStride] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i)) & /* belt hold: long body */
                 (((inClose[i] >= inOpen[i]) & /* with no lower shadow if bullish */
-                ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!(inClose[i] >= inOpen[i])) & /* with no upper shadow if bearish */
-                ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
+                ((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!(inClose[i] >= inOpen[i])) & /* with no upper shadow if bearish */
+                ((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -909,9 +909,9 @@ TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_Peek( const TA_CDLSEPARATINGLINES_St
    {
       if( fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* belt hold: long body */
           ((((inClose >= inOpen) ? 1 : -1) == 1 &&  /* with no lower shadow if bullish */
-            (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose)) ||
+            (TA_COLOR_MIN(inClose, inOpen) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose)) ||
            (((inClose >= inOpen) ? 1 : -1) == -1 && /* with no upper shadow if bearish */
-            (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose))) )
+            (inHigh - TA_COLOR_MAX(inClose, inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose))) )
       {
          *outInteger= ((inClose >= inOpen) ? 1 : -1) * 100;
       } else 

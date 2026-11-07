@@ -2747,6 +2747,20 @@ fn render_func_call(
         return macro_call;
     }
 
+    // A candle's colour picks open or close by a near coin flip: the macros
+    // keep it maxsd/minsd, where the inlined `?:` can compile to a branch.
+    match (fname, args) {
+        ("ta_uppershadow", [h, c, o]) => {
+            let r = |e: &Expr| render_expr(e, ctx, registry, helpers);
+            return format!("({} - TA_COLOR_MAX({}, {}))", r(h), r(c), r(o));
+        }
+        ("ta_lowershadow", [l, c, o]) => {
+            let r = |e: &Expr| render_expr(e, ctx, registry, helpers);
+            return format!("(TA_COLOR_MIN({}, {}) - {})", r(c), r(o), r(l));
+        }
+        _ => {}
+    }
+
     // Check if this is a call to a helper function that can be inlined
     if let Some(helper) = helpers.get(fname) {
         if let Some(inlined_expr) = try_inline_expr(helper, args) {

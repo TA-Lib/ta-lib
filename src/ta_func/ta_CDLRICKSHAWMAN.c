@@ -185,8 +185,8 @@ TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN( int    startIdx,
    {
       if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) ) /* doji */
       {
-         outInteger[outIdx++] = ((100) & -(int)((((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long shadow */
-             ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long shadow */
+         outInteger[outIdx++] = ((100) & -(int)((((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long shadow */
+             ((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long shadow */
              ((inOpen[i] <= inLow[i] + (inHigh[i] - inLow[i]) / 2 + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i)) | (inClose[i] <= inLow[i] + (inHigh[i] - inLow[i]) / 2 + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i))) & /* body near midpoint */
              ((inOpen[i] >= inLow[i] + (inHigh[i] - inLow[i]) / 2 - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i)) | (inClose[i] >= inLow[i] + (inHigh[i] - inLow[i]) / 2 - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i))))));
       } else 
@@ -250,8 +250,8 @@ TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN( int    startIdx,
    {
       if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) ) /* doji */
       {
-         outInteger[outIdx++] = ((100) & -(int)((((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long shadow */
-             ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long shadow */
+         outInteger[outIdx++] = ((100) & -(int)((((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long shadow */
+             ((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long shadow */
              ((inOpen[i] <= inLow[i] + (inHigh[i] - inLow[i]) / 2 + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i)) | (inClose[i] <= inLow[i] + (inHigh[i] - inLow[i]) / 2 + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i))) & /* body near midpoint */
              ((inOpen[i] >= inLow[i] + (inHigh[i] - inLow[i]) / 2 - TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i)) | (inClose[i] >= inLow[i] + (inHigh[i] - inLow[i]) / 2 - TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i))))));
       } else 
@@ -365,7 +365,7 @@ TA_RetCode TA_S_CDLRICKSHAWMAN( int    startIdx,
    {
       if( fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) )
       {
-         outInteger[outIdx++] = ((100) & -(int)(((((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & (((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & (((double)inOpen[i] <= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i)) | ((double)inClose[i] <= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i))) & (((double)inOpen[i] >= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i)) | ((double)inClose[i] >= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i))))));
+         outInteger[outIdx++] = ((100) & -(int)((((TA_COLOR_MIN((double)inClose[i], (double)inOpen[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & (((double)inHigh[i] - TA_COLOR_MAX((double)inClose[i], (double)inOpen[i])) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & (((double)inOpen[i] <= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i)) | ((double)inClose[i] <= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i))) & (((double)inOpen[i] >= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i)) | ((double)inClose[i] >= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i))))));
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -413,7 +413,7 @@ TA_RetCode TA_S_CDLRICKSHAWMAN( int    startIdx,
    {
       if( fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) )
       {
-         outInteger[outIdx++] = ((100) & -(int)(((((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & (((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & (((double)inOpen[i] <= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i)) | ((double)inClose[i] <= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i))) & (((double)inOpen[i] >= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 - TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i)) | ((double)inClose[i] >= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 - TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i))))));
+         outInteger[outIdx++] = ((100) & -(int)((((TA_COLOR_MIN((double)inClose[i], (double)inOpen[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & (((double)inHigh[i] - TA_COLOR_MAX((double)inClose[i], (double)inOpen[i])) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & (((double)inOpen[i] <= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i)) | ((double)inClose[i] <= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i))) & (((double)inOpen[i] >= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 - TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i)) | ((double)inClose[i] >= (double)inLow[i] + ((double)inHigh[i] - (double)inLow[i]) / 2 - TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i))))));
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -481,8 +481,8 @@ static void TA_CDLRICKSHAWMAN_StepImpl( struct TA_CDLRICKSHAWMAN_Stream *sp, dou
    }
    if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) ) /* doji */
    {
-      if( (((inClose >= inOpen) ? inOpen : inClose) - inLow) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long shadow */
-          (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long shadow */
+      if( (TA_COLOR_MIN(inClose, inOpen) - inLow) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long shadow */
+          (inHigh - TA_COLOR_MAX(inClose, inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long shadow */
           (min(inOpen,inClose) <= inLow + (inHigh - inLow) / 2 + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,inOpen,inHigh,inLow,inClose) && /* body near midpoint */
            max(inOpen,inClose) >= inLow + (inHigh - inLow) / 2 - TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,inOpen,inHigh,inLow,inClose)) )
       {
@@ -607,8 +607,8 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLRICKSHAWMAN_OpenBody( struct TA_CDLRICKSH
       {
          if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) ) /* doji */
          {
-            outInteger[outIdx++ * outStride] = ((100) & -(int)((((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long shadow */
-                ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long shadow */
+            outInteger[outIdx++ * outStride] = ((100) & -(int)((((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long shadow */
+                ((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long shadow */
                 ((inOpen[i] <= inLow[i] + (inHigh[i] - inLow[i]) / 2 + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i)) | (inClose[i] <= inLow[i] + (inHigh[i] - inLow[i]) / 2 + TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i))) & /* body near midpoint */
                 ((inOpen[i] >= inLow[i] + (inHigh[i] - inLow[i]) / 2 - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i)) | (inClose[i] >= inLow[i] + (inHigh[i] - inLow[i]) / 2 - TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,Near_avgPeriod,Near_factor,NearPeriodTotal,i))))));
          } else 
@@ -717,8 +717,8 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLRICKSHAWMAN_OpenBody( struct TA_CDLRICKSH
       {
          if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) ) /* doji */
          {
-            outInteger[outIdx++ * outStride] = ((100) & -(int)((((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long shadow */
-                ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long shadow */
+            outInteger[outIdx++ * outStride] = ((100) & -(int)((((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long shadow */
+                ((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) > TA_CANDLEAVERAGE_OF(ShadowLong_rangeType,ShadowLong_avgPeriod,ShadowLong_factor,ShadowLongPeriodTotal,i)) & /* long shadow */
                 ((inOpen[i] <= inLow[i] + (inHigh[i] - inLow[i]) / 2 + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i)) | (inClose[i] <= inLow[i] + (inHigh[i] - inLow[i]) / 2 + TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i))) & /* body near midpoint */
                 ((inOpen[i] >= inLow[i] + (inHigh[i] - inLow[i]) / 2 - TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i)) | (inClose[i] >= inLow[i] + (inHigh[i] - inLow[i]) / 2 - TA_CANDLEAVERAGE_OF(Near_rangeType,Near_avgPeriod,Near_factor,NearPeriodTotal,i))))));
          } else 
@@ -881,8 +881,8 @@ TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN_Peek( const TA_CDLRICKSHAWMAN_Stream *st
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) ) /* doji */
    {
-      if( (((inClose >= inOpen) ? inOpen : inClose) - inLow) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long shadow */
-          (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long shadow */
+      if( (TA_COLOR_MIN(inClose, inOpen) - inLow) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long shadow */
+          (inHigh - TA_COLOR_MAX(inClose, inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long shadow */
           (min(inOpen,inClose) <= inLow + (inHigh - inLow) / 2 + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,inOpen,inHigh,inLow,inClose) && /* body near midpoint */
            max(inOpen,inClose) >= inLow + (inHigh - inLow) / 2 - TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,inOpen,inHigh,inLow,inClose)) )
       {

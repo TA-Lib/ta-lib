@@ -171,7 +171,7 @@ TA_LIB_API TA_RetCode TA_CDLDRAGONFLYDOJI( int    startIdx,
    {
       if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) )
       {
-         outInteger[outIdx++] = ((100) & -(int)((((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)) & ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))));
+         outInteger[outIdx++] = ((100) & -(int)((((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)) & ((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))));
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -223,7 +223,7 @@ TA_LIB_API TA_RetCode TA_CDLDRAGONFLYDOJI( int    startIdx,
    {
       if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) )
       {
-         outInteger[outIdx++] = ((100) & -(int)((((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)) & ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))));
+         outInteger[outIdx++] = ((100) & -(int)((((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)) & ((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))));
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -320,7 +320,7 @@ TA_RetCode TA_S_CDLDRAGONFLYDOJI( int    startIdx,
    {
       if( fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) )
       {
-         outInteger[outIdx++] = ((100) & -(int)(((((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)) & (((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))));
+         outInteger[outIdx++] = ((100) & -(int)(((((double)inHigh[i] - TA_COLOR_MAX((double)inClose[i], (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)) & ((TA_COLOR_MIN((double)inClose[i], (double)inOpen[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))));
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -358,7 +358,7 @@ TA_RetCode TA_S_CDLDRAGONFLYDOJI( int    startIdx,
    {
       if( fabs((double)inClose[i] - (double)inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) )
       {
-         outInteger[outIdx++] = ((100) & -(int)(((((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)) & (((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))));
+         outInteger[outIdx++] = ((100) & -(int)(((((double)inHigh[i] - TA_COLOR_MAX((double)inClose[i], (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)) & ((TA_COLOR_MIN((double)inClose[i], (double)inOpen[i]) - (double)inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))));
       } else 
       {
          outInteger[outIdx++] = 0;
@@ -415,9 +415,9 @@ static void TA_CDLDRAGONFLYDOJI_StepImpl( struct TA_CDLDRAGONFLYDOJI_Stream *sp,
    }
    if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) )
    {
-      if( (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) )
+      if( (inHigh - TA_COLOR_MAX(inClose, inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) )
       {
-         if( (((inClose >= inOpen) ? inOpen : inClose) - inLow) > TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) )
+         if( (TA_COLOR_MIN(inClose, inOpen) - inLow) > TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) )
          {
             *outInteger= 100;
          } else 
@@ -524,7 +524,7 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLDRAGONFLYDOJI_OpenBody( struct TA_CDLDRAG
       {
          if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) )
          {
-            outInteger[outIdx++ * outStride] = ((100) & -(int)((((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)) & ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))));
+            outInteger[outIdx++ * outStride] = ((100) & -(int)((((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)) & ((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -609,7 +609,7 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLDRAGONFLYDOJI_OpenBody( struct TA_CDLDRAG
       {
          if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE_OF(BodyDoji_rangeType,BodyDoji_avgPeriod,BodyDoji_factor,BodyDojiPeriodTotal,i) )
          {
-            outInteger[outIdx++ * outStride] = ((100) & -(int)((((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)) & ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))));
+            outInteger[outIdx++ * outStride] = ((100) & -(int)((((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)) & ((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) > TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))));
          } else 
          {
             outInteger[outIdx++ * outStride] = 0;
@@ -756,9 +756,9 @@ TA_LIB_API TA_RetCode TA_CDLDRAGONFLYDOJI_Peek( const TA_CDLDRAGONFLYDOJI_Stream
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) )
    {
-      if( (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) )
+      if( (inHigh - TA_COLOR_MAX(inClose, inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) )
       {
-         if( (((inClose >= inOpen) ? inOpen : inClose) - inLow) > TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) )
+         if( (TA_COLOR_MIN(inClose, inOpen) - inLow) > TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) )
          {
             *outInteger= 100;
          } else 

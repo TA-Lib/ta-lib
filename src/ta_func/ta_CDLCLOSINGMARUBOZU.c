@@ -168,8 +168,8 @@ TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU( int    startIdx,
    {
       outInteger[outIdx++] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i)) & /* long body */
           (((inClose[i] >= inOpen[i]) & /* white body and very short upper shadow */
-          ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!(inClose[i] >= inOpen[i])) & /* black body and very short lower shadow */
-          ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
+          ((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!(inClose[i] >= inOpen[i])) & /* black body and very short lower shadow */
+          ((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
@@ -215,8 +215,8 @@ TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU( int    startIdx,
    {
       outInteger[outIdx++] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i)) & /* long body */
           (((inClose[i] >= inOpen[i]) & /* white body and very short upper shadow */
-          ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!(inClose[i] >= inOpen[i])) & /* black body and very short lower shadow */
-          ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
+          ((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!(inClose[i] >= inOpen[i])) & /* black body and very short lower shadow */
+          ((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
@@ -307,7 +307,7 @@ TA_RetCode TA_S_CDLCLOSINGMARUBOZU( int    startIdx,
    outIdx = 0;
    do
    {
-      outInteger[outIdx++] = (((((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i)) & ((((double)inClose[i] >= (double)inOpen[i]) & (((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!((double)inClose[i] >= (double)inOpen[i])) & (((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
+      outInteger[outIdx++] = (((((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i)) & ((((double)inClose[i] >= (double)inOpen[i]) & (((double)inHigh[i] - TA_COLOR_MAX((double)inClose[i], (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!((double)inClose[i] >= (double)inOpen[i])) & ((TA_COLOR_MIN((double)inClose[i], (double)inOpen[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
       BodyLongPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_RealBody,i) - TA_CANDLERANGE_OF(TA_RangeType_RealBody,BodyLongTrailingIdx);
       ShadowVeryShortPeriodTotal += TA_CANDLERANGE_OF(TA_RangeType_HighLow,i) - TA_CANDLERANGE_OF(TA_RangeType_HighLow,ShadowVeryShortTrailingIdx);
       i += 1;
@@ -339,7 +339,7 @@ TA_RetCode TA_S_CDLCLOSINGMARUBOZU( int    startIdx,
    outIdx = 0;
    do
    {
-      outInteger[outIdx++] = (((((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i)) & ((((double)inClose[i] >= (double)inOpen[i]) & (((double)inHigh[i] - (((double)inClose[i] >= (double)inOpen[i]) ? (double)inClose[i] : (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!((double)inClose[i] >= (double)inOpen[i])) & (((((double)inClose[i] >= (double)inOpen[i]) ? (double)inOpen[i] : (double)inClose[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
+      outInteger[outIdx++] = (((((double)inClose[i] >= (double)inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs((double)inClose[i] - (double)inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i)) & ((((double)inClose[i] >= (double)inOpen[i]) & (((double)inHigh[i] - TA_COLOR_MAX((double)inClose[i], (double)inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!((double)inClose[i] >= (double)inOpen[i])) & ((TA_COLOR_MIN((double)inClose[i], (double)inOpen[i]) - (double)inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
       BodyLongPeriodTotal += TA_CANDLERANGE_OF(BodyLong_rangeType,i) - TA_CANDLERANGE_OF(BodyLong_rangeType,BodyLongTrailingIdx);
       ShadowVeryShortPeriodTotal += TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,i) - TA_CANDLERANGE_OF(ShadowVeryShort_rangeType,ShadowVeryShortTrailingIdx);
       i += 1;
@@ -392,9 +392,9 @@ static void TA_CDLCLOSINGMARUBOZU_StepImpl( struct TA_CDLCLOSINGMARUBOZU_Stream 
    }
    if( fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long body */
        ((((inClose >= inOpen) ? 1 : -1) == 1 &&  /* white body and very short upper shadow */
-         (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose)) ||
+         (inHigh - TA_COLOR_MAX(inClose, inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose)) ||
         (((inClose >= inOpen) ? 1 : -1) == -1 && /* black body and very short lower shadow */
-         (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose))) )
+         (TA_COLOR_MIN(inClose, inOpen) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose))) )
    {
       *outInteger= ((inClose >= inOpen) ? 1 : -1) * 100;
    } else 
@@ -491,8 +491,8 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCLOSINGMARUBOZU_OpenBody( struct TA_CDLCL
       {
          outInteger[outIdx++ * outStride] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(TA_RangeType_RealBody,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i)) & /* long body */
              (((inClose[i] >= inOpen[i]) & /* white body and very short upper shadow */
-             ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!(inClose[i] >= inOpen[i])) & /* black body and very short lower shadow */
-             ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
+             ((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!(inClose[i] >= inOpen[i])) & /* black body and very short lower shadow */
+             ((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(TA_RangeType_HighLow,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
@@ -571,8 +571,8 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLCLOSINGMARUBOZU_OpenBody( struct TA_CDLCL
       {
          outInteger[outIdx++ * outStride] = ((((inClose[i] >= inOpen[i]) ? 1 : -1) * 100) & -(int)(((fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE_OF(BodyLong_rangeType,BodyLong_avgPeriod,BodyLong_factor,BodyLongPeriodTotal,i)) & /* long body */
              (((inClose[i] >= inOpen[i]) & /* white body and very short upper shadow */
-             ((inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!(inClose[i] >= inOpen[i])) & /* black body and very short lower shadow */
-             ((((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
+             ((inHigh[i] - TA_COLOR_MAX(inClose[i], inOpen[i])) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i))) | ((!(inClose[i] >= inOpen[i])) & /* black body and very short lower shadow */
+             ((TA_COLOR_MIN(inClose[i], inOpen[i]) - inLow[i]) < TA_CANDLEAVERAGE_OF(ShadowVeryShort_rangeType,ShadowVeryShort_avgPeriod,ShadowVeryShort_factor,ShadowVeryShortPeriodTotal,i)))))));
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
           */
@@ -715,9 +715,9 @@ TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU_Peek( const TA_CDLCLOSINGMARUBOZU_St
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    if( fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long body */
        ((((inClose >= inOpen) ? 1 : -1) == 1 &&  /* white body and very short upper shadow */
-         (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose)) ||
+         (inHigh - TA_COLOR_MAX(inClose, inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose)) ||
         (((inClose >= inOpen) ? 1 : -1) == -1 && /* black body and very short lower shadow */
-         (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose))) )
+         (TA_COLOR_MIN(inClose, inOpen) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose))) )
    {
       *outInteger= ((inClose >= inOpen) ? 1 : -1) * 100;
    } else 
