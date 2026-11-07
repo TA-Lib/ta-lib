@@ -60,6 +60,10 @@
  *  103126 MF,CC  Pre-check the two colour tests in an outer if, the gaps inside
  */
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC optimize("no-split-paths")
+#endif
+
 TA_LIB_API int TA_CDLGAPSIDESIDEWHITE_Lookback( void )
 {
    int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;

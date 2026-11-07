@@ -62,6 +62,10 @@
  *  103126 MF,CC  Join the long and doji tests into the one pre-check
  */
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC optimize("no-split-paths")
+#endif
+
 TA_LIB_API int TA_CDLHARAMICROSS_Lookback( void )
 {
    int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;

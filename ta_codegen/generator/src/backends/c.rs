@@ -421,6 +421,7 @@ pub fn generate(
     if let Some(m) = func.alt_marker(crate::ir::Tier::Batch, crate::ir::Lang::C) {
         out.push_str(&format!("/* {m} */\n\n"));
     }
+    let pragma_at = out.len();
     out.push_str(&gen_lookback(func, enums, registry, helpers));
     out.push_str(&gen_display_shift(func, enums, registry, helpers));
 
@@ -443,7 +444,16 @@ pub fn generate(
     // Last, over the finished file: the emitters above place their `(void)x;`
     // before they know what the body will read (see `c_hygiene`).
     if !func.opt_outs.contains(&crate::ir::OptOut::RangeTypeCopy) {
-        out = super::c_candle_defaults::specialize(&out);
+        let copied = super::c_candle_defaults::specialize(&out);
+        if copied != out {
+            // gcc's path splitting duplicates a copied loop's latch and turns
+            // its output select back into a mispredicting branch.
+            out = copied;
+            out.insert_str(
+                pragma_at,
+                "#if defined(__GNUC__) && !defined(__clang__)\n#pragma GCC optimize(\"no-split-paths\")\n#endif\n\n",
+            );
+        }
     }
     super::c_hygiene::scrub_void_casts(&out)
 }

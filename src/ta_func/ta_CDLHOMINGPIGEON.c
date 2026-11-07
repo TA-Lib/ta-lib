@@ -60,6 +60,10 @@
  *  110126 MF,CC  Pre-check the colour and close tests in an outer if, the candle averages inside
  */
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC optimize("no-split-paths")
+#endif
+
 TA_LIB_API int TA_CDLHOMINGPIGEON_Lookback( void )
 {
    int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;

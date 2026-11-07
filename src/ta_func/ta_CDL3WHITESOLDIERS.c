@@ -61,6 +61,10 @@
  *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  */
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC optimize("no-split-paths")
+#endif
+
 TA_LIB_API int TA_CDL3WHITESOLDIERS_Lookback( void )
 {
    int BodyShort_avgPeriod = TA_Globals->candleSettings[TA_BodyShort].avgPeriod;

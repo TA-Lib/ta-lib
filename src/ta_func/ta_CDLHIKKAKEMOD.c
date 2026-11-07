@@ -63,6 +63,10 @@
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  */
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC optimize("no-split-paths")
+#endif
+
 TA_LIB_API int TA_CDLHIKKAKEMOD_Lookback( void )
 {
    int Near_avgPeriod = TA_Globals->candleSettings[TA_Near].avgPeriod;
