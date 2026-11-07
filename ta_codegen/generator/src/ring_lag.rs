@@ -1955,10 +1955,19 @@ fn resolve_callees(
 
 /// Lower bound of `cursor - var` at steady-loop entry for each ring variable,
 /// `None` where nothing could be proved.
+pub fn ring_lag_lower_bounds(func: &FuncDef, input: &LagProofInput, vars: &[&str]) -> Vec<Option<i64>> {
+    let cursor = Expr::Var(input.cursor.to_string());
+    let queries: Vec<(&str, &Expr)> = vars.iter().map(|v| (*v, &cursor)).collect();
+    reach_lower_bounds(func, input, &queries)
+}
+
+/// Lower bound of `at - var` at steady-loop entry for each `(var, at)`, `None`
+/// where nothing could be proved. `at` may name the cursor, variables paced
+/// with it, and names the loop does not write.
 ///
 /// Memoized: every emitter re-analyzes each function. The key covers every
 /// input the proof reads, including the callee lookbacks it resolved.
-pub fn ring_lag_lower_bounds(func: &FuncDef, input: &LagProofInput, vars: &[&str]) -> Vec<Option<i64>> {
+pub fn reach_lower_bounds(func: &FuncDef, input: &LagProofInput, queries: &[(&str, &Expr)]) -> Vec<Option<i64>> {
     use std::hash::{Hash, Hasher};
     type Memo = Mutex<BTreeMap<(String, u64), Vec<Option<i64>>>>;
     static MEMO: OnceLock<Memo> = OnceLock::new();
@@ -1975,7 +1984,7 @@ pub fn ring_lag_lower_bounds(func: &FuncDef, input: &LagProofInput, vars: &[&str
             input.epilogue,
             input.cursor,
             &input.facts,
-            vars,
+            queries,
             &callees,
         )
     )
@@ -1985,7 +1994,7 @@ pub fn ring_lag_lower_bounds(func: &FuncDef, input: &LagProofInput, vars: &[&str
     if let Some(hit) = memo.lock().expect("lag memo").get(&key) {
         return hit.clone();
     }
-    let out = prove(func, input, vars, callees);
+    let out = prove(func, input, queries, callees);
     memo.lock().expect("lag memo").insert(key, out.clone());
     out
 }
@@ -1993,10 +2002,10 @@ pub fn ring_lag_lower_bounds(func: &FuncDef, input: &LagProofInput, vars: &[&str
 fn prove(
     func: &FuncDef,
     input: &LagProofInput,
-    vars: &[&str],
+    queries: &[(&str, &Expr)],
     callees: BTreeMap<String, CalleeLookback>,
 ) -> Vec<Option<i64>> {
-    let none = vec![None; vars.len()];
+    let none = vec![None; queries.len()];
     let mut t = Tracker::new(Ctx::new(func, &input.facts, callees), false);
     let all: Vec<&Statement> = input
         .prologue
@@ -2059,14 +2068,24 @@ fn prove(
         steps.get(v).copied().flatten().filter(|d| *d != 0)
     };
     let Some(cursor_step) = paced(input.cursor) else { return none };
-    let cursor = t.read(input.cursor, &env);
-    vars.iter()
-        .map(|v| {
+    let per_bar_written = written_names(&per_bar);
+    queries
+        .iter()
+        .map(|(v, at)| {
             if paced(v) != Some(cursor_step) {
                 return None;
             }
+            let mut names = BTreeSet::new();
+            crate::streaming::expr_var_names(at, &mut names);
+            let moves_apart = |n: &String| {
+                (per_bar_written.contains(n) || cond_written.contains(n)) && paced(n) != Some(cursor_step)
+            };
+            if names.iter().any(moves_apart) {
+                return None;
+            }
             let var = t.read(v, &env);
-            let d = cursor.plus(&var, -1)?;
+            let at = t.aval(at, &env);
+            let d = at.plus(&var, -1)?;
             if !d.is_param() {
                 return None;
             }
