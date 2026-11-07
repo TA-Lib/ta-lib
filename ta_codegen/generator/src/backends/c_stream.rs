@@ -1285,15 +1285,7 @@ fn mark_fma_multiversion(o: &mut String, func: &FuncDef) {
     if let Some(line) = fuses_at(o, &peek_signature(func)) {
         o.insert_str(line, "TA_FMA_MULTIVERSION\n");
     }
-    if open_takes_fma_frames(func) {
-        dispatch_fused_open(o, func);
-    }
-}
-
-/// A candlestick's fused site sits behind its pattern's conditions and few
-/// bars reach it, so the frames buy nothing there.
-pub fn open_takes_fma_frames(func: &FuncDef) -> bool {
-    !func.is_candlestick()
+    dispatch_fused_open(o, func);
 }
 
 /// The open tier's hardware-FMA clone: a fused `_OpenImpl` is force-inlined

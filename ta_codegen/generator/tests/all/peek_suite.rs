@@ -902,7 +902,7 @@ fn no_peek_frame_reads_a_field_it_has_bound() {
 /// force-inlined and reached only through its two frames, from both seams.
 #[test]
 fn a_fused_per_bar_tier_carries_the_fma_multiversion_attribute() {
-    let (mut peeks, mut steps, mut opens, mut one_path_opens) = (0usize, 0usize, 0usize, 0usize);
+    let (mut peeks, mut steps, mut opens) = (0usize, 0usize, 0usize);
     let (mut fused_peeks, mut fused_steps, mut fused_opens) = (0usize, 0usize, 0usize);
     let mut drifted: Vec<String> = Vec::new();
     let attributed = |src: &str, at: usize| {
@@ -945,13 +945,10 @@ fn a_fused_per_bar_tier_carries_the_fma_multiversion_attribute() {
         let open = format!(" TA_{upper}_OpenImpl(");
         if let (Some(at), Some(body)) = (src.find(&open), body_of(&src, &open)) {
             opens += 1;
-            let framed_tier = ta_codegen_lib::backends::c_stream::open_takes_fma_frames(&func);
             // An open not behind FMA frames keeps only its checks in `_OpenImpl`
             // and its numerics in `_OpenBody`; either one fusing is the open fusing.
-            let open_fuses = body.contains("fma(")
+            let fuses = body.contains("fma(")
                 || body_of(&src, &format!(" TA_{upper}_OpenBody(")).is_some_and(|b| b.contains("fma("));
-            one_path_opens += usize::from(open_fuses && !framed_tier);
-            let fuses = open_fuses && framed_tier;
             let line = &src[src[..at].rfind('\n').map_or(0, |i| i + 1)..at];
             let inlined = line.starts_with("static TA_FMA_STEP_INLINE ");
             // The definition, then one call per frame: the two around the
@@ -981,7 +978,6 @@ fn a_fused_per_bar_tier_carries_the_fma_multiversion_attribute() {
     assert!(drifted.is_empty(), "TA_FMA_MULTIVERSION drifted from the fused tiers: {drifted:?}");
     assert!(opens >= 150, "only {opens} `_OpenImpl` rendered -- the signature moved");
     assert!(fused_opens > 0, "no `_OpenImpl` fuses, so this sweep proved nothing about the open tier");
-    assert!(one_path_opens > 0, "no fused open keeps one path: the exemption admits nothing");
     assert!(peeks >= 200, "only {peeks} peek frame(s) rendered -- the signature moved");
     assert!(steps >= 200, "only {steps} step(s) paired with an Update -- a signature moved");
     assert!(fused_peeks > 0, "no peek fuses, so this sweep proved nothing about Peek");

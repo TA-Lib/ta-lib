@@ -132,8 +132,8 @@ PRV  <N>_OpenImpl(sp, in, sIdx, params, outBeg, outNb, outs, outStride)
 ```
 
 A fused `_OpenImpl` (C, Rust) runs in a private frame compiled for hardware
-FMA or in a plain one, picked per call on the running CPU. Kept on one path: C
-candlesticks; Rust stateless maps and `HT_TRENDMODE`. In C the public
+FMA or in a plain one, picked per call on the running CPU. Kept on one path: Rust
+stateless maps and `HT_TRENDMODE`. In C the public
 `Open` has an FMA frame of its own that declares the sinks: a sink a frame is
 handed is stored on every bar, with everything that feeds it, where a local one
 is computed once. Both seams still call the shared frame, one per stride; drop

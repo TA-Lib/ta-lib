@@ -518,10 +518,25 @@ static TA_FMA_STEP_INLINE void TA_CDLMORNINGSTAR_StepImpl( struct TA_CDLMORNINGS
    }
 }
 
-static TA_OPEN_INLINE TA_RetCode TA_CDLMORNINGSTAR_OpenBody( struct TA_CDLMORNINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
+static TA_FMA_STEP_INLINE TA_RetCode TA_CDLMORNINGSTAR_OpenImpl( struct TA_CDLMORNINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
 {
    struct TA_CDLMORNINGSTAR_Stream *sp;
    int endIdx;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   if( optInPenetration == TA_REAL_DEFAULT )
+      optInPenetration = 0.3;
+   else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) )
+      return TA_BAD_PARAM;
+   if( startIdx >= historyLen )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
 
    endIdx = historyLen - 1;
 
@@ -775,44 +790,17 @@ static TA_OPEN_INLINE TA_RetCode TA_CDLMORNINGSTAR_OpenBody( struct TA_CDLMORNIN
    }
 }
 
-static TA_OPEN_BODY TA_RetCode TA_CDLMORNINGSTAR_OpenFillFrame( struct TA_CDLMORNINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[] )
+TA_FMA_OPEN_CLONE static TA_RetCode TA_CDLMORNINGSTAR_OpenImplFma( struct TA_CDLMORNINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
 {
-   return TA_CDLMORNINGSTAR_OpenBody( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
+   return TA_CDLMORNINGSTAR_OpenImpl( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, optInPenetration, outBegIdx, outNBElement, outInteger, outStride );
 }
 
-static TA_OPEN_BODY TA_RetCode TA_CDLMORNINGSTAR_OpenSinkFrame( struct TA_CDLMORNINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[] )
+TA_FMA_OPEN_PLAIN static TA_RetCode TA_CDLMORNINGSTAR_OpenImplPlain( struct TA_CDLMORNINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
 {
-   int sink_outInteger = 0;
-   TA_RetCode retCode = TA_CDLMORNINGSTAR_OpenBody( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, optInPenetration, outBegIdx, outNBElement, &sink_outInteger, 0 );
-   if( retCode == TA_SUCCESS )
-   {
-      if( outInteger ) *outInteger = sink_outInteger;
-   }
-   return retCode;
+   return TA_CDLMORNINGSTAR_OpenImpl( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, optInPenetration, outBegIdx, outNBElement, outInteger, outStride );
 }
 
-static TA_RetCode TA_CDLMORNINGSTAR_OpenImpl( struct TA_CDLMORNINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
-{
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
-   if( optInPenetration == TA_REAL_DEFAULT )
-      optInPenetration = 0.3;
-   else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) )
-      return TA_BAD_PARAM;
-   if( startIdx >= historyLen )
-   {
-      *outBegIdx = 0;
-      *outNBElement = 0;
-      return TA_INSUFFICIENT_HISTORY;
-   }
-
-   return outStride ? TA_CDLMORNINGSTAR_OpenFillFrame( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, optInPenetration, outBegIdx, outNBElement, outInteger ) : TA_CDLMORNINGSTAR_OpenSinkFrame( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, optInPenetration, outBegIdx, outNBElement, outInteger );
-}
-
-/* Private function, not in public API. */
-TA_RetCode TA_CDLMORNINGSTAR_OpenInternal( struct TA_CDLMORNINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double optInPenetration, int *outInteger )
+TA_FMA_OPEN_CLONE static TA_RetCode TA_CDLMORNINGSTAR_OpenSinkFma( struct TA_CDLMORNINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double optInPenetration, int *outInteger )
 {
    TA_RetCode retCode;
    int dummyBegIdx = 0;
@@ -826,13 +814,28 @@ TA_RetCode TA_CDLMORNINGSTAR_OpenInternal( struct TA_CDLMORNINGSTAR_Stream **str
    return retCode;
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_CDLMORNINGSTAR_OpenInternal( struct TA_CDLMORNINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double optInPenetration, int *outInteger )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   int sink_outInteger = 0;
+   retCode = TA_FMA_AVAILABLE ? TA_CDLMORNINGSTAR_OpenImplFma( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, optInPenetration, &dummyBegIdx, &dummyNBElement, &sink_outInteger, 0 ) : TA_CDLMORNINGSTAR_OpenImplPlain( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, optInPenetration, &dummyBegIdx, &dummyNBElement, &sink_outInteger, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outInteger = sink_outInteger;
+   }
+   return retCode;
+}
+
 TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_Open( TA_CDLMORNINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outInteger )
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( historyLen > TA_INDEX_MAX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
-   return TA_CDLMORNINGSTAR_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, optInPenetration, outInteger );
+   return TA_FMA_AVAILABLE ? TA_CDLMORNINGSTAR_OpenSinkFma( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, optInPenetration, outInteger ) : TA_CDLMORNINGSTAR_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, optInPenetration, outInteger );
 }
 
 TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_OpenAndFill( TA_CDLMORNINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[] )
@@ -848,7 +851,7 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_OpenAndFill( TA_CDLMORNINGSTAR_Stream **
 /* Private function, not in public API. */
 TA_RetCode TA_CDLMORNINGSTAR_OpenAndFillInternal( struct TA_CDLMORNINGSTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double optInPenetration, int *outBegIdx, int *outNBElement, int outInteger[] )
 {
-   return TA_CDLMORNINGSTAR_OpenImpl( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
+   return TA_FMA_AVAILABLE ? TA_CDLMORNINGSTAR_OpenImplFma( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, optInPenetration, outBegIdx, outNBElement, outInteger, 1 ) : TA_CDLMORNINGSTAR_OpenImplPlain( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
 }
 
 TA_FMA_MULTIVERSION
