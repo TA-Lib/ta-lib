@@ -3,11 +3,11 @@
 # policy=monotone: a passing run lowers a row it beat and holds every
 # other, so a row may predate the commit below. Raising one is a human
 # decision that NAMES it: `scripts/bench_icount.py --accept=SMA[/batch]`.
-#policy	accepted
+#policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=randwalk stream_iters=1024 trend_strength=0.500000
-#commit	8e7737b4afd478e5d786c267b1fa269e5379d5e7
-#generated	2026-11-06T02:27:27Z
+#commit	494f8b3fc5fd8d1d619aba8edd0f2bb67425d567
+#generated	2026-11-07T11:25:09Z
 AC	batch	0	703438
 AC	open	0	624330
 AC	openfill	0	692624
@@ -983,6 +983,11 @@ SAREXT	open	0	433028
 SAREXT	openfill	0	477990
 SAREXT	peek	0	46215
 SAREXT	update	0	70703
+SHARPE	batch	0	1078435
+SHARPE	open	0	979199
+SHARPE	openfill	0	1119099
+SHARPE	peek	0	75792
+SHARPE	update	0	130711
 SI	batch	0	980062
 SI	open	0	1000133
 SI	openfill	0	980114

@@ -6,8 +6,8 @@
 #policy	monotone
 #toolchain	x86_64/x86_64-linux-gnu/13.3.0
 #corpus	points=20000 regime_period=14 seed=42 shape=peg stream_iters=1024 trend_strength=0.500000
-#commit	e4ac5a825f2ceb381c8f00677dbd1a97592d99ed
-#generated	2026-11-06T12:37:14Z
+#commit	494f8b3fc5fd8d1d619aba8edd0f2bb67425d567
+#generated	2026-11-07T11:25:19Z
 AC	batch	0	703438
 AC	open	0	624330
 AC	openfill	0	692624
@@ -983,6 +983,11 @@ SAREXT	open	0	408422
 SAREXT	openfill	0	446278
 SAREXT	peek	0	46629
 SAREXT	update	0	66979
+SHARPE	batch	0	1089051
+SHARPE	open	0	989750
+SHARPE	openfill	0	1129686
+SHARPE	peek	0	75792
+SHARPE	update	0	131542
 SI	batch	0	782150
 SI	open	0	784229
 SI	openfill	0	782203
