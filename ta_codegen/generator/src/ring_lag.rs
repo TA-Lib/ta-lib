@@ -2835,4 +2835,41 @@ mod tests {
         assert!(w.reachable());
         assert_eq!(w.value(&var("a")).as_const(), Some(3));
     }
+
+    /// A rolling sum whose window starts at `trailingIdx`, plus one more read
+    /// through `prevIdx`, recomputed every bar from the cursor. That local
+    /// sends the body to the extrema automaton, whose ring holds only
+    /// `[trailingIdx, inIdx]`.
+    fn reach(prev: &str) -> FuncDef {
+        let src = format!(
+            "int roc_lookback(int optInTimePeriod)\n{{\n   return optInTimePeriod;\n}}\n\n\
+             TA_RetCode roc(int startIdx, int endIdx, const double inReal[], int optInTimePeriod,\n\
+             int *outBegIdx, int *outNBElement, double outReal[])\n{{\n\
+             int inIdx, outIdx, trailingIdx, prevIdx;\ndouble sum;\n\
+             if( startIdx > endIdx ) return TA_SUCCESS;\n\
+             outIdx = 0;\nsum = 0.0;\ninIdx = startIdx;\n\
+             trailingIdx = startIdx - optInTimePeriod + 1;\n\
+             while( inIdx <= endIdx ) {{\n\
+             prevIdx = {prev};\nsum += inReal[inIdx] - inReal[trailingIdx];\n\
+             outReal[outIdx++] = sum + inReal[prevIdx];\ninIdx++;\ntrailingIdx++;\n}}\n\
+             *outNBElement = outIdx;\n*outBegIdx = startIdx;\nreturn TA_SUCCESS;\n}}\n"
+        );
+        let mut f = crate::parser::yaml::parse_yaml(&base().join("roc/roc.yaml"));
+        let parsed = crate::parser::c_source::parse_c_source_str(&src);
+        crate::parser::c_source::wire_parsed_source(&mut f, &parsed);
+        f
+    }
+
+    #[test]
+    fn a_read_older_than_the_window_start_is_refused() {
+        // At the window start: one bar inside what the ring holds.
+        let at = reach("inIdx - optInTimePeriod + 1");
+        let m = crate::streaming::analyze(&at).expect("streams");
+        assert!(m.extrema().is_some(), "the extrema automaton serves it");
+        // One bar before it: the ring has already reused that slot.
+        let before = reach("inIdx - optInTimePeriod");
+        let Err(err) = crate::streaming::analyze(&before) else { panic!("refused") };
+        let err = err.to_string();
+        assert!(err.contains("prevIdx") && err.contains("trailingIdx"), "{err}");
+    }
 }
