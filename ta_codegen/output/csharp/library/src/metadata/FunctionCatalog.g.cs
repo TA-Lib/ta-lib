@@ -317,6 +317,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeSkew(),
             MakeSma(),
             MakeSmi(),
+            MakeSortino(),
             MakeSqrt(),
             MakeSqzmom(),
             MakeStc(),
@@ -5124,6 +5125,32 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Smi(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.IntOpt(3), c.RealOut(0), c.RealOut(1)));
+
+    private static FuncInfo MakeSortino() => new(
+        name: "SORTINO",
+        group: FunctionGroup.StatisticFunctions,
+        hint: "Rolling Sortino Ratio",
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Number of returns in the window", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 20, 4, 200, 1)),
+            new OptInputInfo("optInMAR", "Minimum Acceptable Return per Bar", "Minimum acceptable return per bar", OptInputFlags.None, new OptInputDomain.RealRange(-3e37, 3e37, 8, 0.0, 0.0, 0.001, 0.0001)),
+            new OptInputInfo("optInAnnualization", "Annualization", "Bars per year", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 3e37, 2, 252.0, 1.0, 365.0, 1.0)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.SortinoLookback(c.IntOpt(0), c.RealOpt(1), c.RealOpt(2)),
+        displayShift: static (core, c, outputIdx) => core.SortinoDisplayShift(c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Sortino(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOut(0)));
 
     private static FuncInfo MakeSqrt() => new(
         name: "SQRT",

@@ -525,11 +525,13 @@ pub enum FuncId {
     SKEW,
     /// Rolling Sharpe Ratio — [`Core::sharpe`](crate::Core::sharpe).
     SHARPE,
+    /// Rolling Sortino Ratio — [`Core::sortino`](crate::Core::sortino).
+    SORTINO,
 }
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 241;
+    pub const COUNT: usize = 242;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -877,7 +879,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 241] = [
+static FUNC_TABLE: [FuncInfo; 242] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -3529,6 +3531,17 @@ static FUNC_TABLE: [FuncInfo; 241] = [
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
+    FuncInfo {
+        id: FuncId::SORTINO,
+        name: "SORTINO",
+        group: Group::StatisticFunctions,
+        hint: "Rolling Sortino Ratio",
+        flags: FuncFlags(0x42000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of returns in the window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMAR", display_name: "Minimum Acceptable Return per Bar", hint: "Minimum acceptable return per bar", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 8, default: 0.0, suggested: (0.0, 0.001, 0.0001) } }, OptInputInfo { param_name: "optInAnnualization", display_name: "Annualization", hint: "Bars per year", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 2, default: 252.0, suggested: (1.0, 365.0, 1.0) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
 ];
 
 /// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
@@ -3788,6 +3801,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "MACDV" => FuncId::MACDV,
         "SKEW" => FuncId::SKEW,
         "SHARPE" => FuncId::SHARPE,
+        "SORTINO" => FuncId::SORTINO,
         _ => return None,
     })
 }
@@ -4294,6 +4308,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::MACDV => self.core.macdv_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::SKEW => self.core.skew_lookback(self.int_opt[0]),
             FuncId::SHARPE => self.core.sharpe_lookback(self.int_opt[0], self.real_opt[1], self.real_opt[2]),
+            FuncId::SORTINO => self.core.sortino_lookback(self.int_opt[0], self.real_opt[1], self.real_opt[2]),
         }
     }
 
@@ -4548,6 +4563,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::MACDV => self.core.macdv_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], output_idx),
             FuncId::SKEW => self.core.skew_display_shift(self.int_opt[0], output_idx),
             FuncId::SHARPE => self.core.sharpe_display_shift(self.int_opt[0], self.real_opt[1], self.real_opt[2], output_idx),
+            FuncId::SORTINO => self.core.sortino_display_shift(self.int_opt[0], self.real_opt[1], self.real_opt[2], output_idx),
         }
     }
 
@@ -7903,6 +7919,18 @@ impl<'a> ParamHolder<'a> {
                 Self::check_range(start_idx, end_idx)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.sharpe(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::SORTINO => {
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.sortino(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }

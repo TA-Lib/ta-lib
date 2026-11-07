@@ -623,6 +623,9 @@ typedef enum
   /* (#571) SHARPE legs that ran while comparing nothing. */
   TA_SHARPE_VACUOUS            = 1730,
 
+  /* (#572) SORTINO legs that ran while comparing nothing. */
+  TA_SORTINO_VACUOUS           = 1731,
+
   /* Error code related to bug fix documentented on SourceForge. */
   TA_TEST_FAIL_BUG1359452_1  = 2000,
   TA_TEST_FAIL_BUG1359452_2  = 2001,

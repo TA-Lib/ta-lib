@@ -241,6 +241,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [PERCENTRANK](/functions/percentrank.md) — Percent Rank
 - [SHARPE](/functions/sharpe.md) — Rolling Sharpe Ratio
 - [SKEW](/functions/skew.md) — Rolling Skewness
+- [SORTINO](/functions/sortino.md) — Rolling Sortino Ratio
 - [STDDEV](/functions/stddev.md) — Standard Deviation
 - [TSF](/functions/tsf.md) — Time Series Forecast
 - [VAR](/functions/var.md) — Variance

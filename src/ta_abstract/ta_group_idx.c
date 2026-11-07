@@ -242,6 +242,7 @@ extern const TA_FuncDef TA_DEF_SINH;
 extern const TA_FuncDef TA_DEF_SKEW;
 extern const TA_FuncDef TA_DEF_SMA;
 extern const TA_FuncDef TA_DEF_SMI;
+extern const TA_FuncDef TA_DEF_SORTINO;
 extern const TA_FuncDef TA_DEF_SQRT;
 extern const TA_FuncDef TA_DEF_SQZMOM;
 extern const TA_FuncDef TA_DEF_STC;
@@ -547,6 +548,7 @@ const TA_FuncDef *TA_PerGroupFunc_8[] = {
 &TA_DEF_PERCENTRANK,
 &TA_DEF_SHARPE,
 &TA_DEF_SKEW,
+&TA_DEF_SORTINO,
 &TA_DEF_STDDEV,
 &TA_DEF_TSF,
 &TA_DEF_VAR,

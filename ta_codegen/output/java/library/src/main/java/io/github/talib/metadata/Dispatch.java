@@ -664,6 +664,9 @@ final class Dispatch {
          case "SMI":
             return core.smi(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), h.realOutput(0), h.realOutput(1));
+         case "SORTINO":
+            return core.sortino(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOpt(1), h.realOpt(2), h.realOutput(0));
          case "SQRT":
             return core.sqrt(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
@@ -1196,6 +1199,8 @@ final class Dispatch {
             return core.smaLookback(h.intOpt(0));
          case "SMI":
             return core.smiLookback(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3));
+         case "SORTINO":
+            return core.sortinoLookback(h.intOpt(0), h.realOpt(1), h.realOpt(2));
          case "SQRT":
             return core.sqrtLookback();
          case "SQZMOM":
@@ -1686,6 +1691,8 @@ final class Dispatch {
             return core.smaDisplayShift(h.intOpt(0), outputIdx);
          case "SMI":
             return core.smiDisplayShift(h.intOpt(0), h.intOpt(1), h.intOpt(2), h.intOpt(3), outputIdx);
+         case "SORTINO":
+            return core.sortinoDisplayShift(h.intOpt(0), h.realOpt(1), h.realOpt(2), outputIdx);
          case "SQRT":
             return core.sqrtDisplayShift(outputIdx);
          case "SQZMOM":

@@ -10613,6 +10613,57 @@ static void icount_SMI(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_SORTINO(int iters) {
+    const char *nm = "SORTINO";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_SORTINO_Stream *st = NULL;
+    TA_SORTINO_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_SORTINO(0, g_nPoints - 1, g_close, 20, 0.000000000000000, 252.000000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("SORTINO/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_SORTINO_OpenAndFill(&stf, g_close, g_nPoints, 20, 0.000000000000000, 252.000000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("SORTINO/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_SORTINO_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_SORTINO_Open(&st, g_close, g_nPoints, 20, 0.000000000000000, 252.000000000000000, &v0);
+    ICOUNT_DUMP("SORTINO/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_SORTINO_Update(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("SORTINO/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_SORTINO_Peek(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("SORTINO/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_SORTINO_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_SQRT(int iters) {
     const char *nm = "SQRT";
     int outBegIdx = 0, outNBElement = 0;
@@ -12850,6 +12901,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "SKEW") ) { icount_SKEW(iters); fflush(stdout); }
     if( func_matches(filter, "SMA") ) { icount_SMA(iters); fflush(stdout); }
     if( func_matches(filter, "SMI") ) { icount_SMI(iters); fflush(stdout); }
+    if( func_matches(filter, "SORTINO") ) { icount_SORTINO(iters); fflush(stdout); }
     if( func_matches(filter, "SQRT") ) { icount_SQRT(iters); fflush(stdout); }
     if( func_matches(filter, "SQZMOM") ) { icount_SQZMOM(iters); fflush(stdout); }
     if( func_matches(filter, "STC") ) { icount_STC(iters); fflush(stdout); }

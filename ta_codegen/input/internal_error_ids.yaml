@@ -18,7 +18,7 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 517
+next: 518
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
@@ -305,6 +305,7 @@ sites:
   SKEW.extrema: 503
   SMA.ringcap.trailingIdx: 383
   SMI.extrema: 384
+  SORTINO.extrema: 517
   STC.cbsize.lineRing: 468
   STC.cbsize.lineSufHi: 469
   STC.cbsize.lineSufLo: 470

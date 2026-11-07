@@ -2024,6 +2024,18 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OutputType.REAL, paramName: 'outSMI', flags: 0x00000001 },
       { type: OutputType.REAL, paramName: 'outSMISignal', flags: 0x00000004 },
     ]),
+  FuncInfo.of('SORTINO', 'Statistic Functions', 'Rolling Sortino Ratio', 0x42000000,
+    [
+      { type: InputType.REAL, paramName: 'inReal', flags: 0x00000000 },
+    ],
+    [
+      { type: OptInputType.INTEGER_RANGE, paramName: 'optInTimePeriod', flags: 0x00000000, displayName: 'Time Period', hint: 'Number of returns in the window', defaultValue: 20.0, min: 2, max: 100000, suggestedStart: 4, suggestedEnd: 200, suggestedIncrement: 1 },
+      { type: OptInputType.REAL_RANGE, paramName: 'optInMAR', flags: 0x00000000, displayName: 'Minimum Acceptable Return per Bar', hint: 'Minimum acceptable return per bar', defaultValue: 0.0, min: -3e37, max: 3e37, precision: 8, suggestedStart: 0.0, suggestedEnd: 0.001, suggestedIncrement: 0.0001 },
+      { type: OptInputType.REAL_RANGE, paramName: 'optInAnnualization', flags: 0x00000000, displayName: 'Annualization', hint: 'Bars per year', defaultValue: 252.0, min: 0.0, max: 3e37, precision: 2, suggestedStart: 1.0, suggestedEnd: 365.0, suggestedIncrement: 1.0 },
+    ],
+    [
+      { type: OutputType.REAL, paramName: 'outReal', flags: 0x00000001 },
+    ]),
   FuncInfo.of('SQRT', 'Math Transform', 'Vector Square Root', 0x42000008,
     [
       { type: InputType.REAL, paramName: 'inReal', flags: 0x00000000 },

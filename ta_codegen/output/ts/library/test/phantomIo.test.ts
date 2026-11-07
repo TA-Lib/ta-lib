@@ -242,6 +242,7 @@ import * as m_sinh from '../src/func/sinh.ts';
 import * as m_skew from '../src/func/skew.ts';
 import * as m_sma from '../src/func/sma.ts';
 import * as m_smi from '../src/func/smi.ts';
+import * as m_sortino from '../src/func/sortino.ts';
 import * as m_sqrt from '../src/func/sqrt.ts';
 import * as m_sqzmom from '../src/func/sqzmom.ts';
 import * as m_stc from '../src/func/stc.ts';
@@ -3704,6 +3705,20 @@ const PROBES: Probe[] = [
     ],
   },
   {
+    name: 'SORTINO',
+    batch: m_sortino.sortinoPositional,
+    body: m_sortino.sortinoImpl,
+    lookback: m_sortino.sortinoLookbackPositional,
+    open: m_sortino.sortinoOpenPositional,
+    fill: m_sortino.sortinoOpenAndFillPositional,
+    ins: ['real'],
+    outs: ['f'],
+    vectors: [
+      ['defaults', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT],
+      ['minimums', 2, -3e37, 0.0],
+    ],
+  },
+  {
     name: 'SQRT',
     batch: m_sqrt.sqrtPositional,
     body: m_sqrt.sqrtImpl,
@@ -4370,7 +4385,7 @@ const PROBES: Probe[] = [
   },
 ];
 
-const CORPUS = 241;
+const CORPUS = 242;
 
 test('the sweep covers every function module', () => {
   const modules = readdirSync(new URL('../src/func/', import.meta.url)).filter((f) => f.endsWith('.ts')).length;

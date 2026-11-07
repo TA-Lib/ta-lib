@@ -443,6 +443,8 @@ export { sma, smaLookback, smaDisplayShift, smaOpen, smaOpenAndFill, SmaStream }
 export type { SmaOptions, SmaResult } from './func/sma.ts';
 export { smi, smiLookback, smiDisplayShift, smiOpen, smiOpenAndFill, SmiStream, SmiOut } from './func/smi.ts';
 export type { SmiOptions, SmiResult } from './func/smi.ts';
+export { sortino, sortinoLookback, sortinoDisplayShift, sortinoOpen, sortinoOpenAndFill, SortinoStream } from './func/sortino.ts';
+export type { SortinoOptions, SortinoResult } from './func/sortino.ts';
 export { sqrt, sqrtLookback, sqrtDisplayShift, sqrtOpen, sqrtOpenAndFill, SqrtStream } from './func/sqrt.ts';
 export type { SqrtOptions, SqrtResult } from './func/sqrt.ts';
 export { sqzmom, sqzmomLookback, sqzmomDisplayShift, sqzmomOpen, sqzmomOpenAndFill, SqzmomStream, SqzmomOut } from './func/sqzmom.ts';

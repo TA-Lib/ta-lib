@@ -8678,6 +8678,51 @@ static const TA_VOptSpec TA_VOpt_SMI[] = {
    { "optInSignalPeriod", TA_VOPT_INT, 2.0, 100000.0, 9.0 },
 };
 
+static TA_RetCode TA_SORTINO_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SORTINO(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInMAR */,
+               optIn[2] /* optInAnnualization */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SORTINO_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_SORTINO(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInMAR */,
+               optIn[2] /* optInAnnualization */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_SORTINO[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_SORTINO[] = { 0 };
+static const TA_VOptSpec TA_VOpt_SORTINO[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 20.0 },
+   { "optInMAR", TA_VOPT_REAL, -3.00000000000000022e37, 3.00000000000000022e37, 0.0 },
+   { "optInAnnualization", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 252.0 },
+};
+
 static TA_RetCode TA_SQRT_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10733,6 +10778,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_SMA, 1, TA_VOpt_SMA, 1, TA_VOutIsInt_SMA, 0 },
    { "SMI", TA_SMI_VFrameD, TA_SMI_VFrameS,
      3, TA_VIn_SMI, 4, TA_VOpt_SMI, 2, TA_VOutIsInt_SMI, 0 },
+   { "SORTINO", TA_SORTINO_VFrameD, TA_SORTINO_VFrameS,
+     1, TA_VIn_SORTINO, 3, TA_VOpt_SORTINO, 1, TA_VOutIsInt_SORTINO, 0 },
    { "SQRT", TA_SQRT_VFrameD, TA_SQRT_VFrameS,
      1, TA_VIn_SQRT, 0, NULL, 1, TA_VOutIsInt_SQRT, 0 },
    { "SQZMOM", TA_SQZMOM_VFrameD, TA_SQZMOM_VFrameS,
@@ -10813,6 +10860,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 241
+#define TA_VARIANT_TABLE_SIZE 242
 
 #endif /* TA_VARIANT_FRAME_H */

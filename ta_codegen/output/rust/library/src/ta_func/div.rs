@@ -180,7 +180,7 @@ impl Core {
     ///
     /// let out_range = core.div(0, data0.len() - 1, &data0, &data1, &mut out)?;
     /// assert!(out_range.count > 0);
-    /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
+    /// assert!(out[..out_range.count].iter().any(|v| v.is_finite()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///

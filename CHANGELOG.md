@@ -13,6 +13,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - MACDV: MACD-V, Spiroglou's volatility-normalised MACD, the EMA spread over the ATR (#570)
   - SHARPE: Rolling Sharpe Ratio, annualized mean excess return over its standard deviation (#571)
   - SKEW: Rolling Skewness, the adjusted Fisher-Pearson coefficient (#569)
+  - SORTINO: Rolling Sortino Ratio, annualized mean excess return over its downside deviation (#572)
 
 ### Faster
 - ~2x to 5x, up to 7x in batch: most candlestick patterns, batch and streaming. Pre-check,

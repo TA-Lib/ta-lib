@@ -711,6 +711,95 @@ DEF_FUNCTION( SMI,
              );
 /* SMI END */
 
+/* SORTINO BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SORTINO_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   20,
+   "Number of returns in the window",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_SORTINO_MAR =
+{
+   TA_REAL_MIN,
+   TA_REAL_MAX,
+   8,
+   0.0,
+   0.001,
+   0.0001
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SORTINO_MAR =
+{
+   TA_OptInput_RealRange,
+   "optInMAR",
+   0,
+
+   "Minimum Acceptable Return per Bar",
+   (const void *)&TA_DEF_SORTINO_MAR,
+   0.0,
+   "Minimum acceptable return per bar",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_SORTINO_Annualization =
+{
+   0.0,
+   TA_REAL_MAX,
+   2,
+   1.0,
+   365.0,
+   1.0
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SORTINO_Annualization =
+{
+   TA_OptInput_RealRange,
+   "optInAnnualization",
+   0,
+
+   "Annualization",
+   (const void *)&TA_DEF_SORTINO_Annualization,
+   252.0,
+   "Bars per year",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_SORTINO_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_SORTINO_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_SORTINO_OptInputs[] =
+{ &TA_DEF_UI_D_SORTINO_TimePeriod,
+  &TA_DEF_UI_D_SORTINO_MAR,
+  &TA_DEF_UI_D_SORTINO_Annualization,
+  NULL
+};
+
+DEF_FUNCTION( SORTINO,
+              TA_GroupId_Statistic,
+              "Rolling Sortino Ratio",
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
+             );
+/* SORTINO END */
+
 /* SQRT BEGIN */
 static const TA_InputParameterInfo    *TA_SQRT_Inputs[]    =
 {
@@ -1649,6 +1738,7 @@ const TA_FuncDef *TA_DEF_TableS[] =
    ADD_TO_TABLE(SKEW),
    ADD_TO_TABLE(SMA),
    ADD_TO_TABLE(SMI),
+   ADD_TO_TABLE(SORTINO),
    ADD_TO_TABLE(SQRT),
    ADD_TO_TABLE(SQZMOM),
    ADD_TO_TABLE(STC),

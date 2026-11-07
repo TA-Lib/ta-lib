@@ -5503,6 +5503,34 @@ int TA_SMI_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 {
    return TA_SMI_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInInteger, params->optIn[2].data.optInInteger, params->optIn[3].data.optInInteger, outputIdx );
 }
+TA_RetCode TA_SORTINO_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_SORTINO(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               params->optIn[1].data.optInReal, /* optInMAR*/
+               params->optIn[2].data.optInReal, /* optInAnnualization*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_SORTINO_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_SORTINO_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+                    params->optIn[1].data.optInReal, /* optInMAR*/
+                    params->optIn[2].data.optInReal /* optInAnnualization*/ );
+}
+int TA_SORTINO_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_SORTINO_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, params->optIn[2].data.optInReal, outputIdx );
+}
 TA_RetCode TA_SQRT_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

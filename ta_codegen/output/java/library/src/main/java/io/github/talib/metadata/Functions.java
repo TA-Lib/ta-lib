@@ -322,6 +322,7 @@ public final class Functions {
       put(m, f_SKEW());
       put(m, f_SMA());
       put(m, f_SMI());
+      put(m, f_SORTINO());
       put(m, f_SQRT());
       put(m, f_SQZMOM());
       put(m, f_STC());
@@ -3995,6 +3996,34 @@ public final class Functions {
          List.of(
             new OutputInfo(OutputType.REAL, "outSMI", 0x00000001),
             new OutputInfo(OutputType.REAL, "outSMISignal", 0x00000004)
+         ));
+   }
+
+   private static FuncInfo f_SORTINO() {
+      return new FuncInfo(
+         "SORTINO", "Statistic Functions", "Rolling Sortino Ratio", 0x42000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Number of returns in the window", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInMAR", 0x00000000,
+               "Minimum Acceptable Return per Bar", "Minimum acceptable return per bar", 0.0,
+               -3e37, 3e37, 8, 0.0, 0.001, 0.0001,
+               0, 0, 0, 0, 0, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInAnnualization", 0x00000000,
+               "Annualization", "Bars per year", 252.0,
+               0.0, 3e37, 2, 1.0, 365.0, 1.0,
+               0, 0, 0, 0, 0, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));
    }
 

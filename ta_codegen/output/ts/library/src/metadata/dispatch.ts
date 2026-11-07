@@ -239,6 +239,7 @@ import * as SINH from '../func/sinh.ts';
 import * as SKEW from '../func/skew.ts';
 import * as SMA from '../func/sma.ts';
 import * as SMI from '../func/smi.ts';
+import * as SORTINO from '../func/sortino.ts';
 import * as SQRT from '../func/sqrt.ts';
 import * as SQZMOM from '../func/sqzmom.ts';
 import * as STC from '../func/stc.ts';
@@ -1297,6 +1298,11 @@ export const DISPATCH: ReadonlyMap<string, Thunks> = new Map<string, Thunks>([
     lookback: (h) => SMI.smiLookbackPositional(h.opts[0], h.opts[1], h.opts[2], h.opts[3], h.core),
     displayShift: (h, o) => SMI.smiDisplayShiftPositional(h.opts[0], h.opts[1], h.opts[2], h.opts[3], o, h.core),
     call: (h, s, e) => SMI.smiPositional(s, e, h.prices[0]![1]!, h.prices[0]![2]!, h.prices[0]![3]!, h.opts[0], h.opts[1], h.opts[2], h.opts[3], h.outputs[0] as Float64Array, h.outputs[1] as Float64Array, h.core),
+  }],
+  ['SORTINO', {
+    lookback: (h) => SORTINO.sortinoLookbackPositional(h.opts[0], h.opts[1], h.opts[2], h.core),
+    displayShift: (h, o) => SORTINO.sortinoDisplayShiftPositional(h.opts[0], h.opts[1], h.opts[2], o, h.core),
+    call: (h, s, e) => SORTINO.sortinoPositional(s, e, h.inputs[0]!, h.opts[0], h.opts[1], h.opts[2], h.outputs[0] as Float64Array, h.core),
   }],
   ['SQRT', {
     lookback: (h) => SQRT.sqrtLookbackPositional(h.core),

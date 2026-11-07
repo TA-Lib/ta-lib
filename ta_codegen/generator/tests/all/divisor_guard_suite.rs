@@ -137,6 +137,11 @@ const ANNOTATED: &[(&str, &str, &str, &str)] = &[
     // `sumROC1`, so the same reasoning does not reach it.
     ("VWMA", "tempV", "unguarded by decision: stateless per bar", "nan_inf_output"),
 
+    // The same decision, ruled on #572: a window with no return below the MAR is the
+    // plain quotient, +Inf or NaN. The quotient is the bar's output and nothing
+    // carried is computed from it.
+    ("SORTINO", "windowDown", "unguarded by decision: stateless per bar", "nan_inf_output"),
+
 
     // The Hilbert family divides by `atan(Im/Re)*rad2Deg` under `Im != 0.0 && Re != 0.0`
     // (`ht_dcperiod.c:318-319` and its six twins), which bounds neither operand enough

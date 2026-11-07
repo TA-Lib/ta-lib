@@ -18174,6 +18174,105 @@ TA_LIB_API TA_RetCode TA_SMI_Advance( TA_SMI_Stream *stream );
 TA_LIB_API TA_RetCode TA_SMI_Clone( const TA_SMI_Stream *stream, TA_SMI_Stream **clone );
 
 /*
+ * TA_SORTINO - Rolling Sortino Ratio
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Number of returns in the window
+ * 
+ * optInMAR:(From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000)
+ *    Minimum acceptable return per bar
+ * 
+ * optInAnnualization:(From 0 to 30000000000000000000000000000000000000)
+ *    Bars per year
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_SORTINO( int    startIdx,
+                                  int    endIdx,
+                                             const double inReal[],
+                                             int           optInTimePeriod, /* From 2 to 100000 */
+                                             double        optInMAR, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                             double        optInAnnualization, /* From 0 to 30000000000000000000000000000000000000 */
+                                             int          *outBegIdx,
+                                             int          *outNBElement,
+                                             double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_SORTINO( int    startIdx,
+                                    int    endIdx,
+                                               const float  inReal[],
+                                               int           optInTimePeriod, /* From 2 to 100000 */
+                                               double        optInMAR, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                               double        optInAnnualization, /* From 0 to 30000000000000000000000000000000000000 */
+                                               int          *outBegIdx,
+                                               int          *outNBElement,
+                                               double        outReal[] );
+
+TA_LIB_API int TA_SORTINO_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+                                             double        optInMAR, /* From -30000000000000000000000000000000000000 to 30000000000000000000000000000000000000 */
+                                             double        optInAnnualization );  /* From 0 to 30000000000000000000000000000000000000 */
+TA_LIB_API int TA_SORTINO_DisplayShift( int optInTimePeriod, double optInMAR, double optInAnnualization, int outputIdx );
+
+
+
+/*
+ * Streaming API for TA_SORTINO: incremental per-bar evaluation.
+ */
+typedef struct TA_SORTINO_Stream TA_SORTINO_Stream;
+
+TA_LIB_API TA_RetCode TA_SORTINO_Open( TA_SORTINO_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInMAR, double optInAnnualization, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SORTINO_Update( TA_SORTINO_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SORTINO_Peek( const TA_SORTINO_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_SORTINO_Close( TA_SORTINO_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history. The fill is bit-identical to
+ * TA_SORTINO( 0, historyLen-1, ... ).
+ */
+TA_LIB_API TA_RetCode TA_SORTINO_OpenAndFill( TA_SORTINO_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInMAR, double optInAnnualization, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted (the bar
+ * TA_SORTINO_OutRange ends on), without recomputing. Seeded by Open, refreshed by
+ * every accepted Update, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_SORTINO_Value( const TA_SORTINO_Stream *stream, double *outReal );
+
+/*
+ * OutRange: the bars this stream has an output for, in the input series'
+ * coordinates. That is [*outBegIdx, *outBegIdx + *outNBElement), the range
+ * TA_SORTINO reports over the same bars. Open seeds it; every accepted Update and every
+ * TA_SORTINO_Advance adds one; a rejected Update and a Peek change nothing. The
+ * last bar it can reach is TA_INDEX_MAX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
+ */
+TA_LIB_API TA_RetCode TA_SORTINO_OutRange( const TA_SORTINO_Stream *stream, int *outBegIdx, int *outNBElement );
+
+/*
+ * Advance: count one bar this stream was not fed (one an Update rejected and
+ * that will not be re-fed, or a session with no print). The range moves by one
+ * and nothing else does, so TA_SORTINO_Value keeps answering the previous output,
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_INDEX_MAX.
+ */
+TA_LIB_API TA_RetCode TA_SORTINO_Advance( TA_SORTINO_Stream *stream );
+
+/*
+ * Clone: fork the stream. The fork is an independent stream at the same bar,
+ * owning its own copy of everything the original owns. Both must be closed.
+ * The fork carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_SORTINO_Clone( const TA_SORTINO_Stream *stream, TA_SORTINO_Stream **clone );
+
+/*
  * TA_SQRT - Vector Square Root
  * 
  * Input  = double

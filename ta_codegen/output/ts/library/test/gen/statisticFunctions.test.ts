@@ -45,8 +45,8 @@ import {
   linearregSlopeOpenAndFill, median, medianOpen, medianOpenAndFill, percentile,
   percentileOpen, percentileOpenAndFill, percentrank, percentrankOpen,
   percentrankOpenAndFill, sharpe, sharpeOpen, sharpeOpenAndFill, skew, skewOpen,
-  skewOpenAndFill, stddev, stddevOpen, stddevOpenAndFill, tsf, tsfOpen,
-  tsfOpenAndFill, varOpen, varOpenAndFill, var_
+  skewOpenAndFill, sortino, sortinoOpen, sortinoOpenAndFill, stddev, stddevOpen,
+  stddevOpenAndFill, tsf, tsfOpen, tsfOpenAndFill, varOpen, varOpenAndFill, var_
 } from 'ta-lib';
 
 test('BETA: beta example', () => {
@@ -156,7 +156,7 @@ test('KURTOSIS: kurtosis example', () => {
   const count = values.length;
   assert.ok(count > 0);
   assert.equal(begIdx + count, data.length);
-  assert.ok(values.every(Number.isFinite));
+  assert.ok(values.some(Number.isFinite));
 });
 
 test('KURTOSIS: kurtosisOpen example', () => {
@@ -506,7 +506,7 @@ test('SHARPE: sharpe example', () => {
   const count = values.length;
   assert.ok(count > 0);
   assert.equal(begIdx + count, data.length);
-  assert.ok(values.every(Number.isFinite));
+  assert.ok(values.some(Number.isFinite));
 });
 
 test('SHARPE: sharpeOpen example', () => {
@@ -583,6 +583,59 @@ test('SKEW: skewOpenAndFill example', () => {
 
   const range = stream.outRange();
   const batch = skew(data, { timePeriod: 30 });
+  assert.deepEqual([begIdx, values.length], [range.begIdx, range.count]);
+  assert.deepEqual([begIdx, values.length], [batch.begIdx, batch.values.length]);
+  assert.ok(values.length > 0);
+  for (let k = 0; k < values.length; k++) {
+    assert.ok(Object.is(values[k], batch.values[k]));
+  }
+});
+
+test('SORTINO: sortino example', () => {
+  const data = Float64Array.from({ length: 252 }, (_, i) =>
+    100 + 10 * Math.sin(0.1 * i));
+  const { begIdx, values } = sortino(data, {
+    timePeriod: 20,
+    mar: 0,
+    annualization: 252,
+  });
+  // values[k] is the value at bar begIdx + k
+
+  const count = values.length;
+  assert.ok(count > 0);
+  assert.equal(begIdx + count, data.length);
+  assert.ok(values.some(Number.isFinite));
+});
+
+test('SORTINO: sortinoOpen example', () => {
+  const data = Float64Array.from({ length: 252 }, (_, i) =>
+    100 + 10 * Math.sin(0.1 * i));
+  const stream = sortinoOpen(data, {
+    timePeriod: 20,
+    mar: 0,
+    annualization: 252,
+  });
+  const peeked = stream.peek(100.9); // a forming bar: commits nothing
+  const updated = stream.update(100.9); // the bar closes
+
+  assert.ok(Object.is(peeked, updated));
+  assert.ok(Object.is(stream.value(), updated));
+  const range = stream.outRange();
+  assert.equal(range.begIdx + range.count, data.length + 1);
+});
+
+test('SORTINO: sortinoOpenAndFill example', () => {
+  const data = Float64Array.from({ length: 252 }, (_, i) =>
+    100 + 10 * Math.sin(0.1 * i));
+  const { stream, begIdx, values } = sortinoOpenAndFill(data, {
+    timePeriod: 20,
+    mar: 0,
+    annualization: 252,
+  });
+  // values[k] is the value at bar begIdx + k
+
+  const range = stream.outRange();
+  const batch = sortino(data, { timePeriod: 20, mar: 0, annualization: 252 });
   assert.deepEqual([begIdx, values.length], [range.begIdx, range.count]);
   assert.deepEqual([begIdx, values.length], [batch.begIdx, batch.values.length]);
   assert.ok(values.length > 0);

@@ -2278,7 +2278,8 @@ static ErrorNumber testPeriodOnePins( const TA_History *history )
  * reference data; treating it as a failure is a deliberate uninitialized-memory
  * heuristic — it is how the MAVP inverted-window garbage (6.5e-310) was caught,
  * and ASan/UBSan do not flag uninitialized reads. Integer outputs are not
- * scanned (any bit pattern is a legal candlestick/index code).
+ * scanned (any bit pattern is a legal candlestick/index code). A function
+ * declaring TA_FUNC_FLG_NAN_INF_OUT is held to the subnormal check alone.
  */
 static ErrorNumber pbScanOutputsFinite( const char *label,
                                         const TA_FuncHandle *handle,
@@ -2286,6 +2287,7 @@ static ErrorNumber pbScanOutputsFinite( const char *label,
                                         int nb )
 {
    const TA_OutputParameterInfo *outputInfo;
+   int nanInfAllowed = (funcInfo->flags & TA_FUNC_FLG_NAN_INF_OUT) != 0;
    unsigned int o;
    int j;
 
@@ -2297,7 +2299,7 @@ static ErrorNumber pbScanOutputsFinite( const char *label,
       for( j = 0; j < nb; j++ )
       {
          TA_Real v = pbSweepOutReal[o][j];
-         if( !isfinite( v ) || fpclassify( v ) == FP_SUBNORMAL )
+         if( (!isfinite( v ) && !nanInfAllowed) || fpclassify( v ) == FP_SUBNORMAL )
          {
             printf( "\nFail: %s: out[%u][%d] = %.17g is not finite/normal\n",
                     label, o, j, v );

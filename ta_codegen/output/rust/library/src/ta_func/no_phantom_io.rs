@@ -17365,6 +17365,65 @@ fn legs_SMI(r: &mut Report) {
     r.legs_done("SMI", 3);
 }
 
+const V_SORTINO: &[(&str, i32, f64, f64)] = &[
+    ("defaults", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT),
+    ("minimums", 2i32, -3e37f64, 0.0f64),
+];
+
+fn sub_SORTINO(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInMAR, optInAnnualization) in V_SORTINO {
+        let Ok(lb) = core.sortino_lookback(optInTimePeriod, optInMAR, optInAnnualization) else { continue; };
+        r.control("SORTINO", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.sortino_impl(0, lb, &inReal, optInTimePeriod, optInMAR, optInAnnualization, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("SORTINO", label); continue; }
+        r.quiet("SORTINO", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.sortino_impl(0, lb - 1, &inReal, optInTimePeriod, optInMAR, optInAnnualization, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_SORTINO(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInMAR = Core::REAL_DEFAULT;
+    let optInAnnualization = Core::REAL_DEFAULT;
+    let Ok(lb) = core.sortino_lookback(optInTimePeriod, optInMAR, optInAnnualization) else { r.no_legs("SORTINO"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SORTINO", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.sortino_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInMAR, optInAnnualization, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("SORTINO", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.sortino_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInMAR, optInAnnualization, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("SORTINO", 1);
+}
+
 const V_SQRT: &[&str] = &[
     "defaults",
 ];
@@ -20462,6 +20521,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("SKEW", sub_SKEW, legs_SKEW),
     ("SMA", sub_SMA, legs_SMA),
     ("SMI", sub_SMI, legs_SMI),
+    ("SORTINO", sub_SORTINO, legs_SORTINO),
     ("SQRT", sub_SQRT, legs_SQRT),
     ("SQZMOM", sub_SQZMOM, legs_SQZMOM),
     ("STC", sub_STC, legs_STC),
@@ -20539,7 +20599,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 241, "probe count");
+    assert_eq!(PROBES.len(), 242, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

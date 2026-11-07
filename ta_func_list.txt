@@ -200,6 +200,7 @@ SINH                Vector Trigonometric Sinh
 SKEW                Rolling Skewness
 SMA                 Simple Moving Average
 SMI                 Stochastic Momentum Index
+SORTINO             Rolling Sortino Ratio
 SQRT                Vector Square Root
 SQZMOM              Squeeze Momentum and Level
 STC                 Schaff Trend Cycle

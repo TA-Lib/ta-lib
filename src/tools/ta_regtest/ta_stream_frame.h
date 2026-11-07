@@ -8205,6 +8205,46 @@ static TA_RetCode TA_SMI_SFrameClose( void *stream )
    return TA_SMI_Close( (TA_SMI_Stream *)stream );
 }
 
+static TA_RetCode TA_SORTINO_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SORTINO_Open(
+               (TA_SORTINO_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInMAR */,
+               optIn[2] /* optInAnnualization */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SORTINO_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SORTINO_OpenAndFill(
+               (TA_SORTINO_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInMAR */,
+               optIn[2] /* optInAnnualization */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SORTINO_SFrameClose( void *stream )
+{
+   return TA_SORTINO_Close( (TA_SORTINO_Stream *)stream );
+}
+
 static TA_RetCode TA_SQRT_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -10142,6 +10182,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_SMA, 1, TA_VOpt_SMA, 1, TA_VOutIsInt_SMA },
    { "SMI", TA_SMI_SFrameOpen, TA_SMI_SFrameFill, TA_SMI_SFrameClose,
      3, TA_VIn_SMI, 4, TA_VOpt_SMI, 2, TA_VOutIsInt_SMI },
+   { "SORTINO", TA_SORTINO_SFrameOpen, TA_SORTINO_SFrameFill, TA_SORTINO_SFrameClose,
+     1, TA_VIn_SORTINO, 3, TA_VOpt_SORTINO, 1, TA_VOutIsInt_SORTINO },
    { "SQRT", TA_SQRT_SFrameOpen, TA_SQRT_SFrameFill, TA_SQRT_SFrameClose,
      1, TA_VIn_SQRT, 0, NULL, 1, TA_VOutIsInt_SQRT },
    { "SQZMOM", TA_SQZMOM_SFrameOpen, TA_SQZMOM_SFrameFill, TA_SQZMOM_SFrameClose,
@@ -10222,6 +10264,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 241
+#define TA_STREAM_TABLE_SIZE 242
 
 #endif /* TA_STREAM_FRAME_H */
