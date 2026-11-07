@@ -331,10 +331,40 @@ def _do_loops(src, lo, hi):
     return loops
 
 
+# Every pass runs: no condition beyond the subscript's own bound.
+TOTAL_LOOP = re.compile(r"\(\s*totIdx\s*=\s*\d+\s*;\s*totIdx\s*>=\s*0\s*;\s*(?:totIdx\s*-=\s*1|totIdx--|--totIdx)\s*\)")
+LEAVES = re.compile(r"\b(?:if|break|continue|return|goto)\b")
+
+
+def _total_loop(src, lo, brace):
+    """The block opened at `brace` is the body of a `for` over `totIdx`."""
+    j = len(src[lo:brace].rstrip()) + lo - 1
+    if j < lo or src[j] != ")":
+        return False
+    depth = 0
+    while j >= lo:
+        depth += {")": 1, "(": -1}.get(src[j], 0)
+        if depth == 0:
+            break
+        j -= 1
+    f = re.search(r"\bfor\s*$", src[lo:j])
+    if f is None or TOTAL_LOOP.match(src, j) is None:
+        return False
+    head = src[lo:lo + f.start()].rstrip()
+    return head == "" or head[-1] in ";{}"
+
+
 def _guarded(src, lo, pos):
     """The statement at `pos` runs only under a condition: it sits in a nested
-    block, or something (`if( .. )`, `else`) precedes it in its own statement."""
-    if src.count("{", lo, pos) > src.count("}", lo, pos):
+    block other than a loop over the totals' subscript, or something (`if( .. )`,
+    `else`) precedes it in its own statement."""
+    opened = []
+    for k in range(lo, pos):
+        if src[k] == "{":
+            opened.append(k)
+        elif src[k] == "}" and opened:
+            opened.pop()
+    if any(not _total_loop(src, lo, b) or LEAVES.search(src, b, pos) for b in opened):
         return True
     k = max(src.rfind(";", lo, pos), src.rfind("{", lo, pos), src.rfind("}", lo, pos))
     return src[max(k + 1, lo):pos].strip() != ""

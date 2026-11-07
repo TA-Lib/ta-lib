@@ -14,7 +14,6 @@
  *  120904 AC     Creation
  *  100426 MF,CC  Remove the outInteger comment, which misstated the values
  *  103126 MF,CC  Pre-check the cheap tests in an outer if, the candle averages inside
- *  110526 MF,CC  Carry the ranges of the previous bars instead of recomputing them
  *
  */
 
@@ -32,8 +31,7 @@ TA_RetCode cdlpiercing(int startIdx, int endIdx,
    int outInteger[])
 {
    double BodyLongPeriodTotal[2];
-   double BodyLongPeriodTotalRange0, BodyLongPeriodTotalTrailRange0, BodyLongPeriodTotalRange1, BodyLongPeriodTotalTrailRange1;
-   int i, outIdx, BodyLongTrailingIdx, lookbackTotal;
+   int i, outIdx, totIdx, BodyLongTrailingIdx, lookbackTotal;
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -79,8 +77,6 @@ TA_RetCode cdlpiercing(int startIdx, int endIdx,
     */
    outIdx = 0;
 
-   BodyLongPeriodTotalRange1 = ta_candlerange(BodyLong_rangeType, inOpen[i-1], inHigh[i-1], inLow[i-1], inClose[i-1]);
-   BodyLongPeriodTotalTrailRange1 = ta_candlerange(BodyLong_rangeType, inOpen[BodyLongTrailingIdx-1], inHigh[BodyLongTrailingIdx-1], inLow[BodyLongTrailingIdx-1], inClose[BodyLongTrailingIdx-1]);
    do
    {
       if( ta_candlecolor(inClose[i-1], inOpen[i-1]) == -1 &&                                                        // 1st: black
@@ -104,12 +100,9 @@ TA_RetCode cdlpiercing(int startIdx, int endIdx,
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      BodyLongPeriodTotalRange0 = ta_candlerange(BodyLong_rangeType, inOpen[i], inHigh[i], inLow[i], inClose[i]);
-      BodyLongPeriodTotalTrailRange0 = ta_candlerange(BodyLong_rangeType, inOpen[BodyLongTrailingIdx], inHigh[BodyLongTrailingIdx], inLow[BodyLongTrailingIdx], inClose[BodyLongTrailingIdx]);
-      BodyLongPeriodTotal[1] += BodyLongPeriodTotalRange1 - BodyLongPeriodTotalTrailRange1;
-      BodyLongPeriodTotal[0] += BodyLongPeriodTotalRange0 - BodyLongPeriodTotalTrailRange0;
-      BodyLongPeriodTotalRange1 = BodyLongPeriodTotalRange0;
-      BodyLongPeriodTotalTrailRange1 = BodyLongPeriodTotalTrailRange0;
+      for (totIdx = 1; totIdx >= 0; --totIdx)
+         BodyLongPeriodTotal[totIdx] += ta_candlerange(BodyLong_rangeType, inOpen[i-totIdx], inHigh[i-totIdx], inLow[i-totIdx], inClose[i-totIdx])
+      - ta_candlerange(BodyLong_rangeType, inOpen[BodyLongTrailingIdx-totIdx], inHigh[BodyLongTrailingIdx-totIdx], inLow[BodyLongTrailingIdx-totIdx], inClose[BodyLongTrailingIdx-totIdx]);
       i++;
       BodyLongTrailingIdx++;
    } while( i <= endIdx );

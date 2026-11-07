@@ -126,7 +126,7 @@ sites:
   CDLMORNINGSTAR.ringlag.BodyShortTrailingIdx: 280
   CDLONNECK.ringlag.BodyLongTrailingIdx: 281
   CDLONNECK.ringlag.EqualTrailingIdx: 282
-  CDLPIERCING.ringcap.BodyLongTrailingIdx: 515
+  CDLPIERCING.ringlag.BodyLongTrailingIdx: 283
   CDLRICKSHAWMAN.ringcap.BodyDojiTrailingIdx: 284
   CDLRICKSHAWMAN.ringcap.NearTrailingIdx: 285
   CDLRICKSHAWMAN.ringcap.ShadowLongTrailingIdx: 286

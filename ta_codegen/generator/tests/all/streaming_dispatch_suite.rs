@@ -1211,8 +1211,8 @@ fn test_c_server_state_equivalence_leg() {
         );
     }
 
-    // CDLPIERCING: two shifted windows of ONE setting over one derived ring,
-    // the previous bar's ranges carried in scalars beside it.
+    // CDLPIERCING: two shifted windows of ONE setting over one derived ring:
+    // the #229 fold's own shape, and the reason the leg exists.
     let body = srv
         .split("static int sv_steq_TA_CDLPIERCING( const struct TA_CDLPIERCING_Stream *a, const struct TA_CDLPIERCING_Stream *b, const char **w, int *z )\n{")
         .nth(1)
@@ -1233,11 +1233,20 @@ fn test_c_server_state_equivalence_leg() {
         // the carried bar, and the ring geometry
         "if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) )",
         "if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx )",
-        // the carried ranges, bitwise
+    ] {
+        assert!(body.contains(want), "CDLPIERCING comparator missing:\n  {want}\nbody:\n{body}");
+    }
+    // The previous bar's ranges carried in scalars beside the ring, compared bitwise.
+    let cat = srv
+        .split("static int sv_steq_TA_CDLCOUNTERATTACK( const struct TA_CDLCOUNTERATTACK_Stream *a, const struct TA_CDLCOUNTERATTACK_Stream *b, const char **w, int *z )\n{")
+        .nth(1)
+        .expect("CDLCOUNTERATTACK comparator body");
+    let cat = &cat[..cat.find("\n}").expect("comparator end")];
+    for want in [
         "if( sv_xtier_ne(a->BodyLongPeriodTotalRange1, b->BodyLongPeriodTotalRange1, z) )",
         "if( sv_xtier_ne(a->BodyLongPeriodTotalTrailRange1, b->BodyLongPeriodTotalTrailRange1, z) )",
     ] {
-        assert!(body.contains(want), "CDLPIERCING comparator missing:\n  {want}\nbody:\n{body}");
+        assert!(cat.contains(want), "CDLCOUNTERATTACK comparator missing:\n  {want}\nbody:\n{cat}");
     }
     // A ring that lags its cursor carries the lag as geometry, compared like the cap.
     let dcc = srv

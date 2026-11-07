@@ -2952,13 +2952,12 @@ static int sv_steq_TA_CDLPIERCING( const struct TA_CDLPIERCING_Stream *a, const 
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
    for( k = 0; k < 2; k++ ) if( sv_xtier_ne(a->BodyLongPeriodTotal[k], b->BodyLongPeriodTotal[k], z) ) { *w = "BodyLongPeriodTotal"; return 1; }
-   if( sv_xtier_ne(a->BodyLongPeriodTotalRange1, b->BodyLongPeriodTotalRange1, z) ) { *w = "BodyLongPeriodTotalRange1"; return 1; }
-   if( sv_xtier_ne(a->BodyLongPeriodTotalTrailRange1, b->BodyLongPeriodTotalTrailRange1, z) ) { *w = "BodyLongPeriodTotalTrailRange1"; return 1; }
    if( sv_xtier_ne(a->lag1_inOpen, b->lag1_inOpen, z) ) { *w = "lag1_inOpen"; return 1; }
    if( sv_xtier_ne(a->lag1_inHigh, b->lag1_inHigh, z) ) { *w = "lag1_inHigh"; return 1; }
    if( sv_xtier_ne(a->lag1_inLow, b->lag1_inLow, z) ) { *w = "lag1_inLow"; return 1; }
    if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
    if( a->ringCap_BodyLongTrailingIdx != b->ringCap_BodyLongTrailingIdx ) { *w = "ringCap_BodyLongTrailingIdx"; return 1; }
+   if( a->ringLag_BodyLongTrailingIdx != b->ringLag_BodyLongTrailingIdx ) { *w = "ringLag_BodyLongTrailingIdx"; return 1; }
    if( (a->ring_BodyLongTrailingIdx_derived == NULL) != (b->ring_BodyLongTrailingIdx_derived == NULL) ) { *w = "ring_BodyLongTrailingIdx_derived"; return 1; }
    if( a->ring_BodyLongTrailingIdx_derived ) for( k = 0; k < a->ringCap_BodyLongTrailingIdx; k++ )
    {
