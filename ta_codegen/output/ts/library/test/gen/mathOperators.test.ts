@@ -144,7 +144,7 @@ test('DIV: div example', () => {
   const count = values.length;
   assert.ok(count > 0);
   assert.equal(begIdx + count, data0.length);
-  assert.ok(values.some(Number.isFinite));
+  assert.ok(values.every((v) => !Number.isNaN(v)));
 });
 
 test('DIV: divOpen example', () => {

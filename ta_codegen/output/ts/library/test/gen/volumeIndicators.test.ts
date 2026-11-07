@@ -742,7 +742,7 @@ test('RVOL: rvol example', () => {
   const count = values.length;
   assert.ok(count > 0);
   assert.equal(begIdx + count, volume.length);
-  assert.ok(values.some(Number.isFinite));
+  assert.ok(values.every((v) => !Number.isNaN(v)));
 });
 
 test('RVOL: rvolOpen example', () => {

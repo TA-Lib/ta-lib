@@ -978,10 +978,13 @@ pub fn batch_example(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Option
         checks.push(format!("assert.equal({var}.length, count);"));
     }
     if let Some((_, var)) = func.outputs.iter().zip(&outs).find(|(o, _)| o.param_type != ParamType::Integer) {
-        // A `nan_inf_output` function may emit NaN or infinity on ordinary data.
-        let quantifier =
-            if func.flags.iter().any(|fl| fl == "nan_inf_output") { "some" } else { "every" };
-        checks.push(format!("assert.ok({var}.{quantifier}(Number.isFinite));"));
+        // A `nan_inf_output` function may emit infinity on ordinary data.
+        let check = if func.flags.iter().any(|fl| fl == "nan_inf_output") {
+            "(v) => !Number.isNaN(v)"
+        } else {
+            "Number.isFinite"
+        };
+        checks.push(format!("assert.ok({var}.every({check}));"));
     }
     if func.outputs.iter().any(|o| o.param_type == ParamType::Integer) {
         let period = func

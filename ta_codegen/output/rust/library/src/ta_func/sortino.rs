@@ -421,7 +421,7 @@ impl Core {
     ///
     /// let out_range = core.sortino(0, data.len() - 1, &data, 20, 0.0, 252.0, &mut out)?;
     /// assert!(out_range.count > 0);
-    /// assert!(out[..out_range.count].iter().any(|v| v.is_finite()));
+    /// assert!(out[..out_range.count].iter().all(|v| !v.is_nan()));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///

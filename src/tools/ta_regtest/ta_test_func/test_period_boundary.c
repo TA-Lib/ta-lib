@@ -2404,6 +2404,7 @@ static void pbSweepRunCase( PBSweepCtx *ctx,
    TA_ParamHolder *paramHolder;
    TA_RetCode retCode;
    unsigned int i;
+   int j;
    int endIdx = (int)history->nbBars - 1;
    int outBegIdx = -1, outNbElement = -1, lookback = -1;
    char label[160];
@@ -2458,7 +2459,13 @@ static void pbSweepRunCase( PBSweepCtx *ctx,
    {
       TA_GetOutputParameterInfo( handle, i, &outputInfo );
       if( outputInfo->type == TA_Output_Real )
+      {
+         /* A subnormal sentinel, so a slot the call never wrote fails the
+          * scan below even for a function allowed NaN and infinity. */
+         for( j = 0; j < PB_DATA_SIZE; j++ )
+            pbSweepOutReal[i][j] = 4.9e-324;
          TA_SetOutputParamRealPtr( paramHolder, i, &pbSweepOutReal[i][0] );
+      }
       else
          TA_SetOutputParamIntegerPtr( paramHolder, i, &pbSweepOutInt[i][0] );
    }

@@ -666,22 +666,19 @@ fn example_doctest(
     }
     lines.push("assert!(out_range.count > 0);".to_string());
     // Assert on the values, not just the return code. A `nan_inf_output` function
-    // may emit NaN or infinity on ordinary data, so it is held to some finite
-    // value rather than to all of them.
+    // may emit infinity on ordinary data, so it is held to no NaN instead.
     if let Some((_, var)) = func
         .outputs
         .iter()
         .zip(&out_vars)
         .find(|(o, _)| o.param_type != ParamType::Integer)
     {
-        let quantifier = if func.flags.iter().any(|fl| fl == "nan_inf_output") {
-            "any"
+        let check = if func.flags.iter().any(|fl| fl == "nan_inf_output") {
+            "!v.is_nan()"
         } else {
-            "all"
+            "v.is_finite()"
         };
-        lines.push(format!(
-            "assert!({var}[..out_range.count].iter().{quantifier}(|v| v.is_finite()));"
-        ));
+        lines.push(format!("assert!({var}[..out_range.count].iter().all(|v| {check}));"));
     }
     // An integer output has no finiteness to check, which is why the 61
     // candlestick examples and the four other integer-output examples asserted

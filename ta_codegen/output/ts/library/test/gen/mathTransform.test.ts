@@ -54,7 +54,7 @@ test('ACOS: acos example', () => {
   const count = values.length;
   assert.ok(count > 0);
   assert.equal(begIdx + count, data.length);
-  assert.ok(values.some(Number.isFinite));
+  assert.ok(values.every((v) => !Number.isNaN(v)));
 });
 
 test('ACOS: acosOpen example', () => {
@@ -92,7 +92,7 @@ test('ASIN: asin example', () => {
   const count = values.length;
   assert.ok(count > 0);
   assert.equal(begIdx + count, data.length);
-  assert.ok(values.some(Number.isFinite));
+  assert.ok(values.every((v) => !Number.isNaN(v)));
 });
 
 test('ASIN: asinOpen example', () => {
@@ -254,7 +254,7 @@ test('COSH: cosh example', () => {
   const count = values.length;
   assert.ok(count > 0);
   assert.equal(begIdx + count, data.length);
-  assert.ok(values.some(Number.isFinite));
+  assert.ok(values.every((v) => !Number.isNaN(v)));
 });
 
 test('COSH: coshOpen example', () => {
@@ -295,7 +295,7 @@ test('EXP: exp example', () => {
   const count = values.length;
   assert.ok(count > 0);
   assert.equal(begIdx + count, data.length);
-  assert.ok(values.some(Number.isFinite));
+  assert.ok(values.every((v) => !Number.isNaN(v)));
 });
 
 test('EXP: expOpen example', () => {
@@ -377,7 +377,7 @@ test('LN: ln example', () => {
   const count = values.length;
   assert.ok(count > 0);
   assert.equal(begIdx + count, data.length);
-  assert.ok(values.some(Number.isFinite));
+  assert.ok(values.every((v) => !Number.isNaN(v)));
 });
 
 test('LN: lnOpen example', () => {
@@ -418,7 +418,7 @@ test('LOG10: log10 example', () => {
   const count = values.length;
   assert.ok(count > 0);
   assert.equal(begIdx + count, data.length);
-  assert.ok(values.some(Number.isFinite));
+  assert.ok(values.every((v) => !Number.isNaN(v)));
 });
 
 test('LOG10: log10Open example', () => {
@@ -500,7 +500,7 @@ test('SINH: sinh example', () => {
   const count = values.length;
   assert.ok(count > 0);
   assert.equal(begIdx + count, data.length);
-  assert.ok(values.some(Number.isFinite));
+  assert.ok(values.every((v) => !Number.isNaN(v)));
 });
 
 test('SINH: sinhOpen example', () => {
@@ -541,7 +541,7 @@ test('SQRT: sqrt example', () => {
   const count = values.length;
   assert.ok(count > 0);
   assert.equal(begIdx + count, data.length);
-  assert.ok(values.some(Number.isFinite));
+  assert.ok(values.every((v) => !Number.isNaN(v)));
 });
 
 test('SQRT: sqrtOpen example', () => {
