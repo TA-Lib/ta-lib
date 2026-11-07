@@ -369,8 +369,8 @@ export function linearregInterceptDisplayShift(outputIdx: number, options?: Line
 
 /**
  * Returns the y-intercept (b) of the least-squares regression line fitted over the
- * last optInTimePeriod values. Part of the linear-regression family (LINEARREG,
- * SLOPE, ANGLE, TSF).
+ * last timePeriod values. Part of the linear-regression family (LINEARREG, SLOPE,
+ * ANGLE, TSF).
  *
  * Formula and more info at
  * [ta-lib.org/functions/linearreg_intercept](https://ta-lib.org/functions/linearreg_intercept).
@@ -498,7 +498,7 @@ export class LinearregInterceptStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('LINEARREG_INTERCEPT advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('LINEARREG_INTERCEPT advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -506,20 +506,20 @@ export class LinearregInterceptStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input series to regress.
+   * @param real - The bar's `real` value: Input series to regress.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('LINEARREG_INTERCEPT update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('LINEARREG_INTERCEPT update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('LINEARREG_INTERCEPT update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('LINEARREG_INTERCEPT update', 'real');
     }
-    linearregInterceptStepImpl(this, inReal);
+    linearregInterceptStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -527,16 +527,17 @@ export class LinearregInterceptStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input series to regress.
+   * @param real - The bar's `real` value: Input series to regress.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('LINEARREG_INTERCEPT peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('LINEARREG_INTERCEPT peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let m = 0;
     let windowStart = 0;
     let tempValue1 = 0;
@@ -1050,7 +1051,7 @@ export function linearregInterceptOpenPositional(
 ): LinearregInterceptStream {
   optInTimePeriod = requireInt32('LINEARREG_INTERCEPT open', 'timePeriod', optInTimePeriod);
   requireArgument('LINEARREG_INTERCEPT open', 'real', inReal);
-  requireHistory('LINEARREG_INTERCEPT open', inReal.length);
+  requireHistory('LINEARREG_INTERCEPT open', 'real', inReal.length);
   return linearregInterceptOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -1063,7 +1064,7 @@ export function linearregInterceptOpenAndFillPositional(
 ): LinearregInterceptStream {
   optInTimePeriod = requireInt32('LINEARREG_INTERCEPT openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('LINEARREG_INTERCEPT openAndFill', 'real', inReal);
-  requireHistory('LINEARREG_INTERCEPT openAndFill', inReal.length);
+  requireHistory('LINEARREG_INTERCEPT openAndFill', 'real', inReal.length);
   const guardLookback = linearregInterceptLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('LINEARREG_INTERCEPT openAndFill', PARAM_RANGES, optInTimePeriod);

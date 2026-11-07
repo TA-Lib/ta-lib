@@ -445,7 +445,7 @@ export class RsiStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('RSI advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('RSI advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -453,20 +453,20 @@ export class RsiStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Price series (typically close)
+   * @param real - The bar's `real` value: Price series (typically close)
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('RSI update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('RSI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('RSI update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('RSI update', 'real');
     }
-    rsiStepImpl(this, inReal);
+    rsiStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -474,16 +474,17 @@ export class RsiStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Price series (typically close)
+   * @param real - The bar's `real` value: Price series (typically close)
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('RSI peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('RSI peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let gainDelta = 0;
     let tempValue1 = 0;
     let tempValue2 = 0;
@@ -779,7 +780,7 @@ export function rsiOpenPositional(
 ): RsiStream {
   optInTimePeriod = requireInt32('RSI open', 'timePeriod', optInTimePeriod);
   requireArgument('RSI open', 'real', inReal);
-  requireHistory('RSI open', inReal.length);
+  requireHistory('RSI open', 'real', inReal.length);
   return rsiOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -792,7 +793,7 @@ export function rsiOpenAndFillPositional(
 ): RsiStream {
   optInTimePeriod = requireInt32('RSI openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('RSI openAndFill', 'real', inReal);
-  requireHistory('RSI openAndFill', inReal.length);
+  requireHistory('RSI openAndFill', 'real', inReal.length);
   const guardLookback = rsiLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('RSI openAndFill', PARAM_RANGES, optInTimePeriod);

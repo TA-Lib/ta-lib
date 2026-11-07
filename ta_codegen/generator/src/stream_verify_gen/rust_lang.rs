@@ -59,7 +59,7 @@ pub(crate) fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashM
     let sn = crate::backends::common::snake_words(&func.name);
     let fname = &sn;
     let fname_snake = sn.clone();
-    let candle = func.name.starts_with("CDL");
+    let candle = func.is_candlestick();
     let inputs = crate::streaming::input_array_names(func);
     let mut gi = 0usize;
     let arrays: Vec<&'static str> = inputs

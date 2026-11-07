@@ -1068,7 +1068,7 @@ export class HtTrendmodeStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('HT_TRENDMODE advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('HT_TRENDMODE advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -1076,20 +1076,20 @@ export class HtTrendmodeStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price series.
+   * @param real - The bar's `real` value: Source price series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('HT_TRENDMODE update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('HT_TRENDMODE update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('HT_TRENDMODE update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('HT_TRENDMODE update', 'real');
     }
-    htTrendmodeStepImpl(this, inReal);
+    htTrendmodeStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outInteger;
   }
@@ -1097,16 +1097,17 @@ export class HtTrendmodeStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price series.
+   * @param real - The bar's `real` value: Source price series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('HT_TRENDMODE peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('HT_TRENDMODE peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let i = 0;
     let j = 0;
     let tempReal = 0;
@@ -2932,7 +2933,7 @@ export function htTrendmodeOpenPositional(
   core: Core = Core.DEFAULT,
 ): HtTrendmodeStream {
   requireArgument('HT_TRENDMODE open', 'real', inReal);
-  requireHistory('HT_TRENDMODE open', inReal.length);
+  requireHistory('HT_TRENDMODE open', 'real', inReal.length);
   return htTrendmodeOpenInternal(core, float64(inReal), 0);
 }
 
@@ -2943,7 +2944,7 @@ export function htTrendmodeOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): HtTrendmodeStream {
   requireArgument('HT_TRENDMODE openAndFill', 'real', inReal);
-  requireHistory('HT_TRENDMODE openAndFill', inReal.length);
+  requireHistory('HT_TRENDMODE openAndFill', 'real', inReal.length);
   const guardOutLen = openFillCount('HT_TRENDMODE openAndFill', inReal.length, htTrendmodeLookbackPositional(core));
   requireOutput('HT_TRENDMODE openAndFill', 'outInteger', outInteger, guardOutLen, Int32Array);
   const inRealF64 = float64(inReal);

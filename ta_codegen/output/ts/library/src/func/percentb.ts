@@ -441,7 +441,7 @@ export interface PercentbResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * Position of the input between the lower band (0) and the upper band (1)
+   * Position of the input between the lower band (0) and the upper band (1).
    * `values[k]` is the value at input bar `begIdx + k`.
    */
   values: Float64Array;
@@ -491,15 +491,14 @@ export function percentbDisplayShift(outputIdx: number, options?: PercentbOption
  * [ta-lib.org/functions/percentb](https://ta-lib.org/functions/percentb).
  *
  * **Notes**
- * - An input on the middle band reads
- *   `optInNbDevDn / (optInNbDevUp + optInNbDevDn)`: 0.5 with equal multipliers.
+ * - An input on the middle band reads `nbDevDn / (nbDevUp + nbDevDn)`: 0.5 with
+ *   equal multipliers.
  * - With a simple moving average and both multipliers equal to k, %B = 0.5 + z /
  *   (2k), where z is the z-score of the input in its window.
  * - The result is a ratio; multiply by 100 to read it as a percentage.
- * - Any `optInMAType` other than SMA is a TA-Lib generalisation, as it is for
- *   BBANDS: the deviation stays the population standard deviation about the simple
- *   mean.
- * - PERCENTB is bit for bit `(inReal - lower) / (upper - lower)` computed from
+ * - Any `maType` other than SMA is a TA-Lib generalisation, as it is for BBANDS:
+ *   the deviation stays the population standard deviation about the simple mean.
+ * - PERCENTB is bit for bit `(real - lower) / (upper - lower)` computed from
  *   BBANDS' own outputs, and 0.5 wherever those two bands are equal.
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
@@ -617,7 +616,7 @@ export class PercentbStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PERCENTB advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PERCENTB advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -625,20 +624,20 @@ export class PercentbStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input data series.
+   * @param real - The bar's `real` value: Input data series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PERCENTB update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PERCENTB update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('PERCENTB update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('PERCENTB update', 'real');
     }
-    percentbStepImpl(this, inReal);
+    percentbStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -646,16 +645,17 @@ export class PercentbStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input data series.
+   * @param real - The bar's `real` value: Input data series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('PERCENTB peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('PERCENTB peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let den = 0;
     let deviation = 0;
     let lower = 0;
@@ -950,7 +950,7 @@ export function percentbOpenPositional(
   optInNbDevDn = requireReal('PERCENTB open', 'nbDevDn', optInNbDevDn);
   optInMAType = requireInt32('PERCENTB open', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('PERCENTB open', 'real', inReal);
-  requireHistory('PERCENTB open', inReal.length);
+  requireHistory('PERCENTB open', 'real', inReal.length);
   return percentbOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
 }
 
@@ -969,7 +969,7 @@ export function percentbOpenAndFillPositional(
   optInNbDevDn = requireReal('PERCENTB openAndFill', 'nbDevDn', optInNbDevDn);
   optInMAType = requireInt32('PERCENTB openAndFill', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('PERCENTB openAndFill', 'real', inReal);
-  requireHistory('PERCENTB openAndFill', inReal.length);
+  requireHistory('PERCENTB openAndFill', 'real', inReal.length);
   const guardLookback = percentbLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core);
   if (guardLookback < 0) {
     throw rejectedParams('PERCENTB openAndFill', PARAM_RANGES, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);

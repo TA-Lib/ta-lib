@@ -273,12 +273,12 @@ export interface FractalResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * 100 when the bar `optInRightBars` back is a strict swing high, 0 otherwise.
+   * 100 when the bar `rightBars` back is a strict swing high, 0 otherwise.
    * `outSwingHigh[k]` is the value at input bar `begIdx + k`.
    */
   outSwingHigh: Int32Array;
   /**
-   * 100 when the bar `optInRightBars` back is a strict swing low, 0 otherwise.
+   * 100 when the bar `rightBars` back is a strict swing low, 0 otherwise.
    * `outSwingLow[k]` is the value at input bar `begIdx + k`.
    */
   outSwingLow: Int32Array;
@@ -321,18 +321,18 @@ export function fractalDisplayShift(outputIdx: number, options?: FractalOptions)
 
 /**
  * Williams Fractal: a causal swing-pivot detector. A bar is a swing high when its
- * high strictly exceeds the highs of the `optInLeftBars` bars before it and the
- * `optInRightBars` bars after it; a swing low is the mirror on the lows. Bill
- * Williams' original is the symmetric five-candle case; independent left and right
- * arms generalise it. The right arm cannot be known until it has closed, so the
- * value is written on the bar that completes the pivot, `optInRightBars` bars
- * after the pivot itself. Each output value therefore describes the bar
- * `optInRightBars` back, not the bar it is written at: a flag at output index `k`
- * names input bar `outBegIdx + k - optInRightBars`, whose price is `inHigh[...]` /
- * `inLow[...]` at that index. The display shift both outputs report,
- * `-optInRightBars`, is that offset: a chart draws each flag that many bars to the
- * left. The two outputs are independent flags rather than one signed value,
- * because an outside bar can be a swing high and a swing low at once.
+ * high strictly exceeds the highs of the `leftBars` bars before it and the
+ * `rightBars` bars after it; a swing low is the mirror on the lows. Bill Williams'
+ * original is the symmetric five-candle case; independent left and right arms
+ * generalise it. The right arm cannot be known until it has closed, so the value
+ * is written on the bar that completes the pivot, `rightBars` bars after the pivot
+ * itself. Each output value therefore describes the bar `rightBars` back, not the
+ * bar it is written at: a flag at output index `k` names input bar
+ * `begIdx + k - rightBars`, whose price is `high[...]` / `low[...]` at that index.
+ * The display shift both outputs report, `-rightBars`, is that offset: a chart
+ * draws each flag that many bars to the left. The two outputs are independent
+ * flags rather than one signed value, because an outside bar can be a swing high
+ * and a swing low at once.
  *
  * Formula and more info at
  * [ta-lib.org/functions/fractal](https://ta-lib.org/functions/fractal).
@@ -465,7 +465,7 @@ export class FractalStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('FRACTAL advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('FRACTAL advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -473,26 +473,27 @@ export class FractalStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price series.
-   * @param inLow - The bar's `inLow` value: Low price series.
+   * @param high - The bar's `high` value: High price series.
+   * @param low - The bar's `low` value: Low price series.
    * @param out - Receives the outputs and is returned; a new {@link FractalOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, out?: FractalOut): FractalOut {
+  update(high: number, low: number, out?: FractalOut): FractalOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('FRACTAL update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('FRACTAL update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('FRACTAL update', 'FractalOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('FRACTAL update', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('FRACTAL update', !Number.isFinite(high) ? 'high' : 'low');
     }
-    fractalStepImpl(this, inHigh, inLow);
+    fractalStepImpl(this, high, low);
     this.outRangeCount++;
     if (out === undefined) {
       out = new FractalOut();
@@ -505,22 +506,24 @@ export class FractalStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price series.
-   * @param inLow - The bar's `inLow` value: Low price series.
+   * @param high - The bar's `high` value: High price series.
+   * @param low - The bar's `low` value: Low price series.
    * @param out - Receives the outputs and is returned; a new {@link FractalOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, out?: FractalOut): FractalOut {
+  peek(high: number, low: number, out?: FractalOut): FractalOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('FRACTAL peek', 'FractalOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('FRACTAL peek', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('FRACTAL peek', !Number.isFinite(high) ? 'high' : 'low');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let i = 0;
     let pivotHigh = 0;
     let pivotLow = 0;
@@ -587,6 +590,8 @@ export class FractalStream {
    * @param out - Receives the outputs and is returned; a new {@link FractalOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: FractalOut): FractalOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -628,9 +633,9 @@ export class FractalStream {
  * it holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class FractalOut {
-  /** 100 when the bar `optInRightBars` back is a strict swing high, 0 otherwise. */
+  /** 100 when the bar `rightBars` back is a strict swing high, 0 otherwise. */
   outSwingHigh: number = NaN;
-  /** 100 when the bar `optInRightBars` back is a strict swing low, 0 otherwise. */
+  /** 100 when the bar `rightBars` back is a strict swing low, 0 otherwise. */
   outSwingLow: number = NaN;
 }
 
@@ -871,7 +876,7 @@ export function fractalOpenPositional(
   optInLeftBars = requireInt32('FRACTAL open', 'leftBars', optInLeftBars);
   optInRightBars = requireInt32('FRACTAL open', 'rightBars', optInRightBars);
   requireArgument('FRACTAL open', 'prices.high', inHigh);
-  requireHistory('FRACTAL open', inHigh.length);
+  requireHistory('FRACTAL open', 'prices.high', inHigh.length);
   requireArgument('FRACTAL open', 'prices.low', inLow);
   requireHistoryLength('FRACTAL open', 'prices.low', inLow.length, inHigh.length);
   return fractalOpenInternal(core, float64(inHigh), float64(inLow), 0, optInLeftBars, optInRightBars);
@@ -890,7 +895,7 @@ export function fractalOpenAndFillPositional(
   optInLeftBars = requireInt32('FRACTAL openAndFill', 'leftBars', optInLeftBars);
   optInRightBars = requireInt32('FRACTAL openAndFill', 'rightBars', optInRightBars);
   requireArgument('FRACTAL openAndFill', 'prices.high', inHigh);
-  requireHistory('FRACTAL openAndFill', inHigh.length);
+  requireHistory('FRACTAL openAndFill', 'prices.high', inHigh.length);
   requireArgument('FRACTAL openAndFill', 'prices.low', inLow);
   const guardLookback = fractalLookbackPositional(optInLeftBars, optInRightBars, core);
   if (guardLookback < 0) {

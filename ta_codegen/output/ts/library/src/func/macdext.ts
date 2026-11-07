@@ -486,11 +486,11 @@ export function macdextDisplayShift(outputIdx: number, options?: MacdextOptions)
  *   the longer one.
  * - A signal period of 1 disables signal-line smoothing for every signal MAType:
  *   the signal equals the MACD line and the histogram is zero.
- * - `TA_MAType_MAMA` ignores its period argument, so it always produces the same
- *   series regardless of the period requested. If both `optInFastMAType` and
- *   `optInSlowMAType` are set to MAMA, the fast and slow lines are therefore
- *   identical and MACD, Signal, and Hist are all zero at every bar. Select MAMA
- *   for only one side to get a meaningful spread.
+ * - `MAType.MAMA` ignores its period argument, so it always produces the same
+ *   series regardless of the period requested. If both `fastMaType` and
+ *   `slowMaType` are set to MAMA, the fast and slow lines are therefore identical
+ *   and MACD, Signal, and Hist are all zero at every bar. Select MAMA for only one
+ *   side to get a meaningful spread.
  *
  * `outMacd[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends
@@ -629,7 +629,7 @@ export class MacdextStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MACDEXT advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MACDEXT advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -637,25 +637,26 @@ export class MacdextStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inReal - The bar's `inReal` value: Source series.
+   * @param real - The bar's `real` value: Source series.
    * @param out - Receives the outputs and is returned; a new {@link MacdextOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out?: MacdextOut): MacdextOut {
+  update(real: number, out?: MacdextOut): MacdextOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MACDEXT update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MACDEXT update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACDEXT update', 'MacdextOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MACDEXT update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MACDEXT update', 'real');
     }
-    macdextStepImpl(this, inReal);
+    macdextStepImpl(this, real);
     this.outRangeCount++;
     if (out === undefined) {
       out = new MacdextOut();
@@ -669,21 +670,22 @@ export class MacdextStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source series.
+   * @param real - The bar's `real` value: Source series.
    * @param out - Receives the outputs and is returned; a new {@link MacdextOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inReal: number, out?: MacdextOut): MacdextOut {
+  peek(real: number, out?: MacdextOut): MacdextOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACDEXT peek', 'MacdextOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MACDEXT peek', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MACDEXT peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let cur_slowMABuffer = 0;
     let cur_fastMABuffer = 0;
     let cur_outMACDSignal = 0;
@@ -710,6 +712,8 @@ export class MacdextStream {
    * @param out - Receives the outputs and is returned; a new {@link MacdextOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: MacdextOut): MacdextOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -1028,7 +1032,7 @@ export function macdextOpenPositional(
   optInSignalPeriod = requireInt32('MACDEXT open', 'signalPeriod', optInSignalPeriod);
   optInSignalMAType = requireInt32('MACDEXT open', 'signalMaType', optInSignalMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('MACDEXT open', 'real', inReal);
-  requireHistory('MACDEXT open', inReal.length);
+  requireHistory('MACDEXT open', 'real', inReal.length);
   return macdextOpenInternal(core, float64(inReal), 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
 }
 
@@ -1053,7 +1057,7 @@ export function macdextOpenAndFillPositional(
   optInSignalPeriod = requireInt32('MACDEXT openAndFill', 'signalPeriod', optInSignalPeriod);
   optInSignalMAType = requireInt32('MACDEXT openAndFill', 'signalMaType', optInSignalMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('MACDEXT openAndFill', 'real', inReal);
-  requireHistory('MACDEXT openAndFill', inReal.length);
+  requireHistory('MACDEXT openAndFill', 'real', inReal.length);
   const guardLookback = macdextLookbackPositional(optInFastPeriod, optInFastMAType as MAType, optInSlowPeriod, optInSlowMAType as MAType, optInSignalPeriod, optInSignalMAType as MAType, core);
   if (guardLookback < 0) {
     throw rejectedParams('MACDEXT openAndFill', PARAM_RANGES, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);

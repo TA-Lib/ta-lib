@@ -363,9 +363,9 @@ export function linearregSlopeDisplayShift(outputIdx: number, options?: Linearre
 
 /**
  * Slope 'm' of the least-squares best-fit line (y = b + m*x) over the last
- * optInTimePeriod bars. Reports the per-bar rate of change of the fitted trend
- * line. Positive slope = rising trend, negative = falling; magnitude is price
- * change per bar.
+ * timePeriod bars. Reports the per-bar rate of change of the fitted trend line.
+ * Positive slope = rising trend, negative = falling; magnitude is price change per
+ * bar.
  *
  * Formula and more info at
  * [ta-lib.org/functions/linearreg_slope](https://ta-lib.org/functions/linearreg_slope).
@@ -493,7 +493,7 @@ export class LinearregSlopeStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('LINEARREG_SLOPE advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('LINEARREG_SLOPE advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -501,20 +501,20 @@ export class LinearregSlopeStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Data series to fit.
+   * @param real - The bar's `real` value: Data series to fit.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('LINEARREG_SLOPE update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('LINEARREG_SLOPE update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('LINEARREG_SLOPE update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('LINEARREG_SLOPE update', 'real');
     }
-    linearregSlopeStepImpl(this, inReal);
+    linearregSlopeStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -522,16 +522,17 @@ export class LinearregSlopeStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Data series to fit.
+   * @param real - The bar's `real` value: Data series to fit.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('LINEARREG_SLOPE peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('LINEARREG_SLOPE peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let windowStart = 0;
     let tempValue1 = 0;
     let tempValue2 = 0;
@@ -1038,7 +1039,7 @@ export function linearregSlopeOpenPositional(
 ): LinearregSlopeStream {
   optInTimePeriod = requireInt32('LINEARREG_SLOPE open', 'timePeriod', optInTimePeriod);
   requireArgument('LINEARREG_SLOPE open', 'real', inReal);
-  requireHistory('LINEARREG_SLOPE open', inReal.length);
+  requireHistory('LINEARREG_SLOPE open', 'real', inReal.length);
   return linearregSlopeOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -1051,7 +1052,7 @@ export function linearregSlopeOpenAndFillPositional(
 ): LinearregSlopeStream {
   optInTimePeriod = requireInt32('LINEARREG_SLOPE openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('LINEARREG_SLOPE openAndFill', 'real', inReal);
-  requireHistory('LINEARREG_SLOPE openAndFill', inReal.length);
+  requireHistory('LINEARREG_SLOPE openAndFill', 'real', inReal.length);
   const guardLookback = linearregSlopeLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('LINEARREG_SLOPE openAndFill', PARAM_RANGES, optInTimePeriod);

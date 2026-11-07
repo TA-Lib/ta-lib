@@ -521,10 +521,9 @@ export function apoDisplayShift(outputIdx: number, options?: ApoOptions): number
  * [ta-lib.org/functions/apo](https://ta-lib.org/functions/apo).
  *
  * **Notes**
- * - `optInMAType` applies to both the fast and slow moving average.
- *   `TA_MAType_MAMA` ignores its period argument, so with
- *   `optInMAType = TA_MAType_MAMA` the fast and slow MAs are identical and the
- *   output is zero at every bar.
+ * - `maType` applies to both the fast and slow moving average. `MAType.MAMA`
+ *   ignores its period argument, so with `maType = MAType.MAMA` the fast and slow
+ *   MAs are identical and the output is zero at every bar.
  * - If the slow period is set smaller than the fast period, the two are swapped,
  *   as in `MACD`.
  *
@@ -639,7 +638,7 @@ export class ApoStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('APO advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('APO advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -647,20 +646,20 @@ export class ApoStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source data series.
+   * @param real - The bar's `real` value: Source data series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('APO update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('APO update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('APO update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('APO update', 'real');
     }
-    apoStepImpl(this, inReal);
+    apoStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -668,16 +667,17 @@ export class ApoStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source data series.
+   * @param real - The bar's `real` value: Source data series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('APO peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('APO peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let cur_tempBuffer = 0;
     let cur_outReal = 0;
     cur_tempBuffer = sp.sub0.peek(inReal);
@@ -889,7 +889,7 @@ export function apoOpenPositional(
   optInSlowPeriod = requireInt32('APO open', 'slowPeriod', optInSlowPeriod);
   optInMAType = requireInt32('APO open', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('APO open', 'real', inReal);
-  requireHistory('APO open', inReal.length);
+  requireHistory('APO open', 'real', inReal.length);
   return apoOpenInternal(core, float64(inReal), 0, optInFastPeriod, optInSlowPeriod, optInMAType);
 }
 
@@ -906,7 +906,7 @@ export function apoOpenAndFillPositional(
   optInSlowPeriod = requireInt32('APO openAndFill', 'slowPeriod', optInSlowPeriod);
   optInMAType = requireInt32('APO openAndFill', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('APO openAndFill', 'real', inReal);
-  requireHistory('APO openAndFill', inReal.length);
+  requireHistory('APO openAndFill', 'real', inReal.length);
   const guardLookback = apoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core);
   if (guardLookback < 0) {
     throw rejectedParams('APO openAndFill', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInMAType);

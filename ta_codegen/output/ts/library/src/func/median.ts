@@ -382,7 +382,7 @@ export function medianDisplayShift(outputIdx: number, options?: MedianOptions): 
 
 /**
  * The middle order statistic of the trailing window: the central value when
- * `optInTimePeriod` is odd, the mean of the two central values when it is even. A
+ * `timePeriod` is odd, the mean of the two central values when it is even. A
  * robust measure of central tendency — unlike
  * [`SMA`](https://ta-lib.org/functions/sma), a single spike moves it by at most
  * one rank however large the spike is, which is what makes it useful as a filter
@@ -401,9 +401,8 @@ export function medianDisplayShift(outputIdx: number, options?: MedianOptions): 
  *   bit.
  * - At even `n` the output can therefore be a value the series never traded at,
  *   which is the deliberate opposite of `PERCENTILE`'s design property.
- * - `optInTimePeriod` is not restricted to odd values: TA-Lib has no odd-only
- *   range mechanism, and it would surprise any caller reaching for a 20-bar
- *   median.
+ * - `timePeriod` is not restricted to odd values: TA-Lib has no odd-only range
+ *   mechanism, and it would surprise any caller reaching for a 20-bar median.
  * - Every input value must be finite. A NaN makes every comparison against it
  *   false, which breaks the order the window is kept in, and the output can stay
  *   wrong long after the NaN has left the window.
@@ -525,7 +524,7 @@ export class MedianStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MEDIAN advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MEDIAN advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -533,20 +532,20 @@ export class MedianStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: The series to take the median of.
+   * @param real - The bar's `real` value: The series to take the median of.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MEDIAN update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MEDIAN update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MEDIAN update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MEDIAN update', 'real');
     }
-    medianStepImpl(this, inReal);
+    medianStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -554,16 +553,17 @@ export class MedianStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: The series to take the median of.
+   * @param real - The bar's `real` value: The series to take the median of.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MEDIAN peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MEDIAN peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let newValue = 0;
     let result = 0;
     let lower = 0;
@@ -1061,7 +1061,7 @@ export function medianOpenPositional(
 ): MedianStream {
   optInTimePeriod = requireInt32('MEDIAN open', 'timePeriod', optInTimePeriod);
   requireArgument('MEDIAN open', 'real', inReal);
-  requireHistory('MEDIAN open', inReal.length);
+  requireHistory('MEDIAN open', 'real', inReal.length);
   return medianOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -1074,7 +1074,7 @@ export function medianOpenAndFillPositional(
 ): MedianStream {
   optInTimePeriod = requireInt32('MEDIAN openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('MEDIAN openAndFill', 'real', inReal);
-  requireHistory('MEDIAN openAndFill', inReal.length);
+  requireHistory('MEDIAN openAndFill', 'real', inReal.length);
   const guardLookback = medianLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('MEDIAN openAndFill', PARAM_RANGES, optInTimePeriod);

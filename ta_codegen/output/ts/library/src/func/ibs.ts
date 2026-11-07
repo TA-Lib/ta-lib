@@ -310,7 +310,7 @@ export class IbsStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('IBS advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('IBS advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -318,22 +318,22 @@ export class IbsStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number): number {
+  update(high: number, low: number, close: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('IBS update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('IBS update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('IBS update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('IBS update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    ibsStepImpl(this, inHigh, inLow, inClose);
+    ibsStepImpl(this, high, low, close);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -341,17 +341,20 @@ export class IbsStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('IBS peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+  peek(high: number, low: number, close: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('IBS peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let range = 0;
     let cur_outReal = 0;
     /* An exact test: the range of one bar carries the quote unit, so any
@@ -513,7 +516,7 @@ export function ibsOpenPositional(
   core: Core = Core.DEFAULT,
 ): IbsStream {
   requireArgument('IBS open', 'prices.high', inHigh);
-  requireHistory('IBS open', inHigh.length);
+  requireHistory('IBS open', 'prices.high', inHigh.length);
   requireArgument('IBS open', 'prices.low', inLow);
   requireArgument('IBS open', 'prices.close', inClose);
   requireHistoryLength('IBS open', 'prices.low', inLow.length, inHigh.length);
@@ -530,7 +533,7 @@ export function ibsOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): IbsStream {
   requireArgument('IBS openAndFill', 'prices.high', inHigh);
-  requireHistory('IBS openAndFill', inHigh.length);
+  requireHistory('IBS openAndFill', 'prices.high', inHigh.length);
   requireArgument('IBS openAndFill', 'prices.low', inLow);
   requireArgument('IBS openAndFill', 'prices.close', inClose);
   const guardOutLen = openFillCount('IBS openAndFill', inHigh.length, ibsLookbackPositional(core));

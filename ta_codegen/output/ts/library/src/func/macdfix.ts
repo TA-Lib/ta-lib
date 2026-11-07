@@ -676,7 +676,7 @@ export class MacdfixStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MACDFIX advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MACDFIX advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -684,25 +684,26 @@ export class MacdfixStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inReal - The bar's `inReal` value: Source series (typically close)
+   * @param real - The bar's `real` value: Source series (typically close)
    * @param out - Receives the outputs and is returned; a new {@link MacdfixOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out?: MacdfixOut): MacdfixOut {
+  update(real: number, out?: MacdfixOut): MacdfixOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MACDFIX update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MACDFIX update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACDFIX update', 'MacdfixOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MACDFIX update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MACDFIX update', 'real');
     }
-    macdfixStepImpl(this, inReal);
+    macdfixStepImpl(this, real);
     this.outRangeCount++;
     if (out === undefined) {
       out = new MacdfixOut();
@@ -716,21 +717,22 @@ export class MacdfixStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source series (typically close)
+   * @param real - The bar's `real` value: Source series (typically close)
    * @param out - Receives the outputs and is returned; a new {@link MacdfixOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inReal: number, out?: MacdfixOut): MacdfixOut {
+  peek(real: number, out?: MacdfixOut): MacdfixOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACDFIX peek', 'MacdfixOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MACDFIX peek', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MACDFIX peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let macdValue = 0;
     let tempReal = 0;
     let cur_outMACD = 0;
@@ -808,6 +810,8 @@ export class MacdfixStream {
    * @param out - Receives the outputs and is returned; a new {@link MacdfixOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: MacdfixOut): MacdfixOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -1329,7 +1333,7 @@ export function macdfixOpenPositional(
 ): MacdfixStream {
   optInSignalPeriod = requireInt32('MACDFIX open', 'signalPeriod', optInSignalPeriod);
   requireArgument('MACDFIX open', 'real', inReal);
-  requireHistory('MACDFIX open', inReal.length);
+  requireHistory('MACDFIX open', 'real', inReal.length);
   return macdfixOpenInternal(core, float64(inReal), 0, optInSignalPeriod);
 }
 
@@ -1344,7 +1348,7 @@ export function macdfixOpenAndFillPositional(
 ): MacdfixStream {
   optInSignalPeriod = requireInt32('MACDFIX openAndFill', 'signalPeriod', optInSignalPeriod);
   requireArgument('MACDFIX openAndFill', 'real', inReal);
-  requireHistory('MACDFIX openAndFill', inReal.length);
+  requireHistory('MACDFIX openAndFill', 'real', inReal.length);
   const guardLookback = macdfixLookbackPositional(optInSignalPeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('MACDFIX openAndFill', PARAM_RANGES, optInSignalPeriod);

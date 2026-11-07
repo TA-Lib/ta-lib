@@ -494,7 +494,7 @@ export interface BetaResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * Beta: regression slope of inReal1-returns on inReal0-returns. `values[k]` is the
+   * Beta: regression slope of real1-returns on real0-returns. `values[k]` is the
    * value at input bar `begIdx + k`.
    */
   values: Float64Array;
@@ -537,9 +537,9 @@ export function betaDisplayShift(outputIdx: number, options?: BetaOptions): numb
 
 /**
  * Beta: the slope of a least-squares linear regression of one series' percentage
- * returns (y, from inReal1) against another's (x, from inReal0) over a rolling
- * window. Measures how much a security moves relative to a market index. Beta = 1
- * moves with the index; \< 1 less volatile, > 1 more volatile.
+ * returns (y, from real1) against another's (x, from real0) over a rolling window.
+ * Measures how much a security moves relative to a market index. Beta = 1 moves
+ * with the index; \< 1 less volatile, > 1 more volatile.
  *
  * Formula and more info at
  * [ta-lib.org/functions/beta](https://ta-lib.org/functions/beta).
@@ -686,7 +686,7 @@ export class BetaStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('BETA advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('BETA advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -694,23 +694,23 @@ export class BetaStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal0 - The bar's `inReal0` value: Series whose returns are the
-   *   regression x (market/index)
-   * @param inReal1 - The bar's `inReal1` value: Series whose returns are the
-   *   regression y (security)
+   * @param real0 - The bar's `real0` value: Series whose returns are the regression
+   *   x (market/index)
+   * @param real1 - The bar's `real1` value: Series whose returns are the regression
+   *   y (security)
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal0: number, inReal1: number): number {
+  update(real0: number, real1: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('BETA update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('BETA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal0) || !Number.isFinite(inReal1)) {
-      throw nonFiniteBar('BETA update', !Number.isFinite(inReal0) ? 'inReal0' : 'inReal1');
+    if (!Number.isFinite(real0) || !Number.isFinite(real1)) {
+      throw nonFiniteBar('BETA update', !Number.isFinite(real0) ? 'real0' : 'real1');
     }
-    betaStepImpl(this, inReal0, inReal1);
+    betaStepImpl(this, real0, real1);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -718,19 +718,21 @@ export class BetaStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal0 - The bar's `inReal0` value: Series whose returns are the
-   *   regression x (market/index)
-   * @param inReal1 - The bar's `inReal1` value: Series whose returns are the
-   *   regression y (security)
+   * @param real0 - The bar's `real0` value: Series whose returns are the regression
+   *   x (market/index)
+   * @param real1 - The bar's `real1` value: Series whose returns are the regression
+   *   y (security)
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal0: number, inReal1: number): number {
-    if (!Number.isFinite(inReal0) || !Number.isFinite(inReal1)) {
-      throw nonFiniteBar('BETA peek', !Number.isFinite(inReal0) ? 'inReal0' : 'inReal1');
+  peek(real0: number, real1: number): number {
+    if (!Number.isFinite(real0) || !Number.isFinite(real1)) {
+      throw nonFiniteBar('BETA peek', !Number.isFinite(real0) ? 'real0' : 'real1');
     }
     const sp = this;
+    const inReal0 = real0;
+    const inReal1 = real1;
     let tmp_real = 0;
     let denom = 0;
     let denom_scale = 0;
@@ -1621,7 +1623,7 @@ export function betaOpenPositional(
 ): BetaStream {
   optInTimePeriod = requireInt32('BETA open', 'timePeriod', optInTimePeriod);
   requireArgument('BETA open', 'real0', inReal0);
-  requireHistory('BETA open', inReal0.length);
+  requireHistory('BETA open', 'real0', inReal0.length);
   requireArgument('BETA open', 'real1', inReal1);
   requireHistoryLength('BETA open', 'real1', inReal1.length, inReal0.length);
   return betaOpenInternal(core, float64(inReal0), float64(inReal1), 0, optInTimePeriod);
@@ -1637,7 +1639,7 @@ export function betaOpenAndFillPositional(
 ): BetaStream {
   optInTimePeriod = requireInt32('BETA openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('BETA openAndFill', 'real0', inReal0);
-  requireHistory('BETA openAndFill', inReal0.length);
+  requireHistory('BETA openAndFill', 'real0', inReal0.length);
   requireArgument('BETA openAndFill', 'real1', inReal1);
   const guardLookback = betaLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {

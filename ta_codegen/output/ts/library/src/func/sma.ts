@@ -354,7 +354,7 @@ export class SmaStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -362,20 +362,20 @@ export class SmaStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source series to average.
+   * @param real - The bar's `real` value: Source series to average.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SMA update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SMA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SMA update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SMA update', 'real');
     }
-    smaStepImpl(this, inReal);
+    smaStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -383,16 +383,17 @@ export class SmaStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source series to average.
+   * @param real - The bar's `real` value: Source series to average.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SMA peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SMA peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tempReal = 0;
     let cur_outReal = 0;
     let periodTotal = sp.periodTotal;
@@ -601,7 +602,7 @@ export function smaOpenPositional(
 ): SmaStream {
   optInTimePeriod = requireInt32('SMA open', 'timePeriod', optInTimePeriod);
   requireArgument('SMA open', 'real', inReal);
-  requireHistory('SMA open', inReal.length);
+  requireHistory('SMA open', 'real', inReal.length);
   return smaOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -614,7 +615,7 @@ export function smaOpenAndFillPositional(
 ): SmaStream {
   optInTimePeriod = requireInt32('SMA openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('SMA openAndFill', 'real', inReal);
-  requireHistory('SMA openAndFill', inReal.length);
+  requireHistory('SMA openAndFill', 'real', inReal.length);
   const guardLookback = smaLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('SMA openAndFill', PARAM_RANGES, optInTimePeriod);

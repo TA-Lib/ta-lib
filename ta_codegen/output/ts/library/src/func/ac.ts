@@ -560,7 +560,7 @@ export class AcStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('AC advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('AC advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -568,21 +568,21 @@ export class AcStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number): number {
+  update(high: number, low: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('AC update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('AC update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('AC update', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('AC update', !Number.isFinite(high) ? 'high' : 'low');
     }
-    acStepImpl(this, inHigh, inLow);
+    acStepImpl(this, high, low);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -590,17 +590,19 @@ export class AcStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('AC peek', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+  peek(high: number, low: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('AC peek', !Number.isFinite(high) ? 'high' : 'low');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let medianPrice = 0;
     let osc = 0;
     let tempReal = 0;
@@ -1048,7 +1050,7 @@ export function acOpenPositional(
   optInSlowPeriod = requireInt32('AC open', 'slowPeriod', optInSlowPeriod);
   optInSignalPeriod = requireInt32('AC open', 'signalPeriod', optInSignalPeriod);
   requireArgument('AC open', 'prices.high', inHigh);
-  requireHistory('AC open', inHigh.length);
+  requireHistory('AC open', 'prices.high', inHigh.length);
   requireArgument('AC open', 'prices.low', inLow);
   requireHistoryLength('AC open', 'prices.low', inLow.length, inHigh.length);
   return acOpenInternal(core, float64(inHigh), float64(inLow), 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -1068,7 +1070,7 @@ export function acOpenAndFillPositional(
   optInSlowPeriod = requireInt32('AC openAndFill', 'slowPeriod', optInSlowPeriod);
   optInSignalPeriod = requireInt32('AC openAndFill', 'signalPeriod', optInSignalPeriod);
   requireArgument('AC openAndFill', 'prices.high', inHigh);
-  requireHistory('AC openAndFill', inHigh.length);
+  requireHistory('AC openAndFill', 'prices.high', inHigh.length);
   requireArgument('AC openAndFill', 'prices.low', inLow);
   const guardLookback = acLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
   if (guardLookback < 0) {

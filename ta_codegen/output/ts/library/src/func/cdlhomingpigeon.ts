@@ -224,7 +224,7 @@ export interface CdlhomingpigeonResult {
   begIdx: number;
   /**
    * +100 when the pattern is detected, 0 otherwise. Never emits -100 (always
-   * bullish) `values[k]` is the value at input bar `begIdx + k`.
+   * bullish). `values[k]` is the value at input bar `begIdx + k`.
    */
   values: Int32Array;
 }
@@ -423,7 +423,7 @@ export class CdlhomingpigeonStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CDLHOMINGPIGEON advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CDLHOMINGPIGEON advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -431,23 +431,23 @@ export class CdlhomingpigeonStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inOpen - The bar's `inOpen` value: Open price of each bar.
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param open - The bar's `open` value: Open price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inOpen: number, inHigh: number, inLow: number, inClose: number): number {
+  update(open: number, high: number, low: number, close: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CDLHOMINGPIGEON update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CDLHOMINGPIGEON update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inOpen) || !Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('CDLHOMINGPIGEON update', !Number.isFinite(inOpen) ? 'inOpen' : !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(open) || !Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('CDLHOMINGPIGEON update', !Number.isFinite(open) ? 'open' : !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    cdlhomingpigeonStepImpl(this, inOpen, inHigh, inLow, inClose);
+    cdlhomingpigeonStepImpl(this, open, high, low, close);
     this.outRangeCount++;
     return this.cur_outInteger;
   }
@@ -455,19 +455,23 @@ export class CdlhomingpigeonStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inOpen - The bar's `inOpen` value: Open price of each bar.
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param open - The bar's `open` value: Open price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inOpen: number, inHigh: number, inLow: number, inClose: number): number {
-    if (!Number.isFinite(inOpen) || !Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('CDLHOMINGPIGEON peek', !Number.isFinite(inOpen) ? 'inOpen' : !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+  peek(open: number, high: number, low: number, close: number): number {
+    if (!Number.isFinite(open) || !Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('CDLHOMINGPIGEON peek', !Number.isFinite(open) ? 'open' : !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inOpen = open;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let cur_outInteger = 0;
     const BodyLong_rangeType = sp.cs_BodyLong_rangeType;
     const BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -774,7 +778,7 @@ export function cdlhomingpigeonOpenPositional(
   core: Core = Core.DEFAULT,
 ): CdlhomingpigeonStream {
   requireArgument('CDLHOMINGPIGEON open', 'prices.open', inOpen);
-  requireHistory('CDLHOMINGPIGEON open', inOpen.length);
+  requireHistory('CDLHOMINGPIGEON open', 'prices.open', inOpen.length);
   requireArgument('CDLHOMINGPIGEON open', 'prices.high', inHigh);
   requireArgument('CDLHOMINGPIGEON open', 'prices.low', inLow);
   requireArgument('CDLHOMINGPIGEON open', 'prices.close', inClose);
@@ -794,7 +798,7 @@ export function cdlhomingpigeonOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): CdlhomingpigeonStream {
   requireArgument('CDLHOMINGPIGEON openAndFill', 'prices.open', inOpen);
-  requireHistory('CDLHOMINGPIGEON openAndFill', inOpen.length);
+  requireHistory('CDLHOMINGPIGEON openAndFill', 'prices.open', inOpen.length);
   requireArgument('CDLHOMINGPIGEON openAndFill', 'prices.high', inHigh);
   requireArgument('CDLHOMINGPIGEON openAndFill', 'prices.low', inLow);
   requireArgument('CDLHOMINGPIGEON openAndFill', 'prices.close', inClose);

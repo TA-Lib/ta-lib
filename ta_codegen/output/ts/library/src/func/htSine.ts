@@ -697,7 +697,7 @@ export interface HtSineResult {
    */
   outSine: Float64Array;
   /**
-   * Sine of the phase advanced 45 degrees (lead) `outLeadSine[k]` is the value at
+   * Sine of the phase advanced 45 degrees (lead). `outLeadSine[k]` is the value at
    * input bar `begIdx + k`.
    */
   outLeadSine: Float64Array;
@@ -948,7 +948,7 @@ export class HtSineStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('HT_SINE advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('HT_SINE advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -956,25 +956,26 @@ export class HtSineStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inReal - The bar's `inReal` value: Source price series.
+   * @param real - The bar's `real` value: Source price series.
    * @param out - Receives the outputs and is returned; a new {@link HtSineOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out?: HtSineOut): HtSineOut {
+  update(real: number, out?: HtSineOut): HtSineOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('HT_SINE update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('HT_SINE update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('HT_SINE update', 'HtSineOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('HT_SINE update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('HT_SINE update', 'real');
     }
-    htSineStepImpl(this, inReal);
+    htSineStepImpl(this, real);
     this.outRangeCount++;
     if (out === undefined) {
       out = new HtSineOut();
@@ -987,21 +988,22 @@ export class HtSineStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price series.
+   * @param real - The bar's `real` value: Source price series.
    * @param out - Receives the outputs and is returned; a new {@link HtSineOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inReal: number, out?: HtSineOut): HtSineOut {
+  peek(real: number, out?: HtSineOut): HtSineOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('HT_SINE peek', 'HtSineOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('HT_SINE peek', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('HT_SINE peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let i = 0;
     let tempReal = 0;
     let tempReal2 = 0;
@@ -1386,6 +1388,8 @@ export class HtSineStream {
    * @param out - Receives the outputs and is returned; a new {@link HtSineOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: HtSineOut): HtSineOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -2523,7 +2527,7 @@ export function htSineOpenPositional(
   core: Core = Core.DEFAULT,
 ): HtSineStream {
   requireArgument('HT_SINE open', 'real', inReal);
-  requireHistory('HT_SINE open', inReal.length);
+  requireHistory('HT_SINE open', 'real', inReal.length);
   return htSineOpenInternal(core, float64(inReal), 0);
 }
 
@@ -2535,7 +2539,7 @@ export function htSineOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): HtSineStream {
   requireArgument('HT_SINE openAndFill', 'real', inReal);
-  requireHistory('HT_SINE openAndFill', inReal.length);
+  requireHistory('HT_SINE openAndFill', 'real', inReal.length);
   const guardOutLen = openFillCount('HT_SINE openAndFill', inReal.length, htSineLookbackPositional(core));
   requireOutput('HT_SINE openAndFill', 'outSine', outSine, guardOutLen, Float64Array);
   requireOutput('HT_SINE openAndFill', 'outLeadSine', outLeadSine, guardOutLen, Float64Array);

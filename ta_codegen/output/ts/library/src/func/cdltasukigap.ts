@@ -233,7 +233,7 @@ export interface CdltasukigapResult {
   /**
    * +100 on a bullish (upside-gap) tasuki gap, -100 on a bearish (downside-gap)
    * tasuki gap, 0 otherwise. Sign equals the color of the gap candle i-1
-   * (candlecolor(i-1)*100) `values[k]` is the value at input bar `begIdx + k`.
+   * (candlecolor(i-1)*100). `values[k]` is the value at input bar `begIdx + k`.
    */
   values: Int32Array;
 }
@@ -422,7 +422,7 @@ export class CdltasukigapStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CDLTASUKIGAP advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CDLTASUKIGAP advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -430,23 +430,23 @@ export class CdltasukigapStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inOpen - The bar's `inOpen` value: Open price of each bar.
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param open - The bar's `open` value: Open price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inOpen: number, inHigh: number, inLow: number, inClose: number): number {
+  update(open: number, high: number, low: number, close: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CDLTASUKIGAP update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CDLTASUKIGAP update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inOpen) || !Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('CDLTASUKIGAP update', !Number.isFinite(inOpen) ? 'inOpen' : !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(open) || !Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('CDLTASUKIGAP update', !Number.isFinite(open) ? 'open' : !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    cdltasukigapStepImpl(this, inOpen, inHigh, inLow, inClose);
+    cdltasukigapStepImpl(this, open, high, low, close);
     this.outRangeCount++;
     return this.cur_outInteger;
   }
@@ -454,19 +454,21 @@ export class CdltasukigapStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inOpen - The bar's `inOpen` value: Open price of each bar.
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param open - The bar's `open` value: Open price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inOpen: number, inHigh: number, inLow: number, inClose: number): number {
-    if (!Number.isFinite(inOpen) || !Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('CDLTASUKIGAP peek', !Number.isFinite(inOpen) ? 'inOpen' : !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+  peek(open: number, high: number, low: number, close: number): number {
+    if (!Number.isFinite(open) || !Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('CDLTASUKIGAP peek', !Number.isFinite(open) ? 'open' : !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inOpen = open;
+    const inClose = close;
     let cur_outInteger = 0;
     const Near_rangeType = sp.cs_Near_rangeType;
     const Near_avgPeriod = sp.cs_Near_avgPeriod;
@@ -790,7 +792,7 @@ export function cdltasukigapOpenPositional(
   core: Core = Core.DEFAULT,
 ): CdltasukigapStream {
   requireArgument('CDLTASUKIGAP open', 'prices.open', inOpen);
-  requireHistory('CDLTASUKIGAP open', inOpen.length);
+  requireHistory('CDLTASUKIGAP open', 'prices.open', inOpen.length);
   requireArgument('CDLTASUKIGAP open', 'prices.high', inHigh);
   requireArgument('CDLTASUKIGAP open', 'prices.low', inLow);
   requireArgument('CDLTASUKIGAP open', 'prices.close', inClose);
@@ -810,7 +812,7 @@ export function cdltasukigapOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): CdltasukigapStream {
   requireArgument('CDLTASUKIGAP openAndFill', 'prices.open', inOpen);
-  requireHistory('CDLTASUKIGAP openAndFill', inOpen.length);
+  requireHistory('CDLTASUKIGAP openAndFill', 'prices.open', inOpen.length);
   requireArgument('CDLTASUKIGAP openAndFill', 'prices.high', inHigh);
   requireArgument('CDLTASUKIGAP openAndFill', 'prices.low', inLow);
   requireArgument('CDLTASUKIGAP openAndFill', 'prices.close', inClose);

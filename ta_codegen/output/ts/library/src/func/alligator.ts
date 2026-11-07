@@ -484,12 +484,11 @@ export function alligatorDisplayShift(outputIdx: number, options?: AlligatorOpti
  * [ta-lib.org/functions/alligator](https://ta-lib.org/functions/alligator).
  *
  * **Notes**
- * - Each line is `TA_RMA` of `TA_MEDPRICE` over its own period. Williams draws the
- *   lines ahead of price; that is a display shift: `TA_ALLIGATOR_DisplayShift`
- *   reports each line's shift, and it changes nothing about the values, the
- *   lookback or the returned range. Every output is written at the bar that
- *   computed it, so the last `shift` values of a line are the part a chart draws
- *   past the last bar.
+ * - Each line is `rma` of `medprice` over its own period. Williams draws the lines
+ *   ahead of price; that is a display shift: `alligatorDisplayShift` reports each
+ *   line's shift, and it changes nothing about the values, the lookback or the
+ *   returned range. Every output is written at the bar that computed it, so the
+ *   last `shift` values of a line are the part a chart draws past the last bar.
  * - All three lines start at the bar of the longest period, and each shorter line
  *   seeds over the bars its own lookback reaches back from there, not at the first
  *   bar of the series. A chart that seeds every line at the first bar draws
@@ -634,7 +633,7 @@ export class AlligatorStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ALLIGATOR advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ALLIGATOR advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -642,26 +641,27 @@ export class AlligatorStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link AlligatorOut}
    *   when omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, out?: AlligatorOut): AlligatorOut {
+  update(high: number, low: number, out?: AlligatorOut): AlligatorOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ALLIGATOR update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ALLIGATOR update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('ALLIGATOR update', 'AlligatorOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('ALLIGATOR update', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('ALLIGATOR update', !Number.isFinite(high) ? 'high' : 'low');
     }
-    alligatorStepImpl(this, inHigh, inLow);
+    alligatorStepImpl(this, high, low);
     this.outRangeCount++;
     if (out === undefined) {
       out = new AlligatorOut();
@@ -675,22 +675,24 @@ export class AlligatorStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link AlligatorOut}
    *   when omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, out?: AlligatorOut): AlligatorOut {
+  peek(high: number, low: number, out?: AlligatorOut): AlligatorOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('ALLIGATOR peek', 'AlligatorOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('ALLIGATOR peek', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('ALLIGATOR peek', !Number.isFinite(high) ? 'high' : 'low');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let cur_tempMP = 0;
     let cur_outJaw = 0;
     let cur_outTeeth = 0;
@@ -714,6 +716,8 @@ export class AlligatorStream {
    * @param out - Receives the outputs and is returned; a new {@link AlligatorOut}
    *   when omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: AlligatorOut): AlligatorOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -1005,7 +1009,7 @@ export function alligatorOpenPositional(
   optInLipsPeriod = requireInt32('ALLIGATOR open', 'lipsPeriod', optInLipsPeriod);
   optInLipsShift = requireInt32('ALLIGATOR open', 'lipsShift', optInLipsShift);
   requireArgument('ALLIGATOR open', 'prices.high', inHigh);
-  requireHistory('ALLIGATOR open', inHigh.length);
+  requireHistory('ALLIGATOR open', 'prices.high', inHigh.length);
   requireArgument('ALLIGATOR open', 'prices.low', inLow);
   requireHistoryLength('ALLIGATOR open', 'prices.low', inLow.length, inHigh.length);
   return alligatorOpenInternal(core, float64(inHigh), float64(inLow), 0, optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift);
@@ -1033,7 +1037,7 @@ export function alligatorOpenAndFillPositional(
   optInLipsPeriod = requireInt32('ALLIGATOR openAndFill', 'lipsPeriod', optInLipsPeriod);
   optInLipsShift = requireInt32('ALLIGATOR openAndFill', 'lipsShift', optInLipsShift);
   requireArgument('ALLIGATOR openAndFill', 'prices.high', inHigh);
-  requireHistory('ALLIGATOR openAndFill', inHigh.length);
+  requireHistory('ALLIGATOR openAndFill', 'prices.high', inHigh.length);
   requireArgument('ALLIGATOR openAndFill', 'prices.low', inLow);
   const guardLookback = alligatorLookbackPositional(optInJawPeriod, optInJawShift, optInTeethPeriod, optInTeethShift, optInLipsPeriod, optInLipsShift, core);
   if (guardLookback < 0) {

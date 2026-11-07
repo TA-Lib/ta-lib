@@ -368,21 +368,20 @@ export function zigzagDisplayShift(outputIdx: number, options?: ZigzagOptions): 
 /**
  * The percent-filter swing line. A leg runs from the last confirmed pivot to the
  * most extreme price since it, and it reverses only when price moves at least
- * `optInSensitivity` percent away from that extreme and at least
- * `optInMinTrendLength` bars have passed since the pivot's own bar. Achelis
- * describes the chart form and warns that *"the last 'leg' displayed in a Zig Zag
- * chart can change"*. This function does not emit the chart line, which is drawn
- * with hindsight. It emits the causal state the line is drawn from, one row per
- * bar and final once emitted: the price of the swing extreme currently being
- * tracked, the absolute bar index of that extreme, and whether the current leg is
- * up or down. The chart is rebuilt exactly from the outputs and the seed. A pivot
- * is confirmed at bar `i > outBegIdx` whenever `outTrend[i]` differs from
- * `outTrend[i-1]`, and that pivot is `(outPivotIdx[i-1], outZigZag[i-1])`. When
- * `outTrend[outBegIdx]` is +1 a reversal fired on the first output bar, and the
- * pivot it confirmed is the seed,
- * `(outBegIdx - optInMinTrendLength, inLow[outBegIdx - optInMinTrendLength])`,
- * which no output row carries. The last, still-open pivot is
- * `(outPivotIdx[last], outZigZag[last])` — the leg Achelis warns about.
+ * `sensitivity` percent away from that extreme and at least `minTrendLength` bars
+ * have passed since the pivot's own bar. Achelis describes the chart form and
+ * warns that *"the last 'leg' displayed in a Zig Zag chart can change"*. This
+ * function does not emit the chart line, which is drawn with hindsight. It emits
+ * the causal state the line is drawn from, one row per bar and final once emitted:
+ * the price of the swing extreme currently being tracked, the absolute bar index
+ * of that extreme, and whether the current leg is up or down. The chart is rebuilt
+ * exactly from the outputs and the seed. A pivot is confirmed at bar `i > begIdx`
+ * whenever `outTrend[i]` differs from `outTrend[i-1]`, and that pivot is
+ * `(outPivotIdx[i-1], outZigZag[i-1])`. When `outTrend[begIdx]` is +1 a reversal
+ * fired on the first output bar, and the pivot it confirmed is the seed,
+ * `(begIdx - minTrendLength, low[begIdx - minTrendLength])`, which no output row
+ * carries. The last, still-open pivot is `(outPivotIdx[last], outZigZag[last])` —
+ * the leg Achelis warns about.
  *
  * Formula and more info at
  * [ta-lib.org/functions/zigzag](https://ta-lib.org/functions/zigzag).
@@ -404,17 +403,17 @@ export function zigzagDisplayShift(outputIdx: number, options?: ZigzagOptions): 
  *   can fire before the first output bar; the first one can fire exactly there.
  * - **The seed is a low.** The first reversal is therefore always upward. A down
  *   reversal compares a bar's low with the tracked high, so a rising series stays
- *   on its up leg only while no low falls `optInSensitivity` percent under that
- *   high on a bar the gate allows.
+ *   on its up leg only while no low falls `sensitivity` percent under that high on
+ *   a bar the gate allows.
  * - **The input must be positive.** The threshold is a percent of the pivot: at a
  *   pivot of 0 it sits on the pivot and below 0 on the wrong side of it, so the
  *   leg reverses on nearly every bar the gate allows. The output is undefined for
  *   such input and no error is returned. A series that crosses zero, such as an
  *   oscillator or a spread, needs an absolute reversal amount, which this function
  *   does not have.
- * - The lookback is `optInMinTrendLength` and does not depend on the sensitivity:
- *   the threshold decides whether a reversal fires, never how early it may.
- * - `optInSensitivity` is a percent, as Achelis, StockCharts, TTR, Skender and
+ * - The lookback is `minTrendLength` and does not depend on the sensitivity: the
+ *   threshold decides whether a reversal fires, never how early it may.
+ * - `sensitivity` is a percent, as Achelis, StockCharts, TTR, Skender and
  *   TradingView take it. 0 and 100 are degenerate but defined: at 0 a reversal
  *   fires on almost every bar the gate allows, and at 100 no downward reversal
  *   fires on positive prices.
@@ -549,7 +548,7 @@ export class ZigzagStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ZIGZAG advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ZIGZAG advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -557,26 +556,27 @@ export class ZigzagStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link ZigzagOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, out?: ZigzagOut): ZigzagOut {
+  update(high: number, low: number, out?: ZigzagOut): ZigzagOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ZIGZAG update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ZIGZAG update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('ZIGZAG update', 'ZigzagOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('ZIGZAG update', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('ZIGZAG update', !Number.isFinite(high) ? 'high' : 'low');
     }
-    zigzagStepImpl(this, inHigh, inLow);
+    zigzagStepImpl(this, high, low);
     this.outRangeCount++;
     if (out === undefined) {
       out = new ZigzagOut();
@@ -590,22 +590,24 @@ export class ZigzagStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link ZigzagOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, out?: ZigzagOut): ZigzagOut {
+  peek(high: number, low: number, out?: ZigzagOut): ZigzagOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('ZIGZAG peek', 'ZigzagOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('ZIGZAG peek', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('ZIGZAG peek', !Number.isFinite(high) ? 'high' : 'low');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let isExt = 0;
     let barIdx = sp.barIdx;
     let barsSincePivot = sp.barsSincePivot;
@@ -668,6 +670,8 @@ export class ZigzagStream {
    * @param out - Receives the outputs and is returned; a new {@link ZigzagOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: ZigzagOut): ZigzagOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -973,7 +977,7 @@ export function zigzagOpenPositional(
   optInSensitivity = requireReal('ZIGZAG open', 'sensitivity', optInSensitivity);
   optInMinTrendLength = requireInt32('ZIGZAG open', 'minTrendLength', optInMinTrendLength);
   requireArgument('ZIGZAG open', 'prices.high', inHigh);
-  requireHistory('ZIGZAG open', inHigh.length);
+  requireHistory('ZIGZAG open', 'prices.high', inHigh.length);
   requireArgument('ZIGZAG open', 'prices.low', inLow);
   requireHistoryLength('ZIGZAG open', 'prices.low', inLow.length, inHigh.length);
   return zigzagOpenInternal(core, float64(inHigh), float64(inLow), 0, optInSensitivity, optInMinTrendLength);
@@ -993,7 +997,7 @@ export function zigzagOpenAndFillPositional(
   optInSensitivity = requireReal('ZIGZAG openAndFill', 'sensitivity', optInSensitivity);
   optInMinTrendLength = requireInt32('ZIGZAG openAndFill', 'minTrendLength', optInMinTrendLength);
   requireArgument('ZIGZAG openAndFill', 'prices.high', inHigh);
-  requireHistory('ZIGZAG openAndFill', inHigh.length);
+  requireHistory('ZIGZAG openAndFill', 'prices.high', inHigh.length);
   requireArgument('ZIGZAG openAndFill', 'prices.low', inLow);
   const guardLookback = zigzagLookbackPositional(optInSensitivity, optInMinTrendLength, core);
   if (guardLookback < 0) {

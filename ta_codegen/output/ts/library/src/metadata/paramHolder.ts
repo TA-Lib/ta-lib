@@ -44,17 +44,17 @@ import { InputFlags, InputType, OptInputType, OutputType } from './flags.ts';
 /** The OHLCV components of a price input. Omit any the input's `flags` do not name. */
 export interface PriceInput {
   /** Open prices. */
-  readonly open?: ArrayLike<number>;
+  readonly open?: ArrayLike<number> | undefined;
   /** High prices. */
-  readonly high?: ArrayLike<number>;
+  readonly high?: ArrayLike<number> | undefined;
   /** Low prices. */
-  readonly low?: ArrayLike<number>;
+  readonly low?: ArrayLike<number> | undefined;
   /** Close prices. */
-  readonly close?: ArrayLike<number>;
+  readonly close?: ArrayLike<number> | undefined;
   /** Volumes. */
-  readonly volume?: ArrayLike<number>;
+  readonly volume?: ArrayLike<number> | undefined;
   /** Open interest. */
-  readonly openInterest?: ArrayLike<number>;
+  readonly openInterest?: ArrayLike<number> | undefined;
 }
 
 const COMPONENTS = [
@@ -92,7 +92,7 @@ function unsetValue(o: OptInputInfo): number {
  *
  * Every setter checks its argument against the function's row before it writes,
  * so a rejected call leaves the holder as it was. A rejection throws
- * {@link TALibError}: `TA_BAD_PARAM` for an index out of range or a missing or
+ * `TALibError`: `TA_BAD_PARAM` for an index out of range or a missing or
  * malformed value, `TA_INVALID_PARAM_HOLDER_TYPE` for a slot of another kind.
  * An unset optional parameter takes its default.
  *
@@ -243,7 +243,7 @@ export class ParamHolder {
    *
    * @param startIdx - First bar of the requested range (inclusive).
    * @param endIdx - Last bar of the requested range (inclusive).
-   * @throws {@link TALibError} `TA_INPUT_NOT_ALL_INITIALIZE` or
+   * @throws `TALibError` `TA_INPUT_NOT_ALL_INITIALIZE` or
    *   `TA_OUTPUT_NOT_ALL_INITIALIZE` for an unbound input or output.
    */
   call(startIdx: number, endIdx: number): OutRange {

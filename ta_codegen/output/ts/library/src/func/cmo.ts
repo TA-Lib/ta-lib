@@ -419,7 +419,7 @@ export class CmoStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CMO advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CMO advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -427,20 +427,20 @@ export class CmoStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series.
+   * @param real - The bar's `real` value: Source price/value series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CMO update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CMO update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('CMO update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('CMO update', 'real');
     }
-    cmoStepImpl(this, inReal);
+    cmoStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -448,16 +448,17 @@ export class CmoStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series.
+   * @param real - The bar's `real` value: Source price/value series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('CMO peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('CMO peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let gainDelta = 0;
     let tempValue1 = 0;
     let tempValue2 = 0;
@@ -729,7 +730,7 @@ export function cmoOpenPositional(
 ): CmoStream {
   optInTimePeriod = requireInt32('CMO open', 'timePeriod', optInTimePeriod);
   requireArgument('CMO open', 'real', inReal);
-  requireHistory('CMO open', inReal.length);
+  requireHistory('CMO open', 'real', inReal.length);
   return cmoOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -742,7 +743,7 @@ export function cmoOpenAndFillPositional(
 ): CmoStream {
   optInTimePeriod = requireInt32('CMO openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('CMO openAndFill', 'real', inReal);
-  requireHistory('CMO openAndFill', inReal.length);
+  requireHistory('CMO openAndFill', 'real', inReal.length);
   const guardLookback = cmoLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('CMO openAndFill', PARAM_RANGES, optInTimePeriod);

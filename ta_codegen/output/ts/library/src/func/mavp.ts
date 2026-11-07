@@ -487,7 +487,7 @@ export function mavpDisplayShift(outputIdx: number, options?: MavpOptions): numb
 /**
  * Moving average whose period varies per bar, driven by a companion period series.
  * For each bar it computes an MA of the selected type over the (clamped) period
- * given by inPeriods.
+ * given by periods.
  *
  * Formula and more info at
  * [ta-lib.org/functions/mavp](https://ta-lib.org/functions/mavp).
@@ -497,8 +497,7 @@ export function mavpDisplayShift(outputIdx: number, options?: MavpOptions): numb
  *   to the minimum and maximum period.
  * - Period values of 1 perform no smoothing (the bar's output equals its input);
  *   the minimum allowed period is 1 since 0.6.5.
- * - `optInMinPeriod` must not exceed `optInMaxPeriod`; a larger minimum is
- *   rejected.
+ * - `minPeriod` must not exceed `maxPeriod`; a larger minimum is rejected.
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends
@@ -617,7 +616,7 @@ export class MavpStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MAVP advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MAVP advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -625,21 +624,21 @@ export class MavpStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: series to be averaged.
-   * @param inPeriods - The bar's `inPeriods` value: per-bar desired MA period.
+   * @param real - The bar's `real` value: series to be averaged.
+   * @param periods - The bar's `periods` value: per-bar desired MA period.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, inPeriods: number): number {
+  update(real: number, periods: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MAVP update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MAVP update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal) || !Number.isFinite(inPeriods)) {
-      throw nonFiniteBar('MAVP update', !Number.isFinite(inReal) ? 'inReal' : 'inPeriods');
+    if (!Number.isFinite(real) || !Number.isFinite(periods)) {
+      throw nonFiniteBar('MAVP update', !Number.isFinite(real) ? 'real' : 'periods');
     }
-    mavpStepImpl(this, inReal, inPeriods);
+    mavpStepImpl(this, real, periods);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -647,17 +646,19 @@ export class MavpStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: series to be averaged.
-   * @param inPeriods - The bar's `inPeriods` value: per-bar desired MA period.
+   * @param real - The bar's `real` value: series to be averaged.
+   * @param periods - The bar's `periods` value: per-bar desired MA period.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number, inPeriods: number): number {
-    if (!Number.isFinite(inReal) || !Number.isFinite(inPeriods)) {
-      throw nonFiniteBar('MAVP peek', !Number.isFinite(inReal) ? 'inReal' : 'inPeriods');
+  peek(real: number, periods: number): number {
+    if (!Number.isFinite(real) || !Number.isFinite(periods)) {
+      throw nonFiniteBar('MAVP peek', !Number.isFinite(real) ? 'real' : 'periods');
     }
     const sp = this;
+    const inReal = real;
+    const inPeriods = periods;
     let cp = sp.optInMinPeriod;
     if (inPeriods > sp.optInMaxPeriod) {
       cp = sp.optInMaxPeriod;
@@ -1037,7 +1038,7 @@ export function mavpOpenPositional(
   optInMaxPeriod = requireInt32('MAVP open', 'maxPeriod', optInMaxPeriod);
   optInMAType = requireInt32('MAVP open', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('MAVP open', 'real', inReal);
-  requireHistory('MAVP open', inReal.length);
+  requireHistory('MAVP open', 'real', inReal.length);
   requireArgument('MAVP open', 'periods', inPeriods);
   requireHistoryLength('MAVP open', 'periods', inPeriods.length, inReal.length);
   return mavpOpenInternal(core, float64(inReal), float64(inPeriods), 0, optInMinPeriod, optInMaxPeriod, optInMAType);
@@ -1057,7 +1058,7 @@ export function mavpOpenAndFillPositional(
   optInMaxPeriod = requireInt32('MAVP openAndFill', 'maxPeriod', optInMaxPeriod);
   optInMAType = requireInt32('MAVP openAndFill', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('MAVP openAndFill', 'real', inReal);
-  requireHistory('MAVP openAndFill', inReal.length);
+  requireHistory('MAVP openAndFill', 'real', inReal.length);
   requireArgument('MAVP openAndFill', 'periods', inPeriods);
   const guardLookback = mavpLookbackPositional(optInMinPeriod, optInMaxPeriod, optInMAType as MAType, core);
   if (guardLookback < 0) {

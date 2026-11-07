@@ -124,6 +124,11 @@ impl Registry {
         self.names.get(key).cloned().unwrap_or_else(|| key.to_uppercase())
     }
 
+    /// Every indicator's YAML `name:` (`MA`, `HT_DCPERIOD`), in no particular order.
+    pub fn names(&self) -> impl Iterator<Item = &str> {
+        self.names.values().map(String::as_str)
+    }
+
     /// Check if an indicator exists in the registry.
     pub fn contains(&self, name: &str) -> bool {
         self.indicators.iter().any(|n| n == name)

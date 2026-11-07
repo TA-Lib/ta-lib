@@ -363,7 +363,7 @@ export function midpriceDisplayShift(outputIdx: number, options?: MidpriceOption
 
 /**
  * Midpoint of the price range over a rolling window: the average of the highest
- * high and lowest low across the last optInTimePeriod bars. An overlap-study line
+ * high and lowest low across the last timePeriod bars. An overlap-study line
  * plotted on price.
  *
  * Formula and more info at
@@ -490,7 +490,7 @@ export class MidpriceStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MIDPRICE advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MIDPRICE advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -498,21 +498,21 @@ export class MidpriceStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number): number {
+  update(high: number, low: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MIDPRICE update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MIDPRICE update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('MIDPRICE update', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('MIDPRICE update', !Number.isFinite(high) ? 'high' : 'low');
     }
-    midpriceStepImpl(this, inHigh, inLow);
+    midpriceStepImpl(this, high, low);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -520,17 +520,19 @@ export class MidpriceStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('MIDPRICE peek', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+  peek(high: number, low: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('MIDPRICE peek', !Number.isFinite(high) ? 'high' : 'low');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let tmpLow = 0;
     let tmpHigh = 0;
     let cur_outReal = 0;
@@ -880,7 +882,7 @@ export function midpriceOpenPositional(
 ): MidpriceStream {
   optInTimePeriod = requireInt32('MIDPRICE open', 'timePeriod', optInTimePeriod);
   requireArgument('MIDPRICE open', 'prices.high', inHigh);
-  requireHistory('MIDPRICE open', inHigh.length);
+  requireHistory('MIDPRICE open', 'prices.high', inHigh.length);
   requireArgument('MIDPRICE open', 'prices.low', inLow);
   requireHistoryLength('MIDPRICE open', 'prices.low', inLow.length, inHigh.length);
   return midpriceOpenInternal(core, float64(inHigh), float64(inLow), 0, optInTimePeriod);
@@ -896,7 +898,7 @@ export function midpriceOpenAndFillPositional(
 ): MidpriceStream {
   optInTimePeriod = requireInt32('MIDPRICE openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('MIDPRICE openAndFill', 'prices.high', inHigh);
-  requireHistory('MIDPRICE openAndFill', inHigh.length);
+  requireHistory('MIDPRICE openAndFill', 'prices.high', inHigh.length);
   requireArgument('MIDPRICE openAndFill', 'prices.low', inLow);
   const guardLookback = midpriceLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {

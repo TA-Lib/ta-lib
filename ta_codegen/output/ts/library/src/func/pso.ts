@@ -514,9 +514,9 @@ export function psoDisplayShift(outputIdx: number, options?: PsoOptions): number
  *   extremes rather than a fixed band.
  * - Each exponential pass is seeded with a simple average of its own first inputs,
  *   the same seeding TA-Lib's EMA uses, and the second pass seeds on what the
- *   first publishes. `TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)` discards more
- *   of that warm-up, through both passes. Implementations seeding each pass from a
- *   single first sample differ over the transient and agree once it decays.
+ *   first publishes. `CoreBuilder.unstablePeriod(FuncUnstId.EMA, ...)` discards
+ *   more of that warm-up, through both passes. Implementations seeding each pass
+ *   from a single first sample differ over the transient and agree once it decays.
  * - Leibfarth parameterises the smoothing as the square root of a longer period,
  *   25 in his article. The length is taken here directly, as an integer, because
  *   the sources that follow the square root disagree over how to round it.
@@ -663,7 +663,7 @@ export class PsoStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PSO advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PSO advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -671,22 +671,22 @@ export class PsoStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price series.
-   * @param inLow - The bar's `inLow` value: Low price series.
-   * @param inClose - The bar's `inClose` value: Close price series.
+   * @param high - The bar's `high` value: High price series.
+   * @param low - The bar's `low` value: Low price series.
+   * @param close - The bar's `close` value: Close price series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number): number {
+  update(high: number, low: number, close: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PSO update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PSO update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('PSO update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('PSO update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    psoStepImpl(this, inHigh, inLow, inClose);
+    psoStepImpl(this, high, low, close);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -694,18 +694,21 @@ export class PsoStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price series.
-   * @param inLow - The bar's `inLow` value: Low price series.
-   * @param inClose - The bar's `inClose` value: Close price series.
+   * @param high - The bar's `high` value: High price series.
+   * @param low - The bar's `low` value: Low price series.
+   * @param close - The bar's `close` value: Close price series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('PSO peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+  peek(high: number, low: number, close: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('PSO peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let tmp = 0;
     let fastK = 0;
     let nsk = 0;
@@ -1279,7 +1282,7 @@ export function psoOpenPositional(
   optInFastK_Period = requireInt32('PSO open', 'fastKPeriod', optInFastK_Period);
   optInEMAPeriod = requireInt32('PSO open', 'emaPeriod', optInEMAPeriod);
   requireArgument('PSO open', 'prices.high', inHigh);
-  requireHistory('PSO open', inHigh.length);
+  requireHistory('PSO open', 'prices.high', inHigh.length);
   requireArgument('PSO open', 'prices.low', inLow);
   requireArgument('PSO open', 'prices.close', inClose);
   requireHistoryLength('PSO open', 'prices.low', inLow.length, inHigh.length);
@@ -1300,7 +1303,7 @@ export function psoOpenAndFillPositional(
   optInFastK_Period = requireInt32('PSO openAndFill', 'fastKPeriod', optInFastK_Period);
   optInEMAPeriod = requireInt32('PSO openAndFill', 'emaPeriod', optInEMAPeriod);
   requireArgument('PSO openAndFill', 'prices.high', inHigh);
-  requireHistory('PSO openAndFill', inHigh.length);
+  requireHistory('PSO openAndFill', 'prices.high', inHigh.length);
   requireArgument('PSO openAndFill', 'prices.low', inLow);
   requireArgument('PSO openAndFill', 'prices.close', inClose);
   const guardLookback = psoLookbackPositional(optInFastK_Period, optInEMAPeriod, core);

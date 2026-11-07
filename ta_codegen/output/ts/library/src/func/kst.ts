@@ -987,7 +987,7 @@ export class KstStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('KST advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('KST advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -995,26 +995,27 @@ export class KstStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inReal - The bar's `inReal` value: Source price series (canonically the
+   * @param real - The bar's `real` value: Source price series (canonically the
    *   close)
    * @param out - Receives the outputs and is returned; a new {@link KstOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out?: KstOut): KstOut {
+  update(real: number, out?: KstOut): KstOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('KST update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('KST update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KST update', 'KstOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('KST update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('KST update', 'real');
     }
-    kstStepImpl(this, inReal);
+    kstStepImpl(this, real);
     this.outRangeCount++;
     if (out === undefined) {
       out = new KstOut();
@@ -1027,22 +1028,23 @@ export class KstStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price series (canonically the
+   * @param real - The bar's `real` value: Source price series (canonically the
    *   close)
    * @param out - Receives the outputs and is returned; a new {@link KstOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inReal: number, out?: KstOut): KstOut {
+  peek(real: number, out?: KstOut): KstOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KST peek', 'KstOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('KST peek', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('KST peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let prior = 0;
     let roc = 0;
     let kst = 0;
@@ -1213,6 +1215,8 @@ export class KstStream {
    * @param out - Receives the outputs and is returned; a new {@link KstOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: KstOut): KstOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -2062,7 +2066,7 @@ export function kstOpenPositional(
   optInSMA4Period = requireInt32('KST open', 'sma4Period', optInSMA4Period);
   optInSignalPeriod = requireInt32('KST open', 'signalPeriod', optInSignalPeriod);
   requireArgument('KST open', 'real', inReal);
-  requireHistory('KST open', inReal.length);
+  requireHistory('KST open', 'real', inReal.length);
   return kstOpenInternal(core, float64(inReal), 0, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);
 }
 
@@ -2092,7 +2096,7 @@ export function kstOpenAndFillPositional(
   optInSMA4Period = requireInt32('KST openAndFill', 'sma4Period', optInSMA4Period);
   optInSignalPeriod = requireInt32('KST openAndFill', 'signalPeriod', optInSignalPeriod);
   requireArgument('KST openAndFill', 'real', inReal);
-  requireHistory('KST openAndFill', inReal.length);
+  requireHistory('KST openAndFill', 'real', inReal.length);
   const guardLookback = kstLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('KST openAndFill', PARAM_RANGES, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInSMA1Period, optInSMA2Period, optInSMA3Period, optInSMA4Period, optInSignalPeriod);

@@ -130,7 +130,7 @@ export interface SubResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * Per-element difference inReal0 - inReal1. `values[k]` is the value at input bar
+   * Per-element difference real0 - real1. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
   values: Float64Array;
@@ -272,7 +272,7 @@ export class SubStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SUB advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SUB advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -280,21 +280,21 @@ export class SubStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal0 - The bar's `inReal0` value: Minuend series.
-   * @param inReal1 - The bar's `inReal1` value: Subtrahend series.
+   * @param real0 - The bar's `real0` value: Minuend series.
+   * @param real1 - The bar's `real1` value: Subtrahend series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal0: number, inReal1: number): number {
+  update(real0: number, real1: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SUB update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SUB update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal0) || !Number.isFinite(inReal1)) {
-      throw nonFiniteBar('SUB update', !Number.isFinite(inReal0) ? 'inReal0' : 'inReal1');
+    if (!Number.isFinite(real0) || !Number.isFinite(real1)) {
+      throw nonFiniteBar('SUB update', !Number.isFinite(real0) ? 'real0' : 'real1');
     }
-    subStepImpl(this, inReal0, inReal1);
+    subStepImpl(this, real0, real1);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -302,16 +302,18 @@ export class SubStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal0 - The bar's `inReal0` value: Minuend series.
-   * @param inReal1 - The bar's `inReal1` value: Subtrahend series.
+   * @param real0 - The bar's `real0` value: Minuend series.
+   * @param real1 - The bar's `real1` value: Subtrahend series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal0: number, inReal1: number): number {
-    if (!Number.isFinite(inReal0) || !Number.isFinite(inReal1)) {
-      throw nonFiniteBar('SUB peek', !Number.isFinite(inReal0) ? 'inReal0' : 'inReal1');
+  peek(real0: number, real1: number): number {
+    if (!Number.isFinite(real0) || !Number.isFinite(real1)) {
+      throw nonFiniteBar('SUB peek', !Number.isFinite(real0) ? 'real0' : 'real1');
     }
+    const inReal0 = real0;
+    const inReal1 = real1;
     let cur_outReal = 0;
     cur_outReal = inReal0 - inReal1;
     return cur_outReal;
@@ -429,7 +431,7 @@ export function subOpenPositional(
   core: Core = Core.DEFAULT,
 ): SubStream {
   requireArgument('SUB open', 'real0', inReal0);
-  requireHistory('SUB open', inReal0.length);
+  requireHistory('SUB open', 'real0', inReal0.length);
   requireArgument('SUB open', 'real1', inReal1);
   requireHistoryLength('SUB open', 'real1', inReal1.length, inReal0.length);
   return subOpenInternal(core, float64(inReal0), float64(inReal1), 0);
@@ -443,7 +445,7 @@ export function subOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): SubStream {
   requireArgument('SUB openAndFill', 'real0', inReal0);
-  requireHistory('SUB openAndFill', inReal0.length);
+  requireHistory('SUB openAndFill', 'real0', inReal0.length);
   requireArgument('SUB openAndFill', 'real1', inReal1);
   const guardOutLen = openFillCount('SUB openAndFill', inReal0.length, subLookbackPositional(core));
   requireHistoryLength('SUB openAndFill', 'real1', inReal1.length, inReal0.length);

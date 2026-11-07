@@ -121,7 +121,7 @@ fn unstable_func_list(enums: &HashMap<String, EnumDef>) -> (usize, String) {
             let short = v.c_name.strip_prefix("TA_FUNC_UNST_").unwrap_or_else(|| {
                 panic!("FuncUnstId variant `{}` lacks the TA_FUNC_UNST_ prefix", v.c_name)
             });
-            (!short.starts_with("UNUSED_")).then(|| format!("`{short}`"))
+            (!v.reserved).then(|| format!("`{short}`"))
         })
         .collect();
 

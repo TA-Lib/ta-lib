@@ -354,8 +354,8 @@ export function almaDisplayShift(outputIdx: number, options?: AlmaOptions): numb
  * - The peak is floored to a whole bar, as in the authors' code. At periods below
  *   about 5 this puts it on an older bar: at period 2 the line is almost entirely
  *   the previous bar.
- * - `TA_MAType_ALMA` runs this function at the default sigma and offset, so the
- *   line in `MA` and every function taking an MAType has the lag and noise stated
+ * - `MAType.ALMA` runs this function at the default sigma and offset, so the line
+ *   in `MA` and every function taking an MAType has the lag and noise stated
  *   above.
  * - The published paper's summary formula uses a different parameterisation; this
  *   is the form of the authors' own implementation.
@@ -482,7 +482,7 @@ export class AlmaStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ALMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ALMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -490,20 +490,20 @@ export class AlmaStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Data on which to compute the average.
+   * @param real - The bar's `real` value: Data on which to compute the average.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ALMA update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ALMA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ALMA update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ALMA update', 'real');
     }
-    almaStepImpl(this, inReal);
+    almaStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -511,16 +511,17 @@ export class AlmaStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Data on which to compute the average.
+   * @param real - The bar's `real` value: Data on which to compute the average.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ALMA peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ALMA peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let sum = 0;
     let j = 0;
     let w = 0;
@@ -821,7 +822,7 @@ export function almaOpenPositional(
   optInSigma = requireReal('ALMA open', 'sigma', optInSigma);
   optInOffset = requireReal('ALMA open', 'offset', optInOffset);
   requireArgument('ALMA open', 'real', inReal);
-  requireHistory('ALMA open', inReal.length);
+  requireHistory('ALMA open', 'real', inReal.length);
   return almaOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInSigma, optInOffset);
 }
 
@@ -838,7 +839,7 @@ export function almaOpenAndFillPositional(
   optInSigma = requireReal('ALMA openAndFill', 'sigma', optInSigma);
   optInOffset = requireReal('ALMA openAndFill', 'offset', optInOffset);
   requireArgument('ALMA openAndFill', 'real', inReal);
-  requireHistory('ALMA openAndFill', inReal.length);
+  requireHistory('ALMA openAndFill', 'real', inReal.length);
   const guardLookback = almaLookbackPositional(optInTimePeriod, optInSigma, optInOffset, core);
   if (guardLookback < 0) {
     throw rejectedParams('ALMA openAndFill', PARAM_RANGES, optInTimePeriod, optInSigma, optInOffset);

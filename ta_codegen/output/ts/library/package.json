@@ -24,7 +24,8 @@
     "./metadata": {
       "types": "./dist/metadata/index.d.ts",
       "default": "./dist/metadata/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "types": "./dist/index.d.ts",
   "typesVersions": {

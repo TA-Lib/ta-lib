@@ -54,6 +54,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { caught } from './contract.ts';
 import { type Arr, type Fn, isBadParam, N, type Param, type Spec, series, specs } from './corpus.ts';
 import * as lib from '../src/index.ts';
 import { Core, TALibError } from '../src/index.ts';
@@ -292,6 +293,9 @@ test('a non-int32 integer parameter or index is TA_BAD_PARAM before any range ch
         v[k] = bad;
         throwsCode(() => spec.batch(0, N - 1, ...ins, ...v, ...outs()), 'TA_BAD_PARAM', `${spec.name}: ${p.name} ${String(bad)}`);
         throwsCode(() => spec.open(...ins, ...v), 'TA_BAD_PARAM', `${spec.name} open: ${p.name} ${String(bad)}`);
+        // H17: the lookback and the display shift answer their invalid constant, never a fraction of a period.
+        assert.equal(spec.lookback(...v), Core.LOOKBACK_INVALID, `${spec.name} lookback: ${p.name} ${String(bad)}`);
+        assert.equal(spec.shift(...v, 0), Core.DISPLAY_SHIFT_INVALID, `${spec.name} displayShift: ${p.name} ${String(bad)}`);
         rejected += 2;
       });
     }
@@ -374,4 +378,45 @@ test('INT_MIN and -4e37 select the documented defaults, in the batch tier and at
     compared++;
   }
   assert.ok(compared > 0);
+});
+
+// Only a JavaScript caller can reach these: the types reject every one. A series
+// that is not array-like, a second series where the options go, or a primitive
+// where a price object goes must be TA_BAD_PARAM, never a success over an empty
+// or NaN series.
+test('misuse only JavaScript can write is TA_BAD_PARAM, not a silent result', () => {
+  const close = Float64Array.from({ length: 50 }, (_, i) => 100 + Math.sin(i));
+  const as = <T>(v: unknown): T => v as T;
+  const message = (fn: () => unknown, code: string, text: string, what: string): void => {
+    const e = caught(fn, what);
+    assert.equal(e.code, code, `${what}: ${e.message}`);
+    assert.ok(e.message.includes(text), `${what}: "${e.message}" lacks "${text}"`);
+  };
+  for (const [bad, shown] of [[42, 'a number'], ['abc', 'a string'], [true, 'a boolean']] as const) {
+    message(() => lib.sma(as(bad)), 'TA_BAD_PARAM', 'real is not an array', `sma(${shown})`);
+    message(() => lib.sma(as(bad), { endIdx: 5 }), 'TA_BAD_PARAM', 'real is not an array', `sma(${shown}, endIdx)`);
+    message(() => lib.smaOpen(as(bad)), 'TA_BAD_PARAM', `real is ${shown}, not an array or object`, `smaOpen(${shown})`);
+    message(() => lib.atr(as(bad)), 'TA_BAD_PARAM', `prices is ${shown}, not an array or object`, `atr(${shown})`);
+  }
+  message(() => lib.sma(as({})), 'TA_BAD_PARAM', 'real is not an array', 'sma({})');
+  message(() => lib.smaOpen(as({})), 'TA_BAD_PARAM', 'real is not an array', 'smaOpen({})');
+  message(() => lib.atr({ high: close, low: as('x'), close }), 'TA_BAD_PARAM', 'prices.low is not an array', 'atr with a string leg');
+  message(() => lib.atrOpen({ high: close, low: as({}), close }), 'TA_BAD_PARAM', 'prices.low is not an array', 'atrOpen with an object leg');
+  // A length that is not a non-negative integer would pass every later bound as a NaN, or truncate.
+  for (const len of [Number.NaN, Number.POSITIVE_INFINITY, -1, 2.5]) {
+    message(() => lib.sma(as({ length: len }), { timePeriod: 2, endIdx: 4, outReal: new Float64Array(4) }), 'TA_BAD_PARAM', 'real is not an array', `sma({length: ${len}})`);
+    message(() => lib.smaOpen(as({ length: len })), 'TA_BAD_PARAM', 'real is not an array', `smaOpen({length: ${len}})`);
+  }
+  message(() => lib.sma(close, as([])), 'TA_BAD_PARAM', 'options must be a plain object, got an array', 'sma(close, [])');
+  message(() => lib.sma(close, as(close)), 'TA_BAD_PARAM', 'options must be a plain object, got a typed array', 'sma(close, close)');
+  message(() => lib.smaOpen(close, as(close)), 'TA_BAD_PARAM', 'options must be a plain object, got a typed array', 'smaOpen(close, close)');
+  message(() => lib.sma(close, { timePeriod: as('7') }), 'TA_BAD_PARAM', 'timePeriod is not an int32, got "7"', 'a numeric string is shown quoted');
+  message(() => lib.bbands(close, { nbDevUp: as('2') }), 'TA_BAD_PARAM', 'nbDevUp is not a number, got "2"', 'a real as a string is shown quoted');
+  message(() => lib.sma(close, { startIdx: -1 }), 'TA_OUT_OF_RANGE_START_INDEX', `startIdx must be in 0..${Core.INDEX_MAX}, got -1`, 'range messages carry the bound and the value');
+  message(() => lib.sma(close, { startIdx: 10, endIdx: 5 }), 'TA_OUT_OF_RANGE_END_INDEX', `endIdx must be in 10..${Core.INDEX_MAX}, got 5`, 'endIdx below startIdx');
+  message(() => new Core(as(5)), 'TA_BAD_PARAM', 'builder is not a CoreBuilder', 'new Core(5)');
+  message(() => new Core(as({ unstablePeriods: [], candleSettings: [] })), 'TA_BAD_PARAM', 'builder is not a CoreBuilder', 'new Core(shape)');
+  // The array-like a user may legitimately build: a plain object with a numeric length and indexed values.
+  const arrayLike = { length: 3, 0: 1, 1: 2, 2: 3 };
+  assert.deepEqual(Array.from(lib.sma(arrayLike, { timePeriod: 3 }).values), [2]);
 });

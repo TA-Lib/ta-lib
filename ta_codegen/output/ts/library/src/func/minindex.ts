@@ -207,7 +207,7 @@ export interface MinindexResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * Absolute index in inReal of the lowest value in each window. `values[k]` is the
+   * Absolute index in real of the lowest value in each window. `values[k]` is the
    * value at input bar `begIdx + k`.
    */
   values: Int32Array;
@@ -370,7 +370,7 @@ export class MinindexStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MININDEX advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MININDEX advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -378,20 +378,20 @@ export class MinindexStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Series to scan for its minimum.
+   * @param real - The bar's `real` value: Series to scan for its minimum.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MININDEX update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MININDEX update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MININDEX update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MININDEX update', 'real');
     }
-    minindexStepImpl(this, inReal);
+    minindexStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outInteger;
   }
@@ -399,16 +399,17 @@ export class MinindexStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Series to scan for its minimum.
+   * @param real - The bar's `real` value: Series to scan for its minimum.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MININDEX peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MININDEX peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tmp = 0;
     let cur_outInteger = 0;
     let i = sp.i;
@@ -659,7 +660,7 @@ export function minindexOpenPositional(
 ): MinindexStream {
   optInTimePeriod = requireInt32('MININDEX open', 'timePeriod', optInTimePeriod);
   requireArgument('MININDEX open', 'real', inReal);
-  requireHistory('MININDEX open', inReal.length);
+  requireHistory('MININDEX open', 'real', inReal.length);
   return minindexOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -672,7 +673,7 @@ export function minindexOpenAndFillPositional(
 ): MinindexStream {
   optInTimePeriod = requireInt32('MININDEX openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('MININDEX openAndFill', 'real', inReal);
-  requireHistory('MININDEX openAndFill', inReal.length);
+  requireHistory('MININDEX openAndFill', 'real', inReal.length);
   const guardLookback = minindexLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('MININDEX openAndFill', PARAM_RANGES, optInTimePeriod);

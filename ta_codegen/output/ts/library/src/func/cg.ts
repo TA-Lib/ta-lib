@@ -600,12 +600,12 @@ export function cgDisplayShift(outputIdx: number, options?: CgOptions): number {
 
 /**
  * John Ehlers' Center of Gravity oscillator: the balance point of the last
- * `optInTimePeriod` values, each weighted by its value and placed at its position
+ * `timePeriod` values, each weighted by its value and placed at its position
  * counting back from the current bar, which is position 1, negated so that it
  * rises with price. It is smooth and has essentially no lag. Ehlers reads turning
  * points from it and trades its crossings with a copy of itself delayed by one
- * bar. For a positive series it stays between -optInTimePeriod and -1, and a flat
- * window sits at the midpoint, -(optInTimePeriod+1)/2.
+ * bar. For a positive series it stays between -timePeriod and -1, and a flat
+ * window sits at the midpoint, -(timePeriod+1)/2.
  *
  * Formula and more info at
  * [ta-lib.org/functions/cg](https://ta-lib.org/functions/cg).
@@ -617,12 +617,12 @@ export function cgDisplayShift(outputIdx: number, options?: CgOptions): number {
  *   meaningful result here.
  * - Ehlers' default input is the median price (H+L)/2: pass the output of MEDPRICE
  *   to reproduce it.
- * - His 2004 book presents the same oscillator shifted up by
- *   (optInTimePeriod+1)/2, so that a flat window reads 0: add
- *   (optInTimePeriod+1)/2 to the output to obtain that form.
+ * - His 2004 book presents the same oscillator shifted up by (timePeriod+1)/2, so
+ *   that a flat window reads 0: add (timePeriod+1)/2 to the output to obtain that
+ *   form.
  * - Where the window sums to exactly zero the author's listing keeps its previous
- *   value; TA-Lib returns -(optInTimePeriod+1)/2, so every value depends on its
- *   own window alone.
+ *   value; TA-Lib returns -(timePeriod+1)/2, so every value depends on its own
+ *   window alone.
  * - Both sums are exact before the divide, so a window summing to exactly zero is
  *   always recognised and the value does not depend on where the call started. The
  *   exception is a window holding a non-finite value, a value with bits below
@@ -790,7 +790,7 @@ export class CgStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CG advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CG advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -798,20 +798,20 @@ export class CgStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: The series to measure.
+   * @param real - The bar's `real` value: The series to measure.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CG update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CG update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('CG update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('CG update', 'real');
     }
-    cgStepImpl(this, inReal);
+    cgStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -819,16 +819,17 @@ export class CgStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: The series to measure.
+   * @param real - The bar's `real` value: The series to measure.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('CG peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('CG peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let j = 0;
     let k = 0;
     let fits = 0;
@@ -2073,7 +2074,7 @@ export function cgOpenPositional(
 ): CgStream {
   optInTimePeriod = requireInt32('CG open', 'timePeriod', optInTimePeriod);
   requireArgument('CG open', 'real', inReal);
-  requireHistory('CG open', inReal.length);
+  requireHistory('CG open', 'real', inReal.length);
   return cgOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -2086,7 +2087,7 @@ export function cgOpenAndFillPositional(
 ): CgStream {
   optInTimePeriod = requireInt32('CG openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('CG openAndFill', 'real', inReal);
-  requireHistory('CG openAndFill', inReal.length);
+  requireHistory('CG openAndFill', 'real', inReal.length);
   const guardLookback = cgLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('CG openAndFill', PARAM_RANGES, optInTimePeriod);

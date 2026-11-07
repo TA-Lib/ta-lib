@@ -289,7 +289,7 @@ export function swakHpDisplayShift(outputIdx: number, options?: SwakHpOptions): 
  * part of the series, centred on zero, which can then be measured or compared
  * across instruments whose price levels differ by orders of magnitude. The alpha
  * is the cutoff-period one. Ehlers notes that it "is computed exactly the same as
- * it is for the EMA", meaning the same construction, not `TA_EMA`'s `2/(n+1)`.
+ * it is for the EMA", meaning the same construction, not `ema`'s `2/(n+1)`.
  *
  * Formula and more info at
  * [ta-lib.org/functions/swak_hp](https://ta-lib.org/functions/swak_hp).
@@ -299,7 +299,7 @@ export function swakHpDisplayShift(outputIdx: number, options?: SwakHpOptions): 
  * before {@link swakHpLookback} is a success with empty outputs.
  *
  * @param real - The series to detrend; Ehlers' default is the bar midpoint
- *   `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+ *   `(H+L)/2`, which the caller passes as `medprice` output.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link SwakHpOptions}.
  * @returns `begIdx` and the values; see {@link SwakHpResult}. Each output is a
@@ -398,7 +398,7 @@ export class SwakHpStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SWAK_HP advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SWAK_HP advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -406,21 +406,21 @@ export class SwakHpStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: The series to detrend; Ehlers' default
-   *   is the bar midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+   * @param real - The bar's `real` value: The series to detrend; Ehlers' default is
+   *   the bar midpoint `(H+L)/2`, which the caller passes as `medprice` output.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SWAK_HP update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SWAK_HP update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SWAK_HP update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SWAK_HP update', 'real');
     }
-    swakHpStepImpl(this, inReal);
+    swakHpStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -428,17 +428,18 @@ export class SwakHpStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: The series to detrend; Ehlers' default
-   *   is the bar midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+   * @param real - The bar's `real` value: The series to detrend; Ehlers' default is
+   *   the bar midpoint `(H+L)/2`, which the caller passes as `medprice` output.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SWAK_HP peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SWAK_HP peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let x0 = 0;
     let y = 0;
     let cur_outReal = 0;
@@ -674,7 +675,7 @@ export function swakHpOpenPositional(
 ): SwakHpStream {
   optInTimePeriod = requireInt32('SWAK_HP open', 'timePeriod', optInTimePeriod);
   requireArgument('SWAK_HP open', 'real', inReal);
-  requireHistory('SWAK_HP open', inReal.length);
+  requireHistory('SWAK_HP open', 'real', inReal.length);
   return swakHpOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -687,7 +688,7 @@ export function swakHpOpenAndFillPositional(
 ): SwakHpStream {
   optInTimePeriod = requireInt32('SWAK_HP openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('SWAK_HP openAndFill', 'real', inReal);
-  requireHistory('SWAK_HP openAndFill', inReal.length);
+  requireHistory('SWAK_HP openAndFill', 'real', inReal.length);
   const guardLookback = swakHpLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('SWAK_HP openAndFill', PARAM_RANGES, optInTimePeriod);
@@ -709,7 +710,7 @@ export function swakHpOpenAndFillPositional(
  * last history bar, bit-identical to {@link swakHp} there.
  *
  * @param real - Warm-up history. The series to detrend; Ehlers' default is the bar
- *   midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+ *   midpoint `(H+L)/2`, which the caller passes as `medprice` output.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link SwakHpOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -742,7 +743,7 @@ export function swakHpOpen(real: ArrayLike<number>, options?: SwakHpOptions): Sw
  * same pass, bit-identically to {@link swakHp}.
  *
  * @param real - Warm-up history. The series to detrend; Ehlers' default is the bar
- *   midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+ *   midpoint `(H+L)/2`, which the caller passes as `medprice` output.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link SwakHpOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the

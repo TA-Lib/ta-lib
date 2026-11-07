@@ -481,7 +481,7 @@ fn ts_public_openers_type_test_then_the_index_pair_then_the_buffers() {
             let at = src.find(&entry).unwrap_or_else(|| panic!("{f}: no public {verb}"));
             let body = body_after(&src, at);
             let find = |needle: &str| body.find(needle).unwrap_or_else(|| panic!("{f}: {verb} has no `{needle}`"));
-            let pair = find(&format!("requireHistory('{f} {verb}', {history}.length);"));
+            let pair = find(&format!("requireHistory('{f} {verb}', '{}', {history}.length);", backends::ts::input_label(&func, history)));
             for p in &func.optional_inputs {
                 let helper = match p.param_type {
                     ir::ParamType::Integer | ir::ParamType::Enum(_) => "requireInt32",

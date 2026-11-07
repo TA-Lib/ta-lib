@@ -307,12 +307,12 @@ export interface StochrsiResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * Unsmoothed stochastic of the RSI (raw %K) `outFastK[k]` is the value at input
+   * Unsmoothed stochastic of the RSI (raw %K). `outFastK[k]` is the value at input
    * bar `begIdx + k`.
    */
   outFastK: Float64Array;
   /**
-   * %K smoothed over FastD_Period (signal line) `outFastD[k]` is the value at input
+   * %K smoothed over FastD_Period (signal line). `outFastD[k]` is the value at input
    * bar `begIdx + k`.
    */
   outFastD: Float64Array;
@@ -484,7 +484,7 @@ export class StochrsiStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('STOCHRSI advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('STOCHRSI advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -492,26 +492,27 @@ export class StochrsiStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inReal - The bar's `inReal` value: Source series fed into the RSI
+   * @param real - The bar's `real` value: Source series fed into the RSI
    *   calculation.
    * @param out - Receives the outputs and is returned; a new {@link StochrsiOut}
    *   when omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out?: StochrsiOut): StochrsiOut {
+  update(real: number, out?: StochrsiOut): StochrsiOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('STOCHRSI update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('STOCHRSI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('STOCHRSI update', 'StochrsiOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('STOCHRSI update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('STOCHRSI update', 'real');
     }
-    stochrsiStepImpl(this, inReal);
+    stochrsiStepImpl(this, real);
     this.outRangeCount++;
     if (out === undefined) {
       out = new StochrsiOut();
@@ -524,22 +525,23 @@ export class StochrsiStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source series fed into the RSI
+   * @param real - The bar's `real` value: Source series fed into the RSI
    *   calculation.
    * @param out - Receives the outputs and is returned; a new {@link StochrsiOut}
    *   when omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inReal: number, out?: StochrsiOut): StochrsiOut {
+  peek(real: number, out?: StochrsiOut): StochrsiOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('STOCHRSI peek', 'StochrsiOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('STOCHRSI peek', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('STOCHRSI peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let cur_tempRSIBuffer = 0;
     let cur_outFastK = 0;
     let cur_outFastD = 0;
@@ -564,6 +566,8 @@ export class StochrsiStream {
    * @param out - Receives the outputs and is returned; a new {@link StochrsiOut}
    *   when omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: StochrsiOut): StochrsiOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -824,7 +828,7 @@ export function stochrsiOpenPositional(
   optInFastD_Period = requireInt32('STOCHRSI open', 'fastDPeriod', optInFastD_Period);
   optInFastD_MAType = requireInt32('STOCHRSI open', 'fastDMaType', optInFastD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('STOCHRSI open', 'real', inReal);
-  requireHistory('STOCHRSI open', inReal.length);
+  requireHistory('STOCHRSI open', 'real', inReal.length);
   return stochrsiOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
 }
 
@@ -844,7 +848,7 @@ export function stochrsiOpenAndFillPositional(
   optInFastD_Period = requireInt32('STOCHRSI openAndFill', 'fastDPeriod', optInFastD_Period);
   optInFastD_MAType = requireInt32('STOCHRSI openAndFill', 'fastDMaType', optInFastD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('STOCHRSI openAndFill', 'real', inReal);
-  requireHistory('STOCHRSI openAndFill', inReal.length);
+  requireHistory('STOCHRSI openAndFill', 'real', inReal.length);
   const guardLookback = stochrsiLookbackPositional(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType as MAType, core);
   if (guardLookback < 0) {
     throw rejectedParams('STOCHRSI openAndFill', PARAM_RANGES, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);

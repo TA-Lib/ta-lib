@@ -309,20 +309,19 @@ export function crsiDisplayShift(outputIdx: number, options?: CrsiOptions): numb
 /**
  * Connors RSI: a 0 to 100 oscillator, the plain average of three short-term
  * momentum readings on that same scale. The first is Wilder's RSI of the closes
- * over `optInTimePeriod` bars. The second is an RSI over `optInStreakPeriod` bars
- * of the up/down streak, the signed length of the current run of higher or lower
- * closes (+3 after three higher closes in a row, -2 after two lower ones); an
- * unchanged close resets the streak to 0. The third is the percent rank of the
- * bar's one-bar return, (close - previous close) / previous close, among the
- * `optInRankPeriod` returns before it: the percentage of them strictly below it.
- * High readings mark a short-term overbought market and low readings an oversold
- * one.
+ * over `timePeriod` bars. The second is an RSI over `streakPeriod` bars of the
+ * up/down streak, the signed length of the current run of higher or lower closes
+ * (+3 after three higher closes in a row, -2 after two lower ones); an unchanged
+ * close resets the streak to 0. The third is the percent rank of the bar's one-bar
+ * return, (close - previous close) / previous close, among the `rankPeriod`
+ * returns before it: the percentage of them strictly below it. High readings mark
+ * a short-term overbought market and low readings an oversold one.
  *
  * Formula and more info at
  * [ta-lib.org/functions/crsi](https://ta-lib.org/functions/crsi).
  *
  * **Notes**
- * - CRSI has no unstable period of its own: both RSI legs take `TA_FUNC_UNST_RSI`.
+ * - CRSI has no unstable period of its own: both RSI legs take `FuncUnstId.RSI`.
  *   They start warming up on the first bar the call reads (the streak's RSI one
  *   bar later, the streak being a change), so a leg that needs fewer bars than the
  *   lookback warms up over the spare ones.
@@ -447,7 +446,7 @@ export class CrsiStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CRSI advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CRSI advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -455,20 +454,20 @@ export class CrsiStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Close price series.
+   * @param real - The bar's `real` value: Close price series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CRSI update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CRSI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('CRSI update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('CRSI update', 'real');
     }
-    crsiStepImpl(this, inReal);
+    crsiStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -476,16 +475,17 @@ export class CrsiStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Close price series.
+   * @param real - The bar's `real` value: Close price series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('CRSI peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('CRSI peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let cur_tempStreak = 0;
     let cur_tempStreakRSI = 0;
     let cur_tempRSI = 0;
@@ -750,7 +750,7 @@ export function crsiOpenPositional(
   optInStreakPeriod = requireInt32('CRSI open', 'streakPeriod', optInStreakPeriod);
   optInRankPeriod = requireInt32('CRSI open', 'rankPeriod', optInRankPeriod);
   requireArgument('CRSI open', 'real', inReal);
-  requireHistory('CRSI open', inReal.length);
+  requireHistory('CRSI open', 'real', inReal.length);
   return crsiOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInStreakPeriod, optInRankPeriod);
 }
 
@@ -767,7 +767,7 @@ export function crsiOpenAndFillPositional(
   optInStreakPeriod = requireInt32('CRSI openAndFill', 'streakPeriod', optInStreakPeriod);
   optInRankPeriod = requireInt32('CRSI openAndFill', 'rankPeriod', optInRankPeriod);
   requireArgument('CRSI openAndFill', 'real', inReal);
-  requireHistory('CRSI openAndFill', inReal.length);
+  requireHistory('CRSI openAndFill', 'real', inReal.length);
   const guardLookback = crsiLookbackPositional(optInTimePeriod, optInStreakPeriod, optInRankPeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('CRSI openAndFill', PARAM_RANGES, optInTimePeriod, optInStreakPeriod, optInRankPeriod);

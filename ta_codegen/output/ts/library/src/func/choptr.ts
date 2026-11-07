@@ -413,7 +413,7 @@ export class ChoptrStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CHOPTR advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CHOPTR advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -421,22 +421,22 @@ export class ChoptrStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number): number {
+  update(high: number, low: number, close: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CHOPTR update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CHOPTR update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('CHOPTR update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('CHOPTR update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    choptrStepImpl(this, inHigh, inLow, inClose);
+    choptrStepImpl(this, high, low, close);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -444,18 +444,21 @@ export class ChoptrStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('CHOPTR peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+  peek(high: number, low: number, close: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('CHOPTR peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let i = 0;
     let highest = 0;
     let lowest = 0;
@@ -806,7 +809,7 @@ export function choptrOpenPositional(
 ): ChoptrStream {
   optInTimePeriod = requireInt32('CHOPTR open', 'timePeriod', optInTimePeriod);
   requireArgument('CHOPTR open', 'prices.high', inHigh);
-  requireHistory('CHOPTR open', inHigh.length);
+  requireHistory('CHOPTR open', 'prices.high', inHigh.length);
   requireArgument('CHOPTR open', 'prices.low', inLow);
   requireArgument('CHOPTR open', 'prices.close', inClose);
   requireHistoryLength('CHOPTR open', 'prices.low', inLow.length, inHigh.length);
@@ -825,7 +828,7 @@ export function choptrOpenAndFillPositional(
 ): ChoptrStream {
   optInTimePeriod = requireInt32('CHOPTR openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('CHOPTR openAndFill', 'prices.high', inHigh);
-  requireHistory('CHOPTR openAndFill', inHigh.length);
+  requireHistory('CHOPTR openAndFill', 'prices.high', inHigh.length);
   requireArgument('CHOPTR openAndFill', 'prices.low', inLow);
   requireArgument('CHOPTR openAndFill', 'prices.close', inClose);
   const guardLookback = choptrLookbackPositional(optInTimePeriod, core);

@@ -33,7 +33,7 @@ fn emit_ts_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
     let api = crate::server_gen::TsPublic::new(func);
     let open_internal = format!("{ns}.{}", names.open_internal);
     let ocls = format!("{ns}.{}", names.out_class);
-    let candle = func.name.starts_with("CDL");
+    let candle = func.is_candlestick();
     let inputs = crate::streaming::input_array_names(func);
     let mut gi = 0usize;
     let arrays: Vec<&'static str> = inputs.iter().map(|i| sv_ts_input_array(i, &mut gi)).collect();

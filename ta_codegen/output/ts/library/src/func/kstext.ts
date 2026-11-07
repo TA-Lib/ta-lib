@@ -608,13 +608,13 @@ export function kstextDisplayShift(outputIdx: number, options?: KstextOptions): 
  *   is its divisor. Near zero the divisor is small and the output very large; no
  *   error is returned. A series that reaches or crosses zero, such as an
  *   oscillator or a spread, has no meaningful result here.
- * - With both MA types set to `TA_MAType_SMA` the outputs are those of `KST`.
+ * - With both MA types set to `MAType.SMA` the outputs are those of `KST`.
  * - Both outputs start at the first bar where the signal line exists. A signal
  *   period of 1 disables signal-line smoothing for every signal MAType: the signal
  *   is then a copy of the line.
  * - The unstable period of a selected MA type lengthens the lookback, for the legs
  *   and for the signal line separately.
- * - `TA_MAType_MAMA` ignores its period argument, so where it is selected every
+ * - `MAType.MAMA` ignores its period argument, so where it is selected every
  *   period above 1 gives the same average.
  * - Each rate of change follows `ROC`: a zero price in the denominator makes that
  *   term 0.
@@ -780,7 +780,7 @@ export class KstextStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('KSTEXT advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('KSTEXT advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -788,26 +788,27 @@ export class KstextStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inReal - The bar's `inReal` value: Source price series (canonically the
+   * @param real - The bar's `real` value: Source price series (canonically the
    *   close)
    * @param out - Receives the outputs and is returned; a new {@link KstextOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out?: KstextOut): KstextOut {
+  update(real: number, out?: KstextOut): KstextOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('KSTEXT update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('KSTEXT update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KSTEXT update', 'KstextOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('KSTEXT update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('KSTEXT update', 'real');
     }
-    kstextStepImpl(this, inReal);
+    kstextStepImpl(this, real);
     this.outRangeCount++;
     if (out === undefined) {
       out = new KstextOut();
@@ -820,22 +821,23 @@ export class KstextStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price series (canonically the
+   * @param real - The bar's `real` value: Source price series (canonically the
    *   close)
    * @param out - Receives the outputs and is returned; a new {@link KstextOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inReal: number, out?: KstextOut): KstextOut {
+  peek(real: number, out?: KstextOut): KstextOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KSTEXT peek', 'KstextOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('KSTEXT peek', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('KSTEXT peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let cur_kstBuffer = 0;
     let cur_tempBuffer = 0;
     let cur_outKSTSignal = 0;
@@ -909,6 +911,8 @@ export class KstextStream {
    * @param out - Receives the outputs and is returned; a new {@link KstextOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: KstextOut): KstextOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -1396,7 +1400,7 @@ export function kstextOpenPositional(
   optInROCMAType = requireInt32('KSTEXT open', 'rocMaType', optInROCMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   optInSignalMAType = requireInt32('KSTEXT open', 'signalMaType', optInSignalMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('KSTEXT open', 'real', inReal);
-  requireHistory('KSTEXT open', inReal.length);
+  requireHistory('KSTEXT open', 'real', inReal.length);
   return kstextOpenInternal(core, float64(inReal), 0, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);
 }
 
@@ -1430,7 +1434,7 @@ export function kstextOpenAndFillPositional(
   optInROCMAType = requireInt32('KSTEXT openAndFill', 'rocMaType', optInROCMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   optInSignalMAType = requireInt32('KSTEXT openAndFill', 'signalMaType', optInSignalMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('KSTEXT openAndFill', 'real', inReal);
-  requireHistory('KSTEXT openAndFill', inReal.length);
+  requireHistory('KSTEXT openAndFill', 'real', inReal.length);
   const guardLookback = kstextLookbackPositional(optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType as MAType, optInSignalMAType as MAType, core);
   if (guardLookback < 0) {
     throw rejectedParams('KSTEXT openAndFill', PARAM_RANGES, optInROC1Period, optInROC2Period, optInROC3Period, optInROC4Period, optInMA1Period, optInMA2Period, optInMA3Period, optInMA4Period, optInSignalPeriod, optInROCMAType, optInSignalMAType);

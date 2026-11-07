@@ -125,15 +125,18 @@ pub fn ts_fn() -> String {
         let _ = writeln!(acc, "    case '{k}':");
         acc
     });
+    let union = KEYS.iter().map(|k| format!("'{k}'")).collect::<Vec<_>>().join(" | ");
     format!(
-        "/**\n\
+        "/** The keys {{@link getRuntimeInfo}} answers. */\n\
+         export type RuntimeInfoKey = {union};\n\n\
+         /**\n\
          \x20* Run-time state of this library, by key: the TypeScript analog of C's\n\
          \x20* `TA_GetRuntimeInfo()`. The keys: {SPEC}.\n\
          \x20*\n\
-         \x20* @param key - One of the keys above.\n\
-         \x20* @throws {{@link TALibError}} `TA_BAD_PARAM` for an unknown key.\n\
+         \x20* @param key - One of the keys above; any other string is rejected at run time.\n\
+         \x20* @throws `TALibError` with code `TA_BAD_PARAM` for an unknown key.\n\
          \x20*/\n\
-         export function getRuntimeInfo(key: string): number {{\n\
+         export function getRuntimeInfo(key: RuntimeInfoKey | (string & {{}})): number {{\n\
          \x20 switch (key) {{\n\
          {cases}\
          \x20     return 0;\n\

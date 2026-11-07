@@ -870,7 +870,7 @@ export function macdvDisplayShift(outputIdx: number, options?: MacdvOptions): nu
  *   price movement the line falls to 0, its neutral point.
  * - The two price EMAs and the Average True Range each warm up as when calling
  *   `EMA` and `ATR` directly, so a caller who wants the line converged sets
- *   `TA_FUNC_UNST_EMA` and `TA_FUNC_UNST_ATR`, as for those functions.
+ *   `FuncUnstId.EMA` and `FuncUnstId.ATR`, as for those functions.
  * - If the slow period is set smaller than the fast period, the two are swapped so
  *   the slow EMA is always the longer one, as `MACD` does; the ATR period follows
  *   the slow period after the swap.
@@ -1036,7 +1036,7 @@ export class MacdvStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MACDV advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MACDV advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -1044,27 +1044,28 @@ export class MacdvStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link MacdvOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out?: MacdvOut): MacdvOut {
+  update(high: number, low: number, close: number, out?: MacdvOut): MacdvOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MACDV update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MACDV update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACDV update', 'MacdvOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('MACDV update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('MACDV update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    macdvStepImpl(this, inHigh, inLow, inClose);
+    macdvStepImpl(this, high, low, close);
     this.outRangeCount++;
     if (out === undefined) {
       out = new MacdvOut();
@@ -1078,23 +1079,26 @@ export class MacdvStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link MacdvOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out?: MacdvOut): MacdvOut {
+  peek(high: number, low: number, close: number, out?: MacdvOut): MacdvOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACDV peek', 'MacdvOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('MACDV peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('MACDV peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let lineValue = 0;
     let tempReal = 0;
     let val2 = 0;
@@ -1218,6 +1222,8 @@ export class MacdvStream {
    * @param out - Receives the outputs and is returned; a new {@link MacdvOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: MacdvOut): MacdvOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -2051,7 +2057,7 @@ export function macdvOpenPositional(
   optInSlowPeriod = requireInt32('MACDV open', 'slowPeriod', optInSlowPeriod);
   optInSignalPeriod = requireInt32('MACDV open', 'signalPeriod', optInSignalPeriod);
   requireArgument('MACDV open', 'prices.high', inHigh);
-  requireHistory('MACDV open', inHigh.length);
+  requireHistory('MACDV open', 'prices.high', inHigh.length);
   requireArgument('MACDV open', 'prices.low', inLow);
   requireArgument('MACDV open', 'prices.close', inClose);
   requireHistoryLength('MACDV open', 'prices.low', inLow.length, inHigh.length);
@@ -2076,7 +2082,7 @@ export function macdvOpenAndFillPositional(
   optInSlowPeriod = requireInt32('MACDV openAndFill', 'slowPeriod', optInSlowPeriod);
   optInSignalPeriod = requireInt32('MACDV openAndFill', 'signalPeriod', optInSignalPeriod);
   requireArgument('MACDV openAndFill', 'prices.high', inHigh);
-  requireHistory('MACDV openAndFill', inHigh.length);
+  requireHistory('MACDV openAndFill', 'prices.high', inHigh.length);
   requireArgument('MACDV openAndFill', 'prices.low', inLow);
   requireArgument('MACDV openAndFill', 'prices.close', inClose);
   const guardLookback = macdvLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);

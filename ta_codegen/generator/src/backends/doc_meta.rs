@@ -252,6 +252,7 @@ mod tests {
                 c_name: format!("TA_MAType_{n}"),
                 name: (*n).to_string(),
                 value: *v,
+                reserved: false,
             })
             .collect();
         let mut m = HashMap::new();

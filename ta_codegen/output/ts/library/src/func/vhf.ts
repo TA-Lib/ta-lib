@@ -368,7 +368,7 @@ export class VhfStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('VHF advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('VHF advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -376,21 +376,21 @@ export class VhfStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series, canonically
-   *   the close.
+   * @param real - The bar's `real` value: Source price/value series, canonically the
+   *   close.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('VHF update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('VHF update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('VHF update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('VHF update', 'real');
     }
-    vhfStepImpl(this, inReal);
+    vhfStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -398,17 +398,18 @@ export class VhfStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series, canonically
-   *   the close.
+   * @param real - The bar's `real` value: Source price/value series, canonically the
+   *   close.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('VHF peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('VHF peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let i = 0;
     let highest = 0;
     let lowest = 0;
@@ -683,7 +684,7 @@ export function vhfOpenPositional(
 ): VhfStream {
   optInTimePeriod = requireInt32('VHF open', 'timePeriod', optInTimePeriod);
   requireArgument('VHF open', 'real', inReal);
-  requireHistory('VHF open', inReal.length);
+  requireHistory('VHF open', 'real', inReal.length);
   return vhfOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -696,7 +697,7 @@ export function vhfOpenAndFillPositional(
 ): VhfStream {
   optInTimePeriod = requireInt32('VHF openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('VHF openAndFill', 'real', inReal);
-  requireHistory('VHF openAndFill', inReal.length);
+  requireHistory('VHF openAndFill', 'real', inReal.length);
   const guardLookback = vhfLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('VHF openAndFill', PARAM_RANGES, optInTimePeriod);

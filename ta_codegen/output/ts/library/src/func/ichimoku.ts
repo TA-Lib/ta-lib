@@ -408,12 +408,12 @@ export function ichimokuDisplayShift(outputIdx: number, options?: IchimokuOption
  * [ta-lib.org/functions/ichimoku](https://ta-lib.org/functions/ichimoku).
  *
  * **Notes**
- * - Each line is `TA_MIDPRICE` over its own period, and Span A is `TA_MEDPRICE` of
- *   the Tenkan and Kijun lines: it halves two midpoints that are already rounded.
+ * - Each line is `midprice` over its own period, and Span A is `medprice` of the
+ *   Tenkan and Kijun lines: it halves two midpoints that are already rounded.
  *   Averaging the four extremes in one step is the same number in real arithmetic
  *   and can differ in the last bit.
  * - The two spans are drawn `kijunPeriod` bars ahead of the bar that computed
- *   them. That is a display shift: `TA_ICHIMOKU_DisplayShift` reports it, and it
+ *   them. That is a display shift: `ichimokuDisplayShift` reports it, and it
  *   changes nothing about the values, the lookback or the returned range. Every
  *   output is written at the bar that computed it, so the last `kijunPeriod` span
  *   values are the cloud a chart draws past the last bar.
@@ -425,7 +425,7 @@ export function ichimokuDisplayShift(outputIdx: number, options?: IchimokuOption
  *   three, so any of them can be the longest.
  * - The Chikou span is the close drawn `kijunPeriod` bars back. It carries no
  *   computation and is not an output. Its usual signal, the close above the close
- *   `n` bars earlier, is `TA_MOM(close, n) > 0`.
+ *   `n` bars earlier, is `mom(close, n) > 0`.
  *
  * `outTenkanSen[k]` is the value at input bar `begIdx + k`; every output is
  * exactly as long as the number of values written, and nothing is padded. A range
@@ -561,7 +561,7 @@ export class IchimokuStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ICHIMOKU advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ICHIMOKU advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -569,26 +569,27 @@ export class IchimokuStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price series.
-   * @param inLow - The bar's `inLow` value: Low price series.
+   * @param high - The bar's `high` value: High price series.
+   * @param low - The bar's `low` value: Low price series.
    * @param out - Receives the outputs and is returned; a new {@link IchimokuOut}
    *   when omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, out?: IchimokuOut): IchimokuOut {
+  update(high: number, low: number, out?: IchimokuOut): IchimokuOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ICHIMOKU update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ICHIMOKU update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('ICHIMOKU update', 'IchimokuOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('ICHIMOKU update', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('ICHIMOKU update', !Number.isFinite(high) ? 'high' : 'low');
     }
-    ichimokuStepImpl(this, inHigh, inLow);
+    ichimokuStepImpl(this, high, low);
     this.outRangeCount++;
     if (out === undefined) {
       out = new IchimokuOut();
@@ -603,22 +604,24 @@ export class IchimokuStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price series.
-   * @param inLow - The bar's `inLow` value: Low price series.
+   * @param high - The bar's `high` value: High price series.
+   * @param low - The bar's `low` value: Low price series.
    * @param out - Receives the outputs and is returned; a new {@link IchimokuOut}
    *   when omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, out?: IchimokuOut): IchimokuOut {
+  peek(high: number, low: number, out?: IchimokuOut): IchimokuOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('ICHIMOKU peek', 'IchimokuOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('ICHIMOKU peek', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('ICHIMOKU peek', !Number.isFinite(high) ? 'high' : 'low');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let cur_tempT = 0;
     let cur_tempK = 0;
     let cur_outSenkouSpanB = 0;
@@ -647,6 +650,8 @@ export class IchimokuStream {
    * @param out - Receives the outputs and is returned; a new {@link IchimokuOut}
    *   when omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: IchimokuOut): IchimokuOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -903,7 +908,7 @@ export function ichimokuOpenPositional(
   optInKijunPeriod = requireInt32('ICHIMOKU open', 'kijunPeriod', optInKijunPeriod);
   optInSenkouBPeriod = requireInt32('ICHIMOKU open', 'senkouBPeriod', optInSenkouBPeriod);
   requireArgument('ICHIMOKU open', 'prices.high', inHigh);
-  requireHistory('ICHIMOKU open', inHigh.length);
+  requireHistory('ICHIMOKU open', 'prices.high', inHigh.length);
   requireArgument('ICHIMOKU open', 'prices.low', inLow);
   requireHistoryLength('ICHIMOKU open', 'prices.low', inLow.length, inHigh.length);
   return ichimokuOpenInternal(core, float64(inHigh), float64(inLow), 0, optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod);
@@ -926,7 +931,7 @@ export function ichimokuOpenAndFillPositional(
   optInKijunPeriod = requireInt32('ICHIMOKU openAndFill', 'kijunPeriod', optInKijunPeriod);
   optInSenkouBPeriod = requireInt32('ICHIMOKU openAndFill', 'senkouBPeriod', optInSenkouBPeriod);
   requireArgument('ICHIMOKU openAndFill', 'prices.high', inHigh);
-  requireHistory('ICHIMOKU openAndFill', inHigh.length);
+  requireHistory('ICHIMOKU openAndFill', 'prices.high', inHigh.length);
   requireArgument('ICHIMOKU openAndFill', 'prices.low', inLow);
   const guardLookback = ichimokuLookbackPositional(optInTenkanPeriod, optInKijunPeriod, optInSenkouBPeriod, core);
   if (guardLookback < 0) {

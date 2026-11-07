@@ -189,15 +189,15 @@ export function cumsumDisplayShift(outputIdx: number, options?: CumsumOptions): 
  * `CUMSUM(SUB(advancingVolume, decliningVolume))`, and the McClellan Summation
  * Index is `CUMSUM` of the McClellan Oscillator.
  * [`SUM`](https://ta-lib.org/functions/sum) is a *rolling window* over
- * `optInTimePeriod` bars; `CUMSUM` has no window — every bar since the anchor
+ * `timePeriod` bars; `CUMSUM` has no window — every bar since the anchor
  * contributes.
  *
  * Formula and more info at
  * [ta-lib.org/functions/cumsum](https://ta-lib.org/functions/cumsum).
  *
  * **Notes**
- * - Lookback 0: `outBegIdx = startIdx`, one output per input bar. Streaming state
- *   is a single accumulator, so a peek commits nothing by construction.
+ * - Lookback 0: `begIdx = startIdx`, one output per input bar. Streaming state is
+ *   a single accumulator, so a peek commits nothing by construction.
  * - The sum is uncompensated. A Kahan or Neumaier variant would diverge from
  *   `AD`'s own convention, which this follows.
  *
@@ -292,7 +292,7 @@ export class CumsumStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CUMSUM advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CUMSUM advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -300,21 +300,21 @@ export class CumsumStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source series (canonically a per-bar
-   *   net figure, e.g. advances − declines)
+   * @param real - The bar's `real` value: Source series (canonically a per-bar net
+   *   figure, e.g. advances − declines)
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CUMSUM update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CUMSUM update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('CUMSUM update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('CUMSUM update', 'real');
     }
-    cumsumStepImpl(this, inReal);
+    cumsumStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -322,17 +322,18 @@ export class CumsumStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source series (canonically a per-bar
-   *   net figure, e.g. advances − declines)
+   * @param real - The bar's `real` value: Source series (canonically a per-bar net
+   *   figure, e.g. advances − declines)
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('CUMSUM peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('CUMSUM peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let cur_outReal = 0;
     let total = sp.total;
     total += inReal;
@@ -465,7 +466,7 @@ export function cumsumOpenPositional(
   core: Core = Core.DEFAULT,
 ): CumsumStream {
   requireArgument('CUMSUM open', 'real', inReal);
-  requireHistory('CUMSUM open', inReal.length);
+  requireHistory('CUMSUM open', 'real', inReal.length);
   return cumsumOpenInternal(core, float64(inReal), 0);
 }
 
@@ -476,7 +477,7 @@ export function cumsumOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): CumsumStream {
   requireArgument('CUMSUM openAndFill', 'real', inReal);
-  requireHistory('CUMSUM openAndFill', inReal.length);
+  requireHistory('CUMSUM openAndFill', 'real', inReal.length);
   const guardOutLen = openFillCount('CUMSUM openAndFill', inReal.length, cumsumLookbackPositional(core));
   requireOutput('CUMSUM openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);

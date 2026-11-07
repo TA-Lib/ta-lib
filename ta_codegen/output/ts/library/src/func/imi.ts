@@ -352,7 +352,7 @@ export class ImiStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('IMI advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('IMI advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -360,21 +360,21 @@ export class ImiStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inOpen - The bar's `inOpen` value: Open price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param open - The bar's `open` value: Open price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inOpen: number, inClose: number): number {
+  update(open: number, close: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('IMI update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('IMI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inOpen) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('IMI update', !Number.isFinite(inOpen) ? 'inOpen' : 'inClose');
+    if (!Number.isFinite(open) || !Number.isFinite(close)) {
+      throw nonFiniteBar('IMI update', !Number.isFinite(open) ? 'open' : 'close');
     }
-    imiStepImpl(this, inOpen, inClose);
+    imiStepImpl(this, open, close);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -382,17 +382,19 @@ export class ImiStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inOpen - The bar's `inOpen` value: Open price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param open - The bar's `open` value: Open price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inOpen: number, inClose: number): number {
-    if (!Number.isFinite(inOpen) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('IMI peek', !Number.isFinite(inOpen) ? 'inOpen' : 'inClose');
+  peek(open: number, close: number): number {
+    if (!Number.isFinite(open) || !Number.isFinite(close)) {
+      throw nonFiniteBar('IMI peek', !Number.isFinite(open) ? 'open' : 'close');
     }
     const sp = this;
+    const inOpen = open;
+    const inClose = close;
     let upsum = 0;
     let downsum = 0;
     let i = 0;
@@ -628,7 +630,7 @@ export function imiOpenPositional(
 ): ImiStream {
   optInTimePeriod = requireInt32('IMI open', 'timePeriod', optInTimePeriod);
   requireArgument('IMI open', 'prices.open', inOpen);
-  requireHistory('IMI open', inOpen.length);
+  requireHistory('IMI open', 'prices.open', inOpen.length);
   requireArgument('IMI open', 'prices.close', inClose);
   requireHistoryLength('IMI open', 'prices.close', inClose.length, inOpen.length);
   return imiOpenInternal(core, float64(inOpen), float64(inClose), 0, optInTimePeriod);
@@ -644,7 +646,7 @@ export function imiOpenAndFillPositional(
 ): ImiStream {
   optInTimePeriod = requireInt32('IMI openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('IMI openAndFill', 'prices.open', inOpen);
-  requireHistory('IMI openAndFill', inOpen.length);
+  requireHistory('IMI openAndFill', 'prices.open', inOpen.length);
   requireArgument('IMI openAndFill', 'prices.close', inClose);
   const guardLookback = imiLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {

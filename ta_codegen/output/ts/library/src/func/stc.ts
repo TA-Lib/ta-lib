@@ -1004,7 +1004,7 @@ export class StcStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('STC advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('STC advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -1012,20 +1012,20 @@ export class StcStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input series (typically close)
+   * @param real - The bar's `real` value: Input series (typically close)
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('STC update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('STC update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('STC update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('STC update', 'real');
     }
-    stcStepImpl(this, inReal);
+    stcStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -1033,16 +1033,17 @@ export class StcStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input series (typically close)
+   * @param real - The bar's `real` value: Input series (typically close)
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('STC peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('STC peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tempReal = 0;
     let lineValue = 0;
     let lowest = 0;
@@ -2212,7 +2213,7 @@ export function stcOpenPositional(
   optInSlowPeriod = requireInt32('STC open', 'slowPeriod', optInSlowPeriod);
   optInCyclePeriod = requireInt32('STC open', 'cyclePeriod', optInCyclePeriod);
   requireArgument('STC open', 'real', inReal);
-  requireHistory('STC open', inReal.length);
+  requireHistory('STC open', 'real', inReal.length);
   return stcOpenInternal(core, float64(inReal), 0, optInFastPeriod, optInSlowPeriod, optInCyclePeriod);
 }
 
@@ -2229,7 +2230,7 @@ export function stcOpenAndFillPositional(
   optInSlowPeriod = requireInt32('STC openAndFill', 'slowPeriod', optInSlowPeriod);
   optInCyclePeriod = requireInt32('STC openAndFill', 'cyclePeriod', optInCyclePeriod);
   requireArgument('STC openAndFill', 'real', inReal);
-  requireHistory('STC openAndFill', inReal.length);
+  requireHistory('STC openAndFill', 'real', inReal.length);
   const guardLookback = stcLookbackPositional(optInFastPeriod, optInSlowPeriod, optInCyclePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('STC openAndFill', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInCyclePeriod);

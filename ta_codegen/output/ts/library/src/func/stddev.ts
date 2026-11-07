@@ -215,8 +215,8 @@ export interface StddevResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * Standard deviation at each bar, scaled by optInNbDev. `values[k]` is the value
-   * at input bar `begIdx + k`.
+   * Standard deviation at each bar, scaled by nbDev. `values[k]` is the value at
+   * input bar `begIdx + k`.
    */
   values: Float64Array;
 }
@@ -367,7 +367,7 @@ export class StddevStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('STDDEV advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('STDDEV advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -375,20 +375,20 @@ export class StddevStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Series to measure dispersion of.
+   * @param real - The bar's `real` value: Series to measure dispersion of.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('STDDEV update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('STDDEV update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('STDDEV update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('STDDEV update', 'real');
     }
-    stddevStepImpl(this, inReal);
+    stddevStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -396,16 +396,17 @@ export class StddevStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Series to measure dispersion of.
+   * @param real - The bar's `real` value: Series to measure dispersion of.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('STDDEV peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('STDDEV peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let cur_outReal = 0;
     cur_outReal = sp.sub0.peek(inReal);
     if (sp.optInNbDev !== 1.0) {
@@ -600,7 +601,7 @@ export function stddevOpenPositional(
   optInTimePeriod = requireInt32('STDDEV open', 'timePeriod', optInTimePeriod);
   optInNbDev = requireReal('STDDEV open', 'nbDev', optInNbDev);
   requireArgument('STDDEV open', 'real', inReal);
-  requireHistory('STDDEV open', inReal.length);
+  requireHistory('STDDEV open', 'real', inReal.length);
   return stddevOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInNbDev);
 }
 
@@ -615,7 +616,7 @@ export function stddevOpenAndFillPositional(
   optInTimePeriod = requireInt32('STDDEV openAndFill', 'timePeriod', optInTimePeriod);
   optInNbDev = requireReal('STDDEV openAndFill', 'nbDev', optInNbDev);
   requireArgument('STDDEV openAndFill', 'real', inReal);
-  requireHistory('STDDEV openAndFill', inReal.length);
+  requireHistory('STDDEV openAndFill', 'real', inReal.length);
   const guardLookback = stddevLookbackPositional(optInTimePeriod, optInNbDev, core);
   if (guardLookback < 0) {
     throw rejectedParams('STDDEV openAndFill', PARAM_RANGES, optInTimePeriod, optInNbDev);

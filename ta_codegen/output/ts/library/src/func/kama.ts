@@ -616,7 +616,7 @@ export class KamaStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('KAMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('KAMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -624,20 +624,20 @@ export class KamaStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price series.
+   * @param real - The bar's `real` value: Source price series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('KAMA update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('KAMA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('KAMA update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('KAMA update', 'real');
     }
-    kamaStepImpl(this, inReal);
+    kamaStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -645,16 +645,17 @@ export class KamaStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price series.
+   * @param real - The bar's `real` value: Source price series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('KAMA peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('KAMA peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tempReal = 0;
     let tempReal2 = 0;
     let periodROC = 0;
@@ -1193,7 +1194,7 @@ export function kamaOpenPositional(
 ): KamaStream {
   optInTimePeriod = requireInt32('KAMA open', 'timePeriod', optInTimePeriod);
   requireArgument('KAMA open', 'real', inReal);
-  requireHistory('KAMA open', inReal.length);
+  requireHistory('KAMA open', 'real', inReal.length);
   return kamaOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -1206,7 +1207,7 @@ export function kamaOpenAndFillPositional(
 ): KamaStream {
   optInTimePeriod = requireInt32('KAMA openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('KAMA openAndFill', 'real', inReal);
-  requireHistory('KAMA openAndFill', inReal.length);
+  requireHistory('KAMA openAndFill', 'real', inReal.length);
   const guardLookback = kamaLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('KAMA openAndFill', PARAM_RANGES, optInTimePeriod);

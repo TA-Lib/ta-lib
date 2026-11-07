@@ -515,9 +515,9 @@ export function ceDisplayShift(outputIdx: number, options?: CeOptions): number {
  * - Neither line is always on its side of the other: with a small multiplier the
  *   long line sits above the short one.
  * - Both lines inherit the Average True Range's warm-up, so a caller who wants
- *   them converged sets `TA_FUNC_UNST_ATR`, exactly as when calling that function
+ *   them converged sets `FuncUnstId.ATR`, exactly as when calling that function
  *   directly.
- * - The two lines are the Chande Kroll Stop with a stop period of 1, `outRealLong`
+ * - The two lines are the Chande Kroll Stop with a stop period of 1, `outLong`
  *   being CKSP's `outHighStop`.
  *
  * `outLong[k]` is the value at input bar `begIdx + k`; every output is exactly as
@@ -668,7 +668,7 @@ export class CeStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CE advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CE advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -676,27 +676,28 @@ export class CeStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link CeOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out?: CeOut): CeOut {
+  update(high: number, low: number, close: number, out?: CeOut): CeOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CE update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CE update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('CE update', 'CeOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('CE update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('CE update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    ceStepImpl(this, inHigh, inLow, inClose);
+    ceStepImpl(this, high, low, close);
     this.outRangeCount++;
     if (out === undefined) {
       out = new CeOut();
@@ -709,23 +710,25 @@ export class CeStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link CeOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out?: CeOut): CeOut {
+  peek(high: number, low: number, close: number, out?: CeOut): CeOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('CE peek', 'CeOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('CE peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('CE peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let val2 = 0;
     let val3 = 0;
     let greatest = 0;
@@ -807,6 +810,8 @@ export class CeStream {
    * @param out - Receives the outputs and is returned; a new {@link CeOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: CeOut): CeOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -1336,7 +1341,7 @@ export function ceOpenPositional(
   optInTimePeriod = requireInt32('CE open', 'timePeriod', optInTimePeriod);
   optInMultiplier = requireReal('CE open', 'multiplier', optInMultiplier);
   requireArgument('CE open', 'prices.high', inHigh);
-  requireHistory('CE open', inHigh.length);
+  requireHistory('CE open', 'prices.high', inHigh.length);
   requireArgument('CE open', 'prices.low', inLow);
   requireArgument('CE open', 'prices.close', inClose);
   requireHistoryLength('CE open', 'prices.low', inLow.length, inHigh.length);
@@ -1358,7 +1363,7 @@ export function ceOpenAndFillPositional(
   optInTimePeriod = requireInt32('CE openAndFill', 'timePeriod', optInTimePeriod);
   optInMultiplier = requireReal('CE openAndFill', 'multiplier', optInMultiplier);
   requireArgument('CE openAndFill', 'prices.high', inHigh);
-  requireHistory('CE openAndFill', inHigh.length);
+  requireHistory('CE openAndFill', 'prices.high', inHigh.length);
   requireArgument('CE openAndFill', 'prices.low', inLow);
   requireArgument('CE openAndFill', 'prices.close', inClose);
   const guardLookback = ceLookbackPositional(optInTimePeriod, optInMultiplier, core);

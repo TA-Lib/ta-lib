@@ -588,10 +588,10 @@ export function pvoDisplayShift(outputIdx: number, options?: PvoOptions): number
  * [ta-lib.org/functions/pvo](https://ta-lib.org/functions/pvo).
  *
  * **Notes**
- * - `optInMAType` applies to both the fast and slow moving average.
- *   `TA_MAType_MAMA` ignores its period argument, so with
- *   `optInMAType = TA_MAType_MAMA` the fast and slow MAs are identical, making the
- *   numerator — and therefore the output — zero at every bar.
+ * - `maType` applies to both the fast and slow moving average. `MAType.MAMA`
+ *   ignores its period argument, so with `maType = MAType.MAMA` the fast and slow
+ *   MAs are identical, making the numerator — and therefore the output — zero at
+ *   every bar.
  * - If the slow period is set smaller than the fast period, the two are swapped,
  *   as in `MACD`.
  *
@@ -712,7 +712,7 @@ export class PvoStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PVO advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PVO advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -720,20 +720,20 @@ export class PvoStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inVolume: number): number {
+  update(volume: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PVO update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PVO update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inVolume)) {
-      throw nonFiniteBar('PVO update', 'inVolume');
+    if (!Number.isFinite(volume)) {
+      throw nonFiniteBar('PVO update', 'volume');
     }
-    pvoStepImpl(this, inVolume);
+    pvoStepImpl(this, volume);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -741,16 +741,17 @@ export class PvoStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inVolume: number): number {
-    if (!Number.isFinite(inVolume)) {
-      throw nonFiniteBar('PVO peek', 'inVolume');
+  peek(volume: number): number {
+    if (!Number.isFinite(volume)) {
+      throw nonFiniteBar('PVO peek', 'volume');
     }
     const sp = this;
+    const inVolume = volume;
     let tempReal = 0;
     let cur_tempBuffer = 0;
     let cur_outReal = 0;
@@ -1052,7 +1053,7 @@ export function pvoOpenPositional(
   optInSlowPeriod = requireInt32('PVO open', 'slowPeriod', optInSlowPeriod);
   optInMAType = requireInt32('PVO open', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('PVO open', 'prices.volume', inVolume);
-  requireHistory('PVO open', inVolume.length);
+  requireHistory('PVO open', 'prices.volume', inVolume.length);
   return pvoOpenInternal(core, float64(inVolume), 0, optInFastPeriod, optInSlowPeriod, optInMAType);
 }
 
@@ -1069,7 +1070,7 @@ export function pvoOpenAndFillPositional(
   optInSlowPeriod = requireInt32('PVO openAndFill', 'slowPeriod', optInSlowPeriod);
   optInMAType = requireInt32('PVO openAndFill', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('PVO openAndFill', 'prices.volume', inVolume);
-  requireHistory('PVO openAndFill', inVolume.length);
+  requireHistory('PVO openAndFill', 'prices.volume', inVolume.length);
   const guardLookback = pvoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core);
   if (guardLookback < 0) {
     throw rejectedParams('PVO openAndFill', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInMAType);

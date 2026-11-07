@@ -246,8 +246,8 @@ export function erPositional(
  */
 export interface ErOptions {
   /**
-   * Number of one-bar changes in the path sum (`KAMA`'s `optInTimePeriod` is the
-   * same window, under its own default) (default 10; range 2 to 100000;
+   * Number of one-bar changes in the path sum (`KAMA`'s `timePeriod` is the same
+   * window, under its own default) (default 10; range 2 to 100000;
    * `Core.INTEGER_DEFAULT` selects the default).
    */
   timePeriod?: number | undefined;
@@ -444,7 +444,7 @@ export class ErStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ER advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ER advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -452,21 +452,21 @@ export class ErStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series (canonically
+   * @param real - The bar's `real` value: Source price/value series (canonically
    *   close)
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ER update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ER update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ER update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ER update', 'real');
     }
-    erStepImpl(this, inReal);
+    erStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -474,17 +474,18 @@ export class ErStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series (canonically
+   * @param real - The bar's `real` value: Source price/value series (canonically
    *   close)
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ER peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ER peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let live = 0;
     let periodROC = 0;
     let tempReal = 0;
@@ -829,7 +830,7 @@ export function erOpenPositional(
 ): ErStream {
   optInTimePeriod = requireInt32('ER open', 'timePeriod', optInTimePeriod);
   requireArgument('ER open', 'real', inReal);
-  requireHistory('ER open', inReal.length);
+  requireHistory('ER open', 'real', inReal.length);
   return erOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -842,7 +843,7 @@ export function erOpenAndFillPositional(
 ): ErStream {
   optInTimePeriod = requireInt32('ER openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('ER openAndFill', 'real', inReal);
-  requireHistory('ER openAndFill', inReal.length);
+  requireHistory('ER openAndFill', 'real', inReal.length);
   const guardLookback = erLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('ER openAndFill', PARAM_RANGES, optInTimePeriod);

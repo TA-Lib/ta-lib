@@ -596,12 +596,12 @@ export interface HtPhasorResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * In-phase component (detrender delayed 3 bars) `outInPhase[k]` is the value at
+   * In-phase component (detrender delayed 3 bars). `outInPhase[k]` is the value at
    * input bar `begIdx + k`.
    */
   outInPhase: Float64Array;
   /**
-   * Quadrature component (Q1 of the Hilbert Transform) `outQuadrature[k]` is the
+   * Quadrature component (Q1 of the Hilbert Transform). `outQuadrature[k]` is the
    * value at input bar `begIdx + k`.
    */
   outQuadrature: Float64Array;
@@ -838,7 +838,7 @@ export class HtPhasorStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('HT_PHASOR advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('HT_PHASOR advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -846,25 +846,26 @@ export class HtPhasorStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inReal - The bar's `inReal` value: Source price series.
+   * @param real - The bar's `real` value: Source price series.
    * @param out - Receives the outputs and is returned; a new {@link HtPhasorOut}
    *   when omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out?: HtPhasorOut): HtPhasorOut {
+  update(real: number, out?: HtPhasorOut): HtPhasorOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('HT_PHASOR update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('HT_PHASOR update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('HT_PHASOR update', 'HtPhasorOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('HT_PHASOR update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('HT_PHASOR update', 'real');
     }
-    htPhasorStepImpl(this, inReal);
+    htPhasorStepImpl(this, real);
     this.outRangeCount++;
     if (out === undefined) {
       out = new HtPhasorOut();
@@ -877,21 +878,22 @@ export class HtPhasorStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price series.
+   * @param real - The bar's `real` value: Source price series.
    * @param out - Receives the outputs and is returned; a new {@link HtPhasorOut}
    *   when omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inReal: number, out?: HtPhasorOut): HtPhasorOut {
+  peek(real: number, out?: HtPhasorOut): HtPhasorOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('HT_PHASOR peek', 'HtPhasorOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('HT_PHASOR peek', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('HT_PHASOR peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let adjustedPrevPeriod = 0;
     let smoothedValue = 0;
     let hilbertTempReal = 0;
@@ -1002,6 +1004,8 @@ export class HtPhasorStream {
    * @param out - Receives the outputs and is returned; a new {@link HtPhasorOut}
    *   when omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: HtPhasorOut): HtPhasorOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -1959,7 +1963,7 @@ export function htPhasorOpenPositional(
   core: Core = Core.DEFAULT,
 ): HtPhasorStream {
   requireArgument('HT_PHASOR open', 'real', inReal);
-  requireHistory('HT_PHASOR open', inReal.length);
+  requireHistory('HT_PHASOR open', 'real', inReal.length);
   return htPhasorOpenInternal(core, float64(inReal), 0);
 }
 
@@ -1971,7 +1975,7 @@ export function htPhasorOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): HtPhasorStream {
   requireArgument('HT_PHASOR openAndFill', 'real', inReal);
-  requireHistory('HT_PHASOR openAndFill', inReal.length);
+  requireHistory('HT_PHASOR openAndFill', 'real', inReal.length);
   const guardOutLen = openFillCount('HT_PHASOR openAndFill', inReal.length, htPhasorLookbackPositional(core));
   requireOutput('HT_PHASOR openAndFill', 'outInPhase', outInPhase, guardOutLen, Float64Array);
   requireOutput('HT_PHASOR openAndFill', 'outQuadrature', outQuadrature, guardOutLen, Float64Array);

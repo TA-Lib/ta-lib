@@ -435,7 +435,7 @@ export interface StochfResult {
   /** Raw %K stochastic line. `outFastK[k]` is the value at input bar `begIdx + k`. */
   outFastK: Float64Array;
   /**
-   * MA-smoothed %K (signal line) `outFastD[k]` is the value at input bar
+   * MA-smoothed %K (signal line). `outFastD[k]` is the value at input bar
    * `begIdx + k`.
    */
   outFastD: Float64Array;
@@ -629,7 +629,7 @@ export class StochfStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('STOCHF advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('STOCHF advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -637,27 +637,28 @@ export class StochfStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link StochfOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out?: StochfOut): StochfOut {
+  update(high: number, low: number, close: number, out?: StochfOut): StochfOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('STOCHF update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('STOCHF update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('STOCHF update', 'StochfOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('STOCHF update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('STOCHF update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    stochfStepImpl(this, inHigh, inLow, inClose);
+    stochfStepImpl(this, high, low, close);
     this.outRangeCount++;
     if (out === undefined) {
       out = new StochfOut();
@@ -670,23 +671,26 @@ export class StochfStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link StochfOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out?: StochfOut): StochfOut {
+  peek(high: number, low: number, close: number, out?: StochfOut): StochfOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('STOCHF peek', 'StochfOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('STOCHF peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('STOCHF peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let cur_tempBuffer = 0;
     let cur_outFastD = 0;
     let cur_outFastK = 0;
@@ -773,6 +777,8 @@ export class StochfStream {
    * @param out - Receives the outputs and is returned; a new {@link StochfOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: StochfOut): StochfOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -1232,7 +1238,7 @@ export function stochfOpenPositional(
   optInFastD_Period = requireInt32('STOCHF open', 'fastDPeriod', optInFastD_Period);
   optInFastD_MAType = requireInt32('STOCHF open', 'fastDMaType', optInFastD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('STOCHF open', 'prices.high', inHigh);
-  requireHistory('STOCHF open', inHigh.length);
+  requireHistory('STOCHF open', 'prices.high', inHigh.length);
   requireArgument('STOCHF open', 'prices.low', inLow);
   requireArgument('STOCHF open', 'prices.close', inClose);
   requireHistoryLength('STOCHF open', 'prices.low', inLow.length, inHigh.length);
@@ -1256,7 +1262,7 @@ export function stochfOpenAndFillPositional(
   optInFastD_Period = requireInt32('STOCHF openAndFill', 'fastDPeriod', optInFastD_Period);
   optInFastD_MAType = requireInt32('STOCHF openAndFill', 'fastDMaType', optInFastD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('STOCHF openAndFill', 'prices.high', inHigh);
-  requireHistory('STOCHF openAndFill', inHigh.length);
+  requireHistory('STOCHF openAndFill', 'prices.high', inHigh.length);
   requireArgument('STOCHF openAndFill', 'prices.low', inLow);
   requireArgument('STOCHF openAndFill', 'prices.close', inClose);
   const guardLookback = stochfLookbackPositional(optInFastK_Period, optInFastD_Period, optInFastD_MAType as MAType, core);

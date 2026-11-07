@@ -293,7 +293,7 @@ export class ObvStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('OBV advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('OBV advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -301,21 +301,21 @@ export class ObvStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Price series, typically close.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param real - The bar's `real` value: Price series, typically close.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, inVolume: number): number {
+  update(real: number, volume: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('OBV update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('OBV update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('OBV update', !Number.isFinite(inReal) ? 'inReal' : 'inVolume');
+    if (!Number.isFinite(real) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('OBV update', !Number.isFinite(real) ? 'real' : 'volume');
     }
-    obvStepImpl(this, inReal, inVolume);
+    obvStepImpl(this, real, volume);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -323,17 +323,19 @@ export class ObvStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Price series, typically close.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param real - The bar's `real` value: Price series, typically close.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number, inVolume: number): number {
-    if (!Number.isFinite(inReal) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('OBV peek', !Number.isFinite(inReal) ? 'inReal' : 'inVolume');
+  peek(real: number, volume: number): number {
+    if (!Number.isFinite(real) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('OBV peek', !Number.isFinite(real) ? 'real' : 'volume');
     }
     const sp = this;
+    const inReal = real;
+    const inVolume = volume;
     let tempReal = 0;
     let cur_outReal = 0;
     let prevOBV = sp.prevOBV;
@@ -483,7 +485,7 @@ export function obvOpenPositional(
   core: Core = Core.DEFAULT,
 ): ObvStream {
   requireArgument('OBV open', 'real', inReal);
-  requireHistory('OBV open', inReal.length);
+  requireHistory('OBV open', 'real', inReal.length);
   requireArgument('OBV open', 'prices.volume', inVolume);
   requireHistoryLength('OBV open', 'prices.volume', inVolume.length, inReal.length);
   return obvOpenInternal(core, float64(inReal), float64(inVolume), 0);
@@ -497,7 +499,7 @@ export function obvOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): ObvStream {
   requireArgument('OBV openAndFill', 'real', inReal);
-  requireHistory('OBV openAndFill', inReal.length);
+  requireHistory('OBV openAndFill', 'real', inReal.length);
   requireArgument('OBV openAndFill', 'prices.volume', inVolume);
   const guardOutLen = openFillCount('OBV openAndFill', inReal.length, obvLookbackPositional(core));
   requireHistoryLength('OBV openAndFill', 'prices.volume', inVolume.length, inReal.length);

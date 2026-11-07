@@ -533,7 +533,7 @@ export class SkewStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SKEW advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SKEW advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -541,20 +541,20 @@ export class SkewStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: The series to measure.
+   * @param real - The bar's `real` value: The series to measure.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SKEW update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SKEW update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SKEW update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SKEW update', 'real');
     }
-    skewStepImpl(this, inReal);
+    skewStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -562,16 +562,17 @@ export class SkewStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: The series to measure.
+   * @param real - The bar's `real` value: The series to measure.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SKEW peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SKEW peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tempReal = 0;
     let dev = 0;
     let dev2 = 0;
@@ -1217,7 +1218,7 @@ export function skewOpenPositional(
 ): SkewStream {
   optInTimePeriod = requireInt32('SKEW open', 'timePeriod', optInTimePeriod);
   requireArgument('SKEW open', 'real', inReal);
-  requireHistory('SKEW open', inReal.length);
+  requireHistory('SKEW open', 'real', inReal.length);
   return skewOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -1230,7 +1231,7 @@ export function skewOpenAndFillPositional(
 ): SkewStream {
   optInTimePeriod = requireInt32('SKEW openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('SKEW openAndFill', 'real', inReal);
-  requireHistory('SKEW openAndFill', inReal.length);
+  requireHistory('SKEW openAndFill', 'real', inReal.length);
   const guardLookback = skewLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('SKEW openAndFill', PARAM_RANGES, optInTimePeriod);

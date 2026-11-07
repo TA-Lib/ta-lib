@@ -184,3 +184,11 @@ fn no_generated_module_spells_a_js_only_numeric_form() {
     }
     assert!(modules > 0, "VACUOUS: no module generated");
 }
+
+/// H1: an expression the type pass cannot type stops generation; a default type
+/// would let an untyped integer division render as a real one with every gate green.
+#[test]
+#[should_panic(expected = "has no declared type")]
+fn an_untyped_name_stops_generation() {
+    render(&assign(var("undeclared"), var("x"), false));
+}

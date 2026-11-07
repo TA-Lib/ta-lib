@@ -477,7 +477,7 @@ export class AtrStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ATR advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ATR advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -485,22 +485,22 @@ export class AtrStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number): number {
+  update(high: number, low: number, close: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ATR update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ATR update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('ATR update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('ATR update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    atrStepImpl(this, inHigh, inLow, inClose);
+    atrStepImpl(this, high, low, close);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -508,18 +508,20 @@ export class AtrStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('ATR peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+  peek(high: number, low: number, close: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('ATR peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let val2 = 0;
     let val3 = 0;
     let greatest = 0;
@@ -846,7 +848,7 @@ export function atrOpenPositional(
 ): AtrStream {
   optInTimePeriod = requireInt32('ATR open', 'timePeriod', optInTimePeriod);
   requireArgument('ATR open', 'prices.high', inHigh);
-  requireHistory('ATR open', inHigh.length);
+  requireHistory('ATR open', 'prices.high', inHigh.length);
   requireArgument('ATR open', 'prices.low', inLow);
   requireArgument('ATR open', 'prices.close', inClose);
   requireHistoryLength('ATR open', 'prices.low', inLow.length, inHigh.length);
@@ -865,7 +867,7 @@ export function atrOpenAndFillPositional(
 ): AtrStream {
   optInTimePeriod = requireInt32('ATR openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('ATR openAndFill', 'prices.high', inHigh);
-  requireHistory('ATR openAndFill', inHigh.length);
+  requireHistory('ATR openAndFill', 'prices.high', inHigh.length);
   requireArgument('ATR openAndFill', 'prices.low', inLow);
   requireArgument('ATR openAndFill', 'prices.close', inClose);
   const guardLookback = atrLookbackPositional(optInTimePeriod, core);

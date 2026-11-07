@@ -737,8 +737,8 @@ export function smiDisplayShift(outputIdx: number, options?: SmiOptions): number
  * - Each exponential average is seeded with a simple average of its own first
  *   inputs, the same seeding TA-Lib's EMA uses, so the first published values
  *   converge toward an unlimited-history result rather than reproducing it
- *   exactly. `TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)` discards more of that
- *   warm-up. Implementations seeding from a single first sample — Tulip and
+ *   exactly. `CoreBuilder.unstablePeriod(FuncUnstId.EMA, ...)` discards more of
+ *   that warm-up. Implementations seeding from a single first sample — Tulip and
  *   TradingView among them — differ over the transient and agree once it decays.
  * - One output range covers both outputs, so the SMI values consumed by the signal
  *   line's own warm-up are not published.
@@ -908,7 +908,7 @@ export class SmiStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SMI advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SMI advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -916,27 +916,28 @@ export class SmiStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price series.
-   * @param inLow - The bar's `inLow` value: Low price series.
-   * @param inClose - The bar's `inClose` value: Close price series.
+   * @param high - The bar's `high` value: High price series.
+   * @param low - The bar's `low` value: Low price series.
+   * @param close - The bar's `close` value: Close price series.
    * @param out - Receives the outputs and is returned; a new {@link SmiOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out?: SmiOut): SmiOut {
+  update(high: number, low: number, close: number, out?: SmiOut): SmiOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SMI update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SMI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('SMI update', 'SmiOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('SMI update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('SMI update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    smiStepImpl(this, inHigh, inLow, inClose);
+    smiStepImpl(this, high, low, close);
     this.outRangeCount++;
     if (out === undefined) {
       out = new SmiOut();
@@ -949,23 +950,26 @@ export class SmiStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price series.
-   * @param inLow - The bar's `inLow` value: Low price series.
-   * @param inClose - The bar's `inClose` value: Close price series.
+   * @param high - The bar's `high` value: High price series.
+   * @param low - The bar's `low` value: Low price series.
+   * @param close - The bar's `close` value: Close price series.
    * @param out - Receives the outputs and is returned; a new {@link SmiOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out?: SmiOut): SmiOut {
+  peek(high: number, low: number, close: number, out?: SmiOut): SmiOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('SMI peek', 'SmiOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('SMI peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('SMI peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let tmp = 0;
     let num = 0;
     let den = 0;
@@ -1139,6 +1143,8 @@ export class SmiStream {
    * @param out - Receives the outputs and is returned; a new {@link SmiOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: SmiOut): SmiOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -1935,7 +1941,7 @@ export function smiOpenPositional(
   optInSlowPeriod = requireInt32('SMI open', 'slowPeriod', optInSlowPeriod);
   optInSignalPeriod = requireInt32('SMI open', 'signalPeriod', optInSignalPeriod);
   requireArgument('SMI open', 'prices.high', inHigh);
-  requireHistory('SMI open', inHigh.length);
+  requireHistory('SMI open', 'prices.high', inHigh.length);
   requireArgument('SMI open', 'prices.low', inLow);
   requireArgument('SMI open', 'prices.close', inClose);
   requireHistoryLength('SMI open', 'prices.low', inLow.length, inHigh.length);
@@ -1961,7 +1967,7 @@ export function smiOpenAndFillPositional(
   optInSlowPeriod = requireInt32('SMI openAndFill', 'slowPeriod', optInSlowPeriod);
   optInSignalPeriod = requireInt32('SMI openAndFill', 'signalPeriod', optInSignalPeriod);
   requireArgument('SMI openAndFill', 'prices.high', inHigh);
-  requireHistory('SMI openAndFill', inHigh.length);
+  requireHistory('SMI openAndFill', 'prices.high', inHigh.length);
   requireArgument('SMI openAndFill', 'prices.low', inLow);
   requireArgument('SMI openAndFill', 'prices.close', inClose);
   const guardLookback = smiLookbackPositional(optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);

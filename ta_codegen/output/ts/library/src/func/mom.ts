@@ -206,8 +206,8 @@ export interface MomResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * Momentum (current minus value optInTimePeriod bars ago) `values[k]` is the value
-   * at input bar `begIdx + k`.
+   * Momentum (current minus value timePeriod bars ago). `values[k]` is the value at
+   * input bar `begIdx + k`.
    */
   values: Float64Array;
 }
@@ -248,7 +248,7 @@ export function momDisplayShift(outputIdx: number, options?: MomOptions): number
 }
 
 /**
- * Momentum: current price minus the price optInTimePeriod bars ago. The absolute
+ * Momentum: current price minus the price timePeriod bars ago. The absolute
  * (unnormalized) rate of change. Positive = price rose over the period, negative =
  * fell; centered at zero.
  *
@@ -357,7 +357,7 @@ export class MomStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MOM advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MOM advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -365,20 +365,20 @@ export class MomStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input price series.
+   * @param real - The bar's `real` value: Input price series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MOM update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MOM update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MOM update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MOM update', 'real');
     }
-    momStepImpl(this, inReal);
+    momStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -386,16 +386,17 @@ export class MomStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input price series.
+   * @param real - The bar's `real` value: Input price series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MOM peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MOM peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let cur_outReal = 0;
     cur_outReal = inReal - sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
     return cur_outReal;
@@ -595,7 +596,7 @@ export function momOpenPositional(
 ): MomStream {
   optInTimePeriod = requireInt32('MOM open', 'timePeriod', optInTimePeriod);
   requireArgument('MOM open', 'real', inReal);
-  requireHistory('MOM open', inReal.length);
+  requireHistory('MOM open', 'real', inReal.length);
   return momOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -608,7 +609,7 @@ export function momOpenAndFillPositional(
 ): MomStream {
   optInTimePeriod = requireInt32('MOM openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('MOM openAndFill', 'real', inReal);
-  requireHistory('MOM openAndFill', inReal.length);
+  requireHistory('MOM openAndFill', 'real', inReal.length);
   const guardLookback = momLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('MOM openAndFill', PARAM_RANGES, optInTimePeriod);

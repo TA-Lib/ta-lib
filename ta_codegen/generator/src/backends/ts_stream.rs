@@ -60,10 +60,38 @@ fn ts_ty(t: CType) -> &'static str {
     }
 }
 
+/// The bar parameters as the transcribed bodies and the `@internal` tape
+/// frames spell them: C's names (`inReal`, `inHigh`), which the bodies read.
 fn bar_params(func: &FuncDef) -> (String, String) {
     let inputs = streaming::input_array_names(func);
     let sig: Vec<String> = inputs.iter().map(|a| format!("{a}: number")).collect();
     (sig.join(", "), inputs.join(", "))
+}
+
+/// The bar parameters of the public `update` and `peek`: the positional tier's
+/// names (`real`, `high`), as the batch call and the openers spell the same
+/// series. Returns `(signature, forwarding list)`.
+fn public_bar_params(func: &FuncDef) -> (String, String) {
+    let inputs = public_bar_names(func);
+    let sig: Vec<String> = inputs.iter().map(|a| format!("{a}: number")).collect();
+    (sig.join(", "), inputs.join(", "))
+}
+
+fn public_bar_names(func: &FuncDef) -> Vec<String> {
+    streaming::input_array_names(func).iter().map(|a| super::ts::input_param_name(a)).collect()
+}
+
+/// `const inReal = real;` for each bar of a public `peek`: the frame it inlines
+/// reads C's names, and renaming them in the frame is not an option, since
+/// `fma::stream_base` decides what fuses from the names it sees.
+fn bar_aliases(func: &FuncDef, indent: &str) -> String {
+    let mut s = String::new();
+    for (c, p) in streaming::input_array_names(func).iter().zip(public_bar_names(func)) {
+        if *c != p {
+            let _ = writeln!(s, "{indent}const {c} = {p};");
+        }
+    }
+    s
 }
 
 fn opt_sig(func: &FuncDef) -> Vec<String> {
@@ -661,7 +689,7 @@ fn fresh_value_expr_local(func: &FuncDef) -> String {
 
 fn out_range_ceiling_guard(func: &FuncDef, indent: &str, verb: &str) -> String {
     format!(
-        "{indent}if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {{\n{indent}  throw failure('{} {verb}', RetCode.OUT_OF_RANGE_END_INDEX);\n{indent}}}\n",
+        "{indent}if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {{\n{indent}  throw streamFailure('{} {verb}', RetCode.OUT_OF_RANGE_END_INDEX);\n{indent}}}\n",
         func.name
     )
 }
@@ -669,7 +697,7 @@ fn out_range_ceiling_guard(func: &FuncDef, indent: &str, verb: &str) -> String {
 /// Every bar input finite, before anything is written: a handle keeps its
 /// state, so one non-finite bar would poison every later value.
 fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
-    let bars = streaming::input_array_names(func);
+    let bars = public_bar_names(func);
     if bars.is_empty() {
         return String::new();
     }
@@ -730,7 +758,7 @@ fn fill_sink(em: &Em, src: &str, indent: &str) -> String {
 
 fn emit_update_method(o: &mut String, em: &Em) {
     let func = em.func;
-    let (sig_bars, fwd_bars) = bar_params(func);
+    let (sig_bars, fwd_bars) = public_bar_params(func);
     let sep = if sig_bars.is_empty() { "" } else { ", " };
     let _ = write!(o, "\n{}", ts_doc::stream_method_docs(func, StreamMethod::Update));
     let sink = sink_param(em);
@@ -751,7 +779,7 @@ fn emit_update_method(o: &mut String, em: &Em) {
 
 fn emit_peek_method(o: &mut String, em: &Em, frame: Option<&PeekFrame>) {
     let func = em.func;
-    let (sig_bars, _) = bar_params(func);
+    let (sig_bars, _) = public_bar_params(func);
     let sink = sink_param(em);
     let sink = if sig_bars.is_empty() { sink.trim_start_matches(", ").to_string() } else { sink };
     let _ = write!(o, "\n{}", ts_doc::stream_method_docs(func, StreamMethod::Peek));
@@ -760,15 +788,42 @@ fn emit_peek_method(o: &mut String, em: &Em, frame: Option<&PeekFrame>) {
     o.push_str(&finite_bar_check(func, "    ", "peek"));
     let frame = frame.expect("every tier emits a peek frame");
     let _ = writeln!(o, "    const sp = this;");
-    o.push_str(&frame.body);
+    o.push_str(&bar_aliases(func, "    "));
+    let mut body = frame.body.clone();
     if frame.terminal {
         assert!(!has_out_class(func), "a terminal peek frame would skip the caller's sink write");
     } else if has_out_class(func) {
-        o.push_str(&fill_sink(em, "", "    "));
+        body.push_str(&fill_sink(em, "", "    "));
     } else {
-        let _ = writeln!(o, "    return {};", fresh_value_expr_local(func));
+        let _ = writeln!(body, "    return {};", fresh_value_expr_local(func));
+    }
+    // A body local named as a bar parameter (`let high` beside `high: number`)
+    // may shadow it inside a block, never beside it; the aliases above read the
+    // parameters, so they stay outside.
+    if public_bar_names(func).iter().any(|n| declares_local(&body, n)) {
+        let _ = writeln!(o, "    {{");
+        for line in body.lines() {
+            if line.is_empty() {
+                o.push('\n');
+            } else {
+                let _ = writeln!(o, "  {line}");
+            }
+        }
+        let _ = writeln!(o, "    }}");
+    } else {
+        o.push_str(&body);
     }
     let _ = writeln!(o, "  }}");
+}
+
+/// Whether `body` declares a `let` or `const` named `name` at some line's start.
+fn declares_local(body: &str, name: &str) -> bool {
+    body.lines().any(|line| {
+        let t = line.trim_start();
+        let rest = t.strip_prefix("let ").or_else(|| t.strip_prefix("const "));
+        rest.and_then(|r| r.strip_prefix(name))
+            .is_some_and(|after| !after.starts_with(|c: char| c.is_ascii_alphanumeric() || c == '_'))
+    })
 }
 
 fn emit_value_method(o: &mut String, em: &Em) {
@@ -1541,7 +1596,7 @@ fn emit_public_open_guards(o: &mut String, em: &Em, verb: &str, with_outputs: bo
     let entry = format!("{n} {verb}");
     o.push_str(&ts::require_arg_types(func, &entry));
     let _ = writeln!(o, "  requireArgument('{entry}', '{}', {history});", ts::input_label(func, history));
-    let _ = writeln!(o, "  requireHistory('{entry}', {history}.length);");
+    let _ = writeln!(o, "  requireHistory('{entry}', '{}', {history}.length);", ts::input_label(func, history));
     for input in &inputs[1..] {
         let _ = writeln!(o, "  requireArgument('{entry}', '{}', {input});", ts::input_label(func, input));
     }
@@ -1982,7 +2037,7 @@ fn dispatch_peek_frame(
         }
         let _ = writeln!(f, "      }}");
     }
-    let _ = writeln!(f, "      default:\n        throw new Error('unreachable: open rejects arms without a sub-stream');\n    }}");
+    let _ = writeln!(f, "      default:\n        throw failure('{} peek', RetCode.INTERNAL_ERROR);\n    }}", em.func.name);
     PeekFrame { body: f, terminal }
 }
 
@@ -2211,7 +2266,7 @@ fn emit_dispatch_tape(o: &mut String, em: &Em, dp: &streaming::DispatchPlan, scr
         let _ = writeln!(o, "    case {IDENTITY_TAG}:\n      return {inp};");
     }
     o.push_str(&peek_cases);
-    let _ = writeln!(o, "    default:\n      throw new Error('unreachable: open rejects arms without a sub-stream');\n  }}\n}}");
+    let _ = writeln!(o, "    default:\n      throw failure('{} peek', RetCode.INTERNAL_ERROR);\n  }}\n}}", func.name);
 
     let _ = writeln!(o, "\n/** @internal */\nexport function {base}TapeDetach(sp: {class}): number {{");
     let _ = writeln!(o, "  switch (sp.arm) {{");

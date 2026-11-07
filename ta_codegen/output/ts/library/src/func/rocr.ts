@@ -252,18 +252,18 @@ export function rocrDisplayShift(outputIdx: number, options?: RocrOptions): numb
 }
 
 /**
- * Rate of Change Ratio: the ratio of the current price to the price
- * optInTimePeriod bars ago. A momentum measure centered at 1. Always positive,
- * centered at 1: >1 rising, \<1 falling.
+ * Rate of Change Ratio: the ratio of the current price to the price timePeriod
+ * bars ago. A momentum measure centered at 1. Always positive, centered at 1: >1
+ * rising, \<1 falling.
  *
  * Formula and more info at
  * [ta-lib.org/functions/rocr](https://ta-lib.org/functions/rocr).
  *
  * **Notes**
- * - **The input is assumed positive.** The price `optInTimePeriod` bars back is
- *   the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is
- *   small and the output very large; no error is returned. A series that reaches
- *   or crosses zero, such as an oscillator or a spread, has no meaningful result
+ * - **The input is assumed positive.** The price `timePeriod` bars back is the
+ *   divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small
+ *   and the output very large; no error is returned. A series that reaches or
+ *   crosses zero, such as an oscillator or a spread, has no meaningful result
  *   here.
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
@@ -368,7 +368,7 @@ export class RocrStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ROCR advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ROCR advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -376,20 +376,20 @@ export class RocrStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Price series.
+   * @param real - The bar's `real` value: Price series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ROCR update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ROCR update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ROCR update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ROCR update', 'real');
     }
-    rocrStepImpl(this, inReal);
+    rocrStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -397,16 +397,17 @@ export class RocrStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Price series.
+   * @param real - The bar's `real` value: Price series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ROCR peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ROCR peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tempReal = 0;
     let cur_outReal = 0;
     tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
@@ -622,7 +623,7 @@ export function rocrOpenPositional(
 ): RocrStream {
   optInTimePeriod = requireInt32('ROCR open', 'timePeriod', optInTimePeriod);
   requireArgument('ROCR open', 'real', inReal);
-  requireHistory('ROCR open', inReal.length);
+  requireHistory('ROCR open', 'real', inReal.length);
   return rocrOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -635,7 +636,7 @@ export function rocrOpenAndFillPositional(
 ): RocrStream {
   optInTimePeriod = requireInt32('ROCR openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('ROCR openAndFill', 'real', inReal);
-  requireHistory('ROCR openAndFill', inReal.length);
+  requireHistory('ROCR openAndFill', 'real', inReal.length);
   const guardLookback = rocrLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('ROCR openAndFill', PARAM_RANGES, optInTimePeriod);

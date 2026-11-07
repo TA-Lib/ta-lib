@@ -264,7 +264,7 @@ export class CoshStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('COSH advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('COSH advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -272,20 +272,20 @@ export class CoshStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input values to transform.
+   * @param real - The bar's `real` value: Input values to transform.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('COSH update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('COSH update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('COSH update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('COSH update', 'real');
     }
-    coshStepImpl(this, inReal);
+    coshStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -293,15 +293,16 @@ export class CoshStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input values to transform.
+   * @param real - The bar's `real` value: Input values to transform.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('COSH peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('COSH peek', 'real');
     }
+    const inReal = real;
     let cur_outReal = 0;
     cur_outReal = Math.cosh(inReal);
     return cur_outReal;
@@ -411,7 +412,7 @@ export function coshOpenPositional(
   core: Core = Core.DEFAULT,
 ): CoshStream {
   requireArgument('COSH open', 'real', inReal);
-  requireHistory('COSH open', inReal.length);
+  requireHistory('COSH open', 'real', inReal.length);
   return coshOpenInternal(core, float64(inReal), 0);
 }
 
@@ -422,7 +423,7 @@ export function coshOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): CoshStream {
   requireArgument('COSH openAndFill', 'real', inReal);
-  requireHistory('COSH openAndFill', inReal.length);
+  requireHistory('COSH openAndFill', 'real', inReal.length);
   const guardOutLen = openFillCount('COSH openAndFill', inReal.length, coshLookbackPositional(core));
   requireOutput('COSH openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);

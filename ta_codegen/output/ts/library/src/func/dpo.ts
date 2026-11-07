@@ -272,9 +272,9 @@ export function dpoDisplayShift(outputIdx: number, options?: DpoOptions): number
  *   packages usually draw it `t` bars to the left instead, which is a plotting
  *   convention rather than a different series; a caller wanting that view shifts
  *   `outReal` itself, by the display shift the function reports, `-t`.
- * - A causal variant, `P[i] - SMA(P, optInTimePeriod)[i - t]`, displaces the
- *   average instead of the price. It is a genuinely different series, not a
- *   re-indexing of this one, and is not implemented here.
+ * - A causal variant, `P[i] - SMA(P, timePeriod)[i - t]`, displaces the average
+ *   instead of the price. It is a genuinely different series, not a re-indexing of
+ *   this one, and is not implemented here.
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends
@@ -385,7 +385,7 @@ export class DpoStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('DPO advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('DPO advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -393,21 +393,21 @@ export class DpoStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series, canonically
-   *   the close.
+   * @param real - The bar's `real` value: Source price/value series, canonically the
+   *   close.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('DPO update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('DPO update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('DPO update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('DPO update', 'real');
     }
-    dpoStepImpl(this, inReal);
+    dpoStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -415,17 +415,18 @@ export class DpoStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series, canonically
-   *   the close.
+   * @param real - The bar's `real` value: Source price/value series, canonically the
+   *   close.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('DPO peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('DPO peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tempReal = 0;
     let dispVal = 0;
     let cur_outReal = 0;
@@ -667,7 +668,7 @@ export function dpoOpenPositional(
 ): DpoStream {
   optInTimePeriod = requireInt32('DPO open', 'timePeriod', optInTimePeriod);
   requireArgument('DPO open', 'real', inReal);
-  requireHistory('DPO open', inReal.length);
+  requireHistory('DPO open', 'real', inReal.length);
   return dpoOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -680,7 +681,7 @@ export function dpoOpenAndFillPositional(
 ): DpoStream {
   optInTimePeriod = requireInt32('DPO openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('DPO openAndFill', 'real', inReal);
-  requireHistory('DPO openAndFill', inReal.length);
+  requireHistory('DPO openAndFill', 'real', inReal.length);
   const guardLookback = dpoLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('DPO openAndFill', PARAM_RANGES, optInTimePeriod);

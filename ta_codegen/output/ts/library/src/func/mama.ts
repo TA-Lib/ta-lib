@@ -733,13 +733,13 @@ export interface MamaResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * Adaptive moving average (fast line) `outMama[k]` is the value at input bar
+   * Adaptive moving average (fast line). `outMama[k]` is the value at input bar
    * `begIdx + k`.
    */
   outMama: Float64Array;
   /**
-   * Following adaptive moving average, using half the alpha (slow line) `outFama[k]`
-   * is the value at input bar `begIdx + k`.
+   * Following adaptive moving average, using half the alpha (slow line).
+   * `outFama[k]` is the value at input bar `begIdx + k`.
    */
   outFama: Float64Array;
 }
@@ -988,7 +988,7 @@ export class MamaStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MAMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MAMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -996,25 +996,26 @@ export class MamaStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inReal - The bar's `inReal` value: Price series to smooth.
+   * @param real - The bar's `real` value: Price series to smooth.
    * @param out - Receives the outputs and is returned; a new {@link MamaOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out?: MamaOut): MamaOut {
+  update(real: number, out?: MamaOut): MamaOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MAMA update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MAMA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MAMA update', 'MamaOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MAMA update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MAMA update', 'real');
     }
-    mamaStepImpl(this, inReal);
+    mamaStepImpl(this, real);
     this.outRangeCount++;
     if (out === undefined) {
       out = new MamaOut();
@@ -1027,21 +1028,22 @@ export class MamaStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Price series to smooth.
+   * @param real - The bar's `real` value: Price series to smooth.
    * @param out - Receives the outputs and is returned; a new {@link MamaOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inReal: number, out?: MamaOut): MamaOut {
+  peek(real: number, out?: MamaOut): MamaOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MAMA peek', 'MamaOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MAMA peek', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MAMA peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tempReal = 0;
     let tempReal2 = 0;
     let adjustedPrevPeriod = 0;
@@ -1228,6 +1230,8 @@ export class MamaStream {
    * @param out - Receives the outputs and is returned; a new {@link MamaOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: MamaOut): MamaOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -2339,7 +2343,7 @@ export function mamaOpenPositional(
   optInFastLimit = requireReal('MAMA open', 'fastLimit', optInFastLimit);
   optInSlowLimit = requireReal('MAMA open', 'slowLimit', optInSlowLimit);
   requireArgument('MAMA open', 'real', inReal);
-  requireHistory('MAMA open', inReal.length);
+  requireHistory('MAMA open', 'real', inReal.length);
   return mamaOpenInternal(core, float64(inReal), 0, optInFastLimit, optInSlowLimit);
 }
 
@@ -2355,7 +2359,7 @@ export function mamaOpenAndFillPositional(
   optInFastLimit = requireReal('MAMA openAndFill', 'fastLimit', optInFastLimit);
   optInSlowLimit = requireReal('MAMA openAndFill', 'slowLimit', optInSlowLimit);
   requireArgument('MAMA openAndFill', 'real', inReal);
-  requireHistory('MAMA openAndFill', inReal.length);
+  requireHistory('MAMA openAndFill', 'real', inReal.length);
   const guardLookback = mamaLookbackPositional(optInFastLimit, optInSlowLimit, core);
   if (guardLookback < 0) {
     throw rejectedParams('MAMA openAndFill', PARAM_RANGES, optInFastLimit, optInSlowLimit);

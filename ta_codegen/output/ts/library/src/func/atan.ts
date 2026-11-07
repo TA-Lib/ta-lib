@@ -261,7 +261,7 @@ export class AtanStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ATAN advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ATAN advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -269,20 +269,20 @@ export class AtanStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input values.
+   * @param real - The bar's `real` value: Input values.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ATAN update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ATAN update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ATAN update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ATAN update', 'real');
     }
-    atanStepImpl(this, inReal);
+    atanStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -290,15 +290,16 @@ export class AtanStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input values.
+   * @param real - The bar's `real` value: Input values.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ATAN peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ATAN peek', 'real');
     }
+    const inReal = real;
     let cur_outReal = 0;
     cur_outReal = Math.atan(inReal);
     return cur_outReal;
@@ -409,7 +410,7 @@ export function atanOpenPositional(
   core: Core = Core.DEFAULT,
 ): AtanStream {
   requireArgument('ATAN open', 'real', inReal);
-  requireHistory('ATAN open', inReal.length);
+  requireHistory('ATAN open', 'real', inReal.length);
   return atanOpenInternal(core, float64(inReal), 0);
 }
 
@@ -420,7 +421,7 @@ export function atanOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): AtanStream {
   requireArgument('ATAN openAndFill', 'real', inReal);
-  requireHistory('ATAN openAndFill', inReal.length);
+  requireHistory('ATAN openAndFill', 'real', inReal.length);
   const guardOutLen = openFillCount('ATAN openAndFill', inReal.length, atanLookbackPositional(core));
   requireOutput('ATAN openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);

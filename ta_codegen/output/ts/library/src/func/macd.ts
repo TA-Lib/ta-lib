@@ -780,7 +780,7 @@ export class MacdStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MACD advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MACD advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -788,25 +788,26 @@ export class MacdStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inReal - The bar's `inReal` value: Input series (typically close)
+   * @param real - The bar's `real` value: Input series (typically close)
    * @param out - Receives the outputs and is returned; a new {@link MacdOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out?: MacdOut): MacdOut {
+  update(real: number, out?: MacdOut): MacdOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MACD update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MACD update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACD update', 'MacdOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MACD update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MACD update', 'real');
     }
-    macdStepImpl(this, inReal);
+    macdStepImpl(this, real);
     this.outRangeCount++;
     if (out === undefined) {
       out = new MacdOut();
@@ -820,21 +821,22 @@ export class MacdStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input series (typically close)
+   * @param real - The bar's `real` value: Input series (typically close)
    * @param out - Receives the outputs and is returned; a new {@link MacdOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inReal: number, out?: MacdOut): MacdOut {
+  peek(real: number, out?: MacdOut): MacdOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MACD peek', 'MacdOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MACD peek', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MACD peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let macdValue = 0;
     let tempReal = 0;
     let cur_outMACD = 0;
@@ -912,6 +914,8 @@ export class MacdStream {
    * @param out - Receives the outputs and is returned; a new {@link MacdOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: MacdOut): MacdOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -1498,7 +1502,7 @@ export function macdOpenPositional(
   optInSlowPeriod = requireInt32('MACD open', 'slowPeriod', optInSlowPeriod);
   optInSignalPeriod = requireInt32('MACD open', 'signalPeriod', optInSignalPeriod);
   requireArgument('MACD open', 'real', inReal);
-  requireHistory('MACD open', inReal.length);
+  requireHistory('MACD open', 'real', inReal.length);
   return macdOpenInternal(core, float64(inReal), 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
 }
 
@@ -1517,7 +1521,7 @@ export function macdOpenAndFillPositional(
   optInSlowPeriod = requireInt32('MACD openAndFill', 'slowPeriod', optInSlowPeriod);
   optInSignalPeriod = requireInt32('MACD openAndFill', 'signalPeriod', optInSignalPeriod);
   requireArgument('MACD openAndFill', 'real', inReal);
-  requireHistory('MACD openAndFill', inReal.length);
+  requireHistory('MACD openAndFill', 'real', inReal.length);
   const guardLookback = macdLookbackPositional(optInFastPeriod, optInSlowPeriod, optInSignalPeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('MACD openAndFill', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);

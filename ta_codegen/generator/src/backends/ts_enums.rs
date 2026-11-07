@@ -61,7 +61,7 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
             "FuncUnstId values must be contiguous from 0 ({} breaks the sequence)",
             v.c_name
         );
-        if v.name.starts_with("UNUSED_") {
+        if v.reserved {
             continue;
         }
         let _ = writeln!(

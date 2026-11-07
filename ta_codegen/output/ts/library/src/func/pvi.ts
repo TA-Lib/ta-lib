@@ -171,7 +171,7 @@ export interface PviResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * Cumulative positive volume index (seeded at 1000) `values[k]` is the value at
+   * Cumulative positive volume index (seeded at 1000). `values[k]` is the value at
    * input bar `begIdx + k`.
    */
   values: Float64Array;
@@ -330,7 +330,7 @@ export class PviStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PVI advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PVI advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -338,21 +338,21 @@ export class PviStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inClose: number, inVolume: number): number {
+  update(close: number, volume: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PVI update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PVI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('PVI update', !Number.isFinite(inClose) ? 'inClose' : 'inVolume');
+    if (!Number.isFinite(close) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('PVI update', !Number.isFinite(close) ? 'close' : 'volume');
     }
-    pviStepImpl(this, inClose, inVolume);
+    pviStepImpl(this, close, volume);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -360,17 +360,19 @@ export class PviStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inClose: number, inVolume: number): number {
-    if (!Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('PVI peek', !Number.isFinite(inClose) ? 'inClose' : 'inVolume');
+  peek(close: number, volume: number): number {
+    if (!Number.isFinite(close) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('PVI peek', !Number.isFinite(close) ? 'close' : 'volume');
     }
     const sp = this;
+    const inClose = close;
+    const inVolume = volume;
     let tempClose = 0;
     let tempVolume = 0;
     let tempPVI = 0;
@@ -589,7 +591,7 @@ export function pviOpenPositional(
   core: Core = Core.DEFAULT,
 ): PviStream {
   requireArgument('PVI open', 'prices.close', inClose);
-  requireHistory('PVI open', inClose.length);
+  requireHistory('PVI open', 'prices.close', inClose.length);
   requireArgument('PVI open', 'prices.volume', inVolume);
   requireHistoryLength('PVI open', 'prices.volume', inVolume.length, inClose.length);
   return pviOpenInternal(core, float64(inClose), float64(inVolume), 0);
@@ -603,7 +605,7 @@ export function pviOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): PviStream {
   requireArgument('PVI openAndFill', 'prices.close', inClose);
-  requireHistory('PVI openAndFill', inClose.length);
+  requireHistory('PVI openAndFill', 'prices.close', inClose.length);
   requireArgument('PVI openAndFill', 'prices.volume', inVolume);
   const guardOutLen = openFillCount('PVI openAndFill', inClose.length, pviLookbackPositional(core));
   requireHistoryLength('PVI openAndFill', 'prices.volume', inVolume.length, inClose.length);

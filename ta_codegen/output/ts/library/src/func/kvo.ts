@@ -578,7 +578,8 @@ export function kvoDisplayShift(outputIdx: number, options?: KvoOptions): number
  *   anchor bar rather than from a simple average of their own first inputs, so one
  *   warm-up covers all three. KVO is exactly zero on that seed bar, which falls
  *   inside the warm-up and is never output.
- *   `TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)` discards more of that warm-up.
+ *   `CoreBuilder.unstablePeriod(FuncUnstId.EMA, ...)` discards more of that
+ *   warm-up.
  * - The weight is the 1997 form, `|2*(dm/cm) - 1|`, which is what the December
  *   1997 Traders' Tips print. Some later implementations use `|2*(dm/cm - 1)|`,
  *   which is a different series.
@@ -732,7 +733,7 @@ export class KvoStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('KVO advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('KVO advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -740,28 +741,29 @@ export class KvoStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price series.
-   * @param inLow - The bar's `inLow` value: Low price series.
-   * @param inClose - The bar's `inClose` value: Close price series.
-   * @param inVolume - The bar's `inVolume` value: Volume series.
+   * @param high - The bar's `high` value: High price series.
+   * @param low - The bar's `low` value: Low price series.
+   * @param close - The bar's `close` value: Close price series.
+   * @param volume - The bar's `volume` value: Volume series.
    * @param out - Receives the outputs and is returned; a new {@link KvoOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, inVolume: number, out?: KvoOut): KvoOut {
+  update(high: number, low: number, close: number, volume: number, out?: KvoOut): KvoOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('KVO update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('KVO update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KVO update', 'KvoOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('KVO update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : !Number.isFinite(inClose) ? 'inClose' : 'inVolume');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('KVO update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : !Number.isFinite(close) ? 'close' : 'volume');
     }
-    kvoStepImpl(this, inHigh, inLow, inClose, inVolume);
+    kvoStepImpl(this, high, low, close, volume);
     this.outRangeCount++;
     if (out === undefined) {
       out = new KvoOut();
@@ -774,24 +776,28 @@ export class KvoStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price series.
-   * @param inLow - The bar's `inLow` value: Low price series.
-   * @param inClose - The bar's `inClose` value: Close price series.
-   * @param inVolume - The bar's `inVolume` value: Volume series.
+   * @param high - The bar's `high` value: High price series.
+   * @param low - The bar's `low` value: Low price series.
+   * @param close - The bar's `close` value: Close price series.
+   * @param volume - The bar's `volume` value: Volume series.
    * @param out - Receives the outputs and is returned; a new {@link KvoOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, inClose: number, inVolume: number, out?: KvoOut): KvoOut {
+  peek(high: number, low: number, close: number, volume: number, out?: KvoOut): KvoOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KVO peek', 'KvoOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('KVO peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : !Number.isFinite(inClose) ? 'inClose' : 'inVolume');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('KVO peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : !Number.isFinite(close) ? 'close' : 'volume');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
+    const inVolume = volume;
     let hlc = 0;
     let dmToday = 0;
     let vf = 0;
@@ -884,6 +890,8 @@ export class KvoStream {
    * @param out - Receives the outputs and is returned; a new {@link KvoOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: KvoOut): KvoOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -1418,7 +1426,7 @@ export function kvoOpenPositional(
   optInSlowPeriod = requireInt32('KVO open', 'slowPeriod', optInSlowPeriod);
   optInSignalPeriod = requireInt32('KVO open', 'signalPeriod', optInSignalPeriod);
   requireArgument('KVO open', 'prices.high', inHigh);
-  requireHistory('KVO open', inHigh.length);
+  requireHistory('KVO open', 'prices.high', inHigh.length);
   requireArgument('KVO open', 'prices.low', inLow);
   requireArgument('KVO open', 'prices.close', inClose);
   requireArgument('KVO open', 'prices.volume', inVolume);
@@ -1445,7 +1453,7 @@ export function kvoOpenAndFillPositional(
   optInSlowPeriod = requireInt32('KVO openAndFill', 'slowPeriod', optInSlowPeriod);
   optInSignalPeriod = requireInt32('KVO openAndFill', 'signalPeriod', optInSignalPeriod);
   requireArgument('KVO openAndFill', 'prices.high', inHigh);
-  requireHistory('KVO openAndFill', inHigh.length);
+  requireHistory('KVO openAndFill', 'prices.high', inHigh.length);
   requireArgument('KVO openAndFill', 'prices.low', inLow);
   requireArgument('KVO openAndFill', 'prices.close', inClose);
   requireArgument('KVO openAndFill', 'prices.volume', inVolume);

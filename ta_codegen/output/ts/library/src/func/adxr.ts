@@ -218,7 +218,7 @@ export interface AdxrOptions {
 export interface AdxrResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
-  /** ADXR line (averaged ADX) `values[k]` is the value at input bar `begIdx + k`. */
+  /** ADXR line (averaged ADX). `values[k]` is the value at input bar `begIdx + k`. */
   values: Float64Array;
 }
 
@@ -382,7 +382,7 @@ export class AdxrStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ADXR advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ADXR advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -390,22 +390,22 @@ export class AdxrStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number): number {
+  update(high: number, low: number, close: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ADXR update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ADXR update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('ADXR update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('ADXR update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    adxrStepImpl(this, inHigh, inLow, inClose);
+    adxrStepImpl(this, high, low, close);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -413,18 +413,21 @@ export class AdxrStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('ADXR peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+  peek(high: number, low: number, close: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('ADXR peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let cur_adx = 0;
     let cur_outReal = 0;
     cur_adx = sp.sub0.peek(inHigh, inLow, inClose);
@@ -630,7 +633,7 @@ export function adxrOpenPositional(
 ): AdxrStream {
   optInTimePeriod = requireInt32('ADXR open', 'timePeriod', optInTimePeriod);
   requireArgument('ADXR open', 'prices.high', inHigh);
-  requireHistory('ADXR open', inHigh.length);
+  requireHistory('ADXR open', 'prices.high', inHigh.length);
   requireArgument('ADXR open', 'prices.low', inLow);
   requireArgument('ADXR open', 'prices.close', inClose);
   requireHistoryLength('ADXR open', 'prices.low', inLow.length, inHigh.length);
@@ -649,7 +652,7 @@ export function adxrOpenAndFillPositional(
 ): AdxrStream {
   optInTimePeriod = requireInt32('ADXR openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('ADXR openAndFill', 'prices.high', inHigh);
-  requireHistory('ADXR openAndFill', inHigh.length);
+  requireHistory('ADXR openAndFill', 'prices.high', inHigh.length);
   requireArgument('ADXR openAndFill', 'prices.low', inLow);
   requireArgument('ADXR openAndFill', 'prices.close', inClose);
   const guardLookback = adxrLookbackPositional(optInTimePeriod, core);

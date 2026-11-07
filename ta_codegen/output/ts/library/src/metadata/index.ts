@@ -52,3 +52,4 @@ export { Functions } from './functions.ts';
 export { ParamHolder } from './paramHolder.ts';
 export type { PriceInput } from './paramHolder.ts';
 export { getRuntimeInfo } from './runtimeInfo.ts';
+export type { RuntimeInfoKey } from './runtimeInfo.ts';

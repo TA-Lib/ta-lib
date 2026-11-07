@@ -484,9 +484,8 @@ export function bbwDisplayShift(outputIdx: number, options?: BbwOptions): number
  *   deviation divided by its mean.
  * - The two deviation multipliers enter only through their sum.
  * - The result is in percent: 10 means the bands are 10% of the middle band apart.
- * - Any `optInMAType` other than SMA is a TA-Lib generalisation, as it is for
- *   BBANDS: the deviation stays the population standard deviation about the simple
- *   mean.
+ * - Any `maType` other than SMA is a TA-Lib generalisation, as it is for BBANDS:
+ *   the deviation stays the population standard deviation about the simple mean.
  * - Wherever the middle band is not 0, BBW is bit for bit
  *   `((upper - lower) / middle) * 100` computed from BBANDS' own outputs.
  *
@@ -604,7 +603,7 @@ export class BbwStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('BBW advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('BBW advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -612,20 +611,20 @@ export class BbwStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input data series.
+   * @param real - The bar's `real` value: Input data series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('BBW update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('BBW update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('BBW update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('BBW update', 'real');
     }
-    bbwStepImpl(this, inReal);
+    bbwStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -633,16 +632,17 @@ export class BbwStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input data series.
+   * @param real - The bar's `real` value: Input data series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('BBW peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('BBW peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let deviation = 0;
     let lower = 0;
     let middle = 0;
@@ -911,7 +911,7 @@ export function bbwOpenPositional(
   optInNbDevDn = requireReal('BBW open', 'nbDevDn', optInNbDevDn);
   optInMAType = requireInt32('BBW open', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('BBW open', 'real', inReal);
-  requireHistory('BBW open', inReal.length);
+  requireHistory('BBW open', 'real', inReal.length);
   return bbwOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
 }
 
@@ -930,7 +930,7 @@ export function bbwOpenAndFillPositional(
   optInNbDevDn = requireReal('BBW openAndFill', 'nbDevDn', optInNbDevDn);
   optInMAType = requireInt32('BBW openAndFill', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('BBW openAndFill', 'real', inReal);
-  requireHistory('BBW openAndFill', inReal.length);
+  requireHistory('BBW openAndFill', 'real', inReal.length);
   const guardLookback = bbwLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core);
   if (guardLookback < 0) {
     throw rejectedParams('BBW openAndFill', PARAM_RANGES, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);

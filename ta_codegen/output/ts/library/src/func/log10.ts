@@ -263,7 +263,7 @@ export class Log10Stream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('LOG10 advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('LOG10 advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -271,20 +271,20 @@ export class Log10Stream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input values.
+   * @param real - The bar's `real` value: Input values.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('LOG10 update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('LOG10 update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('LOG10 update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('LOG10 update', 'real');
     }
-    log10StepImpl(this, inReal);
+    log10StepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -292,15 +292,16 @@ export class Log10Stream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input values.
+   * @param real - The bar's `real` value: Input values.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('LOG10 peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('LOG10 peek', 'real');
     }
+    const inReal = real;
     let cur_outReal = 0;
     cur_outReal = Math.log10(inReal);
     return cur_outReal;
@@ -410,7 +411,7 @@ export function log10OpenPositional(
   core: Core = Core.DEFAULT,
 ): Log10Stream {
   requireArgument('LOG10 open', 'real', inReal);
-  requireHistory('LOG10 open', inReal.length);
+  requireHistory('LOG10 open', 'real', inReal.length);
   return log10OpenInternal(core, float64(inReal), 0);
 }
 
@@ -421,7 +422,7 @@ export function log10OpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): Log10Stream {
   requireArgument('LOG10 openAndFill', 'real', inReal);
-  requireHistory('LOG10 openAndFill', inReal.length);
+  requireHistory('LOG10 openAndFill', 'real', inReal.length);
   const guardOutLen = openFillCount('LOG10 openAndFill', inReal.length, log10LookbackPositional(core));
   requireOutput('LOG10 openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);

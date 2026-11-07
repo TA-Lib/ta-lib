@@ -285,7 +285,7 @@ export class MedpriceStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MEDPRICE advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MEDPRICE advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -293,21 +293,21 @@ export class MedpriceStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number): number {
+  update(high: number, low: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MEDPRICE update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MEDPRICE update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('MEDPRICE update', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('MEDPRICE update', !Number.isFinite(high) ? 'high' : 'low');
     }
-    medpriceStepImpl(this, inHigh, inLow);
+    medpriceStepImpl(this, high, low);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -315,16 +315,18 @@ export class MedpriceStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('MEDPRICE peek', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+  peek(high: number, low: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('MEDPRICE peek', !Number.isFinite(high) ? 'high' : 'low');
     }
+    const inHigh = high;
+    const inLow = low;
     let cur_outReal = 0;
     cur_outReal = (inHigh + inLow) / 2.0;
     return cur_outReal;
@@ -448,7 +450,7 @@ export function medpriceOpenPositional(
   core: Core = Core.DEFAULT,
 ): MedpriceStream {
   requireArgument('MEDPRICE open', 'prices.high', inHigh);
-  requireHistory('MEDPRICE open', inHigh.length);
+  requireHistory('MEDPRICE open', 'prices.high', inHigh.length);
   requireArgument('MEDPRICE open', 'prices.low', inLow);
   requireHistoryLength('MEDPRICE open', 'prices.low', inLow.length, inHigh.length);
   return medpriceOpenInternal(core, float64(inHigh), float64(inLow), 0);
@@ -462,7 +464,7 @@ export function medpriceOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): MedpriceStream {
   requireArgument('MEDPRICE openAndFill', 'prices.high', inHigh);
-  requireHistory('MEDPRICE openAndFill', inHigh.length);
+  requireHistory('MEDPRICE openAndFill', 'prices.high', inHigh.length);
   requireArgument('MEDPRICE openAndFill', 'prices.low', inLow);
   const guardOutLen = openFillCount('MEDPRICE openAndFill', inHigh.length, medpriceLookbackPositional(core));
   requireHistoryLength('MEDPRICE openAndFill', 'prices.low', inLow.length, inHigh.length);

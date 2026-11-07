@@ -258,7 +258,7 @@ export class CeilStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CEIL advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CEIL advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -266,20 +266,20 @@ export class CeilStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input values.
+   * @param real - The bar's `real` value: Input values.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CEIL update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CEIL update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('CEIL update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('CEIL update', 'real');
     }
-    ceilStepImpl(this, inReal);
+    ceilStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -287,15 +287,16 @@ export class CeilStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input values.
+   * @param real - The bar's `real` value: Input values.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('CEIL peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('CEIL peek', 'real');
     }
+    const inReal = real;
     let cur_outReal = 0;
     cur_outReal = Math.ceil(inReal);
     return cur_outReal;
@@ -405,7 +406,7 @@ export function ceilOpenPositional(
   core: Core = Core.DEFAULT,
 ): CeilStream {
   requireArgument('CEIL open', 'real', inReal);
-  requireHistory('CEIL open', inReal.length);
+  requireHistory('CEIL open', 'real', inReal.length);
   return ceilOpenInternal(core, float64(inReal), 0);
 }
 
@@ -416,7 +417,7 @@ export function ceilOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): CeilStream {
   requireArgument('CEIL openAndFill', 'real', inReal);
-  requireHistory('CEIL openAndFill', inReal.length);
+  requireHistory('CEIL openAndFill', 'real', inReal.length);
   const guardOutLen = openFillCount('CEIL openAndFill', inReal.length, ceilLookbackPositional(core));
   requireOutput('CEIL openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);

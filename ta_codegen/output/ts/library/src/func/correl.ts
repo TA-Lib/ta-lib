@@ -461,9 +461,9 @@ export function correlDisplayShift(outputIdx: number, options?: CorrelOptions): 
 
 /**
  * Pearson's correlation coefficient (r) between two input series over a rolling
- * window of optInTimePeriod bars. Measures how linearly the two series move
- * together. r near +1: strong positive co-movement; near -1: strong inverse; near
- * 0: no linear relationship.
+ * window of timePeriod bars. Measures how linearly the two series move together. r
+ * near +1: strong positive co-movement; near -1: strong inverse; near 0: no linear
+ * relationship.
  *
  * Formula and more info at
  * [ta-lib.org/functions/correl](https://ta-lib.org/functions/correl).
@@ -607,7 +607,7 @@ export class CorrelStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CORREL advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CORREL advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -615,21 +615,21 @@ export class CorrelStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal0 - The bar's `inReal0` value: First data series (X)
-   * @param inReal1 - The bar's `inReal1` value: Second data series (Y)
+   * @param real0 - The bar's `real0` value: First data series (X)
+   * @param real1 - The bar's `real1` value: Second data series (Y)
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal0: number, inReal1: number): number {
+  update(real0: number, real1: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CORREL update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CORREL update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal0) || !Number.isFinite(inReal1)) {
-      throw nonFiniteBar('CORREL update', !Number.isFinite(inReal0) ? 'inReal0' : 'inReal1');
+    if (!Number.isFinite(real0) || !Number.isFinite(real1)) {
+      throw nonFiniteBar('CORREL update', !Number.isFinite(real0) ? 'real0' : 'real1');
     }
-    correlStepImpl(this, inReal0, inReal1);
+    correlStepImpl(this, real0, real1);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -637,17 +637,19 @@ export class CorrelStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal0 - The bar's `inReal0` value: First data series (X)
-   * @param inReal1 - The bar's `inReal1` value: Second data series (Y)
+   * @param real0 - The bar's `real0` value: First data series (X)
+   * @param real1 - The bar's `real1` value: Second data series (Y)
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal0: number, inReal1: number): number {
-    if (!Number.isFinite(inReal0) || !Number.isFinite(inReal1)) {
-      throw nonFiniteBar('CORREL peek', !Number.isFinite(inReal0) ? 'inReal0' : 'inReal1');
+  peek(real0: number, real1: number): number {
+    if (!Number.isFinite(real0) || !Number.isFinite(real1)) {
+      throw nonFiniteBar('CORREL peek', !Number.isFinite(real0) ? 'real0' : 'real1');
     }
     const sp = this;
+    const inReal0 = real0;
+    const inReal1 = real1;
     let x = 0;
     let y = 0;
     let ssX = 0;
@@ -1443,7 +1445,7 @@ export function correlOpenPositional(
 ): CorrelStream {
   optInTimePeriod = requireInt32('CORREL open', 'timePeriod', optInTimePeriod);
   requireArgument('CORREL open', 'real0', inReal0);
-  requireHistory('CORREL open', inReal0.length);
+  requireHistory('CORREL open', 'real0', inReal0.length);
   requireArgument('CORREL open', 'real1', inReal1);
   requireHistoryLength('CORREL open', 'real1', inReal1.length, inReal0.length);
   return correlOpenInternal(core, float64(inReal0), float64(inReal1), 0, optInTimePeriod);
@@ -1459,7 +1461,7 @@ export function correlOpenAndFillPositional(
 ): CorrelStream {
   optInTimePeriod = requireInt32('CORREL openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('CORREL openAndFill', 'real0', inReal0);
-  requireHistory('CORREL openAndFill', inReal0.length);
+  requireHistory('CORREL openAndFill', 'real0', inReal0.length);
   requireArgument('CORREL openAndFill', 'real1', inReal1);
   const guardLookback = correlLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {

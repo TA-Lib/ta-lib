@@ -250,18 +250,18 @@ export function rocDisplayShift(outputIdx: number, options?: RocOptions): number
 
 /**
  * Rate-of-change momentum oscillator: the percent change of price versus the price
- * optInTimePeriod bars earlier. Centered at zero with positive and negative
- * values. Positive when price rose over the period, negative when it fell;
- * magnitude scales the move.
+ * timePeriod bars earlier. Centered at zero with positive and negative values.
+ * Positive when price rose over the period, negative when it fell; magnitude
+ * scales the move.
  *
  * Formula and more info at
  * [ta-lib.org/functions/roc](https://ta-lib.org/functions/roc).
  *
  * **Notes**
- * - **The input is assumed positive.** The price `optInTimePeriod` bars back is
- *   the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is
- *   small and the output very large; no error is returned. A series that reaches
- *   or crosses zero, such as an oscillator or a spread, has no meaningful result
+ * - **The input is assumed positive.** The price `timePeriod` bars back is the
+ *   divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small
+ *   and the output very large; no error is returned. A series that reaches or
+ *   crosses zero, such as an oscillator or a spread, has no meaningful result
  *   here.
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
@@ -366,7 +366,7 @@ export class RocStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ROC advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ROC advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -374,20 +374,20 @@ export class RocStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input price series.
+   * @param real - The bar's `real` value: Input price series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ROC update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ROC update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ROC update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ROC update', 'real');
     }
-    rocStepImpl(this, inReal);
+    rocStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -395,16 +395,17 @@ export class RocStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input price series.
+   * @param real - The bar's `real` value: Input price series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ROC peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ROC peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tempReal = 0;
     let cur_outReal = 0;
     tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
@@ -620,7 +621,7 @@ export function rocOpenPositional(
 ): RocStream {
   optInTimePeriod = requireInt32('ROC open', 'timePeriod', optInTimePeriod);
   requireArgument('ROC open', 'real', inReal);
-  requireHistory('ROC open', inReal.length);
+  requireHistory('ROC open', 'real', inReal.length);
   return rocOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -633,7 +634,7 @@ export function rocOpenAndFillPositional(
 ): RocStream {
   optInTimePeriod = requireInt32('ROC openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('ROC openAndFill', 'real', inReal);
-  requireHistory('ROC openAndFill', inReal.length);
+  requireHistory('ROC openAndFill', 'real', inReal.length);
   const guardLookback = rocLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('ROC openAndFill', PARAM_RANGES, optInTimePeriod);

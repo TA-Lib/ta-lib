@@ -330,7 +330,7 @@ export class AvgdevStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('AVGDEV advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('AVGDEV advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -338,20 +338,20 @@ export class AvgdevStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: source series.
+   * @param real - The bar's `real` value: source series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('AVGDEV update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('AVGDEV update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('AVGDEV update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('AVGDEV update', 'real');
     }
-    avgdevStepImpl(this, inReal);
+    avgdevStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -359,16 +359,17 @@ export class AvgdevStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: source series.
+   * @param real - The bar's `real` value: source series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('AVGDEV peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('AVGDEV peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let todaySum = 0;
     let todayDev = 0;
     let i = 0;
@@ -565,7 +566,7 @@ export function avgdevOpenPositional(
 ): AvgdevStream {
   optInTimePeriod = requireInt32('AVGDEV open', 'timePeriod', optInTimePeriod);
   requireArgument('AVGDEV open', 'real', inReal);
-  requireHistory('AVGDEV open', inReal.length);
+  requireHistory('AVGDEV open', 'real', inReal.length);
   return avgdevOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -578,7 +579,7 @@ export function avgdevOpenAndFillPositional(
 ): AvgdevStream {
   optInTimePeriod = requireInt32('AVGDEV openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('AVGDEV openAndFill', 'real', inReal);
-  requireHistory('AVGDEV openAndFill', inReal.length);
+  requireHistory('AVGDEV openAndFill', 'real', inReal.length);
   const guardLookback = avgdevLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('AVGDEV openAndFill', PARAM_RANGES, optInTimePeriod);

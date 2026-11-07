@@ -507,7 +507,7 @@ export class DonchianStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('DONCHIAN advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('DONCHIAN advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -515,26 +515,27 @@ export class DonchianStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link DonchianOut}
    *   when omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, out?: DonchianOut): DonchianOut {
+  update(high: number, low: number, out?: DonchianOut): DonchianOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('DONCHIAN update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('DONCHIAN update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('DONCHIAN update', 'DonchianOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('DONCHIAN update', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('DONCHIAN update', !Number.isFinite(high) ? 'high' : 'low');
     }
-    donchianStepImpl(this, inHigh, inLow);
+    donchianStepImpl(this, high, low);
     this.outRangeCount++;
     if (out === undefined) {
       out = new DonchianOut();
@@ -548,22 +549,24 @@ export class DonchianStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link DonchianOut}
    *   when omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, out?: DonchianOut): DonchianOut {
+  peek(high: number, low: number, out?: DonchianOut): DonchianOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('DONCHIAN peek', 'DonchianOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('DONCHIAN peek', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('DONCHIAN peek', !Number.isFinite(high) ? 'high' : 'low');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let tmpLow = 0;
     let tmpHigh = 0;
     let cur_outRealLowerBand = 0;
@@ -632,6 +635,8 @@ export class DonchianStream {
    * @param out - Receives the outputs and is returned; a new {@link DonchianOut}
    *   when omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: DonchianOut): DonchianOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -963,7 +968,7 @@ export function donchianOpenPositional(
 ): DonchianStream {
   optInTimePeriod = requireInt32('DONCHIAN open', 'timePeriod', optInTimePeriod);
   requireArgument('DONCHIAN open', 'prices.high', inHigh);
-  requireHistory('DONCHIAN open', inHigh.length);
+  requireHistory('DONCHIAN open', 'prices.high', inHigh.length);
   requireArgument('DONCHIAN open', 'prices.low', inLow);
   requireHistoryLength('DONCHIAN open', 'prices.low', inLow.length, inHigh.length);
   return donchianOpenInternal(core, float64(inHigh), float64(inLow), 0, optInTimePeriod);
@@ -981,7 +986,7 @@ export function donchianOpenAndFillPositional(
 ): DonchianStream {
   optInTimePeriod = requireInt32('DONCHIAN openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('DONCHIAN openAndFill', 'prices.high', inHigh);
-  requireHistory('DONCHIAN openAndFill', inHigh.length);
+  requireHistory('DONCHIAN openAndFill', 'prices.high', inHigh.length);
   requireArgument('DONCHIAN openAndFill', 'prices.low', inLow);
   const guardLookback = donchianLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {

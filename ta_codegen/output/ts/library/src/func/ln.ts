@@ -264,7 +264,7 @@ export class LnStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('LN advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('LN advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -272,20 +272,20 @@ export class LnStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input value series.
+   * @param real - The bar's `real` value: Input value series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('LN update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('LN update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('LN update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('LN update', 'real');
     }
-    lnStepImpl(this, inReal);
+    lnStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -293,15 +293,16 @@ export class LnStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input value series.
+   * @param real - The bar's `real` value: Input value series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('LN peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('LN peek', 'real');
     }
+    const inReal = real;
     let cur_outReal = 0;
     cur_outReal = Math.log(inReal);
     return cur_outReal;
@@ -411,7 +412,7 @@ export function lnOpenPositional(
   core: Core = Core.DEFAULT,
 ): LnStream {
   requireArgument('LN open', 'real', inReal);
-  requireHistory('LN open', inReal.length);
+  requireHistory('LN open', 'real', inReal.length);
   return lnOpenInternal(core, float64(inReal), 0);
 }
 
@@ -422,7 +423,7 @@ export function lnOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): LnStream {
   requireArgument('LN openAndFill', 'real', inReal);
-  requireHistory('LN openAndFill', inReal.length);
+  requireHistory('LN openAndFill', 'real', inReal.length);
   const guardOutLen = openFillCount('LN openAndFill', inReal.length, lnLookbackPositional(core));
   requireOutput('LN openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);

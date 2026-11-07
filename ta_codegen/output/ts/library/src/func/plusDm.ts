@@ -511,7 +511,7 @@ export class PlusDmStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PLUS_DM advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PLUS_DM advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -519,21 +519,21 @@ export class PlusDmStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number): number {
+  update(high: number, low: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PLUS_DM update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PLUS_DM update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('PLUS_DM update', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('PLUS_DM update', !Number.isFinite(high) ? 'high' : 'low');
     }
-    plusDmStepImpl(this, inHigh, inLow);
+    plusDmStepImpl(this, high, low);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -541,17 +541,19 @@ export class PlusDmStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('PLUS_DM peek', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+  peek(high: number, low: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('PLUS_DM peek', !Number.isFinite(high) ? 'high' : 'low');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let cur_outReal = 0;
     if (sp.optInTimePeriod <= 1) {
       let tempReal = 0;
@@ -1044,7 +1046,7 @@ export function plusDmOpenPositional(
 ): PlusDmStream {
   optInTimePeriod = requireInt32('PLUS_DM open', 'timePeriod', optInTimePeriod);
   requireArgument('PLUS_DM open', 'prices.high', inHigh);
-  requireHistory('PLUS_DM open', inHigh.length);
+  requireHistory('PLUS_DM open', 'prices.high', inHigh.length);
   requireArgument('PLUS_DM open', 'prices.low', inLow);
   requireHistoryLength('PLUS_DM open', 'prices.low', inLow.length, inHigh.length);
   return plusDmOpenInternal(core, float64(inHigh), float64(inLow), 0, optInTimePeriod);
@@ -1060,7 +1062,7 @@ export function plusDmOpenAndFillPositional(
 ): PlusDmStream {
   optInTimePeriod = requireInt32('PLUS_DM openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('PLUS_DM openAndFill', 'prices.high', inHigh);
-  requireHistory('PLUS_DM openAndFill', inHigh.length);
+  requireHistory('PLUS_DM openAndFill', 'prices.high', inHigh.length);
   requireArgument('PLUS_DM openAndFill', 'prices.low', inLow);
   const guardLookback = plusDmLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {

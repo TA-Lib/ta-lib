@@ -374,7 +374,7 @@ fn no_managed_tape_peek_writes_the_handle_or_the_tape() {
         let needle = match lang {
             "java" => "public double peek(",
             "csharp" => "public double Peek(",
-            _ => "  peek(inReal: number, inPeriods: number): number {",
+            _ => "  peek(real: number, periods: number): number {",
         };
         let peek = body_of(&bank, needle);
         assert!(peek.contains("sp.tape"), "{lang}: MAVP's peek no longer reads the tape");

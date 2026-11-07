@@ -442,23 +442,22 @@ export function massiDisplayShift(outputIdx: number, options?: MassiOptions): nu
  * [ta-lib.org/functions/massi](https://ta-lib.org/functions/massi).
  *
  * **Notes**
- * - The two periods are not interchangeable and are never swapped:
- *   `optInFastPeriod` is the length of both exponential averages,
- *   `optInSlowPeriod` the length of the summation window. Some implementations
- *   reorder them when the summation window is the shorter of the two; this one
- *   does not.
+ * - The two periods are not interchangeable and are never swapped: `fastPeriod` is
+ *   the length of both exponential averages, `slowPeriod` the length of the
+ *   summation window. Some implementations reorder them when the summation window
+ *   is the shorter of the two; this one does not.
  * - A window in which every bar is exactly flat, high equal to low, leaves both
  *   averages at zero. The ratio is reported as 1 there, its continuous limit, so a
- *   flat market yields exactly `optInSlowPeriod` rather than a spurious zero.
+ *   flat market yields exactly `slowPeriod` rather than a spurious zero.
  * - Implementations disagree on how the exponential averages are seeded. TA-Lib
- *   uses its own EMA convention, the simple average of the first `optInFastPeriod`
+ *   uses its own EMA convention, the simple average of the first `fastPeriod`
  *   inputs, where Tulip Indicators, ta4j and trading-signals seed from a single
  *   raw value and converge to these values only after many bars. Published sample
  *   vectors, including the one in Achelis, are seeded that way and match only in
  *   the tail.
  * - MASSI inherits EMA's unstable period rather than owning one, and inherits it
- *   twice: when `TA_FUNC_UNST_EMA`, set to a count or to an Auto level, discards
- *   `u` bars from an EMA of `optInFastPeriod`, MASSI's first output moves by 2u.
+ *   twice: when `FuncUnstId.EMA`, set to a count or to an Auto level, discards `u`
+ *   bars from an EMA of `fastPeriod`, MASSI's first output moves by 2u.
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends
@@ -587,7 +586,7 @@ export class MassiStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MASSI advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MASSI advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -595,21 +594,21 @@ export class MassiStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price.
-   * @param inLow - The bar's `inLow` value: Low price.
+   * @param high - The bar's `high` value: High price.
+   * @param low - The bar's `low` value: Low price.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number): number {
+  update(high: number, low: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MASSI update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MASSI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('MASSI update', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('MASSI update', !Number.isFinite(high) ? 'high' : 'low');
     }
-    massiStepImpl(this, inHigh, inLow);
+    massiStepImpl(this, high, low);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -617,17 +616,19 @@ export class MassiStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price.
-   * @param inLow - The bar's `inLow` value: Low price.
+   * @param high - The bar's `high` value: High price.
+   * @param low - The bar's `low` value: Low price.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('MASSI peek', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+  peek(high: number, low: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('MASSI peek', !Number.isFinite(high) ? 'high' : 'low');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let hl = 0;
     let ratio = 0;
     let tempReal = 0;
@@ -1040,7 +1041,7 @@ export function massiOpenPositional(
   optInFastPeriod = requireInt32('MASSI open', 'fastPeriod', optInFastPeriod);
   optInSlowPeriod = requireInt32('MASSI open', 'slowPeriod', optInSlowPeriod);
   requireArgument('MASSI open', 'prices.high', inHigh);
-  requireHistory('MASSI open', inHigh.length);
+  requireHistory('MASSI open', 'prices.high', inHigh.length);
   requireArgument('MASSI open', 'prices.low', inLow);
   requireHistoryLength('MASSI open', 'prices.low', inLow.length, inHigh.length);
   return massiOpenInternal(core, float64(inHigh), float64(inLow), 0, optInFastPeriod, optInSlowPeriod);
@@ -1058,7 +1059,7 @@ export function massiOpenAndFillPositional(
   optInFastPeriod = requireInt32('MASSI openAndFill', 'fastPeriod', optInFastPeriod);
   optInSlowPeriod = requireInt32('MASSI openAndFill', 'slowPeriod', optInSlowPeriod);
   requireArgument('MASSI openAndFill', 'prices.high', inHigh);
-  requireHistory('MASSI openAndFill', inHigh.length);
+  requireHistory('MASSI openAndFill', 'prices.high', inHigh.length);
   requireArgument('MASSI openAndFill', 'prices.low', inLow);
   const guardLookback = massiLookbackPositional(optInFastPeriod, optInSlowPeriod, core);
   if (guardLookback < 0) {

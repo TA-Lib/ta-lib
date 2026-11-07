@@ -225,7 +225,7 @@ test('an empty series is TA_BAD_PARAM naming it when endIdx is omitted, given a 
         }
         // endIdx given: every backend's order, the range ahead of the input's length.
         rejects(() => s.api.batch(...args, { startIdx: 0, endIdx: 0 }), 'TA_BAD_PARAM', `${s.fn}: empty ${p.key}, range 0..0`, `${s.fn}: ${p.key} has length 0, needs 1`);
-        rejects(() => s.api.batch(...args, { startIdx: -1, endIdx: N - 1 }), 'TA_OUT_OF_RANGE_START_INDEX', `${s.fn}: empty ${p.key}, startIdx -1`, `${s.fn}: startIdx out of range`);
+        rejects(() => s.api.batch(...args, { startIdx: -1, endIdx: N - 1 }), 'TA_OUT_OF_RANGE_START_INDEX', `${s.fn}: empty ${p.key}, startIdx -1`, `${s.fn}: startIdx must be in 0..${Core.INDEX_MAX}, got -1`);
         probes += 2;
       }
     });
@@ -270,8 +270,9 @@ test('options that are not an object are TA_BAD_PARAM at every entry point, and 
   for (const s of SPECS) {
     const ins = insOf(s);
     const args = s.args(ins);
-    for (const bad of [null, 5, 'x', true]) {
-      const what = `${s.fn} options ${String(bad)}`;
+    const bads: [unknown, string][] = [[null, 'null'], [5, '5'], ['x', '"x"'], [true, 'true'], [[], 'an array'], [new Float64Array(2), 'a typed array or DataView']];
+    for (const [bad, shown] of bads) {
+      const what = `${s.fn} options ${shown}`;
       for (const [verb, fn] of [
         ['', () => s.api.batch(...args, bad)],
         [' lookback', () => s.api.lookback(bad)],
@@ -279,7 +280,7 @@ test('options that are not an object are TA_BAD_PARAM at every entry point, and 
         [' open', () => s.api.open(...args, bad)],
         [' openAndFill', () => s.api.fill(...args, bad)],
       ] as const) {
-        rejects(fn, 'TA_BAD_PARAM', `${what}${verb}`, `${s.fn}${verb}: options must be an object, got ${String(bad)}`);
+        rejects(fn, 'TA_BAD_PARAM', `${what}${verb}`, `${s.fn}${verb}: options must be a plain object, got ${shown}`);
         probes++;
       }
     }
@@ -294,7 +295,7 @@ test('options that are not an object are TA_BAD_PARAM at every entry point, and 
     assert.equal(r.begIdx, Math.max(7, lb), `${s.fn}: the batch object's range`);
     assert.equal(outsIn(s, r)[0].length, N - 2 - Math.max(7, lb) + 1, `${s.fn}: the batch object's count`);
   }
-  assert.equal(probes, 20 * SPECS.length);
+  assert.equal(probes, 30 * SPECS.length);
 });
 
 test('a core that is not a Core is TA_BAD_PARAM at every entry point, and an undefined one is Core.DEFAULT', () => {
@@ -302,7 +303,8 @@ test('a core that is not a Core is TA_BAD_PARAM at every entry point, and an und
   for (const s of SPECS) {
     const ins = insOf(s);
     const args = s.args(ins);
-    for (const bad of [null, {}, 5]) {
+    const hint = '; a Core built by another copy of ta-lib does not count';
+    for (const [bad, tail] of [[null, ''], [{}, hint], [5, '']] as const) {
       const o = { core: bad };
       const what = `${s.fn} core ${JSON.stringify(bad)}`;
       for (const [verb, fn] of [
@@ -312,7 +314,7 @@ test('a core that is not a Core is TA_BAD_PARAM at every entry point, and an und
         [' open', () => s.api.open(...args, o)],
         [' openAndFill', () => s.api.fill(...args, o)],
       ] as const) {
-        rejects(fn, 'TA_BAD_PARAM', `${what}${verb}`, `${s.fn}${verb}: core is not a Core`);
+        rejects(fn, 'TA_BAD_PARAM', `${what}${verb}`, `${s.fn}${verb}: core is not a Core${tail}`);
         probes++;
       }
     }

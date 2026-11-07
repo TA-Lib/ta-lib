@@ -548,7 +548,7 @@ export class AdoscStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ADOSC advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ADOSC advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -556,23 +556,23 @@ export class AdoscStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, inVolume: number): number {
+  update(high: number, low: number, close: number, volume: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ADOSC update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ADOSC update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('ADOSC update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : !Number.isFinite(inClose) ? 'inClose' : 'inVolume');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('ADOSC update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : !Number.isFinite(close) ? 'close' : 'volume');
     }
-    adoscStepImpl(this, inHigh, inLow, inClose, inVolume);
+    adoscStepImpl(this, high, low, close, volume);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -580,66 +580,72 @@ export class AdoscStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number, inVolume: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('ADOSC peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : !Number.isFinite(inClose) ? 'inClose' : 'inVolume');
+  peek(high: number, low: number, close: number, volume: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('ADOSC peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : !Number.isFinite(close) ? 'close' : 'volume');
     }
     const sp = this;
-    let high = 0;
-    let low = 0;
-    let close = 0;
-    let tmp = 0;
-    let ad = sp.ad;
-    let cur_outReal = 0;
-    let fastEMA = sp.fastEMA;
-    let slowEMA = sp.slowEMA;
-    high = inHigh;
-    low = inLow;
-    tmp = high - low;
-    close = inClose;
-    if (tmp > 0.0) {
-      ad += (close - low - (high - close)) / tmp * inVolume;
-    }
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
+    const inVolume = volume;
     {
-      const _a: number = sp.one_minus_fastk, _b: number = fastEMA, _c: number = sp.fastk * ad;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      fastEMA = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      let high = 0;
+      let low = 0;
+      let close = 0;
+      let tmp = 0;
+      let ad = sp.ad;
+      let cur_outReal = 0;
+      let fastEMA = sp.fastEMA;
+      let slowEMA = sp.slowEMA;
+      high = inHigh;
+      low = inLow;
+      tmp = high - low;
+      close = inClose;
+      if (tmp > 0.0) {
+        ad += (close - low - (high - close)) / tmp * inVolume;
+      }
+      {
+        const _a: number = sp.one_minus_fastk, _b: number = fastEMA, _c: number = sp.fastk * ad;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        fastEMA = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+      {
+        const _a: number = sp.one_minus_slowk, _b: number = slowEMA, _c: number = sp.slowk * ad;
+        const _p = _a * _b;
+        let _t = 134217729 * _a;
+        const _ah = _t - (_t - _a), _al = _a - _ah;
+        _t = 134217729 * _b;
+        const _bh = _t - (_t - _b), _bl = _b - _bh;
+        const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
+        const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
+        const _v = _tl + _pl, _v2 = _v + _v;
+        const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
+        slowEMA = _w && (_pl === 0 || _v === 0) ? _th
+          : _w && _v2 !== (_th + _v2) - _th ? _th + _v
+          : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
+      }
+      cur_outReal = fastEMA - slowEMA;
+      return cur_outReal;
     }
-    {
-      const _a: number = sp.one_minus_slowk, _b: number = slowEMA, _c: number = sp.slowk * ad;
-      const _p = _a * _b;
-      let _t = 134217729 * _a;
-      const _ah = _t - (_t - _a), _al = _a - _ah;
-      _t = 134217729 * _b;
-      const _bh = _t - (_t - _b), _bl = _b - _bh;
-      const _pl = ((_ah * _bh - _p) + _ah * _bl + _al * _bh) + _al * _bl;
-      const _th = _c + _p, _z = _th - _c, _tl = (_c - (_th - _z)) + (_p - _z);
-      const _v = _tl + _pl, _v2 = _v + _v;
-      const _w = _a * _a + _b * _b + _c * _c < 2 ** 1000 && _p * _p > 2 ** -1000;
-      slowEMA = _w && (_pl === 0 || _v === 0) ? _th
-        : _w && _v2 !== (_th + _v2) - _th ? _th + _v
-        : _a === 0 || _b === 0 ? _p + _c : fmaSlow(_a, _b, _c, _th, _tl, _pl);
-    }
-    cur_outReal = fastEMA - slowEMA;
-    return cur_outReal;
   }
 
   /** The value at the last bar this stream counted; `peek` does not change it. */
@@ -1008,7 +1014,7 @@ export function adoscOpenPositional(
   optInFastPeriod = requireInt32('ADOSC open', 'fastPeriod', optInFastPeriod);
   optInSlowPeriod = requireInt32('ADOSC open', 'slowPeriod', optInSlowPeriod);
   requireArgument('ADOSC open', 'prices.high', inHigh);
-  requireHistory('ADOSC open', inHigh.length);
+  requireHistory('ADOSC open', 'prices.high', inHigh.length);
   requireArgument('ADOSC open', 'prices.low', inLow);
   requireArgument('ADOSC open', 'prices.close', inClose);
   requireArgument('ADOSC open', 'prices.volume', inVolume);
@@ -1032,7 +1038,7 @@ export function adoscOpenAndFillPositional(
   optInFastPeriod = requireInt32('ADOSC openAndFill', 'fastPeriod', optInFastPeriod);
   optInSlowPeriod = requireInt32('ADOSC openAndFill', 'slowPeriod', optInSlowPeriod);
   requireArgument('ADOSC openAndFill', 'prices.high', inHigh);
-  requireHistory('ADOSC openAndFill', inHigh.length);
+  requireHistory('ADOSC openAndFill', 'prices.high', inHigh.length);
   requireArgument('ADOSC openAndFill', 'prices.low', inLow);
   requireArgument('ADOSC openAndFill', 'prices.close', inClose);
   requireArgument('ADOSC openAndFill', 'prices.volume', inVolume);

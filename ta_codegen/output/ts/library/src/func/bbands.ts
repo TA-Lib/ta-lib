@@ -738,7 +738,7 @@ export class BbandsStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('BBANDS advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('BBANDS advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -746,25 +746,26 @@ export class BbandsStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inReal - The bar's `inReal` value: Input data series.
+   * @param real - The bar's `real` value: Input data series.
    * @param out - Receives the outputs and is returned; a new {@link BbandsOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out?: BbandsOut): BbandsOut {
+  update(real: number, out?: BbandsOut): BbandsOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('BBANDS update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('BBANDS update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('BBANDS update', 'BbandsOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('BBANDS update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('BBANDS update', 'real');
     }
-    bbandsStepImpl(this, inReal);
+    bbandsStepImpl(this, real);
     this.outRangeCount++;
     if (out === undefined) {
       out = new BbandsOut();
@@ -778,21 +779,22 @@ export class BbandsStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input data series.
+   * @param real - The bar's `real` value: Input data series.
    * @param out - Receives the outputs and is returned; a new {@link BbandsOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inReal: number, out?: BbandsOut): BbandsOut {
+  peek(real: number, out?: BbandsOut): BbandsOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('BBANDS peek', 'BbandsOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('BBANDS peek', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('BBANDS peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tempReal = 0;
     let tempReal2 = 0;
     let cur_tempBuffer1 = 0;
@@ -828,6 +830,8 @@ export class BbandsStream {
    * @param out - Receives the outputs and is returned; a new {@link BbandsOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: BbandsOut): BbandsOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -1120,7 +1124,7 @@ export function bbandsOpenPositional(
   optInNbDevDn = requireReal('BBANDS open', 'nbDevDn', optInNbDevDn);
   optInMAType = requireInt32('BBANDS open', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('BBANDS open', 'real', inReal);
-  requireHistory('BBANDS open', inReal.length);
+  requireHistory('BBANDS open', 'real', inReal.length);
   return bbandsOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
 }
 
@@ -1141,7 +1145,7 @@ export function bbandsOpenAndFillPositional(
   optInNbDevDn = requireReal('BBANDS openAndFill', 'nbDevDn', optInNbDevDn);
   optInMAType = requireInt32('BBANDS openAndFill', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('BBANDS openAndFill', 'real', inReal);
-  requireHistory('BBANDS openAndFill', inReal.length);
+  requireHistory('BBANDS openAndFill', 'real', inReal.length);
   const guardLookback = bbandsLookbackPositional(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType as MAType, core);
   if (guardLookback < 0) {
     throw rejectedParams('BBANDS openAndFill', PARAM_RANGES, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);

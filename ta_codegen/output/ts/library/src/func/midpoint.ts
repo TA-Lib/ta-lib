@@ -473,7 +473,7 @@ export class MidpointStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MIDPOINT advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MIDPOINT advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -481,20 +481,20 @@ export class MidpointStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Series to compute the midpoint over.
+   * @param real - The bar's `real` value: Series to compute the midpoint over.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MIDPOINT update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MIDPOINT update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MIDPOINT update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MIDPOINT update', 'real');
     }
-    midpointStepImpl(this, inReal);
+    midpointStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -502,16 +502,17 @@ export class MidpointStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Series to compute the midpoint over.
+   * @param real - The bar's `real` value: Series to compute the midpoint over.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MIDPOINT peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MIDPOINT peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tmpLow = 0;
     let tmpHigh = 0;
     let cur_outReal = 0;
@@ -847,7 +848,7 @@ export function midpointOpenPositional(
 ): MidpointStream {
   optInTimePeriod = requireInt32('MIDPOINT open', 'timePeriod', optInTimePeriod);
   requireArgument('MIDPOINT open', 'real', inReal);
-  requireHistory('MIDPOINT open', inReal.length);
+  requireHistory('MIDPOINT open', 'real', inReal.length);
   return midpointOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -860,7 +861,7 @@ export function midpointOpenAndFillPositional(
 ): MidpointStream {
   optInTimePeriod = requireInt32('MIDPOINT openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('MIDPOINT openAndFill', 'real', inReal);
-  requireHistory('MIDPOINT openAndFill', inReal.length);
+  requireHistory('MIDPOINT openAndFill', 'real', inReal.length);
   const guardLookback = midpointLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('MIDPOINT openAndFill', PARAM_RANGES, optInTimePeriod);

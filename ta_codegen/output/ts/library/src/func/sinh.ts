@@ -263,7 +263,7 @@ export class SinhStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SINH advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SINH advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -271,20 +271,20 @@ export class SinhStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input series.
+   * @param real - The bar's `real` value: Input series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SINH update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SINH update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SINH update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SINH update', 'real');
     }
-    sinhStepImpl(this, inReal);
+    sinhStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -292,15 +292,16 @@ export class SinhStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input series.
+   * @param real - The bar's `real` value: Input series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SINH peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SINH peek', 'real');
     }
+    const inReal = real;
     let cur_outReal = 0;
     cur_outReal = Math.sinh(inReal);
     return cur_outReal;
@@ -410,7 +411,7 @@ export function sinhOpenPositional(
   core: Core = Core.DEFAULT,
 ): SinhStream {
   requireArgument('SINH open', 'real', inReal);
-  requireHistory('SINH open', inReal.length);
+  requireHistory('SINH open', 'real', inReal.length);
   return sinhOpenInternal(core, float64(inReal), 0);
 }
 
@@ -421,7 +422,7 @@ export function sinhOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): SinhStream {
   requireArgument('SINH openAndFill', 'real', inReal);
-  requireHistory('SINH openAndFill', inReal.length);
+  requireHistory('SINH openAndFill', 'real', inReal.length);
   const guardOutLen = openFillCount('SINH openAndFill', inReal.length, sinhLookbackPositional(core));
   requireOutput('SINH openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);

@@ -369,7 +369,7 @@ export function minmaxDisplayShift(outputIdx: number, options?: MinmaxOptions): 
 
 /**
  * Returns both the lowest and highest values of the input over a rolling window of
- * the last optInTimePeriod bars. An overlap-study companion to MIN and MAX that
+ * the last timePeriod bars. An overlap-study companion to MIN and MAX that
  * computes both extrema in one pass.
  *
  * Formula and more info at
@@ -495,7 +495,7 @@ export class MinmaxStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MINMAX advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MINMAX advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -503,26 +503,26 @@ export class MinmaxStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inReal - The bar's `inReal` value: Values scanned for the window min and
-   *   max.
+   * @param real - The bar's `real` value: Values scanned for the window min and max.
    * @param out - Receives the outputs and is returned; a new {@link MinmaxOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out?: MinmaxOut): MinmaxOut {
+  update(real: number, out?: MinmaxOut): MinmaxOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MINMAX update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MINMAX update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MINMAX update', 'MinmaxOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MINMAX update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MINMAX update', 'real');
     }
-    minmaxStepImpl(this, inReal);
+    minmaxStepImpl(this, real);
     this.outRangeCount++;
     if (out === undefined) {
       out = new MinmaxOut();
@@ -535,22 +535,22 @@ export class MinmaxStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Values scanned for the window min and
-   *   max.
+   * @param real - The bar's `real` value: Values scanned for the window min and max.
    * @param out - Receives the outputs and is returned; a new {@link MinmaxOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inReal: number, out?: MinmaxOut): MinmaxOut {
+  peek(real: number, out?: MinmaxOut): MinmaxOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MINMAX peek', 'MinmaxOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MINMAX peek', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MINMAX peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tmpHigh = 0;
     let tmpLow = 0;
     let cur_outMax = 0;
@@ -612,6 +612,8 @@ export class MinmaxStream {
    * @param out - Receives the outputs and is returned; a new {@link MinmaxOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: MinmaxOut): MinmaxOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -920,7 +922,7 @@ export function minmaxOpenPositional(
 ): MinmaxStream {
   optInTimePeriod = requireInt32('MINMAX open', 'timePeriod', optInTimePeriod);
   requireArgument('MINMAX open', 'real', inReal);
-  requireHistory('MINMAX open', inReal.length);
+  requireHistory('MINMAX open', 'real', inReal.length);
   return minmaxOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -934,7 +936,7 @@ export function minmaxOpenAndFillPositional(
 ): MinmaxStream {
   optInTimePeriod = requireInt32('MINMAX openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('MINMAX openAndFill', 'real', inReal);
-  requireHistory('MINMAX openAndFill', inReal.length);
+  requireHistory('MINMAX openAndFill', 'real', inReal.length);
   const guardLookback = minmaxLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('MINMAX openAndFill', PARAM_RANGES, optInTimePeriod);

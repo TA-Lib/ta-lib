@@ -1100,7 +1100,7 @@ export class PercentileStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PERCENTILE advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PERCENTILE advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -1108,21 +1108,20 @@ export class PercentileStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source series to take the percentile
-   *   of.
+   * @param real - The bar's `real` value: Source series to take the percentile of.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PERCENTILE update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PERCENTILE update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('PERCENTILE update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('PERCENTILE update', 'real');
     }
-    percentileStepImpl(this, inReal);
+    percentileStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -1130,17 +1129,17 @@ export class PercentileStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source series to take the percentile
-   *   of.
+   * @param real - The bar's `real` value: Source series to take the percentile of.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('PERCENTILE peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('PERCENTILE peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let newValue = 0;
     let result = 0;
     let cur_outReal = 0;
@@ -2484,7 +2483,7 @@ export function percentileOpenPositional(
   optInTimePeriod = requireInt32('PERCENTILE open', 'timePeriod', optInTimePeriod);
   optInPercentile = requireReal('PERCENTILE open', 'percentile', optInPercentile);
   requireArgument('PERCENTILE open', 'real', inReal);
-  requireHistory('PERCENTILE open', inReal.length);
+  requireHistory('PERCENTILE open', 'real', inReal.length);
   return percentileOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInPercentile);
 }
 
@@ -2499,7 +2498,7 @@ export function percentileOpenAndFillPositional(
   optInTimePeriod = requireInt32('PERCENTILE openAndFill', 'timePeriod', optInTimePeriod);
   optInPercentile = requireReal('PERCENTILE openAndFill', 'percentile', optInPercentile);
   requireArgument('PERCENTILE openAndFill', 'real', inReal);
-  requireHistory('PERCENTILE openAndFill', inReal.length);
+  requireHistory('PERCENTILE openAndFill', 'real', inReal.length);
   const guardLookback = percentileLookbackPositional(optInTimePeriod, optInPercentile, core);
   if (guardLookback < 0) {
     throw rejectedParams('PERCENTILE openAndFill', PARAM_RANGES, optInTimePeriod, optInPercentile);

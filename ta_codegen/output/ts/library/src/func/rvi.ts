@@ -713,7 +713,7 @@ export class RviStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('RVI advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('RVI advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -721,21 +721,21 @@ export class RviStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series, canonically
-   *   the close.
+   * @param real - The bar's `real` value: Source price/value series, canonically the
+   *   close.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('RVI update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('RVI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('RVI update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('RVI update', 'real');
     }
-    rviStepImpl(this, inReal);
+    rviStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -743,17 +743,18 @@ export class RviStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series, canonically
-   *   the close.
+   * @param real - The bar's `real` value: Source price/value series, canonically the
+   *   close.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('RVI peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('RVI peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tempReal = 0;
     let meanValue1 = 0;
     let variance = 0;
@@ -1441,7 +1442,7 @@ export function rviOpenPositional(
   optInTimePeriod = requireInt32('RVI open', 'timePeriod', optInTimePeriod);
   optInStdDevPeriod = requireInt32('RVI open', 'stdDevPeriod', optInStdDevPeriod);
   requireArgument('RVI open', 'real', inReal);
-  requireHistory('RVI open', inReal.length);
+  requireHistory('RVI open', 'real', inReal.length);
   return rviOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInStdDevPeriod);
 }
 
@@ -1456,7 +1457,7 @@ export function rviOpenAndFillPositional(
   optInTimePeriod = requireInt32('RVI openAndFill', 'timePeriod', optInTimePeriod);
   optInStdDevPeriod = requireInt32('RVI openAndFill', 'stdDevPeriod', optInStdDevPeriod);
   requireArgument('RVI openAndFill', 'real', inReal);
-  requireHistory('RVI openAndFill', inReal.length);
+  requireHistory('RVI openAndFill', 'real', inReal.length);
   const guardLookback = rviLookbackPositional(optInTimePeriod, optInStdDevPeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('RVI openAndFill', PARAM_RANGES, optInTimePeriod, optInStdDevPeriod);

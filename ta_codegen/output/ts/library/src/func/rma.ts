@@ -268,8 +268,8 @@ export function rmaDisplayShift(outputIdx: number, options?: RmaOptions): number
  * RMA reacts more slowly and gives noticeably more weight to old data: it takes
  * about twice the period to shed the influence of a bar. Read it as a slow trend
  * line — direction and slope matter, individual crossings much less than on a
- * faster average. RMA is also selectable as a moving-average type
- * (`TA_MAType_RMA`) wherever an `optInMAType` parameter is accepted
+ * faster average. RMA is also selectable as a moving-average type (`MAType.RMA`)
+ * wherever an `maType` parameter is accepted
  * ([`MA`](https://ta-lib.org/functions/ma),
  * [`BBANDS`](https://ta-lib.org/functions/bbands),
  * [`STOCH`](https://ta-lib.org/functions/stoch),
@@ -289,8 +289,8 @@ export function rmaDisplayShift(outputIdx: number, options?: RmaOptions): number
  *   of 2N-1". The factors really are identical, since `2/((2N-1)+1)` is `1/N`, but
  *   the two seed over different windows: the series differ through the warm-up and
  *   only converge as the seed's influence decays.
- * - `TA_RMA` over `TA_TRANGE` is `TA_ATR`, bit for bit. The recurrence is spelled
- *   here exactly as ATR spells it.
+ * - `rma` over `trange` is `atr`, bit for bit. The recurrence is spelled here
+ *   exactly as ATR spells it.
  * - The recurrence is the `alpha * x + (1 - alpha) * prev` form, which is
  *   TradingView Pine's `ta.rma` and pandas' `ewm(adjust=False)` kernel.
  *   Implementations that spell it `prev + (x - prev) * alpha` or
@@ -404,7 +404,7 @@ export class RmaStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('RMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('RMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -412,20 +412,20 @@ export class RmaStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Data on which to compute the average.
+   * @param real - The bar's `real` value: Data on which to compute the average.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('RMA update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('RMA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('RMA update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('RMA update', 'real');
     }
-    rmaStepImpl(this, inReal);
+    rmaStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -433,16 +433,17 @@ export class RmaStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Data on which to compute the average.
+   * @param real - The bar's `real` value: Data on which to compute the average.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('RMA peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('RMA peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let cur_outReal = 0;
     let prevRMA = sp.prevRMA;
     prevRMA = fma(sp.wBeta, prevRMA, sp.wAlpha * inReal);
@@ -640,7 +641,7 @@ export function rmaOpenPositional(
 ): RmaStream {
   optInTimePeriod = requireInt32('RMA open', 'timePeriod', optInTimePeriod);
   requireArgument('RMA open', 'real', inReal);
-  requireHistory('RMA open', inReal.length);
+  requireHistory('RMA open', 'real', inReal.length);
   return rmaOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -653,7 +654,7 @@ export function rmaOpenAndFillPositional(
 ): RmaStream {
   optInTimePeriod = requireInt32('RMA openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('RMA openAndFill', 'real', inReal);
-  requireHistory('RMA openAndFill', inReal.length);
+  requireHistory('RMA openAndFill', 'real', inReal.length);
   const guardLookback = rmaLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('RMA openAndFill', PARAM_RANGES, optInTimePeriod);

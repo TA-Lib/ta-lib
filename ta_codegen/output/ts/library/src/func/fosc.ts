@@ -457,7 +457,7 @@ export class FoscStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('FOSC advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('FOSC advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -465,20 +465,20 @@ export class FoscStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series.
+   * @param real - The bar's `real` value: Source price/value series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('FOSC update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('FOSC update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('FOSC update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('FOSC update', 'real');
     }
-    foscStepImpl(this, inReal);
+    foscStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -486,16 +486,17 @@ export class FoscStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series.
+   * @param real - The bar's `real` value: Source price/value series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('FOSC peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('FOSC peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let m = 0;
     let b = 0;
     let closeValue = 0;
@@ -867,7 +868,7 @@ export function foscOpenPositional(
 ): FoscStream {
   optInTimePeriod = requireInt32('FOSC open', 'timePeriod', optInTimePeriod);
   requireArgument('FOSC open', 'real', inReal);
-  requireHistory('FOSC open', inReal.length);
+  requireHistory('FOSC open', 'real', inReal.length);
   return foscOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -880,7 +881,7 @@ export function foscOpenAndFillPositional(
 ): FoscStream {
   optInTimePeriod = requireInt32('FOSC openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('FOSC openAndFill', 'real', inReal);
-  requireHistory('FOSC openAndFill', inReal.length);
+  requireHistory('FOSC openAndFill', 'real', inReal.length);
   const guardLookback = foscLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('FOSC openAndFill', PARAM_RANGES, optInTimePeriod);

@@ -267,12 +267,12 @@ export interface AroonResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * Recency of the lowest low (100 = it is the current bar, decaying as it ages)
+   * Recency of the lowest low (100 = it is the current bar, decaying as it ages).
    * `outAroonDown[k]` is the value at input bar `begIdx + k`.
    */
   outAroonDown: Float64Array;
   /**
-   * Recency of the highest high (100 = it is the current bar, decaying as it ages)
+   * Recency of the highest high (100 = it is the current bar, decaying as it ages).
    * `outAroonUp[k]` is the value at input bar `begIdx + k`.
    */
   outAroonUp: Float64Array;
@@ -315,10 +315,9 @@ export function aroonDisplayShift(outputIdx: number, options?: AroonOptions): nu
 
 /**
  * Aroon reports how recently the highest high and lowest low occurred within a
- * rolling window of length optInTimePeriod, as two 0-100 oscillators. Indicates
- * trend strength and direction. Up near 100 = a very recent new high (strong
- * uptrend); Down near 100 = a very recent new low. Up/Down crossovers signal trend
- * shifts.
+ * rolling window of length timePeriod, as two 0-100 oscillators. Indicates trend
+ * strength and direction. Up near 100 = a very recent new high (strong uptrend);
+ * Down near 100 = a very recent new low. Up/Down crossovers signal trend shifts.
  *
  * Formula and more info at
  * [ta-lib.org/functions/aroon](https://ta-lib.org/functions/aroon).
@@ -451,7 +450,7 @@ export class AroonStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('AROON advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('AROON advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -459,26 +458,27 @@ export class AroonStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link AroonOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, out?: AroonOut): AroonOut {
+  update(high: number, low: number, out?: AroonOut): AroonOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('AROON update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('AROON update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('AROON update', 'AroonOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('AROON update', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('AROON update', !Number.isFinite(high) ? 'high' : 'low');
     }
-    aroonStepImpl(this, inHigh, inLow);
+    aroonStepImpl(this, high, low);
     this.outRangeCount++;
     if (out === undefined) {
       out = new AroonOut();
@@ -491,22 +491,24 @@ export class AroonStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link AroonOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, out?: AroonOut): AroonOut {
+  peek(high: number, low: number, out?: AroonOut): AroonOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('AROON peek', 'AroonOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('AROON peek', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('AROON peek', !Number.isFinite(high) ? 'high' : 'low');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let tmp = 0;
     let cur_outAroonDown = 0;
     let cur_outAroonUp = 0;
@@ -576,6 +578,8 @@ export class AroonStream {
    * @param out - Receives the outputs and is returned; a new {@link AroonOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: AroonOut): AroonOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -891,7 +895,7 @@ export function aroonOpenPositional(
 ): AroonStream {
   optInTimePeriod = requireInt32('AROON open', 'timePeriod', optInTimePeriod);
   requireArgument('AROON open', 'prices.high', inHigh);
-  requireHistory('AROON open', inHigh.length);
+  requireHistory('AROON open', 'prices.high', inHigh.length);
   requireArgument('AROON open', 'prices.low', inLow);
   requireHistoryLength('AROON open', 'prices.low', inLow.length, inHigh.length);
   return aroonOpenInternal(core, float64(inHigh), float64(inLow), 0, optInTimePeriod);
@@ -908,7 +912,7 @@ export function aroonOpenAndFillPositional(
 ): AroonStream {
   optInTimePeriod = requireInt32('AROON openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('AROON openAndFill', 'prices.high', inHigh);
-  requireHistory('AROON openAndFill', inHigh.length);
+  requireHistory('AROON openAndFill', 'prices.high', inHigh.length);
   requireArgument('AROON openAndFill', 'prices.low', inLow);
   const guardLookback = aroonLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {

@@ -544,7 +544,7 @@ export class FisherStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('FISHER advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('FISHER advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -552,26 +552,27 @@ export class FisherStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link FisherOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, out?: FisherOut): FisherOut {
+  update(high: number, low: number, out?: FisherOut): FisherOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('FISHER update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('FISHER update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('FISHER update', 'FisherOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('FISHER update', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('FISHER update', !Number.isFinite(high) ? 'high' : 'low');
     }
-    fisherStepImpl(this, inHigh, inLow);
+    fisherStepImpl(this, high, low);
     this.outRangeCount++;
     if (out === undefined) {
       out = new FisherOut();
@@ -584,22 +585,24 @@ export class FisherStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link FisherOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, out?: FisherOut): FisherOut {
+  peek(high: number, low: number, out?: FisherOut): FisherOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('FISHER peek', 'FisherOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('FISHER peek', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('FISHER peek', !Number.isFinite(high) ? 'high' : 'low');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let price = 0;
     let ratio = 0;
     let fish = 0;
@@ -715,6 +718,8 @@ export class FisherStream {
    * @param out - Receives the outputs and is returned; a new {@link FisherOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: FisherOut): FisherOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -1133,7 +1138,7 @@ export function fisherOpenPositional(
 ): FisherStream {
   optInTimePeriod = requireInt32('FISHER open', 'timePeriod', optInTimePeriod);
   requireArgument('FISHER open', 'prices.high', inHigh);
-  requireHistory('FISHER open', inHigh.length);
+  requireHistory('FISHER open', 'prices.high', inHigh.length);
   requireArgument('FISHER open', 'prices.low', inLow);
   requireHistoryLength('FISHER open', 'prices.low', inLow.length, inHigh.length);
   return fisherOpenInternal(core, float64(inHigh), float64(inLow), 0, optInTimePeriod);
@@ -1150,7 +1155,7 @@ export function fisherOpenAndFillPositional(
 ): FisherStream {
   optInTimePeriod = requireInt32('FISHER openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('FISHER openAndFill', 'prices.high', inHigh);
-  requireHistory('FISHER openAndFill', inHigh.length);
+  requireHistory('FISHER openAndFill', 'prices.high', inHigh.length);
   requireArgument('FISHER openAndFill', 'prices.low', inLow);
   const guardLookback = fisherLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {

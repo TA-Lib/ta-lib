@@ -404,8 +404,8 @@ export function kcDisplayShift(outputIdx: number, options?: KcOptions): number {
  *   two are independent, so the band width can be tuned separately.
  * - The centre line and the band are separate recursions, each with its own
  *   warm-up. They are entered at their own lookbacks, so a caller who wants either
- *   one converged sets that function's unstable period — `TA_FUNC_UNST_EMA` for
- *   the centre line, `TA_FUNC_UNST_ATR` for the band.
+ *   one converged sets that function's unstable period — `FuncUnstId.EMA` for the
+ *   centre line, `FuncUnstId.ATR` for the band.
  *
  * `outUpperBand[k]` is the value at input bar `begIdx + k`; every output is
  * exactly as long as the number of values written, and nothing is padded. A range
@@ -537,7 +537,7 @@ export class KcStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('KC advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('KC advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -545,27 +545,28 @@ export class KcStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link KcOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out?: KcOut): KcOut {
+  update(high: number, low: number, close: number, out?: KcOut): KcOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('KC update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('KC update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KC update', 'KcOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('KC update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('KC update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    kcStepImpl(this, inHigh, inLow, inClose);
+    kcStepImpl(this, high, low, close);
     this.outRangeCount++;
     if (out === undefined) {
       out = new KcOut();
@@ -579,23 +580,26 @@ export class KcStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link KcOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out?: KcOut): KcOut {
+  peek(high: number, low: number, close: number, out?: KcOut): KcOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KC peek', 'KcOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('KC peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('KC peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let middle = 0;
     let tempReal = 0;
     let cur_tempTP = 0;
@@ -625,6 +629,8 @@ export class KcStream {
    * @param out - Receives the outputs and is returned; a new {@link KcOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: KcOut): KcOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -893,7 +899,7 @@ export function kcOpenPositional(
   optInATRPeriod = requireInt32('KC open', 'atrPeriod', optInATRPeriod);
   optInNbDev = requireReal('KC open', 'nbDev', optInNbDev);
   requireArgument('KC open', 'prices.high', inHigh);
-  requireHistory('KC open', inHigh.length);
+  requireHistory('KC open', 'prices.high', inHigh.length);
   requireArgument('KC open', 'prices.low', inLow);
   requireArgument('KC open', 'prices.close', inClose);
   requireHistoryLength('KC open', 'prices.low', inLow.length, inHigh.length);
@@ -918,7 +924,7 @@ export function kcOpenAndFillPositional(
   optInATRPeriod = requireInt32('KC openAndFill', 'atrPeriod', optInATRPeriod);
   optInNbDev = requireReal('KC openAndFill', 'nbDev', optInNbDev);
   requireArgument('KC openAndFill', 'prices.high', inHigh);
-  requireHistory('KC openAndFill', inHigh.length);
+  requireHistory('KC openAndFill', 'prices.high', inHigh.length);
   requireArgument('KC openAndFill', 'prices.low', inLow);
   requireArgument('KC openAndFill', 'prices.close', inClose);
   const guardLookback = kcLookbackPositional(optInTimePeriod, optInATRPeriod, optInNbDev, core);

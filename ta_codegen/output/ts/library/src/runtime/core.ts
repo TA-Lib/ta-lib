@@ -77,7 +77,6 @@ export type RangeType = (typeof RangeType)[keyof typeof RangeType];
 const INDEX_MAX = 100000000;
 const UNSTABLE_AUTO_PREC_4 = INDEX_MAX + 4;
 const UNSTABLE_AUTO_PREC_8 = INDEX_MAX + 8;
-const CANDLE_SETTING_COUNT = CandleSettingType.ALL_CANDLE_SETTINGS;
 const FUNC_UNST_COUNT = FuncUnstIds.Count;
 
 /** One candlestick threshold: `factor` times the average of `rangeType` over `avgPeriod` previous candles. */
@@ -110,6 +109,7 @@ const DEFAULT_CANDLE_SETTINGS: readonly CandleSetting[] = [
   new CandleSetting(CandleSettingType.FAR, RangeType.HIGH_LOW, 5, 0.6),
   new CandleSetting(CandleSettingType.EQUAL, RangeType.HIGH_LOW, 5, 0.05),
 ];
+const CANDLE_SETTING_COUNT = DEFAULT_CANDLE_SETTINGS.length;
 
 function badParam(message: string): TALibError {
   return new TALibError(RetCode.BAD_PARAM, message);
@@ -124,7 +124,7 @@ function isCandleSlot(settingType: number): boolean {
 }
 
 /**
- * Configures a {@link Core}. A rejected call throws {@link TALibError}
+ * Configures a {@link Core}. A rejected call throws `TALibError`
  * `TA_BAD_PARAM`, as C's setter returns it, and writes nothing.
  */
 export class CoreBuilder {
@@ -212,11 +212,15 @@ export class CoreBuilder {
 export class Core {
   /** Selects a real optional parameter's default; C's `TA_REAL_DEFAULT`. */
   static readonly REAL_DEFAULT = -4e37;
+  /** Lowest value a real optional parameter may take; C's `TA_REAL_MIN`. */
   static readonly REAL_MIN = -3e37;
+  /** Highest value a real optional parameter may take; C's `TA_REAL_MAX`. */
   static readonly REAL_MAX = 3e37;
   /** Selects an integer optional parameter's default; C's `TA_INTEGER_DEFAULT`. */
   static readonly INTEGER_DEFAULT = -2147483648;
+  /** Lowest value an integer optional parameter may take; C's `TA_INTEGER_MIN`. */
   static readonly INTEGER_MIN = -2147483647;
+  /** Highest value an integer optional parameter may take; C's `TA_INTEGER_MAX`. */
   static readonly INTEGER_MAX = 2147483647;
   /** Largest `startIdx` or `endIdx`. It bounds the API domain, not accuracy. */
   static readonly INDEX_MAX = INDEX_MAX;
@@ -237,8 +241,15 @@ export class Core {
   /** @internal Indexed by `CandleSettingType`. */
   readonly candleSettings: readonly CandleSetting[];
 
-  /** `new Core(b)` is `b.build()`; `new Core()` has the defaults of {@link Core.DEFAULT}. */
+  /**
+   * `new Core(b)` is `b.build()`; `new Core()` has the defaults of {@link Core.DEFAULT}.
+   *
+   * @throws `TALibError` with code `TA_BAD_PARAM` when `builder` is not a `CoreBuilder`.
+   */
   constructor(builder: CoreBuilder = new CoreBuilder()) {
+    if (!(builder instanceof CoreBuilder)) {
+      throw badParam('Core: builder is not a CoreBuilder');
+    }
     // Frozen because `readonly` binds TypeScript callers only. An Int32Array
     // cannot be frozen.
     this.unstablePeriods = Object.freeze(Array.from(builder.unstablePeriods));
@@ -246,6 +257,7 @@ export class Core {
     Object.freeze(this);
   }
 
+  /** A builder with the defaults of {@link Core.DEFAULT}. */
   static builder(): CoreBuilder {
     return new CoreBuilder();
   }

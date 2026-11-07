@@ -583,7 +583,7 @@ export class TrimaStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('TRIMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('TRIMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -591,20 +591,20 @@ export class TrimaStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price series.
+   * @param real - The bar's `real` value: Source price series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('TRIMA update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('TRIMA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('TRIMA update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('TRIMA update', 'real');
     }
-    trimaStepImpl(this, inReal);
+    trimaStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -612,16 +612,17 @@ export class TrimaStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price series.
+   * @param real - The bar's `real` value: Source price series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('TRIMA peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('TRIMA peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let cur_outReal = 0;
     if (((sp.optInTimePeriod % 2) | 0) === 1) {
       let numerator = sp.numerator;
@@ -1290,7 +1291,7 @@ export function trimaOpenPositional(
 ): TrimaStream {
   optInTimePeriod = requireInt32('TRIMA open', 'timePeriod', optInTimePeriod);
   requireArgument('TRIMA open', 'real', inReal);
-  requireHistory('TRIMA open', inReal.length);
+  requireHistory('TRIMA open', 'real', inReal.length);
   return trimaOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -1303,7 +1304,7 @@ export function trimaOpenAndFillPositional(
 ): TrimaStream {
   optInTimePeriod = requireInt32('TRIMA openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('TRIMA openAndFill', 'real', inReal);
-  requireHistory('TRIMA openAndFill', inReal.length);
+  requireHistory('TRIMA openAndFill', 'real', inReal.length);
   const guardLookback = trimaLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('TRIMA openAndFill', PARAM_RANGES, optInTimePeriod);

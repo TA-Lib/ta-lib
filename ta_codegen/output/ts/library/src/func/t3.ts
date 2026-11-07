@@ -934,7 +934,7 @@ export class T3Stream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('T3 advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('T3 advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -942,20 +942,20 @@ export class T3Stream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source series to smooth.
+   * @param real - The bar's `real` value: Source series to smooth.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('T3 update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('T3 update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('T3 update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('T3 update', 'real');
     }
-    t3StepImpl(this, inReal);
+    t3StepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -963,16 +963,17 @@ export class T3Stream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source series to smooth.
+   * @param real - The bar's `real` value: Source series to smooth.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('T3 peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('T3 peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let cur_outReal = 0;
     let e1 = sp.e1;
     let e2 = sp.e2;
@@ -2005,7 +2006,7 @@ export function t3OpenPositional(
   optInTimePeriod = requireInt32('T3 open', 'timePeriod', optInTimePeriod);
   optInVFactor = requireReal('T3 open', 'vFactor', optInVFactor);
   requireArgument('T3 open', 'real', inReal);
-  requireHistory('T3 open', inReal.length);
+  requireHistory('T3 open', 'real', inReal.length);
   return t3OpenInternal(core, float64(inReal), 0, optInTimePeriod, optInVFactor);
 }
 
@@ -2020,7 +2021,7 @@ export function t3OpenAndFillPositional(
   optInTimePeriod = requireInt32('T3 openAndFill', 'timePeriod', optInTimePeriod);
   optInVFactor = requireReal('T3 openAndFill', 'vFactor', optInVFactor);
   requireArgument('T3 openAndFill', 'real', inReal);
-  requireHistory('T3 openAndFill', inReal.length);
+  requireHistory('T3 openAndFill', 'real', inReal.length);
   const guardLookback = t3LookbackPositional(optInTimePeriod, optInVFactor, core);
   if (guardLookback < 0) {
     throw rejectedParams('T3 openAndFill', PARAM_RANGES, optInTimePeriod, optInVFactor);

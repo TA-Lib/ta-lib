@@ -433,7 +433,7 @@ export class EfiStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('EFI advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('EFI advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -441,21 +441,21 @@ export class EfiStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inClose: number, inVolume: number): number {
+  update(close: number, volume: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('EFI update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('EFI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('EFI update', !Number.isFinite(inClose) ? 'inClose' : 'inVolume');
+    if (!Number.isFinite(close) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('EFI update', !Number.isFinite(close) ? 'close' : 'volume');
     }
-    efiStepImpl(this, inClose, inVolume);
+    efiStepImpl(this, close, volume);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -463,17 +463,19 @@ export class EfiStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inClose: number, inVolume: number): number {
-    if (!Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('EFI peek', !Number.isFinite(inClose) ? 'inClose' : 'inVolume');
+  peek(close: number, volume: number): number {
+    if (!Number.isFinite(close) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('EFI peek', !Number.isFinite(close) ? 'close' : 'volume');
     }
     const sp = this;
+    const inClose = close;
+    const inVolume = volume;
     let cur_outReal = 0;
     if (sp.optInTimePeriod === 1) {
       let force = 0;
@@ -813,7 +815,7 @@ export function efiOpenPositional(
 ): EfiStream {
   optInTimePeriod = requireInt32('EFI open', 'timePeriod', optInTimePeriod);
   requireArgument('EFI open', 'prices.close', inClose);
-  requireHistory('EFI open', inClose.length);
+  requireHistory('EFI open', 'prices.close', inClose.length);
   requireArgument('EFI open', 'prices.volume', inVolume);
   requireHistoryLength('EFI open', 'prices.volume', inVolume.length, inClose.length);
   return efiOpenInternal(core, float64(inClose), float64(inVolume), 0, optInTimePeriod);
@@ -829,7 +831,7 @@ export function efiOpenAndFillPositional(
 ): EfiStream {
   optInTimePeriod = requireInt32('EFI openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('EFI openAndFill', 'prices.close', inClose);
-  requireHistory('EFI openAndFill', inClose.length);
+  requireHistory('EFI openAndFill', 'prices.close', inClose.length);
   requireArgument('EFI openAndFill', 'prices.volume', inVolume);
   const guardLookback = efiLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {

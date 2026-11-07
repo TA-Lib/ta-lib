@@ -284,8 +284,8 @@ export function zlemaDisplayShift(outputIdx: number, options?: ZlemaOptions): nu
  * EMA that turns sooner: crossings of price and average, and changes in its slope,
  * arrive earlier than the equivalent EMA signal, and its overshoot after a spike
  * is a property of the filter rather than a move in the market. ZLEMA is also
- * selectable as a moving-average type (`TA_MAType_ZLEMA`) wherever an
- * `optInMAType` parameter is accepted ([`MA`](https://ta-lib.org/functions/ma),
+ * selectable as a moving-average type (`MAType.ZLEMA`) wherever an `maType`
+ * parameter is accepted ([`MA`](https://ta-lib.org/functions/ma),
  * [`BBANDS`](https://ta-lib.org/functions/bbands),
  * [`STOCH`](https://ta-lib.org/functions/stoch),
  * [`MACDEXT`](https://ta-lib.org/functions/macdext), ...).
@@ -322,7 +322,8 @@ export function zlemaDisplayShift(outputIdx: number, options?: ZlemaOptions): nu
  *   Tulip Indicators seeds from a single raw price and so emits its first value
  *   earlier and converges to these values only after many bars.
  * - ZLEMA inherits EMA's unstable period rather than owning one:
- *   `TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)` moves ZLEMA's first output too.
+ *   `CoreBuilder.unstablePeriod(FuncUnstId.EMA, ...)` moves ZLEMA's first output
+ *   too.
  * - A period of 1 performs no smoothing: the output is a copy of the input.
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
@@ -434,7 +435,7 @@ export class ZlemaStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ZLEMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ZLEMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -442,21 +443,20 @@ export class ZlemaStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price series, close by
-   *   convention.
+   * @param real - The bar's `real` value: Source price series, close by convention.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ZLEMA update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ZLEMA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ZLEMA update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ZLEMA update', 'real');
     }
-    zlemaStepImpl(this, inReal);
+    zlemaStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -464,17 +464,17 @@ export class ZlemaStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price series, close by
-   *   convention.
+   * @param real - The bar's `real` value: Source price series, close by convention.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ZLEMA peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ZLEMA peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let cur_outReal = 0;
     let prevMA = sp.prevMA;
     let pkSlot0 = -1;
@@ -733,7 +733,7 @@ export function zlemaOpenPositional(
 ): ZlemaStream {
   optInTimePeriod = requireInt32('ZLEMA open', 'timePeriod', optInTimePeriod);
   requireArgument('ZLEMA open', 'real', inReal);
-  requireHistory('ZLEMA open', inReal.length);
+  requireHistory('ZLEMA open', 'real', inReal.length);
   return zlemaOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -746,7 +746,7 @@ export function zlemaOpenAndFillPositional(
 ): ZlemaStream {
   optInTimePeriod = requireInt32('ZLEMA openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('ZLEMA openAndFill', 'real', inReal);
-  requireHistory('ZLEMA openAndFill', inReal.length);
+  requireHistory('ZLEMA openAndFill', 'real', inReal.length);
   const guardLookback = zlemaLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('ZLEMA openAndFill', PARAM_RANGES, optInTimePeriod);

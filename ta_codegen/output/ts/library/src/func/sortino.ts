@@ -577,7 +577,7 @@ export class SortinoStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SORTINO advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SORTINO advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -585,21 +585,21 @@ export class SortinoStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: The price series; its returns are
-   *   computed internally.
+   * @param real - The bar's `real` value: The price series; its returns are computed
+   *   internally.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SORTINO update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SORTINO update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SORTINO update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SORTINO update', 'real');
     }
-    sortinoStepImpl(this, inReal);
+    sortinoStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -607,17 +607,18 @@ export class SortinoStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: The price series; its returns are
-   *   computed internally.
+   * @param real - The bar's `real` value: The price series; its returns are computed
+   *   internally.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SORTINO peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SORTINO peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let windowTotal = 0;
     let windowDown = 0;
     let windowAbs = 0;
@@ -1233,7 +1234,7 @@ export function sortinoOpenPositional(
   optInMAR = requireReal('SORTINO open', 'mar', optInMAR);
   optInAnnualization = requireReal('SORTINO open', 'annualization', optInAnnualization);
   requireArgument('SORTINO open', 'real', inReal);
-  requireHistory('SORTINO open', inReal.length);
+  requireHistory('SORTINO open', 'real', inReal.length);
   return sortinoOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInMAR, optInAnnualization);
 }
 
@@ -1250,7 +1251,7 @@ export function sortinoOpenAndFillPositional(
   optInMAR = requireReal('SORTINO openAndFill', 'mar', optInMAR);
   optInAnnualization = requireReal('SORTINO openAndFill', 'annualization', optInAnnualization);
   requireArgument('SORTINO openAndFill', 'real', inReal);
-  requireHistory('SORTINO openAndFill', inReal.length);
+  requireHistory('SORTINO openAndFill', 'real', inReal.length);
   const guardLookback = sortinoLookbackPositional(optInTimePeriod, optInMAR, optInAnnualization, core);
   if (guardLookback < 0) {
     throw rejectedParams('SORTINO openAndFill', PARAM_RANGES, optInTimePeriod, optInMAR, optInAnnualization);

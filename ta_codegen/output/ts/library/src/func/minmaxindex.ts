@@ -252,13 +252,13 @@ export interface MinmaxindexResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * Absolute index (into inReal) of the window minimum. `outMinIdx[k]` is the value
-   * at input bar `begIdx + k`.
+   * Absolute index (into real) of the window minimum. `outMinIdx[k]` is the value at
+   * input bar `begIdx + k`.
    */
   outMinIdx: Int32Array;
   /**
-   * Absolute index (into inReal) of the window maximum. `outMaxIdx[k]` is the value
-   * at input bar `begIdx + k`.
+   * Absolute index (into real) of the window maximum. `outMaxIdx[k]` is the value at
+   * input bar `begIdx + k`.
    */
   outMaxIdx: Int32Array;
 }
@@ -301,7 +301,7 @@ export function minmaxindexDisplayShift(outputIdx: number, options?: Minmaxindex
 
 /**
  * Returns the absolute input indices of the lowest and highest values within each
- * rolling window of optInTimePeriod bars. Index variant of MINMAX.
+ * rolling window of timePeriod bars. Index variant of MINMAX.
  *
  * Formula and more info at
  * [ta-lib.org/functions/minmaxindex](https://ta-lib.org/functions/minmaxindex).
@@ -428,7 +428,7 @@ export class MinmaxindexStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MINMAXINDEX advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MINMAXINDEX advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -436,25 +436,26 @@ export class MinmaxindexStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inReal - The bar's `inReal` value: Input series scanned for extremes.
+   * @param real - The bar's `real` value: Input series scanned for extremes.
    * @param out - Receives the outputs and is returned; a new {@link MinmaxindexOut}
    *   when omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, out?: MinmaxindexOut): MinmaxindexOut {
+  update(real: number, out?: MinmaxindexOut): MinmaxindexOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MINMAXINDEX update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MINMAXINDEX update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MINMAXINDEX update', 'MinmaxindexOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MINMAXINDEX update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MINMAXINDEX update', 'real');
     }
-    minmaxindexStepImpl(this, inReal);
+    minmaxindexStepImpl(this, real);
     this.outRangeCount++;
     if (out === undefined) {
       out = new MinmaxindexOut();
@@ -467,21 +468,22 @@ export class MinmaxindexStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input series scanned for extremes.
+   * @param real - The bar's `real` value: Input series scanned for extremes.
    * @param out - Receives the outputs and is returned; a new {@link MinmaxindexOut}
    *   when omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inReal: number, out?: MinmaxindexOut): MinmaxindexOut {
+  peek(real: number, out?: MinmaxindexOut): MinmaxindexOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('MINMAXINDEX peek', 'MinmaxindexOut');
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MINMAXINDEX peek', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MINMAXINDEX peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tmpHigh = 0;
     let tmpLow = 0;
     let cur_outMaxIdx = 0;
@@ -543,6 +545,8 @@ export class MinmaxindexStream {
    * @param out - Receives the outputs and is returned; a new {@link MinmaxindexOut}
    *   when omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: MinmaxindexOut): MinmaxindexOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -588,9 +592,9 @@ export class MinmaxindexStream {
  * it holds its values until the next call that writes it. A new one holds `NaN`.
  */
 export class MinmaxindexOut {
-  /** Absolute index (into inReal) of the window minimum. */
+  /** Absolute index (into real) of the window minimum. */
   outMinIdx: number = NaN;
-  /** Absolute index (into inReal) of the window maximum. */
+  /** Absolute index (into real) of the window maximum. */
   outMaxIdx: number = NaN;
 }
 
@@ -834,7 +838,7 @@ export function minmaxindexOpenPositional(
 ): MinmaxindexStream {
   optInTimePeriod = requireInt32('MINMAXINDEX open', 'timePeriod', optInTimePeriod);
   requireArgument('MINMAXINDEX open', 'real', inReal);
-  requireHistory('MINMAXINDEX open', inReal.length);
+  requireHistory('MINMAXINDEX open', 'real', inReal.length);
   return minmaxindexOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -848,7 +852,7 @@ export function minmaxindexOpenAndFillPositional(
 ): MinmaxindexStream {
   optInTimePeriod = requireInt32('MINMAXINDEX openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('MINMAXINDEX openAndFill', 'real', inReal);
-  requireHistory('MINMAXINDEX openAndFill', inReal.length);
+  requireHistory('MINMAXINDEX openAndFill', 'real', inReal.length);
   const guardLookback = minmaxindexLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('MINMAXINDEX openAndFill', PARAM_RANGES, optInTimePeriod);

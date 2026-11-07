@@ -364,7 +364,7 @@ export class Cdl3outsideStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CDL3OUTSIDE advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CDL3OUTSIDE advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -372,23 +372,23 @@ export class Cdl3outsideStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inOpen - The bar's `inOpen` value: Open price of each bar.
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param open - The bar's `open` value: Open price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inOpen: number, inHigh: number, inLow: number, inClose: number): number {
+  update(open: number, high: number, low: number, close: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CDL3OUTSIDE update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CDL3OUTSIDE update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inOpen) || !Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('CDL3OUTSIDE update', !Number.isFinite(inOpen) ? 'inOpen' : !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(open) || !Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('CDL3OUTSIDE update', !Number.isFinite(open) ? 'open' : !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    cdl3outsideStepImpl(this, inOpen, inHigh, inLow, inClose);
+    cdl3outsideStepImpl(this, open, high, low, close);
     this.outRangeCount++;
     return this.cur_outInteger;
   }
@@ -396,19 +396,20 @@ export class Cdl3outsideStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inOpen - The bar's `inOpen` value: Open price of each bar.
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param open - The bar's `open` value: Open price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inOpen: number, inHigh: number, inLow: number, inClose: number): number {
-    if (!Number.isFinite(inOpen) || !Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('CDL3OUTSIDE peek', !Number.isFinite(inOpen) ? 'inOpen' : !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+  peek(open: number, high: number, low: number, close: number): number {
+    if (!Number.isFinite(open) || !Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('CDL3OUTSIDE peek', !Number.isFinite(open) ? 'open' : !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inClose = close;
     let cur_outInteger = 0;
     if (((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : -1) === 1 &&
          ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : -1) === -1 && /* white engulfs black */
@@ -617,7 +618,7 @@ export function cdl3outsideOpenPositional(
   core: Core = Core.DEFAULT,
 ): Cdl3outsideStream {
   requireArgument('CDL3OUTSIDE open', 'prices.open', inOpen);
-  requireHistory('CDL3OUTSIDE open', inOpen.length);
+  requireHistory('CDL3OUTSIDE open', 'prices.open', inOpen.length);
   requireArgument('CDL3OUTSIDE open', 'prices.high', inHigh);
   requireArgument('CDL3OUTSIDE open', 'prices.low', inLow);
   requireArgument('CDL3OUTSIDE open', 'prices.close', inClose);
@@ -637,7 +638,7 @@ export function cdl3outsideOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): Cdl3outsideStream {
   requireArgument('CDL3OUTSIDE openAndFill', 'prices.open', inOpen);
-  requireHistory('CDL3OUTSIDE openAndFill', inOpen.length);
+  requireHistory('CDL3OUTSIDE openAndFill', 'prices.open', inOpen.length);
   requireArgument('CDL3OUTSIDE openAndFill', 'prices.high', inHigh);
   requireArgument('CDL3OUTSIDE openAndFill', 'prices.low', inLow);
   requireArgument('CDL3OUTSIDE openAndFill', 'prices.close', inClose);

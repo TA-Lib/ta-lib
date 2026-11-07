@@ -325,6 +325,7 @@ pub fn generate(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
+    super::ts_doc::seed_function_names(registry.names());
     let resolved = func.resolved_for(Lang::Ts);
     let func: &FuncDef = &resolved;
     let module = module_stem(func);
@@ -2630,7 +2631,8 @@ pub fn render_package_json(version: &str) -> String {
     "./metadata": {{
       "types": "./dist/metadata/index.d.ts",
       "default": "./dist/metadata/index.js"
-    }}
+    }},
+    "./package.json": "./package.json"
   }},
   "types": "./dist/index.d.ts",
   "typesVersions": {{

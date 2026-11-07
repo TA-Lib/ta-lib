@@ -264,7 +264,7 @@ export class AsinStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ASIN advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ASIN advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -272,21 +272,21 @@ export class AsinStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input values (domain \[-1,1] for a
-   *   real result)
+   * @param real - The bar's `real` value: Input values (domain \[-1,1] for a real
+   *   result)
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ASIN update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ASIN update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ASIN update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ASIN update', 'real');
     }
-    asinStepImpl(this, inReal);
+    asinStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -294,16 +294,17 @@ export class AsinStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input values (domain \[-1,1] for a
-   *   real result)
+   * @param real - The bar's `real` value: Input values (domain \[-1,1] for a real
+   *   result)
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ASIN peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ASIN peek', 'real');
     }
+    const inReal = real;
     let cur_outReal = 0;
     cur_outReal = Math.asin(inReal);
     return cur_outReal;
@@ -413,7 +414,7 @@ export function asinOpenPositional(
   core: Core = Core.DEFAULT,
 ): AsinStream {
   requireArgument('ASIN open', 'real', inReal);
-  requireHistory('ASIN open', inReal.length);
+  requireHistory('ASIN open', 'real', inReal.length);
   return asinOpenInternal(core, float64(inReal), 0);
 }
 
@@ -424,7 +425,7 @@ export function asinOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): AsinStream {
   requireArgument('ASIN openAndFill', 'real', inReal);
-  requireHistory('ASIN openAndFill', inReal.length);
+  requireHistory('ASIN openAndFill', 'real', inReal.length);
   const guardOutLen = openFillCount('ASIN openAndFill', inReal.length, asinLookbackPositional(core));
   requireOutput('ASIN openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);

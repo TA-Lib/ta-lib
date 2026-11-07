@@ -462,8 +462,7 @@ export function maDisplayShift(outputIdx: number, options?: MaOptions): number {
 
 /**
  * Generic moving-average dispatcher that forwards the job to the MA implementation
- * selected by optInMAType. Single uniform interface over all TA-Lib moving
- * averages.
+ * selected by maType. Single uniform interface over all TA-Lib moving averages.
  *
  * Formula and more info at
  * [ta-lib.org/functions/ma](https://ta-lib.org/functions/ma).
@@ -471,12 +470,12 @@ export function maDisplayShift(outputIdx: number, options?: MaOptions): number {
  * **Notes**
  * - A period of 1 performs no smoothing for every MAType: the output is a copy of
  *   the input.
- * - `TA_MAType_DISABLED` bypasses smoothing explicitly, for any period: the output
- *   is a copy of the input with a lookback of 0. Every function that takes an
- *   MAType parameter accepts it.
- * - `TA_MAType_DEFAULT` selects the documented default of the parameter it is
- *   passed to — SMA here, EMA for APO, PPO and PVO. Every function that takes an
- *   MAType parameter accepts it.
+ * - `MAType.DISABLED` bypasses smoothing explicitly, for any period: the output is
+ *   a copy of the input with a lookback of 0. Every function that takes an MAType
+ *   parameter accepts it.
+ * - `MAType.DEFAULT` selects the documented default of the parameter it is passed
+ *   to — SMA here, EMA for APO, PPO and PVO. Every function that takes an MAType
+ *   parameter accepts it.
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends
@@ -591,7 +590,7 @@ export class MaStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MA advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MA advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -599,20 +598,20 @@ export class MaStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Series to average.
+   * @param real - The bar's `real` value: Series to average.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MA update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MA update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MA update', 'real');
     }
-    maStepImpl(this, inReal);
+    maStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -620,16 +619,17 @@ export class MaStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Series to average.
+   * @param real - The bar's `real` value: Series to average.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MA peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MA peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     const sub = sp.sub;
     switch (sp.arm) {
       case -1:
@@ -679,7 +679,7 @@ export class MaStream {
         return (sub as AlmaStream).peek(inReal);
       }
       default:
-        throw new Error('unreachable: open rejects arms without a sub-stream');
+        throw failure('MA peek', RetCode.INTERNAL_ERROR);
     }
   }
 
@@ -1331,7 +1331,7 @@ export function maOpenPositional(
   optInTimePeriod = requireInt32('MA open', 'timePeriod', optInTimePeriod);
   optInMAType = requireInt32('MA open', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('MA open', 'real', inReal);
-  requireHistory('MA open', inReal.length);
+  requireHistory('MA open', 'real', inReal.length);
   return maOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInMAType);
 }
 
@@ -1346,7 +1346,7 @@ export function maOpenAndFillPositional(
   optInTimePeriod = requireInt32('MA openAndFill', 'timePeriod', optInTimePeriod);
   optInMAType = requireInt32('MA openAndFill', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('MA openAndFill', 'real', inReal);
-  requireHistory('MA openAndFill', inReal.length);
+  requireHistory('MA openAndFill', 'real', inReal.length);
   const guardLookback = maLookbackPositional(optInTimePeriod, optInMAType as MAType, core);
   if (guardLookback < 0) {
     throw rejectedParams('MA openAndFill', PARAM_RANGES, optInTimePeriod, optInMAType);
@@ -1601,7 +1601,7 @@ export function maPeekTape(sp: MaStream, tape: Float64Array, tapeBase: number, t
       return almaPeekTape(sp.sub as AlmaStream, tape, tapeBase, tapeMask, inReal);
     }
     default:
-      throw new Error('unreachable: open rejects arms without a sub-stream');
+      throw failure('MA peek', RetCode.INTERNAL_ERROR);
   }
 }
 

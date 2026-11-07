@@ -384,8 +384,8 @@ export function linearregDisplayShift(outputIdx: number, options?: LinearregOpti
 }
 
 /**
- * Least-squares straight-line fit over the last optInTimePeriod bars, reported as
- * the fitted line value at the window endpoint (b + m*(period-1)).
+ * Least-squares straight-line fit over the last timePeriod bars, reported as the
+ * fitted line value at the window endpoint (b + m*(period-1)).
  *
  * Formula and more info at
  * [ta-lib.org/functions/linearreg](https://ta-lib.org/functions/linearreg).
@@ -512,7 +512,7 @@ export class LinearregStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('LINEARREG advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('LINEARREG advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -520,20 +520,20 @@ export class LinearregStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Series to fit.
+   * @param real - The bar's `real` value: Series to fit.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('LINEARREG update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('LINEARREG update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('LINEARREG update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('LINEARREG update', 'real');
     }
-    linearregStepImpl(this, inReal);
+    linearregStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -541,16 +541,17 @@ export class LinearregStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Series to fit.
+   * @param real - The bar's `real` value: Series to fit.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('LINEARREG peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('LINEARREG peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let m = 0;
     let b = 0;
     let windowStart = 0;
@@ -1085,7 +1086,7 @@ export function linearregOpenPositional(
 ): LinearregStream {
   optInTimePeriod = requireInt32('LINEARREG open', 'timePeriod', optInTimePeriod);
   requireArgument('LINEARREG open', 'real', inReal);
-  requireHistory('LINEARREG open', inReal.length);
+  requireHistory('LINEARREG open', 'real', inReal.length);
   return linearregOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -1098,7 +1099,7 @@ export function linearregOpenAndFillPositional(
 ): LinearregStream {
   optInTimePeriod = requireInt32('LINEARREG openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('LINEARREG openAndFill', 'real', inReal);
-  requireHistory('LINEARREG openAndFill', inReal.length);
+  requireHistory('LINEARREG openAndFill', 'real', inReal.length);
   const guardLookback = linearregLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('LINEARREG openAndFill', PARAM_RANGES, optInTimePeriod);

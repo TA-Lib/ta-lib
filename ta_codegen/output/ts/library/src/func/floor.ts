@@ -258,7 +258,7 @@ export class FloorStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('FLOOR advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('FLOOR advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -266,20 +266,20 @@ export class FloorStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input values.
+   * @param real - The bar's `real` value: Input values.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('FLOOR update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('FLOOR update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('FLOOR update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('FLOOR update', 'real');
     }
-    floorStepImpl(this, inReal);
+    floorStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -287,15 +287,16 @@ export class FloorStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input values.
+   * @param real - The bar's `real` value: Input values.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('FLOOR peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('FLOOR peek', 'real');
     }
+    const inReal = real;
     let cur_outReal = 0;
     cur_outReal = Math.floor(inReal);
     return cur_outReal;
@@ -405,7 +406,7 @@ export function floorOpenPositional(
   core: Core = Core.DEFAULT,
 ): FloorStream {
   requireArgument('FLOOR open', 'real', inReal);
-  requireHistory('FLOOR open', inReal.length);
+  requireHistory('FLOOR open', 'real', inReal.length);
   return floorOpenInternal(core, float64(inReal), 0);
 }
 
@@ -416,7 +417,7 @@ export function floorOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): FloorStream {
   requireArgument('FLOOR openAndFill', 'real', inReal);
-  requireHistory('FLOOR openAndFill', inReal.length);
+  requireHistory('FLOOR openAndFill', 'real', inReal.length);
   const guardOutLen = openFillCount('FLOOR openAndFill', inReal.length, floorLookbackPositional(core));
   requireOutput('FLOOR openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);

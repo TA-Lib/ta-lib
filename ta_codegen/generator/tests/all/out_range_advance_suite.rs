@@ -189,7 +189,7 @@ fn assert_ceiling_is_answered_first(what: &str, lang: &str, body: &str) {
         ],
         "ts" => [
             ceiling_needle("ts"),
-            "throw failure(",
+            "throw streamFailure(",
             "RetCode.OUT_OF_RANGE_END_INDEX",
         ],
         other => panic!("unknown backend {other}"),
@@ -224,7 +224,7 @@ fn finite_test(lang: &str, bars: &[String]) -> String {
             "rust" => format!("!{b}.is_finite()"),
             "java" => format!("!Double.isFinite({b})"),
             "csharp" => format!("!double.IsFinite({b})"),
-            "ts" => format!("!Number.isFinite({b})"),
+            "ts" => format!("!Number.isFinite({})", backends::ts::input_param_name(b)),
             other => panic!("unknown backend {other}"),
         })
         .collect();

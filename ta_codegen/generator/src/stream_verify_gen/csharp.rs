@@ -35,7 +35,7 @@ fn emit_csharp_sv_func(
     let base_pascal = crate::backends::common::pascal_words(&func.name);
     let class = crate::backends::csharp_stream::stream_class_name(func);
     let valty = crate::backends::csharp_stream::value_type_name(func);
-    let candle = func.name.starts_with("CDL");
+    let candle = func.is_candlestick();
     let inputs = crate::streaming::input_array_names(func);
     let mut gi = 0usize;
     let arrays: Vec<&'static str> = inputs

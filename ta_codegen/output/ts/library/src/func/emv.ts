@@ -461,7 +461,7 @@ export class EmvStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('EMV advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('EMV advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -469,22 +469,22 @@ export class EmvStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inVolume: number): number {
+  update(high: number, low: number, volume: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('EMV update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('EMV update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('EMV update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inVolume');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('EMV update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'volume');
     }
-    emvStepImpl(this, inHigh, inLow, inVolume);
+    emvStepImpl(this, high, low, volume);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -492,18 +492,21 @@ export class EmvStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inVolume: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('EMV peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inVolume');
+  peek(high: number, low: number, volume: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('EMV peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'volume');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
+    const inVolume = volume;
     let mid = 0;
     let range = 0;
     let boxRatio = 0;
@@ -805,7 +808,7 @@ export function emvOpenPositional(
   optInTimePeriod = requireInt32('EMV open', 'timePeriod', optInTimePeriod);
   optInVolumeDivisor = requireReal('EMV open', 'volumeDivisor', optInVolumeDivisor);
   requireArgument('EMV open', 'prices.high', inHigh);
-  requireHistory('EMV open', inHigh.length);
+  requireHistory('EMV open', 'prices.high', inHigh.length);
   requireArgument('EMV open', 'prices.low', inLow);
   requireArgument('EMV open', 'prices.volume', inVolume);
   requireHistoryLength('EMV open', 'prices.low', inLow.length, inHigh.length);
@@ -826,7 +829,7 @@ export function emvOpenAndFillPositional(
   optInTimePeriod = requireInt32('EMV openAndFill', 'timePeriod', optInTimePeriod);
   optInVolumeDivisor = requireReal('EMV openAndFill', 'volumeDivisor', optInVolumeDivisor);
   requireArgument('EMV openAndFill', 'prices.high', inHigh);
-  requireHistory('EMV openAndFill', inHigh.length);
+  requireHistory('EMV openAndFill', 'prices.high', inHigh.length);
   requireArgument('EMV openAndFill', 'prices.low', inLow);
   requireArgument('EMV openAndFill', 'prices.volume', inVolume);
   const guardLookback = emvLookbackPositional(optInTimePeriod, optInVolumeDivisor, core);

@@ -54,11 +54,12 @@
  * A `count` of 0 is a success: the range ended before the lookback.
  */
 export class OutRange {
-  /** An empty result. Frozen, because every empty call shares it. */
+  /** The empty range `(0, 0)`, frozen. */
   static readonly EMPTY: OutRange = Object.freeze(new OutRange(0, 0));
 
   /** Input index of the first value; 0 when `count` is 0. */
   readonly begIdx: number;
+  /** How many values the output holds. */
   readonly count: number;
 
   constructor(begIdx: number, count: number) {
@@ -66,6 +67,7 @@ export class OutRange {
     this.count = count;
   }
 
+  /** `count` is 0: the range ended before the lookback. */
   isEmpty(): boolean {
     return this.count === 0;
   }

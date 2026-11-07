@@ -314,7 +314,7 @@ export function maxDisplayShift(outputIdx: number, options?: MaxOptions): number
 }
 
 /**
- * Highest input value over a rolling window of the last optInTimePeriod bars. A
+ * Highest input value over a rolling window of the last timePeriod bars. A
  * moving-window maximum.
  *
  * Formula and more info at
@@ -431,7 +431,7 @@ export class MaxStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MAX advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MAX advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -439,20 +439,20 @@ export class MaxStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Series to take the rolling maximum of.
+   * @param real - The bar's `real` value: Series to take the rolling maximum of.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MAX update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MAX update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MAX update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MAX update', 'real');
     }
-    maxStepImpl(this, inReal);
+    maxStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -460,16 +460,17 @@ export class MaxStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Series to take the rolling maximum of.
+   * @param real - The bar's `real` value: Series to take the rolling maximum of.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MAX peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MAX peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tmp = 0;
     let cur_outReal = 0;
     let highest = sp.highest;
@@ -730,7 +731,7 @@ export function maxOpenPositional(
 ): MaxStream {
   optInTimePeriod = requireInt32('MAX open', 'timePeriod', optInTimePeriod);
   requireArgument('MAX open', 'real', inReal);
-  requireHistory('MAX open', inReal.length);
+  requireHistory('MAX open', 'real', inReal.length);
   return maxOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -743,7 +744,7 @@ export function maxOpenAndFillPositional(
 ): MaxStream {
   optInTimePeriod = requireInt32('MAX openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('MAX openAndFill', 'real', inReal);
-  requireHistory('MAX openAndFill', inReal.length);
+  requireHistory('MAX openAndFill', 'real', inReal.length);
   const guardLookback = maxLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('MAX openAndFill', PARAM_RANGES, optInTimePeriod);

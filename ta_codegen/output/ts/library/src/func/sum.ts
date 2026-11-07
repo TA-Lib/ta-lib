@@ -235,7 +235,7 @@ export function sumDisplayShift(outputIdx: number, options?: SumOptions): number
 
 /**
  * Rolling sum of the input over a fixed period. Each output is the sum of the most
- * recent optInTimePeriod input values.
+ * recent timePeriod input values.
  *
  * Formula and more info at
  * [ta-lib.org/functions/sum](https://ta-lib.org/functions/sum).
@@ -341,7 +341,7 @@ export class SumStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SUM advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SUM advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -349,20 +349,20 @@ export class SumStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Values to sum.
+   * @param real - The bar's `real` value: Values to sum.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SUM update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SUM update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SUM update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SUM update', 'real');
     }
-    sumStepImpl(this, inReal);
+    sumStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -370,16 +370,17 @@ export class SumStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Values to sum.
+   * @param real - The bar's `real` value: Values to sum.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SUM peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SUM peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tempReal = 0;
     let cur_outReal = 0;
     let periodTotal = sp.periodTotal;
@@ -577,7 +578,7 @@ export function sumOpenPositional(
 ): SumStream {
   optInTimePeriod = requireInt32('SUM open', 'timePeriod', optInTimePeriod);
   requireArgument('SUM open', 'real', inReal);
-  requireHistory('SUM open', inReal.length);
+  requireHistory('SUM open', 'real', inReal.length);
   return sumOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -590,7 +591,7 @@ export function sumOpenAndFillPositional(
 ): SumStream {
   optInTimePeriod = requireInt32('SUM openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('SUM openAndFill', 'real', inReal);
-  requireHistory('SUM openAndFill', inReal.length);
+  requireHistory('SUM openAndFill', 'real', inReal.length);
   const guardLookback = sumLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('SUM openAndFill', PARAM_RANGES, optInTimePeriod);

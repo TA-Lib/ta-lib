@@ -534,7 +534,7 @@ export class NatrStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('NATR advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('NATR advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -542,22 +542,22 @@ export class NatrStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number): number {
+  update(high: number, low: number, close: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('NATR update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('NATR update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('NATR update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('NATR update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    natrStepImpl(this, inHigh, inLow, inClose);
+    natrStepImpl(this, high, low, close);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -565,18 +565,21 @@ export class NatrStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('NATR peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+  peek(high: number, low: number, close: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('NATR peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let tempValue = 0;
     let val2 = 0;
     let val3 = 0;
@@ -967,7 +970,7 @@ export function natrOpenPositional(
 ): NatrStream {
   optInTimePeriod = requireInt32('NATR open', 'timePeriod', optInTimePeriod);
   requireArgument('NATR open', 'prices.high', inHigh);
-  requireHistory('NATR open', inHigh.length);
+  requireHistory('NATR open', 'prices.high', inHigh.length);
   requireArgument('NATR open', 'prices.low', inLow);
   requireArgument('NATR open', 'prices.close', inClose);
   requireHistoryLength('NATR open', 'prices.low', inLow.length, inHigh.length);
@@ -986,7 +989,7 @@ export function natrOpenAndFillPositional(
 ): NatrStream {
   optInTimePeriod = requireInt32('NATR openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('NATR openAndFill', 'prices.high', inHigh);
-  requireHistory('NATR openAndFill', inHigh.length);
+  requireHistory('NATR openAndFill', 'prices.high', inHigh.length);
   requireArgument('NATR openAndFill', 'prices.low', inLow);
   requireArgument('NATR openAndFill', 'prices.close', inClose);
   const guardLookback = natrLookbackPositional(optInTimePeriod, core);

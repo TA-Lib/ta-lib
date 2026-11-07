@@ -575,7 +575,7 @@ export class SharpeStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SHARPE advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SHARPE advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -583,21 +583,21 @@ export class SharpeStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: The price series; its returns are
-   *   computed internally.
+   * @param real - The bar's `real` value: The price series; its returns are computed
+   *   internally.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SHARPE update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SHARPE update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SHARPE update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SHARPE update', 'real');
     }
-    sharpeStepImpl(this, inReal);
+    sharpeStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -605,17 +605,18 @@ export class SharpeStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: The price series; its returns are
-   *   computed internally.
+   * @param real - The bar's `real` value: The price series; its returns are computed
+   *   internally.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SHARPE peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SHARPE peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let price = 0;
     let trailingPrevPrice = 0;
     let windowPrevPrice = 0;
@@ -1242,7 +1243,7 @@ export function sharpeOpenPositional(
   optInRiskFreeRate = requireReal('SHARPE open', 'riskFreeRate', optInRiskFreeRate);
   optInAnnualization = requireReal('SHARPE open', 'annualization', optInAnnualization);
   requireArgument('SHARPE open', 'real', inReal);
-  requireHistory('SHARPE open', inReal.length);
+  requireHistory('SHARPE open', 'real', inReal.length);
   return sharpeOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInRiskFreeRate, optInAnnualization);
 }
 
@@ -1259,7 +1260,7 @@ export function sharpeOpenAndFillPositional(
   optInRiskFreeRate = requireReal('SHARPE openAndFill', 'riskFreeRate', optInRiskFreeRate);
   optInAnnualization = requireReal('SHARPE openAndFill', 'annualization', optInAnnualization);
   requireArgument('SHARPE openAndFill', 'real', inReal);
-  requireHistory('SHARPE openAndFill', inReal.length);
+  requireHistory('SHARPE openAndFill', 'real', inReal.length);
   const guardLookback = sharpeLookbackPositional(optInTimePeriod, optInRiskFreeRate, optInAnnualization, core);
   if (guardLookback < 0) {
     throw rejectedParams('SHARPE openAndFill', PARAM_RANGES, optInTimePeriod, optInRiskFreeRate, optInAnnualization);

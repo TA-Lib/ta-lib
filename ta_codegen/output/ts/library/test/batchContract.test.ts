@@ -246,17 +246,17 @@ test('given an endIdx, an index fault outranks an absent or short argument and a
       return a;
     };
     // Given a range, the order every backend shares: the range first.
-    rejects(() => call(s, -1, N - 1, without(inK)), 'TA_OUT_OF_RANGE_START_INDEX', `${s.fn}: startIdx -1, no ${inName}`, `${s.fn}: startIdx out of range`);
-    rejects(() => call(s, 0, Core.INDEX_MAX + 1, without(inK)), 'TA_OUT_OF_RANGE_END_INDEX', `${s.fn}: endIdx past INDEX_MAX, no ${inName}`, `${s.fn}: endIdx out of range`);
+    rejects(() => call(s, -1, N - 1, without(inK)), 'TA_OUT_OF_RANGE_START_INDEX', `${s.fn}: startIdx -1, no ${inName}`, `${s.fn}: startIdx must be in 0..${Core.INDEX_MAX}, got -1`);
+    rejects(() => call(s, 0, Core.INDEX_MAX + 1, without(inK)), 'TA_OUT_OF_RANGE_END_INDEX', `${s.fn}: endIdx past INDEX_MAX, no ${inName}`, `${s.fn}: endIdx must be in 0..${Core.INDEX_MAX}, got ${Core.INDEX_MAX + 1}`);
     // An omitted endIdx reads the inputs' length, so an absent one is named first.
     const omitted = undefined as unknown as number;
     rejects(() => call(s, -1, omitted, without(inK)), 'TA_BAD_PARAM', `${s.fn}: startIdx -1, endIdx omitted, no ${inName}`, `${s.fn}: ${inKey} is absent`);
     rejects(() => call(s, Core.INDEX_MAX + 5, omitted, without(inK)), 'TA_BAD_PARAM', `${s.fn}: startIdx past INDEX_MAX, endIdx omitted, no ${inName}`, `${s.fn}: ${inKey} is absent`);
     presence += 2;
-    rejects(() => call(s, -1, N - 1, shortIn()), 'TA_OUT_OF_RANGE_START_INDEX', `${s.fn}: startIdx -1, short ${inName}`, `${s.fn}: startIdx out of range`);
-    rejects(() => call(s, 50, 10, without(outK)), 'TA_OUT_OF_RANGE_END_INDEX', `${s.fn}: endIdx < startIdx, no output`, `${s.fn}: endIdx out of range`);
-    rejects(() => call(s, 0, Core.INDEX_MAX + 1, shortIn()), 'TA_OUT_OF_RANGE_END_INDEX', `${s.fn}: endIdx past INDEX_MAX, short ${inName}`, `${s.fn}: endIdx out of range`);
-    rejects(() => call(s, Core.INDEX_MAX + 5, Core.INDEX_MAX + 9, without(outK)), 'TA_OUT_OF_RANGE_START_INDEX', `${s.fn}: startIdx past INDEX_MAX, no output`, `${s.fn}: startIdx out of range`);
+    rejects(() => call(s, -1, N - 1, shortIn()), 'TA_OUT_OF_RANGE_START_INDEX', `${s.fn}: startIdx -1, short ${inName}`, `${s.fn}: startIdx must be in 0..${Core.INDEX_MAX}, got -1`);
+    rejects(() => call(s, 50, 10, without(outK)), 'TA_OUT_OF_RANGE_END_INDEX', `${s.fn}: endIdx < startIdx, no output`, `${s.fn}: endIdx must be in 50..${Core.INDEX_MAX}, got 10`);
+    rejects(() => call(s, 0, Core.INDEX_MAX + 1, shortIn()), 'TA_OUT_OF_RANGE_END_INDEX', `${s.fn}: endIdx past INDEX_MAX, short ${inName}`, `${s.fn}: endIdx must be in 0..${Core.INDEX_MAX}, got ${Core.INDEX_MAX + 1}`);
+    rejects(() => call(s, Core.INDEX_MAX + 5, Core.INDEX_MAX + 9, without(outK)), 'TA_OUT_OF_RANGE_START_INDEX', `${s.fn}: startIdx past INDEX_MAX, no output`, `${s.fn}: startIdx must be in 0..${Core.INDEX_MAX}, got ${Core.INDEX_MAX + 5}`);
     index += 4;
     rejects(() => call(s, 0, N - 1, without(inK)), 'TA_BAD_PARAM', `${s.fn}: a valid range reports the absent ${inName}`, `${s.fn}: ${inKey} is absent`);
 

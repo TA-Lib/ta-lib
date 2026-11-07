@@ -595,10 +595,10 @@ export function ppoDisplayShift(outputIdx: number, options?: PpoOptions): number
  *   Near zero the divisor is small and the output very large; no error is
  *   returned. A series that reaches or crosses zero, such as an oscillator or a
  *   spread, has no meaningful result here.
- * - `optInMAType` applies to both the fast and slow moving average.
- *   `TA_MAType_MAMA` ignores its period argument, so with
- *   `optInMAType = TA_MAType_MAMA` the fast and slow MAs are identical, making the
- *   numerator — and therefore the output — zero at every bar.
+ * - `maType` applies to both the fast and slow moving average. `MAType.MAMA`
+ *   ignores its period argument, so with `maType = MAType.MAMA` the fast and slow
+ *   MAs are identical, making the numerator — and therefore the output — zero at
+ *   every bar.
  * - If the slow period is set smaller than the fast period, the two are swapped,
  *   as in `MACD`.
  *
@@ -717,7 +717,7 @@ export class PpoStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PPO advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PPO advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -725,20 +725,20 @@ export class PpoStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input data series.
+   * @param real - The bar's `real` value: Input data series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PPO update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PPO update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('PPO update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('PPO update', 'real');
     }
-    ppoStepImpl(this, inReal);
+    ppoStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -746,16 +746,17 @@ export class PpoStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input data series.
+   * @param real - The bar's `real` value: Input data series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('PPO peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('PPO peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tempReal = 0;
     let cur_tempBuffer = 0;
     let cur_outReal = 0;
@@ -1057,7 +1058,7 @@ export function ppoOpenPositional(
   optInSlowPeriod = requireInt32('PPO open', 'slowPeriod', optInSlowPeriod);
   optInMAType = requireInt32('PPO open', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('PPO open', 'real', inReal);
-  requireHistory('PPO open', inReal.length);
+  requireHistory('PPO open', 'real', inReal.length);
   return ppoOpenInternal(core, float64(inReal), 0, optInFastPeriod, optInSlowPeriod, optInMAType);
 }
 
@@ -1074,7 +1075,7 @@ export function ppoOpenAndFillPositional(
   optInSlowPeriod = requireInt32('PPO openAndFill', 'slowPeriod', optInSlowPeriod);
   optInMAType = requireInt32('PPO openAndFill', 'maType', optInMAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('PPO openAndFill', 'real', inReal);
-  requireHistory('PPO openAndFill', inReal.length);
+  requireHistory('PPO openAndFill', 'real', inReal.length);
   const guardLookback = ppoLookbackPositional(optInFastPeriod, optInSlowPeriod, optInMAType as MAType, core);
   if (guardLookback < 0) {
     throw rejectedParams('PPO openAndFill', PARAM_RANGES, optInFastPeriod, optInSlowPeriod, optInMAType);

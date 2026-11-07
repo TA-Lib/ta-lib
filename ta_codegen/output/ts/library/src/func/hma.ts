@@ -555,7 +555,7 @@ export function hmaDisplayShift(outputIdx: number, options?: HmaOptions): number
  * [`WMA`](https://ta-lib.org/functions/wma) and subtracting the full-period one —
  * extrapolating the average toward current price — then smooths that de-lagged
  * series with a final WMA over the square root of the period. HMA is also
- * selectable as a moving-average type (`TA_MAType_HMA`) wherever an `optInMAType`
+ * selectable as a moving-average type (`MAType.HMA`) wherever an `maType`
  * parameter is accepted ([`MA`](https://ta-lib.org/functions/ma),
  * [`BBANDS`](https://ta-lib.org/functions/bbands),
  * [`STOCH`](https://ta-lib.org/functions/stoch),
@@ -741,7 +741,7 @@ export class HmaStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('HMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('HMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -749,21 +749,20 @@ export class HmaStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price series, close by
-   *   convention.
+   * @param real - The bar's `real` value: Source price series, close by convention.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('HMA update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('HMA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('HMA update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('HMA update', 'real');
     }
-    hmaStepImpl(this, inReal);
+    hmaStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -771,17 +770,17 @@ export class HmaStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price series, close by
-   *   convention.
+   * @param real - The bar's `real` value: Source price series, close by convention.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('HMA peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('HMA peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let cur_outReal = 0;
     if (sp.optInTimePeriod === 1) {
       cur_outReal = inReal;
@@ -1816,7 +1815,7 @@ export function hmaOpenPositional(
 ): HmaStream {
   optInTimePeriod = requireInt32('HMA open', 'timePeriod', optInTimePeriod);
   requireArgument('HMA open', 'real', inReal);
-  requireHistory('HMA open', inReal.length);
+  requireHistory('HMA open', 'real', inReal.length);
   return hmaOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -1829,7 +1828,7 @@ export function hmaOpenAndFillPositional(
 ): HmaStream {
   optInTimePeriod = requireInt32('HMA openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('HMA openAndFill', 'real', inReal);
-  requireHistory('HMA openAndFill', inReal.length);
+  requireHistory('HMA openAndFill', 'real', inReal.length);
   const guardLookback = hmaLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('HMA openAndFill', PARAM_RANGES, optInTimePeriod);

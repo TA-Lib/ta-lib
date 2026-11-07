@@ -317,7 +317,7 @@ export class PvtStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PVT advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PVT advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -325,21 +325,21 @@ export class PvtStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inClose: number, inVolume: number): number {
+  update(close: number, volume: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PVT update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PVT update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('PVT update', !Number.isFinite(inClose) ? 'inClose' : 'inVolume');
+    if (!Number.isFinite(close) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('PVT update', !Number.isFinite(close) ? 'close' : 'volume');
     }
-    pvtStepImpl(this, inClose, inVolume);
+    pvtStepImpl(this, close, volume);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -347,17 +347,19 @@ export class PvtStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inClose: number, inVolume: number): number {
-    if (!Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('PVT peek', !Number.isFinite(inClose) ? 'inClose' : 'inVolume');
+  peek(close: number, volume: number): number {
+    if (!Number.isFinite(close) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('PVT peek', !Number.isFinite(close) ? 'close' : 'volume');
     }
     const sp = this;
+    const inClose = close;
+    const inVolume = volume;
     let tempClose = 0;
     let cur_outReal = 0;
     let prevPVT = sp.prevPVT;
@@ -513,7 +515,7 @@ export function pvtOpenPositional(
   core: Core = Core.DEFAULT,
 ): PvtStream {
   requireArgument('PVT open', 'prices.close', inClose);
-  requireHistory('PVT open', inClose.length);
+  requireHistory('PVT open', 'prices.close', inClose.length);
   requireArgument('PVT open', 'prices.volume', inVolume);
   requireHistoryLength('PVT open', 'prices.volume', inVolume.length, inClose.length);
   return pvtOpenInternal(core, float64(inClose), float64(inVolume), 0);
@@ -527,7 +529,7 @@ export function pvtOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): PvtStream {
   requireArgument('PVT openAndFill', 'prices.close', inClose);
-  requireHistory('PVT openAndFill', inClose.length);
+  requireHistory('PVT openAndFill', 'prices.close', inClose.length);
   requireArgument('PVT openAndFill', 'prices.volume', inVolume);
   const guardOutLen = openFillCount('PVT openAndFill', inClose.length, pvtLookbackPositional(core));
   requireHistoryLength('PVT openAndFill', 'prices.volume', inVolume.length, inClose.length);

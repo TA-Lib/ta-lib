@@ -263,7 +263,7 @@ export class AcosStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ACOS advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ACOS advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -271,20 +271,20 @@ export class AcosStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: input values (expected in \[-1, 1])
+   * @param real - The bar's `real` value: input values (expected in \[-1, 1])
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ACOS update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ACOS update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ACOS update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ACOS update', 'real');
     }
-    acosStepImpl(this, inReal);
+    acosStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -292,15 +292,16 @@ export class AcosStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: input values (expected in \[-1, 1])
+   * @param real - The bar's `real` value: input values (expected in \[-1, 1])
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ACOS peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ACOS peek', 'real');
     }
+    const inReal = real;
     let cur_outReal = 0;
     cur_outReal = Math.acos(inReal);
     return cur_outReal;
@@ -410,7 +411,7 @@ export function acosOpenPositional(
   core: Core = Core.DEFAULT,
 ): AcosStream {
   requireArgument('ACOS open', 'real', inReal);
-  requireHistory('ACOS open', inReal.length);
+  requireHistory('ACOS open', 'real', inReal.length);
   return acosOpenInternal(core, float64(inReal), 0);
 }
 
@@ -421,7 +422,7 @@ export function acosOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): AcosStream {
   requireArgument('ACOS openAndFill', 'real', inReal);
-  requireHistory('ACOS openAndFill', inReal.length);
+  requireHistory('ACOS openAndFill', 'real', inReal.length);
   const guardOutLen = openFillCount('ACOS openAndFill', inReal.length, acosLookbackPositional(core));
   requireOutput('ACOS openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);

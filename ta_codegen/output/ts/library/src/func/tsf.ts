@@ -339,7 +339,7 @@ export interface TsfResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * Regression line value projected to x=period (one step past LINEARREG)
+   * Regression line value projected to x=period (one step past LINEARREG).
    * `values[k]` is the value at input bar `begIdx + k`.
    */
   values: Float64Array;
@@ -510,7 +510,7 @@ export class TsfStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('TSF advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('TSF advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -518,20 +518,20 @@ export class TsfStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input series to regress and forecast.
+   * @param real - The bar's `real` value: Input series to regress and forecast.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('TSF update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('TSF update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('TSF update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('TSF update', 'real');
     }
-    tsfStepImpl(this, inReal);
+    tsfStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -539,16 +539,17 @@ export class TsfStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input series to regress and forecast.
+   * @param real - The bar's `real` value: Input series to regress and forecast.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('TSF peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('TSF peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let m = 0;
     let b = 0;
     let windowStart = 0;
@@ -1083,7 +1084,7 @@ export function tsfOpenPositional(
 ): TsfStream {
   optInTimePeriod = requireInt32('TSF open', 'timePeriod', optInTimePeriod);
   requireArgument('TSF open', 'real', inReal);
-  requireHistory('TSF open', inReal.length);
+  requireHistory('TSF open', 'real', inReal.length);
   return tsfOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -1096,7 +1097,7 @@ export function tsfOpenAndFillPositional(
 ): TsfStream {
   optInTimePeriod = requireInt32('TSF openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('TSF openAndFill', 'real', inReal);
-  requireHistory('TSF openAndFill', inReal.length);
+  requireHistory('TSF openAndFill', 'real', inReal.length);
   const guardLookback = tsfLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('TSF openAndFill', PARAM_RANGES, optInTimePeriod);

@@ -549,7 +549,7 @@ export class FramaStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('FRAMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('FRAMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -557,21 +557,21 @@ export class FramaStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number): number {
+  update(high: number, low: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('FRAMA update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('FRAMA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('FRAMA update', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('FRAMA update', !Number.isFinite(high) ? 'high' : 'low');
     }
-    framaStepImpl(this, inHigh, inLow);
+    framaStepImpl(this, high, low);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -579,17 +579,19 @@ export class FramaStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('FRAMA peek', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+  peek(high: number, low: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('FRAMA peek', !Number.isFinite(high) ? 'high' : 'low');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let tmpHigh = 0;
     let tmpLow = 0;
     let hi1 = 0;
@@ -1079,7 +1081,7 @@ export function framaOpenPositional(
 ): FramaStream {
   optInTimePeriod = requireInt32('FRAMA open', 'timePeriod', optInTimePeriod);
   requireArgument('FRAMA open', 'prices.high', inHigh);
-  requireHistory('FRAMA open', inHigh.length);
+  requireHistory('FRAMA open', 'prices.high', inHigh.length);
   requireArgument('FRAMA open', 'prices.low', inLow);
   requireHistoryLength('FRAMA open', 'prices.low', inLow.length, inHigh.length);
   return framaOpenInternal(core, float64(inHigh), float64(inLow), 0, optInTimePeriod);
@@ -1095,7 +1097,7 @@ export function framaOpenAndFillPositional(
 ): FramaStream {
   optInTimePeriod = requireInt32('FRAMA openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('FRAMA openAndFill', 'prices.high', inHigh);
-  requireHistory('FRAMA openAndFill', inHigh.length);
+  requireHistory('FRAMA openAndFill', 'prices.high', inHigh.length);
   requireArgument('FRAMA openAndFill', 'prices.low', inLow);
   const guardLookback = framaLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {

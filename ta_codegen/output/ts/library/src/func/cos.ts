@@ -258,7 +258,7 @@ export class CosStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('COS advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('COS advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -266,21 +266,21 @@ export class CosStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input values, treated as angles in
+   * @param real - The bar's `real` value: Input values, treated as angles in
    *   radians.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('COS update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('COS update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('COS update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('COS update', 'real');
     }
-    cosStepImpl(this, inReal);
+    cosStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -288,16 +288,17 @@ export class CosStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input values, treated as angles in
+   * @param real - The bar's `real` value: Input values, treated as angles in
    *   radians.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('COS peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('COS peek', 'real');
     }
+    const inReal = real;
     let cur_outReal = 0;
     cur_outReal = Math.cos(inReal);
     return cur_outReal;
@@ -407,7 +408,7 @@ export function cosOpenPositional(
   core: Core = Core.DEFAULT,
 ): CosStream {
   requireArgument('COS open', 'real', inReal);
-  requireHistory('COS open', inReal.length);
+  requireHistory('COS open', 'real', inReal.length);
   return cosOpenInternal(core, float64(inReal), 0);
 }
 
@@ -418,7 +419,7 @@ export function cosOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): CosStream {
   requireArgument('COS openAndFill', 'real', inReal);
-  requireHistory('COS openAndFill', inReal.length);
+  requireHistory('COS openAndFill', 'real', inReal.length);
   const guardOutLen = openFillCount('COS openAndFill', inReal.length, cosLookbackPositional(core));
   requireOutput('COS openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);

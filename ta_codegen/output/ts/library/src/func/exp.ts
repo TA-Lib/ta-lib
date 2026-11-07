@@ -263,7 +263,7 @@ export class ExpStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('EXP advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('EXP advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -271,20 +271,20 @@ export class ExpStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input values.
+   * @param real - The bar's `real` value: Input values.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('EXP update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('EXP update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('EXP update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('EXP update', 'real');
     }
-    expStepImpl(this, inReal);
+    expStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -292,15 +292,16 @@ export class ExpStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input values.
+   * @param real - The bar's `real` value: Input values.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('EXP peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('EXP peek', 'real');
     }
+    const inReal = real;
     let cur_outReal = 0;
     cur_outReal = Math.exp(inReal);
     return cur_outReal;
@@ -410,7 +411,7 @@ export function expOpenPositional(
   core: Core = Core.DEFAULT,
 ): ExpStream {
   requireArgument('EXP open', 'real', inReal);
-  requireHistory('EXP open', inReal.length);
+  requireHistory('EXP open', 'real', inReal.length);
   return expOpenInternal(core, float64(inReal), 0);
 }
 
@@ -421,7 +422,7 @@ export function expOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): ExpStream {
   requireArgument('EXP openAndFill', 'real', inReal);
-  requireHistory('EXP openAndFill', inReal.length);
+  requireHistory('EXP openAndFill', 'real', inReal.length);
   const guardOutLen = openFillCount('EXP openAndFill', inReal.length, expLookbackPositional(core));
   requireOutput('EXP openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);

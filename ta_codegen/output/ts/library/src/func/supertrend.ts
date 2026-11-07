@@ -468,7 +468,7 @@ export function supertrendDisplayShift(outputIdx: number, options?: SupertrendOp
  *   and differ on others, and the trend flips on most bars rather than on every
  *   one.
  * - The band inherits the Average True Range's warm-up, so a caller who wants it
- *   converged sets `TA_FUNC_UNST_ATR`, exactly as when calling that function
+ *   converged sets `FuncUnstId.ATR`, exactly as when calling that function
  *   directly.
  *
  * `outSupertrend[k]` is the value at input bar `begIdx + k`; every output is
@@ -603,7 +603,7 @@ export class SupertrendStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SUPERTREND advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SUPERTREND advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -611,27 +611,28 @@ export class SupertrendStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link SupertrendOut}
    *   when omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out?: SupertrendOut): SupertrendOut {
+  update(high: number, low: number, close: number, out?: SupertrendOut): SupertrendOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SUPERTREND update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SUPERTREND update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('SUPERTREND update', 'SupertrendOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('SUPERTREND update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('SUPERTREND update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    supertrendStepImpl(this, inHigh, inLow, inClose);
+    supertrendStepImpl(this, high, low, close);
     this.outRangeCount++;
     if (out === undefined) {
       out = new SupertrendOut();
@@ -644,23 +645,26 @@ export class SupertrendStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link SupertrendOut}
    *   when omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out?: SupertrendOut): SupertrendOut {
+  peek(high: number, low: number, close: number, out?: SupertrendOut): SupertrendOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('SUPERTREND peek', 'SupertrendOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('SUPERTREND peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('SUPERTREND peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let val2 = 0;
     let val3 = 0;
     let greatest = 0;
@@ -746,6 +750,8 @@ export class SupertrendStream {
    * @param out - Receives the outputs and is returned; a new {@link SupertrendOut}
    *   when omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: SupertrendOut): SupertrendOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -1161,7 +1167,7 @@ export function supertrendOpenPositional(
   optInTimePeriod = requireInt32('SUPERTREND open', 'timePeriod', optInTimePeriod);
   optInMultiplier = requireReal('SUPERTREND open', 'multiplier', optInMultiplier);
   requireArgument('SUPERTREND open', 'prices.high', inHigh);
-  requireHistory('SUPERTREND open', inHigh.length);
+  requireHistory('SUPERTREND open', 'prices.high', inHigh.length);
   requireArgument('SUPERTREND open', 'prices.low', inLow);
   requireArgument('SUPERTREND open', 'prices.close', inClose);
   requireHistoryLength('SUPERTREND open', 'prices.low', inLow.length, inHigh.length);
@@ -1183,7 +1189,7 @@ export function supertrendOpenAndFillPositional(
   optInTimePeriod = requireInt32('SUPERTREND openAndFill', 'timePeriod', optInTimePeriod);
   optInMultiplier = requireReal('SUPERTREND openAndFill', 'multiplier', optInMultiplier);
   requireArgument('SUPERTREND openAndFill', 'prices.high', inHigh);
-  requireHistory('SUPERTREND openAndFill', inHigh.length);
+  requireHistory('SUPERTREND openAndFill', 'prices.high', inHigh.length);
   requireArgument('SUPERTREND openAndFill', 'prices.low', inLow);
   requireArgument('SUPERTREND openAndFill', 'prices.close', inClose);
   const guardLookback = supertrendLookbackPositional(optInTimePeriod, optInMultiplier, core);

@@ -387,7 +387,7 @@ export function swakButterDisplayShift(outputIdx: number, options?: SwakButterOp
  * that cuts the shortest cycles harder than the Gaussian does while keeping the
  * same pole placement. Read it as a smoothed price line. Its DC gain is 1, so a
  * flat market returns the price itself and the line sits on the chart with price.
- * The two Nyquist zeros are what separate it from `TA_SWAK_GAUSS`: a bar-to-bar
+ * The two Nyquist zeros are what separate it from `swakGauss`: a bar-to-bar
  * alternation, the fastest motion a sampled series can carry, is removed outright
  * rather than merely attenuated, which is why the numerator weights three
  * consecutive bars 1, 2, 1. The name keeps the `SWAK` prefix on purpose. This is
@@ -403,7 +403,7 @@ export function swakButterDisplayShift(outputIdx: number, options?: SwakButterOp
  * before {@link swakButterLookback} is a success with empty outputs.
  *
  * @param real - The series to filter; Ehlers' default is the bar midpoint
- *   `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+ *   `(H+L)/2`, which the caller passes as `medprice` output.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link SwakButterOptions}.
  * @returns `begIdx` and the values; see {@link SwakButterResult}. Each output is a
@@ -508,7 +508,7 @@ export class SwakButterStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SWAK_BUTTER advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SWAK_BUTTER advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -516,21 +516,21 @@ export class SwakButterStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: The series to filter; Ehlers' default
-   *   is the bar midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+   * @param real - The bar's `real` value: The series to filter; Ehlers' default is
+   *   the bar midpoint `(H+L)/2`, which the caller passes as `medprice` output.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SWAK_BUTTER update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SWAK_BUTTER update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SWAK_BUTTER update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SWAK_BUTTER update', 'real');
     }
-    swakButterStepImpl(this, inReal);
+    swakButterStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -538,17 +538,18 @@ export class SwakButterStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: The series to filter; Ehlers' default
-   *   is the bar midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+   * @param real - The bar's `real` value: The series to filter; Ehlers' default is
+   *   the bar midpoint `(H+L)/2`, which the caller passes as `medprice` output.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SWAK_BUTTER peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SWAK_BUTTER peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let x0 = 0;
     let y = 0;
     let cur_outReal = 0;
@@ -984,7 +985,7 @@ export function swakButterOpenPositional(
 ): SwakButterStream {
   optInTimePeriod = requireInt32('SWAK_BUTTER open', 'timePeriod', optInTimePeriod);
   requireArgument('SWAK_BUTTER open', 'real', inReal);
-  requireHistory('SWAK_BUTTER open', inReal.length);
+  requireHistory('SWAK_BUTTER open', 'real', inReal.length);
   return swakButterOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -997,7 +998,7 @@ export function swakButterOpenAndFillPositional(
 ): SwakButterStream {
   optInTimePeriod = requireInt32('SWAK_BUTTER openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('SWAK_BUTTER openAndFill', 'real', inReal);
-  requireHistory('SWAK_BUTTER openAndFill', inReal.length);
+  requireHistory('SWAK_BUTTER openAndFill', 'real', inReal.length);
   const guardLookback = swakButterLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('SWAK_BUTTER openAndFill', PARAM_RANGES, optInTimePeriod);
@@ -1019,7 +1020,7 @@ export function swakButterOpenAndFillPositional(
  * the last history bar, bit-identical to {@link swakButter} there.
  *
  * @param real - Warm-up history. The series to filter; Ehlers' default is the bar
- *   midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+ *   midpoint `(H+L)/2`, which the caller passes as `medprice` output.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link SwakButterOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1052,7 +1053,7 @@ export function swakButterOpen(real: ArrayLike<number>, options?: SwakButterOpti
  * the same pass, bit-identically to {@link swakButter}.
  *
  * @param real - Warm-up history. The series to filter; Ehlers' default is the bar
- *   midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+ *   midpoint `(H+L)/2`, which the caller passes as `medprice` output.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link SwakButterOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the

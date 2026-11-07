@@ -508,9 +508,10 @@ export function tsiDisplayShift(outputIdx: number, options?: TsiOptions): number
  * - Each exponential average is seeded with a simple average of its own first
  *   inputs, the same seeding TA-Lib's EMA uses, so the first published values
  *   converge toward an unlimited-history result rather than reproducing it
- *   exactly. `TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)` discards more of that
- *   warm-up. Implementations seeding from a single first sample — trading-signals
- *   among them — differ over the transient and agree once it decays.
+ *   exactly. `CoreBuilder.unstablePeriod(FuncUnstId.EMA, ...)` discards more of
+ *   that warm-up. Implementations seeding from a single first sample —
+ *   trading-signals among them — differ over the transient and agree once it
+ *   decays.
  * - The parameters are named by the order they are applied in, not fast and slow.
  *   Blau's published pair applies the longer average first, the inverse of the
  *   differenced fast/slow pairs elsewhere in the library, so swapping them
@@ -633,7 +634,7 @@ export class TsiStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('TSI advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('TSI advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -641,21 +642,21 @@ export class TsiStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series, canonically
-   *   the close.
+   * @param real - The bar's `real` value: Source price/value series, canonically the
+   *   close.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('TSI update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('TSI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('TSI update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('TSI update', 'real');
     }
-    tsiStepImpl(this, inReal);
+    tsiStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -663,17 +664,18 @@ export class TsiStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series, canonically
-   *   the close.
+   * @param real - The bar's `real` value: Source price/value series, canonically the
+   *   close.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('TSI peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('TSI peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let mom = 0;
     let absMom = 0;
     let tsiValue = 0;
@@ -1239,7 +1241,7 @@ export function tsiOpenPositional(
   optInFirstPeriod = requireInt32('TSI open', 'firstPeriod', optInFirstPeriod);
   optInSecondPeriod = requireInt32('TSI open', 'secondPeriod', optInSecondPeriod);
   requireArgument('TSI open', 'real', inReal);
-  requireHistory('TSI open', inReal.length);
+  requireHistory('TSI open', 'real', inReal.length);
   return tsiOpenInternal(core, float64(inReal), 0, optInFirstPeriod, optInSecondPeriod);
 }
 
@@ -1254,7 +1256,7 @@ export function tsiOpenAndFillPositional(
   optInFirstPeriod = requireInt32('TSI openAndFill', 'firstPeriod', optInFirstPeriod);
   optInSecondPeriod = requireInt32('TSI openAndFill', 'secondPeriod', optInSecondPeriod);
   requireArgument('TSI openAndFill', 'real', inReal);
-  requireHistory('TSI openAndFill', inReal.length);
+  requireHistory('TSI openAndFill', 'real', inReal.length);
   const guardLookback = tsiLookbackPositional(optInFirstPeriod, optInSecondPeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('TSI openAndFill', PARAM_RANGES, optInFirstPeriod, optInSecondPeriod);

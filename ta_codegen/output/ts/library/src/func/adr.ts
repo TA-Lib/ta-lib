@@ -265,12 +265,12 @@ export function adrDisplayShift(outputIdx: number, options?: AdrOptions): number
 }
 
 /**
- * Average Day Range: the arithmetic mean of the last `optInTimePeriod` bar ranges,
- * high minus low. It answers how far price travels *within* a bar, and is read as
- * a volatility budget — a stop or a target much smaller than ADR is inside the
- * noise the instrument produces on an ordinary bar, one much larger asks for a
- * move that rarely happens. Same family as ATR, and deliberately the narrower
- * member: the range excludes the overnight gap, so on a gapping instrument ADR is
+ * Average Day Range: the arithmetic mean of the last `timePeriod` bar ranges, high
+ * minus low. It answers how far price travels *within* a bar, and is read as a
+ * volatility budget — a stop or a target much smaller than ADR is inside the noise
+ * the instrument produces on an ordinary bar, one much larger asks for a move that
+ * rarely happens. Same family as ATR, and deliberately the narrower member: the
+ * range excludes the overnight gap, so on a gapping instrument ADR is
  * systematically smaller than ATR. Having both is the point.
  *
  * Formula and more info at
@@ -299,7 +299,7 @@ export function adrDisplayShift(outputIdx: number, options?: AdrOptions): number
  *   Day Range" but the freqtrade code behind it computes
  *   `MAX(close, 24) - MIN(close, 24)`, a channel width on the closes with no
  *   averaging and no high/low. That is a different series and already reachable,
- *   as `TA_SUB(TA_MAX(close, 24), TA_MIN(close, 24))`.
+ *   as `sub(max(close, 24), min(close, 24))`.
  * - No percentage form is emitted. The two published ones disagree by more than
  *   20% on ordinary data — Qullamaggie's `100 · (SMA(high/low, 20) - 1)` averages
  *   ratios, TradingView's `(SMA(high, 14) - SMA(low, 14)) / close · 100` takes a
@@ -416,7 +416,7 @@ export class AdrStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ADR advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ADR advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -424,21 +424,21 @@ export class AdrStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number): number {
+  update(high: number, low: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ADR update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ADR update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('ADR update', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('ADR update', !Number.isFinite(high) ? 'high' : 'low');
     }
-    adrStepImpl(this, inHigh, inLow);
+    adrStepImpl(this, high, low);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -446,17 +446,19 @@ export class AdrStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('ADR peek', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+  peek(high: number, low: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('ADR peek', !Number.isFinite(high) ? 'high' : 'low');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let tempReal = 0;
     let cur_outReal = 0;
     let periodTotal = sp.periodTotal;
@@ -690,7 +692,7 @@ export function adrOpenPositional(
 ): AdrStream {
   optInTimePeriod = requireInt32('ADR open', 'timePeriod', optInTimePeriod);
   requireArgument('ADR open', 'prices.high', inHigh);
-  requireHistory('ADR open', inHigh.length);
+  requireHistory('ADR open', 'prices.high', inHigh.length);
   requireArgument('ADR open', 'prices.low', inLow);
   requireHistoryLength('ADR open', 'prices.low', inLow.length, inHigh.length);
   return adrOpenInternal(core, float64(inHigh), float64(inLow), 0, optInTimePeriod);
@@ -706,7 +708,7 @@ export function adrOpenAndFillPositional(
 ): AdrStream {
   optInTimePeriod = requireInt32('ADR openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('ADR openAndFill', 'prices.high', inHigh);
-  requireHistory('ADR openAndFill', inHigh.length);
+  requireHistory('ADR openAndFill', 'prices.high', inHigh.length);
   requireArgument('ADR openAndFill', 'prices.low', inLow);
   const guardLookback = adrLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {

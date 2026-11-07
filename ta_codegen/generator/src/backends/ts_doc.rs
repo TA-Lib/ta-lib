@@ -201,7 +201,9 @@ pub fn buffer_text(func: &FuncDef, out: &Output) -> String {
 #[must_use]
 pub fn result_field_text(func: &FuncDef, out: &Output) -> String {
     let key = ts::result_key(func, out);
-    format!("{} `{key}[k]` is the value at input bar `begIdx + k`.", output_desc(out, doc_of(func)))
+    let desc = output_desc(out, doc_of(func));
+    let stop = if desc.ends_with(['.', '!', '?']) { "" } else { "." };
+    format!("{desc}{stop} `{key}[k]` is the value at input bar `begIdx + k`.")
 }
 
 const OPTIONS_IGNORED: &str = "other keys are ignored";
@@ -384,7 +386,8 @@ pub fn stream_method_docs(func: &FuncDef, method: StreamMethod) -> String {
             });
             b.blank();
             for bar in streaming::input_array_names(func) {
-                b.param(&bar, &format!("The bar's `{bar}` value: {}", input_desc(&bar, doc)));
+                let name = ts::input_param_name(&bar);
+                b.param(&name, &format!("The bar's `{name}` value: {}", input_desc(&bar, doc)));
             }
             if multi {
                 b.param("out", &sink_param(&names));
@@ -392,16 +395,17 @@ pub fn stream_method_docs(func: &FuncDef, method: StreamMethod) -> String {
             } else {
                 b.tag("returns", if update { "The new value." } else { "The value `update` would return." });
             }
+            let sink = if multi { SINK_REJECTED } else { "" };
             if update {
                 b.tag(
                     "throws",
                     &format!(
-                        "`TALibError` with code `TA_BAD_PARAM` for a bar value that is not finite, \
+                        "`TALibError` with code `TA_BAD_PARAM` for a bar value that is not finite{sink}, \
                          before anything moves. {CEILING_THROWS}"
                     ),
                 );
             } else {
-                b.tag("throws", "`TALibError` with code `TA_BAD_PARAM` for a bar value that is not finite.");
+                b.tag("throws", &format!("`TALibError` with code `TA_BAD_PARAM` for a bar value that is not finite{sink}."));
             }
         }
         StreamMethod::Value => {
@@ -410,6 +414,7 @@ pub fn stream_method_docs(func: &FuncDef, method: StreamMethod) -> String {
                 b.blank();
                 b.param("out", &sink_param(&names));
                 b.tag("returns", "`out`, or the new sink.");
+                b.tag("throws", &format!("`TALibError` with code `TA_BAD_PARAM` for{}.", SINK_REJECTED.trim_start_matches(", or")));
             } else {
                 b.para("The value at the last bar this stream counted; `peek` does not change it.");
             }
@@ -425,6 +430,9 @@ pub fn stream_method_docs(func: &FuncDef, method: StreamMethod) -> String {
     }
     b.render()
 }
+
+/// The sink clause of a multi-output method's `@throws`.
+const SINK_REJECTED: &str = ", or a sink that is not an object, `null` included";
 
 fn sink_param(names: &ts::TsNames) -> String {
     format!("Receives the outputs and is returned; a new {{@link {}}} when omitted.", names.out_class)
@@ -614,12 +622,74 @@ fn see_also(func: &FuncDef, doc: &DocDef, registry: &Registry) -> Vec<String> {
         .collect()
 }
 
+/// The function names the prose mapper may spell in TypeScript, seeded by the
+/// backend from the corpus it generates. Seeding only adds, so the set does not
+/// depend on which caller seeded last; empty under a unit test that seeds nothing,
+/// which then maps only the context-free forms.
+static FUNCTION_NAMES: std::sync::RwLock<BTreeSet<String>> = std::sync::RwLock::new(BTreeSet::new());
+
+pub fn seed_function_names<'a>(names: impl IntoIterator<Item = &'a str>) {
+    FUNCTION_NAMES.write().expect("function names").extend(names.into_iter().map(str::to_string));
+}
+
+/// C spellings in the shared `.md` prose, in the TypeScript API's own terms:
+/// `optInTimePeriod` is the option key `timePeriod`, `inHigh` the bar's `high`,
+/// `outRealUpperBand` the result's `outUpperBand` and `outBegIdx` its `begIdx`
+/// (a single output's `outReal` stays: it is also its buffer key), `TA_MAType_EMA`
+/// is `MAType.EMA`, `TA_FUNC_UNST_EMA` is `FuncUnstId.EMA`, the settings calls are
+/// the builder's, and a function `TA_MEDPRICE` (or its `_Lookback` /
+/// `_DisplayShift`) is `medprice`. A `TA_` name that is none of these, a
+/// `RetCode` for one, stays: it is the `code` a thrown error carries.
+fn plain_terms(text: &str) -> String {
+    use regex::Regex;
+    use std::sync::OnceLock;
+    static OPT: OnceLock<Regex> = OnceLock::new();
+    static INP: OnceLock<Regex> = OnceLock::new();
+    static OUT: OnceLock<Regex> = OnceLock::new();
+    static TA: OnceLock<Regex> = OnceLock::new();
+    let opt = OPT.get_or_init(|| Regex::new(r"\boptIn[A-Z][A-Za-z0-9_]*").expect("regex"));
+    let inp = INP.get_or_init(|| Regex::new(r"\bin(Open|High|Low|Close|Volume|OpenInterest|Real[0-9]*|Periods)\b").expect("regex"));
+    let out = OUT.get_or_init(|| Regex::new(r"\bout[A-Z][A-Za-z0-9_]*\b").expect("regex"));
+    let ta = TA.get_or_init(|| Regex::new(r"\bTA_([A-Za-z][A-Za-z0-9_]*)\b").expect("regex"));
+    let names = FUNCTION_NAMES.read().expect("function names");
+    let text = opt.replace_all(text, |c: &regex::Captures| ts::param_key(&c[0]));
+    let text = inp.replace_all(&text, |c: &regex::Captures| ts::input_param_name(&c[0]));
+    let text = out.replace_all(&text, |c: &regex::Captures| if &c[0] == "outBegIdx" { "begIdx".to_string() } else { ts::output_key(&c[0]) });
+    ta.replace_all(&text, |c: &regex::Captures| {
+        let rest = &c[1];
+        if let Some(m) = rest.strip_prefix("MAType_") {
+            return format!("MAType.{m}");
+        }
+        if let Some(m) = rest.strip_prefix("FUNC_UNST_") {
+            return format!("FuncUnstId.{m}");
+        }
+        match rest {
+            "SetUnstablePeriod" => return "CoreBuilder.unstablePeriod".to_string(),
+            "GetUnstablePeriod" => return "Core.unstablePeriod".to_string(),
+            "SetCandleSettings" => return "CoreBuilder.candleSetting".to_string(),
+            "RestoreCandleDefaultSettings" => return "CoreBuilder.restoreCandleDefault".to_string(),
+            _ => {}
+        }
+        if let Some(func) = rest.strip_suffix("_Lookback").filter(|f| names.contains(*f)) {
+            return ts::ts_names(func).lookback;
+        }
+        if let Some(func) = rest.strip_suffix("_DisplayShift").filter(|f| names.contains(*f)) {
+            return ts::ts_names(func).display_shift;
+        }
+        if names.contains(rest) {
+            return ts::func_ident(rest);
+        }
+        c[0].to_string()
+    })
+    .into_owned()
+}
+
 /// Canonical Markdown made safe inside a `/** */` block: rustdoc's escaping
 /// (TSDoc renders the same Markdown), plus `@` outside code spans, which TSDoc
 /// would read as a tag at the start of a wrapped line.
 #[must_use]
 pub fn tsdoc(text: &str) -> String {
-    let escaped = rust_doc::escape_prose(text);
+    let escaped = rust_doc::escape_prose(&plain_terms(text));
     let mut out = String::with_capacity(escaped.len());
     let mut in_code = false;
     for c in escaped.chars() {

@@ -360,12 +360,12 @@ export interface VortexResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * Positive vortex line (+VI) `outPlusVi[k]` is the value at input bar
+   * Positive vortex line (+VI). `outPlusVi[k]` is the value at input bar
    * `begIdx + k`.
    */
   outPlusVi: Float64Array;
   /**
-   * Negative vortex line (−VI) `outMinusVi[k]` is the value at input bar
+   * Negative vortex line (−VI). `outMinusVi[k]` is the value at input bar
    * `begIdx + k`.
    */
   outMinusVi: Float64Array;
@@ -421,7 +421,7 @@ export function vortexDisplayShift(outputIdx: number, options?: VortexOptions): 
  * **Notes**
  * - Bar 0 has no term (all three need a prior bar) and is consumed exactly as
  *   [`TRANGE`](https://ta-lib.org/functions/trange) consumes it, so the first
- *   output sits at index `optInTimePeriod`, not `optInTimePeriod − 1`.
+ *   output sits at index `timePeriod`, not `timePeriod − 1`.
  * - Not start-dependent: each output depends only on the finite trailing window.
  *   No unstable period.
  *
@@ -560,7 +560,7 @@ export class VortexStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('VORTEX advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('VORTEX advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -568,27 +568,28 @@ export class VortexStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price series.
-   * @param inLow - The bar's `inLow` value: Low price series.
-   * @param inClose - The bar's `inClose` value: Close price series.
+   * @param high - The bar's `high` value: High price series.
+   * @param low - The bar's `low` value: Low price series.
+   * @param close - The bar's `close` value: Close price series.
    * @param out - Receives the outputs and is returned; a new {@link VortexOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out?: VortexOut): VortexOut {
+  update(high: number, low: number, close: number, out?: VortexOut): VortexOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('VORTEX update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('VORTEX update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('VORTEX update', 'VortexOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('VORTEX update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('VORTEX update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    vortexStepImpl(this, inHigh, inLow, inClose);
+    vortexStepImpl(this, high, low, close);
     this.outRangeCount++;
     if (out === undefined) {
       out = new VortexOut();
@@ -601,23 +602,26 @@ export class VortexStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price series.
-   * @param inLow - The bar's `inLow` value: Low price series.
-   * @param inClose - The bar's `inClose` value: Close price series.
+   * @param high - The bar's `high` value: High price series.
+   * @param low - The bar's `low` value: Low price series.
+   * @param close - The bar's `close` value: Close price series.
    * @param out - Receives the outputs and is returned; a new {@link VortexOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out?: VortexOut): VortexOut {
+  peek(high: number, low: number, close: number, out?: VortexOut): VortexOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('VORTEX peek', 'VortexOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('VORTEX peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('VORTEX peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let live = 0;
     let curTR = 0;
     let curVMP = 0;
@@ -741,6 +745,8 @@ export class VortexStream {
    * @param out - Receives the outputs and is returned; a new {@link VortexOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: VortexOut): VortexOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -1203,7 +1209,7 @@ export function vortexOpenPositional(
 ): VortexStream {
   optInTimePeriod = requireInt32('VORTEX open', 'timePeriod', optInTimePeriod);
   requireArgument('VORTEX open', 'prices.high', inHigh);
-  requireHistory('VORTEX open', inHigh.length);
+  requireHistory('VORTEX open', 'prices.high', inHigh.length);
   requireArgument('VORTEX open', 'prices.low', inLow);
   requireArgument('VORTEX open', 'prices.close', inClose);
   requireHistoryLength('VORTEX open', 'prices.low', inLow.length, inHigh.length);
@@ -1223,7 +1229,7 @@ export function vortexOpenAndFillPositional(
 ): VortexStream {
   optInTimePeriod = requireInt32('VORTEX openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('VORTEX openAndFill', 'prices.high', inHigh);
-  requireHistory('VORTEX openAndFill', inHigh.length);
+  requireHistory('VORTEX openAndFill', 'prices.high', inHigh.length);
   requireArgument('VORTEX openAndFill', 'prices.low', inLow);
   requireArgument('VORTEX openAndFill', 'prices.close', inClose);
   const guardLookback = vortexLookbackPositional(optInTimePeriod, core);

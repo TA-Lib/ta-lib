@@ -56,7 +56,7 @@ import { test } from 'node:test';
 import { FuncFlags, Functions } from '../src/metadata/index.ts';
 
 const TESTS: Record<string, number> = {
-  'batchArgs.test.ts': 9,
+  'batchArgs.test.ts': 10,
   'batchContract.test.ts': 10,
   'inputForms.test.ts': 1,
   'mavpBank.test.ts': 2,

@@ -291,7 +291,7 @@ export class WclpriceStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('WCLPRICE advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('WCLPRICE advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -299,22 +299,22 @@ export class WclpriceStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number): number {
+  update(high: number, low: number, close: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('WCLPRICE update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('WCLPRICE update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('WCLPRICE update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('WCLPRICE update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    wclpriceStepImpl(this, inHigh, inLow, inClose);
+    wclpriceStepImpl(this, high, low, close);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -322,17 +322,20 @@ export class WclpriceStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('WCLPRICE peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+  peek(high: number, low: number, close: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('WCLPRICE peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let cur_outReal = 0;
     cur_outReal = (fma(inClose, 2.0, inHigh + inLow)) / 4.0;
     return cur_outReal;
@@ -455,7 +458,7 @@ export function wclpriceOpenPositional(
   core: Core = Core.DEFAULT,
 ): WclpriceStream {
   requireArgument('WCLPRICE open', 'prices.high', inHigh);
-  requireHistory('WCLPRICE open', inHigh.length);
+  requireHistory('WCLPRICE open', 'prices.high', inHigh.length);
   requireArgument('WCLPRICE open', 'prices.low', inLow);
   requireArgument('WCLPRICE open', 'prices.close', inClose);
   requireHistoryLength('WCLPRICE open', 'prices.low', inLow.length, inHigh.length);
@@ -472,7 +475,7 @@ export function wclpriceOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): WclpriceStream {
   requireArgument('WCLPRICE openAndFill', 'prices.high', inHigh);
-  requireHistory('WCLPRICE openAndFill', inHigh.length);
+  requireHistory('WCLPRICE openAndFill', 'prices.high', inHigh.length);
   requireArgument('WCLPRICE openAndFill', 'prices.low', inLow);
   requireArgument('WCLPRICE openAndFill', 'prices.close', inClose);
   const guardOutLen = openFillCount('WCLPRICE openAndFill', inHigh.length, wclpriceLookbackPositional(core));

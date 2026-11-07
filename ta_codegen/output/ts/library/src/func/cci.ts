@@ -514,7 +514,7 @@ export class CciStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CCI advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CCI advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -522,22 +522,22 @@ export class CciStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number): number {
+  update(high: number, low: number, close: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CCI update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CCI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('CCI update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('CCI update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    cciStepImpl(this, inHigh, inLow, inClose);
+    cciStepImpl(this, high, low, close);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -545,18 +545,21 @@ export class CciStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('CCI peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+  peek(high: number, low: number, close: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('CCI peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let tempReal = 0;
     let tempReal2 = 0;
     let tempReal3 = 0;
@@ -1036,7 +1039,7 @@ export function cciOpenPositional(
 ): CciStream {
   optInTimePeriod = requireInt32('CCI open', 'timePeriod', optInTimePeriod);
   requireArgument('CCI open', 'prices.high', inHigh);
-  requireHistory('CCI open', inHigh.length);
+  requireHistory('CCI open', 'prices.high', inHigh.length);
   requireArgument('CCI open', 'prices.low', inLow);
   requireArgument('CCI open', 'prices.close', inClose);
   requireHistoryLength('CCI open', 'prices.low', inLow.length, inHigh.length);
@@ -1055,7 +1058,7 @@ export function cciOpenAndFillPositional(
 ): CciStream {
   optInTimePeriod = requireInt32('CCI openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('CCI openAndFill', 'prices.high', inHigh);
-  requireHistory('CCI openAndFill', inHigh.length);
+  requireHistory('CCI openAndFill', 'prices.high', inHigh.length);
   requireArgument('CCI openAndFill', 'prices.low', inLow);
   requireArgument('CCI openAndFill', 'prices.close', inClose);
   const guardLookback = cciLookbackPositional(optInTimePeriod, core);

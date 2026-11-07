@@ -572,7 +572,7 @@ export class KurtosisStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('KURTOSIS advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('KURTOSIS advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -580,20 +580,20 @@ export class KurtosisStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: The series to measure.
+   * @param real - The bar's `real` value: The series to measure.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('KURTOSIS update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('KURTOSIS update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('KURTOSIS update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('KURTOSIS update', 'real');
     }
-    kurtosisStepImpl(this, inReal);
+    kurtosisStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -601,16 +601,17 @@ export class KurtosisStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: The series to measure.
+   * @param real - The bar's `real` value: The series to measure.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('KURTOSIS peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('KURTOSIS peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tempReal = 0;
     let dev = 0;
     let dev2 = 0;
@@ -1329,7 +1330,7 @@ export function kurtosisOpenPositional(
 ): KurtosisStream {
   optInTimePeriod = requireInt32('KURTOSIS open', 'timePeriod', optInTimePeriod);
   requireArgument('KURTOSIS open', 'real', inReal);
-  requireHistory('KURTOSIS open', inReal.length);
+  requireHistory('KURTOSIS open', 'real', inReal.length);
   return kurtosisOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -1342,7 +1343,7 @@ export function kurtosisOpenAndFillPositional(
 ): KurtosisStream {
   optInTimePeriod = requireInt32('KURTOSIS openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('KURTOSIS openAndFill', 'real', inReal);
-  requireHistory('KURTOSIS openAndFill', inReal.length);
+  requireHistory('KURTOSIS openAndFill', 'real', inReal.length);
   const guardLookback = kurtosisLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('KURTOSIS openAndFill', PARAM_RANGES, optInTimePeriod);

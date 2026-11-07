@@ -7120,6 +7120,10 @@ typedef struct {
     int                open;      /* 1 once the subprocess is up              */
     long long          cases;     /* cases compared against the golden        */
     long long          mism;      /* real bitwise/tolerance mismatches        */
+    long long          tolCases;  /* of cases, those compared at tolTranscendental
+                                   * instead of bitwise: floored and capped below */
+    long long          laneEligible; /* cases the lane could have taken: accepted
+                                   * vectors off the kernel lane; the cap's base */
     int                restarts;  /* recovered subprocess crashes             */
 } XlangServer;
 
@@ -7176,7 +7180,7 @@ typedef struct {
                                       * (non-vacuity: an empty output hashes the
                                       * same on both sides, so a healthy fraction
                                       * must be non-empty for the gate to bite)   */
-    long long    tolCases;           /* Java calls routed to the transcendental
+    long long    tolCases;           /* calls routed to a server's transcendental
                                       * tolerance path (the rest are bitwise)     */
     long long    vmathCases;         /* calls whose values fuzz_vmath_near held  */
     long long    vmathDue;           /* (function, server) pairs swept that
@@ -9425,7 +9429,8 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                         continue;
                     }
                     sv->cases++;
-                    if( tolPath && !vm ) ctx->tolCases++;
+                    if( !vm && kind[k] != FUZZ_VEC_REJECT ) sv->laneEligible++;
+                    if( tolPath && !vm ) { ctx->tolCases++; sv->tolCases++; }
                     if( curUnst )  ctx->unstCases++;
                     if( kind[k] == FUZZ_VEC_REJECT ) ctx->oorCases++;
 
@@ -9532,10 +9537,10 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
      * compare at their language's bound: none of their `Math.*` is guaranteed
      * to be the platform libm. Every non-transcendental call stays bitwise. */
     static XlangServer servers[] = {
-        {"rust",   "Rust",       argv_rust,   1, 0, 0, {0}, 0, 0, 0, 0},
-        {"java",   "Java",       argv_java,   0, 0, 0, {0}, 0, 0, 0, 0},
-        {"csharp", "C#",         argv_csharp, 0, 0, 0, {0}, 0, 0, 0, 0},
-        {"ts",     "TypeScript", argv_ts,     0, 0, 0, {0}, 0, 0, 0, 0},
+        {"rust",   "Rust",       argv_rust,   1, 0, 0, {0}, 0, 0, 0, 0, 0, 0},
+        {"java",   "Java",       argv_java,   0, 0, 0, {0}, 0, 0, 0, 0, 0, 0},
+        {"csharp", "C#",         argv_csharp, 0, 0, 0, {0}, 0, 0, 0, 0, 0, 0},
+        {"ts",     "TypeScript", argv_ts,     0, 0, 0, {0}, 0, 0, 0, 0, 0, 0},
     };
     int nsv = (int)(sizeof(servers)/sizeof(servers[0]));
 
@@ -9775,6 +9780,27 @@ ErrorNumber xlang_hash(const char *functionFilter, const char *languageFilter)
                "TA_FUNC_FLG_UNST_PER; if that is now zero the flag or the sweep "
                "stopped enumerating them (#116).\n", ctx.unstFuncs);
         return TA_CODEGEN_OUTPUT_MISMATCH;
+    }
+    /* The transcendental lane needs a floor and a ceiling per server. The floor,
+     * because a lane that compares nothing leaves every transcendental function
+     * ungated on that server; the ceiling, because a classifier that routes every
+     * call through the lane turns this bitwise gate into a tolerance compare and
+     * nothing else here would notice. The base is the cases the lane could take
+     * (rejected vectors stay on the hash path whatever the function), else a
+     * classifier answering 1 everywhere would still sit under the total.
+     * Unfiltered runs only: --function= can select nothing transcendental, or
+     * nothing else. */
+    for( int s = 0; s < nsv; s++ )
+    {
+        if( functionFilter || servers[s].tolTranscendental <= 0.0 || servers[s].laneEligible == 0 )
+            continue;
+        if( servers[s].tolCases == 0 || servers[s].tolCases >= servers[s].laneEligible )
+        {
+            printf("FAIL — TRANSCENDENTAL LANE: %s compared %lld of its %lld eligible case(s) "
+                   "at its bound instead of bitwise; the lane must carry some, never all.\n",
+                   servers[s].display, servers[s].tolCases, servers[s].laneEligible);
+            return TA_CODEGEN_OUTPUT_MISMATCH;
+        }
     }
     /* Same-server tier agreement (#256) needs its own floor: it is driven by
      * the same per-vector loop as the checks above but is a distinct property

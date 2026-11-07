@@ -210,8 +210,8 @@ export interface RocpResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * Fractional rate of change vs the value optInTimePeriod bars earlier. `values[k]`
-   * is the value at input bar `begIdx + k`.
+   * Fractional rate of change vs the value timePeriod bars earlier. `values[k]` is
+   * the value at input bar `begIdx + k`.
    */
   values: Float64Array;
 }
@@ -252,7 +252,7 @@ export function rocpDisplayShift(outputIdx: number, options?: RocpOptions): numb
 }
 
 /**
- * Rate of change expressed as a fraction of the price optInTimePeriod bars ago.
+ * Rate of change expressed as a fraction of the price timePeriod bars ago.
  * Normalized and centered at zero (positive or negative). >0 rising vs N bars ago,
  * \<0 falling; equals ROC/100.
  *
@@ -260,10 +260,10 @@ export function rocpDisplayShift(outputIdx: number, options?: RocpOptions): numb
  * [ta-lib.org/functions/rocp](https://ta-lib.org/functions/rocp).
  *
  * **Notes**
- * - **The input is assumed positive.** The price `optInTimePeriod` bars back is
- *   the divisor. Where it is exactly 0 the output is 0. Near zero the divisor is
- *   small and the output very large; no error is returned. A series that reaches
- *   or crosses zero, such as an oscillator or a spread, has no meaningful result
+ * - **The input is assumed positive.** The price `timePeriod` bars back is the
+ *   divisor. Where it is exactly 0 the output is 0. Near zero the divisor is small
+ *   and the output very large; no error is returned. A series that reaches or
+ *   crosses zero, such as an oscillator or a spread, has no meaningful result
  *   here.
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
@@ -368,7 +368,7 @@ export class RocpStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ROCP advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ROCP advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -376,20 +376,20 @@ export class RocpStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price series.
+   * @param real - The bar's `real` value: Source price series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ROCP update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ROCP update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ROCP update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ROCP update', 'real');
     }
-    rocpStepImpl(this, inReal);
+    rocpStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -397,16 +397,17 @@ export class RocpStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price series.
+   * @param real - The bar's `real` value: Source price series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('ROCP peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('ROCP peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tempReal = 0;
     let cur_outReal = 0;
     tempReal = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
@@ -622,7 +623,7 @@ export function rocpOpenPositional(
 ): RocpStream {
   optInTimePeriod = requireInt32('ROCP open', 'timePeriod', optInTimePeriod);
   requireArgument('ROCP open', 'real', inReal);
-  requireHistory('ROCP open', inReal.length);
+  requireHistory('ROCP open', 'real', inReal.length);
   return rocpOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -635,7 +636,7 @@ export function rocpOpenAndFillPositional(
 ): RocpStream {
   optInTimePeriod = requireInt32('ROCP openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('ROCP openAndFill', 'real', inReal);
-  requireHistory('ROCP openAndFill', inReal.length);
+  requireHistory('ROCP openAndFill', 'real', inReal.length);
   const guardLookback = rocpLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('ROCP openAndFill', PARAM_RANGES, optInTimePeriod);

@@ -401,7 +401,7 @@ export function rogerssatchellDisplayShift(outputIdx: number, options?: Rogerssa
  * range as volatility. The price of that is a blind spot of its own: the estimator
  * has no close-to-open term, so overnight gaps are invisible to it. Read the
  * output as a fraction in log-return units, not price units and not percent. At an
- * `optInAnnualization` of 252 it is an annualised figure for daily bars; pass 1 to
+ * `annualization` of 252 it is an annualised figure for daily bars; pass 1 to
  * leave the per-bar figure, 52 for weekly bars, 12 for monthly.
  *
  * Formula and more info at
@@ -537,7 +537,7 @@ export class RogerssatchellStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ROGERSSATCHELL advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ROGERSSATCHELL advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -545,23 +545,23 @@ export class RogerssatchellStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inOpen - The bar's `inOpen` value: Open price of each bar.
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param open - The bar's `open` value: Open price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inOpen: number, inHigh: number, inLow: number, inClose: number): number {
+  update(open: number, high: number, low: number, close: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ROGERSSATCHELL update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ROGERSSATCHELL update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inOpen) || !Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('ROGERSSATCHELL update', !Number.isFinite(inOpen) ? 'inOpen' : !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(open) || !Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('ROGERSSATCHELL update', !Number.isFinite(open) ? 'open' : !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    rogerssatchellStepImpl(this, inOpen, inHigh, inLow, inClose);
+    rogerssatchellStepImpl(this, open, high, low, close);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -569,19 +569,23 @@ export class RogerssatchellStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inOpen - The bar's `inOpen` value: Open price of each bar.
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param open - The bar's `open` value: Open price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inOpen: number, inHigh: number, inLow: number, inClose: number): number {
-    if (!Number.isFinite(inOpen) || !Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('ROGERSSATCHELL peek', !Number.isFinite(inOpen) ? 'inOpen' : !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+  peek(open: number, high: number, low: number, close: number): number {
+    if (!Number.isFinite(open) || !Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('ROGERSSATCHELL peek', !Number.isFinite(open) ? 'open' : !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inOpen = open;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let o = 0;
     let h = 0;
     let l = 0;
@@ -1053,7 +1057,7 @@ export function rogerssatchellOpenPositional(
   optInTimePeriod = requireInt32('ROGERSSATCHELL open', 'timePeriod', optInTimePeriod);
   optInAnnualization = requireReal('ROGERSSATCHELL open', 'annualization', optInAnnualization);
   requireArgument('ROGERSSATCHELL open', 'prices.open', inOpen);
-  requireHistory('ROGERSSATCHELL open', inOpen.length);
+  requireHistory('ROGERSSATCHELL open', 'prices.open', inOpen.length);
   requireArgument('ROGERSSATCHELL open', 'prices.high', inHigh);
   requireArgument('ROGERSSATCHELL open', 'prices.low', inLow);
   requireArgument('ROGERSSATCHELL open', 'prices.close', inClose);
@@ -1077,7 +1081,7 @@ export function rogerssatchellOpenAndFillPositional(
   optInTimePeriod = requireInt32('ROGERSSATCHELL openAndFill', 'timePeriod', optInTimePeriod);
   optInAnnualization = requireReal('ROGERSSATCHELL openAndFill', 'annualization', optInAnnualization);
   requireArgument('ROGERSSATCHELL openAndFill', 'prices.open', inOpen);
-  requireHistory('ROGERSSATCHELL openAndFill', inOpen.length);
+  requireHistory('ROGERSSATCHELL openAndFill', 'prices.open', inOpen.length);
   requireArgument('ROGERSSATCHELL openAndFill', 'prices.high', inHigh);
   requireArgument('ROGERSSATCHELL openAndFill', 'prices.low', inLow);
   requireArgument('ROGERSSATCHELL openAndFill', 'prices.close', inClose);

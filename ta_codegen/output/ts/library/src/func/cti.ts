@@ -376,10 +376,10 @@ export function ctiDisplayShift(outputIdx: number, options?: CtiOptions): number
 
 /**
  * John F. Ehlers' Correlation Trend Indicator: the Pearson correlation of the last
- * `optInTimePeriod` closes against a straight line of positive slope. Bounded in
- * -1..+1 by construction — `+1` is a perfectly linear uptrend, `-1` a perfectly
- * linear downtrend, `0` no linear trend. Trend strength and direction in one
- * bounded number, with no smoothing, no recursion and no filter coefficients.
+ * `timePeriod` closes against a straight line of positive slope. Bounded in -1..+1
+ * by construction — `+1` is a perfectly linear uptrend, `-1` a perfectly linear
+ * downtrend, `0` no linear trend. Trend strength and direction in one bounded
+ * number, with no smoothing, no recursion and no filter coefficients.
  * Arithmetically it is [`CORREL`](https://ta-lib.org/functions/correl) of the
  * series against a ramp, with the ramp side collapsed to closed-form constants.
  *
@@ -391,8 +391,8 @@ export function ctiDisplayShift(outputIdx: number, options?: CtiOptions): number
  *   the author's listing does; holding would make the function path-dependent.
  * - The result is clamped into -1..+1, as `CORREL` is: rounding in three sums can
  *   put a coefficient slightly outside its own range.
- * - `optInTimePeriod` starts at 2, not 1: at `n = 1` the closed form `n²(n²−1)/12`
- *   is identically zero and every window is degenerate.
+ * - `timePeriod` starts at 2, not 1: at `n = 1` the closed form `n²(n²−1)/12` is
+ *   identically zero and every window is degenerate.
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends
@@ -521,7 +521,7 @@ export class CtiStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CTI advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CTI advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -529,20 +529,20 @@ export class CtiStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: The series to measure the trend of.
+   * @param real - The bar's `real` value: The series to measure the trend of.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CTI update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CTI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('CTI update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('CTI update', 'real');
     }
-    ctiStepImpl(this, inReal);
+    ctiStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -550,16 +550,17 @@ export class CtiStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: The series to measure the trend of.
+   * @param real - The bar's `real` value: The series to measure the trend of.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('CTI peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('CTI peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let x = 0;
     let ssX = 0;
     let spXY = 0;
@@ -1128,7 +1129,7 @@ export function ctiOpenPositional(
 ): CtiStream {
   optInTimePeriod = requireInt32('CTI open', 'timePeriod', optInTimePeriod);
   requireArgument('CTI open', 'real', inReal);
-  requireHistory('CTI open', inReal.length);
+  requireHistory('CTI open', 'real', inReal.length);
   return ctiOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -1141,7 +1142,7 @@ export function ctiOpenAndFillPositional(
 ): CtiStream {
   optInTimePeriod = requireInt32('CTI openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('CTI openAndFill', 'real', inReal);
-  requireHistory('CTI openAndFill', inReal.length);
+  requireHistory('CTI openAndFill', 'real', inReal.length);
   const guardLookback = ctiLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('CTI openAndFill', PARAM_RANGES, optInTimePeriod);

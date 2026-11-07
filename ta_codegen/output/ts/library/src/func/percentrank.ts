@@ -227,15 +227,15 @@ export function percentrankDisplayShift(outputIdx: number, options?: Percentrank
 /**
  * Percent Rank: where the current value sits inside the distribution of the values
  * that came before it, as a percentage. Each bar is compared against the
- * `optInTimePeriod` values immediately preceding it — the current bar is not part
- * of its own comparison set — and the output is the share of them it exceeds. 0
- * means the current value is at or below every one of them, 100 means it is above
- * all of them, 50 means it is above half. It is a distribution-relative reading
- * rather than a price-relative one: unlike an oscillator built from ranges or
- * averages, it says nothing about how far the value moved, only how many of its
- * recent predecessors it overtook. That makes it flat-scaled across instruments
- * and directly comparable between them. It is best known as the third leg of
- * Connors' ConnorsRSI, applied there to one-day returns rather than to price.
+ * `timePeriod` values immediately preceding it — the current bar is not part of
+ * its own comparison set — and the output is the share of them it exceeds. 0 means
+ * the current value is at or below every one of them, 100 means it is above all of
+ * them, 50 means it is above half. It is a distribution-relative reading rather
+ * than a price-relative one: unlike an oscillator built from ranges or averages,
+ * it says nothing about how far the value moved, only how many of its recent
+ * predecessors it overtook. That makes it flat-scaled across instruments and
+ * directly comparable between them. It is best known as the third leg of Connors'
+ * ConnorsRSI, applied there to one-day returns rather than to price.
  *
  * Formula and more info at
  * [ta-lib.org/functions/percentrank](https://ta-lib.org/functions/percentrank).
@@ -353,7 +353,7 @@ export class PercentrankStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PERCENTRANK advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PERCENTRANK advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -361,20 +361,20 @@ export class PercentrankStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series.
+   * @param real - The bar's `real` value: Source price/value series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('PERCENTRANK update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('PERCENTRANK update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('PERCENTRANK update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('PERCENTRANK update', 'real');
     }
-    percentrankStepImpl(this, inReal);
+    percentrankStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -382,16 +382,17 @@ export class PercentrankStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series.
+   * @param real - The bar's `real` value: Source price/value series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('PERCENTRANK peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('PERCENTRANK peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let i = 0;
     let count = 0;
     let current = 0;
@@ -588,7 +589,7 @@ export function percentrankOpenPositional(
 ): PercentrankStream {
   optInTimePeriod = requireInt32('PERCENTRANK open', 'timePeriod', optInTimePeriod);
   requireArgument('PERCENTRANK open', 'real', inReal);
-  requireHistory('PERCENTRANK open', inReal.length);
+  requireHistory('PERCENTRANK open', 'real', inReal.length);
   return percentrankOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -601,7 +602,7 @@ export function percentrankOpenAndFillPositional(
 ): PercentrankStream {
   optInTimePeriod = requireInt32('PERCENTRANK openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('PERCENTRANK openAndFill', 'real', inReal);
-  requireHistory('PERCENTRANK openAndFill', inReal.length);
+  requireHistory('PERCENTRANK openAndFill', 'real', inReal.length);
   const guardLookback = percentrankLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('PERCENTRANK openAndFill', PARAM_RANGES, optInTimePeriod);

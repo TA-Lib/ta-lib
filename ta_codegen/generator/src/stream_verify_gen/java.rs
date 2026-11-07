@@ -47,7 +47,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     let base = crate::backends::common::camel_words(&func.name);
     let base_camel = crate::backends::common::camel_words(&func.name);
     let class = crate::backends::java_stream::stream_class_name(func);
-    let candle = func.name.starts_with("CDL");
+    let candle = func.is_candlestick();
     let inputs = crate::streaming::input_array_names(func);
     let mut gi = 0usize;
     let arrays: Vec<&'static str> = inputs

@@ -287,7 +287,7 @@ export class TyppriceStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('TYPPRICE advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('TYPPRICE advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -295,22 +295,22 @@ export class TyppriceStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number): number {
+  update(high: number, low: number, close: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('TYPPRICE update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('TYPPRICE update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('TYPPRICE update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('TYPPRICE update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    typpriceStepImpl(this, inHigh, inLow, inClose);
+    typpriceStepImpl(this, high, low, close);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -318,17 +318,20 @@ export class TyppriceStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('TYPPRICE peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+  peek(high: number, low: number, close: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('TYPPRICE peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let cur_outReal = 0;
     cur_outReal = (inHigh + inLow + inClose) / 3.0;
     return cur_outReal;
@@ -451,7 +454,7 @@ export function typpriceOpenPositional(
   core: Core = Core.DEFAULT,
 ): TyppriceStream {
   requireArgument('TYPPRICE open', 'prices.high', inHigh);
-  requireHistory('TYPPRICE open', inHigh.length);
+  requireHistory('TYPPRICE open', 'prices.high', inHigh.length);
   requireArgument('TYPPRICE open', 'prices.low', inLow);
   requireArgument('TYPPRICE open', 'prices.close', inClose);
   requireHistoryLength('TYPPRICE open', 'prices.low', inLow.length, inHigh.length);
@@ -468,7 +471,7 @@ export function typpriceOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): TyppriceStream {
   requireArgument('TYPPRICE openAndFill', 'prices.high', inHigh);
-  requireHistory('TYPPRICE openAndFill', inHigh.length);
+  requireHistory('TYPPRICE openAndFill', 'prices.high', inHigh.length);
   requireArgument('TYPPRICE openAndFill', 'prices.low', inLow);
   requireArgument('TYPPRICE openAndFill', 'prices.close', inClose);
   const guardOutLen = openFillCount('TYPPRICE openAndFill', inHigh.length, typpriceLookbackPositional(core));

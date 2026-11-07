@@ -387,7 +387,7 @@ export class EmaStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('EMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('EMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -395,20 +395,20 @@ export class EmaStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: price/data series to smooth.
+   * @param real - The bar's `real` value: price/data series to smooth.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('EMA update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('EMA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('EMA update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('EMA update', 'real');
     }
-    emaStepImpl(this, inReal);
+    emaStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -416,16 +416,17 @@ export class EmaStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: price/data series to smooth.
+   * @param real - The bar's `real` value: price/data series to smooth.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('EMA peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('EMA peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let cur_outReal = 0;
     let prevMA = sp.prevMA;
     if (sp.optInTimePeriod === 1) {
@@ -648,7 +649,7 @@ export function emaOpenPositional(
 ): EmaStream {
   optInTimePeriod = requireInt32('EMA open', 'timePeriod', optInTimePeriod);
   requireArgument('EMA open', 'real', inReal);
-  requireHistory('EMA open', inReal.length);
+  requireHistory('EMA open', 'real', inReal.length);
   return emaOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -661,7 +662,7 @@ export function emaOpenAndFillPositional(
 ): EmaStream {
   optInTimePeriod = requireInt32('EMA openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('EMA openAndFill', 'real', inReal);
-  requireHistory('EMA openAndFill', inReal.length);
+  requireHistory('EMA openAndFill', 'real', inReal.length);
   const guardLookback = emaLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('EMA openAndFill', PARAM_RANGES, optInTimePeriod);

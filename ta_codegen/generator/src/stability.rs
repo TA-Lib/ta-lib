@@ -548,7 +548,7 @@ pub fn validate_unstable_reads<S: std::hash::BuildHasher>(
     }
     if let Some(def) = enums.get("FuncUnstId") {
         for v in &def.variants {
-            if !v.name.starts_with("UNUSED_") && !read_by_owner.contains(&v.name.to_uppercase()) {
+            if !v.reserved && !read_by_owner.contains(&v.name.to_uppercase()) {
                 errors.push(format!("TA_FUNC_UNST_{}: no lookback reads this id", v.name));
             }
         }

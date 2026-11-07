@@ -363,7 +363,7 @@ export class CdldojiStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CDLDOJI advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CDLDOJI advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -371,23 +371,23 @@ export class CdldojiStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inOpen - The bar's `inOpen` value: Open price of each bar.
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param open - The bar's `open` value: Open price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inOpen: number, inHigh: number, inLow: number, inClose: number): number {
+  update(open: number, high: number, low: number, close: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CDLDOJI update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CDLDOJI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inOpen) || !Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('CDLDOJI update', !Number.isFinite(inOpen) ? 'inOpen' : !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(open) || !Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('CDLDOJI update', !Number.isFinite(open) ? 'open' : !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    cdldojiStepImpl(this, inOpen, inHigh, inLow, inClose);
+    cdldojiStepImpl(this, open, high, low, close);
     this.outRangeCount++;
     return this.cur_outInteger;
   }
@@ -395,19 +395,23 @@ export class CdldojiStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inOpen - The bar's `inOpen` value: Open price of each bar.
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param open - The bar's `open` value: Open price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inOpen: number, inHigh: number, inLow: number, inClose: number): number {
-    if (!Number.isFinite(inOpen) || !Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('CDLDOJI peek', !Number.isFinite(inOpen) ? 'inOpen' : !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+  peek(open: number, high: number, low: number, close: number): number {
+    if (!Number.isFinite(open) || !Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('CDLDOJI peek', !Number.isFinite(open) ? 'open' : !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inOpen = open;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let cur_outInteger = 0;
     const BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
     const BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -631,7 +635,7 @@ export function cdldojiOpenPositional(
   core: Core = Core.DEFAULT,
 ): CdldojiStream {
   requireArgument('CDLDOJI open', 'prices.open', inOpen);
-  requireHistory('CDLDOJI open', inOpen.length);
+  requireHistory('CDLDOJI open', 'prices.open', inOpen.length);
   requireArgument('CDLDOJI open', 'prices.high', inHigh);
   requireArgument('CDLDOJI open', 'prices.low', inLow);
   requireArgument('CDLDOJI open', 'prices.close', inClose);
@@ -651,7 +655,7 @@ export function cdldojiOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): CdldojiStream {
   requireArgument('CDLDOJI openAndFill', 'prices.open', inOpen);
-  requireHistory('CDLDOJI openAndFill', inOpen.length);
+  requireHistory('CDLDOJI openAndFill', 'prices.open', inOpen.length);
   requireArgument('CDLDOJI openAndFill', 'prices.high', inHigh);
   requireArgument('CDLDOJI openAndFill', 'prices.low', inLow);
   requireArgument('CDLDOJI openAndFill', 'prices.close', inClose);

@@ -207,7 +207,7 @@ export interface MaxindexResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * Absolute index (into inReal) of the highest value in each window. `values[k]` is
+   * Absolute index (into real) of the highest value in each window. `values[k]` is
    * the value at input bar `begIdx + k`.
    */
   values: Int32Array;
@@ -250,7 +250,7 @@ export function maxindexDisplayShift(outputIdx: number, options?: MaxindexOption
 
 /**
  * Returns the index of the highest input value within a rolling window of
- * optInTimePeriod bars. Same as MAX but outputs the location instead of the value.
+ * timePeriod bars. Same as MAX but outputs the location instead of the value.
  *
  * Formula and more info at
  * [ta-lib.org/functions/maxindex](https://ta-lib.org/functions/maxindex).
@@ -369,7 +369,7 @@ export class MaxindexStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MAXINDEX advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MAXINDEX advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -377,20 +377,20 @@ export class MaxindexStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input series to scan.
+   * @param real - The bar's `real` value: Input series to scan.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MAXINDEX update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MAXINDEX update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MAXINDEX update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MAXINDEX update', 'real');
     }
-    maxindexStepImpl(this, inReal);
+    maxindexStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outInteger;
   }
@@ -398,16 +398,17 @@ export class MaxindexStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input series to scan.
+   * @param real - The bar's `real` value: Input series to scan.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MAXINDEX peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MAXINDEX peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tmp = 0;
     let cur_outInteger = 0;
     let highest = sp.highest;
@@ -658,7 +659,7 @@ export function maxindexOpenPositional(
 ): MaxindexStream {
   optInTimePeriod = requireInt32('MAXINDEX open', 'timePeriod', optInTimePeriod);
   requireArgument('MAXINDEX open', 'real', inReal);
-  requireHistory('MAXINDEX open', inReal.length);
+  requireHistory('MAXINDEX open', 'real', inReal.length);
   return maxindexOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -671,7 +672,7 @@ export function maxindexOpenAndFillPositional(
 ): MaxindexStream {
   optInTimePeriod = requireInt32('MAXINDEX openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('MAXINDEX openAndFill', 'real', inReal);
-  requireHistory('MAXINDEX openAndFill', inReal.length);
+  requireHistory('MAXINDEX openAndFill', 'real', inReal.length);
   const guardLookback = maxindexLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('MAXINDEX openAndFill', PARAM_RANGES, optInTimePeriod);

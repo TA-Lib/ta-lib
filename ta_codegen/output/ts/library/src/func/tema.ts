@@ -634,7 +634,7 @@ export class TemaStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('TEMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('TEMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -642,20 +642,20 @@ export class TemaStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price/data series.
+   * @param real - The bar's `real` value: Source price/data series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('TEMA update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('TEMA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('TEMA update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('TEMA update', 'real');
     }
-    temaStepImpl(this, inReal);
+    temaStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -663,16 +663,17 @@ export class TemaStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price/data series.
+   * @param real - The bar's `real` value: Source price/data series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('TEMA peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('TEMA peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let cur_outReal = 0;
     let prevEMA1 = sp.prevEMA1;
     let prevEMA2 = sp.prevEMA2;
@@ -1237,7 +1238,7 @@ export function temaOpenPositional(
 ): TemaStream {
   optInTimePeriod = requireInt32('TEMA open', 'timePeriod', optInTimePeriod);
   requireArgument('TEMA open', 'real', inReal);
-  requireHistory('TEMA open', inReal.length);
+  requireHistory('TEMA open', 'real', inReal.length);
   return temaOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -1250,7 +1251,7 @@ export function temaOpenAndFillPositional(
 ): TemaStream {
   optInTimePeriod = requireInt32('TEMA openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('TEMA openAndFill', 'real', inReal);
-  requireHistory('TEMA openAndFill', inReal.length);
+  requireHistory('TEMA openAndFill', 'real', inReal.length);
   const guardLookback = temaLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('TEMA openAndFill', PARAM_RANGES, optInTimePeriod);

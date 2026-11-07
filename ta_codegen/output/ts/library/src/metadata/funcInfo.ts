@@ -209,7 +209,7 @@ export class FuncInfo {
    * A holder to bind this function's arguments into at run time, then call it.
    *
    * @param core - Unstable periods and candle settings to compute with; `Core.DEFAULT` when omitted.
-   * @throws {@link TALibError} `TA_BAD_PARAM` if `core` is not a `Core`.
+   * @throws `TALibError` `TA_BAD_PARAM` if `core` is not a `Core`.
    */
   newCall(core: Core = Core.DEFAULT): ParamHolder {
     if (!(core instanceof Core)) {

@@ -159,11 +159,11 @@ Misuse throws a `TALibError` rather than returning a return code. Its `code` nam
 | `endIdx` negative, above `Core.INDEX_MAX`, or below `startIdx` | `'TA_OUT_OF_RANGE_END_INDEX'` |
 | Parameter outside its documented range | `'TA_BAD_PARAM'` |
 | An index or integer parameter that is not a 32-bit integer, such as `14.5`, or a real parameter that is not a number, such as `'0.02'` | `'TA_BAD_PARAM'` |
-| Options that are not an object | `'TA_BAD_PARAM'` |
+| Options that are not a plain object, an array included | `'TA_BAD_PARAM'` |
 | Two output buffers sharing memory, or a buffer partly overlapping a `Float64Array` input | `'TA_BAD_PARAM'` |
 | A `core` that is not a `Core` | `'TA_BAD_PARAM'` |
 | An input too short for the range requested, including an `endIdx` past its end, or a buffer too short for the values written | `'TA_BAD_PARAM'` |
-| An absent or empty input, or an empty buffer | `'TA_BAD_PARAM'` |
+| An absent or empty input, an input that is not array-like, a price object that is not an object, or an empty buffer | `'TA_BAD_PARAM'` |
 | A buffer that is not a `Float64Array`, or not an `Int32Array` for an integer output | `'TA_BAD_PARAM'` |
 
 ```ts

@@ -613,9 +613,9 @@ export function wavetrendDisplayShift(outputIdx: number, options?: WavetrendOpti
  * [ta-lib.org/functions/wavetrend](https://ta-lib.org/functions/wavetrend).
  *
  * **Notes**
- * - The middle stage is an exponential CCI, not `TA_CCI`: CCI averages with a
- *   simple moving average and takes the mean deviation around that window's own
- *   average, where this uses two exponential averages.
+ * - The middle stage is an exponential CCI, not `cci`: CCI averages with a simple
+ *   moving average and takes the mean deviation around that window's own average,
+ *   where this uses two exponential averages.
  * - On a market that has stopped moving, the exponential average stops moving too
  *   — once its step falls under half an ulp it freezes, a few ulps away from the
  *   price. That frozen gap is a real non-zero distance, so dividing by its own
@@ -627,10 +627,10 @@ export function wavetrendDisplayShift(outputIdx: number, options?: WavetrendOpti
  *   actually uses, and answers the neutral 0 rather than dividing.
  * - Each exponential average is seeded with a simple average of its own first
  *   inputs, the same seeding TA-Lib's EMA uses, and each seeds on what the stage
- *   before it publishes. `TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)` discards
- *   more of that warm-up, and it counts three times because there are three
- *   exponential stages.
- * - The difference the author also plots is `TA_SUB(outWT1, outWT2)`.
+ *   before it publishes. `CoreBuilder.unstablePeriod(FuncUnstId.EMA, ...)`
+ *   discards more of that warm-up, and it counts three times because there are
+ *   three exponential stages.
+ * - The difference the author also plots is `sub(outWt1, outWt2)`.
  *
  * `outWt1[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends
@@ -777,7 +777,7 @@ export class WavetrendStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('WAVETREND advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('WAVETREND advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -785,27 +785,28 @@ export class WavetrendStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price series.
-   * @param inLow - The bar's `inLow` value: Low price series.
-   * @param inClose - The bar's `inClose` value: Close price series.
+   * @param high - The bar's `high` value: High price series.
+   * @param low - The bar's `low` value: Low price series.
+   * @param close - The bar's `close` value: Close price series.
    * @param out - Receives the outputs and is returned; a new {@link WavetrendOut}
    *   when omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out?: WavetrendOut): WavetrendOut {
+  update(high: number, low: number, close: number, out?: WavetrendOut): WavetrendOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('WAVETREND update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('WAVETREND update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('WAVETREND update', 'WavetrendOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('WAVETREND update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('WAVETREND update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    wavetrendStepImpl(this, inHigh, inLow, inClose);
+    wavetrendStepImpl(this, high, low, close);
     this.outRangeCount++;
     if (out === undefined) {
       out = new WavetrendOut();
@@ -818,23 +819,26 @@ export class WavetrendStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price series.
-   * @param inLow - The bar's `inLow` value: Low price series.
-   * @param inClose - The bar's `inClose` value: Close price series.
+   * @param high - The bar's `high` value: High price series.
+   * @param low - The bar's `low` value: Low price series.
+   * @param close - The bar's `close` value: Close price series.
    * @param out - Receives the outputs and is returned; a new {@link WavetrendOut}
    *   when omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out?: WavetrendOut): WavetrendOut {
+  peek(high: number, low: number, close: number, out?: WavetrendOut): WavetrendOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('WAVETREND peek', 'WavetrendOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('WAVETREND peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('WAVETREND peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let ap = 0;
     let dev = 0;
     let ci = 0;
@@ -920,6 +924,8 @@ export class WavetrendStream {
    * @param out - Receives the outputs and is returned; a new {@link WavetrendOut}
    *   when omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: WavetrendOut): WavetrendOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -1515,7 +1521,7 @@ export function wavetrendOpenPositional(
   optInAveragePeriod = requireInt32('WAVETREND open', 'averagePeriod', optInAveragePeriod);
   optInSignalPeriod = requireInt32('WAVETREND open', 'signalPeriod', optInSignalPeriod);
   requireArgument('WAVETREND open', 'prices.high', inHigh);
-  requireHistory('WAVETREND open', inHigh.length);
+  requireHistory('WAVETREND open', 'prices.high', inHigh.length);
   requireArgument('WAVETREND open', 'prices.low', inLow);
   requireArgument('WAVETREND open', 'prices.close', inClose);
   requireHistoryLength('WAVETREND open', 'prices.low', inLow.length, inHigh.length);
@@ -1539,7 +1545,7 @@ export function wavetrendOpenAndFillPositional(
   optInAveragePeriod = requireInt32('WAVETREND openAndFill', 'averagePeriod', optInAveragePeriod);
   optInSignalPeriod = requireInt32('WAVETREND openAndFill', 'signalPeriod', optInSignalPeriod);
   requireArgument('WAVETREND openAndFill', 'prices.high', inHigh);
-  requireHistory('WAVETREND openAndFill', inHigh.length);
+  requireHistory('WAVETREND openAndFill', 'prices.high', inHigh.length);
   requireArgument('WAVETREND openAndFill', 'prices.low', inLow);
   requireArgument('WAVETREND openAndFill', 'prices.close', inClose);
   const guardLookback = wavetrendLookbackPositional(optInChannelPeriod, optInAveragePeriod, optInSignalPeriod, core);

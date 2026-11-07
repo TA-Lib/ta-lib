@@ -346,21 +346,21 @@ export function cmfDisplayShift(outputIdx: number, options?: CmfOptions): number
 }
 
 /**
- * Chaikin Money Flow: over a trailing window of `optInTimePeriod` bars, the sum of
- * each bar's money flow volume divided by the sum of its volume. The result is a
- * ratio in `[-1, +1]`. A bar's money flow volume is its volume scaled by where the
- * close sat inside the bar's range: a close at the high contributes the full
- * volume, a close at the low contributes minus the full volume, and a close at the
- * midpoint contributes nothing. Summing that over a window and dividing by the
- * window's volume answers "over these N bars, what share of the traded volume
- * closed near the top of its range?" Above zero is accumulation, below zero is
- * distribution, and the distance from zero measures conviction. Because the
- * divisor is the window's own volume, the output is comparable across instruments
- * and across time in a way a raw accumulation total is not. Created by Marc
- * Chaikin, who also authored the [`AD`](https://ta-lib.org/functions/ad) line this
- * shares its per-bar multiplier with. CMF is that same multiplier summed over a
- * fixed window and normalised, where AD accumulates it from the start of the
- * series without bound.
+ * Chaikin Money Flow: over a trailing window of `timePeriod` bars, the sum of each
+ * bar's money flow volume divided by the sum of its volume. The result is a ratio
+ * in `[-1, +1]`. A bar's money flow volume is its volume scaled by where the close
+ * sat inside the bar's range: a close at the high contributes the full volume, a
+ * close at the low contributes minus the full volume, and a close at the midpoint
+ * contributes nothing. Summing that over a window and dividing by the window's
+ * volume answers "over these N bars, what share of the traded volume closed near
+ * the top of its range?" Above zero is accumulation, below zero is distribution,
+ * and the distance from zero measures conviction. Because the divisor is the
+ * window's own volume, the output is comparable across instruments and across time
+ * in a way a raw accumulation total is not. Created by Marc Chaikin, who also
+ * authored the [`AD`](https://ta-lib.org/functions/ad) line this shares its
+ * per-bar multiplier with. CMF is that same multiplier summed over a fixed window
+ * and normalised, where AD accumulates it from the start of the series without
+ * bound.
  *
  * Formula and more info at
  * [ta-lib.org/functions/cmf](https://ta-lib.org/functions/cmf).
@@ -510,7 +510,7 @@ export class CmfStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CMF advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CMF advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -518,23 +518,23 @@ export class CmfStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, inVolume: number): number {
+  update(high: number, low: number, close: number, volume: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CMF update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CMF update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('CMF update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : !Number.isFinite(inClose) ? 'inClose' : 'inVolume');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('CMF update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : !Number.isFinite(close) ? 'close' : 'volume');
     }
-    cmfStepImpl(this, inHigh, inLow, inClose, inVolume);
+    cmfStepImpl(this, high, low, close, volume);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -542,55 +542,61 @@ export class CmfStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number, inVolume: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('CMF peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : !Number.isFinite(inClose) ? 'inClose' : 'inVolume');
+  peek(high: number, low: number, close: number, volume: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('CMF peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : !Number.isFinite(close) ? 'close' : 'volume');
     }
     const sp = this;
-    let high = 0;
-    let low = 0;
-    let close = 0;
-    let tmp = 0;
-    let mfv = 0;
-    let liveVol = 0;
-    let cur_outReal = 0;
-    let nullRun = sp.nullRun;
-    let sumMFV = sp.sumMFV;
-    let sumVol = sp.sumVol;
-    sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
-    sumVol -= sp.cb_mfv_volume[sp.mfv_Idx];
-    high = inHigh;
-    low = inLow;
-    close = inClose;
-    tmp = high - low;
-    if (tmp > 0.0) {
-      mfv = (close - low - (high - close)) / tmp * inVolume;
-    } else {
-      mfv = 0.0;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
+    const inVolume = volume;
+    {
+      let high = 0;
+      let low = 0;
+      let close = 0;
+      let tmp = 0;
+      let mfv = 0;
+      let liveVol = 0;
+      let cur_outReal = 0;
+      let nullRun = sp.nullRun;
+      let sumMFV = sp.sumMFV;
+      let sumVol = sp.sumVol;
+      sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
+      sumVol -= sp.cb_mfv_volume[sp.mfv_Idx];
+      high = inHigh;
+      low = inLow;
+      close = inClose;
+      tmp = high - low;
+      if (tmp > 0.0) {
+        mfv = (close - low - (high - close)) / tmp * inVolume;
+      } else {
+        mfv = 0.0;
+      }
+      sumMFV += mfv;
+      sumVol += inVolume;
+      liveVol = (!(Math.abs(inVolume) <= 0.0) ? 1 : 0);
+      nullRun = (nullRun + 1) & (liveVol - 1);
+      if (nullRun >= sp.optInTimePeriod) {
+        nullRun = sp.optInTimePeriod;
+        sumMFV = 0.0;
+        sumVol = 0.0;
+        cur_outReal = 0.0;
+      } else if (sumVol > 0.0) {
+        cur_outReal = sumMFV / sumVol;
+      } else {
+        cur_outReal = 0.0;
+      }
+      return cur_outReal;
     }
-    sumMFV += mfv;
-    sumVol += inVolume;
-    liveVol = (!(Math.abs(inVolume) <= 0.0) ? 1 : 0);
-    nullRun = (nullRun + 1) & (liveVol - 1);
-    if (nullRun >= sp.optInTimePeriod) {
-      nullRun = sp.optInTimePeriod;
-      sumMFV = 0.0;
-      sumVol = 0.0;
-      cur_outReal = 0.0;
-    } else if (sumVol > 0.0) {
-      cur_outReal = sumMFV / sumVol;
-    } else {
-      cur_outReal = 0.0;
-    }
-    return cur_outReal;
   }
 
   /** The value at the last bar this stream counted; `peek` does not change it. */
@@ -913,7 +919,7 @@ export function cmfOpenPositional(
 ): CmfStream {
   optInTimePeriod = requireInt32('CMF open', 'timePeriod', optInTimePeriod);
   requireArgument('CMF open', 'prices.high', inHigh);
-  requireHistory('CMF open', inHigh.length);
+  requireHistory('CMF open', 'prices.high', inHigh.length);
   requireArgument('CMF open', 'prices.low', inLow);
   requireArgument('CMF open', 'prices.close', inClose);
   requireArgument('CMF open', 'prices.volume', inVolume);
@@ -935,7 +941,7 @@ export function cmfOpenAndFillPositional(
 ): CmfStream {
   optInTimePeriod = requireInt32('CMF openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('CMF openAndFill', 'prices.high', inHigh);
-  requireHistory('CMF openAndFill', inHigh.length);
+  requireHistory('CMF openAndFill', 'prices.high', inHigh.length);
   requireArgument('CMF openAndFill', 'prices.low', inLow);
   requireArgument('CMF openAndFill', 'prices.close', inClose);
   requireArgument('CMF openAndFill', 'prices.volume', inVolume);

@@ -458,7 +458,7 @@ export class CmouStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CMOU advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CMOU advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -466,20 +466,20 @@ export class CmouStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series.
+   * @param real - The bar's `real` value: Source price/value series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CMOU update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CMOU update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('CMOU update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('CMOU update', 'real');
     }
-    cmouStepImpl(this, inReal);
+    cmouStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -487,16 +487,17 @@ export class CmouStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series.
+   * @param real - The bar's `real` value: Source price/value series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('CMOU peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('CMOU peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let live = 0;
     let sum = 0;
     let diff = 0;
@@ -859,7 +860,7 @@ export function cmouOpenPositional(
 ): CmouStream {
   optInTimePeriod = requireInt32('CMOU open', 'timePeriod', optInTimePeriod);
   requireArgument('CMOU open', 'real', inReal);
-  requireHistory('CMOU open', inReal.length);
+  requireHistory('CMOU open', 'real', inReal.length);
   return cmouOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -872,7 +873,7 @@ export function cmouOpenAndFillPositional(
 ): CmouStream {
   optInTimePeriod = requireInt32('CMOU openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('CMOU openAndFill', 'real', inReal);
-  requireHistory('CMOU openAndFill', inReal.length);
+  requireHistory('CMOU openAndFill', 'real', inReal.length);
   const guardLookback = cmouLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('CMOU openAndFill', PARAM_RANGES, optInTimePeriod);

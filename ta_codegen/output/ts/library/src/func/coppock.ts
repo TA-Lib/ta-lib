@@ -434,8 +434,8 @@ export function coppockDisplayShift(outputIdx: number, options?: CoppockOptions)
  *   oscillator or a spread, has no meaningful result here.
  * - The single fused pass is bit-identical to running `ROC + ROC` into
  *   [`WMA`](https://ta-lib.org/functions/wma).
- * - First output at `max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1`.
- *   Not start-dependent: each output depends only on its finite trailing window.
+ * - First output at `max(roc1Period, roc2Period) + wmaPeriod - 1`. Not
+ *   start-dependent: each output depends only on its finite trailing window.
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends
@@ -571,7 +571,7 @@ export class CoppockStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('COPPOCK advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('COPPOCK advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -579,21 +579,21 @@ export class CoppockStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series (canonically
-   *   a monthly close)
+   * @param real - The bar's `real` value: Source price/value series (canonically a
+   *   monthly close)
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('COPPOCK update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('COPPOCK update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('COPPOCK update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('COPPOCK update', 'real');
     }
-    coppockStepImpl(this, inReal);
+    coppockStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -601,17 +601,18 @@ export class CoppockStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series (canonically
-   *   a monthly close)
+   * @param real - The bar's `real` value: Source price/value series (canonically a
+   *   monthly close)
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('COPPOCK peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('COPPOCK peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let q = 0;
     let rw = 0;
     let ringWalk = 0;
@@ -1127,7 +1128,7 @@ export function coppockOpenPositional(
   optInROC1Period = requireInt32('COPPOCK open', 'roc1Period', optInROC1Period);
   optInROC2Period = requireInt32('COPPOCK open', 'roc2Period', optInROC2Period);
   requireArgument('COPPOCK open', 'real', inReal);
-  requireHistory('COPPOCK open', inReal.length);
+  requireHistory('COPPOCK open', 'real', inReal.length);
   return coppockOpenInternal(core, float64(inReal), 0, optInWMAPeriod, optInROC1Period, optInROC2Period);
 }
 
@@ -1144,7 +1145,7 @@ export function coppockOpenAndFillPositional(
   optInROC1Period = requireInt32('COPPOCK openAndFill', 'roc1Period', optInROC1Period);
   optInROC2Period = requireInt32('COPPOCK openAndFill', 'roc2Period', optInROC2Period);
   requireArgument('COPPOCK openAndFill', 'real', inReal);
-  requireHistory('COPPOCK openAndFill', inReal.length);
+  requireHistory('COPPOCK openAndFill', 'real', inReal.length);
   const guardLookback = coppockLookbackPositional(optInWMAPeriod, optInROC1Period, optInROC2Period, core);
   if (guardLookback < 0) {
     throw rejectedParams('COPPOCK openAndFill', PARAM_RANGES, optInWMAPeriod, optInROC1Period, optInROC2Period);

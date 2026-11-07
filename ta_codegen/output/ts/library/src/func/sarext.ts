@@ -843,7 +843,7 @@ export class SarextStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SAREXT advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SAREXT advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -851,21 +851,21 @@ export class SarextStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number): number {
+  update(high: number, low: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SAREXT update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SAREXT update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('SAREXT update', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('SAREXT update', !Number.isFinite(high) ? 'high' : 'low');
     }
-    sarextStepImpl(this, inHigh, inLow);
+    sarextStepImpl(this, high, low);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -873,17 +873,19 @@ export class SarextStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('SAREXT peek', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+  peek(high: number, low: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('SAREXT peek', !Number.isFinite(high) ? 'high' : 'low');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let prevHigh = 0;
     let prevLow = 0;
     let afLong = sp.afLong;
@@ -1806,7 +1808,7 @@ export function sarextOpenPositional(
   optInAccelerationShort = requireReal('SAREXT open', 'accelerationShort', optInAccelerationShort);
   optInAccelerationMaxShort = requireReal('SAREXT open', 'accelerationMaxShort', optInAccelerationMaxShort);
   requireArgument('SAREXT open', 'prices.high', inHigh);
-  requireHistory('SAREXT open', inHigh.length);
+  requireHistory('SAREXT open', 'prices.high', inHigh.length);
   requireArgument('SAREXT open', 'prices.low', inLow);
   requireHistoryLength('SAREXT open', 'prices.low', inLow.length, inHigh.length);
   return sarextOpenInternal(core, float64(inHigh), float64(inLow), 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
@@ -1836,7 +1838,7 @@ export function sarextOpenAndFillPositional(
   optInAccelerationShort = requireReal('SAREXT openAndFill', 'accelerationShort', optInAccelerationShort);
   optInAccelerationMaxShort = requireReal('SAREXT openAndFill', 'accelerationMaxShort', optInAccelerationMaxShort);
   requireArgument('SAREXT openAndFill', 'prices.high', inHigh);
-  requireHistory('SAREXT openAndFill', inHigh.length);
+  requireHistory('SAREXT openAndFill', 'prices.high', inHigh.length);
   requireArgument('SAREXT openAndFill', 'prices.low', inLow);
   const guardLookback = sarextLookbackPositional(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, core);
   if (guardLookback < 0) {

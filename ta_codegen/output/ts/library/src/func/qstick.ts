@@ -382,7 +382,7 @@ export class QstickStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('QSTICK advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('QSTICK advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -390,21 +390,21 @@ export class QstickStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inOpen - The bar's `inOpen` value: Open price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param open - The bar's `open` value: Open price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inOpen: number, inClose: number): number {
+  update(open: number, close: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('QSTICK update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('QSTICK update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inOpen) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('QSTICK update', !Number.isFinite(inOpen) ? 'inOpen' : 'inClose');
+    if (!Number.isFinite(open) || !Number.isFinite(close)) {
+      throw nonFiniteBar('QSTICK update', !Number.isFinite(open) ? 'open' : 'close');
     }
-    qstickStepImpl(this, inOpen, inClose);
+    qstickStepImpl(this, open, close);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -412,17 +412,19 @@ export class QstickStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inOpen - The bar's `inOpen` value: Open price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param open - The bar's `open` value: Open price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inOpen: number, inClose: number): number {
-    if (!Number.isFinite(inOpen) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('QSTICK peek', !Number.isFinite(inOpen) ? 'inOpen' : 'inClose');
+  peek(open: number, close: number): number {
+    if (!Number.isFinite(open) || !Number.isFinite(close)) {
+      throw nonFiniteBar('QSTICK peek', !Number.isFinite(open) ? 'open' : 'close');
     }
     const sp = this;
+    const inOpen = open;
+    const inClose = close;
     let tempReal = 0;
     let cur_outReal = 0;
     let periodTotal = sp.periodTotal;
@@ -658,7 +660,7 @@ export function qstickOpenPositional(
 ): QstickStream {
   optInTimePeriod = requireInt32('QSTICK open', 'timePeriod', optInTimePeriod);
   requireArgument('QSTICK open', 'prices.open', inOpen);
-  requireHistory('QSTICK open', inOpen.length);
+  requireHistory('QSTICK open', 'prices.open', inOpen.length);
   requireArgument('QSTICK open', 'prices.close', inClose);
   requireHistoryLength('QSTICK open', 'prices.close', inClose.length, inOpen.length);
   return qstickOpenInternal(core, float64(inOpen), float64(inClose), 0, optInTimePeriod);
@@ -674,7 +676,7 @@ export function qstickOpenAndFillPositional(
 ): QstickStream {
   optInTimePeriod = requireInt32('QSTICK openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('QSTICK openAndFill', 'prices.open', inOpen);
-  requireHistory('QSTICK openAndFill', inOpen.length);
+  requireHistory('QSTICK openAndFill', 'prices.open', inOpen.length);
   requireArgument('QSTICK openAndFill', 'prices.close', inClose);
   const guardLookback = qstickLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {

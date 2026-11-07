@@ -341,11 +341,12 @@ export function cviDisplayShift(outputIdx: number, options?: CviOptions): number
  *   average at zero. CVI reports 0 there. Tulip Indicators and pandas-ta-classic
  *   leave the division unguarded and emit NaN; trading-signals returns 0, as here.
  * - Implementations disagree on how the inner EMA is seeded. TA-Lib uses its own
- *   EMA convention, the simple average of the first `optInTimePeriod` spreads,
- *   where Tulip Indicators and trading-signals seed from a single raw spread and
+ *   EMA convention, the simple average of the first `timePeriod` spreads, where
+ *   Tulip Indicators and trading-signals seed from a single raw spread and
  *   converge to these values only after many bars.
  * - CVI inherits EMA's unstable period rather than owning one:
- *   `TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)` moves CVI's first output too.
+ *   `CoreBuilder.unstablePeriod(FuncUnstId.EMA, ...)` moves CVI's first output
+ *   too.
  *
  * `values[k]` is the value at input bar `begIdx + k`; every output is exactly as
  * long as the number of values written, and nothing is padded. A range that ends
@@ -469,7 +470,7 @@ export class CviStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CVI advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CVI advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -477,21 +478,21 @@ export class CviStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price.
-   * @param inLow - The bar's `inLow` value: Low price.
+   * @param high - The bar's `high` value: High price.
+   * @param low - The bar's `low` value: Low price.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number): number {
+  update(high: number, low: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CVI update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CVI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('CVI update', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('CVI update', !Number.isFinite(high) ? 'high' : 'low');
     }
-    cviStepImpl(this, inHigh, inLow);
+    cviStepImpl(this, high, low);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -499,17 +500,19 @@ export class CviStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price.
-   * @param inLow - The bar's `inLow` value: Low price.
+   * @param high - The bar's `high` value: High price.
+   * @param low - The bar's `low` value: Low price.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow)) {
-      throw nonFiniteBar('CVI peek', !Number.isFinite(inHigh) ? 'inHigh' : 'inLow');
+  peek(high: number, low: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low)) {
+      throw nonFiniteBar('CVI peek', !Number.isFinite(high) ? 'high' : 'low');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let laggedEMA = 0;
     let tempReal = 0;
     let cur_outReal = 0;
@@ -792,7 +795,7 @@ export function cviOpenPositional(
   optInTimePeriod = requireInt32('CVI open', 'timePeriod', optInTimePeriod);
   optInROCPeriod = requireInt32('CVI open', 'rocPeriod', optInROCPeriod);
   requireArgument('CVI open', 'prices.high', inHigh);
-  requireHistory('CVI open', inHigh.length);
+  requireHistory('CVI open', 'prices.high', inHigh.length);
   requireArgument('CVI open', 'prices.low', inLow);
   requireHistoryLength('CVI open', 'prices.low', inLow.length, inHigh.length);
   return cviOpenInternal(core, float64(inHigh), float64(inLow), 0, optInTimePeriod, optInROCPeriod);
@@ -810,7 +813,7 @@ export function cviOpenAndFillPositional(
   optInTimePeriod = requireInt32('CVI openAndFill', 'timePeriod', optInTimePeriod);
   optInROCPeriod = requireInt32('CVI openAndFill', 'rocPeriod', optInROCPeriod);
   requireArgument('CVI openAndFill', 'prices.high', inHigh);
-  requireHistory('CVI openAndFill', inHigh.length);
+  requireHistory('CVI openAndFill', 'prices.high', inHigh.length);
   requireArgument('CVI openAndFill', 'prices.low', inLow);
   const guardLookback = cviLookbackPositional(optInTimePeriod, optInROCPeriod, core);
   if (guardLookback < 0) {

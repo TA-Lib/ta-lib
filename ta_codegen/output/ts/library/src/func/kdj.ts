@@ -541,7 +541,7 @@ export class KdjStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('KDJ advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('KDJ advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -549,27 +549,28 @@ export class KdjStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link KdjOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out?: KdjOut): KdjOut {
+  update(high: number, low: number, close: number, out?: KdjOut): KdjOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('KDJ update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('KDJ update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KDJ update', 'KdjOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('KDJ update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('KDJ update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    kdjStepImpl(this, inHigh, inLow, inClose);
+    kdjStepImpl(this, high, low, close);
     this.outRangeCount++;
     if (out === undefined) {
       out = new KdjOut();
@@ -583,23 +584,26 @@ export class KdjStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link KdjOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out?: KdjOut): KdjOut {
+  peek(high: number, low: number, close: number, out?: KdjOut): KdjOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('KDJ peek', 'KdjOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('KDJ peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('KDJ peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let cur_outK = 0;
     let cur_outD = 0;
     let cur_outJ = 0;
@@ -625,6 +629,8 @@ export class KdjStream {
    * @param out - Receives the outputs and is returned; a new {@link KdjOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: KdjOut): KdjOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -880,7 +886,7 @@ export function kdjOpenPositional(
   optInSlowD_Period = requireInt32('KDJ open', 'slowDPeriod', optInSlowD_Period);
   optInSlowD_MAType = requireInt32('KDJ open', 'slowDMaType', optInSlowD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('KDJ open', 'prices.high', inHigh);
-  requireHistory('KDJ open', inHigh.length);
+  requireHistory('KDJ open', 'prices.high', inHigh.length);
   requireArgument('KDJ open', 'prices.low', inLow);
   requireArgument('KDJ open', 'prices.close', inClose);
   requireHistoryLength('KDJ open', 'prices.low', inLow.length, inHigh.length);
@@ -909,7 +915,7 @@ export function kdjOpenAndFillPositional(
   optInSlowD_Period = requireInt32('KDJ openAndFill', 'slowDPeriod', optInSlowD_Period);
   optInSlowD_MAType = requireInt32('KDJ openAndFill', 'slowDMaType', optInSlowD_MAType) as MAType | typeof Core.INTEGER_DEFAULT;
   requireArgument('KDJ openAndFill', 'prices.high', inHigh);
-  requireHistory('KDJ openAndFill', inHigh.length);
+  requireHistory('KDJ openAndFill', 'prices.high', inHigh.length);
   requireArgument('KDJ openAndFill', 'prices.low', inLow);
   requireArgument('KDJ openAndFill', 'prices.close', inClose);
   const guardLookback = kdjLookbackPositional(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType as MAType, optInSlowD_Period, optInSlowD_MAType as MAType, core);

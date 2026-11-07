@@ -214,12 +214,12 @@ export function marketfiDisplayShift(outputIdx: number, options?: MarketfiOption
  * range a bar travelled per unit of volume traded — how much movement the market
  * "facilitated" per tick. A rising index on rising volume is read as a move the
  * market is absorbing; a rising index on falling volume as one it is not. Retail
- * material commonly abbreviates this "MFI" or "BW MFI". TA-Lib already ships
- * `TA_MFI` for the Money Flow Index, so this carries the `MARKETFI` name used by
- * Tulip and pandas-ta-classic. Charting packages often overlay a four-state colour
- * code (green / fade / fake / squat) derived from the signs of the bar-to-bar
- * change in this index and in volume. That is an interpretive layer on top of the
- * series, not part of it; `outReal` is the scalar only.
+ * material commonly abbreviates this "MFI" or "BW MFI". TA-Lib already ships `mfi`
+ * for the Money Flow Index, so this carries the `MARKETFI` name used by Tulip and
+ * pandas-ta-classic. Charting packages often overlay a four-state colour code
+ * (green / fade / fake / squat) derived from the signs of the bar-to-bar change in
+ * this index and in volume. That is an interpretive layer on top of the series,
+ * not part of it; `outReal` is the scalar only.
  *
  * Formula and more info at
  * [ta-lib.org/functions/marketfi](https://ta-lib.org/functions/marketfi).
@@ -325,7 +325,7 @@ export class MarketfiStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MARKETFI advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MARKETFI advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -333,22 +333,22 @@ export class MarketfiStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inVolume: number): number {
+  update(high: number, low: number, volume: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MARKETFI update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MARKETFI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('MARKETFI update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inVolume');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('MARKETFI update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'volume');
     }
-    marketfiStepImpl(this, inHigh, inLow, inVolume);
+    marketfiStepImpl(this, high, low, volume);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -356,17 +356,20 @@ export class MarketfiStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inVolume: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('MARKETFI peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inVolume');
+  peek(high: number, low: number, volume: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('MARKETFI peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'volume');
     }
+    const inHigh = high;
+    const inLow = low;
+    const inVolume = volume;
     let cur_outReal = 0;
     /* A zero-volume bar would divide by zero. Neither reference guards
      * it -- they emit +/-Inf, or NaN when the range is zero too -- but
@@ -544,7 +547,7 @@ export function marketfiOpenPositional(
   core: Core = Core.DEFAULT,
 ): MarketfiStream {
   requireArgument('MARKETFI open', 'prices.high', inHigh);
-  requireHistory('MARKETFI open', inHigh.length);
+  requireHistory('MARKETFI open', 'prices.high', inHigh.length);
   requireArgument('MARKETFI open', 'prices.low', inLow);
   requireArgument('MARKETFI open', 'prices.volume', inVolume);
   requireHistoryLength('MARKETFI open', 'prices.low', inLow.length, inHigh.length);
@@ -561,7 +564,7 @@ export function marketfiOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): MarketfiStream {
   requireArgument('MARKETFI openAndFill', 'prices.high', inHigh);
-  requireHistory('MARKETFI openAndFill', inHigh.length);
+  requireHistory('MARKETFI openAndFill', 'prices.high', inHigh.length);
   requireArgument('MARKETFI openAndFill', 'prices.low', inLow);
   requireArgument('MARKETFI openAndFill', 'prices.volume', inVolume);
   const guardOutLen = openFillCount('MARKETFI openAndFill', inHigh.length, marketfiLookbackPositional(core));

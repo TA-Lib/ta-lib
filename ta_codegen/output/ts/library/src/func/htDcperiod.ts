@@ -825,7 +825,7 @@ export class HtDcperiodStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('HT_DCPERIOD advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('HT_DCPERIOD advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -833,20 +833,20 @@ export class HtDcperiodStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series.
+   * @param real - The bar's `real` value: Source price/value series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('HT_DCPERIOD update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('HT_DCPERIOD update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('HT_DCPERIOD update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('HT_DCPERIOD update', 'real');
     }
-    htDcperiodStepImpl(this, inReal);
+    htDcperiodStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -854,16 +854,17 @@ export class HtDcperiodStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price/value series.
+   * @param real - The bar's `real` value: Source price/value series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('HT_DCPERIOD peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('HT_DCPERIOD peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tempReal = 0;
     let tempReal2 = 0;
     let adjustedPrevPeriod = 0;
@@ -2134,7 +2135,7 @@ export function htDcperiodOpenPositional(
   core: Core = Core.DEFAULT,
 ): HtDcperiodStream {
   requireArgument('HT_DCPERIOD open', 'real', inReal);
-  requireHistory('HT_DCPERIOD open', inReal.length);
+  requireHistory('HT_DCPERIOD open', 'real', inReal.length);
   return htDcperiodOpenInternal(core, float64(inReal), 0);
 }
 
@@ -2145,7 +2146,7 @@ export function htDcperiodOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): HtDcperiodStream {
   requireArgument('HT_DCPERIOD openAndFill', 'real', inReal);
-  requireHistory('HT_DCPERIOD openAndFill', inReal.length);
+  requireHistory('HT_DCPERIOD openAndFill', 'real', inReal.length);
   const guardOutLen = openFillCount('HT_DCPERIOD openAndFill', inReal.length, htDcperiodLookbackPositional(core));
   requireOutput('HT_DCPERIOD openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);

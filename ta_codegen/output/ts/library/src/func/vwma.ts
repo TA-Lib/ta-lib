@@ -316,9 +316,9 @@ export function vwmaDisplayShift(outputIdx: number, options?: VwmaOptions): numb
 
 /**
  * Volume Weighted Moving Average: the mean price over a trailing window of
- * `optInTimePeriod` bars, each bar weighted by its own volume. Heavily traded bars
- * pull the average toward their price; quiet bars barely move it. Read like any
- * moving average — price above is strength, below is weakness. Against a plain
+ * `timePeriod` bars, each bar weighted by its own volume. Heavily traded bars pull
+ * the average toward their price; quiet bars barely move it. Read like any moving
+ * average — price above is strength, below is weakness. Against a plain
  * [`SMA`](https://ta-lib.org/functions/sma) of the same window it leads on
  * high-volume moves and lags on low-volume drift, so the gap between the two lines
  * measures how volume-confirmed a move is. It has no attributable inventor —
@@ -456,7 +456,7 @@ export class VwmaStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('VWMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('VWMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -464,22 +464,21 @@ export class VwmaStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price series, close by
-   *   convention.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param real - The bar's `real` value: Source price series, close by convention.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number, inVolume: number): number {
+  update(real: number, volume: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('VWMA update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('VWMA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('VWMA update', !Number.isFinite(inReal) ? 'inReal' : 'inVolume');
+    if (!Number.isFinite(real) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('VWMA update', !Number.isFinite(real) ? 'real' : 'volume');
     }
-    vwmaStepImpl(this, inReal, inVolume);
+    vwmaStepImpl(this, real, volume);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -487,18 +486,19 @@ export class VwmaStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price series, close by
-   *   convention.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param real - The bar's `real` value: Source price series, close by convention.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number, inVolume: number): number {
-    if (!Number.isFinite(inReal) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('VWMA peek', !Number.isFinite(inReal) ? 'inReal' : 'inVolume');
+  peek(real: number, volume: number): number {
+    if (!Number.isFinite(real) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('VWMA peek', !Number.isFinite(real) ? 'real' : 'volume');
     }
     const sp = this;
+    const inReal = real;
+    const inVolume = volume;
     let tempPV = 0;
     let tempV = 0;
     let tempReal = 0;
@@ -870,7 +870,7 @@ export function vwmaOpenPositional(
 ): VwmaStream {
   optInTimePeriod = requireInt32('VWMA open', 'timePeriod', optInTimePeriod);
   requireArgument('VWMA open', 'real', inReal);
-  requireHistory('VWMA open', inReal.length);
+  requireHistory('VWMA open', 'real', inReal.length);
   requireArgument('VWMA open', 'prices.volume', inVolume);
   requireHistoryLength('VWMA open', 'prices.volume', inVolume.length, inReal.length);
   return vwmaOpenInternal(core, float64(inReal), float64(inVolume), 0, optInTimePeriod);
@@ -886,7 +886,7 @@ export function vwmaOpenAndFillPositional(
 ): VwmaStream {
   optInTimePeriod = requireInt32('VWMA openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('VWMA openAndFill', 'real', inReal);
-  requireHistory('VWMA openAndFill', inReal.length);
+  requireHistory('VWMA openAndFill', 'real', inReal.length);
   requireArgument('VWMA openAndFill', 'prices.volume', inVolume);
   const guardLookback = vwmaLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {

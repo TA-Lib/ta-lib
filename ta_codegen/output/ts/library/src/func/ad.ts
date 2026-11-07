@@ -334,7 +334,7 @@ export class AdStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('AD advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('AD advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -342,23 +342,23 @@ export class AdStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, inVolume: number): number {
+  update(high: number, low: number, close: number, volume: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('AD update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('AD update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('AD update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : !Number.isFinite(inClose) ? 'inClose' : 'inVolume');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('AD update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : !Number.isFinite(close) ? 'close' : 'volume');
     }
-    adStepImpl(this, inHigh, inLow, inClose, inVolume);
+    adStepImpl(this, high, low, close, volume);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -366,34 +366,40 @@ export class AdStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number, inVolume: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('AD peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : !Number.isFinite(inClose) ? 'inClose' : 'inVolume');
+  peek(high: number, low: number, close: number, volume: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('AD peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : !Number.isFinite(close) ? 'close' : 'volume');
     }
     const sp = this;
-    let high = 0;
-    let low = 0;
-    let close = 0;
-    let tmp = 0;
-    let ad = sp.ad;
-    let cur_outReal = 0;
-    high = inHigh;
-    low = inLow;
-    tmp = high - low;
-    close = inClose;
-    if (tmp > 0.0) {
-      ad += (close - low - (high - close)) / tmp * inVolume;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
+    const inVolume = volume;
+    {
+      let high = 0;
+      let low = 0;
+      let close = 0;
+      let tmp = 0;
+      let ad = sp.ad;
+      let cur_outReal = 0;
+      high = inHigh;
+      low = inLow;
+      tmp = high - low;
+      close = inClose;
+      if (tmp > 0.0) {
+        ad += (close - low - (high - close)) / tmp * inVolume;
+      }
+      cur_outReal = ad;
+      return cur_outReal;
     }
-    cur_outReal = ad;
-    return cur_outReal;
   }
 
   /** The value at the last bar this stream counted; `peek` does not change it. */
@@ -562,7 +568,7 @@ export function adOpenPositional(
   core: Core = Core.DEFAULT,
 ): AdStream {
   requireArgument('AD open', 'prices.high', inHigh);
-  requireHistory('AD open', inHigh.length);
+  requireHistory('AD open', 'prices.high', inHigh.length);
   requireArgument('AD open', 'prices.low', inLow);
   requireArgument('AD open', 'prices.close', inClose);
   requireArgument('AD open', 'prices.volume', inVolume);
@@ -582,7 +588,7 @@ export function adOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): AdStream {
   requireArgument('AD openAndFill', 'prices.high', inHigh);
-  requireHistory('AD openAndFill', inHigh.length);
+  requireHistory('AD openAndFill', 'prices.high', inHigh.length);
   requireArgument('AD openAndFill', 'prices.low', inLow);
   requireArgument('AD openAndFill', 'prices.close', inClose);
   requireArgument('AD openAndFill', 'prices.volume', inVolume);

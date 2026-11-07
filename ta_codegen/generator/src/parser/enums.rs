@@ -10,6 +10,8 @@ use crate::ir::{EnumDef, EnumVariant};
 struct YamlVariant {
     name: String,
     value: i32,
+    #[serde(default)]
+    reserved: bool,
 }
 
 #[derive(Deserialize)]
@@ -38,6 +40,7 @@ pub fn load_enums(path: &Path) -> HashMap<String, EnumDef> {
                     c_name: format!("{}{}", spec.c_prefix, v.name),
                     name: v.name,
                     value: v.value,
+                    reserved: v.reserved,
                 })
                 .collect();
             check_unique(&name, &variants, path);

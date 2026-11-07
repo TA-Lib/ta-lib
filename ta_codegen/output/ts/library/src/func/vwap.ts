@@ -441,7 +441,7 @@ export class VwapStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('VWAP advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('VWAP advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -449,23 +449,23 @@ export class VwapStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, inVolume: number): number {
+  update(high: number, low: number, close: number, volume: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('VWAP update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('VWAP update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('VWAP update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : !Number.isFinite(inClose) ? 'inClose' : 'inVolume');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('VWAP update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : !Number.isFinite(close) ? 'close' : 'volume');
     }
-    vwapStepImpl(this, inHigh, inLow, inClose, inVolume);
+    vwapStepImpl(this, high, low, close, volume);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -473,112 +473,118 @@ export class VwapStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inHigh: number, inLow: number, inClose: number, inVolume: number): number {
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose) || !Number.isFinite(inVolume)) {
-      throw nonFiniteBar('VWAP peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : !Number.isFinite(inClose) ? 'inClose' : 'inVolume');
+  peek(high: number, low: number, close: number, volume: number): number {
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close) || !Number.isFinite(volume)) {
+      throw nonFiniteBar('VWAP peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : !Number.isFinite(close) ? 'close' : 'volume');
     }
     const sp = this;
-    let typPrice = 0;
-    let volume = 0;
-    let tempReal = 0;
-    let cur_outReal = 0;
-    let sumPV = sp.sumPV;
-    let sumV = sp.sumV;
-    let vwap = sp.vwap;
-    /* The typical price is written exactly as in ta_TYPPRICE.c so that the
-     * two agree bit for bit and this stays a true composite of it.
-     */
-    typPrice = (inHigh + inLow + inClose) / 3.0;
-    volume = inVolume;
-    /* A bar is weighted only if both of its terms are real numbers. That is
-     * the whole condition: a NaN or an infinity in the price or the volume
-     * is the only way a bar cannot be weighted, and every other bar --
-     * including one that traded nothing -- is weighted normally.
-     *
-     * The test gates BOTH adds. Letting the volume in without its matching
-     * price term would leave a weight in the divisor that nothing paid for,
-     * biasing every later value: a NaN close with a good volume would drag
-     * the next value 25% low.
-     *
-     * Skipping the bar is what makes this recoverable. These are CUMULATIVE
-     * sums with no trailing term to subtract anything back out, so a single
-     * non-finite bar allowed in would leave both sums non-finite for the
-     * REST of the call -- the line would repeat one stale value on every
-     * later bar however clean it was, silently, and looking like a plausible
-     * price the whole way. Skipping keeps the state usable, so the average
-     * resumes on the very next bar that can be weighted.
-     *
-     * Testing the two INPUTS, not the product and not the candidate sums, is
-     * a measured choice:
-     *
-     *   - The candidate sums would have to be committed conditionally, which
-     *     puts four cmovs in the loop-carried dependency chain and costs
-     *     +60% on this loop. Both forms below leave the adds unconditional
-     *     inside a predicted branch and measure free.
-     *   - The product alone would also detect every unusable bar, one test
-     *     instead of two, and measures the same. But it would additionally
-     *     drop a WELL-FORMED bar whose price and volume are both finite and
-     *     whose product merely overflows -- silently, and taking that bar's
-     *     volume out of the divisor with it. Testing the inputs leaves that
-     *     case exactly as it was before this guard existed: the overflow
-     *     reaches the sum and the call reports Inf, which is the documented
-     *     `double` overflow class rather than an indicator defect, and is
-     *     louder than a freeze.
-     *
-     * So this changes behaviour for one thing only: a bar whose price or
-     * volume is not a finite number. On finite data the test is always true
-     * and no value the function has ever produced moves. Only the batch path
-     * needs it -- the streaming Update/Peek entry points reject a non-finite
-     * bar with TA_BAD_PARAM before it reaches any accumulator.
-     */
-    /* The product is kept in its own statement so no compiler may contract it
-     * into an FMA. Contracting here would make the C output disagree with the
-     * Rust, Java and C# backends under the cross-language bitwise gate. Same
-     * reason as in ta_codegen/input/vwma/vwma.c.
-     *
-     * Computed before the guard rather than inside it, and unconditionally,
-     * so it stays a per-bar temporary. Assigned only on the taken arm it
-     * would instead be live across bars, and the streaming tier would carry
-     * it as a fourth state field in every handle -- 8 bytes to hold a value
-     * no later bar reads. The multiply on a skipped bar is discarded.
-     */
-    tempReal = typPrice * volume;
-    if ((Number.isFinite(typPrice)) && (Number.isFinite(volume))) {
-      sumPV += tempReal;
-      sumV += volume;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
+    const inVolume = volume;
+    {
+      let typPrice = 0;
+      let volume = 0;
+      let tempReal = 0;
+      let cur_outReal = 0;
+      let sumPV = sp.sumPV;
+      let sumV = sp.sumV;
+      let vwap = sp.vwap;
+      /* The typical price is written exactly as in ta_TYPPRICE.c so that the
+       * two agree bit for bit and this stays a true composite of it.
+       */
+      typPrice = (inHigh + inLow + inClose) / 3.0;
+      volume = inVolume;
+      /* A bar is weighted only if both of its terms are real numbers. That is
+       * the whole condition: a NaN or an infinity in the price or the volume
+       * is the only way a bar cannot be weighted, and every other bar --
+       * including one that traded nothing -- is weighted normally.
+       *
+       * The test gates BOTH adds. Letting the volume in without its matching
+       * price term would leave a weight in the divisor that nothing paid for,
+       * biasing every later value: a NaN close with a good volume would drag
+       * the next value 25% low.
+       *
+       * Skipping the bar is what makes this recoverable. These are CUMULATIVE
+       * sums with no trailing term to subtract anything back out, so a single
+       * non-finite bar allowed in would leave both sums non-finite for the
+       * REST of the call -- the line would repeat one stale value on every
+       * later bar however clean it was, silently, and looking like a plausible
+       * price the whole way. Skipping keeps the state usable, so the average
+       * resumes on the very next bar that can be weighted.
+       *
+       * Testing the two INPUTS, not the product and not the candidate sums, is
+       * a measured choice:
+       *
+       *   - The candidate sums would have to be committed conditionally, which
+       *     puts four cmovs in the loop-carried dependency chain and costs
+       *     +60% on this loop. Both forms below leave the adds unconditional
+       *     inside a predicted branch and measure free.
+       *   - The product alone would also detect every unusable bar, one test
+       *     instead of two, and measures the same. But it would additionally
+       *     drop a WELL-FORMED bar whose price and volume are both finite and
+       *     whose product merely overflows -- silently, and taking that bar's
+       *     volume out of the divisor with it. Testing the inputs leaves that
+       *     case exactly as it was before this guard existed: the overflow
+       *     reaches the sum and the call reports Inf, which is the documented
+       *     `double` overflow class rather than an indicator defect, and is
+       *     louder than a freeze.
+       *
+       * So this changes behaviour for one thing only: a bar whose price or
+       * volume is not a finite number. On finite data the test is always true
+       * and no value the function has ever produced moves. Only the batch path
+       * needs it -- the streaming Update/Peek entry points reject a non-finite
+       * bar with TA_BAD_PARAM before it reaches any accumulator.
+       */
+      /* The product is kept in its own statement so no compiler may contract it
+       * into an FMA. Contracting here would make the C output disagree with the
+       * Rust, Java and C# backends under the cross-language bitwise gate. Same
+       * reason as in ta_codegen/input/vwma/vwma.c.
+       *
+       * Computed before the guard rather than inside it, and unconditionally,
+       * so it stays a per-bar temporary. Assigned only on the taken arm it
+       * would instead be live across bars, and the streaming tier would carry
+       * it as a fourth state field in every handle -- 8 bytes to hold a value
+       * no later bar reads. The multiply on a skipped bar is discarded.
+       */
+      tempReal = typPrice * volume;
+      if ((Number.isFinite(typPrice)) && (Number.isFinite(volume))) {
+        sumPV += tempReal;
+        sumV += volume;
+      }
+      /* Bars that traded nothing carry no weight, so a zero-volume bar in
+       * the middle of a series leaves both sums untouched and repeats the
+       * previous value on its own -- no arm needed for that. A bar skipped
+       * by the guard above repeats it for the same reason.
+       *
+       * The arm below is for the one case the ratio cannot express: a
+       * leading run of bars before any volume has traded, where there are
+       * no weights at all and the weighted mean is undefined. The last
+       * value computed is carried forward instead, which is 0.0 until the
+       * first bar with volume. Volume is non-negative, so once the divisor
+       * leaves zero it never returns and this arm cannot fire again.
+       *
+       * A successful call therefore never emits NaN or Inf (issue #112),
+       * which is the divergence from pandas-ta-classic and from
+       * trading-signals: the first emits NaN there, the second no bar at
+       * all. Testing sumV rather than the bar's own volume also keeps a
+       * negative divisor -- which no non-negative volume series can
+       * produce -- out of a price-scale output, as ta_CMF.c does.
+       */
+      if (sumV > 0.0) {
+        vwap = sumPV / sumV;
+      }
+      cur_outReal = vwap;
+      return cur_outReal;
     }
-    /* Bars that traded nothing carry no weight, so a zero-volume bar in
-     * the middle of a series leaves both sums untouched and repeats the
-     * previous value on its own -- no arm needed for that. A bar skipped
-     * by the guard above repeats it for the same reason.
-     *
-     * The arm below is for the one case the ratio cannot express: a
-     * leading run of bars before any volume has traded, where there are
-     * no weights at all and the weighted mean is undefined. The last
-     * value computed is carried forward instead, which is 0.0 until the
-     * first bar with volume. Volume is non-negative, so once the divisor
-     * leaves zero it never returns and this arm cannot fire again.
-     *
-     * A successful call therefore never emits NaN or Inf (issue #112),
-     * which is the divergence from pandas-ta-classic and from
-     * trading-signals: the first emits NaN there, the second no bar at
-     * all. Testing sumV rather than the bar's own volume also keeps a
-     * negative divisor -- which no non-negative volume series can
-     * produce -- out of a price-scale output, as ta_CMF.c does.
-     */
-    if (sumV > 0.0) {
-      vwap = sumPV / sumV;
-    }
-    cur_outReal = vwap;
-    return cur_outReal;
   }
 
   /** The value at the last bar this stream counted; `peek` does not change it. */
@@ -899,7 +905,7 @@ export function vwapOpenPositional(
   core: Core = Core.DEFAULT,
 ): VwapStream {
   requireArgument('VWAP open', 'prices.high', inHigh);
-  requireHistory('VWAP open', inHigh.length);
+  requireHistory('VWAP open', 'prices.high', inHigh.length);
   requireArgument('VWAP open', 'prices.low', inLow);
   requireArgument('VWAP open', 'prices.close', inClose);
   requireArgument('VWAP open', 'prices.volume', inVolume);
@@ -919,7 +925,7 @@ export function vwapOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): VwapStream {
   requireArgument('VWAP openAndFill', 'prices.high', inHigh);
-  requireHistory('VWAP openAndFill', inHigh.length);
+  requireHistory('VWAP openAndFill', 'prices.high', inHigh.length);
   requireArgument('VWAP openAndFill', 'prices.low', inLow);
   requireArgument('VWAP openAndFill', 'prices.close', inClose);
   requireArgument('VWAP openAndFill', 'prices.volume', inVolume);

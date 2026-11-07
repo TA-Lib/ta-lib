@@ -352,9 +352,9 @@ export function swak2phpDisplayShift(outputIdx: number, options?: Swak2phpOption
  * numerator instead of a smoothing one. It removes what is slower than the cutoff
  * period and rolls off twice as steeply as the one-pole row. Read it as an
  * oscillator, not as price. Its DC gain is 0, so a flat market returns zero and a
- * trend returns its departure from itself. Against `TA_SWAK_HP` the difference is
- * the slope of the transition: the second pole buys a sharper separation between
- * what is kept and what is removed.
+ * trend returns its departure from itself. Against `swakHp` the difference is the
+ * slope of the transition: the second pole buys a sharper separation between what
+ * is kept and what is removed.
  *
  * Formula and more info at
  * [ta-lib.org/functions/swak_2php](https://ta-lib.org/functions/swak_2php).
@@ -364,7 +364,7 @@ export function swak2phpDisplayShift(outputIdx: number, options?: Swak2phpOption
  * before {@link swak2phpLookback} is a success with empty outputs.
  *
  * @param real - The series to detrend; Ehlers' default is the bar midpoint
- *   `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+ *   `(H+L)/2`, which the caller passes as `medprice` output.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link Swak2phpOptions}.
  * @returns `begIdx` and the values; see {@link Swak2phpResult}. Each output is a
@@ -469,7 +469,7 @@ export class Swak2phpStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SWAK_2PHP advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SWAK_2PHP advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -477,21 +477,21 @@ export class Swak2phpStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: The series to detrend; Ehlers' default
-   *   is the bar midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+   * @param real - The bar's `real` value: The series to detrend; Ehlers' default is
+   *   the bar midpoint `(H+L)/2`, which the caller passes as `medprice` output.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SWAK_2PHP update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SWAK_2PHP update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SWAK_2PHP update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SWAK_2PHP update', 'real');
     }
-    swak2phpStepImpl(this, inReal);
+    swak2phpStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -499,17 +499,18 @@ export class Swak2phpStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: The series to detrend; Ehlers' default
-   *   is the bar midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+   * @param real - The bar's `real` value: The series to detrend; Ehlers' default is
+   *   the bar midpoint `(H+L)/2`, which the caller passes as `medprice` output.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SWAK_2PHP peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SWAK_2PHP peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let x0 = 0;
     let y = 0;
     let cur_outReal = 0;
@@ -823,7 +824,7 @@ export function swak2phpOpenPositional(
 ): Swak2phpStream {
   optInTimePeriod = requireInt32('SWAK_2PHP open', 'timePeriod', optInTimePeriod);
   requireArgument('SWAK_2PHP open', 'real', inReal);
-  requireHistory('SWAK_2PHP open', inReal.length);
+  requireHistory('SWAK_2PHP open', 'real', inReal.length);
   return swak2phpOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -836,7 +837,7 @@ export function swak2phpOpenAndFillPositional(
 ): Swak2phpStream {
   optInTimePeriod = requireInt32('SWAK_2PHP openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('SWAK_2PHP openAndFill', 'real', inReal);
-  requireHistory('SWAK_2PHP openAndFill', inReal.length);
+  requireHistory('SWAK_2PHP openAndFill', 'real', inReal.length);
   const guardLookback = swak2phpLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('SWAK_2PHP openAndFill', PARAM_RANGES, optInTimePeriod);
@@ -858,7 +859,7 @@ export function swak2phpOpenAndFillPositional(
  * last history bar, bit-identical to {@link swak2php} there.
  *
  * @param real - Warm-up history. The series to detrend; Ehlers' default is the bar
- *   midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+ *   midpoint `(H+L)/2`, which the caller passes as `medprice` output.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link Swak2phpOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -891,7 +892,7 @@ export function swak2phpOpen(real: ArrayLike<number>, options?: Swak2phpOptions)
  * the same pass, bit-identically to {@link swak2php}.
  *
  * @param real - Warm-up history. The series to detrend; Ehlers' default is the bar
- *   midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+ *   midpoint `(H+L)/2`, which the caller passes as `medprice` output.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link Swak2phpOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the

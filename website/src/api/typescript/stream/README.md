@@ -55,7 +55,7 @@ const provisional = s.peek(formingClose); // state left unchanged
 
 ## Multi-input / multi-output
 
-Inputs mirror the batch function: the same positional arrays and price objects at `open`, then one number per input component at `update` and `peek`. A multi-output function returns its outputs in a `<Name>Out`, a plain mutable object with one field per output, named as the batch result's. Candlestick patterns return a `number`:
+Inputs mirror the batch function: the same positional arrays and price objects at `open`, then one number per input component at `update` and `peek`, named as the opener's positional inputs are, a price input by its components (`update(high, low, close)`). A multi-output function returns its outputs in a `<Name>Out`, a plain mutable object with one field per output, named as the batch result's. Candlestick patterns return a `number`:
 
 ```ts
 import { cdldojiOpen, macdOpen, MacdOut } from 'ta-lib';

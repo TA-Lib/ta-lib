@@ -429,7 +429,7 @@ export class MinStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MIN advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MIN advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -437,20 +437,20 @@ export class MinStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source series to take the minimum of.
+   * @param real - The bar's `real` value: Source series to take the minimum of.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MIN update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MIN update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MIN update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MIN update', 'real');
     }
-    minStepImpl(this, inReal);
+    minStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -458,16 +458,17 @@ export class MinStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source series to take the minimum of.
+   * @param real - The bar's `real` value: Source series to take the minimum of.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MIN peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MIN peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tmp = 0;
     let cur_outReal = 0;
     let i = sp.i;
@@ -726,7 +727,7 @@ export function minOpenPositional(
 ): MinStream {
   optInTimePeriod = requireInt32('MIN open', 'timePeriod', optInTimePeriod);
   requireArgument('MIN open', 'real', inReal);
-  requireHistory('MIN open', inReal.length);
+  requireHistory('MIN open', 'real', inReal.length);
   return minOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -739,7 +740,7 @@ export function minOpenAndFillPositional(
 ): MinStream {
   optInTimePeriod = requireInt32('MIN openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('MIN openAndFill', 'real', inReal);
-  requireHistory('MIN openAndFill', inReal.length);
+  requireHistory('MIN openAndFill', 'real', inReal.length);
   const guardLookback = minLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('MIN openAndFill', PARAM_RANGES, optInTimePeriod);

@@ -766,6 +766,9 @@ pub struct EnumVariant {
     /// Pinned integer value. Part of the ABI: identical in every backend and
     /// append-only.
     pub value: i32,
+    /// A retired slot: its value stays in the ABI, its name names no function,
+    /// and a backend that publishes members leaves it out.
+    pub reserved: bool,
 }
 
 #[derive(Debug, Clone)]

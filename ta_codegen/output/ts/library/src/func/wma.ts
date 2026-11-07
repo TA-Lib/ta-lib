@@ -497,7 +497,7 @@ export class WmaStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('WMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('WMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -505,20 +505,20 @@ export class WmaStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source price/data series.
+   * @param real - The bar's `real` value: Source price/data series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('WMA update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('WMA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('WMA update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('WMA update', 'real');
     }
-    wmaStepImpl(this, inReal);
+    wmaStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -526,16 +526,17 @@ export class WmaStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source price/data series.
+   * @param real - The bar's `real` value: Source price/data series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('WMA peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('WMA peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let j = 0;
     let rw = 0;
     let tempReal = 0;
@@ -1051,7 +1052,7 @@ export function wmaOpenPositional(
 ): WmaStream {
   optInTimePeriod = requireInt32('WMA open', 'timePeriod', optInTimePeriod);
   requireArgument('WMA open', 'real', inReal);
-  requireHistory('WMA open', inReal.length);
+  requireHistory('WMA open', 'real', inReal.length);
   return wmaOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -1064,7 +1065,7 @@ export function wmaOpenAndFillPositional(
 ): WmaStream {
   optInTimePeriod = requireInt32('WMA openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('WMA openAndFill', 'real', inReal);
-  requireHistory('WMA openAndFill', inReal.length);
+  requireHistory('WMA openAndFill', 'real', inReal.length);
   const guardLookback = wmaLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('WMA openAndFill', PARAM_RANGES, optInTimePeriod);

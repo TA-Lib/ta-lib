@@ -91,6 +91,9 @@ function sameBits(a: number[], b: number[]): boolean {
   return a.length === b.length && a.every((x, i) => Object.is(x, b[i]));
 }
 
+/** The public `update`/`peek` parameter of C's `inHigh`: `high`. */
+const barName = (cName: string): string => cName.replace(/^in([A-Z])/, (_, c: string) => c.toLowerCase());
+
 test('every streaming registry function has an opener, and the sweeps below cover each one', () => {
   const streaming = Functions.all().filter((f) => f.hasFlags(FuncFlags.STREAMING));
   assert.equal(SPECS.length, streaming.length);
@@ -214,8 +217,8 @@ test('an empty history is a short history answered after every leg presence, len
       legs++;
     }
     const past = ins.map(() => claiming(Core.INDEX_MAX + 2));
-    rejects(() => s.open(...past, ...opts), 'TA_OUT_OF_RANGE_END_INDEX', `${s.fn} open: past INDEX_MAX + 1`, `${s.fn} open: endIdx out of range`);
-    rejects(() => s.fill(...past, ...opts, ...none), 'TA_OUT_OF_RANGE_END_INDEX', `${s.fn} openAndFill: past INDEX_MAX + 1`, `${s.fn} openAndFill: endIdx out of range`);
+    rejects(() => s.open(...past, ...opts), 'TA_OUT_OF_RANGE_END_INDEX', `${s.fn} open: past INDEX_MAX + 1`, `${s.fn} open: history has length ${Core.INDEX_MAX + 2}, at most ${Core.INDEX_MAX + 1}`);
+    rejects(() => s.fill(...past, ...opts, ...none), 'TA_OUT_OF_RANGE_END_INDEX', `${s.fn} openAndFill: past INDEX_MAX + 1`, `${s.fn} openAndFill: history has length ${Core.INDEX_MAX + 2}, at most ${Core.INDEX_MAX + 1}`);
     probes++;
 
     if (ins.length !== 1) continue;
@@ -378,7 +381,7 @@ test('a non-finite bar is refused naming its input and moves nothing; the next g
       for (const v of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
         const bars = good.map((g, j) => (j === k ? v : g));
         for (const verb of ['update', 'peek'] as const) {
-          rejects(() => read(s, handle, verb, bars), 'TA_BAD_PARAM', `${s.fn} ${verb}: ${p.name}=${v}`, `${s.fn} ${verb}: ${p.name} is not finite`);
+          rejects(() => read(s, handle, verb, bars), 'TA_BAD_PARAM', `${s.fn} ${verb}: ${p.name}=${v}`, `${s.fn} ${verb}: ${barName(p.name)} is not finite`);
           assert.deepEqual(handle.outRange(), range, `${s.fn} ${verb}: a refused bar moved the range`);
           assert.ok(sameBits(read(s, handle, 'value', []), held), `${s.fn} ${verb}: a refused bar moved value()`);
           refused++;
@@ -419,9 +422,9 @@ test('the last bar a stream counts is INDEX_MAX: past it advance and update refu
     assert.equal(full.begIdx, at.begIdx, fn);
     assert.equal(full.begIdx + full.count, Core.INDEX_MAX + 1, `${fn}: the last bar counted`);
     const held = s.value();
-    rejects(() => s.advance(), 'TA_OUT_OF_RANGE_END_INDEX', `${fn} advance`, `${fn} advance: endIdx out of range`);
-    rejects(() => s.update(...bar), 'TA_OUT_OF_RANGE_END_INDEX', `${fn} update`, `${fn} update: endIdx out of range`);
-    rejects(() => s.advance(), 'TA_OUT_OF_RANGE_END_INDEX', `${fn} advance again`, `${fn} advance: endIdx out of range`);
+    rejects(() => s.advance(), 'TA_OUT_OF_RANGE_END_INDEX', `${fn} advance`, `${fn} advance: outRange() has reached Core.INDEX_MAX`);
+    rejects(() => s.update(...bar), 'TA_OUT_OF_RANGE_END_INDEX', `${fn} update`, `${fn} update: outRange() has reached Core.INDEX_MAX`);
+    rejects(() => s.advance(), 'TA_OUT_OF_RANGE_END_INDEX', `${fn} advance again`, `${fn} advance: outRange() has reached Core.INDEX_MAX`);
     assert.ok(Number.isFinite(s.peek(...bar)), `${fn}: peek counts no bar`);
     assert.deepEqual(s.outRange(), full, `${fn}: a refused call moved the range`);
     assert.ok(Object.is(s.value(), held), `${fn}: a refused call moved value()`);

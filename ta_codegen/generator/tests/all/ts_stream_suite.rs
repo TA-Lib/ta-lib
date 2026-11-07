@@ -463,3 +463,39 @@ fn no_ts_peek_copies_the_handle() {
     let expected: BTreeSet<String> = ["kdj", "ma", "stochrsi"].iter().map(|s| (*s).to_string()).collect();
     assert_eq!(sink_sites, expected, "the set of composed peeks allocating a sub-stream sink moved");
 }
+
+/// The public `update` and `peek` name the bar as the positional tier names the
+/// series; the transcribed bodies and the `@internal` frames keep C's names.
+#[test]
+fn public_update_and_peek_name_the_bar_as_the_positional_tier_does() {
+    let sma = section("sma");
+    assert!(sma.contains("\n  update(real: number): number {\n"), "sma: {}", signature_of(&sma, "\n  update("));
+    assert!(sma.contains("\n  peek(real: number): number {\n"), "sma: {}", signature_of(&sma, "\n  peek("));
+    assert!(sma.contains("\n    const inReal = real;\n"), "the peek frame reads C's name through an alias");
+    assert!(sma.contains("\nfunction smaStepImpl(sp: SmaStream, inReal: number): void {\n"), "the step body keeps C's name");
+    assert!(sma.contains("\n    smaStepImpl(this, real);\n"));
+    let atr = section("atr");
+    assert!(atr.contains("\n  update(high: number, low: number, close: number): number {\n"), "atr: {}", signature_of(&atr, "\n  update("));
+    // ad's body declares `high`, `low`, `close` and `volume` as locals: inside a
+    // block they shadow the parameters, which the aliases ahead of it have read.
+    let peek = body_of(&section("ad"), "  peek(high: number");
+    let alias = peek.find("const inHigh = high;").expect("alias");
+    let block = alias + peek[alias..].find("\n    {\n").expect("shadowing block");
+    let local = peek.find("let high").expect("the body local");
+    assert!(alias < block && block < local, "aliases, then the block, then the local:\n{peek}");
+
+    let (registry, helpers) = (common::make_registry(), common::make_helpers());
+    let mut methods = 0;
+    for name in streaming_funcs() {
+        let (func, enums) = load(&name);
+        let src = section_of(&backends::ts::generate(&func, &enums, registry, helpers)).expect("stream section");
+        for needle in ["\n  update(", "\n  peek("] {
+            let sig = signature_of(&src, needle);
+            let params = sig.split_once('(').map_or("", |(_, p)| p);
+            let c_named = params.split(", ").any(|p| p.starts_with("in") && p[2..].starts_with(|c: char| c.is_ascii_uppercase()));
+            assert!(!c_named, "{name}: C's input name in a public signature: {sig}");
+            methods += 1;
+        }
+    }
+    assert!(methods >= 400, "swept {methods} public methods");
+}

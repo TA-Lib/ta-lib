@@ -305,6 +305,7 @@ fn the_enum_limit_macros_are_declared_next_to_the_enum() {
                 name: format!("V{v}"),
                 c_name: format!("TA_Tri_V{v}"),
                 value: v,
+                reserved: false,
             })
             .collect(),
     };
@@ -375,6 +376,7 @@ fn the_gate_bound_follows_the_member_set() {
                     name: format!("V{v}"),
                     c_name: format!("TA_Tri_V{v}"),
                     value: v,
+                    reserved: false,
                 })
                 .collect(),
         },

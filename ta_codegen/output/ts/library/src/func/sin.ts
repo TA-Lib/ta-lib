@@ -257,7 +257,7 @@ export class SinStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SIN advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SIN advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -265,20 +265,20 @@ export class SinStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input values (radians)
+   * @param real - The bar's `real` value: Input values (radians)
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SIN update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SIN update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SIN update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SIN update', 'real');
     }
-    sinStepImpl(this, inReal);
+    sinStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -286,15 +286,16 @@ export class SinStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input values (radians)
+   * @param real - The bar's `real` value: Input values (radians)
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SIN peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SIN peek', 'real');
     }
+    const inReal = real;
     let cur_outReal = 0;
     cur_outReal = Math.sin(inReal);
     return cur_outReal;
@@ -404,7 +405,7 @@ export function sinOpenPositional(
   core: Core = Core.DEFAULT,
 ): SinStream {
   requireArgument('SIN open', 'real', inReal);
-  requireHistory('SIN open', inReal.length);
+  requireHistory('SIN open', 'real', inReal.length);
   return sinOpenInternal(core, float64(inReal), 0);
 }
 
@@ -415,7 +416,7 @@ export function sinOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): SinStream {
   requireArgument('SIN openAndFill', 'real', inReal);
-  requireHistory('SIN openAndFill', inReal.length);
+  requireHistory('SIN openAndFill', 'real', inReal.length);
   const guardOutLen = openFillCount('SIN openAndFill', inReal.length, sinLookbackPositional(core));
   requireOutput('SIN openAndFill', 'outReal', outReal, guardOutLen, Float64Array);
   const inRealF64 = float64(inReal);

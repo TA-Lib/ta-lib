@@ -522,7 +522,7 @@ export class AccbandsStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ACCBANDS advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ACCBANDS advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -530,27 +530,28 @@ export class AccbandsStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link AccbandsOut}
    *   when omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out?: AccbandsOut): AccbandsOut {
+  update(high: number, low: number, close: number, out?: AccbandsOut): AccbandsOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ACCBANDS update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ACCBANDS update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('ACCBANDS update', 'AccbandsOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('ACCBANDS update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('ACCBANDS update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    accbandsStepImpl(this, inHigh, inLow, inClose);
+    accbandsStepImpl(this, high, low, close);
     this.outRangeCount++;
     if (out === undefined) {
       out = new AccbandsOut();
@@ -564,23 +565,26 @@ export class AccbandsStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link AccbandsOut}
    *   when omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out?: AccbandsOut): AccbandsOut {
+  peek(high: number, low: number, close: number, out?: AccbandsOut): AccbandsOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('ACCBANDS peek', 'AccbandsOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('ACCBANDS peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('ACCBANDS peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let tempUpper = 0;
     let tempMiddle = 0;
     let tempLower = 0;
@@ -636,6 +640,8 @@ export class AccbandsStream {
    * @param out - Receives the outputs and is returned; a new {@link AccbandsOut}
    *   when omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: AccbandsOut): AccbandsOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -976,7 +982,7 @@ export function accbandsOpenPositional(
 ): AccbandsStream {
   optInTimePeriod = requireInt32('ACCBANDS open', 'timePeriod', optInTimePeriod);
   requireArgument('ACCBANDS open', 'prices.high', inHigh);
-  requireHistory('ACCBANDS open', inHigh.length);
+  requireHistory('ACCBANDS open', 'prices.high', inHigh.length);
   requireArgument('ACCBANDS open', 'prices.low', inLow);
   requireArgument('ACCBANDS open', 'prices.close', inClose);
   requireHistoryLength('ACCBANDS open', 'prices.low', inLow.length, inHigh.length);
@@ -997,7 +1003,7 @@ export function accbandsOpenAndFillPositional(
 ): AccbandsStream {
   optInTimePeriod = requireInt32('ACCBANDS openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('ACCBANDS openAndFill', 'prices.high', inHigh);
-  requireHistory('ACCBANDS openAndFill', inHigh.length);
+  requireHistory('ACCBANDS openAndFill', 'prices.high', inHigh.length);
   requireArgument('ACCBANDS openAndFill', 'prices.low', inLow);
   requireArgument('ACCBANDS openAndFill', 'prices.close', inClose);
   const guardLookback = accbandsLookbackPositional(optInTimePeriod, core);

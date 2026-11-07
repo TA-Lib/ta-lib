@@ -462,7 +462,7 @@ export class EriStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ERI advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ERI advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -470,27 +470,28 @@ export class EriStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price series.
-   * @param inLow - The bar's `inLow` value: Low price series.
-   * @param inClose - The bar's `inClose` value: Close price series.
+   * @param high - The bar's `high` value: High price series.
+   * @param low - The bar's `low` value: Low price series.
+   * @param close - The bar's `close` value: Close price series.
    * @param out - Receives the outputs and is returned; a new {@link EriOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out?: EriOut): EriOut {
+  update(high: number, low: number, close: number, out?: EriOut): EriOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('ERI update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('ERI update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('ERI update', 'EriOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('ERI update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('ERI update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    eriStepImpl(this, inHigh, inLow, inClose);
+    eriStepImpl(this, high, low, close);
     this.outRangeCount++;
     if (out === undefined) {
       out = new EriOut();
@@ -503,23 +504,26 @@ export class EriStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price series.
-   * @param inLow - The bar's `inLow` value: Low price series.
-   * @param inClose - The bar's `inClose` value: Close price series.
+   * @param high - The bar's `high` value: High price series.
+   * @param low - The bar's `low` value: Low price series.
+   * @param close - The bar's `close` value: Close price series.
    * @param out - Receives the outputs and is returned; a new {@link EriOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out?: EriOut): EriOut {
+  peek(high: number, low: number, close: number, out?: EriOut): EriOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('ERI peek', 'EriOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('ERI peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('ERI peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
+    const inClose = close;
     let cur_outBullPower = 0;
     let cur_outBearPower = 0;
     if (sp.optInTimePeriod === 1) {
@@ -555,6 +559,8 @@ export class EriStream {
    * @param out - Receives the outputs and is returned; a new {@link EriOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: EriOut): EriOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -869,7 +875,7 @@ export function eriOpenPositional(
 ): EriStream {
   optInTimePeriod = requireInt32('ERI open', 'timePeriod', optInTimePeriod);
   requireArgument('ERI open', 'prices.high', inHigh);
-  requireHistory('ERI open', inHigh.length);
+  requireHistory('ERI open', 'prices.high', inHigh.length);
   requireArgument('ERI open', 'prices.low', inLow);
   requireArgument('ERI open', 'prices.close', inClose);
   requireHistoryLength('ERI open', 'prices.low', inLow.length, inHigh.length);
@@ -889,7 +895,7 @@ export function eriOpenAndFillPositional(
 ): EriStream {
   optInTimePeriod = requireInt32('ERI openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('ERI openAndFill', 'prices.high', inHigh);
-  requireHistory('ERI openAndFill', inHigh.length);
+  requireHistory('ERI openAndFill', 'prices.high', inHigh.length);
   requireArgument('ERI openAndFill', 'prices.low', inLow);
   requireArgument('ERI openAndFill', 'prices.close', inClose);
   const guardLookback = eriLookbackPositional(optInTimePeriod, core);

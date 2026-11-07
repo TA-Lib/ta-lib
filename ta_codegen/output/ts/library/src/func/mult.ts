@@ -275,7 +275,7 @@ export class MultStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MULT advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MULT advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -283,21 +283,21 @@ export class MultStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal0 - The bar's `inReal0` value: First operand series.
-   * @param inReal1 - The bar's `inReal1` value: Second operand series.
+   * @param real0 - The bar's `real0` value: First operand series.
+   * @param real1 - The bar's `real1` value: Second operand series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal0: number, inReal1: number): number {
+  update(real0: number, real1: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MULT update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MULT update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal0) || !Number.isFinite(inReal1)) {
-      throw nonFiniteBar('MULT update', !Number.isFinite(inReal0) ? 'inReal0' : 'inReal1');
+    if (!Number.isFinite(real0) || !Number.isFinite(real1)) {
+      throw nonFiniteBar('MULT update', !Number.isFinite(real0) ? 'real0' : 'real1');
     }
-    multStepImpl(this, inReal0, inReal1);
+    multStepImpl(this, real0, real1);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -305,16 +305,18 @@ export class MultStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal0 - The bar's `inReal0` value: First operand series.
-   * @param inReal1 - The bar's `inReal1` value: Second operand series.
+   * @param real0 - The bar's `real0` value: First operand series.
+   * @param real1 - The bar's `real1` value: Second operand series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal0: number, inReal1: number): number {
-    if (!Number.isFinite(inReal0) || !Number.isFinite(inReal1)) {
-      throw nonFiniteBar('MULT peek', !Number.isFinite(inReal0) ? 'inReal0' : 'inReal1');
+  peek(real0: number, real1: number): number {
+    if (!Number.isFinite(real0) || !Number.isFinite(real1)) {
+      throw nonFiniteBar('MULT peek', !Number.isFinite(real0) ? 'real0' : 'real1');
     }
+    const inReal0 = real0;
+    const inReal1 = real1;
     let cur_outReal = 0;
     cur_outReal = inReal0 * inReal1;
     return cur_outReal;
@@ -435,7 +437,7 @@ export function multOpenPositional(
   core: Core = Core.DEFAULT,
 ): MultStream {
   requireArgument('MULT open', 'real0', inReal0);
-  requireHistory('MULT open', inReal0.length);
+  requireHistory('MULT open', 'real0', inReal0.length);
   requireArgument('MULT open', 'real1', inReal1);
   requireHistoryLength('MULT open', 'real1', inReal1.length, inReal0.length);
   return multOpenInternal(core, float64(inReal0), float64(inReal1), 0);
@@ -449,7 +451,7 @@ export function multOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): MultStream {
   requireArgument('MULT openAndFill', 'real0', inReal0);
-  requireHistory('MULT openAndFill', inReal0.length);
+  requireHistory('MULT openAndFill', 'real0', inReal0.length);
   requireArgument('MULT openAndFill', 'real1', inReal1);
   const guardOutLen = openFillCount('MULT openAndFill', inReal0.length, multLookbackPositional(core));
   requireHistoryLength('MULT openAndFill', 'real1', inReal1.length, inReal0.length);

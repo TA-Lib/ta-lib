@@ -561,17 +561,17 @@ export function doscDisplayShift(outputIdx: number, options?: DoscOptions): numb
  *
  * **Notes**
  * - Every stage is a function TA-Lib already ships, and the output is identical,
- *   bit for bit, to `TA_RSI` followed by two `TA_EMA` calls, a `TA_SMA` and a
- *   `TA_SUB`. That chain takes five calls and their intermediate buffers; this
- *   computes it in one pass without materialising them.
+ *   bit for bit, to `rsi` followed by two `ema` calls, a `sma` and a `sub`. That
+ *   chain takes five calls and their intermediate buffers; this computes it in one
+ *   pass without materialising them.
  * - Each exponential average is seeded with a simple average of its own first
  *   inputs, the same seeding TA-Lib's EMA uses, and the second seeds on what the
- *   first publishes. `TA_SetUnstablePeriod` on either `TA_FUNC_UNST_RSI` or
- *   `TA_FUNC_UNST_EMA` discards more of that warm-up, and the EMA setting counts
+ *   first publishes. `CoreBuilder.unstablePeriod` on either `FuncUnstId.RSI` or
+ *   `FuncUnstId.EMA` discards more of that warm-up, and the EMA setting counts
  *   twice because there are two exponential stages. Implementations seeding each
  *   stage from a single first sample differ over the transient and agree once it
  *   decays.
- * - The degenerate reading is whatever `TA_RSI` answers when neither a gain nor a
+ * - The degenerate reading is whatever `rsi` answers when neither a gain nor a
  *   loss has been seen since the seed. Some other implementations answer 100 there
  *   and will disagree over that stretch.
  * - The periods are independent: no ordering between the two smoothing periods is
@@ -720,7 +720,7 @@ export class DoscStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('DOSC advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('DOSC advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -728,20 +728,20 @@ export class DoscStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Input series, usually the close.
+   * @param real - The bar's `real` value: Input series, usually the close.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('DOSC update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('DOSC update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('DOSC update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('DOSC update', 'real');
     }
-    doscStepImpl(this, inReal);
+    doscStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -749,16 +749,17 @@ export class DoscStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Input series, usually the close.
+   * @param real - The bar's `real` value: Input series, usually the close.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('DOSC peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('DOSC peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let gainDelta = 0;
     let tempValue1 = 0;
     let tempValue2 = 0;
@@ -1293,7 +1294,7 @@ export function doscOpenPositional(
   optInSecondPeriod = requireInt32('DOSC open', 'secondPeriod', optInSecondPeriod);
   optInSignalPeriod = requireInt32('DOSC open', 'signalPeriod', optInSignalPeriod);
   requireArgument('DOSC open', 'real', inReal);
-  requireHistory('DOSC open', inReal.length);
+  requireHistory('DOSC open', 'real', inReal.length);
   return doscOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);
 }
 
@@ -1312,7 +1313,7 @@ export function doscOpenAndFillPositional(
   optInSecondPeriod = requireInt32('DOSC openAndFill', 'secondPeriod', optInSecondPeriod);
   optInSignalPeriod = requireInt32('DOSC openAndFill', 'signalPeriod', optInSignalPeriod);
   requireArgument('DOSC openAndFill', 'real', inReal);
-  requireHistory('DOSC openAndFill', inReal.length);
+  requireHistory('DOSC openAndFill', 'real', inReal.length);
   const guardLookback = doscLookbackPositional(optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('DOSC openAndFill', PARAM_RANGES, optInTimePeriod, optInFirstPeriod, optInSecondPeriod, optInSignalPeriod);

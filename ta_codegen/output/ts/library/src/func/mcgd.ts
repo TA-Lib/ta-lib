@@ -369,7 +369,7 @@ export class McgdStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MCGD advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MCGD advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -377,20 +377,20 @@ export class McgdStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Data on which to compute the average.
+   * @param real - The bar's `real` value: Data on which to compute the average.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('MCGD update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('MCGD update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MCGD update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MCGD update', 'real');
     }
-    mcgdStepImpl(this, inReal);
+    mcgdStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -398,16 +398,17 @@ export class McgdStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Data on which to compute the average.
+   * @param real - The bar's `real` value: Data on which to compute the average.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('MCGD peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('MCGD peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let tempMD = 0;
     let tempReal = 0;
     let ratio = 0;
@@ -608,7 +609,7 @@ export function mcgdOpenPositional(
 ): McgdStream {
   optInTimePeriod = requireInt32('MCGD open', 'timePeriod', optInTimePeriod);
   requireArgument('MCGD open', 'real', inReal);
-  requireHistory('MCGD open', inReal.length);
+  requireHistory('MCGD open', 'real', inReal.length);
   return mcgdOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -621,7 +622,7 @@ export function mcgdOpenAndFillPositional(
 ): McgdStream {
   optInTimePeriod = requireInt32('MCGD openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('MCGD openAndFill', 'real', inReal);
-  requireHistory('MCGD openAndFill', inReal.length);
+  requireHistory('MCGD openAndFill', 'real', inReal.length);
   const guardLookback = mcgdLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('MCGD openAndFill', PARAM_RANGES, optInTimePeriod);

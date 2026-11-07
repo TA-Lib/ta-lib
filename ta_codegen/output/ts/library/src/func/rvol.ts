@@ -389,7 +389,7 @@ export class RvolStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('RVOL advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('RVOL advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -397,20 +397,20 @@ export class RvolStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inVolume: number): number {
+  update(volume: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('RVOL update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('RVOL update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inVolume)) {
-      throw nonFiniteBar('RVOL update', 'inVolume');
+    if (!Number.isFinite(volume)) {
+      throw nonFiniteBar('RVOL update', 'volume');
     }
-    rvolStepImpl(this, inVolume);
+    rvolStepImpl(this, volume);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -418,16 +418,17 @@ export class RvolStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inVolume - The bar's `inVolume` value: Volume of each bar.
+   * @param volume - The bar's `volume` value: Volume of each bar.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inVolume: number): number {
-    if (!Number.isFinite(inVolume)) {
-      throw nonFiniteBar('RVOL peek', 'inVolume');
+  peek(volume: number): number {
+    if (!Number.isFinite(volume)) {
+      throw nonFiniteBar('RVOL peek', 'volume');
     }
     const sp = this;
+    const inVolume = volume;
     let baseline = 0;
     let todayVolume = 0;
     let cur_outReal = 0;
@@ -673,7 +674,7 @@ export function rvolOpenPositional(
 ): RvolStream {
   optInTimePeriod = requireInt32('RVOL open', 'timePeriod', optInTimePeriod);
   requireArgument('RVOL open', 'prices.volume', inVolume);
-  requireHistory('RVOL open', inVolume.length);
+  requireHistory('RVOL open', 'prices.volume', inVolume.length);
   return rvolOpenInternal(core, float64(inVolume), 0, optInTimePeriod);
 }
 
@@ -686,7 +687,7 @@ export function rvolOpenAndFillPositional(
 ): RvolStream {
   optInTimePeriod = requireInt32('RVOL openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('RVOL openAndFill', 'prices.volume', inVolume);
-  requireHistory('RVOL openAndFill', inVolume.length);
+  requireHistory('RVOL openAndFill', 'prices.volume', inVolume.length);
   const guardLookback = rvolLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('RVOL openAndFill', PARAM_RANGES, optInTimePeriod);

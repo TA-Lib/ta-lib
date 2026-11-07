@@ -564,7 +564,7 @@ export class VidyaStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('VIDYA advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('VIDYA advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -572,20 +572,20 @@ export class VidyaStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Data on which to compute the average.
+   * @param real - The bar's `real` value: Data on which to compute the average.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('VIDYA update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('VIDYA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('VIDYA update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('VIDYA update', 'real');
     }
-    vidyaStepImpl(this, inReal);
+    vidyaStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -593,16 +593,17 @@ export class VidyaStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Data on which to compute the average.
+   * @param real - The bar's `real` value: Data on which to compute the average.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('VIDYA peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('VIDYA peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let live = 0;
     let sum = 0;
     let diff = 0;
@@ -1060,7 +1061,7 @@ export function vidyaOpenPositional(
   optInTimePeriod = requireInt32('VIDYA open', 'timePeriod', optInTimePeriod);
   optInCMOPeriod = requireInt32('VIDYA open', 'cmoPeriod', optInCMOPeriod);
   requireArgument('VIDYA open', 'real', inReal);
-  requireHistory('VIDYA open', inReal.length);
+  requireHistory('VIDYA open', 'real', inReal.length);
   return vidyaOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInCMOPeriod);
 }
 
@@ -1075,7 +1076,7 @@ export function vidyaOpenAndFillPositional(
   optInTimePeriod = requireInt32('VIDYA openAndFill', 'timePeriod', optInTimePeriod);
   optInCMOPeriod = requireInt32('VIDYA openAndFill', 'cmoPeriod', optInCMOPeriod);
   requireArgument('VIDYA openAndFill', 'real', inReal);
-  requireHistory('VIDYA openAndFill', inReal.length);
+  requireHistory('VIDYA openAndFill', 'real', inReal.length);
   const guardLookback = vidyaLookbackPositional(optInTimePeriod, optInCMOPeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('VIDYA openAndFill', PARAM_RANGES, optInTimePeriod, optInCMOPeriod);

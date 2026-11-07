@@ -53,7 +53,7 @@ FuncUnstId:
   c_prefix: TA_FUNC_UNST_
   variants:
     - { name: ADX,          value: 0 }
-    - { name: UNUSED_1,     value: 1 }   # reserved: was ADXR, knob was inert (#129); kept for ABI, reusable
+    - { name: UNUSED_1,     value: 1, reserved: true }   # reserved: was ADXR, knob was inert (#129); kept for ABI, reusable
     - { name: ATR,          value: 2 }
     - { name: CMO,          value: 3 }
     - { name: DX,           value: 4 }
@@ -64,17 +64,17 @@ FuncUnstId:
     - { name: HT_SINE,      value: 9 }
     - { name: HT_TRENDLINE, value: 10 }
     - { name: HT_TRENDMODE, value: 11 }
-    - { name: UNUSED_12,    value: 12 }  # reserved: was IMI, reclassified stable (#14); kept for ABI, reusable
+    - { name: UNUSED_12,    value: 12, reserved: true }  # reserved: was IMI, reclassified stable (#14); kept for ABI, reusable
     - { name: KAMA,         value: 13 }
     - { name: MAMA,         value: 14 }
-    - { name: UNUSED_15,    value: 15 }  # reserved: was MFI, reclassified stable (#4); kept for ABI, reusable
+    - { name: UNUSED_15,    value: 15, reserved: true }  # reserved: was MFI, reclassified stable (#4); kept for ABI, reusable
     - { name: MINUS_DI,     value: 16 }
     - { name: MINUS_DM,     value: 17 }
     - { name: NATR,         value: 18 }
     - { name: PLUS_DI,      value: 19 }
     - { name: PLUS_DM,      value: 20 }
     - { name: RSI,          value: 21 }
-    - { name: UNUSED_22,    value: 22 }  # reserved: was STOCHRSI, knob was inert (#129); kept for ABI, reusable
+    - { name: UNUSED_22,    value: 22, reserved: true }  # reserved: was STOCHRSI, knob was inert (#129); kept for ABI, reusable
     - { name: T3,           value: 23 }
     - { name: RMA,          value: 24 }
     - { name: HA,           value: 25 }

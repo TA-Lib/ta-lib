@@ -768,7 +768,7 @@ export function ckspDisplayShift(outputIdx: number, options?: CkspOptions): numb
  * - A stop period of 1 leaves the first stops unchanged, which is the Chandelier
  *   Exit on both sides.
  * - Both lines inherit the Average True Range's warm-up, so a caller who wants
- *   them converged sets `TA_FUNC_UNST_ATR`, exactly as when calling that function
+ *   them converged sets `FuncUnstId.ATR`, exactly as when calling that function
  *   directly.
  *
  * `outHighStop[k]` is the value at input bar `begIdx + k`; every output is exactly
@@ -944,7 +944,7 @@ export class CkspStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CKSP advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CKSP advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -952,27 +952,28 @@ export class CkspStream {
   /**
    * Commits one closed bar and returns its outputs.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link CkspOut} when
    *   omitted.
    * @returns `out`, or the new sink.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite, before anything moves. `TALibError` with code
-   *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
+   *   finite, or a sink that is not an object, `null` included, before anything moves.
+   *   `TALibError` with code `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached
+   *   bar `Core.INDEX_MAX`.
    */
-  update(inHigh: number, inLow: number, inClose: number, out?: CkspOut): CkspOut {
+  update(high: number, low: number, close: number, out?: CkspOut): CkspOut {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('CKSP update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('CKSP update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('CKSP update', 'CkspOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('CKSP update', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('CKSP update', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
-    ckspStepImpl(this, inHigh, inLow, inClose);
+    ckspStepImpl(this, high, low, close);
     this.outRangeCount++;
     if (out === undefined) {
       out = new CkspOut();
@@ -985,23 +986,25 @@ export class CkspStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inHigh - The bar's `inHigh` value: High price of each bar.
-   * @param inLow - The bar's `inLow` value: Low price of each bar.
-   * @param inClose - The bar's `inClose` value: Close price of each bar.
+   * @param high - The bar's `high` value: High price of each bar.
+   * @param low - The bar's `low` value: Low price of each bar.
+   * @param close - The bar's `close` value: Close price of each bar.
    * @param out - Receives the outputs and is returned; a new {@link CkspOut} when
    *   omitted.
    * @returns `out`, or the new sink, as `update` would fill it.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
-   *   finite.
+   *   finite, or a sink that is not an object, `null` included.
    */
-  peek(inHigh: number, inLow: number, inClose: number, out?: CkspOut): CkspOut {
+  peek(high: number, low: number, close: number, out?: CkspOut): CkspOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
       throw badSink('CKSP peek', 'CkspOut');
     }
-    if (!Number.isFinite(inHigh) || !Number.isFinite(inLow) || !Number.isFinite(inClose)) {
-      throw nonFiniteBar('CKSP peek', !Number.isFinite(inHigh) ? 'inHigh' : !Number.isFinite(inLow) ? 'inLow' : 'inClose');
+    if (!Number.isFinite(high) || !Number.isFinite(low) || !Number.isFinite(close)) {
+      throw nonFiniteBar('CKSP peek', !Number.isFinite(high) ? 'high' : !Number.isFinite(low) ? 'low' : 'close');
     }
     const sp = this;
+    const inHigh = high;
+    const inLow = low;
     let val2 = 0;
     let val3 = 0;
     let greatest = 0;
@@ -1112,6 +1115,8 @@ export class CkspStream {
    * @param out - Receives the outputs and is returned; a new {@link CkspOut} when
    *   omitted.
    * @returns `out`, or the new sink.
+   * @throws `TALibError` with code `TA_BAD_PARAM` for a sink that is not an object,
+   *   `null` included.
    */
   value(out?: CkspOut): CkspOut {
     if (out !== undefined && (typeof out !== 'object' || out === null)) {
@@ -1951,7 +1956,7 @@ export function ckspOpenPositional(
   optInMultiplier = requireReal('CKSP open', 'multiplier', optInMultiplier);
   optInStopPeriod = requireInt32('CKSP open', 'stopPeriod', optInStopPeriod);
   requireArgument('CKSP open', 'prices.high', inHigh);
-  requireHistory('CKSP open', inHigh.length);
+  requireHistory('CKSP open', 'prices.high', inHigh.length);
   requireArgument('CKSP open', 'prices.low', inLow);
   requireArgument('CKSP open', 'prices.close', inClose);
   requireHistoryLength('CKSP open', 'prices.low', inLow.length, inHigh.length);
@@ -1975,7 +1980,7 @@ export function ckspOpenAndFillPositional(
   optInMultiplier = requireReal('CKSP openAndFill', 'multiplier', optInMultiplier);
   optInStopPeriod = requireInt32('CKSP openAndFill', 'stopPeriod', optInStopPeriod);
   requireArgument('CKSP openAndFill', 'prices.high', inHigh);
-  requireHistory('CKSP openAndFill', inHigh.length);
+  requireHistory('CKSP openAndFill', 'prices.high', inHigh.length);
   requireArgument('CKSP openAndFill', 'prices.low', inLow);
   requireArgument('CKSP openAndFill', 'prices.close', inClose);
   const guardLookback = ckspLookbackPositional(optInTimePeriod, optInMultiplier, optInStopPeriod, core);

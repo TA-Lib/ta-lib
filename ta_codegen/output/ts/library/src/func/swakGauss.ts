@@ -347,7 +347,7 @@ export function swakGaussDisplayShift(outputIdx: number, options?: SwakGaussOpti
  * construction asks for, not the exponential-moving-average alpha. Ehlers notes
  * that the same shape can be had by taking an EMA of an EMA, but that doing so
  * "leaves the computation of the correct alpha to be a little nebulous", and gives
- * these coefficients instead. `TA_EMA` cannot stand in: its alpha is `2/(n+1)` for
+ * these coefficients instead. `ema` cannot stand in: its alpha is `2/(n+1)` for
  * whole `n`, and at a cutoff period of 20 this filter's alpha is 0.38217, which
  * would ask for `n = 4.233`.
  *
@@ -359,7 +359,7 @@ export function swakGaussDisplayShift(outputIdx: number, options?: SwakGaussOpti
  * before {@link swakGaussLookback} is a success with empty outputs.
  *
  * @param real - The series to filter; Ehlers' default is the bar midpoint
- *   `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+ *   `(H+L)/2`, which the caller passes as `medprice` output.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link SwakGaussOptions}.
  * @returns `begIdx` and the values; see {@link SwakGaussResult}. Each output is a
@@ -460,7 +460,7 @@ export class SwakGaussStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SWAK_GAUSS advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SWAK_GAUSS advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -468,21 +468,21 @@ export class SwakGaussStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: The series to filter; Ehlers' default
-   *   is the bar midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+   * @param real - The bar's `real` value: The series to filter; Ehlers' default is
+   *   the bar midpoint `(H+L)/2`, which the caller passes as `medprice` output.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SWAK_GAUSS update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SWAK_GAUSS update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SWAK_GAUSS update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SWAK_GAUSS update', 'real');
     }
-    swakGaussStepImpl(this, inReal);
+    swakGaussStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -490,17 +490,18 @@ export class SwakGaussStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: The series to filter; Ehlers' default
-   *   is the bar midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+   * @param real - The bar's `real` value: The series to filter; Ehlers' default is
+   *   the bar midpoint `(H+L)/2`, which the caller passes as `medprice` output.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SWAK_GAUSS peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SWAK_GAUSS peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let y = 0;
     let cur_outReal = 0;
     let y1 = sp.y1;
@@ -784,7 +785,7 @@ export function swakGaussOpenPositional(
 ): SwakGaussStream {
   optInTimePeriod = requireInt32('SWAK_GAUSS open', 'timePeriod', optInTimePeriod);
   requireArgument('SWAK_GAUSS open', 'real', inReal);
-  requireHistory('SWAK_GAUSS open', inReal.length);
+  requireHistory('SWAK_GAUSS open', 'real', inReal.length);
   return swakGaussOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -797,7 +798,7 @@ export function swakGaussOpenAndFillPositional(
 ): SwakGaussStream {
   optInTimePeriod = requireInt32('SWAK_GAUSS openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('SWAK_GAUSS openAndFill', 'real', inReal);
-  requireHistory('SWAK_GAUSS openAndFill', inReal.length);
+  requireHistory('SWAK_GAUSS openAndFill', 'real', inReal.length);
   const guardLookback = swakGaussLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('SWAK_GAUSS openAndFill', PARAM_RANGES, optInTimePeriod);
@@ -819,7 +820,7 @@ export function swakGaussOpenAndFillPositional(
  * last history bar, bit-identical to {@link swakGauss} there.
  *
  * @param real - Warm-up history. The series to filter; Ehlers' default is the bar
- *   midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+ *   midpoint `(H+L)/2`, which the caller passes as `medprice` output.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link SwakGaussOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -852,7 +853,7 @@ export function swakGaussOpen(real: ArrayLike<number>, options?: SwakGaussOption
  * the same pass, bit-identically to {@link swakGauss}.
  *
  * @param real - Warm-up history. The series to filter; Ehlers' default is the bar
- *   midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+ *   midpoint `(H+L)/2`, which the caller passes as `medprice` output.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link SwakGaussOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the

@@ -129,7 +129,7 @@ export interface DivResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /**
-   * Per-element quotient inReal0/inReal1. `values[k]` is the value at input bar
+   * Per-element quotient real0/real1. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
   values: Float64Array;
@@ -275,7 +275,7 @@ export class DivStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('DIV advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('DIV advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -283,21 +283,21 @@ export class DivStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal0 - The bar's `inReal0` value: Dividend (numerator) series.
-   * @param inReal1 - The bar's `inReal1` value: Divisor (denominator) series.
+   * @param real0 - The bar's `real0` value: Dividend (numerator) series.
+   * @param real1 - The bar's `real1` value: Divisor (denominator) series.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal0: number, inReal1: number): number {
+  update(real0: number, real1: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('DIV update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('DIV update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal0) || !Number.isFinite(inReal1)) {
-      throw nonFiniteBar('DIV update', !Number.isFinite(inReal0) ? 'inReal0' : 'inReal1');
+    if (!Number.isFinite(real0) || !Number.isFinite(real1)) {
+      throw nonFiniteBar('DIV update', !Number.isFinite(real0) ? 'real0' : 'real1');
     }
-    divStepImpl(this, inReal0, inReal1);
+    divStepImpl(this, real0, real1);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -305,16 +305,18 @@ export class DivStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal0 - The bar's `inReal0` value: Dividend (numerator) series.
-   * @param inReal1 - The bar's `inReal1` value: Divisor (denominator) series.
+   * @param real0 - The bar's `real0` value: Dividend (numerator) series.
+   * @param real1 - The bar's `real1` value: Divisor (denominator) series.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal0: number, inReal1: number): number {
-    if (!Number.isFinite(inReal0) || !Number.isFinite(inReal1)) {
-      throw nonFiniteBar('DIV peek', !Number.isFinite(inReal0) ? 'inReal0' : 'inReal1');
+  peek(real0: number, real1: number): number {
+    if (!Number.isFinite(real0) || !Number.isFinite(real1)) {
+      throw nonFiniteBar('DIV peek', !Number.isFinite(real0) ? 'real0' : 'real1');
     }
+    const inReal0 = real0;
+    const inReal1 = real1;
     let cur_outReal = 0;
     cur_outReal = inReal0 / inReal1;
     return cur_outReal;
@@ -431,7 +433,7 @@ export function divOpenPositional(
   core: Core = Core.DEFAULT,
 ): DivStream {
   requireArgument('DIV open', 'real0', inReal0);
-  requireHistory('DIV open', inReal0.length);
+  requireHistory('DIV open', 'real0', inReal0.length);
   requireArgument('DIV open', 'real1', inReal1);
   requireHistoryLength('DIV open', 'real1', inReal1.length, inReal0.length);
   return divOpenInternal(core, float64(inReal0), float64(inReal1), 0);
@@ -445,7 +447,7 @@ export function divOpenAndFillPositional(
   core: Core = Core.DEFAULT,
 ): DivStream {
   requireArgument('DIV openAndFill', 'real0', inReal0);
-  requireHistory('DIV openAndFill', inReal0.length);
+  requireHistory('DIV openAndFill', 'real0', inReal0.length);
   requireArgument('DIV openAndFill', 'real1', inReal1);
   const guardOutLen = openFillCount('DIV openAndFill', inReal0.length, divLookbackPositional(core));
   requireHistoryLength('DIV openAndFill', 'real1', inReal1.length, inReal0.length);

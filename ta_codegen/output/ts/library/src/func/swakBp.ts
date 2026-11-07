@@ -396,7 +396,7 @@ export function swakBpDisplayShift(outputIdx: number, options?: SwakBpOptions): 
  * before {@link swakBpLookback} is a success with empty outputs.
  *
  * @param real - The series to filter; Ehlers' default is the bar midpoint
- *   `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+ *   `(H+L)/2`, which the caller passes as `medprice` output.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link SwakBpOptions}.
  * @returns `begIdx` and the values; see {@link SwakBpResult}. Each output is a
@@ -504,7 +504,7 @@ export class SwakBpStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SWAK_BP advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SWAK_BP advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -512,21 +512,21 @@ export class SwakBpStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: The series to filter; Ehlers' default
-   *   is the bar midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+   * @param real - The bar's `real` value: The series to filter; Ehlers' default is
+   *   the bar midpoint `(H+L)/2`, which the caller passes as `medprice` output.
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('SWAK_BP update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('SWAK_BP update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SWAK_BP update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SWAK_BP update', 'real');
     }
-    swakBpStepImpl(this, inReal);
+    swakBpStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -534,17 +534,18 @@ export class SwakBpStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: The series to filter; Ehlers' default
-   *   is the bar midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+   * @param real - The bar's `real` value: The series to filter; Ehlers' default is
+   *   the bar midpoint `(H+L)/2`, which the caller passes as `medprice` output.
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('SWAK_BP peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('SWAK_BP peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let x0 = 0;
     let y = 0;
     let cur_outReal = 0;
@@ -872,7 +873,7 @@ export function swakBpOpenPositional(
   optInTimePeriod = requireInt32('SWAK_BP open', 'timePeriod', optInTimePeriod);
   optInDelta = requireReal('SWAK_BP open', 'delta', optInDelta);
   requireArgument('SWAK_BP open', 'real', inReal);
-  requireHistory('SWAK_BP open', inReal.length);
+  requireHistory('SWAK_BP open', 'real', inReal.length);
   return swakBpOpenInternal(core, float64(inReal), 0, optInTimePeriod, optInDelta);
 }
 
@@ -887,7 +888,7 @@ export function swakBpOpenAndFillPositional(
   optInTimePeriod = requireInt32('SWAK_BP openAndFill', 'timePeriod', optInTimePeriod);
   optInDelta = requireReal('SWAK_BP openAndFill', 'delta', optInDelta);
   requireArgument('SWAK_BP openAndFill', 'real', inReal);
-  requireHistory('SWAK_BP openAndFill', inReal.length);
+  requireHistory('SWAK_BP openAndFill', 'real', inReal.length);
   const guardLookback = swakBpLookbackPositional(optInTimePeriod, optInDelta, core);
   if (guardLookback < 0) {
     throw rejectedParams('SWAK_BP openAndFill', PARAM_RANGES, optInTimePeriod, optInDelta);
@@ -909,7 +910,7 @@ export function swakBpOpenAndFillPositional(
  * last history bar, bit-identical to {@link swakBp} there.
  *
  * @param real - Warm-up history. The series to filter; Ehlers' default is the bar
- *   midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+ *   midpoint `(H+L)/2`, which the caller passes as `medprice` output.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link SwakBpOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -943,7 +944,7 @@ export function swakBpOpen(real: ArrayLike<number>, options?: SwakBpOptions): Sw
  * same pass, bit-identically to {@link swakBp}.
  *
  * @param real - Warm-up history. The series to filter; Ehlers' default is the bar
- *   midpoint `(H+L)/2`, which the caller passes as `TA_MEDPRICE` output.
+ *   midpoint `(H+L)/2`, which the caller passes as `medprice` output.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link SwakBpOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the

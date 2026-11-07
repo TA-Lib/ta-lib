@@ -524,7 +524,7 @@ export class DemaStream {
    */
   advance(): void {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('DEMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('DEMA advance', RetCode.OUT_OF_RANGE_END_INDEX);
     }
     this.outRangeCount++;
   }
@@ -532,20 +532,20 @@ export class DemaStream {
   /**
    * Commits one closed bar and returns the new value.
    *
-   * @param inReal - The bar's `inReal` value: Source series (typically price)
+   * @param real - The bar's `real` value: Source series (typically price)
    * @returns The new value.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite, before anything moves. `TALibError` with code
    *   `TA_OUT_OF_RANGE_END_INDEX` once `outRange()` has reached bar `Core.INDEX_MAX`.
    */
-  update(inReal: number): number {
+  update(real: number): number {
     if (this.outRangeBegIdx + this.outRangeCount > Core.INDEX_MAX) {
-      throw failure('DEMA update', RetCode.OUT_OF_RANGE_END_INDEX);
+      throw streamFailure('DEMA update', RetCode.OUT_OF_RANGE_END_INDEX);
     }
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('DEMA update', 'inReal');
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('DEMA update', 'real');
     }
-    demaStepImpl(this, inReal);
+    demaStepImpl(this, real);
     this.outRangeCount++;
     return this.cur_outReal;
   }
@@ -553,16 +553,17 @@ export class DemaStream {
   /**
    * What the next `update` with the same bar would return, committing nothing.
    *
-   * @param inReal - The bar's `inReal` value: Source series (typically price)
+   * @param real - The bar's `real` value: Source series (typically price)
    * @returns The value `update` would return.
    * @throws `TALibError` with code `TA_BAD_PARAM` for a bar value that is not
    *   finite.
    */
-  peek(inReal: number): number {
-    if (!Number.isFinite(inReal)) {
-      throw nonFiniteBar('DEMA peek', 'inReal');
+  peek(real: number): number {
+    if (!Number.isFinite(real)) {
+      throw nonFiniteBar('DEMA peek', 'real');
     }
     const sp = this;
+    const inReal = real;
     let cur_outReal = 0;
     let prevEMA1 = sp.prevEMA1;
     let prevEMA2 = sp.prevEMA2;
@@ -929,7 +930,7 @@ export function demaOpenPositional(
 ): DemaStream {
   optInTimePeriod = requireInt32('DEMA open', 'timePeriod', optInTimePeriod);
   requireArgument('DEMA open', 'real', inReal);
-  requireHistory('DEMA open', inReal.length);
+  requireHistory('DEMA open', 'real', inReal.length);
   return demaOpenInternal(core, float64(inReal), 0, optInTimePeriod);
 }
 
@@ -942,7 +943,7 @@ export function demaOpenAndFillPositional(
 ): DemaStream {
   optInTimePeriod = requireInt32('DEMA openAndFill', 'timePeriod', optInTimePeriod);
   requireArgument('DEMA openAndFill', 'real', inReal);
-  requireHistory('DEMA openAndFill', inReal.length);
+  requireHistory('DEMA openAndFill', 'real', inReal.length);
   const guardLookback = demaLookbackPositional(optInTimePeriod, core);
   if (guardLookback < 0) {
     throw rejectedParams('DEMA openAndFill', PARAM_RANGES, optInTimePeriod);
