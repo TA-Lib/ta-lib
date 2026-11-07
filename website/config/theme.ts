@@ -2,6 +2,8 @@ import { hopeTheme } from "vuepress-theme-hope";
 import { enNavbar } from "./navbar/index.js";
 import { enSidebar } from "./sidebar/index.js";
 
+const PREVIEW_IMAGE = "https://ta-lib.org/assets/images/social-preview.png";
+
 export default hopeTheme({
   hostname: "https://ta-lib.org",
 
@@ -79,6 +81,10 @@ export default hopeTheme({
     // land, so near-identical siblings each declare themselves as the original.
     seo: {
       canonical: "https://ta-lib.org",
+      fallBackImage: PREVIEW_IMAGE,
+      // Force it: otherwise a page's first markdown image (a badge, say) becomes its
+      // card image, and badges are SVG, which link cards do not render.
+      ogp: (ogp) => ({ ...ogp, "og:image": PREVIEW_IMAGE }),
     },
 
     icon: {
