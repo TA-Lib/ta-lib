@@ -1289,6 +1289,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOpt(6), c.RealOpt(7), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["SHARPE"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.SharpeImpl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["SI"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.SiImpl(
@@ -2734,6 +2740,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, Narrow(c.Price(0, PriceComponents.High)), Narrow(c.Price(0, PriceComponents.Low)), c.RealOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOpt(6), c.RealOpt(7), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["SHARPE"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.SharpeImpl(
+                startIdx, endIdx, Narrow(c.Series(0)), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["SI"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.SiImpl(
@@ -3204,6 +3216,7 @@ internal static class NoPhantomIoBinder
         ["RVOL"] = static (core, c) => core.RvolOpen(c.Price(0, PriceComponents.Volume), c.IntOpt(0)),
         ["SAR"] = static (core, c) => core.SarOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.RealOpt(1)),
         ["SAREXT"] = static (core, c) => core.SarextOpen(c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOpt(6), c.RealOpt(7)),
+        ["SHARPE"] = static (core, c) => core.SharpeOpen(c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2)),
         ["SI"] = static (core, c) => core.SiOpen(c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0)),
         ["SIN"] = static (core, c) => core.SinOpen(c.Series(0)),
         ["SINH"] = static (core, c) => core.SinhOpen(c.Series(0)),

@@ -10251,6 +10251,57 @@ static void icount_SAREXT(int iters) {
     g_sink += acc + outNBElement;
 }
 
+static void icount_SHARPE(int iters) {
+    const char *nm = "SHARPE";
+    int outBegIdx = 0, outNBElement = 0;
+    double acc = 0.0;
+    TA_RetCode rc;
+    TA_SHARPE_Stream *st = NULL;
+    TA_SHARPE_Stream *stf = NULL;
+    double v0 = 0.0;
+
+    ICOUNT_ZERO();
+    rc = TA_SHARPE(0, g_nPoints - 1, g_close, 20, 0.000000000000000, 252.000000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("SHARPE/batch");
+    icount_row(nm, "batch", 1, rc);
+    acc += g_outBuf0[0];
+
+    ICOUNT_ZERO();
+    rc = TA_SHARPE_OpenAndFill(&stf, g_close, g_nPoints, 20, 0.000000000000000, 252.000000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+    ICOUNT_DUMP("SHARPE/openfill");
+    icount_row(nm, "openfill", 1, rc);
+    acc += g_outBuf0[0];
+    if( stf ) TA_SHARPE_Close(stf);
+
+    ICOUNT_ZERO();
+    rc = TA_SHARPE_Open(&st, g_close, g_nPoints, 20, 0.000000000000000, 252.000000000000000, &v0);
+    ICOUNT_DUMP("SHARPE/open");
+    icount_row(nm, "open", 1, rc);
+
+    if( rc == TA_SUCCESS && st ) {
+        TA_RetCode src = TA_SUCCESS;
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_SHARPE_Update(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("SHARPE/update");
+        icount_row(nm, "update", 1, src);
+        ICOUNT_ZERO();
+        for( int it = 0; it < iters; it++ ) {
+            src = TA_SHARPE_Peek(st, g_close[it & ICOUNT_MASK], &v0);
+            acc += v0;
+        }
+        ICOUNT_DUMP("SHARPE/peek");
+        icount_row(nm, "peek", 1, src);
+    } else {
+        icount_row(nm, "update", 0, rc);
+        icount_row(nm, "peek", 0, rc);
+    }
+    if( st ) TA_SHARPE_Close(st);
+    g_sink += acc + outNBElement;
+}
+
 static void icount_SI(int iters) {
     const char *nm = "SI";
     int outBegIdx = 0, outNBElement = 0;
@@ -12792,6 +12843,7 @@ static void icount_all(const char *filter, int iters) {
     if( func_matches(filter, "RVOL") ) { icount_RVOL(iters); fflush(stdout); }
     if( func_matches(filter, "SAR") ) { icount_SAR(iters); fflush(stdout); }
     if( func_matches(filter, "SAREXT") ) { icount_SAREXT(iters); fflush(stdout); }
+    if( func_matches(filter, "SHARPE") ) { icount_SHARPE(iters); fflush(stdout); }
     if( func_matches(filter, "SI") ) { icount_SI(iters); fflush(stdout); }
     if( func_matches(filter, "SIN") ) { icount_SIN(iters); fflush(stdout); }
     if( func_matches(filter, "SINH") ) { icount_SINH(iters); fflush(stdout); }

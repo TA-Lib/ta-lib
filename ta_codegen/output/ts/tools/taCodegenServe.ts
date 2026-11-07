@@ -202,6 +202,7 @@ import * as RVIR from '../library/src/func/rvir.ts';
 import * as RVOL from '../library/src/func/rvol.ts';
 import * as SAR from '../library/src/func/sar.ts';
 import * as SAREXT from '../library/src/func/sarext.ts';
+import * as SHARPE from '../library/src/func/sharpe.ts';
 import * as SI from '../library/src/func/si.ts';
 import * as SIN from '../library/src/func/sin.ts';
 import * as SINH from '../library/src/func/sinh.ts';
@@ -857,6 +858,7 @@ const FUNCTION_LIST = '{"functions":[' + [
   '"TA_RVOL"',
   '"TA_SAR"',
   '"TA_SAREXT"',
+  '"TA_SHARPE"',
   '"TA_SI"',
   '"TA_SIN"',
   '"TA_SINH"',
@@ -14610,6 +14612,75 @@ function handle_SAREXT(p: Params): string {
   return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
 }
 
+function handle_SHARPE(p: Params): string {
+  const startIdx = int(p, 'startIdx', 0);
+  const endIdx = int(p, 'endIdx', 0);
+  const pre = int(p, 'use_preloaded', 0) !== 0 && refN > 0;
+  const inReal = pre ? refClose.slice(0, refN) : f64Array(p, 'inReal');
+  const benchMode = int(p, 'bench_mode', 0);
+  const warm_inReal = benchMode === 0 ? inReal : warmView(inReal, endIdx + 1);
+  const optInTimePeriod = int(p, 'optInTimePeriod', Core.INTEGER_DEFAULT);
+  const optInRiskFreeRate = real(p, 'optInRiskFreeRate', Core.REAL_DEFAULT);
+  const optInAnnualization = real(p, 'optInAnnualization', Core.REAL_DEFAULT);
+  const outLen = outLength(p, startIdx, endIdx, SHARPE.sharpeLookback({ timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core }));
+  const out0 = f64Out(outLen);
+  const iters = benchIters(p);
+  const timed = int(p, 'timed', 0) !== 0;
+  const outBegIdx = new MInteger();
+  const outNBElement = new MInteger();
+  let rc: number = RetCode.SUCCESS;
+  let t0 = 0n;
+  for (let bi = 0; bi <= iters; bi++) {
+    if (bi === 1) t0 = process.hrtime.bigint();
+    if (benchMode !== 0) {
+      try {
+        if (benchMode === 1) {
+          SHARPE.sharpeOpen(warm_inReal, { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core });
+        } else {
+          const wh = SHARPE.sharpeOpenAndFill(warm_inReal, { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core, outReal: out0 });
+          outBegIdx.value = wh.begIdx;
+          outNBElement.value = wh.values.length;
+        }
+        rc = RetCode.SUCCESS;
+      } catch (e) {
+        rc = e instanceof TALibError ? e.retCode : RetCode.BAD_PARAM;
+      }
+      continue;
+    }
+    try {
+      if (timed) {
+        rc = SHARPE.sharpeImpl(core, startIdx, endIdx, inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization, outBegIdx, outNBElement, out0);
+      } else {
+        const r = SHARPE.sharpe(inReal, { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, startIdx, endIdx, core, outReal: out0 });
+        outBegIdx.value = r.begIdx;
+        outNBElement.value = r.values.length;
+        rc = RetCode.SUCCESS;
+      }
+    } catch (e) {
+      rc = failureCode(e);
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
+    }
+  }
+  const elapsedNs = (process.hrtime.bigint() - t0) / BigInt(iters);
+  let usedFloat = 0;
+  if (int(p, 'use_float', 0) !== 0) {
+    try {
+      const r = SHARPE.sharpe(Float32Array.from(inReal), { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, startIdx, endIdx, core, outReal: out0 });
+      outBegIdx.value = r.begIdx;
+      outNBElement.value = r.values.length;
+      rc = RetCode.SUCCESS;
+    } catch (e) {
+      rc = failureCode(e);
+      outBegIdx.value = 0;
+      outNBElement.value = 0;
+    }
+    usedFloat = 1;
+  }
+  const rideFields = rideSharpe(core, p, endIdx, inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization);
+  return reply(p, rc, outBegIdx.value, outNBElement.value, outLen, ['outReal'], [out0], usedFloat, elapsedNs, rideFields);
+}
+
 function handle_SI(p: Params): string {
   const startIdx = int(p, 'startIdx', 0);
   const endIdx = int(p, 'endIdx', 0);
@@ -17929,6 +18000,7 @@ const FUNCTIONS = new Map<string, (p: Params) => string>([
   ['TA_RVOL', handle_RVOL],
   ['TA_SAR', handle_SAR],
   ['TA_SAREXT', handle_SAREXT],
+  ['TA_SHARPE', handle_SHARPE],
   ['TA_SI', handle_SI],
   ['TA_SIN', handle_SIN],
   ['TA_SINH', handle_SINH],
@@ -50711,6 +50783,172 @@ function sv_SAREXT(p: Params): string {
   return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
 }
 
+function sv_SHARPE(p: Params): string {
+  const svShape = int(p, 'gen_shape', 0);
+  const svSeed = int(p, 'gen_seed', 0);
+  let svN = int(p, 'gen_n', 0);
+  if (svN < 2) svN = 2;
+  if (svN > 256) svN = 256;
+  const optInTimePeriod = int(p, 'optInTimePeriod', 20);
+  const optInRiskFreeRate = real(p, 'optInRiskFreeRate', 0e0);
+  const optInAnnualization = real(p, 'optInAnnualization', 2.52e2);
+  const fz_o = new Float64Array(svN);
+  const fz_h = new Float64Array(svN);
+  const fz_l = new Float64Array(svN);
+  const fz_c = new Float64Array(svN);
+  const fz_v = new Float64Array(svN);
+  const fz_oi = new Float64Array(svN);
+  fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+  const b0 = new Float64Array(svN);
+  let legs = 0;
+  let allOk = true;
+  let peekAll = true;
+  let peekReps = 0;
+  let peekRejects = 0;
+  let peekRepAll = true;
+  let fillChecked = 0;
+  let fillOk = true;
+  const beg = new MInteger();
+  const nb = new MInteger();
+  let diag = '';
+  let rangeChecked = 0;
+  let rangeOk = true;
+  let rangeLegs = 0;
+  let rangeSites = 0;
+  const zsign = [0];
+  const rounds = 1;
+  for (let rd = 0; rd < rounds; rd++) {
+    const c2 = new Core();
+    let rc: number;
+    try { rc = SHARPE.sharpeImpl(c2, 0, svN - 1, fz_c, optInTimePeriod, optInRiskFreeRate, optInAnnualization, beg, nb, b0); }
+    catch (e) { if (!(e instanceof TALibError)) throw e; rc = e.retCode; beg.value = 0; nb.value = 0; }
+    const lb = SHARPE.sharpeLookback({ timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core: c2 });
+    if (rc !== RetCode.SUCCESS || nb.value === 0) {
+      let openRejects: boolean;
+      try { SHARPE.sharpeOpen(fz_c, { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core: c2 }); openRejects = false; } catch (e) { openRejects = svRejected(e); }
+      return `{"retCode":${rc},"legs":0,"nb":${nb.value},"openRejects":${openRejects ? 1 : 0},"ok":${openRejects ? 1 : 0},"peek_ok":1}`;
+    }
+    fillChecked = 1;
+    try {
+      const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
+      const _fh = SHARPE.sharpeOpenAndFill(fz_c, { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core: c2, outReal: f0 });
+      const _fr = _fh.stream.outRange();
+      rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+      if (_fr.begIdx !== beg.value || _fr.count !== nb.value) rangeOk = false;
+      if (_fh.begIdx !== _fr.begIdx || _fh.values.length !== _fr.count) fillOk = false;
+      if (_fr.begIdx !== beg.value || _fr.count !== nb.value) fillOk = false;
+      else {
+        for (let i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+        for (let i = nb.value; i < svN; i++) if (f0[i] !== -1.2345678901234e300) fillOk = false;
+      }
+      try { SHARPE.sharpeOpenAndFill(fz_c, { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core: c2, outReal: fz_c }); fillOk = false; } catch (e) { svRejected(e); }
+    } catch (e) { svRejected(e); fillOk = false; }
+    const pcs = [lb + 1, lb + 13, Math.trunc(svN / 2), svN - 1].sort((x, y) => x - y);
+    let prevP = -1;
+    for (let pi = 0; pi < pcs.length; pi++) {
+      const P = pcs[pi];
+      if (P < lb + 1 || P > svN - 1 || P === prevP) continue;
+      prevP = P;
+      let st: SHARPE.SharpeStream;
+      try { st = SHARPE.sharpeOpen(fz_c.slice(0, P), { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core: c2 }); }
+      catch (e) { svRejected(e); allOk = false; if (diag === '') diag = `,"openRejectP":${P}`; continue; }
+      legs++;
+      if (svXtierNe(st.value(), b0[P - 1 - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${P - 1},"badOut":0,"where":"open"`; }
+      for (let t = P; t < svN; t++) {
+        let pkTook = true;
+        let pk = 0;
+        try { pk = st.peek(fz_c[t]); } catch (e) { svRejected(e); pkTook = false; peekRejects++; }
+        if (t % 7 === 0) {
+          let rpTook = pkTook;
+          try { st.peek(fz_c[t - 1]); } catch (e) { svRejected(e); peekRejects++; }
+          let rp = 0;
+          try { rp = st.peek(fz_c[t]); } catch (e) { svRejected(e); rpTook = false; }
+          if (rpTook) {
+            peekReps++;
+            if (svBne(rp, pk)) peekRepAll = false;
+          } else { peekRejects++; }
+        }
+        const up = st.update(fz_c[t]);
+        if (pkTook && svBne(pk, up)) peekAll = false;
+        try { st.peek(fz_c[t - 1]); } catch (e) { svRejected(e); peekRejects++; }
+        if (svBne(st.value(), up)) allOk = false;
+        if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"badBar":${t},"badOut":0,"batchv":"${hex64(float64Bits(b0[t - beg.value]))}","streamv":"${hex64(float64Bits(up))}"`; }
+      }
+      if (allOk) {
+        rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+        if (st.outRange().begIdx !== beg.value || st.outRange().count !== nb.value) rangeOk = false;
+        rangeLegs++; rangeSites |= 16;
+        st.advance();
+        if (st.outRange().begIdx !== beg.value || st.outRange().count !== nb.value + 1) rangeOk = false;
+      }
+    }
+    {
+      const p0 = lb + 1;
+      if (p0 <= svN - 1) {
+        try {
+          const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
+          const sA = SHARPE.sharpeOpenAndFill(fz_c.slice(0, p0), { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core: c2, outReal: f0 }).stream;
+          const mid = Math.trunc((p0 + svN) / 2);
+          for (let t = p0; t < mid; t++) {
+            const uA = sA.update(fz_c[t]);
+            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+          }
+          const sB = sA.clone();
+          sB.advance();
+          sB.advance();
+          const fk0 = new Float64Array(svN);
+          for (let t = mid; t < svN; t++) {
+            const uB = sB.update(fz_c[t]);
+            fk0[t] = uB;
+            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+          }
+          for (let t = mid; t < svN; t++) {
+            const uA = sA.update(fz_c[t]);
+            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag === '') diag = `,"copyDiverged":${t}`; }
+          }
+          if (allOk) {
+            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+            if (sA.outRange().begIdx !== beg.value || sA.outRange().count !== nb.value) { rangeOk = false; if (diag === '') diag = ',"copyRangeSrc":1'; }
+            if (sB.outRange().begIdx !== beg.value || sB.outRange().count !== nb.value + 2) { rangeOk = false; if (diag === '') diag = ',"copyRange":1'; }
+          }
+        } catch (e) { svRejected(e); allOk = false; if (diag === '') diag = ',"copyOpenReject":1'; }
+      }
+    }
+    if (lb >= 1 && lb < svN) {
+      try { SHARPE.sharpeOpen(fz_c.slice(0, lb), { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core: c2 }); allOk = false; if (diag === '') diag = ',"shortHistoryAccepted":1'; }
+      catch (e) { if (!svShortHistory(e)) { allOk = false; if (diag === '') diag = ',"shortHistoryWrongType":1'; } }
+      {
+        const f0 = new Float64Array(svN).fill(-1.2345678901234e300);
+        try { SHARPE.sharpeOpenAndFill(fz_c.slice(0, lb), { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core: c2, outReal: f0 }); allOk = false; if (diag === '') diag = ',"shortHistoryFillAccepted":1'; }
+        catch (e) { if (!svShortHistory(e)) { allOk = false; if (diag === '') diag = ',"shortHistoryFillWrongType":1'; } }
+      }
+    }
+    try {
+      const sD = SHARPE.sharpeOpen(fz_c, { timePeriod: Core.INTEGER_DEFAULT, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core: c2 });
+      const sE = SHARPE.sharpeOpen(fz_c, { timePeriod: 20, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core: c2 });
+      if (svBne(sD.value(), sE.value())) { allOk = false; if (diag === '') diag = ',"minValueDefault":1'; }
+    } catch (e) { svRejected(e); }
+    {
+      const Sidx = lb + Math.trunc((svN - lb) / 3);
+      if (Sidx > lb && Sidx < svN - 1) {
+        const begS = new MInteger();
+        const nbS = new MInteger();
+        let rcS: number;
+        try { rcS = SHARPE.sharpeImpl(c2, Sidx, svN - 1, fz_c, optInTimePeriod, optInRiskFreeRate, optInAnnualization, begS, nbS, b0); }
+        catch (e) { if (!(e instanceof TALibError)) throw e; rcS = e.retCode; }
+        if (rcS === RetCode.SUCCESS && nbS.value > 0) {
+          try {
+            const stA = SHARPE.sharpeOpenInternal(c2, fz_c.slice(0, svN), Sidx, optInTimePeriod, optInRiskFreeRate, optInAnnualization);
+            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+            if (stA.outRange().begIdx !== begS.value || stA.outRange().count !== nbS.value) rangeOk = false;
+          } catch (e) { svRejected(e); rangeOk = false; if (diag === '') diag = ',"anchoredOpenRejected":1'; }
+        }
+      }
+    }
+  }
+  return `{"retCode":0,"beg":${beg.value},"nb":${nb.value},"legs":${legs},"fill_checked":${fillChecked},"fill_ok":${fillOk ? 1 : 0},"range_checked":${rangeChecked},"range_legs":${rangeLegs},"range_sites":${rangeSites},"range_sites_all":31,"range_ok":${rangeOk ? 1 : 0},"step_ok":${allOk ? 1 : 0},"ok":${allOk && fillOk && rangeOk ? 1 : 0},"peek_ok":${peekAll ? 1 : 0},"peek_reps":${peekReps},"peek_rep_ok":${peekRepAll ? 1 : 0},"peek_rejects":${peekRejects},"benign":${zsign[0]}${diag}}`;
+}
+
 function sv_SI(p: Params): string {
   const svShape = int(p, 'gen_shape', 0);
   const svSeed = int(p, 'gen_seed', 0);
@@ -58554,6 +58792,7 @@ function handleStreamVerify(p: Params): string {
     case 'TA_RVOL': return sv_RVOL(p);
     case 'TA_SAR': return sv_SAR(p);
     case 'TA_SAREXT': return sv_SAREXT(p);
+    case 'TA_SHARPE': return sv_SHARPE(p);
     case 'TA_SI': return sv_SI(p);
     case 'TA_SIN': return sv_SIN(p);
     case 'TA_SINH': return sv_SINH(p);
@@ -78597,6 +78836,106 @@ function rideBodySarext(core: Core, p: Params, endIdx: number, inHigh: Float64Ar
     const fb0 = new Float64Array(m);
     try {
       const f2 = SAREXT.sarextOpenAndFill({ high: inHigh.slice(0, m), low: inLow.slice(0, m) }, { startValue: optInStartValue, offsetOnReverse: optInOffsetOnReverse, accelerationInitLong: optInAccelerationInitLong, accelerationLong: optInAccelerationLong, accelerationMaxLong: optInAccelerationMaxLong, accelerationInitShort: optInAccelerationInitShort, accelerationShort: optInAccelerationShort, accelerationMaxShort: optInAccelerationMaxShort, core, outReal: fb0 });
+      const st2 = f2.stream;
+      if (f2.begIdx !== beg || f2.values.length !== nb) { r.ok = false; r.leg = 2; }
+      if (st2.outRange().begIdx !== beg || st2.outRange().count !== nb) { r.ok = false; r.leg = 2; }
+      if (r.ok) {
+        for (let k = 0; k < nb; k++) {
+          let cmp = true;
+          if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = float64Bits(rb0[k]); r.stream = float64Bits(fb0[k]); }
+          if (cmp) r.fillBars++;
+          if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+        }
+      }
+    } catch (_e) { r.ok = false; r.leg = 2; }
+  }
+
+  if (r.ok) {
+    rideSeenUsed[slot] = 1; rideSeenA[slot] = hash.a; rideSeenB[slot] = hash.b;
+    rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+  }
+}
+
+function rideSharpe(core: Core, p: Params, endIdx: number, inReal: Float64Array, optInTimePeriod: number, optInRiskFreeRate: number, optInAnnualization: number): string {
+  if (!rideGate(p)) return '';
+  const r = new RideResult();
+  rideBodySharpe(core, p, endIdx, inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization, r);
+  return r.emit();
+}
+
+function rideBodySharpe(core: Core, p: Params, endIdx: number, inReal: Float64Array, optInTimePeriod: number, optInRiskFreeRate: number, optInAnnualization: number, r: RideResult): void {
+  r.lb = SHARPE.sharpeLookback({ timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core });
+  const lb = r.lb;
+  let navail = endIdx + 1;
+  if (inReal.length < navail) navail = inReal.length;
+  let m = lb >= 0 ? 2 * lb + 10 : navail;
+  if (m > navail) m = navail;
+  r.m = m;
+  if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+  if (m < 1) { r.skip = 2; return; }
+  if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+  if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+  let hash = rideKey();
+  hash = rideMixStr(hash, 'TA_SHARPE');
+  hash = rideMix(hash, m);
+  hash = rideMix(hash, rideGen);
+  hash = rideMix(hash, int(p, 'unstablePeriod', 0));
+  hash = rideMix(hash, optInTimePeriod);
+  hash = rideMix(hash, optInRiskFreeRate);
+  hash = rideMix(hash, optInAnnualization);
+  hash = rideMixArr(hash, inReal, m);
+  const slot = hash.a & (RIDE_SEEN_N - 1);
+  if (rideSeenUsed[slot] !== 0 && rideSeenA[slot] === hash.a && rideSeenB[slot] === hash.b) {
+    r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+  }
+
+  const rb0 = new Float64Array(m);
+  let beg = 0;
+  let nb = 0;
+  let codeB = '';
+  let rejected = false;
+  try { const _rr = SHARPE.sharpe(inReal.slice(0, m), { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, startIdx: 0, endIdx: m - 1, core, outReal: rb0 }); beg = _rr.begIdx; nb = _rr.values.length; }
+  catch (_e) { r.rcBatch = rideCode(_e); codeB = rideCodeName(_e); rejected = true; }
+  if (rejected) {
+    let codeO = '';
+    let codeF = '';
+    try { SHARPE.sharpeOpen(inReal.slice(0, m), { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core }); } catch (_e) { r.rcOpen = rideCode(_e); codeO = rideCodeName(_e); }
+    const fb0 = new Float64Array(m);
+    try { SHARPE.sharpeOpenAndFill(inReal.slice(0, m), { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core, outReal: fb0 }); } catch (_e) { r.rcFill = rideCode(_e); codeF = rideCodeName(_e); }
+    const cmpO = r.rcOpen === r.rcBatch && codeO === codeB;
+    if (cmpO) r.rej++;
+    if (!cmpO) { r.ok = false; r.leg = r.rcOpen === r.rcBatch ? 4 : 3; }
+    const cmpF = r.rcFill === r.rcBatch && codeF === codeB;
+    if (cmpF) r.rej++;
+    if (!cmpF) { r.ok = false; r.leg = r.rcFill === r.rcBatch ? 4 : 3; }
+    return;
+  }
+  if (lb < 0) { r.skip = 7; return; }
+  if (nb === 0) { r.skip = 5; return; }
+  if (beg !== lb) { r.skip = 6; return; }
+
+  try {
+    let cmp: boolean;
+    const st = SHARPE.sharpeOpen(inReal.slice(0, lb + 1), { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core });
+    let uv = st.value();
+    cmp = true;
+    if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = float64Bits(rb0[lb - beg]); r.stream = float64Bits(uv); }
+    if (cmp) r.openBars++;
+    if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+    for (let t = lb + 1; r.ok && t < m; t++) {
+      uv = st.update(inReal[t]);
+      cmp = true;
+      if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = float64Bits(rb0[t - beg]); r.stream = float64Bits(uv); }
+      if (cmp) r.openBars++;
+      if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+    }
+  } catch (_e) { r.ok = false; r.leg = 1; }
+
+  if (r.ok) {
+    const fb0 = new Float64Array(m);
+    try {
+      const f2 = SHARPE.sharpeOpenAndFill(inReal.slice(0, m), { timePeriod: optInTimePeriod, riskFreeRate: optInRiskFreeRate, annualization: optInAnnualization, core, outReal: fb0 });
       const st2 = f2.stream;
       if (f2.begIdx !== beg || f2.values.length !== nb) { r.ok = false; r.leg = 2; }
       if (st2.outRange().begIdx !== beg || st2.outRange().count !== nb) { r.ok = false; r.leg = 2; }

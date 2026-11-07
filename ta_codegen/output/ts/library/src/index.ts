@@ -429,6 +429,8 @@ export { sar, sarLookback, sarDisplayShift, sarOpen, sarOpenAndFill, SarStream }
 export type { SarOptions, SarResult } from './func/sar.ts';
 export { sarext, sarextLookback, sarextDisplayShift, sarextOpen, sarextOpenAndFill, SarextStream } from './func/sarext.ts';
 export type { SarextOptions, SarextResult } from './func/sarext.ts';
+export { sharpe, sharpeLookback, sharpeDisplayShift, sharpeOpen, sharpeOpenAndFill, SharpeStream } from './func/sharpe.ts';
+export type { SharpeOptions, SharpeResult } from './func/sharpe.ts';
 export { si, siLookback, siDisplayShift, siOpen, siOpenAndFill, SiStream } from './func/si.ts';
 export type { SiOptions, SiResult } from './func/si.ts';
 export { sin, sinLookback, sinDisplayShift, sinOpen, sinOpenAndFill, SinStream } from './func/sin.ts';

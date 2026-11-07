@@ -220,6 +220,7 @@
 #include "ta_RVOL.c"
 #include "ta_SAR.c"
 #include "ta_SAREXT.c"
+#include "ta_SHARPE.c"
 #include "ta_SI.c"
 #include "ta_SIN.c"
 #include "ta_SINH.c"
@@ -3523,6 +3524,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += g_outBuf0[0];
         }
         printf("SAREXT %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "SHARPE") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_SHARPE(0, g_nPoints - 1, g_close, 20, 0.000000000000000, 252.000000000000000, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += g_outBuf0[0];
+        }
+        printf("SHARPE %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "SI") ) {

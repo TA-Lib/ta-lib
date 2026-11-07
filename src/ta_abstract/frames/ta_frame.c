@@ -5317,6 +5317,34 @@ int TA_SAREXT_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
 {
    return TA_SAREXT_DisplayShift( params->optIn[0].data.optInReal, params->optIn[1].data.optInReal, params->optIn[2].data.optInReal, params->optIn[3].data.optInReal, params->optIn[4].data.optInReal, params->optIn[5].data.optInReal, params->optIn[6].data.optInReal, params->optIn[7].data.optInReal, outputIdx );
 }
+TA_RetCode TA_SHARPE_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_SHARPE(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               params->optIn[1].data.optInReal, /* optInRiskFreeRate*/
+               params->optIn[2].data.optInReal, /* optInAnnualization*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_SHARPE_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_SHARPE_Lookback(params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+                    params->optIn[1].data.optInReal, /* optInRiskFreeRate*/
+                    params->optIn[2].data.optInReal /* optInAnnualization*/ );
+}
+int TA_SHARPE_FramePPDS( const TA_ParamHolderPriv *params, int outputIdx )
+{
+   return TA_SHARPE_DisplayShift( params->optIn[0].data.optInInteger, params->optIn[1].data.optInReal, params->optIn[2].data.optInReal, outputIdx );
+}
 TA_RetCode TA_SI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

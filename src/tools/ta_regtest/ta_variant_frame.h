@@ -8384,6 +8384,51 @@ static const TA_VOptSpec TA_VOpt_SAREXT[] = {
    { "optInAccelerationMaxShort", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.00000000000000011e-1 },
 };
 
+static TA_RetCode TA_SHARPE_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_SHARPE(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInRiskFreeRate */,
+               optIn[2] /* optInAnnualization */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_SHARPE_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_SHARPE(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInRiskFreeRate */,
+               optIn[2] /* optInAnnualization */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_SHARPE[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_SHARPE[] = { 0 };
+static const TA_VOptSpec TA_VOpt_SHARPE[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 20.0 },
+   { "optInRiskFreeRate", TA_VOPT_REAL, -3.00000000000000022e37, 3.00000000000000022e37, 0.0 },
+   { "optInAnnualization", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 252.0 },
+};
+
 static TA_RetCode TA_SI_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -10674,6 +10719,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      2, TA_VIn_SAR, 2, TA_VOpt_SAR, 1, TA_VOutIsInt_SAR, 0 },
    { "SAREXT", TA_SAREXT_VFrameD, TA_SAREXT_VFrameS,
      2, TA_VIn_SAREXT, 8, TA_VOpt_SAREXT, 1, TA_VOutIsInt_SAREXT, 0 },
+   { "SHARPE", TA_SHARPE_VFrameD, TA_SHARPE_VFrameS,
+     1, TA_VIn_SHARPE, 3, TA_VOpt_SHARPE, 1, TA_VOutIsInt_SHARPE, 0 },
    { "SI", TA_SI_VFrameD, TA_SI_VFrameS,
      4, TA_VIn_SI, 1, TA_VOpt_SI, 1, TA_VOutIsInt_SI, 0 },
    { "SIN", TA_SIN_VFrameD, TA_SIN_VFrameS,
@@ -10766,6 +10813,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 240
+#define TA_VARIANT_TABLE_SIZE 241
 
 #endif /* TA_VARIANT_FRAME_H */

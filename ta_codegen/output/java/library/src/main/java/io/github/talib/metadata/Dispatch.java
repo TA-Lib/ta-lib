@@ -643,6 +643,9 @@ final class Dispatch {
          case "SAREXT":
             return core.sarext(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.realOpt(0), h.realOpt(1), h.realOpt(2), h.realOpt(3), h.realOpt(4), h.realOpt(5), h.realOpt(6), h.realOpt(7), h.realOutput(0));
+         case "SHARPE":
+            return core.sharpe(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOpt(1), h.realOpt(2), h.realOutput(0));
          case "SI":
             return core.si(
                startIdx, endIdx, h.price(0, 0), h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOpt(0), h.realOutput(0));
@@ -1179,6 +1182,8 @@ final class Dispatch {
             return core.sarLookback(h.realOpt(0), h.realOpt(1));
          case "SAREXT":
             return core.sarextLookback(h.realOpt(0), h.realOpt(1), h.realOpt(2), h.realOpt(3), h.realOpt(4), h.realOpt(5), h.realOpt(6), h.realOpt(7));
+         case "SHARPE":
+            return core.sharpeLookback(h.intOpt(0), h.realOpt(1), h.realOpt(2));
          case "SI":
             return core.siLookback(h.realOpt(0));
          case "SIN":
@@ -1667,6 +1672,8 @@ final class Dispatch {
             return core.sarDisplayShift(h.realOpt(0), h.realOpt(1), outputIdx);
          case "SAREXT":
             return core.sarextDisplayShift(h.realOpt(0), h.realOpt(1), h.realOpt(2), h.realOpt(3), h.realOpt(4), h.realOpt(5), h.realOpt(6), h.realOpt(7), outputIdx);
+         case "SHARPE":
+            return core.sharpeDisplayShift(h.intOpt(0), h.realOpt(1), h.realOpt(2), outputIdx);
          case "SI":
             return core.siDisplayShift(h.realOpt(0), outputIdx);
          case "SIN":

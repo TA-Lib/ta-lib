@@ -16876,6 +16876,65 @@ fn legs_SAREXT(r: &mut Report) {
     r.legs_done("SAREXT", 2);
 }
 
+const V_SHARPE: &[(&str, i32, f64, f64)] = &[
+    ("defaults", i32::MIN, Core::REAL_DEFAULT, Core::REAL_DEFAULT),
+    ("minimums", 2i32, -3e37f64, 0.0f64),
+];
+
+fn sub_SHARPE(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInRiskFreeRate, optInAnnualization) in V_SHARPE {
+        let Ok(lb) = core.sharpe_lookback(optInTimePeriod, optInRiskFreeRate, optInAnnualization) else { continue; };
+        r.control("SHARPE", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.sharpe_impl(0, lb, &inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("SHARPE", label); continue; }
+        r.quiet("SHARPE", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.sharpe_impl(0, lb - 1, &inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_SHARPE(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInRiskFreeRate = Core::REAL_DEFAULT;
+    let optInAnnualization = Core::REAL_DEFAULT;
+    let Ok(lb) = core.sharpe_lookback(optInTimePeriod, optInRiskFreeRate, optInAnnualization) else { r.no_legs("SHARPE"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("SHARPE", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.sharpe_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("SHARPE", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.sharpe_impl(startIdx, endIdx, &inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("SHARPE", 1);
+}
+
 const V_SI: &[(&str, f64)] = &[
     ("defaults", Core::REAL_DEFAULT),
     ("minimums", 1e-8f64),
@@ -20396,6 +20455,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("RVOL", sub_RVOL, legs_RVOL),
     ("SAR", sub_SAR, legs_SAR),
     ("SAREXT", sub_SAREXT, legs_SAREXT),
+    ("SHARPE", sub_SHARPE, legs_SHARPE),
     ("SI", sub_SI, legs_SI),
     ("SIN", sub_SIN, legs_SIN),
     ("SINH", sub_SINH, legs_SINH),
@@ -20479,7 +20539,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 240, "probe count");
+    assert_eq!(PROBES.len(), 241, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

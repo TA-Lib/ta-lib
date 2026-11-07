@@ -235,6 +235,7 @@ import * as m_rvir from '../src/func/rvir.ts';
 import * as m_rvol from '../src/func/rvol.ts';
 import * as m_sar from '../src/func/sar.ts';
 import * as m_sarext from '../src/func/sarext.ts';
+import * as m_sharpe from '../src/func/sharpe.ts';
 import * as m_si from '../src/func/si.ts';
 import * as m_sin from '../src/func/sin.ts';
 import * as m_sinh from '../src/func/sinh.ts';
@@ -3607,6 +3608,20 @@ const PROBES: Probe[] = [
     ],
   },
   {
+    name: 'SHARPE',
+    batch: m_sharpe.sharpePositional,
+    body: m_sharpe.sharpeImpl,
+    lookback: m_sharpe.sharpeLookbackPositional,
+    open: m_sharpe.sharpeOpenPositional,
+    fill: m_sharpe.sharpeOpenAndFillPositional,
+    ins: ['real'],
+    outs: ['f'],
+    vectors: [
+      ['defaults', Core.INTEGER_DEFAULT, Core.REAL_DEFAULT, Core.REAL_DEFAULT],
+      ['minimums', 2, -3e37, 0.0],
+    ],
+  },
+  {
     name: 'SI',
     batch: m_si.siPositional,
     body: m_si.siImpl,
@@ -4355,7 +4370,7 @@ const PROBES: Probe[] = [
   },
 ];
 
-const CORPUS = 240;
+const CORPUS = 241;
 
 test('the sweep covers every function module', () => {
   const modules = readdirSync(new URL('../src/func/', import.meta.url)).filter((f) => f.endsWith('.ts')).length;

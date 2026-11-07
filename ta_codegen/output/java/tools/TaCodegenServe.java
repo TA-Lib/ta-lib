@@ -192364,6 +192364,1396 @@ class Core {
      *
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
+     *  110626 MF,CC  Initial version (#571).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#sharpe} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInTimePeriod Number of returns in the window; one price more is
+        *        read (default 20; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInRiskFreeRate Risk-free return per bar, subtracted from each
+        *        return (default 0; {@link Core#REAL_DEFAULT} selects the default).
+        * @param optInAnnualization Bars per year; the per-bar ratio is multiplied
+        *        by its square root (default 252; minimum 0; {@link Core#REAL_DEFAULT}
+        *        selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int sharpeLookback( int optInTimePeriod, double optInRiskFreeRate, double optInAnnualization )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          if( optInRiskFreeRate == REAL_DEFAULT ) {
+             optInRiskFreeRate = 0e0;
+          } else if( !(optInRiskFreeRate >= REAL_MIN && optInRiskFreeRate <= REAL_MAX) ) {
+             return -1;
+          }
+          if( optInAnnualization == REAL_DEFAULT ) {
+             optInAnnualization = 2.52e2;
+          } else if( !(optInAnnualization >= 0e0 && optInAnnualization <= REAL_MAX) ) {
+             return -1;
+          }
+          return optInTimePeriod ;
+
+       }
+       /**
+        * How many bars ahead (positive) or behind (negative) of the bar that
+        * computed it a chart draws one output of {@link Core#sharpe}.
+        * <p>Every output of this function is drawn at its own bar, so the answer is
+        * 0.
+        *
+        * @param optInTimePeriod Number of returns in the window; one price more is
+        *        read (default 20; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInRiskFreeRate Risk-free return per bar, subtracted from each
+        *        return (default 0; {@link Core#REAL_DEFAULT} selects the default).
+        * @param optInAnnualization Bars per year; the per-bar ratio is multiplied
+        *        by its square root (default 252; minimum 0; {@link Core#REAL_DEFAULT}
+        *        selects the default).
+        * @param outputIdx Position of the output in the batch signature, from 0.
+        * @return The display shift, or {@code Integer.MIN_VALUE} if a parameter is
+        *        out of range or the index names no output.
+        */
+       public int sharpeDisplayShift( int optInTimePeriod, double optInRiskFreeRate, double optInAnnualization, int outputIdx )
+       {
+          if( sharpeLookback( optInTimePeriod, optInRiskFreeRate, optInAnnualization ) < 0 ) {
+             return Integer.MIN_VALUE;
+          }
+          if( outputIdx < 0 || outputIdx >= 1 ) {
+             return Integer.MIN_VALUE;
+          }
+          return 0;
+       }
+       RetCode sharpeImpl( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           int optInTimePeriod,
+                           double optInRiskFreeRate,
+                           double optInAnnualization,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+       {
+          double shift = 0;
+          double periodTotal1 = 0;
+          double periodTotal2 = 0;
+          double peakTotal2 = 0;
+          double price = 0;
+          double prevPrice = 0;
+          double trailingPrevPrice = 0;
+          double windowPrevPrice = 0;
+          double ret = 0;
+          double dev = 0;
+          double dPeriod = 0;
+          double invPeriod = 0;
+          double meanDev = 0;
+          double moment2 = 0;
+          double excess = 0;
+          double sqrtAnnual = 0;
+          double ratio = 0;
+          int i = 0;
+          int j = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int windowStart = 0;
+          int barsSinceReseed = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInRiskFreeRate == REAL_DEFAULT ) {
+             optInRiskFreeRate = 0e0;
+          } else if( !(optInRiskFreeRate >= REAL_MIN && optInRiskFreeRate <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInAnnualization == REAL_DEFAULT ) {
+             optInAnnualization = 2.52e2;
+          } else if( !(optInAnnualization >= 0e0 && optInAnnualization <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx < optInTimePeriod ) {
+             startIdx = optInTimePeriod;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          dPeriod = (double)optInTimePeriod;
+          invPeriod = 1.0 / dPeriod;
+          sqrtAnnual = Math.sqrt(optInAnnualization);
+          /* The window holds the returns of the bars after trailingIdx up to i; a
+           * bar's return reads the price before it.
+           *
+           * The variance of the excess returns is the variance of the returns, so
+           * the risk-free rate enters only the mean. That keeps the sums at return
+           * scale whatever the rate, and lets a flat price window reach an exact
+           * zero spread.
+           */
+          trailingIdx = startIdx - optInTimePeriod;
+          prevPrice = inReal[trailingIdx];
+          /* A return needs a non-zero base price and nothing more: the test is
+           * exact, never a band, since a price carries the quote unit. A zero base
+           * gives a zero return.
+           */
+          price = inReal[trailingIdx + 1];
+          ret = 0.0;
+          if( prevPrice != 0.0 ) {
+             ret = (price - prevPrice) / prevPrice;
+          }
+          shift = ret;
+          periodTotal1 = 0.0;
+          periodTotal2 = 0.0;
+          for( j = trailingIdx + 1; j < startIdx; j += 1 ) {
+             price = inReal[j];
+             ret = 0.0;
+             if( prevPrice != 0.0 ) {
+                ret = (price - prevPrice) / prevPrice;
+             }
+             prevPrice = price;
+             dev = ret - shift;
+             periodTotal1 += dev;
+             periodTotal2 += dev * dev;
+          }
+          i = startIdx;
+          outIdx = 0;
+          barsSinceReseed = 32 * optInTimePeriod;
+          peakTotal2 = periodTotal2;
+          do {
+             price = inReal[i];
+             ret = 0.0;
+             if( prevPrice != 0.0 ) {
+                ret = (price - prevPrice) / prevPrice;
+             }
+             prevPrice = price;
+             dev = ret - shift;
+             periodTotal1 += dev;
+             periodTotal2 += dev * dev;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+             meanDev = periodTotal1 * invPeriod;
+             moment2 = periodTotal2 - meanDev * periodTotal1;
+             /* inReal and outReal may be the same buffer, and the trailing prices
+              * sit in slots the output reaches: every read of the window happens
+              * before this bar's write. The oldest price read is the trailing
+              * return's base, so the index stays on it.
+              */
+             trailingPrevPrice = inReal[trailingIdx];
+             trailingIdx += 1;
+             price = inReal[trailingIdx];
+             ret = 0.0;
+             if( trailingPrevPrice != 0.0 ) {
+                ret = (price - trailingPrevPrice) / trailingPrevPrice;
+             }
+             dev = ret - shift;
+             periodTotal1 -= dev;
+             periodTotal2 -= dev * dev;
+             /* Rebuild against the window mean when the spread has shrunk below 1% of
+              * the largest sum of squares held since the last rebuild, or at least
+              * every 32 windows. The rounding the running sums carry scales with that
+              * peak, so once a large return leaves, the current sum can be all
+              * rounding; a flat run after a move must still come out exactly flat.
+              * The spread is a divisor, so its relative error reaches the ratio.
+              */
+             barsSinceReseed -= 1;
+             if( moment2 < 0.01 * peakTotal2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * optInTimePeriod;
+                windowStart = i - optInTimePeriod + 1;
+                windowPrevPrice = inReal[windowStart - 1];
+                dev = 0.0;
+                for( j = windowStart; j <= i; j += 1 ) {
+                   price = inReal[j];
+                   ret = 0.0;
+                   if( windowPrevPrice != 0.0 ) {
+                      ret = (price - windowPrevPrice) / windowPrevPrice;
+                   }
+                   windowPrevPrice = price;
+                   dev += ret;
+                }
+                shift = dev * invPeriod;
+                windowPrevPrice = inReal[windowStart - 1];
+                periodTotal1 = 0.0;
+                periodTotal2 = 0.0;
+                for( j = windowStart; j <= i; j += 1 ) {
+                   price = inReal[j];
+                   ret = 0.0;
+                   if( windowPrevPrice != 0.0 ) {
+                      ret = (price - windowPrevPrice) / windowPrevPrice;
+                   }
+                   windowPrevPrice = price;
+                   dev = ret - shift;
+                   periodTotal1 += dev;
+                   periodTotal2 += dev * dev;
+                }
+                meanDev = periodTotal1 * invPeriod;
+                moment2 = periodTotal2 - meanDev * periodTotal1;
+                /* A window of equal returns can sit off this mean by rounding, which
+                 * leaves a spread of rounding where the ratio must be the plain
+                 * quotient, and fires the trigger again on every bar. Anchored on
+                 * one of its own returns, its deviations are exactly zero.
+                 */
+                if( moment2 < 0.000001 * periodTotal2 ) {
+                   shift = ret;
+                   windowPrevPrice = inReal[windowStart - 1];
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= i; j += 1 ) {
+                      price = inReal[j];
+                      ret = 0.0;
+                      if( windowPrevPrice != 0.0 ) {
+                         ret = (price - windowPrevPrice) / windowPrevPrice;
+                      }
+                      windowPrevPrice = price;
+                      dev = ret - shift;
+                      periodTotal1 += dev;
+                      periodTotal2 += dev * dev;
+                   }
+                   meanDev = periodTotal1 * invPeriod;
+                   moment2 = periodTotal2 - meanDev * periodTotal1;
+                }
+                peakTotal2 = periodTotal2;
+                /* Re-remove the trailing return under the new shift so the carried
+                 * state matches the path without a rebuild.
+                 */
+                price = inReal[windowStart];
+                ret = 0.0;
+                if( inReal[windowStart - 1] != 0.0 ) {
+                   ret = (price - inReal[windowStart - 1]) / inReal[windowStart - 1];
+                }
+                dev = ret - shift;
+                periodTotal1 -= dev;
+                periodTotal2 -= dev * dev;
+             }
+             /* No spread is the plain quotient: +/-Inf by the sign of the excess
+              * mean, NaN when it is exactly zero (ruled on #571). Annualize the
+              * per-bar ratio last, so an annualization of 1 is that ratio bit for
+              * bit.
+              */
+             excess = shift + meanDev - optInRiskFreeRate;
+             ratio = excess / Math.sqrt(moment2 / (dPeriod - 1.0));
+             outReal[outIdx++] = sqrtAnnual * ratio;
+             i += 1;
+          } while( i <= endIdx );
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       RetCode sharpeImpl( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           int optInTimePeriod,
+                           double optInRiskFreeRate,
+                           double optInAnnualization,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+       {
+          double shift = 0;
+          double periodTotal1 = 0;
+          double periodTotal2 = 0;
+          double peakTotal2 = 0;
+          double price = 0;
+          double prevPrice = 0;
+          double trailingPrevPrice = 0;
+          double windowPrevPrice = 0;
+          double ret = 0;
+          double dev = 0;
+          double dPeriod = 0;
+          double invPeriod = 0;
+          double meanDev = 0;
+          double moment2 = 0;
+          double excess = 0;
+          double sqrtAnnual = 0;
+          double ratio = 0;
+          int i = 0;
+          int j = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int windowStart = 0;
+          int barsSinceReseed = 0;
+          if( (startIdx < 0) || (startIdx > INDEX_MAX) ) {
+             return RetCode.OUT_OF_RANGE_START_INDEX ;
+          }
+          if( (endIdx < 0) || (endIdx > INDEX_MAX) || (endIdx < startIdx)) {
+             return RetCode.OUT_OF_RANGE_END_INDEX ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInRiskFreeRate == REAL_DEFAULT ) {
+             optInRiskFreeRate = 0e0;
+          } else if( !(optInRiskFreeRate >= REAL_MIN && optInRiskFreeRate <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInAnnualization == REAL_DEFAULT ) {
+             optInAnnualization = 2.52e2;
+          } else if( !(optInAnnualization >= 0e0 && optInAnnualization <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx < optInTimePeriod ) {
+             startIdx = optInTimePeriod;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.SUCCESS ;
+          }
+          dPeriod = (double)optInTimePeriod;
+          invPeriod = 1.0 / dPeriod;
+          sqrtAnnual = Math.sqrt(optInAnnualization);
+          trailingIdx = startIdx - optInTimePeriod;
+          prevPrice = (double)inReal[trailingIdx];
+          price = (double)inReal[trailingIdx + 1];
+          ret = 0.0;
+          if( prevPrice != 0.0 ) {
+             ret = (price - prevPrice) / prevPrice;
+          }
+          shift = ret;
+          periodTotal1 = 0.0;
+          periodTotal2 = 0.0;
+          for( j = trailingIdx + 1; j < startIdx; j += 1 ) {
+             price = (double)inReal[j];
+             ret = 0.0;
+             if( prevPrice != 0.0 ) {
+                ret = (price - prevPrice) / prevPrice;
+             }
+             prevPrice = price;
+             dev = ret - shift;
+             periodTotal1 += dev;
+             periodTotal2 += dev * dev;
+          }
+          i = startIdx;
+          outIdx = 0;
+          barsSinceReseed = 32 * optInTimePeriod;
+          peakTotal2 = periodTotal2;
+          do {
+             price = (double)inReal[i];
+             ret = 0.0;
+             if( prevPrice != 0.0 ) {
+                ret = (price - prevPrice) / prevPrice;
+             }
+             prevPrice = price;
+             dev = ret - shift;
+             periodTotal1 += dev;
+             periodTotal2 += dev * dev;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+             meanDev = periodTotal1 * invPeriod;
+             moment2 = periodTotal2 - meanDev * periodTotal1;
+             trailingPrevPrice = (double)inReal[trailingIdx];
+             trailingIdx += 1;
+             price = (double)inReal[trailingIdx];
+             ret = 0.0;
+             if( trailingPrevPrice != 0.0 ) {
+                ret = (price - trailingPrevPrice) / trailingPrevPrice;
+             }
+             dev = ret - shift;
+             periodTotal1 -= dev;
+             periodTotal2 -= dev * dev;
+             barsSinceReseed -= 1;
+             if( moment2 < 0.01 * peakTotal2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * optInTimePeriod;
+                windowStart = i - optInTimePeriod + 1;
+                windowPrevPrice = (double)inReal[windowStart - 1];
+                dev = 0.0;
+                for( j = windowStart; j <= i; j += 1 ) {
+                   price = (double)inReal[j];
+                   ret = 0.0;
+                   if( windowPrevPrice != 0.0 ) {
+                      ret = (price - windowPrevPrice) / windowPrevPrice;
+                   }
+                   windowPrevPrice = price;
+                   dev += ret;
+                }
+                shift = dev * invPeriod;
+                windowPrevPrice = (double)inReal[windowStart - 1];
+                periodTotal1 = 0.0;
+                periodTotal2 = 0.0;
+                for( j = windowStart; j <= i; j += 1 ) {
+                   price = (double)inReal[j];
+                   ret = 0.0;
+                   if( windowPrevPrice != 0.0 ) {
+                      ret = (price - windowPrevPrice) / windowPrevPrice;
+                   }
+                   windowPrevPrice = price;
+                   dev = ret - shift;
+                   periodTotal1 += dev;
+                   periodTotal2 += dev * dev;
+                }
+                meanDev = periodTotal1 * invPeriod;
+                moment2 = periodTotal2 - meanDev * periodTotal1;
+                if( moment2 < 0.000001 * periodTotal2 ) {
+                   shift = ret;
+                   windowPrevPrice = (double)inReal[windowStart - 1];
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= i; j += 1 ) {
+                      price = (double)inReal[j];
+                      ret = 0.0;
+                      if( windowPrevPrice != 0.0 ) {
+                         ret = (price - windowPrevPrice) / windowPrevPrice;
+                      }
+                      windowPrevPrice = price;
+                      dev = ret - shift;
+                      periodTotal1 += dev;
+                      periodTotal2 += dev * dev;
+                   }
+                   meanDev = periodTotal1 * invPeriod;
+                   moment2 = periodTotal2 - meanDev * periodTotal1;
+                }
+                peakTotal2 = periodTotal2;
+                price = (double)inReal[windowStart];
+                ret = 0.0;
+                if( (double)inReal[windowStart - 1] != 0.0 ) {
+                   ret = (price - (double)inReal[windowStart - 1]) / (double)inReal[windowStart - 1];
+                }
+                dev = ret - shift;
+                periodTotal1 -= dev;
+                periodTotal2 -= dev * dev;
+             }
+             excess = shift + meanDev - optInRiskFreeRate;
+             ratio = excess / Math.sqrt(moment2 / (dPeriod - 1.0));
+             outReal[outIdx++] = sqrtAnnual * ratio;
+             i += 1;
+          } while( i <= endIdx );
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          return RetCode.SUCCESS ;
+       }
+       /**
+        * The rolling Sharpe ratio: the mean return in excess of a risk-free rate,
+        * divided by the standard deviation of that excess return, over a trailing
+        * window. A drift-over-volatility measure of the series itself, scaled to a
+        * year. Above 0 the window's returns beat the risk-free rate on average; the
+        * larger the value, the more return per unit of volatility.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/sharpe">ta-lib.org/functions/sharpe</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>This is Sharpe's 1994 <i>ex post</i> ratio with a constant benchmark, over simple returns and the sample ({@code n−1}) standard deviation.</li>
+        * <li>A window whose returns are all equal has no spread: the result is +Inf or -Inf by the sign of the mean excess return, and NaN when that mean is exactly 0. With an annualization of 0 it is NaN there and 0 elsewhere.</li>
+        * <li>The risk-free rate is per bar, in the same unit as the returns. For an annual rate {@code R}, pass {@code (1+R)^(1/A) − 1}, where {@code A} is the annualization; it is not de-annualized for you.</li>
+        * <li>An annualization of 1 gives the raw per-bar ratio.</li>
+        * <li>A zero price leaves no return to measure from it: the return of the bar after it counts as 0.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#sharpeLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The price series; its returns are computed internally.
+        * @param optInTimePeriod Number of returns in the window; one price more is
+        *        read (default 20; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInRiskFreeRate Risk-free return per bar, subtracted from each
+        *        return (default 0; {@link Core#REAL_DEFAULT} selects the default).
+        * @param optInAnnualization Bars per year; the per-bar ratio is multiplied
+        *        by its square root (default 252; minimum 0; {@link Core#REAL_DEFAULT}
+        *        selects the default).
+        * @param outReal Annualized Sharpe ratio of the trailing window, or ±Inf or
+        *        NaN where the window has no spread. Must hold at least
+        *        {@code endIdx - max(startIdx, sharpeLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
+        *
+        * @see Core#stddev
+        * @see Core#var
+        * @see Core#beta
+        * @see Core#rocp
+        */
+       public OutRange sharpe( int startIdx,
+                               int endIdx,
+                               double inReal[],
+                               int optInTimePeriod,
+                               double optInRiskFreeRate,
+                               double optInAnnualization,
+                               double outReal[] )
+       {
+          requireIndexRange("SHARPE", startIdx, endIdx);
+          int guardStart = clampedStart("SHARPE", startIdx, sharpeLookback(optInTimePeriod, optInRiskFreeRate, optInAnnualization));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SHARPE", "inReal", inReal, guardInLen);
+          requireLength("SHARPE", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = sharpeImpl(startIdx, endIdx, inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SHARPE", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * The rolling Sharpe ratio: the mean return in excess of a risk-free rate,
+        * divided by the standard deviation of that excess return, over a trailing
+        * window. A drift-over-volatility measure of the series itself, scaled to a
+        * year. Above 0 the window's returns beat the risk-free rate on average; the
+        * larger the value, the more return per unit of volatility.
+        * <p>Formula and more info at <a
+        * href="https://ta-lib.org/functions/sharpe">ta-lib.org/functions/sharpe</a>.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>This is Sharpe's 1994 <i>ex post</i> ratio with a constant benchmark, over simple returns and the sample ({@code n−1}) standard deviation.</li>
+        * <li>A window whose returns are all equal has no spread: the result is +Inf or -Inf by the sign of the mean excess return, and NaN when that mean is exactly 0. With an annualization of 0 it is NaN there and 0 elsewhere.</li>
+        * <li>The risk-free rate is per bar, in the same unit as the returns. For an annual rate {@code R}, pass {@code (1+R)^(1/A) − 1}, where {@code A} is the annualization; it is not de-annualized for you.</li>
+        * <li>An annualization of 1 gives the raw per-bar ratio.</li>
+        * <li>A zero price leaves no return to measure from it: the return of the bar after it counts as 0.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are, and the
+        * library never pads with NaN. A valid range that ends before
+        * {@link Core#sharpeLookback} is a <b>success with no values</b>
+        * ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal The price series; its returns are computed internally.
+        * @param optInTimePeriod Number of returns in the window; one price more is
+        *        read (default 20; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInRiskFreeRate Risk-free return per bar, subtracted from each
+        *        return (default 0; {@link Core#REAL_DEFAULT} selects the default).
+        * @param optInAnnualization Bars per year; the per-bar ratio is multiplied
+        *        by its square root (default 252; minimum 0; {@link Core#REAL_DEFAULT}
+        *        selects the default).
+        * @param outReal Annualized Sharpe ratio of the trailing window, or ±Inf or
+        *        NaN where the window has no spread. Must hold at least
+        *        {@code endIdx - max(startIdx, sharpeLookback(...)) + 1} values, and never
+        *        be empty: an empty array is an absent output.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#INDEX_MAX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. Checked before anything is written, so a rejected call leaves every
+        *        buffer untouched.
+        *
+        * @see Core#stddev
+        * @see Core#var
+        * @see Core#beta
+        * @see Core#rocp
+        */
+       public OutRange sharpe( int startIdx,
+                               int endIdx,
+                               float inReal[],
+                               int optInTimePeriod,
+                               double optInRiskFreeRate,
+                               double optInAnnualization,
+                               double outReal[] )
+       {
+          requireIndexRange("SHARPE", startIdx, endIdx);
+          int guardStart = clampedStart("SHARPE", startIdx, sharpeLookback(optInTimePeriod, optInRiskFreeRate, optInAnnualization));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SHARPE", "inReal", inReal, guardInLen);
+          requireLength("SHARPE", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = sharpeImpl(startIdx, endIdx, inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.SUCCESS ) {
+             throw failure("SHARPE", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live SHARPE stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#sharpe} over the same series.
+        * Open with {@link Core#sharpeOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class SharpeStream {
+          private Core core;
+          private int optInTimePeriod;
+          private double optInRiskFreeRate;
+          private double optInAnnualization;
+          private double shift;
+          private double periodTotal1;
+          private double periodTotal2;
+          private double peakTotal2;
+          private double prevPrice;
+          private double dPeriod;
+          private double invPeriod;
+          private double sqrtAnnual;
+          private int trailingIdx;
+          private int barsSinceReseed;
+          private int j;
+          private int windowStart;
+          private int i;
+          private int xMask;
+          private double[] x_inReal;
+          private double cur_outReal;
+          private int outRangeBegIdx;
+          private int outRangeCount;
+
+          private SharpeStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#sharpe} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * accepted {@code update} adds one to the count — a rejected one
+           * changes nothing, and neither does {@code peek} — and
+           * {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#INDEX_MAX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          /**
+           * Count one bar this stream was not fed: {@link #outRange()} advances
+           * by one and nothing else moves — {@link #value()} keeps answering the previous
+           * output, which is this bar's output too.
+           * <p>For a bar the caller leaves out: one an {@code update} rejected
+           * and that will not be re-fed, or a session with no print. Without it
+           * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
+           */
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SHARPE advance", RetCode.OUT_OF_RANGE_END_INDEX);
+             this.outRangeCount++;
+          }
+
+          private SharpeStream( SharpeStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.optInRiskFreeRate = other.optInRiskFreeRate;
+             this.optInAnnualization = other.optInAnnualization;
+             this.shift = other.shift;
+             this.periodTotal1 = other.periodTotal1;
+             this.periodTotal2 = other.periodTotal2;
+             this.peakTotal2 = other.peakTotal2;
+             this.prevPrice = other.prevPrice;
+             this.dPeriod = other.dPeriod;
+             this.invPeriod = other.invPeriod;
+             this.sqrtAnnual = other.sqrtAnnual;
+             this.trailingIdx = other.trailingIdx;
+             this.barsSinceReseed = other.barsSinceReseed;
+             this.j = other.j;
+             this.windowStart = other.windowStart;
+             this.i = other.i;
+             this.xMask = other.xMask;
+             this.x_inReal = other.x_inReal.clone();
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so nothing moves — {@link #outRange()} included — and
+           * {@link #value()} still answers the previous value. Re-feed the bar when a
+           * corrected value arrives, or call {@link #advance()} to count it and
+           * carry on; two handles on one feed drift a bar apart if neither
+           * happens.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#INDEX_MAX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
+           */
+          public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > INDEX_MAX )
+                throw failure("SHARPE update", RetCode.OUT_OF_RANGE_END_INDEX);
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("SHARPE update", "inReal");
+             core.sharpeStepImpl(this, inReal);
+             this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may run concurrently with each other.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#INDEX_MAX} ceiling {@code update} stops at.
+           */
+          public double peek( double inReal ) {
+             if( !Double.isFinite(inReal) )
+                throw nonFiniteBar("SHARPE peek", "inReal");
+             SharpeStream sp = this;
+             double price = 0.0;
+             double trailingPrevPrice = 0.0;
+             double windowPrevPrice = 0.0;
+             double ret = 0.0;
+             double dev = 0.0;
+             double meanDev = 0.0;
+             double moment2 = 0.0;
+             double excess = 0.0;
+             double ratio = 0.0;
+             int barsSinceReseed = sp.barsSinceReseed;
+             double cur_outReal = 0.0;
+             int j = sp.j;
+             double peakTotal2 = sp.peakTotal2;
+             double periodTotal1 = sp.periodTotal1;
+             double periodTotal2 = sp.periodTotal2;
+             double prevPrice = sp.prevPrice;
+             double shift = sp.shift;
+             int trailingIdx = sp.trailingIdx;
+             int windowStart = sp.windowStart;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             pkSlot0 = sp.i & sp.xMask;
+             pkVal0 = inReal;
+             price = ((sp.i & sp.xMask) != pkSlot0) ? sp.x_inReal[sp.i & sp.xMask] : pkVal0;
+             ret = 0.0;
+             if( prevPrice != 0.0 ) {
+                ret = (price - prevPrice) / prevPrice;
+             }
+             prevPrice = price;
+             dev = ret - shift;
+             periodTotal1 += dev;
+             periodTotal2 += dev * dev;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+             meanDev = periodTotal1 * sp.invPeriod;
+             moment2 = periodTotal2 - meanDev * periodTotal1;
+             /* inReal and outReal may be the same buffer, and the trailing prices
+              * sit in slots the output reaches: every read of the window happens
+              * before this bar's write. The oldest price read is the trailing
+              * return's base, so the index stays on it.
+              */
+             trailingPrevPrice = ((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[trailingIdx & sp.xMask] : pkVal0;
+             trailingIdx += 1;
+             price = ((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[trailingIdx & sp.xMask] : pkVal0;
+             ret = 0.0;
+             if( trailingPrevPrice != 0.0 ) {
+                ret = (price - trailingPrevPrice) / trailingPrevPrice;
+             }
+             dev = ret - shift;
+             periodTotal1 -= dev;
+             periodTotal2 -= dev * dev;
+             /* Rebuild against the window mean when the spread has shrunk below 1% of
+              * the largest sum of squares held since the last rebuild, or at least
+              * every 32 windows. The rounding the running sums carry scales with that
+              * peak, so once a large return leaves, the current sum can be all
+              * rounding; a flat run after a move must still come out exactly flat.
+              * The spread is a divisor, so its relative error reaches the ratio.
+              */
+             barsSinceReseed -= 1;
+             if( moment2 < 0.01 * peakTotal2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * sp.optInTimePeriod;
+                windowStart = sp.i - sp.optInTimePeriod + 1;
+                windowPrevPrice = (((windowStart - 1) & sp.xMask) != pkSlot0) ? sp.x_inReal[(windowStart - 1) & sp.xMask] : pkVal0;
+                dev = 0.0;
+                for( j = windowStart; j <= sp.i; j += 1 ) {
+                   price = ((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0;
+                   ret = 0.0;
+                   if( windowPrevPrice != 0.0 ) {
+                      ret = (price - windowPrevPrice) / windowPrevPrice;
+                   }
+                   windowPrevPrice = price;
+                   dev += ret;
+                }
+                shift = dev * sp.invPeriod;
+                windowPrevPrice = (((windowStart - 1) & sp.xMask) != pkSlot0) ? sp.x_inReal[(windowStart - 1) & sp.xMask] : pkVal0;
+                periodTotal1 = 0.0;
+                periodTotal2 = 0.0;
+                for( j = windowStart; j <= sp.i; j += 1 ) {
+                   price = ((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0;
+                   ret = 0.0;
+                   if( windowPrevPrice != 0.0 ) {
+                      ret = (price - windowPrevPrice) / windowPrevPrice;
+                   }
+                   windowPrevPrice = price;
+                   dev = ret - shift;
+                   periodTotal1 += dev;
+                   periodTotal2 += dev * dev;
+                }
+                meanDev = periodTotal1 * sp.invPeriod;
+                moment2 = periodTotal2 - meanDev * periodTotal1;
+                /* A window of equal returns can sit off this mean by rounding, which
+                 * leaves a spread of rounding where the ratio must be the plain
+                 * quotient, and fires the trigger again on every bar. Anchored on
+                 * one of its own returns, its deviations are exactly zero.
+                 */
+                if( moment2 < 0.000001 * periodTotal2 ) {
+                   shift = ret;
+                   windowPrevPrice = (((windowStart - 1) & sp.xMask) != pkSlot0) ? sp.x_inReal[(windowStart - 1) & sp.xMask] : pkVal0;
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= sp.i; j += 1 ) {
+                      price = ((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0;
+                      ret = 0.0;
+                      if( windowPrevPrice != 0.0 ) {
+                         ret = (price - windowPrevPrice) / windowPrevPrice;
+                      }
+                      windowPrevPrice = price;
+                      dev = ret - shift;
+                      periodTotal1 += dev;
+                      periodTotal2 += dev * dev;
+                   }
+                   meanDev = periodTotal1 * sp.invPeriod;
+                   moment2 = periodTotal2 - meanDev * periodTotal1;
+                }
+                peakTotal2 = periodTotal2;
+                /* Re-remove the trailing return under the new shift so the carried
+                 * state matches the path without a rebuild.
+                 */
+                price = ((windowStart & sp.xMask) != pkSlot0) ? sp.x_inReal[windowStart & sp.xMask] : pkVal0;
+                ret = 0.0;
+                if( ((((windowStart - 1) & sp.xMask) != pkSlot0) ? sp.x_inReal[(windowStart - 1) & sp.xMask] : pkVal0) != 0.0 ) {
+                   ret = (price - ((((windowStart - 1) & sp.xMask) != pkSlot0) ? sp.x_inReal[(windowStart - 1) & sp.xMask] : pkVal0)) / ((((windowStart - 1) & sp.xMask) != pkSlot0) ? sp.x_inReal[(windowStart - 1) & sp.xMask] : pkVal0);
+                }
+                dev = ret - shift;
+                periodTotal1 -= dev;
+                periodTotal2 -= dev * dev;
+             }
+             /* No spread is the plain quotient: +/-Inf by the sign of the excess
+              * mean, NaN when it is exactly zero (ruled on #571). Annualize the
+              * per-bar ratio last, so an annualization of 1 is that ratio bit for
+              * bit.
+              */
+             excess = shift + meanDev - sp.optInRiskFreeRate;
+             ratio = excess / Math.sqrt(moment2 / (sp.dPeriod - 1.0));
+             cur_outReal = sp.sqrtAnnual * ratio;
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public SharpeStream clone() {
+             return new SharpeStream(this);
+          }
+       }
+       private void sharpeStepImpl( SharpeStream sp, double inReal )
+       {
+          double price = 0.0;
+          double trailingPrevPrice = 0.0;
+          double windowPrevPrice = 0.0;
+          double ret = 0.0;
+          double dev = 0.0;
+          double meanDev = 0.0;
+          double moment2 = 0.0;
+          double excess = 0.0;
+          double ratio = 0.0;
+          sp.x_inReal[sp.i & sp.xMask] = inReal;
+          price = sp.x_inReal[sp.i & sp.xMask];
+          ret = 0.0;
+          if( sp.prevPrice != 0.0 ) {
+             ret = (price - sp.prevPrice) / sp.prevPrice;
+          }
+          sp.prevPrice = price;
+          dev = ret - sp.shift;
+          sp.periodTotal1 += dev;
+          sp.periodTotal2 += dev * dev;
+          sp.peakTotal2 = (sp.periodTotal2 > sp.peakTotal2) ? sp.periodTotal2 : sp.peakTotal2;
+          meanDev = sp.periodTotal1 * sp.invPeriod;
+          moment2 = sp.periodTotal2 - meanDev * sp.periodTotal1;
+          /* inReal and outReal may be the same buffer, and the trailing prices
+           * sit in slots the output reaches: every read of the window happens
+           * before this bar's write. The oldest price read is the trailing
+           * return's base, so the index stays on it.
+           */
+          trailingPrevPrice = sp.x_inReal[sp.trailingIdx & sp.xMask];
+          sp.trailingIdx += 1;
+          price = sp.x_inReal[sp.trailingIdx & sp.xMask];
+          ret = 0.0;
+          if( trailingPrevPrice != 0.0 ) {
+             ret = (price - trailingPrevPrice) / trailingPrevPrice;
+          }
+          dev = ret - sp.shift;
+          sp.periodTotal1 -= dev;
+          sp.periodTotal2 -= dev * dev;
+          /* Rebuild against the window mean when the spread has shrunk below 1% of
+           * the largest sum of squares held since the last rebuild, or at least
+           * every 32 windows. The rounding the running sums carry scales with that
+           * peak, so once a large return leaves, the current sum can be all
+           * rounding; a flat run after a move must still come out exactly flat.
+           * The spread is a divisor, so its relative error reaches the ratio.
+           */
+          sp.barsSinceReseed -= 1;
+          if( moment2 < 0.01 * sp.peakTotal2 || sp.barsSinceReseed <= 0 ) {
+             sp.barsSinceReseed = 32 * sp.optInTimePeriod;
+             sp.windowStart = sp.i - sp.optInTimePeriod + 1;
+             windowPrevPrice = sp.x_inReal[(sp.windowStart - 1) & sp.xMask];
+             dev = 0.0;
+             for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 ) {
+                price = sp.x_inReal[sp.j & sp.xMask];
+                ret = 0.0;
+                if( windowPrevPrice != 0.0 ) {
+                   ret = (price - windowPrevPrice) / windowPrevPrice;
+                }
+                windowPrevPrice = price;
+                dev += ret;
+             }
+             sp.shift = dev * sp.invPeriod;
+             windowPrevPrice = sp.x_inReal[(sp.windowStart - 1) & sp.xMask];
+             sp.periodTotal1 = 0.0;
+             sp.periodTotal2 = 0.0;
+             for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 ) {
+                price = sp.x_inReal[sp.j & sp.xMask];
+                ret = 0.0;
+                if( windowPrevPrice != 0.0 ) {
+                   ret = (price - windowPrevPrice) / windowPrevPrice;
+                }
+                windowPrevPrice = price;
+                dev = ret - sp.shift;
+                sp.periodTotal1 += dev;
+                sp.periodTotal2 += dev * dev;
+             }
+             meanDev = sp.periodTotal1 * sp.invPeriod;
+             moment2 = sp.periodTotal2 - meanDev * sp.periodTotal1;
+             /* A window of equal returns can sit off this mean by rounding, which
+              * leaves a spread of rounding where the ratio must be the plain
+              * quotient, and fires the trigger again on every bar. Anchored on
+              * one of its own returns, its deviations are exactly zero.
+              */
+             if( moment2 < 0.000001 * sp.periodTotal2 ) {
+                sp.shift = ret;
+                windowPrevPrice = sp.x_inReal[(sp.windowStart - 1) & sp.xMask];
+                sp.periodTotal1 = 0.0;
+                sp.periodTotal2 = 0.0;
+                for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 ) {
+                   price = sp.x_inReal[sp.j & sp.xMask];
+                   ret = 0.0;
+                   if( windowPrevPrice != 0.0 ) {
+                      ret = (price - windowPrevPrice) / windowPrevPrice;
+                   }
+                   windowPrevPrice = price;
+                   dev = ret - sp.shift;
+                   sp.periodTotal1 += dev;
+                   sp.periodTotal2 += dev * dev;
+                }
+                meanDev = sp.periodTotal1 * sp.invPeriod;
+                moment2 = sp.periodTotal2 - meanDev * sp.periodTotal1;
+             }
+             sp.peakTotal2 = sp.periodTotal2;
+             /* Re-remove the trailing return under the new shift so the carried
+              * state matches the path without a rebuild.
+              */
+             price = sp.x_inReal[sp.windowStart & sp.xMask];
+             ret = 0.0;
+             if( sp.x_inReal[(sp.windowStart - 1) & sp.xMask] != 0.0 ) {
+                ret = (price - sp.x_inReal[(sp.windowStart - 1) & sp.xMask]) / sp.x_inReal[(sp.windowStart - 1) & sp.xMask];
+             }
+             dev = ret - sp.shift;
+             sp.periodTotal1 -= dev;
+             sp.periodTotal2 -= dev * dev;
+          }
+          /* No spread is the plain quotient: +/-Inf by the sign of the excess
+           * mean, NaN when it is exactly zero (ruled on #571). Annualize the
+           * per-bar ratio last, so an annualization of 1 is that ratio bit for
+           * bit.
+           */
+          excess = sp.shift + meanDev - sp.optInRiskFreeRate;
+          ratio = excess / Math.sqrt(moment2 / (sp.dPeriod - 1.0));
+          sp.cur_outReal = sp.sqrtAnnual * ratio;
+          sp.i += 1;
+       }
+       private RetCode sharpeOpenImpl( SharpeStream sp, double inReal[], int startIdx, int optInTimePeriod, double optInRiskFreeRate, double optInAnnualization, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          double shift = 0;
+          double periodTotal1 = 0;
+          double periodTotal2 = 0;
+          double peakTotal2 = 0;
+          double price = 0;
+          double prevPrice = 0;
+          double trailingPrevPrice = 0;
+          double windowPrevPrice = 0;
+          double ret = 0;
+          double dev = 0;
+          double dPeriod = 0;
+          double invPeriod = 0;
+          double meanDev = 0;
+          double moment2 = 0;
+          double excess = 0;
+          double sqrtAnnual = 0;
+          double ratio = 0;
+          int i = 0;
+          int j = 0;
+          int outIdx = 0;
+          int trailingIdx = 0;
+          int windowStart = 0;
+          int barsSinceReseed = 0;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen > INDEX_MAX + 1 ) {
+             return RetCode.OUT_OF_RANGE_END_INDEX;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInRiskFreeRate == REAL_DEFAULT ) {
+             optInRiskFreeRate = 0e0;
+          } else if( !(optInRiskFreeRate >= REAL_MIN && optInRiskFreeRate <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( optInAnnualization == REAL_DEFAULT ) {
+             optInAnnualization = 2.52e2;
+          } else if( !(optInAnnualization >= 0e0 && optInAnnualization <= REAL_MAX) ) {
+             return RetCode.BAD_PARAM;
+          }
+          if( startIdx >= historyLen ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY;
+          }
+          if( startIdx < optInTimePeriod ) {
+             startIdx = optInTimePeriod;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.INSUFFICIENT_HISTORY ;
+          }
+          dPeriod = (double)optInTimePeriod;
+          invPeriod = 1.0 / dPeriod;
+          sqrtAnnual = Math.sqrt(optInAnnualization);
+          /* The window holds the returns of the bars after trailingIdx up to i; a
+           * bar's return reads the price before it.
+           *
+           * The variance of the excess returns is the variance of the returns, so
+           * the risk-free rate enters only the mean. That keeps the sums at return
+           * scale whatever the rate, and lets a flat price window reach an exact
+           * zero spread.
+           */
+          trailingIdx = startIdx - optInTimePeriod;
+          prevPrice = inReal[trailingIdx];
+          /* A return needs a non-zero base price and nothing more: the test is
+           * exact, never a band, since a price carries the quote unit. A zero base
+           * gives a zero return.
+           */
+          price = inReal[trailingIdx + 1];
+          ret = 0.0;
+          if( prevPrice != 0.0 ) {
+             ret = (price - prevPrice) / prevPrice;
+          }
+          shift = ret;
+          periodTotal1 = 0.0;
+          periodTotal2 = 0.0;
+          for( j = trailingIdx + 1; j < startIdx; j += 1 ) {
+             price = inReal[j];
+             ret = 0.0;
+             if( prevPrice != 0.0 ) {
+                ret = (price - prevPrice) / prevPrice;
+             }
+             prevPrice = price;
+             dev = ret - shift;
+             periodTotal1 += dev;
+             periodTotal2 += dev * dev;
+          }
+          i = startIdx;
+          outIdx = 0;
+          barsSinceReseed = 32 * optInTimePeriod;
+          peakTotal2 = periodTotal2;
+          do {
+             price = inReal[i];
+             ret = 0.0;
+             if( prevPrice != 0.0 ) {
+                ret = (price - prevPrice) / prevPrice;
+             }
+             prevPrice = price;
+             dev = ret - shift;
+             periodTotal1 += dev;
+             periodTotal2 += dev * dev;
+             peakTotal2 = (periodTotal2 > peakTotal2) ? periodTotal2 : peakTotal2;
+             meanDev = periodTotal1 * invPeriod;
+             moment2 = periodTotal2 - meanDev * periodTotal1;
+             /* inReal and outReal may be the same buffer, and the trailing prices
+              * sit in slots the output reaches: every read of the window happens
+              * before this bar's write. The oldest price read is the trailing
+              * return's base, so the index stays on it.
+              */
+             trailingPrevPrice = inReal[trailingIdx];
+             trailingIdx += 1;
+             price = inReal[trailingIdx];
+             ret = 0.0;
+             if( trailingPrevPrice != 0.0 ) {
+                ret = (price - trailingPrevPrice) / trailingPrevPrice;
+             }
+             dev = ret - shift;
+             periodTotal1 -= dev;
+             periodTotal2 -= dev * dev;
+             /* Rebuild against the window mean when the spread has shrunk below 1% of
+              * the largest sum of squares held since the last rebuild, or at least
+              * every 32 windows. The rounding the running sums carry scales with that
+              * peak, so once a large return leaves, the current sum can be all
+              * rounding; a flat run after a move must still come out exactly flat.
+              * The spread is a divisor, so its relative error reaches the ratio.
+              */
+             barsSinceReseed -= 1;
+             if( moment2 < 0.01 * peakTotal2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * optInTimePeriod;
+                windowStart = i - optInTimePeriod + 1;
+                windowPrevPrice = inReal[windowStart - 1];
+                dev = 0.0;
+                for( j = windowStart; j <= i; j += 1 ) {
+                   price = inReal[j];
+                   ret = 0.0;
+                   if( windowPrevPrice != 0.0 ) {
+                      ret = (price - windowPrevPrice) / windowPrevPrice;
+                   }
+                   windowPrevPrice = price;
+                   dev += ret;
+                }
+                shift = dev * invPeriod;
+                windowPrevPrice = inReal[windowStart - 1];
+                periodTotal1 = 0.0;
+                periodTotal2 = 0.0;
+                for( j = windowStart; j <= i; j += 1 ) {
+                   price = inReal[j];
+                   ret = 0.0;
+                   if( windowPrevPrice != 0.0 ) {
+                      ret = (price - windowPrevPrice) / windowPrevPrice;
+                   }
+                   windowPrevPrice = price;
+                   dev = ret - shift;
+                   periodTotal1 += dev;
+                   periodTotal2 += dev * dev;
+                }
+                meanDev = periodTotal1 * invPeriod;
+                moment2 = periodTotal2 - meanDev * periodTotal1;
+                /* A window of equal returns can sit off this mean by rounding, which
+                 * leaves a spread of rounding where the ratio must be the plain
+                 * quotient, and fires the trigger again on every bar. Anchored on
+                 * one of its own returns, its deviations are exactly zero.
+                 */
+                if( moment2 < 0.000001 * periodTotal2 ) {
+                   shift = ret;
+                   windowPrevPrice = inReal[windowStart - 1];
+                   periodTotal1 = 0.0;
+                   periodTotal2 = 0.0;
+                   for( j = windowStart; j <= i; j += 1 ) {
+                      price = inReal[j];
+                      ret = 0.0;
+                      if( windowPrevPrice != 0.0 ) {
+                         ret = (price - windowPrevPrice) / windowPrevPrice;
+                      }
+                      windowPrevPrice = price;
+                      dev = ret - shift;
+                      periodTotal1 += dev;
+                      periodTotal2 += dev * dev;
+                   }
+                   meanDev = periodTotal1 * invPeriod;
+                   moment2 = periodTotal2 - meanDev * periodTotal1;
+                }
+                peakTotal2 = periodTotal2;
+                /* Re-remove the trailing return under the new shift so the carried
+                 * state matches the path without a rebuild.
+                 */
+                price = inReal[windowStart];
+                ret = 0.0;
+                if( inReal[windowStart - 1] != 0.0 ) {
+                   ret = (price - inReal[windowStart - 1]) / inReal[windowStart - 1];
+                }
+                dev = ret - shift;
+                periodTotal1 -= dev;
+                periodTotal2 -= dev * dev;
+             }
+             /* No spread is the plain quotient: +/-Inf by the sign of the excess
+              * mean, NaN when it is exactly zero (ruled on #571). Annualize the
+              * per-bar ratio last, so an annualization of 1 is that ratio bit for
+              * bit.
+              */
+             excess = shift + meanDev - optInRiskFreeRate;
+             ratio = excess / Math.sqrt(moment2 / (dPeriod - 1.0));
+             outReal[outIdx++ * outStride] = sqrtAnnual * ratio;
+             i += 1;
+          } while( i <= endIdx );
+          outNBElement.value = outIdx;
+          outBegIdx.value = startIdx;
+          /* Capture the live batch state into the handle. */
+          int capX = i - trailingIdx + 1;
+          if( capX < 1 || capX > historyLen ) {
+             return RetCode.INTERNAL_ERROR;
+          }
+          int physX = 1;
+          while( physX < capX ) {
+             physX <<= 1;
+          }
+          double[] capX_inReal = new double[physX];
+          for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
+             capX_inReal[fillJ & (physX - 1)] = inReal[fillJ];
+          }
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.optInRiskFreeRate = optInRiskFreeRate;
+          sp.optInAnnualization = optInAnnualization;
+          sp.shift = shift;
+          sp.periodTotal1 = periodTotal1;
+          sp.periodTotal2 = periodTotal2;
+          sp.peakTotal2 = peakTotal2;
+          sp.prevPrice = prevPrice;
+          sp.dPeriod = dPeriod;
+          sp.invPeriod = invPeriod;
+          sp.sqrtAnnual = sqrtAnnual;
+          sp.trailingIdx = trailingIdx;
+          sp.barsSinceReseed = barsSinceReseed;
+          sp.j = j;
+          sp.windowStart = windowStart;
+          sp.i = i;
+          sp.xMask = physX - 1;
+          sp.x_inReal = capX_inReal;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.SUCCESS;
+       }
+       /* sharpeOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       SharpeStream sharpeOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInRiskFreeRate, double optInAnnualization, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          SharpeStream sp = new SharpeStream(this);
+          RetCode retCode = sharpeOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInRiskFreeRate, optInAnnualization, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SHARPE openAndFill", inReal.length, startIdx, sharpeLookback(optInTimePeriod, optInRiskFreeRate, optInAnnualization));
+          }
+          throw streamFailure("SHARPE openAndFill", retCode);
+       }
+       /* Internal startIdx-anchored open behind sharpeOpen (composition seam). */
+       SharpeStream sharpeOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInRiskFreeRate, double optInAnnualization )
+       {
+          SharpeStream sp = new SharpeStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = sharpeOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInRiskFreeRate, optInAnnualization, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.SUCCESS ) {
+             return sp;
+          }
+          if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
+             throw insufficientHistory("SHARPE open", inReal.length, startIdx, sharpeLookback(optInTimePeriod, optInRiskFreeRate, optInAnnualization));
+          }
+          throw streamFailure("SHARPE open", retCode);
+       }
+       /**
+        * Open a live SHARPE stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#sharpe} at that bar.
+        * <p>The history must hold at least {@code sharpeLookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown, an empty history included. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
+        * parameter's documented default, as in the batch API). A null argument throws
+        * {@link IllegalArgumentException}, ahead of everything above.
+        */
+       public SharpeStream sharpeOpen( double inReal[], int optInTimePeriod, double optInRiskFreeRate, double optInAnnualization )
+       {
+          requireArgument("SHARPE open", "inReal", inReal);
+          requireHistory("SHARPE open", inReal.length);
+          return sharpeOpenInternal(inReal, 0, optInTimePeriod, optInRiskFreeRate, optInAnnualization);
+       }
+       /**
+        * {@link Core#sharpeOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#sharpe} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link SharpeStream#outRange()}.
+        */
+       public SharpeStream sharpeOpenAndFill( double inReal[], int optInTimePeriod, double optInRiskFreeRate, double optInAnnualization, double outReal[] )
+       {
+          requireArgument("SHARPE openAndFill", "inReal", inReal);
+          requireHistory("SHARPE openAndFill", inReal.length);
+          int guardOutLen = openFillCount("SHARPE openAndFill", inReal.length, sharpeLookback(optInTimePeriod, optInRiskFreeRate, optInAnnualization));
+          requireLength("SHARPE openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inReal ) {
+             throw streamFailure("SHARPE openAndFill", RetCode.BAD_PARAM);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return sharpeOpenAndFillInternal(inReal, 0, optInTimePeriod, optInRiskFreeRate, optInAnnualization, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
      *  092726 MF,CC  Initial version (#451).
      */
 
@@ -234763,7 +236153,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "fd1a59454c485534";
+    static final String SPLICED_GENCODE_DIGEST = "9f6a87405daec3ec";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -235722,6 +237112,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
             new AbsOpt[]{ new AbsOpt(0,"optInStartValue",0,"Start Value","Start value and direction. 0 for Auto, >0 for Long, <0 for Short",0.0, -3e37,3e37,4,0.0,0.0,0.0, 0,0,0,0,0, null), new AbsOpt(0,"optInOffsetOnReverse",0,"Offset on Reverse","Percent offset added/removed to initial stop on short/long reversal",0.0, 0.0,3e37,4,0.01,0.15,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationInitLong",0,"AF Init Long","Acceleration Factor initial value for the Long direction",0.02, 0.0,3e37,4,0.01,0.19,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationLong",0,"AF Long","Acceleration Factor for the Long direction",0.02, 0.0,3e37,4,0.01,0.2,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationMaxLong",0,"AF Max Long","Acceleration Factor maximum value for the Long direction",0.2, 0.0,3e37,4,0.2,0.4,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationInitShort",0,"AF Init Short","Acceleration Factor initial value for the Short direction",0.02, 0.0,3e37,4,0.01,0.19,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationShort",0,"AF Short","Acceleration Factor for the Short direction",0.02, 0.0,3e37,4,0.01,0.2,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInAccelerationMaxShort",0,"AF Max Short","Acceleration Factor maximum value for the Short direction",0.2, 0.0,3e37,4,0.2,0.4,0.01, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("SHARPE", new AbsFunc("SHARPE", "Statistic Functions", "Rolling Sharpe Ratio", 1107296256,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of returns in the window",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInRiskFreeRate",0,"Risk-Free Rate per Bar","Risk-free return per bar",0.0, -3e37,3e37,8,0.0,0.001,0.0001, 0,0,0,0,0, null), new AbsOpt(0,"optInAnnualization",0,"Annualization","Bars per year",252.0, 0.0,3e37,2,1.0,365.0,1.0, 0,0,0,0,0, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("SI", new AbsFunc("SI", "Momentum Indicators", "Wilder Swing Index", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
             new AbsOpt[]{ new AbsOpt(0,"optInLimitMove",0,"Limit Move","Largest one-bar price move the index is scaled against, in price units",3.0, 1e-8,3e37,4,0.5,30.0,0.5, 0,0,0,0,0, null) },
@@ -236216,6 +237610,7 @@ public class TaCodegenServe {
         "TA_RVOL",
         "TA_SAR",
         "TA_SAREXT",
+        "TA_SHARPE",
         "TA_SI",
         "TA_SIN",
         "TA_SINH",
@@ -236462,51 +237857,52 @@ public class TaCodegenServe {
             case 192: return handle_RVOL(json);
             case 193: return handle_SAR(json);
             case 194: return handle_SAREXT(json);
-            case 195: return handle_SI(json);
-            case 196: return handle_SIN(json);
-            case 197: return handle_SINH(json);
-            case 198: return handle_SKEW(json);
-            case 199: return handle_SMA(json);
-            case 200: return handle_SMI(json);
-            case 201: return handle_SQRT(json);
-            case 202: return handle_SQZMOM(json);
-            case 203: return handle_STC(json);
-            case 204: return handle_STDDEV(json);
-            case 205: return handle_STOCH(json);
-            case 206: return handle_STOCHF(json);
-            case 207: return handle_STOCHRSI(json);
-            case 208: return handle_SUB(json);
-            case 209: return handle_SUM(json);
-            case 210: return handle_SUPERTREND(json);
-            case 211: return handle_SWAK_2PHP(json);
-            case 212: return handle_SWAK_BP(json);
-            case 213: return handle_SWAK_BUTTER(json);
-            case 214: return handle_SWAK_GAUSS(json);
-            case 215: return handle_SWAK_HP(json);
-            case 216: return handle_T3(json);
-            case 217: return handle_TAN(json);
-            case 218: return handle_TANH(json);
-            case 219: return handle_TEMA(json);
-            case 220: return handle_TRANGE(json);
-            case 221: return handle_TRIMA(json);
-            case 222: return handle_TRIX(json);
-            case 223: return handle_TSF(json);
-            case 224: return handle_TSI(json);
-            case 225: return handle_TYPPRICE(json);
-            case 226: return handle_ULTOSC(json);
-            case 227: return handle_VAR(json);
-            case 228: return handle_VHF(json);
-            case 229: return handle_VIDYA(json);
-            case 230: return handle_VORTEX(json);
-            case 231: return handle_VWAP(json);
-            case 232: return handle_VWMA(json);
-            case 233: return handle_WAD(json);
-            case 234: return handle_WAVETREND(json);
-            case 235: return handle_WCLPRICE(json);
-            case 236: return handle_WILLR(json);
-            case 237: return handle_WMA(json);
-            case 238: return handle_ZIGZAG(json);
-            case 239: return handle_ZLEMA(json);
+            case 195: return handle_SHARPE(json);
+            case 196: return handle_SI(json);
+            case 197: return handle_SIN(json);
+            case 198: return handle_SINH(json);
+            case 199: return handle_SKEW(json);
+            case 200: return handle_SMA(json);
+            case 201: return handle_SMI(json);
+            case 202: return handle_SQRT(json);
+            case 203: return handle_SQZMOM(json);
+            case 204: return handle_STC(json);
+            case 205: return handle_STDDEV(json);
+            case 206: return handle_STOCH(json);
+            case 207: return handle_STOCHF(json);
+            case 208: return handle_STOCHRSI(json);
+            case 209: return handle_SUB(json);
+            case 210: return handle_SUM(json);
+            case 211: return handle_SUPERTREND(json);
+            case 212: return handle_SWAK_2PHP(json);
+            case 213: return handle_SWAK_BP(json);
+            case 214: return handle_SWAK_BUTTER(json);
+            case 215: return handle_SWAK_GAUSS(json);
+            case 216: return handle_SWAK_HP(json);
+            case 217: return handle_T3(json);
+            case 218: return handle_TAN(json);
+            case 219: return handle_TANH(json);
+            case 220: return handle_TEMA(json);
+            case 221: return handle_TRANGE(json);
+            case 222: return handle_TRIMA(json);
+            case 223: return handle_TRIX(json);
+            case 224: return handle_TSF(json);
+            case 225: return handle_TSI(json);
+            case 226: return handle_TYPPRICE(json);
+            case 227: return handle_ULTOSC(json);
+            case 228: return handle_VAR(json);
+            case 229: return handle_VHF(json);
+            case 230: return handle_VIDYA(json);
+            case 231: return handle_VORTEX(json);
+            case 232: return handle_VWAP(json);
+            case 233: return handle_VWMA(json);
+            case 234: return handle_WAD(json);
+            case 235: return handle_WAVETREND(json);
+            case 236: return handle_WCLPRICE(json);
+            case 237: return handle_WILLR(json);
+            case 238: return handle_WMA(json);
+            case 239: return handle_ZIGZAG(json);
+            case 240: return handle_ZLEMA(json);
             default: return null;
         }
     }
@@ -267318,6 +268714,154 @@ public class TaCodegenServe {
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         rideSarext(core, json, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, sb);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_SHARPE(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[MAX_ARRAY_SIZE];
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            inReal = jsonDoubleArray(json, "inReal");
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        double optInRiskFreeRate = jsonDouble(json, "optInRiskFreeRate");
+        double optInAnnualization = jsonDouble(json, "optInAnnualization");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off.
+        // An empty output is an absent one, so sizing to zero here would turn the second
+        // into a rejection of the buffer.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.sharpeLookback(optInTimePeriod, optInRiskFreeRate, optInAnnualization);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        java.util.Arrays.fill(outArr0, Double.longBitsToDouble(TAIL_F64_BITS));
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.SUCCESS;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.sharpeImpl(startIdx, endIdx, inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.sharpe(startIdx, endIdx, inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BAD_PARAM; }
+        else { try {
+            if (bench_mode == 1) {
+                core.sharpeOpen(_warm_inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization);
+            } else {
+                Core.SharpeStream _wh = core.sharpeOpenAndFill(_warm_inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.SUCCESS;
+        } catch (RuntimeException _e) { rc = _e instanceof TALibFailure ? ((TALibFailure)_e).retCode() : RetCode.BAD_PARAM; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BAD_PARAM;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.sharpe(startIdx, endIdx, f_inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.SUCCESS;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TALibFailure)) throw _e;
+                rc = ((TALibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        String tailField = rc == RetCode.SUCCESS ? ",\"out_tail_dirty\":" + (tailDirty(outArr0, outNBElement.value)) : "";
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.SUCCESS && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            StringBuilder hb = new StringBuilder();
+            hb.append("{\"retCode\":").append(rc.toInt()).append(",\"outBegIdx\":").append(outBegIdx.value).append(",\"outNBElement\":").append(outNBElement.value).append(",\"out_hash\":\"").append(String.format("%016x", _h)).append("\"");
+            hb.append(tailField);
+            rideSharpe(core, json, endIdx, inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization, hb);
+            hb.append("}");
+            return hb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(tailField);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        rideSharpe(core, json, endIdx, inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization, sb);
         sb.append("}");
         return sb.toString();
     }
@@ -308429,6 +309973,178 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_SHARPE(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
+        double optInRiskFreeRate = json.contains("\"optInRiskFreeRate\"") ? jsonDouble(json, "optInRiskFreeRate") : 0e0;
+        double optInAnnualization = json.contains("\"optInAnnualization\"") ? jsonDouble(json, "optInAnnualization") : 2.52e2;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            RetCode rc;
+            try { rc = c2.sharpeImpl(0, svN - 1, fz_c, optInTimePeriod, optInRiskFreeRate, optInAnnualization, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rc = ((TALibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.sharpeLookback(optInTimePeriod, optInRiskFreeRate, optInAnnualization);
+            if (rc != RetCode.SUCCESS || nb.value == 0) {
+                boolean openRejects;
+                try { c2.sharpeOpen(fz_c, optInTimePeriod, optInRiskFreeRate, optInAnnualization); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.SharpeStream _fh = c2.sharpeOpenAndFill(fz_c, optInTimePeriod, optInRiskFreeRate, optInAnnualization, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.sharpeOpenAndFill(fz_c, optInTimePeriod, optInRiskFreeRate, optInAnnualization, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.SharpeStream st;
+                try { st = c2.sharpeOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInRiskFreeRate, optInAnnualization); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                    rangeLegs++; rangeSites |= 16;
+                    st.advance();
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value + 1) rangeOk = false;
+                }
+            }
+            {
+                int p0 = lb + 1;
+                if (p0 <= svN - 1) {
+                    try {
+                        double[] f0 = new double[svN];
+                        java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                        Core.SharpeStream sA = c2.sharpeOpenAndFill(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInRiskFreeRate, optInAnnualization, f0);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        Core.SharpeStream sB = sA.clone();
+                        sB.advance();
+                        sB.advance();
+                        double[] fk0 = new double[svN];
+                        for (int t = mid; t < svN; t++) {
+                            double uB = sB.update(fz_c[t]);
+                            fk0[t] = uB;
+                            if (svXtierNe(uB, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            if (svBne(uA, fk0[t]) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value + 2) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.sharpeOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInRiskFreeRate, optInAnnualization); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+                {
+                    double[] f0 = new double[svN];
+                    java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                    try { c2.sharpeOpenAndFill(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInRiskFreeRate, optInAnnualization, f0); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillAccepted\":1"; }
+                    catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                    catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryFillWrongType\":1"; }
+                }
+            }
+            try {
+                Core.SharpeStream sD = c2.sharpeOpen(fz_c, Integer.MIN_VALUE, optInRiskFreeRate, optInAnnualization);
+                Core.SharpeStream sE = c2.sharpeOpen(fz_c, 20, optInRiskFreeRate, optInAnnualization);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.sharpeImpl(Sidx, svN - 1, fz_c, optInTimePeriod, optInRiskFreeRate, optInAnnualization, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TALibFailure)) throw _sve; rcS = ((TALibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.SUCCESS && nbS.value > 0) {
+                        try {
+                            Core.SharpeStream stA = c2.sharpeOpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod, optInRiskFreeRate, optInAnnualization);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_SI(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -316594,6 +318310,7 @@ public class TaCodegenServe {
         case "TA_RVOL": return sv_RVOL(json);
         case "TA_SAR": return sv_SAR(json);
         case "TA_SAREXT": return sv_SAREXT(json);
+        case "TA_SHARPE": return sv_SHARPE(json);
         case "TA_SI": return sv_SI(json);
         case "TA_SIN": return sv_SIN(json);
         case "TA_SINH": return sv_SINH(json);
@@ -336406,6 +338123,105 @@ public class TaCodegenServe {
             double[] fb0 = new double[m];
             try {
                 Core.SarextStream st2 = core.sarextOpenAndFill(java.util.Arrays.copyOf(inHigh, m), java.util.Arrays.copyOf(inLow, m), optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, fb0);
+                if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
+                if (r.ok) {
+                    for (int k = 0; k < nb; k++) {
+                        boolean cmp = true;
+                        if (cmp && svXtierNe(rb0[k], fb0[k], r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[k]); r.stream = Double.doubleToRawLongBits(fb0[k]); }
+                        if (cmp) r.fillBars++;
+                        if (!cmp) { r.ok = false; r.leg = 2; r.bar = beg + k; break; }
+                    }
+                }
+            } catch (RuntimeException _e) { r.ok = false; r.leg = 2; }
+        }
+
+        if (r.ok) {
+            rideSeenUsed[slot] = true; rideSeenHash[slot] = hash;
+            rideSeenOpen[slot] = r.openBars; rideSeenFill[slot] = r.fillBars;
+        }
+    }
+
+    static void rideSharpe(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInRiskFreeRate, double optInAnnualization, StringBuilder sb) {
+        if (!rideGate(json)) return;
+        RideResult r = new RideResult();
+        rideBodySharpe(core, json, endIdx, inReal, optInTimePeriod, optInRiskFreeRate, optInAnnualization, r);
+        r.emit(sb);
+    }
+
+    @SuppressWarnings("unused")
+    static void rideBodySharpe(Core core, String json, int endIdx, double[] inReal, int optInTimePeriod, double optInRiskFreeRate, double optInAnnualization, RideResult r) {
+        try { r.lb = core.sharpeLookback(optInTimePeriod, optInRiskFreeRate, optInAnnualization); } catch (RuntimeException _e) { r.lb = -1; }
+        int lb = r.lb;
+        int navail = endIdx + 1;
+        if (inReal.length < navail) navail = inReal.length;
+        int m = lb >= 0 ? 2 * lb + 10 : navail;
+        if (m > navail) m = navail;
+        r.m = m;
+        if (m > RIDE_MAX_BARS) { r.skip = 1; return; }
+        if (m < 1) { r.skip = 2; return; }
+        if (lb >= 0 && m < lb + 2) { r.skip = 3; return; }
+        if (!rideFinite(inReal, m) || false) { r.skip = 4; return; }
+
+        long hash = 0xcbf29ce484222325L;
+        hash = rideMixStr(hash, "TA_SHARPE");
+        hash = rideMix(hash, m);
+        hash = rideMix(hash, rideGen);
+        hash = rideMix(hash, jsonInt(json, "unstablePeriod"));
+        hash = rideMix(hash, optInTimePeriod);
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInRiskFreeRate));
+        hash = rideMix(hash, Double.doubleToRawLongBits(optInAnnualization));
+        hash = rideMixArr(hash, inReal, m);
+        int slot = (int) Math.floorMod(hash, (long) RIDE_SEEN_N);
+        if (rideSeenUsed[slot] && rideSeenHash[slot] == hash) {
+            r.dedup = 1; r.openBars = rideSeenOpen[slot]; r.fillBars = rideSeenFill[slot]; return;
+        }
+
+        double[] rb0 = new double[m];
+        int beg = 0;
+        int nb = 0;
+        String clsB = "";
+        boolean rejected = false;
+        try { OutRange _rr = core.sharpe(0, m - 1, java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInRiskFreeRate, optInAnnualization, rb0); beg = _rr.begIdx(); nb = _rr.count(); }
+        catch (RuntimeException _e) { r.rcBatch = rideCode(_e); clsB = _e.getClass().getName(); rejected = true; }
+        if (rejected) {
+            String clsO = "", clsF = "";
+            try { core.sharpeOpen(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInRiskFreeRate, optInAnnualization); } catch (RuntimeException _e) { r.rcOpen = rideCode(_e); clsO = _e.getClass().getName(); }
+            double[] fb0 = new double[m];
+            try { core.sharpeOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInRiskFreeRate, optInAnnualization, fb0); } catch (RuntimeException _e) { r.rcFill = rideCode(_e); clsF = _e.getClass().getName(); }
+            boolean cmpO = r.rcOpen == r.rcBatch && clsO.equals(clsB);
+            if (cmpO) r.rej++;
+            if (!cmpO) { r.ok = false; r.leg = r.rcOpen == r.rcBatch ? 4 : 3; }
+            boolean cmpF = r.rcFill == r.rcBatch && clsF.equals(clsB);
+            if (cmpF) r.rej++;
+            if (!cmpF) { r.ok = false; r.leg = r.rcFill == r.rcBatch ? 4 : 3; }
+            return;
+        }
+        if (lb < 0) { r.skip = 7; return; }
+        if (nb == 0) { r.skip = 5; return; }
+        if (beg != lb) { r.skip = 6; return; }
+
+        try {
+            boolean cmp;
+            Core.SharpeStream st = core.sharpeOpen(java.util.Arrays.copyOf(inReal, lb + 1), optInTimePeriod, optInRiskFreeRate, optInAnnualization);
+            double uv = st.value();
+            cmp = true;
+            if (cmp && svXtierNe(rb0[lb - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[lb - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+            if (cmp) r.openBars++;
+            if (!cmp) { r.ok = false; r.leg = 1; r.bar = lb; }
+            for (int t = lb + 1; r.ok && t < m; t++) {
+                double uv2 = st.update(inReal[t]);
+                uv = uv2;
+                cmp = true;
+                if (cmp && svXtierNe(rb0[t - beg], uv, r.benign)) { cmp = false; r.out = 0; r.batch = Double.doubleToRawLongBits(rb0[t - beg]); r.stream = Double.doubleToRawLongBits(uv); }
+                if (cmp) r.openBars++;
+                if (!cmp) { r.ok = false; r.leg = 1; r.bar = t; }
+            }
+        } catch (RuntimeException _e) { r.ok = false; r.leg = 1; }
+
+        if (r.ok) {
+            double[] fb0 = new double[m];
+            try {
+                Core.SharpeStream st2 = core.sharpeOpenAndFill(java.util.Arrays.copyOf(inReal, m), optInTimePeriod, optInRiskFreeRate, optInAnnualization, fb0);
                 if (st2.outRange().begIdx() != beg || st2.outRange().count() != nb) { r.ok = false; r.leg = 2; }
                 if (r.ok) {
                     for (int k = 0; k < nb; k++) {

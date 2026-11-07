@@ -193,6 +193,7 @@ RVIR                Relative Volatility Index, refined high/low form
 RVOL                Relative Volume
 SAR                 Parabolic SAR
 SAREXT              Parabolic SAR - Extended
+SHARPE              Rolling Sharpe Ratio
 SI                  Wilder Swing Index
 SIN                 Vector Trigonometric Sin
 SINH                Vector Trigonometric Sinh

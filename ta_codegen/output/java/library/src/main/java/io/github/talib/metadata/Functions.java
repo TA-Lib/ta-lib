@@ -315,6 +315,7 @@ public final class Functions {
       put(m, f_RVOL());
       put(m, f_SAR());
       put(m, f_SAREXT());
+      put(m, f_SHARPE());
       put(m, f_SI());
       put(m, f_SIN());
       put(m, f_SINH());
@@ -3850,6 +3851,34 @@ public final class Functions {
                OptInputType.REAL_RANGE, "optInAccelerationMaxShort", 0x00000000,
                "AF Max Short", "Acceleration Factor maximum value for the Short direction", 0.2,
                0.0, 3e37, 4, 0.2, 0.4, 0.01,
+               0, 0, 0, 0, 0, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FuncInfo f_SHARPE() {
+      return new FuncInfo(
+         "SHARPE", "Statistic Functions", "Rolling Sharpe Ratio", 0x42000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Number of returns in the window", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInRiskFreeRate", 0x00000000,
+               "Risk-Free Rate per Bar", "Risk-free return per bar", 0.0,
+               -3e37, 3e37, 8, 0.0, 0.001, 0.0001,
+               0, 0, 0, 0, 0, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInAnnualization", 0x00000000,
+               "Annualization", "Bars per year", 252.0,
+               0.0, 3e37, 2, 1.0, 365.0, 1.0,
                0, 0, 0, 0, 0, null)
          ),
          List.of(

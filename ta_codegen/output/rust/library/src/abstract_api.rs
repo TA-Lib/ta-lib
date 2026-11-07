@@ -523,11 +523,13 @@ pub enum FuncId {
     MACDV,
     /// Rolling Skewness — [`Core::skew`](crate::Core::skew).
     SKEW,
+    /// Rolling Sharpe Ratio — [`Core::sharpe`](crate::Core::sharpe).
+    SHARPE,
 }
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 240;
+    pub const COUNT: usize = 241;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -875,7 +877,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 240] = [
+static FUNC_TABLE: [FuncInfo; 241] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -3516,6 +3518,17 @@ static FUNC_TABLE: [FuncInfo; 240] = [
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
+    FuncInfo {
+        id: FuncId::SHARPE,
+        name: "SHARPE",
+        group: Group::StatisticFunctions,
+        hint: "Rolling Sharpe Ratio",
+        flags: FuncFlags(0x42000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of returns in the window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInRiskFreeRate", display_name: "Risk-Free Rate per Bar", hint: "Risk-free return per bar", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 8, default: 0.0, suggested: (0.0, 0.001, 0.0001) } }, OptInputInfo { param_name: "optInAnnualization", display_name: "Annualization", hint: "Bars per year", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 2, default: 252.0, suggested: (1.0, 365.0, 1.0) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
 ];
 
 /// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
@@ -3774,6 +3787,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "CE" => FuncId::CE,
         "MACDV" => FuncId::MACDV,
         "SKEW" => FuncId::SKEW,
+        "SHARPE" => FuncId::SHARPE,
         _ => return None,
     })
 }
@@ -4279,6 +4293,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::CE => self.core.ce_lookback(self.int_opt[0], self.real_opt[1]),
             FuncId::MACDV => self.core.macdv_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::SKEW => self.core.skew_lookback(self.int_opt[0]),
+            FuncId::SHARPE => self.core.sharpe_lookback(self.int_opt[0], self.real_opt[1], self.real_opt[2]),
         }
     }
 
@@ -4532,6 +4547,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::CE => self.core.ce_display_shift(self.int_opt[0], self.real_opt[1], output_idx),
             FuncId::MACDV => self.core.macdv_display_shift(self.int_opt[0], self.int_opt[1], self.int_opt[2], output_idx),
             FuncId::SKEW => self.core.skew_display_shift(self.int_opt[0], output_idx),
+            FuncId::SHARPE => self.core.sharpe_display_shift(self.int_opt[0], self.real_opt[1], self.real_opt[2], output_idx),
         }
     }
 
@@ -7875,6 +7891,18 @@ impl<'a> ParamHolder<'a> {
                 Self::check_range(start_idx, end_idx)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
                 let res = self.core.skew(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::SHARPE => {
+                let i0 = self.real_in[0].ok_or(RetCode::InputNotAllInitialize)?;
+                if self.real_out[0].is_none() { return Err(RetCode::OutputNotAllInitialize); }
+                Self::check_range(start_idx, end_idx)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::OutputNotAllInitialize)?;
+                let res = self.core.sharpe(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }

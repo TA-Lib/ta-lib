@@ -336,6 +336,95 @@ DEF_FUNCTION( SAREXT,
              );
 /* SAREXT END */
 
+/* SHARPE BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SHARPE_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   20,
+   "Number of returns in the window",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_SHARPE_RiskFreeRate =
+{
+   TA_REAL_MIN,
+   TA_REAL_MAX,
+   8,
+   0.0,
+   0.001,
+   0.0001
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SHARPE_RiskFreeRate =
+{
+   TA_OptInput_RealRange,
+   "optInRiskFreeRate",
+   0,
+
+   "Risk-Free Rate per Bar",
+   (const void *)&TA_DEF_SHARPE_RiskFreeRate,
+   0.0,
+   "Risk-free return per bar",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_SHARPE_Annualization =
+{
+   0.0,
+   TA_REAL_MAX,
+   2,
+   1.0,
+   365.0,
+   1.0
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_SHARPE_Annualization =
+{
+   TA_OptInput_RealRange,
+   "optInAnnualization",
+   0,
+
+   "Annualization",
+   (const void *)&TA_DEF_SHARPE_Annualization,
+   252.0,
+   "Bars per year",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_SHARPE_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_SHARPE_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_SHARPE_OptInputs[] =
+{ &TA_DEF_UI_D_SHARPE_TimePeriod,
+  &TA_DEF_UI_D_SHARPE_RiskFreeRate,
+  &TA_DEF_UI_D_SHARPE_Annualization,
+  NULL
+};
+
+DEF_FUNCTION( SHARPE,
+              TA_GroupId_Statistic,
+              "Rolling Sharpe Ratio",
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
+             );
+/* SHARPE END */
+
 /* SI BEGIN */
 static const TA_RealRange TA_DEF_SI_LimitMove =
 {
@@ -1553,6 +1642,7 @@ const TA_FuncDef *TA_DEF_TableS[] =
 {
    ADD_TO_TABLE(SAR),
    ADD_TO_TABLE(SAREXT),
+   ADD_TO_TABLE(SHARPE),
    ADD_TO_TABLE(SI),
    ADD_TO_TABLE(SIN),
    ADD_TO_TABLE(SINH),

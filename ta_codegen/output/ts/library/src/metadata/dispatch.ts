@@ -232,6 +232,7 @@ import * as RVIR from '../func/rvir.ts';
 import * as RVOL from '../func/rvol.ts';
 import * as SAR from '../func/sar.ts';
 import * as SAREXT from '../func/sarext.ts';
+import * as SHARPE from '../func/sharpe.ts';
 import * as SI from '../func/si.ts';
 import * as SIN from '../func/sin.ts';
 import * as SINH from '../func/sinh.ts';
@@ -1261,6 +1262,11 @@ export const DISPATCH: ReadonlyMap<string, Thunks> = new Map<string, Thunks>([
     lookback: (h) => SAREXT.sarextLookbackPositional(h.opts[0], h.opts[1], h.opts[2], h.opts[3], h.opts[4], h.opts[5], h.opts[6], h.opts[7], h.core),
     displayShift: (h, o) => SAREXT.sarextDisplayShiftPositional(h.opts[0], h.opts[1], h.opts[2], h.opts[3], h.opts[4], h.opts[5], h.opts[6], h.opts[7], o, h.core),
     call: (h, s, e) => SAREXT.sarextPositional(s, e, h.prices[0]![1]!, h.prices[0]![2]!, h.opts[0], h.opts[1], h.opts[2], h.opts[3], h.opts[4], h.opts[5], h.opts[6], h.opts[7], h.outputs[0] as Float64Array, h.core),
+  }],
+  ['SHARPE', {
+    lookback: (h) => SHARPE.sharpeLookbackPositional(h.opts[0], h.opts[1], h.opts[2], h.core),
+    displayShift: (h, o) => SHARPE.sharpeDisplayShiftPositional(h.opts[0], h.opts[1], h.opts[2], o, h.core),
+    call: (h, s, e) => SHARPE.sharpePositional(s, e, h.inputs[0]!, h.opts[0], h.opts[1], h.opts[2], h.outputs[0] as Float64Array, h.core),
   }],
   ['SI', {
     lookback: (h) => SI.siLookbackPositional(h.opts[0], h.core),

@@ -310,6 +310,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
             MakeRvol(),
             MakeSar(),
             MakeSarext(),
+            MakeSharpe(),
             MakeSi(),
             MakeSin(),
             MakeSinh(),
@@ -4955,6 +4956,32 @@ public sealed class FunctionCatalog : IReadOnlyList<FuncInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.Sarext(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOpt(6), c.RealOpt(7), c.RealOut(0)));
+
+    private static FuncInfo MakeSharpe() => new(
+        name: "SHARPE",
+        group: FunctionGroup.StatisticFunctions,
+        hint: "Rolling Sharpe Ratio",
+        flags: FuncFlags.Stream | FuncFlags.NanInfOutput,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Number of returns in the window", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 20, 4, 200, 1)),
+            new OptInputInfo("optInRiskFreeRate", "Risk-Free Rate per Bar", "Risk-free return per bar", OptInputFlags.None, new OptInputDomain.RealRange(-3e37, 3e37, 8, 0.0, 0.0, 0.001, 0.0001)),
+            new OptInputInfo("optInAnnualization", "Annualization", "Bars per year", OptInputFlags.None, new OptInputDomain.RealRange(0.0, 3e37, 2, 252.0, 1.0, 365.0, 1.0)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.SharpeLookback(c.IntOpt(0), c.RealOpt(1), c.RealOpt(2)),
+        displayShift: static (core, c, outputIdx) => core.SharpeDisplayShift(c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), outputIdx),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.Sharpe(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOut(0)));
 
     private static FuncInfo MakeSi() => new(
         name: "SI",
