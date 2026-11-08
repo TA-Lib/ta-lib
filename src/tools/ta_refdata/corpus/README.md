@@ -13,7 +13,8 @@ the page's pattern function never fires on it. The prices are split-adjusted
 and the volume is unadjusted, exactly as in ta_regtest's
 `TA_SREF_*_daily_ref_0_PRIV` arrays (`src/tools/ta_regtest/test_data.c`), which
 is why a freshly downloaded series matches neither; the dates come from the
-`daily_ref_0.csv` that produced those arrays. `ta_refdata` refuses to run when the file and the arrays differ.
+`daily_ref_0.csv` that produced those arrays. `ta_refdata` refuses to run when
+the file and the arrays differ.
 
 Every other file is a 40-bar excerpt, the pattern's lookback among them,
 charted whole, for a pattern IBM 1999 never shows. Such a pattern takes the

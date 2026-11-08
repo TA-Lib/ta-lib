@@ -577,12 +577,12 @@ static void render(const Run *r, Buf *b, int flaggedBars)
     }
     buf_add(b, "\n");
     for (row = 0; row < r->rows; row++) {
-        int a = row, k = row - r->beg;
-        buf_addf(b, "%s,%s", r->s->date[a], fmt_real(num, sizeof num, r->s->o[a]));
-        buf_addf(b, ",%s", fmt_real(num, sizeof num, r->s->h[a]));
-        buf_addf(b, ",%s", fmt_real(num, sizeof num, r->s->l[a]));
-        buf_addf(b, ",%s", fmt_real(num, sizeof num, r->s->c[a]));
-        buf_addf(b, ",%s", fmt_real(num, sizeof num, r->s->v[a]));
+        int k = row - r->beg;
+        buf_addf(b, "%s,%s", r->s->date[row], fmt_real(num, sizeof num, r->s->o[row]));
+        buf_addf(b, ",%s", fmt_real(num, sizeof num, r->s->h[row]));
+        buf_addf(b, ",%s", fmt_real(num, sizeof num, r->s->l[row]));
+        buf_addf(b, ",%s", fmt_real(num, sizeof num, r->s->c[row]));
+        buf_addf(b, ",%s", fmt_real(num, sizeof num, r->s->v[row]));
         for (e = 0; e < r->nExtra; e++) buf_addf(b, ",%s", fmt_real(num, sizeof num, r->extra[e][row]));
         for (i = 0; i < fi->nbOutput; i++) {
             if (k < 0 || k >= r->nb) buf_add(b, ",");
