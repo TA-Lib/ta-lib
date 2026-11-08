@@ -156,7 +156,7 @@ const r = Functions.byName('SMA')!.newCall()
 
 :::
 
-The call behaves like the typed one: same values, same range, same rejections. In TypeScript every row also carries the typed call's `key` (`timePeriod`, `prices`, `outUpperBand`), and a parameter binds by that key or by position. A parameter holder is not thread-safe: confine one to one thread, or build one per call. The exact rules: [Abstract API and Metadata](/spec/abstract/).
+The call behaves like the typed one: same values, same range, same rejections. In TypeScript every row also carries the typed call's `key` (`timePeriod`, `prices`, `outUpperBand`), and an optional parameter binds by that key or by position. A parameter holder is not thread-safe: confine one to one thread, or build one per call. The exact rules: [Abstract API and Metadata](/spec/abstract/).
 
 ## Lookback and display shift
 

@@ -104,6 +104,10 @@ test('call-by-name matches the typed API bit for bit on every function, with eve
     const rb = typed(spec(f), sentinels(f), b);
     assert.deepEqual({ begIdx: ra.begIdx, count: ra.count }, { begIdx: rb.begIdx, count: rb.count }, `${f.name}: range`);
     a.forEach((x, k) => assert.deepEqual(bytes(x, ra.count), bytes(b[k], ra.count), `${f.name}: output ${k}`));
+    // Each output row's `key` is the typed result's key for that output, in order, on every function.
+    const s = spec(f);
+    const typedResult = s.api.batch(...s.args(s.params.filter((p) => p.kind === 'input').map((p) => data[p.name]))) as Record<string, unknown>;
+    assert.deepEqual(Object.keys(typedResult).filter((k) => k !== 'begIdx'), f.outputs.map((o) => o.key), `${f.name}: result keys`);
     compared++;
     if (ra.count > 0) nonEmpty++;
   }
