@@ -480,7 +480,7 @@ export interface MinusDiOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link minusDi} returns, and {@link minusDiOpenAndFill} with its stream. */
@@ -491,7 +491,7 @@ export interface MinusDiResult {
    * The Minus Directional Indicator (-DI) line. `values[k]` is the value at input
    * bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -548,9 +548,9 @@ export function minusDiDisplayShift(outputIdx: number, options?: MinusDiOptions)
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link minusDiLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
- *   bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link MinusDiOptions}.
  * @returns `begIdx` and the values; see {@link MinusDiResult}. Each output is a
@@ -584,7 +584,7 @@ export function minusDiDisplayShift(outputIdx: number, options?: MinusDiOptions)
  * @see [`adxr`](https://ta-lib.org/functions/adxr)
  * @see [`trange`](https://ta-lib.org/functions/trange)
  */
-export function minusDi(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: MinusDiOptions): MinusDiResult {
+export function minusDi(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: MinusDiOptions): MinusDiResult {
   requireArgument('MINUS_DI', 'prices', prices);
   const o = optionsOf('MINUS_DI', options);
   if (o.endIdx === undefined) {
@@ -1503,9 +1503,10 @@ export function minusDiOpenAndFillPositional(
  * Opens a live MINUS_DI stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link minusDi} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link MinusDiOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1530,7 +1531,7 @@ export function minusDiOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function minusDiOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: MinusDiOptions): MinusDiStream {
+export function minusDiOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: MinusDiOptions): MinusDiStream {
   requireArgument('MINUS_DI open', 'prices', prices);
   const o = optionsOf('MINUS_DI open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -1542,9 +1543,10 @@ export function minusDiOpen(prices: { high: ArrayLike<number>; low: ArrayLike<nu
  * {@link minusDiOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link minusDi}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link MinusDiOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1575,7 +1577,7 @@ export function minusDiOpen(prices: { high: ArrayLike<number>; low: ArrayLike<nu
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function minusDiOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: MinusDiOptions): MinusDiResult & { stream: MinusDiStream } {
+export function minusDiOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: MinusDiOptions): MinusDiResult & { stream: MinusDiStream } {
   requireArgument('MINUS_DI openAndFill', 'prices', prices);
   const o = optionsOf('MINUS_DI openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

@@ -308,7 +308,7 @@ export interface AtrOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link atr} returns, and {@link atrOpenAndFill} with its stream. */
@@ -316,7 +316,7 @@ export interface AtrResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /** Average True Range value. `values[k]` is the value at input bar `begIdx + k`. */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -368,9 +368,9 @@ export function atrDisplayShift(outputIdx: number, options?: AtrOptions): number
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link atrLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
- *   bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link AtrOptions}.
  * @returns `begIdx` and the values; see {@link AtrResult}. Each output is a view
@@ -402,7 +402,7 @@ export function atrDisplayShift(outputIdx: number, options?: AtrOptions): number
  * @see [`sma`](https://ta-lib.org/functions/sma)
  * @see [`ema`](https://ta-lib.org/functions/ema)
  */
-export function atr(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: AtrOptions): AtrResult {
+export function atr(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AtrOptions): AtrResult {
   requireArgument('ATR', 'prices', prices);
   const o = optionsOf('ATR', options);
   if (o.endIdx === undefined) {
@@ -906,9 +906,10 @@ export function atrOpenAndFillPositional(
  * Opens a live ATR stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link atr} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link AtrOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -933,7 +934,7 @@ export function atrOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function atrOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: AtrOptions): AtrStream {
+export function atrOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AtrOptions): AtrStream {
   requireArgument('ATR open', 'prices', prices);
   const o = optionsOf('ATR open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -945,9 +946,10 @@ export function atrOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * {@link atrOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link atr}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link AtrOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -978,7 +980,7 @@ export function atrOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function atrOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: AtrOptions): AtrResult & { stream: AtrStream } {
+export function atrOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AtrOptions): AtrResult & { stream: AtrStream } {
   requireArgument('ATR openAndFill', 'prices', prices);
   const o = optionsOf('ATR openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

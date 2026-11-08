@@ -132,7 +132,7 @@ export interface MedpriceOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link medprice} returns, and {@link medpriceOpenAndFill} with its stream. */
@@ -143,7 +143,7 @@ export interface MedpriceResult {
    * Midpoint of each bar's high and low. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -192,8 +192,9 @@ export function medpriceDisplayShift(outputIdx: number, options?: MedpriceOption
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link medpriceLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link MedpriceOptions}.
  * @returns `begIdx` and the values; see {@link MedpriceResult}. Each output is a
@@ -222,7 +223,7 @@ export function medpriceDisplayShift(outputIdx: number, options?: MedpriceOption
  * @see [`typprice`](https://ta-lib.org/functions/typprice)
  * @see [`wclprice`](https://ta-lib.org/functions/wclprice)
  */
-export function medprice(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: MedpriceOptions): MedpriceResult {
+export function medprice(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: MedpriceOptions): MedpriceResult {
   requireArgument('MEDPRICE', 'prices', prices);
   const o = optionsOf('MEDPRICE', options);
   if (o.endIdx === undefined) {
@@ -490,8 +491,9 @@ export function medpriceOpenAndFillPositional(
  * Opens a live MEDPRICE stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link medprice} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link MedpriceOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -513,7 +515,7 @@ export function medpriceOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1); // the bar closes
  * ```
  */
-export function medpriceOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: MedpriceOptions): MedpriceStream {
+export function medpriceOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: MedpriceOptions): MedpriceStream {
   requireArgument('MEDPRICE open', 'prices', prices);
   const o = optionsOf('MEDPRICE open', options);
   const core = coreOf('MEDPRICE open', o.core);
@@ -524,8 +526,9 @@ export function medpriceOpen(prices: { high: ArrayLike<number>; low: ArrayLike<n
  * {@link medpriceOpen} that also computes the outputs over the whole history in
  * the same pass, bit-identically to {@link medprice}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link MedpriceOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -551,7 +554,7 @@ export function medpriceOpen(prices: { high: ArrayLike<number>; low: ArrayLike<n
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function medpriceOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: MedpriceOptions): MedpriceResult & { stream: MedpriceStream } {
+export function medpriceOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: MedpriceOptions): MedpriceResult & { stream: MedpriceStream } {
   requireArgument('MEDPRICE openAndFill', 'prices', prices);
   const o = optionsOf('MEDPRICE openAndFill', options);
   const core = coreOf('MEDPRICE openAndFill', o.core);

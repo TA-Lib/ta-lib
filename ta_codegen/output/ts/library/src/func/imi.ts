@@ -192,7 +192,7 @@ export interface ImiOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link imi} returns, and {@link imiOpenAndFill} with its stream. */
@@ -200,7 +200,7 @@ export interface ImiResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /** IMI oscillator value, 0-100. `values[k]` is the value at input bar `begIdx + k`. */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -250,8 +250,9 @@ export function imiDisplayShift(outputIdx: number, options?: ImiOptions): number
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link imiLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `close`: Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link ImiOptions}.
  * @returns `begIdx` and the values; see {@link ImiResult}. Each output is a view
@@ -278,7 +279,7 @@ export function imiDisplayShift(outputIdx: number, options?: ImiOptions): number
  * ```
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  */
-export function imi(prices: { open: ArrayLike<number>; close: ArrayLike<number> }, options?: ImiOptions): ImiResult {
+export function imi(prices: { open: ArrayLike<number>; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: ImiOptions): ImiResult {
   requireArgument('IMI', 'prices', prices);
   const o = optionsOf('IMI', options);
   if (o.endIdx === undefined) {
@@ -676,8 +677,9 @@ export function imiOpenAndFillPositional(
  * Opens a live IMI stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link imi} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link ImiOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -700,7 +702,7 @@ export function imiOpenAndFillPositional(
  * const updated = stream.update(100.2, 100.9); // the bar closes
  * ```
  */
-export function imiOpen(prices: { open: ArrayLike<number>; close: ArrayLike<number> }, options?: ImiOptions): ImiStream {
+export function imiOpen(prices: { open: ArrayLike<number>; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: ImiOptions): ImiStream {
   requireArgument('IMI open', 'prices', prices);
   const o = optionsOf('IMI open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -712,8 +714,9 @@ export function imiOpen(prices: { open: ArrayLike<number>; close: ArrayLike<numb
  * {@link imiOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link imi}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link ImiOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -742,7 +745,7 @@ export function imiOpen(prices: { open: ArrayLike<number>; close: ArrayLike<numb
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function imiOpenAndFill(prices: { open: ArrayLike<number>; close: ArrayLike<number> }, options?: ImiOptions): ImiResult & { stream: ImiStream } {
+export function imiOpenAndFill(prices: { open: ArrayLike<number>; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: ImiOptions): ImiResult & { stream: ImiStream } {
   requireArgument('IMI openAndFill', 'prices', prices);
   const o = optionsOf('IMI openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

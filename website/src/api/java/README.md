@@ -197,7 +197,7 @@ Every indicator is overloaded for `float[]` inputs as well as `double[]`. The `f
 
 **`Core` is immutable**, so one instance is safe to share across any number of threads with no synchronization.
 
-Use `Core.DEFAULT` for the all-defaults instance. There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.EMA)`.
+Use `Core.DEFAULT` for the all-defaults instance. There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.EMA)`, a candle setting with `core.candleSetting(CandleSettingType.BODY_DOJI)`.
 
 ## 5.0 Documentation {#docs}
 

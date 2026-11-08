@@ -181,7 +181,7 @@ export interface Cdl3outsideOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -196,7 +196,7 @@ export interface Cdl3outsideResult {
    * when no pattern. Emits both signs; value is candle i-1's color * 100.
    * `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -257,9 +257,10 @@ export function cdl3outsideDisplayShift(outputIdx: number, options?: Cdl3outside
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdl3outsideLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link Cdl3outsideOptions}.
  * @returns `begIdx` and the values; see {@link Cdl3outsideResult}. Each output is
@@ -291,7 +292,7 @@ export function cdl3outsideDisplayShift(outputIdx: number, options?: Cdl3outside
  * @see [`cdlengulfing`](https://ta-lib.org/functions/cdlengulfing)
  * @see [`cdl3linestrike`](https://ta-lib.org/functions/cdl3linestrike)
  */
-export function cdl3outside(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3outsideOptions): Cdl3outsideResult {
+export function cdl3outside(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3outsideOptions): Cdl3outsideResult {
   requireArgument('CDL3OUTSIDE', 'prices', prices);
   const o = optionsOf('CDL3OUTSIDE', options);
   if (o.endIdx === undefined) {
@@ -682,9 +683,10 @@ export function cdl3outsideOpenAndFillPositional(
  * Opens a live CDL3OUTSIDE stream over the warm-up history: `value()` starts at
  * the last history bar, bit-identical to {@link cdl3outside} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link Cdl3outsideOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -710,7 +712,7 @@ export function cdl3outsideOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdl3outsideOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3outsideOptions): Cdl3outsideStream {
+export function cdl3outsideOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3outsideOptions): Cdl3outsideStream {
   requireArgument('CDL3OUTSIDE open', 'prices', prices);
   const o = optionsOf('CDL3OUTSIDE open', options);
   const core = coreOf('CDL3OUTSIDE open', o.core);
@@ -721,9 +723,10 @@ export function cdl3outsideOpen(prices: { open: ArrayLike<number>; high: ArrayLi
  * {@link cdl3outsideOpen} that also computes the outputs over the whole history in
  * the same pass, bit-identically to {@link cdl3outside}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link Cdl3outsideOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -753,7 +756,7 @@ export function cdl3outsideOpen(prices: { open: ArrayLike<number>; high: ArrayLi
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdl3outsideOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3outsideOptions): Cdl3outsideResult & { stream: Cdl3outsideStream } {
+export function cdl3outsideOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3outsideOptions): Cdl3outsideResult & { stream: Cdl3outsideStream } {
   requireArgument('CDL3OUTSIDE openAndFill', 'prices', prices);
   const o = optionsOf('CDL3OUTSIDE openAndFill', options);
   const core = coreOf('CDL3OUTSIDE openAndFill', o.core);

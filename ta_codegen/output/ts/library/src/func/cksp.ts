@@ -680,7 +680,7 @@ export interface CkspOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outHighStop?: Float64Array | undefined;
+  outHighStop?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outLowStop`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -688,7 +688,7 @@ export interface CkspOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outLowStop?: Float64Array | undefined;
+  outLowStop?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link cksp} returns, and {@link ckspOpenAndFill} with its stream. */
@@ -699,12 +699,12 @@ export interface CkspResult {
    * Highest of the recent first high stops; usually plotted as the short stop.
    * `outHighStop[k]` is the value at input bar `begIdx + k`.
    */
-  outHighStop: Float64Array;
+  outHighStop: Float64Array<ArrayBuffer>;
   /**
    * Lowest of the recent first low stops; usually plotted as the long stop.
    * `outLowStop[k]` is the value at input bar `begIdx + k`.
    */
-  outLowStop: Float64Array;
+  outLowStop: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -775,9 +775,9 @@ export function ckspDisplayShift(outputIdx: number, options?: CkspOptions): numb
  * as long as the number of values written, and nothing is padded. A range that
  * ends before {@link ckspLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
- *   bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CkspOptions}.
  * @returns `begIdx` and the values; see {@link CkspResult}. Each output is a view
@@ -816,7 +816,7 @@ export function ckspDisplayShift(outputIdx: number, options?: CkspOptions): numb
  * @see [`kc`](https://ta-lib.org/functions/kc)
  * @see [`donchian`](https://ta-lib.org/functions/donchian)
  */
-export function cksp(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CkspOptions): CkspResult {
+export function cksp(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CkspOptions): CkspResult {
   requireArgument('CKSP', 'prices', prices);
   const o = optionsOf('CKSP', options);
   if (o.endIdx === undefined) {
@@ -2044,9 +2044,10 @@ export function ckspOpenAndFillPositional(
  * Opens a live CKSP stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link cksp} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CkspOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -2075,7 +2076,7 @@ export function ckspOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function ckspOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CkspOptions): CkspStream {
+export function ckspOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CkspOptions): CkspStream {
   requireArgument('CKSP open', 'prices', prices);
   const o = optionsOf('CKSP open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -2089,9 +2090,10 @@ export function ckspOpen(prices: { high: ArrayLike<number>; low: ArrayLike<numbe
  * {@link ckspOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link cksp}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CkspOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -2129,7 +2131,7 @@ export function ckspOpen(prices: { high: ArrayLike<number>; low: ArrayLike<numbe
  * // outHighStop[k] is the value at bar begIdx + k
  * ```
  */
-export function ckspOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CkspOptions): CkspResult & { stream: CkspStream } {
+export function ckspOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CkspOptions): CkspResult & { stream: CkspStream } {
   requireArgument('CKSP openAndFill', 'prices', prices);
   const o = optionsOf('CKSP openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

@@ -688,7 +688,7 @@ export interface KstOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outKst?: Float64Array | undefined;
+  outKst?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outKstSignal`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -696,7 +696,7 @@ export interface KstOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outKstSignal?: Float64Array | undefined;
+  outKstSignal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link kst} returns, and {@link kstOpenAndFill} with its stream. */
@@ -704,12 +704,12 @@ export interface KstResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /** Know Sure Thing line. `outKst[k]` is the value at input bar `begIdx + k`. */
-  outKst: Float64Array;
+  outKst: Float64Array<ArrayBuffer>;
   /**
    * Simple moving average of the line. `outKstSignal[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outKstSignal: Float64Array;
+  outKstSignal: Float64Array<ArrayBuffer>;
 }
 
 /**

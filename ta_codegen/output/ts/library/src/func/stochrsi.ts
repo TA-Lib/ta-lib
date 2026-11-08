@@ -291,7 +291,7 @@ export interface StochrsiOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outFastK?: Float64Array | undefined;
+  outFastK?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outFastD`, written from index 0 and allocated when omitted. It must
    * hold the values produced (for a batch call the input length always suffices, for
@@ -299,7 +299,7 @@ export interface StochrsiOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outFastD?: Float64Array | undefined;
+  outFastD?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link stochrsi} returns, and {@link stochrsiOpenAndFill} with its stream. */
@@ -310,12 +310,12 @@ export interface StochrsiResult {
    * Unsmoothed stochastic of the RSI (raw %K). `outFastK[k]` is the value at input
    * bar `begIdx + k`.
    */
-  outFastK: Float64Array;
+  outFastK: Float64Array<ArrayBuffer>;
   /**
    * %K smoothed over FastD_Period (signal line). `outFastD[k]` is the value at input
    * bar `begIdx + k`.
    */
-  outFastD: Float64Array;
+  outFastD: Float64Array<ArrayBuffer>;
 }
 
 /**

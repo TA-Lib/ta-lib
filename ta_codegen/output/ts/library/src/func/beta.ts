@@ -486,7 +486,7 @@ export interface BetaOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link beta} returns, and {@link betaOpenAndFill} with its stream. */
@@ -497,7 +497,7 @@ export interface BetaResult {
    * Beta: regression slope of real1-returns on real0-returns. `values[k]` is the
    * value at input bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**

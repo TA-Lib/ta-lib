@@ -52,7 +52,7 @@ export function float64ArrayToHex(a: Float64Array, count: number = a.length): st
 }
 
 /** @internal */
-export function float64ArrayFromHex(hex: string): Float64Array {
+export function float64ArrayFromHex(hex: string): Float64Array<ArrayBuffer> {
   checkHex(hex, 16);
   const n = hex.length / 16;
   const out = new Float64Array(n);

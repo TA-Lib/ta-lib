@@ -273,7 +273,7 @@ export interface ErOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link er} returns, and {@link erOpenAndFill} with its stream. */
@@ -281,7 +281,7 @@ export interface ErResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /** Efficiency ratio. `values[k]` is the value at input bar `begIdx + k`. */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**

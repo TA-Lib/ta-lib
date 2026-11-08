@@ -497,7 +497,7 @@ export interface DoscOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link dosc} returns, and {@link doscOpenAndFill} with its stream. */
@@ -508,7 +508,7 @@ export interface DoscResult {
    * Derivative Oscillator, in RSI points, centred on zero. `values[k]` is the value
    * at input bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**

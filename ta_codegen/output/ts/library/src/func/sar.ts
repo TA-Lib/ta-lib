@@ -454,7 +454,7 @@ export interface SarOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link sar} returns, and {@link sarOpenAndFill} with its stream. */
@@ -465,7 +465,7 @@ export interface SarResult {
    * Parabolic SAR stop/reverse level per bar. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -516,8 +516,9 @@ export function sarDisplayShift(outputIdx: number, options?: SarOptions): number
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link sarLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link SarOptions}.
  * @returns `begIdx` and the values; see {@link SarResult}. Each output is a view
@@ -549,7 +550,7 @@ export function sarDisplayShift(outputIdx: number, options?: SarOptions): number
  * @see [`minusDm`](https://ta-lib.org/functions/minus_dm)
  * @see [`plusDm`](https://ta-lib.org/functions/plus_dm)
  */
-export function sar(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: SarOptions): SarResult {
+export function sar(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SarOptions): SarResult {
   requireArgument('SAR', 'prices', prices);
   const o = optionsOf('SAR', options);
   if (o.endIdx === undefined) {
@@ -1498,8 +1499,9 @@ export function sarOpenAndFillPositional(
  * Opens a live SAR stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link sar} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link SarOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1522,7 +1524,7 @@ export function sarOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1); // the bar closes
  * ```
  */
-export function sarOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: SarOptions): SarStream {
+export function sarOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SarOptions): SarStream {
   requireArgument('SAR open', 'prices', prices);
   const o = optionsOf('SAR open', options);
   const optInAcceleration = orDefault(o.acceleration, Core.REAL_DEFAULT);
@@ -1535,8 +1537,9 @@ export function sarOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * {@link sarOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link sar}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link SarOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1565,7 +1568,7 @@ export function sarOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function sarOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: SarOptions): SarResult & { stream: SarStream } {
+export function sarOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SarOptions): SarResult & { stream: SarStream } {
   requireArgument('SAR openAndFill', 'prices', prices);
   const o = optionsOf('SAR openAndFill', options);
   const optInAcceleration = orDefault(o.acceleration, Core.REAL_DEFAULT);

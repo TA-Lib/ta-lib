@@ -212,7 +212,7 @@ export interface CdlhomingpigeonOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -226,7 +226,7 @@ export interface CdlhomingpigeonResult {
    * +100 when the pattern is detected, 0 otherwise. Never emits -100 (always
    * bullish). `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -286,9 +286,10 @@ export function cdlhomingpigeonDisplayShift(outputIdx: number, options?: Cdlhomi
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdlhomingpigeonLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CdlhomingpigeonOptions}.
  * @returns `begIdx` and the values; see {@link CdlhomingpigeonResult}. Each output
@@ -319,7 +320,7 @@ export function cdlhomingpigeonDisplayShift(outputIdx: number, options?: Cdlhomi
  * @see [`cdlharami`](https://ta-lib.org/functions/cdlharami)
  * @see [`cdlmatchinglow`](https://ta-lib.org/functions/cdlmatchinglow)
  */
-export function cdlhomingpigeon(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlhomingpigeonOptions): CdlhomingpigeonResult {
+export function cdlhomingpigeon(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlhomingpigeonOptions): CdlhomingpigeonResult {
   requireArgument('CDLHOMINGPIGEON', 'prices', prices);
   const o = optionsOf('CDLHOMINGPIGEON', options);
   if (o.endIdx === undefined) {
@@ -842,9 +843,10 @@ export function cdlhomingpigeonOpenAndFillPositional(
  * Opens a live CDLHOMINGPIGEON stream over the warm-up history: `value()` starts
  * at the last history bar, bit-identical to {@link cdlhomingpigeon} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdlhomingpigeonOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -870,7 +872,7 @@ export function cdlhomingpigeonOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlhomingpigeonOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlhomingpigeonOptions): CdlhomingpigeonStream {
+export function cdlhomingpigeonOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlhomingpigeonOptions): CdlhomingpigeonStream {
   requireArgument('CDLHOMINGPIGEON open', 'prices', prices);
   const o = optionsOf('CDLHOMINGPIGEON open', options);
   const core = coreOf('CDLHOMINGPIGEON open', o.core);
@@ -881,9 +883,10 @@ export function cdlhomingpigeonOpen(prices: { open: ArrayLike<number>; high: Arr
  * {@link cdlhomingpigeonOpen} that also computes the outputs over the whole
  * history in the same pass, bit-identically to {@link cdlhomingpigeon}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdlhomingpigeonOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -913,7 +916,7 @@ export function cdlhomingpigeonOpen(prices: { open: ArrayLike<number>; high: Arr
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlhomingpigeonOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlhomingpigeonOptions): CdlhomingpigeonResult & { stream: CdlhomingpigeonStream } {
+export function cdlhomingpigeonOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlhomingpigeonOptions): CdlhomingpigeonResult & { stream: CdlhomingpigeonStream } {
   requireArgument('CDLHOMINGPIGEON openAndFill', 'prices', prices);
   const o = optionsOf('CDLHOMINGPIGEON openAndFill', options);
   const core = coreOf('CDLHOMINGPIGEON openAndFill', o.core);

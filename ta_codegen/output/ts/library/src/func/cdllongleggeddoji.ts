@@ -206,7 +206,7 @@ export interface CdllongleggeddojiOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -221,7 +221,7 @@ export interface CdllongleggeddojiResult {
    * never emits -100, and the positive sign does NOT mean bullish. `values[k]` is
    * the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -280,9 +280,10 @@ export function cdllongleggeddojiDisplayShift(outputIdx: number, options?: Cdllo
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdllongleggeddojiLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CdllongleggeddojiOptions}.
  * @returns `begIdx` and the values; see {@link CdllongleggeddojiResult}. Each
@@ -315,7 +316,7 @@ export function cdllongleggeddojiDisplayShift(outputIdx: number, options?: Cdllo
  * @see [`cdldragonflydoji`](https://ta-lib.org/functions/cdldragonflydoji)
  * @see [`cdlrickshawman`](https://ta-lib.org/functions/cdlrickshawman)
  */
-export function cdllongleggeddoji(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdllongleggeddojiOptions): CdllongleggeddojiResult {
+export function cdllongleggeddoji(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdllongleggeddojiOptions): CdllongleggeddojiResult {
   requireArgument('CDLLONGLEGGEDDOJI', 'prices', prices);
   const o = optionsOf('CDLLONGLEGGEDDOJI', options);
   if (o.endIdx === undefined) {
@@ -798,9 +799,10 @@ export function cdllongleggeddojiOpenAndFillPositional(
  * Opens a live CDLLONGLEGGEDDOJI stream over the warm-up history: `value()` starts
  * at the last history bar, bit-identical to {@link cdllongleggeddoji} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdllongleggeddojiOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -826,7 +828,7 @@ export function cdllongleggeddojiOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdllongleggeddojiOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdllongleggeddojiOptions): CdllongleggeddojiStream {
+export function cdllongleggeddojiOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdllongleggeddojiOptions): CdllongleggeddojiStream {
   requireArgument('CDLLONGLEGGEDDOJI open', 'prices', prices);
   const o = optionsOf('CDLLONGLEGGEDDOJI open', options);
   const core = coreOf('CDLLONGLEGGEDDOJI open', o.core);
@@ -837,9 +839,10 @@ export function cdllongleggeddojiOpen(prices: { open: ArrayLike<number>; high: A
  * {@link cdllongleggeddojiOpen} that also computes the outputs over the whole
  * history in the same pass, bit-identically to {@link cdllongleggeddoji}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdllongleggeddojiOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -869,7 +872,7 @@ export function cdllongleggeddojiOpen(prices: { open: ArrayLike<number>; high: A
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdllongleggeddojiOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdllongleggeddojiOptions): CdllongleggeddojiResult & { stream: CdllongleggeddojiStream } {
+export function cdllongleggeddojiOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdllongleggeddojiOptions): CdllongleggeddojiResult & { stream: CdllongleggeddojiStream } {
   requireArgument('CDLLONGLEGGEDDOJI openAndFill', 'prices', prices);
   const o = optionsOf('CDLLONGLEGGEDDOJI openAndFill', options);
   const core = coreOf('CDLLONGLEGGEDDOJI openAndFill', o.core);

@@ -163,7 +163,7 @@ export interface NviOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link nvi} returns, and {@link nviOpenAndFill} with its stream. */
@@ -174,7 +174,7 @@ export interface NviResult {
    * Cumulative negative volume index (seeded at 1000). `values[k]` is the value at
    * input bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -236,8 +236,9 @@ export function nviDisplayShift(outputIdx: number, options?: NviOptions): number
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link nviLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `close`:
- *   Close price of each bar. `volume`: Volume of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `close`: Close price of
+ *   each bar. `volume`: Volume of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link NviOptions}.
  * @returns `begIdx` and the values; see {@link NviResult}. Each output is a view
@@ -262,7 +263,7 @@ export function nviDisplayShift(outputIdx: number, options?: NviOptions): number
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function nvi(prices: { close: ArrayLike<number>; volume: ArrayLike<number> }, options?: NviOptions): NviResult {
+export function nvi(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: NviOptions): NviResult {
   requireArgument('NVI', 'prices', prices);
   const o = optionsOf('NVI', options);
   if (o.endIdx === undefined) {
@@ -632,8 +633,9 @@ export function nviOpenAndFillPositional(
  * Opens a live NVI stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link nvi} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `close`: Close price of each bar. `volume`: Volume of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `close`: Close price of each bar. `volume`: Volume of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link NviOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -655,7 +657,7 @@ export function nviOpenAndFillPositional(
  * const updated = stream.update(100.9, 12345); // the bar closes
  * ```
  */
-export function nviOpen(prices: { close: ArrayLike<number>; volume: ArrayLike<number> }, options?: NviOptions): NviStream {
+export function nviOpen(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: NviOptions): NviStream {
   requireArgument('NVI open', 'prices', prices);
   const o = optionsOf('NVI open', options);
   const core = coreOf('NVI open', o.core);
@@ -666,8 +668,9 @@ export function nviOpen(prices: { close: ArrayLike<number>; volume: ArrayLike<nu
  * {@link nviOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link nvi}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `close`: Close price of each bar. `volume`: Volume of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `close`: Close price of each bar. `volume`: Volume of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link NviOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -693,7 +696,7 @@ export function nviOpen(prices: { close: ArrayLike<number>; volume: ArrayLike<nu
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function nviOpenAndFill(prices: { close: ArrayLike<number>; volume: ArrayLike<number> }, options?: NviOptions): NviResult & { stream: NviStream } {
+export function nviOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: NviOptions): NviResult & { stream: NviStream } {
   requireArgument('NVI openAndFill', 'prices', prices);
   const o = optionsOf('NVI openAndFill', options);
   const core = coreOf('NVI openAndFill', o.core);

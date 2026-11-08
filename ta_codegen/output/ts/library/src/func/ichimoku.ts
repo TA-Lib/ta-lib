@@ -313,7 +313,7 @@ export interface IchimokuOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outTenkanSen?: Float64Array | undefined;
+  outTenkanSen?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outKijunSen`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -321,7 +321,7 @@ export interface IchimokuOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outKijunSen?: Float64Array | undefined;
+  outKijunSen?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outSenkouSpanA`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -329,7 +329,7 @@ export interface IchimokuOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outSenkouSpanA?: Float64Array | undefined;
+  outSenkouSpanA?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outSenkouSpanB`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -337,7 +337,7 @@ export interface IchimokuOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outSenkouSpanB?: Float64Array | undefined;
+  outSenkouSpanB?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link ichimoku} returns, and {@link ichimokuOpenAndFill} with its stream. */
@@ -345,19 +345,19 @@ export interface IchimokuResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /** Conversion line. `outTenkanSen[k]` is the value at input bar `begIdx + k`. */
-  outTenkanSen: Float64Array;
+  outTenkanSen: Float64Array<ArrayBuffer>;
   /** Base line. `outKijunSen[k]` is the value at input bar `begIdx + k`. */
-  outKijunSen: Float64Array;
+  outKijunSen: Float64Array<ArrayBuffer>;
   /**
    * First leading span, drawn ahead by the base period. `outSenkouSpanA[k]` is the
    * value at input bar `begIdx + k`.
    */
-  outSenkouSpanA: Float64Array;
+  outSenkouSpanA: Float64Array<ArrayBuffer>;
   /**
    * Second leading span, drawn ahead by the base period. `outSenkouSpanB[k]` is the
    * value at input bar `begIdx + k`.
    */
-  outSenkouSpanB: Float64Array;
+  outSenkouSpanB: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -431,8 +431,9 @@ export function ichimokuDisplayShift(outputIdx: number, options?: IchimokuOption
  * exactly as long as the number of values written, and nothing is padded. A range
  * that ends before {@link ichimokuLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price series. `low`: Low price series.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price
+ *   series. `low`: Low price series.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link IchimokuOptions}.
  * @returns `begIdx` and the values; see {@link IchimokuResult}. Each output is a
@@ -472,7 +473,7 @@ export function ichimokuDisplayShift(outputIdx: number, options?: IchimokuOption
  * @see [`sar`](https://ta-lib.org/functions/sar)
  * @see [`bbands`](https://ta-lib.org/functions/bbands)
  */
-export function ichimoku(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: IchimokuOptions): IchimokuResult {
+export function ichimoku(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: IchimokuOptions): IchimokuResult {
   requireArgument('ICHIMOKU', 'prices', prices);
   const o = optionsOf('ICHIMOKU', options);
   if (o.endIdx === undefined) {
@@ -1036,8 +1037,9 @@ export function ichimokuOpenAndFillPositional(
  * Opens a live ICHIMOKU stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link ichimoku} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price series. `low`: Low price series.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price series. `low`: Low price series.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link IchimokuOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1064,7 +1066,7 @@ export function ichimokuOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1); // the bar closes
  * ```
  */
-export function ichimokuOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: IchimokuOptions): IchimokuStream {
+export function ichimokuOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: IchimokuOptions): IchimokuStream {
   requireArgument('ICHIMOKU open', 'prices', prices);
   const o = optionsOf('ICHIMOKU open', options);
   const optInTenkanPeriod = orDefault(o.tenkanPeriod, Core.INTEGER_DEFAULT);
@@ -1078,8 +1080,9 @@ export function ichimokuOpen(prices: { high: ArrayLike<number>; low: ArrayLike<n
  * {@link ichimokuOpen} that also computes the outputs over the whole history in
  * the same pass, bit-identically to {@link ichimoku}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price series. `low`: Low price series.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price series. `low`: Low price series.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link IchimokuOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1117,7 +1120,7 @@ export function ichimokuOpen(prices: { high: ArrayLike<number>; low: ArrayLike<n
  * // outTenkanSen[k] is the value at bar begIdx + k
  * ```
  */
-export function ichimokuOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: IchimokuOptions): IchimokuResult & { stream: IchimokuStream } {
+export function ichimokuOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: IchimokuOptions): IchimokuResult & { stream: IchimokuStream } {
   requireArgument('ICHIMOKU openAndFill', 'prices', prices);
   const o = optionsOf('ICHIMOKU openAndFill', options);
   const optInTenkanPeriod = orDefault(o.tenkanPeriod, Core.INTEGER_DEFAULT);

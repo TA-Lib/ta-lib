@@ -141,7 +141,7 @@ export interface AvgpriceOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link avgprice} returns, and {@link avgpriceOpenAndFill} with its stream. */
@@ -152,7 +152,7 @@ export interface AvgpriceResult {
    * Per-bar average of the four OHLC prices. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -201,9 +201,10 @@ export function avgpriceDisplayShift(outputIdx: number, options?: AvgpriceOption
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link avgpriceLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link AvgpriceOptions}.
  * @returns `begIdx` and the values; see {@link AvgpriceResult}. Each output is a
@@ -235,7 +236,7 @@ export function avgpriceDisplayShift(outputIdx: number, options?: AvgpriceOption
  * @see [`typprice`](https://ta-lib.org/functions/typprice)
  * @see [`wclprice`](https://ta-lib.org/functions/wclprice)
  */
-export function avgprice(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: AvgpriceOptions): AvgpriceResult {
+export function avgprice(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AvgpriceOptions): AvgpriceResult {
   requireArgument('AVGPRICE', 'prices', prices);
   const o = optionsOf('AVGPRICE', options);
   if (o.endIdx === undefined) {
@@ -538,9 +539,10 @@ export function avgpriceOpenAndFillPositional(
  * Opens a live AVGPRICE stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link avgprice} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link AvgpriceOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -566,7 +568,7 @@ export function avgpriceOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function avgpriceOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: AvgpriceOptions): AvgpriceStream {
+export function avgpriceOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AvgpriceOptions): AvgpriceStream {
   requireArgument('AVGPRICE open', 'prices', prices);
   const o = optionsOf('AVGPRICE open', options);
   const core = coreOf('AVGPRICE open', o.core);
@@ -577,9 +579,10 @@ export function avgpriceOpen(prices: { open: ArrayLike<number>; high: ArrayLike<
  * {@link avgpriceOpen} that also computes the outputs over the whole history in
  * the same pass, bit-identically to {@link avgprice}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link AvgpriceOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -609,7 +612,7 @@ export function avgpriceOpen(prices: { open: ArrayLike<number>; high: ArrayLike<
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function avgpriceOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: AvgpriceOptions): AvgpriceResult & { stream: AvgpriceStream } {
+export function avgpriceOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AvgpriceOptions): AvgpriceResult & { stream: AvgpriceStream } {
   requireArgument('AVGPRICE openAndFill', 'prices', prices);
   const o = optionsOf('AVGPRICE openAndFill', options);
   const core = coreOf('AVGPRICE openAndFill', o.core);

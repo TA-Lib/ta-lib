@@ -501,7 +501,7 @@ server; the ports' own suites read both levels back from a built `Core`
 
 rT4's C getter: `test_internals.c`. rT8's Rust latch: verified by probe
 (footnote [16]). rT8's candle setter in Java: `aRejectedCandleSettingWritesNothing`
-(`CoreApiTest`), through CDLDOJI since Java's `Core` has no candle getter. rT2,
+(`CoreApiTest`), through CDLDOJI. rT2,
 rT4 and rT5 under a cast out of the enum in C#: `CandleMisuseThrows` and
 `MisuseThrows` (`CoreBuilderTest`). rT10: `testUnstablePeriodBounds`
 (`test_internals.c`) changes the settings and initializes over them.

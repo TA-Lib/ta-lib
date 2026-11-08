@@ -364,14 +364,14 @@ export interface SupertrendOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outSupertrend?: Float64Array | undefined;
+  outSupertrend?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outTrend`, written from index 0 and allocated when omitted. It must
    * hold the values produced (for a batch call the input length always suffices, for
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outTrend?: Int32Array | undefined;
+  outTrend?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -385,12 +385,12 @@ export interface SupertrendResult {
    * The SuperTrend line: the band the trend is currently riding. `outSupertrend[k]`
    * is the value at input bar `begIdx + k`.
    */
-  outSupertrend: Float64Array;
+  outSupertrend: Float64Array<ArrayBuffer>;
   /**
    * Trend direction: +1 while the trend rides the lower band, -1 while it rides the
    * upper one. `outTrend[k]` is the value at input bar `begIdx + k`.
    */
-  outTrend: Int32Array;
+  outTrend: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -475,9 +475,9 @@ export function supertrendDisplayShift(outputIdx: number, options?: SupertrendOp
  * exactly as long as the number of values written, and nothing is padded. A range
  * that ends before {@link supertrendLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
- *   bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link SupertrendOptions}.
  * @returns `begIdx` and the values; see {@link SupertrendResult}. Each output is a
@@ -514,7 +514,7 @@ export function supertrendDisplayShift(outputIdx: number, options?: SupertrendOp
  * @see [`sarext`](https://ta-lib.org/functions/sarext)
  * @see [`kc`](https://ta-lib.org/functions/kc)
  */
-export function supertrend(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: SupertrendOptions): SupertrendResult {
+export function supertrend(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SupertrendOptions): SupertrendResult {
   requireArgument('SUPERTREND', 'prices', prices);
   const o = optionsOf('SUPERTREND', options);
   if (o.endIdx === undefined) {
@@ -1253,9 +1253,10 @@ export function supertrendOpenAndFillPositional(
  * Opens a live SUPERTREND stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link supertrend} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link SupertrendOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1284,7 +1285,7 @@ export function supertrendOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function supertrendOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: SupertrendOptions): SupertrendStream {
+export function supertrendOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SupertrendOptions): SupertrendStream {
   requireArgument('SUPERTREND open', 'prices', prices);
   const o = optionsOf('SUPERTREND open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -1297,9 +1298,10 @@ export function supertrendOpen(prices: { high: ArrayLike<number>; low: ArrayLike
  * {@link supertrendOpen} that also computes the outputs over the whole history in
  * the same pass, bit-identically to {@link supertrend}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link SupertrendOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1336,7 +1338,7 @@ export function supertrendOpen(prices: { high: ArrayLike<number>; low: ArrayLike
  * // outSupertrend[k] is the value at bar begIdx + k
  * ```
  */
-export function supertrendOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: SupertrendOptions): SupertrendResult & { stream: SupertrendStream } {
+export function supertrendOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SupertrendOptions): SupertrendResult & { stream: SupertrendStream } {
   requireArgument('SUPERTREND openAndFill', 'prices', prices);
   const o = optionsOf('SUPERTREND openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

@@ -18,7 +18,7 @@ npm install ta-lib
 ```
 
 ESM only, with no top-level await, so `require('ta-lib')` also works on every supported Node
-line. Node 22.12 or later; any runtime that loads standard ES modules.
+line. Node 22.12 or later; any runtime that loads standard ES modules; TypeScript 5.7 or later to read the types.
 
 ## Quick start
 
@@ -43,7 +43,7 @@ parameter takes its default.
 Inputs take any `ArrayLike<number>`: a `Float64Array` is read in place, and any other form,
 `number[]` included, is copied into one first. The components of a price input are one
 object: `atr({ high, low, close }, { timePeriod: 14 })`. Outputs are
-`Float64Array`, or `Int32Array` for integer outputs. Pass your own buffers (`outReal`,
+`Float64Array<ArrayBuffer>`, or `Int32Array<ArrayBuffer>` for integer outputs. Pass your own buffers (`outReal`,
 `outMacd`, ...) so the call allocates no output; the results are views of them.
 
 Invalid arguments throw a `TALibError`; match on its `code`:

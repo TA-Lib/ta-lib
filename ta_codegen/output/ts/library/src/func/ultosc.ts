@@ -463,7 +463,7 @@ export interface UltoscOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link ultosc} returns, and {@link ultoscOpenAndFill} with its stream. */
@@ -471,7 +471,7 @@ export interface UltoscResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /** Ultimate Oscillator value. `values[k]` is the value at input bar `begIdx + k`. */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -527,9 +527,9 @@ export function ultoscDisplayShift(outputIdx: number, options?: UltoscOptions): 
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link ultoscLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
- *   bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link UltoscOptions}.
  * @returns `begIdx` and the values; see {@link UltoscResult}. Each output is a
@@ -564,7 +564,7 @@ export function ultoscDisplayShift(outputIdx: number, options?: UltoscOptions): 
  * @see [`trange`](https://ta-lib.org/functions/trange)
  * @see [`rsi`](https://ta-lib.org/functions/rsi)
  */
-export function ultosc(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: UltoscOptions): UltoscResult {
+export function ultosc(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: UltoscOptions): UltoscResult {
   requireArgument('ULTOSC', 'prices', prices);
   const o = optionsOf('ULTOSC', options);
   if (o.endIdx === undefined) {
@@ -1424,9 +1424,10 @@ export function ultoscOpenAndFillPositional(
  * Opens a live ULTOSC stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link ultosc} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link UltoscOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1455,7 +1456,7 @@ export function ultoscOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function ultoscOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: UltoscOptions): UltoscStream {
+export function ultoscOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: UltoscOptions): UltoscStream {
   requireArgument('ULTOSC open', 'prices', prices);
   const o = optionsOf('ULTOSC open', options);
   const optInTimePeriod1 = orDefault(o.timePeriod1, Core.INTEGER_DEFAULT);
@@ -1469,9 +1470,10 @@ export function ultoscOpen(prices: { high: ArrayLike<number>; low: ArrayLike<num
  * {@link ultoscOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link ultosc}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link UltoscOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1504,7 +1506,7 @@ export function ultoscOpen(prices: { high: ArrayLike<number>; low: ArrayLike<num
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function ultoscOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: UltoscOptions): UltoscResult & { stream: UltoscStream } {
+export function ultoscOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: UltoscOptions): UltoscResult & { stream: UltoscStream } {
   requireArgument('ULTOSC openAndFill', 'prices', prices);
   const o = optionsOf('ULTOSC openAndFill', options);
   const optInTimePeriod1 = orDefault(o.timePeriod1, Core.INTEGER_DEFAULT);

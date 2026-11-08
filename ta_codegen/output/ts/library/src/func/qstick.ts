@@ -214,7 +214,7 @@ export interface QstickOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link qstick} returns, and {@link qstickOpenAndFill} with its stream. */
@@ -225,7 +225,7 @@ export interface QstickResult {
    * Average candle body over the window. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -277,8 +277,9 @@ export function qstickDisplayShift(outputIdx: number, options?: QstickOptions): 
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link qstickLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `close`: Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link QstickOptions}.
  * @returns `begIdx` and the values; see {@link QstickResult}. Each output is a
@@ -308,7 +309,7 @@ export function qstickDisplayShift(outputIdx: number, options?: QstickOptions): 
  * @see [`mom`](https://ta-lib.org/functions/mom)
  * @see [`sma`](https://ta-lib.org/functions/sma)
  */
-export function qstick(prices: { open: ArrayLike<number>; close: ArrayLike<number> }, options?: QstickOptions): QstickResult {
+export function qstick(prices: { open: ArrayLike<number>; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: QstickOptions): QstickResult {
   requireArgument('QSTICK', 'prices', prices);
   const o = optionsOf('QSTICK', options);
   if (o.endIdx === undefined) {
@@ -706,8 +707,9 @@ export function qstickOpenAndFillPositional(
  * Opens a live QSTICK stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link qstick} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link QstickOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -730,7 +732,7 @@ export function qstickOpenAndFillPositional(
  * const updated = stream.update(100.2, 100.9); // the bar closes
  * ```
  */
-export function qstickOpen(prices: { open: ArrayLike<number>; close: ArrayLike<number> }, options?: QstickOptions): QstickStream {
+export function qstickOpen(prices: { open: ArrayLike<number>; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: QstickOptions): QstickStream {
   requireArgument('QSTICK open', 'prices', prices);
   const o = optionsOf('QSTICK open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -742,8 +744,9 @@ export function qstickOpen(prices: { open: ArrayLike<number>; close: ArrayLike<n
  * {@link qstickOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link qstick}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link QstickOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -772,7 +775,7 @@ export function qstickOpen(prices: { open: ArrayLike<number>; close: ArrayLike<n
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function qstickOpenAndFill(prices: { open: ArrayLike<number>; close: ArrayLike<number> }, options?: QstickOptions): QstickResult & { stream: QstickStream } {
+export function qstickOpenAndFill(prices: { open: ArrayLike<number>; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: QstickOptions): QstickResult & { stream: QstickStream } {
   requireArgument('QSTICK openAndFill', 'prices', prices);
   const o = optionsOf('QSTICK openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

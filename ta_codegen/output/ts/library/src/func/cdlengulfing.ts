@@ -189,7 +189,7 @@ export interface CdlengulfingOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -205,7 +205,7 @@ export interface CdlengulfingResult {
    * ends; 80 when the bodies share an exact endpoint (open\[i]==close\[i-1] or
    * close\[i]==open\[i-1]). `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -267,9 +267,10 @@ export function cdlengulfingDisplayShift(outputIdx: number, options?: Cdlengulfi
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdlengulfingLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CdlengulfingOptions}.
  * @returns `begIdx` and the values; see {@link CdlengulfingResult}. Each output is
@@ -301,7 +302,7 @@ export function cdlengulfingDisplayShift(outputIdx: number, options?: Cdlengulfi
  * @see [`cdlcounterattack`](https://ta-lib.org/functions/cdlcounterattack)
  * @see [`cdlharamicross`](https://ta-lib.org/functions/cdlharamicross)
  */
-export function cdlengulfing(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlengulfingOptions): CdlengulfingResult {
+export function cdlengulfing(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlengulfingOptions): CdlengulfingResult {
   requireArgument('CDLENGULFING', 'prices', prices);
   const o = optionsOf('CDLENGULFING', options);
   if (o.endIdx === undefined) {
@@ -700,9 +701,10 @@ export function cdlengulfingOpenAndFillPositional(
  * Opens a live CDLENGULFING stream over the warm-up history: `value()` starts at
  * the last history bar, bit-identical to {@link cdlengulfing} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdlengulfingOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -728,7 +730,7 @@ export function cdlengulfingOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlengulfingOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlengulfingOptions): CdlengulfingStream {
+export function cdlengulfingOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlengulfingOptions): CdlengulfingStream {
   requireArgument('CDLENGULFING open', 'prices', prices);
   const o = optionsOf('CDLENGULFING open', options);
   const core = coreOf('CDLENGULFING open', o.core);
@@ -739,9 +741,10 @@ export function cdlengulfingOpen(prices: { open: ArrayLike<number>; high: ArrayL
  * {@link cdlengulfingOpen} that also computes the outputs over the whole history
  * in the same pass, bit-identically to {@link cdlengulfing}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdlengulfingOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -771,7 +774,7 @@ export function cdlengulfingOpen(prices: { open: ArrayLike<number>; high: ArrayL
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlengulfingOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlengulfingOptions): CdlengulfingResult & { stream: CdlengulfingStream } {
+export function cdlengulfingOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlengulfingOptions): CdlengulfingResult & { stream: CdlengulfingStream } {
   requireArgument('CDLENGULFING openAndFill', 'prices', prices);
   const o = optionsOf('CDLENGULFING openAndFill', options);
   const core = coreOf('CDLENGULFING openAndFill', o.core);

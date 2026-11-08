@@ -325,7 +325,7 @@ export interface CtiOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link cti} returns, and {@link ctiOpenAndFill} with its stream. */
@@ -336,7 +336,7 @@ export interface CtiResult {
    * Correlation against the ramp, in -1..+1. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**

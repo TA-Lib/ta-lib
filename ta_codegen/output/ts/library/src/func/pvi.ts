@@ -163,7 +163,7 @@ export interface PviOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link pvi} returns, and {@link pviOpenAndFill} with its stream. */
@@ -174,7 +174,7 @@ export interface PviResult {
    * Cumulative positive volume index (seeded at 1000). `values[k]` is the value at
    * input bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -235,8 +235,9 @@ export function pviDisplayShift(outputIdx: number, options?: PviOptions): number
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link pviLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `close`:
- *   Close price of each bar. `volume`: Volume of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `close`: Close price of
+ *   each bar. `volume`: Volume of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link PviOptions}.
  * @returns `begIdx` and the values; see {@link PviResult}. Each output is a view
@@ -261,7 +262,7 @@ export function pviDisplayShift(outputIdx: number, options?: PviOptions): number
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function pvi(prices: { close: ArrayLike<number>; volume: ArrayLike<number> }, options?: PviOptions): PviResult {
+export function pvi(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: PviOptions): PviResult {
   requireArgument('PVI', 'prices', prices);
   const o = optionsOf('PVI', options);
   if (o.endIdx === undefined) {
@@ -631,8 +632,9 @@ export function pviOpenAndFillPositional(
  * Opens a live PVI stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link pvi} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `close`: Close price of each bar. `volume`: Volume of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `close`: Close price of each bar. `volume`: Volume of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link PviOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -654,7 +656,7 @@ export function pviOpenAndFillPositional(
  * const updated = stream.update(100.9, 12345); // the bar closes
  * ```
  */
-export function pviOpen(prices: { close: ArrayLike<number>; volume: ArrayLike<number> }, options?: PviOptions): PviStream {
+export function pviOpen(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: PviOptions): PviStream {
   requireArgument('PVI open', 'prices', prices);
   const o = optionsOf('PVI open', options);
   const core = coreOf('PVI open', o.core);
@@ -665,8 +667,9 @@ export function pviOpen(prices: { close: ArrayLike<number>; volume: ArrayLike<nu
  * {@link pviOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link pvi}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `close`: Close price of each bar. `volume`: Volume of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `close`: Close price of each bar. `volume`: Volume of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link PviOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -692,7 +695,7 @@ export function pviOpen(prices: { close: ArrayLike<number>; volume: ArrayLike<nu
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function pviOpenAndFill(prices: { close: ArrayLike<number>; volume: ArrayLike<number> }, options?: PviOptions): PviResult & { stream: PviStream } {
+export function pviOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: PviOptions): PviResult & { stream: PviStream } {
   requireArgument('PVI openAndFill', 'prices', prices);
   const o = optionsOf('PVI openAndFill', options);
   const core = coreOf('PVI openAndFill', o.core);

@@ -585,6 +585,26 @@ public final class Core {
       return unstablePeriod[id.ordinal()];
    }
 
+   /**
+    * The candle setting stored for one attribute.
+    *
+    * @throws NullPointerException if {@code settingType} is null
+    * @throws IllegalArgumentException if {@code settingType} is
+    *         {@link CandleSettingType#ALL_CANDLE_SETTINGS}, the write-side
+    *         wildcard naming no single setting
+    */
+   public CandleSetting candleSetting(CandleSettingType settingType)
+   {
+      if (settingType == null) {
+         throw new NullPointerException("settingType");
+      }
+      if (settingType == CandleSettingType.ALL_CANDLE_SETTINGS) {
+         throw new IllegalArgumentException(
+            settingType + " is a wildcard, not a single candle setting");
+      }
+      return candleSettings[settingType.ordinal()];
+   }
+
    /**** START GENCODE SECTION 1 - DO NOT DELETE THIS LINE ****/
 /* List of contributors:
  *

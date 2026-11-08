@@ -653,7 +653,7 @@ export interface SmiOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outSmi?: Float64Array | undefined;
+  outSmi?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outSmiSignal`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -661,7 +661,7 @@ export interface SmiOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outSmiSignal?: Float64Array | undefined;
+  outSmiSignal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link smi} returns, and {@link smiOpenAndFill} with its stream. */
@@ -672,12 +672,12 @@ export interface SmiResult {
    * Stochastic Momentum Index, -100 to +100. `outSmi[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outSmi: Float64Array;
+  outSmi: Float64Array<ArrayBuffer>;
   /**
    * Exponential average of the SMI line. `outSmiSignal[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outSmiSignal: Float64Array;
+  outSmiSignal: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -747,8 +747,9 @@ export function smiDisplayShift(outputIdx: number, options?: SmiOptions): number
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link smiLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price series. `low`: Low price series. `close`: Close price series.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price
+ *   series. `low`: Low price series. `close`: Close price series.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link SmiOptions}.
  * @returns `begIdx` and the values; see {@link SmiResult}. Each output is a view
@@ -785,7 +786,7 @@ export function smiDisplayShift(outputIdx: number, options?: SmiOptions): number
  * @see [`willr`](https://ta-lib.org/functions/willr)
  * @see [`macd`](https://ta-lib.org/functions/macd)
  */
-export function smi(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: SmiOptions): SmiResult {
+export function smi(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SmiOptions): SmiResult {
   requireArgument('SMI', 'prices', prices);
   const o = optionsOf('SMI', options);
   if (o.endIdx === undefined) {
@@ -2031,9 +2032,9 @@ export function smiOpenAndFillPositional(
  * Opens a live SMI stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link smi} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price series. `low`: Low price series. `close`: Close price
- *   series.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price series. `low`: Low price series. `close`: Close price series.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link SmiOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -2063,7 +2064,7 @@ export function smiOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function smiOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: SmiOptions): SmiStream {
+export function smiOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SmiOptions): SmiStream {
   requireArgument('SMI open', 'prices', prices);
   const o = optionsOf('SMI open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -2078,9 +2079,9 @@ export function smiOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * {@link smiOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link smi}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price series. `low`: Low price series. `close`: Close price
- *   series.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price series. `low`: Low price series. `close`: Close price series.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link SmiOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -2119,7 +2120,7 @@ export function smiOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * // outSmi[k] is the value at bar begIdx + k
  * ```
  */
-export function smiOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: SmiOptions): SmiResult & { stream: SmiStream } {
+export function smiOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SmiOptions): SmiResult & { stream: SmiStream } {
   requireArgument('SMI openAndFill', 'prices', prices);
   const o = optionsOf('SMI openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

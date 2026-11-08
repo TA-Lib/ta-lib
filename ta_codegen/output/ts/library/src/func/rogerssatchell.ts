@@ -337,7 +337,7 @@ export interface RogerssatchellOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -351,7 +351,7 @@ export interface RogerssatchellResult {
    * Estimated volatility, in log-return units. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -411,9 +411,10 @@ export function rogerssatchellDisplayShift(outputIdx: number, options?: Rogerssa
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link rogerssatchellLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link RogerssatchellOptions}.
  * @returns `begIdx` and the values; see {@link RogerssatchellResult}. Each output
@@ -449,7 +450,7 @@ export function rogerssatchellDisplayShift(outputIdx: number, options?: Rogerssa
  * @see [`natr`](https://ta-lib.org/functions/natr)
  * @see [`var_`](https://ta-lib.org/functions/var)
  */
-export function rogerssatchell(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: RogerssatchellOptions): RogerssatchellResult {
+export function rogerssatchell(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: RogerssatchellOptions): RogerssatchellResult {
   requireArgument('ROGERSSATCHELL', 'prices', prices);
   const o = optionsOf('ROGERSSATCHELL', options);
   if (o.endIdx === undefined) {
@@ -1129,9 +1130,10 @@ export function rogerssatchellOpenAndFillPositional(
  * Opens a live ROGERSSATCHELL stream over the warm-up history: `value()` starts at
  * the last history bar, bit-identical to {@link rogerssatchell} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link RogerssatchellOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1162,7 +1164,7 @@ export function rogerssatchellOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function rogerssatchellOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: RogerssatchellOptions): RogerssatchellStream {
+export function rogerssatchellOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: RogerssatchellOptions): RogerssatchellStream {
   requireArgument('ROGERSSATCHELL open', 'prices', prices);
   const o = optionsOf('ROGERSSATCHELL open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -1175,9 +1177,10 @@ export function rogerssatchellOpen(prices: { open: ArrayLike<number>; high: Arra
  * {@link rogerssatchellOpen} that also computes the outputs over the whole history
  * in the same pass, bit-identically to {@link rogerssatchell}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link RogerssatchellOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1211,7 +1214,7 @@ export function rogerssatchellOpen(prices: { open: ArrayLike<number>; high: Arra
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function rogerssatchellOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: RogerssatchellOptions): RogerssatchellResult & { stream: RogerssatchellStream } {
+export function rogerssatchellOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: RogerssatchellOptions): RogerssatchellResult & { stream: RogerssatchellStream } {
   requireArgument('ROGERSSATCHELL openAndFill', 'prices', prices);
   const o = optionsOf('ROGERSSATCHELL openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

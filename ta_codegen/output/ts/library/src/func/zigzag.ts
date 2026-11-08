@@ -292,21 +292,21 @@ export interface ZigzagOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outZigZag?: Float64Array | undefined;
+  outZigZag?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outTrend`, written from index 0 and allocated when omitted. It must
    * hold the values produced (for a batch call the input length always suffices, for
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outTrend?: Int32Array | undefined;
+  outTrend?: Int32Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outPivotIdx`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
    * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
    * with another buffer or with an input.
    */
-  outPivotIdx?: Int32Array | undefined;
+  outPivotIdx?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link zigzag} returns, and {@link zigzagOpenAndFill} with its stream. */
@@ -317,17 +317,17 @@ export interface ZigzagResult {
    * Price of the swing extreme currently being tracked. `outZigZag[k]` is the value
    * at input bar `begIdx + k`.
    */
-  outZigZag: Float64Array;
+  outZigZag: Float64Array<ArrayBuffer>;
   /**
    * +1 while the leg is up, -1 while it is down. `outTrend[k]` is the value at input
    * bar `begIdx + k`.
    */
-  outTrend: Int32Array;
+  outTrend: Int32Array<ArrayBuffer>;
   /**
    * Absolute index, into the input, of the bar that extreme sits on.
    * `outPivotIdx[k]` is the value at input bar `begIdx + k`.
    */
-  outPivotIdx: Int32Array;
+  outPivotIdx: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -424,8 +424,9 @@ export function zigzagDisplayShift(outputIdx: number, options?: ZigzagOptions): 
  * as long as the number of values written, and nothing is padded. A range that
  * ends before {@link zigzagLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link ZigzagOptions}.
  * @returns `begIdx` and the values; see {@link ZigzagResult}. Each output is a
@@ -461,7 +462,7 @@ export function zigzagDisplayShift(outputIdx: number, options?: ZigzagOptions): 
  * @see [`minmaxindex`](https://ta-lib.org/functions/minmaxindex)
  * @see [`midprice`](https://ta-lib.org/functions/midprice)
  */
-export function zigzag(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: ZigzagOptions): ZigzagResult {
+export function zigzag(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: ZigzagOptions): ZigzagResult {
   requireArgument('ZIGZAG', 'prices', prices);
   const o = optionsOf('ZIGZAG', options);
   if (o.endIdx === undefined) {
@@ -1071,8 +1072,9 @@ export function zigzagOpenAndFillPositional(
  * Opens a live ZIGZAG stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link zigzag} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link ZigzagOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1095,7 +1097,7 @@ export function zigzagOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1); // the bar closes
  * ```
  */
-export function zigzagOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: ZigzagOptions): ZigzagStream {
+export function zigzagOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: ZigzagOptions): ZigzagStream {
   requireArgument('ZIGZAG open', 'prices', prices);
   const o = optionsOf('ZIGZAG open', options);
   const optInSensitivity = orDefault(o.sensitivity, Core.REAL_DEFAULT);
@@ -1108,8 +1110,9 @@ export function zigzagOpen(prices: { high: ArrayLike<number>; low: ArrayLike<num
  * {@link zigzagOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link zigzag}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link ZigzagOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1142,7 +1145,7 @@ export function zigzagOpen(prices: { high: ArrayLike<number>; low: ArrayLike<num
  * // outZigZag[k] is the value at bar begIdx + k
  * ```
  */
-export function zigzagOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: ZigzagOptions): ZigzagResult & { stream: ZigzagStream } {
+export function zigzagOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: ZigzagOptions): ZigzagResult & { stream: ZigzagStream } {
   requireArgument('ZIGZAG openAndFill', 'prices', prices);
   const o = optionsOf('ZIGZAG openAndFill', options);
   const optInSensitivity = orDefault(o.sensitivity, Core.REAL_DEFAULT);

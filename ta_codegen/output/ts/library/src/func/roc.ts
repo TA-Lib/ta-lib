@@ -202,7 +202,7 @@ export interface RocOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link roc} returns, and {@link rocOpenAndFill} with its stream. */
@@ -210,7 +210,7 @@ export interface RocResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /** Percent rate of change. `values[k]` is the value at input bar `begIdx + k`. */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**

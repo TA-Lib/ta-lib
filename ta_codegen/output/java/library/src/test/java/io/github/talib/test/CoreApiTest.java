@@ -191,6 +191,28 @@ public class CoreApiTest {
         check(outT[rT.count() - 1] == 100, "tuned core: a huge BodyDoji factor calls it a doji");
     }
 
+    /** A getter answers what the builder stored, and refuses the wildcard. */
+    static void candleSettingReadsBack() {
+        CandleSetting d = Core.DEFAULT.candleSetting(CandleSettingType.BODY_DOJI);
+        check(d.settingType() == CandleSettingType.BODY_DOJI && d.rangeType() == RangeType.HIGH_LOW
+              && d.avgPeriod() == 10 && d.factor() == 0.1,
+              "the default BodyDoji setting reads back as C's default");
+        Core tuned = Core.builder()
+            .candleSetting(CandleSettingType.BODY_DOJI, RangeType.REAL_BODY, 7, 0.25)
+            .build();
+        CandleSetting t = tuned.candleSetting(CandleSettingType.BODY_DOJI);
+        check(t.rangeType() == RangeType.REAL_BODY && t.avgPeriod() == 7 && t.factor() == 0.25,
+              "a built core reads back the setting the builder stored");
+        check(tuned.candleSetting(CandleSettingType.NEAR).avgPeriod()
+              == Core.DEFAULT.candleSetting(CandleSettingType.NEAR).avgPeriod(),
+              "other settings keep their defaults");
+        checkThrows(NullPointerException.class, () -> Core.DEFAULT.candleSetting(null),
+                    "a null setting type is rejected");
+        checkThrows(IllegalArgumentException.class,
+                    () -> Core.DEFAULT.candleSetting(CandleSettingType.ALL_CANDLE_SETTINGS),
+                    "the wildcard names no single setting to read (rT4)");
+    }
+
     /**
      * The property the {@code avgPeriod} bounds exist to preserve (#185), stated
      * over the two tiers rather than over the setter: for every setting the
@@ -560,6 +582,7 @@ public class CoreApiTest {
         builderAllIsSetAll();
         unstablePeriodReachesTheIndicator();
         candleSettingReachesTheIndicator();
+        candleSettingReadsBack();
         acceptedCandleSettingsKeepTheLookbackAndTheCallInStep();
         restoreCandleDefaultUndoesAnOverride();
         builtCoreIsIsolatedFromTheBuilder();

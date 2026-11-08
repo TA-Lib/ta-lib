@@ -439,7 +439,7 @@ export interface PsoOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link pso} returns, and {@link psoOpenAndFill} with its stream. */
@@ -450,7 +450,7 @@ export interface PsoResult {
    * Premier Stochastic Oscillator, -1 to +1. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -525,8 +525,9 @@ export function psoDisplayShift(outputIdx: number, options?: PsoOptions): number
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link psoLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price series. `low`: Low price series. `close`: Close price series.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price
+ *   series. `low`: Low price series. `close`: Close price series.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link PsoOptions}.
  * @returns `begIdx` and the values; see {@link PsoResult}. Each output is a view
@@ -561,7 +562,7 @@ export function psoDisplayShift(outputIdx: number, options?: PsoOptions): number
  * @see [`smi`](https://ta-lib.org/functions/smi)
  * @see [`willr`](https://ta-lib.org/functions/willr)
  */
-export function pso(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: PsoOptions): PsoResult {
+export function pso(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: PsoOptions): PsoResult {
   requireArgument('PSO', 'prices', prices);
   const o = optionsOf('PSO', options);
   if (o.endIdx === undefined) {
@@ -1342,9 +1343,9 @@ export function psoOpenAndFillPositional(
  * Opens a live PSO stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link pso} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price series. `low`: Low price series. `close`: Close price
- *   series.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price series. `low`: Low price series. `close`: Close price series.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link PsoOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1369,7 +1370,7 @@ export function psoOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function psoOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: PsoOptions): PsoStream {
+export function psoOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: PsoOptions): PsoStream {
   requireArgument('PSO open', 'prices', prices);
   const o = optionsOf('PSO open', options);
   const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);
@@ -1382,9 +1383,9 @@ export function psoOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * {@link psoOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link pso}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price series. `low`: Low price series. `close`: Close price
- *   series.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price series. `low`: Low price series. `close`: Close price series.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link PsoOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1416,7 +1417,7 @@ export function psoOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function psoOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: PsoOptions): PsoResult & { stream: PsoStream } {
+export function psoOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: PsoOptions): PsoResult & { stream: PsoStream } {
   requireArgument('PSO openAndFill', 'prices', prices);
   const o = optionsOf('PSO openAndFill', options);
   const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);

@@ -676,7 +676,7 @@ export interface HtSineOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outSine?: Float64Array | undefined;
+  outSine?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outLeadSine`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -684,7 +684,7 @@ export interface HtSineOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outLeadSine?: Float64Array | undefined;
+  outLeadSine?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link htSine} returns, and {@link htSineOpenAndFill} with its stream. */
@@ -695,12 +695,12 @@ export interface HtSineResult {
    * Sine of the dominant-cycle phase. `outSine[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outSine: Float64Array;
+  outSine: Float64Array<ArrayBuffer>;
   /**
    * Sine of the phase advanced 45 degrees (lead). `outLeadSine[k]` is the value at
    * input bar `begIdx + k`.
    */
-  outLeadSine: Float64Array;
+  outLeadSine: Float64Array<ArrayBuffer>;
 }
 
 /**

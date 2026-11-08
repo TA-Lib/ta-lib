@@ -188,7 +188,7 @@ export interface CdldojiOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link cdldoji} returns, and {@link cdldojiOpenAndFill} with its stream. */
@@ -199,7 +199,7 @@ export interface CdldojiResult {
    * 100 when a doji is detected, else 0. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -249,9 +249,10 @@ export function cdldojiDisplayShift(outputIdx: number, options?: CdldojiOptions)
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdldojiLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CdldojiOptions}.
  * @returns `begIdx` and the values; see {@link CdldojiResult}. Each output is a
@@ -284,7 +285,7 @@ export function cdldojiDisplayShift(outputIdx: number, options?: CdldojiOptions)
  * @see [`cdlgravestonedoji`](https://ta-lib.org/functions/cdlgravestonedoji)
  * @see [`cdllongleggeddoji`](https://ta-lib.org/functions/cdllongleggeddoji)
  */
-export function cdldoji(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdldojiOptions): CdldojiResult {
+export function cdldoji(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdldojiOptions): CdldojiResult {
   requireArgument('CDLDOJI', 'prices', prices);
   const o = optionsOf('CDLDOJI', options);
   if (o.endIdx === undefined) {
@@ -699,9 +700,10 @@ export function cdldojiOpenAndFillPositional(
  * Opens a live CDLDOJI stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link cdldoji} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdldojiOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -727,7 +729,7 @@ export function cdldojiOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdldojiOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdldojiOptions): CdldojiStream {
+export function cdldojiOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdldojiOptions): CdldojiStream {
   requireArgument('CDLDOJI open', 'prices', prices);
   const o = optionsOf('CDLDOJI open', options);
   const core = coreOf('CDLDOJI open', o.core);
@@ -738,9 +740,10 @@ export function cdldojiOpen(prices: { open: ArrayLike<number>; high: ArrayLike<n
  * {@link cdldojiOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link cdldoji}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdldojiOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -770,7 +773,7 @@ export function cdldojiOpen(prices: { open: ArrayLike<number>; high: ArrayLike<n
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdldojiOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdldojiOptions): CdldojiResult & { stream: CdldojiStream } {
+export function cdldojiOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdldojiOptions): CdldojiResult & { stream: CdldojiStream } {
   requireArgument('CDLDOJI openAndFill', 'prices', prices);
   const o = optionsOf('CDLDOJI openAndFill', options);
   const core = coreOf('CDLDOJI openAndFill', o.core);

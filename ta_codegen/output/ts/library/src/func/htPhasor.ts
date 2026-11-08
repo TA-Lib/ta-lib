@@ -580,7 +580,7 @@ export interface HtPhasorOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outInPhase?: Float64Array | undefined;
+  outInPhase?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outQuadrature`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -588,7 +588,7 @@ export interface HtPhasorOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outQuadrature?: Float64Array | undefined;
+  outQuadrature?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link htPhasor} returns, and {@link htPhasorOpenAndFill} with its stream. */
@@ -599,12 +599,12 @@ export interface HtPhasorResult {
    * In-phase component (detrender delayed 3 bars). `outInPhase[k]` is the value at
    * input bar `begIdx + k`.
    */
-  outInPhase: Float64Array;
+  outInPhase: Float64Array<ArrayBuffer>;
   /**
    * Quadrature component (Q1 of the Hilbert Transform). `outQuadrature[k]` is the
    * value at input bar `begIdx + k`.
    */
-  outQuadrature: Float64Array;
+  outQuadrature: Float64Array<ArrayBuffer>;
 }
 
 /**

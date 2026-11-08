@@ -207,7 +207,7 @@ export interface CdlgravestonedojiOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -222,7 +222,7 @@ export interface CdlgravestonedojiResult {
    * sign is not a directional signal (evaluate relative to the trend). `values[k]`
    * is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -283,9 +283,10 @@ export function cdlgravestonedojiDisplayShift(outputIdx: number, options?: Cdlgr
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdlgravestonedojiLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CdlgravestonedojiOptions}.
  * @returns `begIdx` and the values; see {@link CdlgravestonedojiResult}. Each
@@ -318,7 +319,7 @@ export function cdlgravestonedojiDisplayShift(outputIdx: number, options?: Cdlgr
  * @see [`cdllongleggeddoji`](https://ta-lib.org/functions/cdllongleggeddoji)
  * @see [`cdldojistar`](https://ta-lib.org/functions/cdldojistar)
  */
-export function cdlgravestonedoji(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlgravestonedojiOptions): CdlgravestonedojiResult {
+export function cdlgravestonedoji(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlgravestonedojiOptions): CdlgravestonedojiResult {
   requireArgument('CDLGRAVESTONEDOJI', 'prices', prices);
   const o = optionsOf('CDLGRAVESTONEDOJI', options);
   if (o.endIdx === undefined) {
@@ -802,9 +803,10 @@ export function cdlgravestonedojiOpenAndFillPositional(
  * Opens a live CDLGRAVESTONEDOJI stream over the warm-up history: `value()` starts
  * at the last history bar, bit-identical to {@link cdlgravestonedoji} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdlgravestonedojiOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -830,7 +832,7 @@ export function cdlgravestonedojiOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlgravestonedojiOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlgravestonedojiOptions): CdlgravestonedojiStream {
+export function cdlgravestonedojiOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlgravestonedojiOptions): CdlgravestonedojiStream {
   requireArgument('CDLGRAVESTONEDOJI open', 'prices', prices);
   const o = optionsOf('CDLGRAVESTONEDOJI open', options);
   const core = coreOf('CDLGRAVESTONEDOJI open', o.core);
@@ -841,9 +843,10 @@ export function cdlgravestonedojiOpen(prices: { open: ArrayLike<number>; high: A
  * {@link cdlgravestonedojiOpen} that also computes the outputs over the whole
  * history in the same pass, bit-identically to {@link cdlgravestonedoji}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdlgravestonedojiOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -873,7 +876,7 @@ export function cdlgravestonedojiOpen(prices: { open: ArrayLike<number>; high: A
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlgravestonedojiOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlgravestonedojiOptions): CdlgravestonedojiResult & { stream: CdlgravestonedojiStream } {
+export function cdlgravestonedojiOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlgravestonedojiOptions): CdlgravestonedojiResult & { stream: CdlgravestonedojiStream } {
   requireArgument('CDLGRAVESTONEDOJI openAndFill', 'prices', prices);
   const o = optionsOf('CDLGRAVESTONEDOJI openAndFill', options);
   const core = coreOf('CDLGRAVESTONEDOJI openAndFill', o.core);

@@ -361,7 +361,7 @@ export interface SortinoOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link sortino} returns, and {@link sortinoOpenAndFill} with its stream. */
@@ -372,7 +372,7 @@ export interface SortinoResult {
    * Annualized Sortino ratio of the trailing window, or +Inf or NaN where the window
    * has no return below the MAR. `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**

@@ -306,7 +306,7 @@ export interface Cdl3whitesoldiersOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -320,7 +320,7 @@ export interface Cdl3whitesoldiersResult {
    * +100 when the pattern is detected, 0 otherwise; never negative (three white
    * soldiers is always bullish). `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -380,9 +380,10 @@ export function cdl3whitesoldiersDisplayShift(outputIdx: number, options?: Cdl3w
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdl3whitesoldiersLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link Cdl3whitesoldiersOptions}.
  * @returns `begIdx` and the values; see {@link Cdl3whitesoldiersResult}. Each
@@ -414,7 +415,7 @@ export function cdl3whitesoldiersDisplayShift(outputIdx: number, options?: Cdl3w
  * @see [`cdladvanceblock`](https://ta-lib.org/functions/cdladvanceblock)
  * @see [`cdlidentical3crows`](https://ta-lib.org/functions/cdlidentical3crows)
  */
-export function cdl3whitesoldiers(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3whitesoldiersOptions): Cdl3whitesoldiersResult {
+export function cdl3whitesoldiers(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3whitesoldiersOptions): Cdl3whitesoldiersResult {
   requireArgument('CDL3WHITESOLDIERS', 'prices', prices);
   const o = optionsOf('CDL3WHITESOLDIERS', options);
   if (o.endIdx === undefined) {
@@ -1228,9 +1229,10 @@ export function cdl3whitesoldiersOpenAndFillPositional(
  * Opens a live CDL3WHITESOLDIERS stream over the warm-up history: `value()` starts
  * at the last history bar, bit-identical to {@link cdl3whitesoldiers} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link Cdl3whitesoldiersOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1256,7 +1258,7 @@ export function cdl3whitesoldiersOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdl3whitesoldiersOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3whitesoldiersOptions): Cdl3whitesoldiersStream {
+export function cdl3whitesoldiersOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3whitesoldiersOptions): Cdl3whitesoldiersStream {
   requireArgument('CDL3WHITESOLDIERS open', 'prices', prices);
   const o = optionsOf('CDL3WHITESOLDIERS open', options);
   const core = coreOf('CDL3WHITESOLDIERS open', o.core);
@@ -1267,9 +1269,10 @@ export function cdl3whitesoldiersOpen(prices: { open: ArrayLike<number>; high: A
  * {@link cdl3whitesoldiersOpen} that also computes the outputs over the whole
  * history in the same pass, bit-identically to {@link cdl3whitesoldiers}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link Cdl3whitesoldiersOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1299,7 +1302,7 @@ export function cdl3whitesoldiersOpen(prices: { open: ArrayLike<number>; high: A
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdl3whitesoldiersOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3whitesoldiersOptions): Cdl3whitesoldiersResult & { stream: Cdl3whitesoldiersStream } {
+export function cdl3whitesoldiersOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3whitesoldiersOptions): Cdl3whitesoldiersResult & { stream: Cdl3whitesoldiersStream } {
   requireArgument('CDL3WHITESOLDIERS openAndFill', 'prices', prices);
   const o = optionsOf('CDL3WHITESOLDIERS openAndFill', options);
   const core = coreOf('CDL3WHITESOLDIERS openAndFill', o.core);

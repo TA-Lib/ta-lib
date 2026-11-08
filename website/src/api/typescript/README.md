@@ -67,7 +67,7 @@ Then depend on the built directory from your project's `package.json`:
 }
 ```
 
-The package is ESM only, with no top-level await, so `require('ta-lib')` works too. It needs Node.js 22.12 or later, and the library imports nothing specific to Node.
+The package is ESM only, with no top-level await, so `require('ta-lib')` works too. It needs Node.js 22.12 or later, and the library imports nothing specific to Node. A TypeScript consumer needs TypeScript 5.7 or later: the declarations spell typed arrays with their buffer type.
 
 ## 3.0 Calling into TA-Lib {#ta_func}
 
@@ -85,13 +85,13 @@ As an example, let's walk through `SMA`, a function to calculate a moving averag
                 <span class="ta-arg-range">startIdx?: number,</span>
                 <span class="ta-arg-range">endIdx?: number,</span>
                 core?: Core,
-                <span class="ta-arg-out">outReal?: Float64Array</span> } ): { begIdx: number, values: Float64Array }
+                <span class="ta-arg-out">outReal?: Float64Array&lt;ArrayBuffer&gt;</span> } ): { begIdx: number, values: Float64Array&lt;ArrayBuffer&gt; }
 </pre>
 
 All TA functions use the same calling pattern, divided into four groups:
 
 <ul>
-<li><span class="ta-arg-in">The input arrays come first. Typically, these are the "price" data. In this example there is only one input. The components of a price input are one object, keyed <code>open</code>, <code>high</code>, <code>low</code>, <code>close</code>, <code>volume</code> and <code>openInterest</code>: <code>atr({ high, low, close })</code>, <code>obv(close, { volume })</code>.</span></li>
+<li><span class="ta-arg-in">The input arrays come first. Typically, these are the "price" data. In this example there is only one input. The components of a price input are one object, keyed <code>open</code>, <code>high</code>, <code>low</code>, <code>close</code>, <code>volume</code> and <code>openInterest</code>: <code>atr({ high, low, close })</code>, <code>obv(close, { volume })</code>. An object with more components than the function reads, a whole bar, passes.</span></li>
 <li><span class="ta-arg-opt">The parameters are keys of the options object, named as in C without <code>optIn</code> and in camelCase (<a href="/spec/#rj1">rJ1</a>): <code>timePeriod</code>, <code>nbDevUp</code>, <code>maType</code>, <code>fastDMaType</code>. They give finer control specific to each function. A key you omit, or set to <code>undefined</code>, takes its default; <code>Core.INTEGER_DEFAULT</code>, <code>Core.REAL_DEFAULT</code> and <code>MAType.DEFAULT</code> select it too.</span></li>
 <li><span class="ta-arg-range">The output is calculated only for the range from startIdx to endIdx, zero-based and inclusive indices into the input arrays. Omitted, the range is the whole input. Bars before startIdx are still read as warm-up, which slicing the input would lose.</span></li>
 <li><span class="ta-arg-out">Output buffers are optional, one key per output (outReal here): see <a href="#input_type">4.4</a>. Without them, each output is allocated.</span></li>
@@ -208,7 +208,7 @@ const core = new CoreBuilder()
   .candleSetting(CandleSettingType.BODY_DOJI, RangeType.HIGH_LOW, 10, 0.1)
   .build();
 
-const { begIdx, values } = cdldoji({ open, high, low, close }, { core });   // values: Int32Array
+const { begIdx, values } = cdldoji({ open, high, low, close }, { core });   // values: Int32Array<ArrayBuffer>
 ```
 
 Each setter throws `TALibError` (`'TA_BAD_PARAM'`) at once if an argument is out of range, so `build()` cannot fail.
@@ -217,7 +217,7 @@ Each setter throws `TALibError` (`'TA_BAD_PARAM'`) at once if an argument is out
 
 An input is any `ArrayLike<number>`. A `Float64Array` is read in place; any other form, such as a `number[]` or a `Float32Array`, is first copied into a `Float64Array`, each element converted to a double. A `Float32Array` therefore gives the same output, bit for bit, as a `Float64Array` holding the same values.
 
-An output is a `Float64Array`, or an `Int32Array` for an integer output such as a candlestick pattern. To compute without allocating, pass your own buffer under the output's key; the result returns a view of it, trimmed to the values written:
+An output is a `Float64Array<ArrayBuffer>`, or an `Int32Array<ArrayBuffer>` for an integer output such as a candlestick pattern: a buffer you pass is typed as backed by an `ArrayBuffer` (one over a `SharedArrayBuffer` needs a cast; the call does not inspect it), and a result goes to a `Blob` or a `fetch` body without one. To compute without allocating, pass your own buffer under the output's key; the result returns a view of it, trimmed to the values written:
 
 ```ts
 const buf = new Float64Array(close.length);
@@ -234,7 +234,7 @@ You can pass the same `Float64Array` as an input and as an output buffer to comp
 
 ### 4.6 Changing Settings {#settings}
 
-**`Core` is immutable.** There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.EMA)`.
+**`Core` is immutable.** There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.EMA)`, a candle setting with `core.candleSetting(CandleSettingType.BODY_DOJI)`.
 
 ## 5.0 Documentation {#docs}
 

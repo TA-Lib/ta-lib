@@ -186,7 +186,7 @@ export interface Cdlxsidegap3methodsOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -202,7 +202,7 @@ export interface Cdlxsidegap3methodsResult {
    * candlecolor(1st candle) * 100. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -263,9 +263,10 @@ export function cdlxsidegap3methodsDisplayShift(outputIdx: number, options?: Cdl
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdlxsidegap3methodsLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see
  *   {@link Cdlxsidegap3methodsOptions}.
@@ -298,7 +299,7 @@ export function cdlxsidegap3methodsDisplayShift(outputIdx: number, options?: Cdl
  * @see [`cdltasukigap`](https://ta-lib.org/functions/cdltasukigap)
  * @see [`cdlrisefall3methods`](https://ta-lib.org/functions/cdlrisefall3methods)
  */
-export function cdlxsidegap3methods(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdlxsidegap3methodsOptions): Cdlxsidegap3methodsResult {
+export function cdlxsidegap3methods(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlxsidegap3methodsOptions): Cdlxsidegap3methodsResult {
   requireArgument('CDLXSIDEGAP3METHODS', 'prices', prices);
   const o = optionsOf('CDLXSIDEGAP3METHODS', options);
   if (o.endIdx === undefined) {
@@ -699,9 +700,10 @@ export function cdlxsidegap3methodsOpenAndFillPositional(
  * starts at the last history bar, bit-identical to {@link cdlxsidegap3methods}
  * there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link Cdlxsidegap3methodsOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -727,7 +729,7 @@ export function cdlxsidegap3methodsOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlxsidegap3methodsOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdlxsidegap3methodsOptions): Cdlxsidegap3methodsStream {
+export function cdlxsidegap3methodsOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlxsidegap3methodsOptions): Cdlxsidegap3methodsStream {
   requireArgument('CDLXSIDEGAP3METHODS open', 'prices', prices);
   const o = optionsOf('CDLXSIDEGAP3METHODS open', options);
   const core = coreOf('CDLXSIDEGAP3METHODS open', o.core);
@@ -738,9 +740,10 @@ export function cdlxsidegap3methodsOpen(prices: { open: ArrayLike<number>; high:
  * {@link cdlxsidegap3methodsOpen} that also computes the outputs over the whole
  * history in the same pass, bit-identically to {@link cdlxsidegap3methods}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link Cdlxsidegap3methodsOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -770,7 +773,7 @@ export function cdlxsidegap3methodsOpen(prices: { open: ArrayLike<number>; high:
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlxsidegap3methodsOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdlxsidegap3methodsOptions): Cdlxsidegap3methodsResult & { stream: Cdlxsidegap3methodsStream } {
+export function cdlxsidegap3methodsOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlxsidegap3methodsOptions): Cdlxsidegap3methodsResult & { stream: Cdlxsidegap3methodsStream } {
   requireArgument('CDLXSIDEGAP3METHODS openAndFill', 'prices', prices);
   const o = optionsOf('CDLXSIDEGAP3METHODS openAndFill', options);
   const core = coreOf('CDLXSIDEGAP3METHODS openAndFill', o.core);

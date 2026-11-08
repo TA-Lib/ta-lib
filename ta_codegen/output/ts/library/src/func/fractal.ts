@@ -258,14 +258,14 @@ export interface FractalOptions {
    * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
    * with another buffer or with an input.
    */
-  outSwingHigh?: Int32Array | undefined;
+  outSwingHigh?: Int32Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outSwingLow`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
    * suffices, for an `OpenAndFill` `historyLen - lookback`), and share no memory
    * with another buffer or with an input.
    */
-  outSwingLow?: Int32Array | undefined;
+  outSwingLow?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link fractal} returns, and {@link fractalOpenAndFill} with its stream. */
@@ -276,12 +276,12 @@ export interface FractalResult {
    * 100 when the bar `rightBars` back is a strict swing high, 0 otherwise.
    * `outSwingHigh[k]` is the value at input bar `begIdx + k`.
    */
-  outSwingHigh: Int32Array;
+  outSwingHigh: Int32Array<ArrayBuffer>;
   /**
    * 100 when the bar `rightBars` back is a strict swing low, 0 otherwise.
    * `outSwingLow[k]` is the value at input bar `begIdx + k`.
    */
-  outSwingLow: Int32Array;
+  outSwingLow: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -351,8 +351,9 @@ export function fractalDisplayShift(outputIdx: number, options?: FractalOptions)
  * exactly as long as the number of values written, and nothing is padded. A range
  * that ends before {@link fractalLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price series. `low`: Low price series.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price
+ *   series. `low`: Low price series.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link FractalOptions}.
  * @returns `begIdx` and the values; see {@link FractalResult}. Each output is a
@@ -385,7 +386,7 @@ export function fractalDisplayShift(outputIdx: number, options?: FractalOptions)
  * @see [`minindex`](https://ta-lib.org/functions/minindex)
  * @see [`minmaxindex`](https://ta-lib.org/functions/minmaxindex)
  */
-export function fractal(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: FractalOptions): FractalResult {
+export function fractal(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: FractalOptions): FractalResult {
   requireArgument('FRACTAL', 'prices', prices);
   const o = optionsOf('FRACTAL', options);
   if (o.endIdx === undefined) {
@@ -944,8 +945,9 @@ export function fractalOpenAndFillPositional(
  * Opens a live FRACTAL stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link fractal} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price series. `low`: Low price series.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price series. `low`: Low price series.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link FractalOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -968,7 +970,7 @@ export function fractalOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1); // the bar closes
  * ```
  */
-export function fractalOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: FractalOptions): FractalStream {
+export function fractalOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: FractalOptions): FractalStream {
   requireArgument('FRACTAL open', 'prices', prices);
   const o = optionsOf('FRACTAL open', options);
   const optInLeftBars = orDefault(o.leftBars, Core.INTEGER_DEFAULT);
@@ -981,8 +983,9 @@ export function fractalOpen(prices: { high: ArrayLike<number>; low: ArrayLike<nu
  * {@link fractalOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link fractal}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price series. `low`: Low price series.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price series. `low`: Low price series.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link FractalOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1014,7 +1017,7 @@ export function fractalOpen(prices: { high: ArrayLike<number>; low: ArrayLike<nu
  * // outSwingHigh[k] is the value at bar begIdx + k
  * ```
  */
-export function fractalOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: FractalOptions): FractalResult & { stream: FractalStream } {
+export function fractalOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: FractalOptions): FractalResult & { stream: FractalStream } {
   requireArgument('FRACTAL openAndFill', 'prices', prices);
   const o = optionsOf('FRACTAL openAndFill', options);
   const optInLeftBars = orDefault(o.leftBars, Core.INTEGER_DEFAULT);

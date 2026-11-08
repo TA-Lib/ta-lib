@@ -139,7 +139,7 @@ export interface ObvOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link obv} returns, and {@link obvOpenAndFill} with its stream. */
@@ -150,7 +150,7 @@ export interface ObvResult {
    * Cumulative on-balance volume. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -200,8 +200,9 @@ export function obvDisplayShift(outputIdx: number, options?: ObvOptions): number
  * before {@link obvLookback} is a success with empty outputs.
  *
  * @param real - Price series, typically close.
- * @param prices - One series per price component, all of one length. `volume`:
- *   Volume of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `volume`: Volume of
+ *   each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link ObvOptions}.
  * @returns `begIdx` and the values; see {@link ObvResult}. Each output is a view
@@ -226,7 +227,7 @@ export function obvDisplayShift(outputIdx: number, options?: ObvOptions): number
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function obv(real: ArrayLike<number>, prices: { volume: ArrayLike<number> }, options?: ObvOptions): ObvResult {
+export function obv(real: ArrayLike<number>, prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: ObvOptions): ObvResult {
   requireArgument('OBV', 'prices', prices);
   const o = optionsOf('OBV', options);
   if (o.endIdx === undefined) {
@@ -526,8 +527,9 @@ export function obvOpenAndFillPositional(
  * history bar, bit-identical to {@link obv} there.
  *
  * @param real - Warm-up history. Price series, typically close.
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `volume`: Volume of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `volume`: Volume of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link ObvOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -549,7 +551,7 @@ export function obvOpenAndFillPositional(
  * const updated = stream.update(100.9, 12345); // the bar closes
  * ```
  */
-export function obvOpen(real: ArrayLike<number>, prices: { volume: ArrayLike<number> }, options?: ObvOptions): ObvStream {
+export function obvOpen(real: ArrayLike<number>, prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: ObvOptions): ObvStream {
   requireArgument('OBV open', 'prices', prices);
   const o = optionsOf('OBV open', options);
   const core = coreOf('OBV open', o.core);
@@ -561,8 +563,9 @@ export function obvOpen(real: ArrayLike<number>, prices: { volume: ArrayLike<num
  * same pass, bit-identically to {@link obv}.
  *
  * @param real - Warm-up history. Price series, typically close.
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `volume`: Volume of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `volume`: Volume of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link ObvOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -588,7 +591,7 @@ export function obvOpen(real: ArrayLike<number>, prices: { volume: ArrayLike<num
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function obvOpenAndFill(real: ArrayLike<number>, prices: { volume: ArrayLike<number> }, options?: ObvOptions): ObvResult & { stream: ObvStream } {
+export function obvOpenAndFill(real: ArrayLike<number>, prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: ObvOptions): ObvResult & { stream: ObvStream } {
   requireArgument('OBV openAndFill', 'prices', prices);
   const o = optionsOf('OBV openAndFill', options);
   const core = coreOf('OBV openAndFill', o.core);

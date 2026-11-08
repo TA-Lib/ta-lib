@@ -203,7 +203,7 @@ export interface CdlmarubozuOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -218,7 +218,7 @@ export interface CdlmarubozuResult {
    * no pattern. Sign follows the candle color. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -275,9 +275,10 @@ export function cdlmarubozuDisplayShift(outputIdx: number, options?: Cdlmarubozu
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdlmarubozuLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CdlmarubozuOptions}.
  * @returns `begIdx` and the values; see {@link CdlmarubozuResult}. Each output is
@@ -309,7 +310,7 @@ export function cdlmarubozuDisplayShift(outputIdx: number, options?: Cdlmarubozu
  * @see [`cdllongline`](https://ta-lib.org/functions/cdllongline)
  * @see [`cdlbelthold`](https://ta-lib.org/functions/cdlbelthold)
  */
-export function cdlmarubozu(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlmarubozuOptions): CdlmarubozuResult {
+export function cdlmarubozu(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlmarubozuOptions): CdlmarubozuResult {
   requireArgument('CDLMARUBOZU', 'prices', prices);
   const o = optionsOf('CDLMARUBOZU', options);
   if (o.endIdx === undefined) {
@@ -790,9 +791,10 @@ export function cdlmarubozuOpenAndFillPositional(
  * Opens a live CDLMARUBOZU stream over the warm-up history: `value()` starts at
  * the last history bar, bit-identical to {@link cdlmarubozu} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdlmarubozuOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -818,7 +820,7 @@ export function cdlmarubozuOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlmarubozuOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlmarubozuOptions): CdlmarubozuStream {
+export function cdlmarubozuOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlmarubozuOptions): CdlmarubozuStream {
   requireArgument('CDLMARUBOZU open', 'prices', prices);
   const o = optionsOf('CDLMARUBOZU open', options);
   const core = coreOf('CDLMARUBOZU open', o.core);
@@ -829,9 +831,10 @@ export function cdlmarubozuOpen(prices: { open: ArrayLike<number>; high: ArrayLi
  * {@link cdlmarubozuOpen} that also computes the outputs over the whole history in
  * the same pass, bit-identically to {@link cdlmarubozu}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdlmarubozuOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -861,7 +864,7 @@ export function cdlmarubozuOpen(prices: { open: ArrayLike<number>; high: ArrayLi
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlmarubozuOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlmarubozuOptions): CdlmarubozuResult & { stream: CdlmarubozuStream } {
+export function cdlmarubozuOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlmarubozuOptions): CdlmarubozuResult & { stream: CdlmarubozuStream } {
   requireArgument('CDLMARUBOZU openAndFill', 'prices', prices);
   const o = optionsOf('CDLMARUBOZU openAndFill', options);
   const core = coreOf('CDLMARUBOZU openAndFill', o.core);

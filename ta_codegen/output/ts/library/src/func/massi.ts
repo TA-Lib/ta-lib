@@ -377,7 +377,7 @@ export interface MassiOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link massi} returns, and {@link massiOpenAndFill} with its stream. */
@@ -388,7 +388,7 @@ export interface MassiResult {
    * Summed ratio of the two smoothed high-low ranges. `values[k]` is the value at
    * input bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -463,8 +463,9 @@ export function massiDisplayShift(outputIdx: number, options?: MassiOptions): nu
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link massiLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price. `low`: Low price.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price.
+ *   `low`: Low price.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link MassiOptions}.
  * @returns `begIdx` and the values; see {@link MassiResult}. Each output is a view
@@ -499,7 +500,7 @@ export function massiDisplayShift(outputIdx: number, options?: MassiOptions): nu
  * @see [`ema`](https://ta-lib.org/functions/ema)
  * @see [`sum`](https://ta-lib.org/functions/sum)
  */
-export function massi(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: MassiOptions): MassiResult {
+export function massi(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: MassiOptions): MassiResult {
   requireArgument('MASSI', 'prices', prices);
   const o = optionsOf('MASSI', options);
   if (o.endIdx === undefined) {
@@ -1089,8 +1090,9 @@ export function massiOpenAndFillPositional(
  * Opens a live MASSI stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link massi} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price. `low`: Low price.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price. `low`: Low price.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link MassiOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1113,7 +1115,7 @@ export function massiOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1); // the bar closes
  * ```
  */
-export function massiOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: MassiOptions): MassiStream {
+export function massiOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: MassiOptions): MassiStream {
   requireArgument('MASSI open', 'prices', prices);
   const o = optionsOf('MASSI open', options);
   const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
@@ -1126,8 +1128,9 @@ export function massiOpen(prices: { high: ArrayLike<number>; low: ArrayLike<numb
  * {@link massiOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link massi}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price. `low`: Low price.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price. `low`: Low price.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link MassiOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1157,7 +1160,7 @@ export function massiOpen(prices: { high: ArrayLike<number>; low: ArrayLike<numb
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function massiOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: MassiOptions): MassiResult & { stream: MassiStream } {
+export function massiOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: MassiOptions): MassiResult & { stream: MassiStream } {
   requireArgument('MASSI openAndFill', 'prices', prices);
   const o = optionsOf('MASSI openAndFill', options);
   const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);

@@ -234,14 +234,14 @@ export interface MinmaxindexOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outMinIdx?: Int32Array | undefined;
+  outMinIdx?: Int32Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outMaxIdx`, written from index 0 and allocated when omitted. It must
    * hold the values produced (for a batch call the input length always suffices, for
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outMaxIdx?: Int32Array | undefined;
+  outMaxIdx?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -255,12 +255,12 @@ export interface MinmaxindexResult {
    * Absolute index (into real) of the window minimum. `outMinIdx[k]` is the value at
    * input bar `begIdx + k`.
    */
-  outMinIdx: Int32Array;
+  outMinIdx: Int32Array<ArrayBuffer>;
   /**
    * Absolute index (into real) of the window maximum. `outMaxIdx[k]` is the value at
    * input bar `begIdx + k`.
    */
-  outMaxIdx: Int32Array;
+  outMaxIdx: Int32Array<ArrayBuffer>;
 }
 
 /**

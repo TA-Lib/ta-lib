@@ -240,6 +240,16 @@ pub fn input_param_name(input_name: &str) -> String {
 /// The name of the one object parameter a price group is passed as.
 pub const PRICES_PARAM: &str = "prices";
 
+/// The keys of a price object, in the order the metadata API's `PriceInput` lists them.
+const PRICE_COMPONENT_ORDER: [crate::ir::PriceComponent; 6] = [
+    crate::ir::PriceComponent::Open,
+    crate::ir::PriceComponent::High,
+    crate::ir::PriceComponent::Low,
+    crate::ir::PriceComponent::Close,
+    crate::ir::PriceComponent::Volume,
+    crate::ir::PriceComponent::OpenInterest,
+];
+
 /// One positional parameter of the idiomatic API: a plain input, or a price
 /// group as one object.
 pub struct ApiInput<'a> {
@@ -268,13 +278,24 @@ pub fn api_inputs(func: &FuncDef) -> Vec<ApiInput<'_>> {
             }
             Grouped::Price(comps) => {
                 assert!(!out.iter().any(|a: &ApiInput| a.is_price), "{}: two price groups", func.name);
-                let mut keys = Vec::new();
-                let mut legs = Vec::new();
-                for i in comps {
-                    let key = i.price.expect("a price component").component.token();
-                    keys.push(format!("{key}: ArrayLike<number>"));
-                    legs.push((i, format!("{PRICES_PARAM}.{key}")));
-                }
+                let legs: Vec<(&crate::ir::Input, String)> = comps
+                    .iter()
+                    .map(|i| (*i, format!("{PRICES_PARAM}.{}", i.price.expect("a price component").component.token())))
+                    .collect();
+                // The components read are required; the others are optional and
+                // ignored, so a whole bar object passes and a typo still fails.
+                let read: Vec<&str> = comps.iter().map(|i| i.price.expect("a price component").component.token()).collect();
+                let keys: Vec<String> = PRICE_COMPONENT_ORDER
+                    .iter()
+                    .map(|c| {
+                        let key = c.token();
+                        if read.contains(&key) {
+                            format!("{key}: ArrayLike<number>")
+                        } else {
+                            format!("{key}?: ArrayLike<number> | undefined")
+                        }
+                    })
+                    .collect();
                 out.push(ApiInput { name: PRICES_PARAM.to_string(), ty: format!("{{ {} }}", keys.join("; ")), legs, is_price: true });
             }
         }
@@ -937,6 +958,13 @@ pub(crate) fn array_ts_type(t: &ParamType) -> &'static str {
     }
 }
 
+/// A public output's type, buffer type included: an allocated output is
+/// `ArrayBuffer`-backed and a caller's buffer must be, so a result goes where a
+/// `BufferSource` is wanted without a cast. TypeScript reads the generic from 5.7.
+pub(crate) fn public_array_ts_type(t: &ParamType) -> String {
+    format!("{}<ArrayBuffer>", array_ts_type(t))
+}
+
 /// Each optional parameter's default and range checks; `fail` is what a
 /// rejection returns. An enum parameter is a number at run time, so it is
 /// range-checked as C checks it.
@@ -1494,7 +1522,7 @@ fn gen_api_types(func: &FuncDef, svc: &Services) -> String {
     }
     for out in &func.outputs {
         s.push_str(&super::ts_doc::member(&super::ts_doc::buffer_text(func, out)));
-        let _ = writeln!(s, "  {}?: {} | undefined;", buffer_key(func, out), array_ts_type(&out.param_type));
+        let _ = writeln!(s, "  {}?: {} | undefined;", buffer_key(func, out), public_array_ts_type(&out.param_type));
     }
     s.push_str("}\n");
     let _ = write!(s, "\n{}export interface {} {{\n", super::ts_doc::result_docs(func), names.result_type);
@@ -1502,7 +1530,7 @@ fn gen_api_types(func: &FuncDef, svc: &Services) -> String {
     s.push_str("  begIdx: number;\n");
     for out in &func.outputs {
         s.push_str(&super::ts_doc::member(&super::ts_doc::result_field_text(func, out)));
-        let _ = writeln!(s, "  {}: {};", result_key(func, out), array_ts_type(&out.param_type));
+        let _ = writeln!(s, "  {}: {};", result_key(func, out), public_array_ts_type(&out.param_type));
     }
     s.push_str("}\n");
     s

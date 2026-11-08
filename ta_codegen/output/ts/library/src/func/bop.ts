@@ -153,7 +153,7 @@ export interface BopOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link bop} returns, and {@link bopOpenAndFill} with its stream. */
@@ -164,7 +164,7 @@ export interface BopResult {
    * Balance of Power value per bar. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -214,9 +214,10 @@ export function bopDisplayShift(outputIdx: number, options?: BopOptions): number
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link bopLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link BopOptions}.
  * @returns `begIdx` and the values; see {@link BopResult}. Each output is a view
@@ -245,7 +246,7 @@ export function bopDisplayShift(outputIdx: number, options?: BopOptions): number
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function bop(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: BopOptions): BopResult {
+export function bop(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: BopOptions): BopResult {
   requireArgument('BOP', 'prices', prices);
   const o = optionsOf('BOP', options);
   if (o.endIdx === undefined) {
@@ -584,9 +585,10 @@ export function bopOpenAndFillPositional(
  * Opens a live BOP stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link bop} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link BopOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -612,7 +614,7 @@ export function bopOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function bopOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: BopOptions): BopStream {
+export function bopOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: BopOptions): BopStream {
   requireArgument('BOP open', 'prices', prices);
   const o = optionsOf('BOP open', options);
   const core = coreOf('BOP open', o.core);
@@ -623,9 +625,10 @@ export function bopOpen(prices: { open: ArrayLike<number>; high: ArrayLike<numbe
  * {@link bopOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link bop}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link BopOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -655,7 +658,7 @@ export function bopOpen(prices: { open: ArrayLike<number>; high: ArrayLike<numbe
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function bopOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: BopOptions): BopResult & { stream: BopStream } {
+export function bopOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: BopOptions): BopResult & { stream: BopStream } {
   requireArgument('BOP openAndFill', 'prices', prices);
   const o = optionsOf('BOP openAndFill', options);
   const core = coreOf('BOP openAndFill', o.core);

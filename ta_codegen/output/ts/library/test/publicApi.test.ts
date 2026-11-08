@@ -48,7 +48,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { Core, CoreBuilder, FuncUnstId, OutRange, TALibError, ema, sma, smaLookback, smaOpen } from 'ta-lib';
+import { Core, CoreBuilder, FuncUnstId, OutRange, TALibError, atr, cdldoji, ema, macd, sma, smaLookback, smaOpen } from 'ta-lib';
 
 const close = Float64Array.from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
@@ -90,4 +90,34 @@ test('a Core built with an unstable period changes where the output starts', () 
   const plain = ema(close, { timePeriod: 3, outReal: a, core: Core.DEFAULT });
   const tuned = ema(close, { timePeriod: 3, outReal: b, core });
   assert.equal(tuned.begIdx, plain.begIdx + 3);
+});
+
+test('every output is an ArrayBuffer-backed typed array, by type and in fact', () => {
+  // Compiles only while the result fields are Float64Array<ArrayBuffer> / Int32Array<ArrayBuffer>.
+  const allocated: ArrayBuffer = sma(close, { timePeriod: 3 }).values.buffer;
+  assert.ok(allocated instanceof ArrayBuffer && !(allocated instanceof SharedArrayBuffer));
+  const own = new Float64Array(close.length);
+  const view: Float64Array<ArrayBuffer> = sma(close, { timePeriod: 3, outReal: own }).values;
+  assert.equal(view.buffer, own.buffer);
+  const multi: ArrayBuffer = macd(close).outMacd.buffer;
+  assert.ok(multi instanceof ArrayBuffer);
+  const bars = { open: close, high: close, low: close, close };
+  const pattern: ArrayBuffer = cdldoji(bars).values.buffer;
+  assert.ok(pattern instanceof ArrayBuffer);
+  const shared = new Float64Array(new SharedArrayBuffer(8 * close.length));
+  // @ts-expect-error a buffer over a SharedArrayBuffer is not an outReal: the type is the rule, the call does not inspect it
+  const r = sma(close, { timePeriod: 3, outReal: shared });
+  assert.equal(r.values.length, 8);
+});
+
+test('a price object may carry more components than the function reads', () => {
+  // An inline literal, so the excess-property check runs: the unread components must be declared, not merely tolerated.
+  const full = atr({ open: close, high: close, low: close, close, volume: close }, { timePeriod: 3 });
+  const needed = atr({ high: close, low: close, close }, { timePeriod: 3 });
+  // @ts-expect-error a misspelt component is still rejected at compile time
+  atr({ high: close, low: close, close, hgih: close }, { timePeriod: 3 });
+  assert.deepEqual(Array.from(full.values), Array.from(needed.values));
+  assert.equal(full.begIdx, needed.begIdx);
+  // @ts-expect-error a component the function reads is still required, and absent at run time it is TA_BAD_PARAM
+  assert.throws(() => atr({ high: close, low: close }, { timePeriod: 3 }), (e: unknown) => e instanceof TALibError && e.code === 'TA_BAD_PARAM');
 });

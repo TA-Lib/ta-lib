@@ -492,7 +492,7 @@ export interface KvoOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outKvo?: Float64Array | undefined;
+  outKvo?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outKvoSignal`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -500,7 +500,7 @@ export interface KvoOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outKvoSignal?: Float64Array | undefined;
+  outKvoSignal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link kvo} returns, and {@link kvoOpenAndFill} with its stream. */
@@ -508,12 +508,12 @@ export interface KvoResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /** Klinger Volume Oscillator. `outKvo[k]` is the value at input bar `begIdx + k`. */
-  outKvo: Float64Array;
+  outKvo: Float64Array<ArrayBuffer>;
   /**
    * Trigger line, an exponential average of the oscillator. `outKvoSignal[k]` is the
    * value at input bar `begIdx + k`.
    */
-  outKvoSignal: Float64Array;
+  outKvoSignal: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -590,9 +590,10 @@ export function kvoDisplayShift(outputIdx: number, options?: KvoOptions): number
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link kvoLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price series. `low`: Low price series. `close`: Close price series. `volume`:
- *   Volume series.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price
+ *   series. `low`: Low price series. `close`: Close price series. `volume`: Volume
+ *   series.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link KvoOptions}.
  * @returns `begIdx` and the values; see {@link KvoResult}. Each output is a view
@@ -630,7 +631,7 @@ export function kvoDisplayShift(outputIdx: number, options?: KvoOptions): number
  * @see [`mfi`](https://ta-lib.org/functions/mfi)
  * @see [`ad`](https://ta-lib.org/functions/ad)
  */
-export function kvo(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number> }, options?: KvoOptions): KvoResult {
+export function kvo(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: KvoOptions): KvoResult {
   requireArgument('KVO', 'prices', prices);
   const o = optionsOf('KVO', options);
   if (o.endIdx === undefined) {
@@ -1532,9 +1533,10 @@ export function kvoOpenAndFillPositional(
  * Opens a live KVO stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link kvo} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price series. `low`: Low price series. `close`: Close price
- *   series. `volume`: Volume series.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price series. `low`: Low price series. `close`: Close price series.
+ *   `volume`: Volume series.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link KvoOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1565,7 +1567,7 @@ export function kvoOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9, 12345); // the bar closes
  * ```
  */
-export function kvoOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number> }, options?: KvoOptions): KvoStream {
+export function kvoOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: KvoOptions): KvoStream {
   requireArgument('KVO open', 'prices', prices);
   const o = optionsOf('KVO open', options);
   const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
@@ -1579,9 +1581,10 @@ export function kvoOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * {@link kvoOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link kvo}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price series. `low`: Low price series. `close`: Close price
- *   series. `volume`: Volume series.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price series. `low`: Low price series. `close`: Close price series.
+ *   `volume`: Volume series.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link KvoOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1621,7 +1624,7 @@ export function kvoOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * // outKvo[k] is the value at bar begIdx + k
  * ```
  */
-export function kvoOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number> }, options?: KvoOptions): KvoResult & { stream: KvoStream } {
+export function kvoOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: KvoOptions): KvoResult & { stream: KvoStream } {
   requireArgument('KVO openAndFill', 'prices', prices);
   const o = optionsOf('KVO openAndFill', options);
   const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);

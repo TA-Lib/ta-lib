@@ -173,7 +173,7 @@ export interface AdOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link ad} returns, and {@link adOpenAndFill} with its stream. */
@@ -184,7 +184,7 @@ export interface AdResult {
    * Cumulative A/D line value per bar. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -234,9 +234,10 @@ export function adDisplayShift(outputIdx: number, options?: AdOptions): number {
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link adLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
- *   bar. `volume`: Volume of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
+ *   `volume`: Volume of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link AdOptions}.
  * @returns `begIdx` and the values; see {@link AdResult}. Each output is a view of
@@ -267,7 +268,7 @@ export function adDisplayShift(outputIdx: number, options?: AdOptions): number {
  * @see [`adosc`](https://ta-lib.org/functions/adosc)
  * @see [`obv`](https://ta-lib.org/functions/obv)
  */
-export function ad(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number> }, options?: AdOptions): AdResult {
+export function ad(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: AdOptions): AdResult {
   requireArgument('AD', 'prices', prices);
   const o = optionsOf('AD', options);
   if (o.endIdx === undefined) {
@@ -632,9 +633,10 @@ export function adOpenAndFillPositional(
  * Opens a live AD stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link ad} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar. `volume`: Volume of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar. `volume`: Volume of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link AdOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -660,7 +662,7 @@ export function adOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9, 12345); // the bar closes
  * ```
  */
-export function adOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number> }, options?: AdOptions): AdStream {
+export function adOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: AdOptions): AdStream {
   requireArgument('AD open', 'prices', prices);
   const o = optionsOf('AD open', options);
   const core = coreOf('AD open', o.core);
@@ -671,9 +673,10 @@ export function adOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>
  * {@link adOpen} that also computes the outputs over the whole history in the same
  * pass, bit-identically to {@link ad}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar. `volume`: Volume of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar. `volume`: Volume of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link AdOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -703,7 +706,7 @@ export function adOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function adOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number> }, options?: AdOptions): AdResult & { stream: AdStream } {
+export function adOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: AdOptions): AdResult & { stream: AdStream } {
   requireArgument('AD openAndFill', 'prices', prices);
   const o = optionsOf('AD openAndFill', options);
   const core = coreOf('AD openAndFill', o.core);

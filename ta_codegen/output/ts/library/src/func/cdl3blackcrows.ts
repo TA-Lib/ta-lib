@@ -231,7 +231,7 @@ export interface Cdl3blackcrowsOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -245,7 +245,7 @@ export interface Cdl3blackcrowsResult {
    * -100 when the bearish pattern is detected, 0 otherwise. Never emits +100.
    * `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -301,9 +301,10 @@ export function cdl3blackcrowsDisplayShift(outputIdx: number, options?: Cdl3blac
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdl3blackcrowsLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link Cdl3blackcrowsOptions}.
  * @returns `begIdx` and the values; see {@link Cdl3blackcrowsResult}. Each output
@@ -335,7 +336,7 @@ export function cdl3blackcrowsDisplayShift(outputIdx: number, options?: Cdl3blac
  * @see [`cdlidentical3crows`](https://ta-lib.org/functions/cdlidentical3crows)
  * @see [`cdladvanceblock`](https://ta-lib.org/functions/cdladvanceblock)
  */
-export function cdl3blackcrows(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3blackcrowsOptions): Cdl3blackcrowsResult {
+export function cdl3blackcrows(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3blackcrowsOptions): Cdl3blackcrowsResult {
   requireArgument('CDL3BLACKCROWS', 'prices', prices);
   const o = optionsOf('CDL3BLACKCROWS', options);
   if (o.endIdx === undefined) {
@@ -901,9 +902,10 @@ export function cdl3blackcrowsOpenAndFillPositional(
  * Opens a live CDL3BLACKCROWS stream over the warm-up history: `value()` starts at
  * the last history bar, bit-identical to {@link cdl3blackcrows} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link Cdl3blackcrowsOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -929,7 +931,7 @@ export function cdl3blackcrowsOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdl3blackcrowsOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3blackcrowsOptions): Cdl3blackcrowsStream {
+export function cdl3blackcrowsOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3blackcrowsOptions): Cdl3blackcrowsStream {
   requireArgument('CDL3BLACKCROWS open', 'prices', prices);
   const o = optionsOf('CDL3BLACKCROWS open', options);
   const core = coreOf('CDL3BLACKCROWS open', o.core);
@@ -940,9 +942,10 @@ export function cdl3blackcrowsOpen(prices: { open: ArrayLike<number>; high: Arra
  * {@link cdl3blackcrowsOpen} that also computes the outputs over the whole history
  * in the same pass, bit-identically to {@link cdl3blackcrows}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link Cdl3blackcrowsOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -972,7 +975,7 @@ export function cdl3blackcrowsOpen(prices: { open: ArrayLike<number>; high: Arra
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdl3blackcrowsOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3blackcrowsOptions): Cdl3blackcrowsResult & { stream: Cdl3blackcrowsStream } {
+export function cdl3blackcrowsOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3blackcrowsOptions): Cdl3blackcrowsResult & { stream: Cdl3blackcrowsStream } {
   requireArgument('CDL3BLACKCROWS openAndFill', 'prices', prices);
   const o = optionsOf('CDL3BLACKCROWS openAndFill', options);
   const core = coreOf('CDL3BLACKCROWS openAndFill', o.core);

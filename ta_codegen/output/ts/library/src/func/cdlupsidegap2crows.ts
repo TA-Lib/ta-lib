@@ -219,7 +219,7 @@ export interface Cdlupsidegap2crowsOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -233,7 +233,7 @@ export interface Cdlupsidegap2crowsResult {
    * -100 on a pattern bar, 0 otherwise. Bearish-only: this pattern never emits +100.
    * `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -294,9 +294,10 @@ export function cdlupsidegap2crowsDisplayShift(outputIdx: number, options?: Cdlu
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdlupsidegap2crowsLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link Cdlupsidegap2crowsOptions}.
  * @returns `begIdx` and the values; see {@link Cdlupsidegap2crowsResult}. Each
@@ -327,7 +328,7 @@ export function cdlupsidegap2crowsDisplayShift(outputIdx: number, options?: Cdlu
  * @see [`cdl2crows`](https://ta-lib.org/functions/cdl2crows)
  * @see [`cdlgapsidesidewhite`](https://ta-lib.org/functions/cdlgapsidesidewhite)
  */
-export function cdlupsidegap2crows(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdlupsidegap2crowsOptions): Cdlupsidegap2crowsResult {
+export function cdlupsidegap2crows(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlupsidegap2crowsOptions): Cdlupsidegap2crowsResult {
   requireArgument('CDLUPSIDEGAP2CROWS', 'prices', prices);
   const o = optionsOf('CDLUPSIDEGAP2CROWS', options);
   if (o.endIdx === undefined) {
@@ -879,9 +880,10 @@ export function cdlupsidegap2crowsOpenAndFillPositional(
  * starts at the last history bar, bit-identical to {@link cdlupsidegap2crows}
  * there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link Cdlupsidegap2crowsOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -907,7 +909,7 @@ export function cdlupsidegap2crowsOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlupsidegap2crowsOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdlupsidegap2crowsOptions): Cdlupsidegap2crowsStream {
+export function cdlupsidegap2crowsOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlupsidegap2crowsOptions): Cdlupsidegap2crowsStream {
   requireArgument('CDLUPSIDEGAP2CROWS open', 'prices', prices);
   const o = optionsOf('CDLUPSIDEGAP2CROWS open', options);
   const core = coreOf('CDLUPSIDEGAP2CROWS open', o.core);
@@ -918,9 +920,10 @@ export function cdlupsidegap2crowsOpen(prices: { open: ArrayLike<number>; high: 
  * {@link cdlupsidegap2crowsOpen} that also computes the outputs over the whole
  * history in the same pass, bit-identically to {@link cdlupsidegap2crows}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link Cdlupsidegap2crowsOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -950,7 +953,7 @@ export function cdlupsidegap2crowsOpen(prices: { open: ArrayLike<number>; high: 
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlupsidegap2crowsOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdlupsidegap2crowsOptions): Cdlupsidegap2crowsResult & { stream: Cdlupsidegap2crowsStream } {
+export function cdlupsidegap2crowsOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlupsidegap2crowsOptions): Cdlupsidegap2crowsResult & { stream: Cdlupsidegap2crowsStream } {
   requireArgument('CDLUPSIDEGAP2CROWS openAndFill', 'prices', prices);
   const o = optionsOf('CDLUPSIDEGAP2CROWS openAndFill', options);
   const core = coreOf('CDLUPSIDEGAP2CROWS openAndFill', o.core);

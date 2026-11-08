@@ -121,7 +121,7 @@ export interface DivOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link div} returns, and {@link divOpenAndFill} with its stream. */
@@ -132,7 +132,7 @@ export interface DivResult {
    * Per-element quotient real0/real1. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**

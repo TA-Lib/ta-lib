@@ -226,7 +226,7 @@ export interface CdlinvertedhammerOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -240,7 +240,7 @@ export interface CdlinvertedhammerResult {
    * +100 when the inverted hammer is detected, 0 otherwise. Never emits -100; the
    * pattern is always bullish. `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -300,9 +300,10 @@ export function cdlinvertedhammerDisplayShift(outputIdx: number, options?: Cdlin
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdlinvertedhammerLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CdlinvertedhammerOptions}.
  * @returns `begIdx` and the values; see {@link CdlinvertedhammerResult}. Each
@@ -334,7 +335,7 @@ export function cdlinvertedhammerDisplayShift(outputIdx: number, options?: Cdlin
  * @see [`cdlshootingstar`](https://ta-lib.org/functions/cdlshootingstar)
  * @see [`cdlhangingman`](https://ta-lib.org/functions/cdlhangingman)
  */
-export function cdlinvertedhammer(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlinvertedhammerOptions): CdlinvertedhammerResult {
+export function cdlinvertedhammer(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlinvertedhammerOptions): CdlinvertedhammerResult {
   requireArgument('CDLINVERTEDHAMMER', 'prices', prices);
   const o = optionsOf('CDLINVERTEDHAMMER', options);
   if (o.endIdx === undefined) {
@@ -906,9 +907,10 @@ export function cdlinvertedhammerOpenAndFillPositional(
  * Opens a live CDLINVERTEDHAMMER stream over the warm-up history: `value()` starts
  * at the last history bar, bit-identical to {@link cdlinvertedhammer} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdlinvertedhammerOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -934,7 +936,7 @@ export function cdlinvertedhammerOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlinvertedhammerOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlinvertedhammerOptions): CdlinvertedhammerStream {
+export function cdlinvertedhammerOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlinvertedhammerOptions): CdlinvertedhammerStream {
   requireArgument('CDLINVERTEDHAMMER open', 'prices', prices);
   const o = optionsOf('CDLINVERTEDHAMMER open', options);
   const core = coreOf('CDLINVERTEDHAMMER open', o.core);
@@ -945,9 +947,10 @@ export function cdlinvertedhammerOpen(prices: { open: ArrayLike<number>; high: A
  * {@link cdlinvertedhammerOpen} that also computes the outputs over the whole
  * history in the same pass, bit-identically to {@link cdlinvertedhammer}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdlinvertedhammerOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -977,7 +980,7 @@ export function cdlinvertedhammerOpen(prices: { open: ArrayLike<number>; high: A
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlinvertedhammerOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlinvertedhammerOptions): CdlinvertedhammerResult & { stream: CdlinvertedhammerStream } {
+export function cdlinvertedhammerOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlinvertedhammerOptions): CdlinvertedhammerResult & { stream: CdlinvertedhammerStream } {
   requireArgument('CDLINVERTEDHAMMER openAndFill', 'prices', prices);
   const o = optionsOf('CDLINVERTEDHAMMER openAndFill', options);
   const core = coreOf('CDLINVERTEDHAMMER openAndFill', o.core);

@@ -114,7 +114,7 @@ export interface FloorOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link floor} returns, and {@link floorOpenAndFill} with its stream. */
@@ -125,7 +125,7 @@ export interface FloorResult {
    * Each input rounded down to nearest integer. `values[k]` is the value at input
    * bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**

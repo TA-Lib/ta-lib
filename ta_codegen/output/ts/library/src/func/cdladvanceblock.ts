@@ -338,7 +338,7 @@ export interface CdladvanceblockOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -352,7 +352,7 @@ export interface CdladvanceblockResult {
    * -100 on a detected pattern (always bearish), 0 otherwise; never emits +100.
    * `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -412,9 +412,10 @@ export function cdladvanceblockDisplayShift(outputIdx: number, options?: Cdladva
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdladvanceblockLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CdladvanceblockOptions}.
  * @returns `begIdx` and the values; see {@link CdladvanceblockResult}. Each output
@@ -445,7 +446,7 @@ export function cdladvanceblockDisplayShift(outputIdx: number, options?: Cdladva
  * @see [`cdl3whitesoldiers`](https://ta-lib.org/functions/cdl3whitesoldiers)
  * @see [`cdlstalledpattern`](https://ta-lib.org/functions/cdlstalledpattern)
  */
-export function cdladvanceblock(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdladvanceblockOptions): CdladvanceblockResult {
+export function cdladvanceblock(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdladvanceblockOptions): CdladvanceblockResult {
   requireArgument('CDLADVANCEBLOCK', 'prices', prices);
   const o = optionsOf('CDLADVANCEBLOCK', options);
   if (o.endIdx === undefined) {
@@ -1369,9 +1370,10 @@ export function cdladvanceblockOpenAndFillPositional(
  * Opens a live CDLADVANCEBLOCK stream over the warm-up history: `value()` starts
  * at the last history bar, bit-identical to {@link cdladvanceblock} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdladvanceblockOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1397,7 +1399,7 @@ export function cdladvanceblockOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdladvanceblockOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdladvanceblockOptions): CdladvanceblockStream {
+export function cdladvanceblockOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdladvanceblockOptions): CdladvanceblockStream {
   requireArgument('CDLADVANCEBLOCK open', 'prices', prices);
   const o = optionsOf('CDLADVANCEBLOCK open', options);
   const core = coreOf('CDLADVANCEBLOCK open', o.core);
@@ -1408,9 +1410,10 @@ export function cdladvanceblockOpen(prices: { open: ArrayLike<number>; high: Arr
  * {@link cdladvanceblockOpen} that also computes the outputs over the whole
  * history in the same pass, bit-identically to {@link cdladvanceblock}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdladvanceblockOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1440,7 +1443,7 @@ export function cdladvanceblockOpen(prices: { open: ArrayLike<number>; high: Arr
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdladvanceblockOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdladvanceblockOptions): CdladvanceblockResult & { stream: CdladvanceblockStream } {
+export function cdladvanceblockOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdladvanceblockOptions): CdladvanceblockResult & { stream: CdladvanceblockStream } {
   requireArgument('CDLADVANCEBLOCK openAndFill', 'prices', prices);
   const o = optionsOf('CDLADVANCEBLOCK openAndFill', options);
   const core = coreOf('CDLADVANCEBLOCK openAndFill', o.core);

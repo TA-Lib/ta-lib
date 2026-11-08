@@ -300,3 +300,17 @@ test('every exported enum and flag object is frozen: a write cannot redirect a g
   }
   assert.ok(Object.keys(flags).length >= 7, `${Object.keys(flags).length} flag objects`);
 });
+
+test('candleSetting reads back what the builder stored, and rejects the wildcard', () => {
+  const T = CandleSettingType;
+  const d = Core.DEFAULT.candleSetting(T.BODY_DOJI);
+  assert.deepEqual([d.settingType, d.rangeType, d.avgPeriod, d.factor], [T.BODY_DOJI, RangeType.HIGH_LOW, 10, 0.1]);
+  const core = new CoreBuilder().candleSetting(T.BODY_DOJI, RangeType.REAL_BODY, 7, 0.25).build();
+  const s = core.candleSetting(T.BODY_DOJI);
+  assert.deepEqual([s.settingType, s.rangeType, s.avgPeriod, s.factor], [T.BODY_DOJI, RangeType.REAL_BODY, 7, 0.25]);
+  assert.deepEqual(core.candleSetting(T.NEAR), Core.DEFAULT.candleSetting(T.NEAR), 'other settings keep their defaults');
+  assertBadParam(() => Core.DEFAULT.candleSetting(T.ALL_CANDLE_SETTINGS as OneSetting));
+  assertBadParam(() => Core.DEFAULT.candleSetting(-1 as OneSetting));
+  assertBadParam(() => Core.DEFAULT.candleSetting(12 as OneSetting));
+  assertBadParam(() => Core.DEFAULT.candleSetting(1.5 as OneSetting));
+});

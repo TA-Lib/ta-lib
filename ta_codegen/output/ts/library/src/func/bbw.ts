@@ -417,7 +417,7 @@ export interface BbwOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link bbw} returns, and {@link bbwOpenAndFill} with its stream. */
@@ -428,7 +428,7 @@ export interface BbwResult {
    * Width of the bands as a percentage of the middle band. `values[k]` is the value
    * at input bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**

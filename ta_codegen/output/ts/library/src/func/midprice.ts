@@ -312,7 +312,7 @@ export interface MidpriceOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link midprice} returns, and {@link midpriceOpenAndFill} with its stream. */
@@ -323,7 +323,7 @@ export interface MidpriceResult {
    * Midpoint of the period's high/low extremes. `values[k]` is the value at input
    * bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -373,8 +373,9 @@ export function midpriceDisplayShift(outputIdx: number, options?: MidpriceOption
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link midpriceLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link MidpriceOptions}.
  * @returns `begIdx` and the values; see {@link MidpriceResult}. Each output is a
@@ -402,7 +403,7 @@ export function midpriceDisplayShift(outputIdx: number, options?: MidpriceOption
  * @see [`midpoint`](https://ta-lib.org/functions/midpoint)
  * @see [`medprice`](https://ta-lib.org/functions/medprice)
  */
-export function midprice(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: MidpriceOptions): MidpriceResult {
+export function midprice(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: MidpriceOptions): MidpriceResult {
   requireArgument('MIDPRICE', 'prices', prices);
   const o = optionsOf('MIDPRICE', options);
   if (o.endIdx === undefined) {
@@ -928,8 +929,9 @@ export function midpriceOpenAndFillPositional(
  * Opens a live MIDPRICE stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link midprice} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link MidpriceOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -952,7 +954,7 @@ export function midpriceOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1); // the bar closes
  * ```
  */
-export function midpriceOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: MidpriceOptions): MidpriceStream {
+export function midpriceOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: MidpriceOptions): MidpriceStream {
   requireArgument('MIDPRICE open', 'prices', prices);
   const o = optionsOf('MIDPRICE open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -964,8 +966,9 @@ export function midpriceOpen(prices: { high: ArrayLike<number>; low: ArrayLike<n
  * {@link midpriceOpen} that also computes the outputs over the whole history in
  * the same pass, bit-identically to {@link midprice}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link MidpriceOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -994,7 +997,7 @@ export function midpriceOpen(prices: { high: ArrayLike<number>; low: ArrayLike<n
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function midpriceOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: MidpriceOptions): MidpriceResult & { stream: MidpriceStream } {
+export function midpriceOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: MidpriceOptions): MidpriceResult & { stream: MidpriceStream } {
   requireArgument('MIDPRICE openAndFill', 'prices', prices);
   const o = optionsOf('MIDPRICE openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

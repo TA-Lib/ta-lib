@@ -472,7 +472,7 @@ export interface StochOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outSlowK?: Float64Array | undefined;
+  outSlowK?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outSlowD`, written from index 0 and allocated when omitted. It must
    * hold the values produced (for a batch call the input length always suffices, for
@@ -480,7 +480,7 @@ export interface StochOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outSlowD?: Float64Array | undefined;
+  outSlowD?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link stoch} returns, and {@link stochOpenAndFill} with its stream. */
@@ -491,12 +491,12 @@ export interface StochResult {
    * Raw FastK smoothed by SlowK_Period MA. `outSlowK[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outSlowK: Float64Array;
+  outSlowK: Float64Array<ArrayBuffer>;
   /**
    * Signal line: SlowK smoothed by SlowD_Period MA. `outSlowD[k]` is the value at
    * input bar `begIdx + k`.
    */
-  outSlowD: Float64Array;
+  outSlowD: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -551,9 +551,9 @@ export function stochDisplayShift(outputIdx: number, options?: StochOptions): nu
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link stochLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
- *   bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link StochOptions}.
  * @returns `begIdx` and the values; see {@link StochResult}. Each output is a view
@@ -590,7 +590,7 @@ export function stochDisplayShift(outputIdx: number, options?: StochOptions): nu
  * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)
  * @see [`ma`](https://ta-lib.org/functions/ma)
  */
-export function stoch(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: StochOptions): StochResult {
+export function stoch(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: StochOptions): StochResult {
   requireArgument('STOCH', 'prices', prices);
   const o = optionsOf('STOCH', options);
   if (o.endIdx === undefined) {
@@ -1438,9 +1438,10 @@ export function stochOpenAndFillPositional(
  * Opens a live STOCH stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link stoch} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link StochOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1471,7 +1472,7 @@ export function stochOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function stochOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: StochOptions): StochStream {
+export function stochOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: StochOptions): StochStream {
   requireArgument('STOCH open', 'prices', prices);
   const o = optionsOf('STOCH open', options);
   const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);
@@ -1487,9 +1488,10 @@ export function stochOpen(prices: { high: ArrayLike<number>; low: ArrayLike<numb
  * {@link stochOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link stoch}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link StochOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1524,7 +1526,7 @@ export function stochOpen(prices: { high: ArrayLike<number>; low: ArrayLike<numb
  * // outSlowK[k] is the value at bar begIdx + k
  * ```
  */
-export function stochOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: StochOptions): StochResult & { stream: StochStream } {
+export function stochOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: StochOptions): StochResult & { stream: StochStream } {
   requireArgument('STOCH openAndFill', 'prices', prices);
   const o = optionsOf('STOCH openAndFill', options);
   const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);

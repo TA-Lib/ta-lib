@@ -290,7 +290,7 @@ export function rng(seed: number): () => number {
 export const r2 = (x: number): number => Math.round(x * 100) / 100;
 
 /** One seeded OHLCV series with two-decimal prices. */
-export function series(seed: number): Record<string, Float64Array> {
+export function series(seed: number): Record<string, Float64Array<ArrayBuffer>> {
   const r = rng(seed);
   const o = new Float64Array(N);
   const h = new Float64Array(N);

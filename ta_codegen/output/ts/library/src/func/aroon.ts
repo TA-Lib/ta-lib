@@ -251,7 +251,7 @@ export interface AroonOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outAroonDown?: Float64Array | undefined;
+  outAroonDown?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outAroonUp`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -259,7 +259,7 @@ export interface AroonOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outAroonUp?: Float64Array | undefined;
+  outAroonUp?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link aroon} returns, and {@link aroonOpenAndFill} with its stream. */
@@ -270,12 +270,12 @@ export interface AroonResult {
    * Recency of the lowest low (100 = it is the current bar, decaying as it ages).
    * `outAroonDown[k]` is the value at input bar `begIdx + k`.
    */
-  outAroonDown: Float64Array;
+  outAroonDown: Float64Array<ArrayBuffer>;
   /**
    * Recency of the highest high (100 = it is the current bar, decaying as it ages).
    * `outAroonUp[k]` is the value at input bar `begIdx + k`.
    */
-  outAroonUp: Float64Array;
+  outAroonUp: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -326,8 +326,9 @@ export function aroonDisplayShift(outputIdx: number, options?: AroonOptions): nu
  * exactly as long as the number of values written, and nothing is padded. A range
  * that ends before {@link aroonLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link AroonOptions}.
  * @returns `begIdx` and the values; see {@link AroonResult}. Each output is a view
@@ -359,7 +360,7 @@ export function aroonDisplayShift(outputIdx: number, options?: AroonOptions): nu
  * @see [`min`](https://ta-lib.org/functions/min)
  * @see [`max`](https://ta-lib.org/functions/max)
  */
-export function aroon(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: AroonOptions): AroonResult {
+export function aroon(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AroonOptions): AroonResult {
   requireArgument('AROON', 'prices', prices);
   const o = optionsOf('AROON', options);
   if (o.endIdx === undefined) {
@@ -961,8 +962,9 @@ export function aroonOpenAndFillPositional(
  * Opens a live AROON stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link aroon} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link AroonOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -985,7 +987,7 @@ export function aroonOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1); // the bar closes
  * ```
  */
-export function aroonOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: AroonOptions): AroonStream {
+export function aroonOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AroonOptions): AroonStream {
   requireArgument('AROON open', 'prices', prices);
   const o = optionsOf('AROON open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -997,8 +999,9 @@ export function aroonOpen(prices: { high: ArrayLike<number>; low: ArrayLike<numb
  * {@link aroonOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link aroon}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link AroonOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1030,7 +1033,7 @@ export function aroonOpen(prices: { high: ArrayLike<number>; low: ArrayLike<numb
  * // outAroonDown[k] is the value at bar begIdx + k
  * ```
  */
-export function aroonOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: AroonOptions): AroonResult & { stream: AroonStream } {
+export function aroonOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AroonOptions): AroonResult & { stream: AroonStream } {
   requireArgument('AROON openAndFill', 'prices', prices);
   const o = optionsOf('AROON openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

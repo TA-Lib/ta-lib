@@ -219,7 +219,7 @@ export interface CdlgapsidesidewhiteOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -235,7 +235,7 @@ export interface CdlgapsidesidewhiteResult {
    * direction (realbodygapup ? 100 : -100). `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -296,9 +296,10 @@ export function cdlgapsidesidewhiteDisplayShift(outputIdx: number, options?: Cdl
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdlgapsidesidewhiteLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see
  *   {@link CdlgapsidesidewhiteOptions}.
@@ -330,7 +331,7 @@ export function cdlgapsidesidewhiteDisplayShift(outputIdx: number, options?: Cdl
  * @see [`cdltasukigap`](https://ta-lib.org/functions/cdltasukigap)
  * @see [`cdlxsidegap3methods`](https://ta-lib.org/functions/cdlxsidegap3methods)
  */
-export function cdlgapsidesidewhite(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlgapsidesidewhiteOptions): CdlgapsidesidewhiteResult {
+export function cdlgapsidesidewhite(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlgapsidesidewhiteOptions): CdlgapsidesidewhiteResult {
   requireArgument('CDLGAPSIDESIDEWHITE', 'prices', prices);
   const o = optionsOf('CDLGAPSIDESIDEWHITE', options);
   if (o.endIdx === undefined) {
@@ -879,9 +880,10 @@ export function cdlgapsidesidewhiteOpenAndFillPositional(
  * starts at the last history bar, bit-identical to {@link cdlgapsidesidewhite}
  * there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdlgapsidesidewhiteOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -907,7 +909,7 @@ export function cdlgapsidesidewhiteOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlgapsidesidewhiteOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlgapsidesidewhiteOptions): CdlgapsidesidewhiteStream {
+export function cdlgapsidesidewhiteOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlgapsidesidewhiteOptions): CdlgapsidesidewhiteStream {
   requireArgument('CDLGAPSIDESIDEWHITE open', 'prices', prices);
   const o = optionsOf('CDLGAPSIDESIDEWHITE open', options);
   const core = coreOf('CDLGAPSIDESIDEWHITE open', o.core);
@@ -918,9 +920,10 @@ export function cdlgapsidesidewhiteOpen(prices: { open: ArrayLike<number>; high:
  * {@link cdlgapsidesidewhiteOpen} that also computes the outputs over the whole
  * history in the same pass, bit-identically to {@link cdlgapsidesidewhite}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdlgapsidesidewhiteOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -950,7 +953,7 @@ export function cdlgapsidesidewhiteOpen(prices: { open: ArrayLike<number>; high:
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlgapsidesidewhiteOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlgapsidesidewhiteOptions): CdlgapsidesidewhiteResult & { stream: CdlgapsidesidewhiteStream } {
+export function cdlgapsidesidewhiteOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlgapsidesidewhiteOptions): CdlgapsidesidewhiteResult & { stream: CdlgapsidesidewhiteStream } {
   requireArgument('CDLGAPSIDESIDEWHITE openAndFill', 'prices', prices);
   const o = optionsOf('CDLGAPSIDESIDEWHITE openAndFill', options);
   const core = coreOf('CDLGAPSIDESIDEWHITE openAndFill', o.core);

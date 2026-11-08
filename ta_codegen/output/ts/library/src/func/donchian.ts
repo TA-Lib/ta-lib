@@ -278,7 +278,7 @@ export interface DonchianOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outUpperBand?: Float64Array | undefined;
+  outUpperBand?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outMiddleBand`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -286,7 +286,7 @@ export interface DonchianOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outMiddleBand?: Float64Array | undefined;
+  outMiddleBand?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outLowerBand`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -294,7 +294,7 @@ export interface DonchianOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outLowerBand?: Float64Array | undefined;
+  outLowerBand?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link donchian} returns, and {@link donchianOpenAndFill} with its stream. */
@@ -305,17 +305,17 @@ export interface DonchianResult {
    * Highest high of the window. `outUpperBand[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outUpperBand: Float64Array;
+  outUpperBand: Float64Array<ArrayBuffer>;
   /**
    * Midpoint of the upper and lower bands. `outMiddleBand[k]` is the value at input
    * bar `begIdx + k`.
    */
-  outMiddleBand: Float64Array;
+  outMiddleBand: Float64Array<ArrayBuffer>;
   /**
    * Lowest low of the window. `outLowerBand[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outLowerBand: Float64Array;
+  outLowerBand: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -383,8 +383,9 @@ export function donchianDisplayShift(outputIdx: number, options?: DonchianOption
  * exactly as long as the number of values written, and nothing is padded. A range
  * that ends before {@link donchianLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link DonchianOptions}.
  * @returns `begIdx` and the values; see {@link DonchianResult}. Each output is a
@@ -415,7 +416,7 @@ export function donchianDisplayShift(outputIdx: number, options?: DonchianOption
  * // outUpperBand[k] is the value at bar begIdx + k
  * ```
  */
-export function donchian(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: DonchianOptions): DonchianResult {
+export function donchian(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: DonchianOptions): DonchianResult {
   requireArgument('DONCHIAN', 'prices', prices);
   const o = optionsOf('DONCHIAN', options);
   if (o.endIdx === undefined) {
@@ -1060,8 +1061,9 @@ export function donchianOpenAndFillPositional(
  * Opens a live DONCHIAN stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link donchian} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link DonchianOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1084,7 +1086,7 @@ export function donchianOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1); // the bar closes
  * ```
  */
-export function donchianOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: DonchianOptions): DonchianStream {
+export function donchianOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: DonchianOptions): DonchianStream {
   requireArgument('DONCHIAN open', 'prices', prices);
   const o = optionsOf('DONCHIAN open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -1096,8 +1098,9 @@ export function donchianOpen(prices: { high: ArrayLike<number>; low: ArrayLike<n
  * {@link donchianOpen} that also computes the outputs over the whole history in
  * the same pass, bit-identically to {@link donchian}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link DonchianOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1130,7 +1133,7 @@ export function donchianOpen(prices: { high: ArrayLike<number>; low: ArrayLike<n
  * // outUpperBand[k] is the value at bar begIdx + k
  * ```
  */
-export function donchianOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: DonchianOptions): DonchianResult & { stream: DonchianStream } {
+export function donchianOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: DonchianOptions): DonchianResult & { stream: DonchianStream } {
   requireArgument('DONCHIAN openAndFill', 'prices', prices);
   const o = optionsOf('DONCHIAN openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

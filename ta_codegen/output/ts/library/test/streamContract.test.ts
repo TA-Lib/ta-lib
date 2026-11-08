@@ -434,14 +434,14 @@ test('the last bar a stream counts is INDEX_MAX: past it advance and update refu
 test('a partial overlap is checked after the history, a start address shared before it', () => {
   const buf = series(46).inClose.slice(0, 120);
   const lb = lib.smaLookback({ timePeriod: 30 });
-  const sma = (n: number, out: Float64Array): unknown => lib.smaOpenAndFill(buf.subarray(0, n), { timePeriod: 30, outReal: out });
+  const sma = (n: number, out: Float64Array<ArrayBuffer>): unknown => lib.smaOpenAndFill(buf.subarray(0, n), { timePeriod: 30, outReal: out });
   rejects(() => sma(lb, buf.subarray(1, 1 + lb)), 'TA_INSUFFICIENT_HISTORY', 'a partial overlap on a history too short to open');
   rejects(() => sma(lb + 10, buf.subarray(1, 11 + lb)), 'TA_BAD_PARAM', 'a partial overlap on a history long enough to open');
   rejects(() => sma(lb, buf.subarray(0, 5)), 'TA_BAD_PARAM', 'an output starting on the input, short history');
 
   const maOpts = { timePeriod: 30, maType: MAType.EMA };
   const maLb = lib.maLookback(maOpts);
-  const ma = (n: number, out: Float64Array): unknown => lib.maOpenAndFill(buf.subarray(0, n), { ...maOpts, outReal: out });
+  const ma = (n: number, out: Float64Array<ArrayBuffer>): unknown => lib.maOpenAndFill(buf.subarray(0, n), { ...maOpts, outReal: out });
   rejects(() => ma(maLb, buf.subarray(1, 1 + maLb)), 'TA_INSUFFICIENT_HISTORY', 'MA: a partial overlap on a history too short to open');
   rejects(() => ma(maLb + 10, buf.subarray(1, 11 + maLb)), 'TA_BAD_PARAM', 'MA: a partial overlap on a history long enough to open');
   rejects(() => ma(maLb, buf.subarray(0, 5)), 'TA_BAD_PARAM', 'MA: an output starting on the input, short history');
@@ -449,7 +449,7 @@ test('a partial overlap is checked after the history, a start address shared bef
   const mvOpts = { minPeriod: 2, maxPeriod: 30, maType: MAType.SMA };
   const mvLb = lib.mavpLookback(mvOpts);
   const per = new Float64Array(120).fill(10);
-  const mavp = (n: number, out: Float64Array): unknown => lib.mavpOpenAndFill(buf.subarray(0, n), per.subarray(0, n), { ...mvOpts, outReal: out });
+  const mavp = (n: number, out: Float64Array<ArrayBuffer>): unknown => lib.mavpOpenAndFill(buf.subarray(0, n), per.subarray(0, n), { ...mvOpts, outReal: out });
   rejects(() => mavp(mvLb, buf.subarray(1, 1 + mvLb)), 'TA_INSUFFICIENT_HISTORY', 'MAVP: a partial overlap on a history too short to open');
   rejects(() => mavp(mvLb + 10, buf.subarray(1, 11 + mvLb)), 'TA_BAD_PARAM', 'MAVP: a partial overlap on a history long enough to open');
   rejects(() => mavp(mvLb, buf.subarray(0, 5)), 'TA_BAD_PARAM', 'MAVP: an output starting on the input, short history');
@@ -458,7 +458,7 @@ test('a partial overlap is checked after the history, a start address shared bef
   const outs = new Float64Array(200);
   const acLb = lib.accbandsLookback({ timePeriod: 20 });
   const shortHlc = hlc.slice(0, acLb);
-  const acc = (x: Float64Array, upper: Float64Array, middle: Float64Array, lower: Float64Array): unknown =>
+  const acc = (x: Float64Array, upper: Float64Array<ArrayBuffer>, middle: Float64Array<ArrayBuffer>, lower: Float64Array<ArrayBuffer>): unknown =>
     lib.accbandsOpenAndFill({ high: x, low: x, close: x }, { timePeriod: 20, outUpperBand: upper, outMiddleBand: middle, outLowerBand: lower });
   rejects(() => acc(shortHlc, outs.subarray(0, 50), outs.subarray(1, 51), outs.subarray(100, 150)), 'TA_INSUFFICIENT_HISTORY', 'two outputs overlapping in part, short history');
   rejects(() => acc(hlc, outs.subarray(0, 50), outs.subarray(1, 51), outs.subarray(100, 150)), 'TA_BAD_PARAM', 'two outputs overlapping in part, history long enough');
@@ -467,7 +467,7 @@ test('a partial overlap is checked after the history, a start address shared bef
   const dojiLb = lib.cdldojiLookback();
   const ohlc = series(48).inClose.slice(0, dojiLb + 40);
   const h = ohlc.subarray(0, dojiLb);
-  const doji = (out: Int32Array): unknown => lib.cdldojiOpenAndFill({ open: h, high: h, low: h, close: h }, { outInteger: out });
+  const doji = (out: Int32Array<ArrayBuffer>): unknown => lib.cdldojiOpenAndFill({ open: h, high: h, low: h, close: h }, { outInteger: out });
   const intOver = new Int32Array(ohlc.buffer, 8, Math.max(1, dojiLb));
   rejects(() => doji(intOver), 'TA_INSUFFICIENT_HISTORY', 'an int output over a real input in part, short history');
   rejects(() => doji(new Int32Array(ohlc.buffer, 0, Math.max(1, dojiLb))), 'TA_BAD_PARAM', 'an int output starting on a real input, short history');

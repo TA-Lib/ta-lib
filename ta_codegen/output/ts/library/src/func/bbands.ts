@@ -533,7 +533,7 @@ export interface BbandsOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outUpperBand?: Float64Array | undefined;
+  outUpperBand?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outMiddleBand`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -541,7 +541,7 @@ export interface BbandsOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outMiddleBand?: Float64Array | undefined;
+  outMiddleBand?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outLowerBand`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -549,7 +549,7 @@ export interface BbandsOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outLowerBand?: Float64Array | undefined;
+  outLowerBand?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link bbands} returns, and {@link bbandsOpenAndFill} with its stream. */
@@ -560,14 +560,14 @@ export interface BbandsResult {
    * Middle band plus nbDevUp standard deviations. `outUpperBand[k]` is the value at
    * input bar `begIdx + k`.
    */
-  outUpperBand: Float64Array;
+  outUpperBand: Float64Array<ArrayBuffer>;
   /** The moving average. `outMiddleBand[k]` is the value at input bar `begIdx + k`. */
-  outMiddleBand: Float64Array;
+  outMiddleBand: Float64Array<ArrayBuffer>;
   /**
    * Middle band minus nbDevDn standard deviations. `outLowerBand[k]` is the value at
    * input bar `begIdx + k`.
    */
-  outLowerBand: Float64Array;
+  outLowerBand: Float64Array<ArrayBuffer>;
 }
 
 /**

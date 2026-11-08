@@ -270,7 +270,7 @@ export interface EriOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outBullPower?: Float64Array | undefined;
+  outBullPower?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outBearPower`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -278,7 +278,7 @@ export interface EriOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outBearPower?: Float64Array | undefined;
+  outBearPower?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link eri} returns, and {@link eriOpenAndFill} with its stream. */
@@ -289,12 +289,12 @@ export interface EriResult {
    * High minus the EMA of close. `outBullPower[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outBullPower: Float64Array;
+  outBullPower: Float64Array<ArrayBuffer>;
   /**
    * Low minus the EMA of close. `outBearPower[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outBearPower: Float64Array;
+  outBearPower: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -352,8 +352,9 @@ export function eriDisplayShift(outputIdx: number, options?: EriOptions): number
  * exactly as long as the number of values written, and nothing is padded. A range
  * that ends before {@link eriLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price series. `low`: Low price series. `close`: Close price series.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price
+ *   series. `low`: Low price series. `close`: Close price series.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link EriOptions}.
  * @returns `begIdx` and the values; see {@link EriResult}. Each output is a view
@@ -386,7 +387,7 @@ export function eriDisplayShift(outputIdx: number, options?: EriOptions): number
  * @see [`efi`](https://ta-lib.org/functions/efi)
  * @see [`macd`](https://ta-lib.org/functions/macd)
  */
-export function eri(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: EriOptions): EriResult {
+export function eri(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: EriOptions): EriResult {
   requireArgument('ERI', 'prices', prices);
   const o = optionsOf('ERI', options);
   if (o.endIdx === undefined) {
@@ -959,9 +960,9 @@ export function eriOpenAndFillPositional(
  * Opens a live ERI stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link eri} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price series. `low`: Low price series. `close`: Close price
- *   series.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price series. `low`: Low price series. `close`: Close price series.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link EriOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -986,7 +987,7 @@ export function eriOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function eriOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: EriOptions): EriStream {
+export function eriOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: EriOptions): EriStream {
   requireArgument('ERI open', 'prices', prices);
   const o = optionsOf('ERI open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -998,9 +999,9 @@ export function eriOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * {@link eriOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link eri}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price series. `low`: Low price series. `close`: Close price
- *   series.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price series. `low`: Low price series. `close`: Close price series.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link EriOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1034,7 +1035,7 @@ export function eriOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * // outBullPower[k] is the value at bar begIdx + k
  * ```
  */
-export function eriOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: EriOptions): EriResult & { stream: EriStream } {
+export function eriOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: EriOptions): EriResult & { stream: EriStream } {
   requireArgument('ERI openAndFill', 'prices', prices);
   const o = optionsOf('ERI openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

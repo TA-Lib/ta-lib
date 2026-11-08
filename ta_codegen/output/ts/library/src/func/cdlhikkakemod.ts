@@ -264,7 +264,7 @@ export interface CdlhikkakemodOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -278,7 +278,7 @@ export interface CdlhikkakemodResult {
    * +100 bullish hikkake bar, -100 bearish; +200 confirmed bullish, -200 confirmed
    * bearish; 0 otherwise. `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -337,9 +337,10 @@ export function cdlhikkakemodDisplayShift(outputIdx: number, options?: Cdlhikkak
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdlhikkakemodLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CdlhikkakemodOptions}.
  * @returns `begIdx` and the values; see {@link CdlhikkakemodResult}. Each output
@@ -369,7 +370,7 @@ export function cdlhikkakemodDisplayShift(outputIdx: number, options?: Cdlhikkak
  * ```
  * @see [`cdlhikkake`](https://ta-lib.org/functions/cdlhikkake)
  */
-export function cdlhikkakemod(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlhikkakemodOptions): CdlhikkakemodResult {
+export function cdlhikkakemod(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlhikkakemodOptions): CdlhikkakemodResult {
   requireArgument('CDLHIKKAKEMOD', 'prices', prices);
   const o = optionsOf('CDLHIKKAKEMOD', options);
   if (o.endIdx === undefined) {
@@ -971,9 +972,10 @@ export function cdlhikkakemodOpenAndFillPositional(
  * Opens a live CDLHIKKAKEMOD stream over the warm-up history: `value()` starts at
  * the last history bar, bit-identical to {@link cdlhikkakemod} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdlhikkakemodOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -999,7 +1001,7 @@ export function cdlhikkakemodOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlhikkakemodOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlhikkakemodOptions): CdlhikkakemodStream {
+export function cdlhikkakemodOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlhikkakemodOptions): CdlhikkakemodStream {
   requireArgument('CDLHIKKAKEMOD open', 'prices', prices);
   const o = optionsOf('CDLHIKKAKEMOD open', options);
   const core = coreOf('CDLHIKKAKEMOD open', o.core);
@@ -1010,9 +1012,10 @@ export function cdlhikkakemodOpen(prices: { open: ArrayLike<number>; high: Array
  * {@link cdlhikkakemodOpen} that also computes the outputs over the whole history
  * in the same pass, bit-identically to {@link cdlhikkakemod}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdlhikkakemodOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1042,7 +1045,7 @@ export function cdlhikkakemodOpen(prices: { open: ArrayLike<number>; high: Array
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlhikkakemodOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlhikkakemodOptions): CdlhikkakemodResult & { stream: CdlhikkakemodStream } {
+export function cdlhikkakemodOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlhikkakemodOptions): CdlhikkakemodResult & { stream: CdlhikkakemodStream } {
   requireArgument('CDLHIKKAKEMOD openAndFill', 'prices', prices);
   const o = optionsOf('CDLHIKKAKEMOD openAndFill', options);
   const core = coreOf('CDLHIKKAKEMOD openAndFill', o.core);

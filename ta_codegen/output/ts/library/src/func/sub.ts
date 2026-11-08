@@ -122,7 +122,7 @@ export interface SubOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link sub} returns, and {@link subOpenAndFill} with its stream. */
@@ -133,7 +133,7 @@ export interface SubResult {
    * Per-element difference real0 - real1. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**

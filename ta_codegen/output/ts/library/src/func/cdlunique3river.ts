@@ -218,7 +218,7 @@ export interface Cdlunique3riverOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -232,7 +232,7 @@ export interface Cdlunique3riverResult {
    * +100 when the pattern is present, 0 otherwise. Bullish-only: never emits -100.
    * `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -291,9 +291,10 @@ export function cdlunique3riverDisplayShift(outputIdx: number, options?: Cdluniq
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdlunique3riverLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link Cdlunique3riverOptions}.
  * @returns `begIdx` and the values; see {@link Cdlunique3riverResult}. Each output
@@ -325,7 +326,7 @@ export function cdlunique3riverDisplayShift(outputIdx: number, options?: Cdluniq
  * @see [`cdlhomingpigeon`](https://ta-lib.org/functions/cdlhomingpigeon)
  * @see [`cdl3inside`](https://ta-lib.org/functions/cdl3inside)
  */
-export function cdlunique3river(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdlunique3riverOptions): Cdlunique3riverResult {
+export function cdlunique3river(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlunique3riverOptions): Cdlunique3riverResult {
   requireArgument('CDLUNIQUE3RIVER', 'prices', prices);
   const o = optionsOf('CDLUNIQUE3RIVER', options);
   if (o.endIdx === undefined) {
@@ -877,9 +878,10 @@ export function cdlunique3riverOpenAndFillPositional(
  * Opens a live CDLUNIQUE3RIVER stream over the warm-up history: `value()` starts
  * at the last history bar, bit-identical to {@link cdlunique3river} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link Cdlunique3riverOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -905,7 +907,7 @@ export function cdlunique3riverOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlunique3riverOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdlunique3riverOptions): Cdlunique3riverStream {
+export function cdlunique3riverOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlunique3riverOptions): Cdlunique3riverStream {
   requireArgument('CDLUNIQUE3RIVER open', 'prices', prices);
   const o = optionsOf('CDLUNIQUE3RIVER open', options);
   const core = coreOf('CDLUNIQUE3RIVER open', o.core);
@@ -916,9 +918,10 @@ export function cdlunique3riverOpen(prices: { open: ArrayLike<number>; high: Arr
  * {@link cdlunique3riverOpen} that also computes the outputs over the whole
  * history in the same pass, bit-identically to {@link cdlunique3river}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link Cdlunique3riverOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -948,7 +951,7 @@ export function cdlunique3riverOpen(prices: { open: ArrayLike<number>; high: Arr
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlunique3riverOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdlunique3riverOptions): Cdlunique3riverResult & { stream: Cdlunique3riverStream } {
+export function cdlunique3riverOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlunique3riverOptions): Cdlunique3riverResult & { stream: Cdlunique3riverStream } {
   requireArgument('CDLUNIQUE3RIVER openAndFill', 'prices', prices);
   const o = optionsOf('CDLUNIQUE3RIVER openAndFill', options);
   const core = coreOf('CDLUNIQUE3RIVER openAndFill', o.core);

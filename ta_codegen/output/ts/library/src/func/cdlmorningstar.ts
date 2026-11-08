@@ -253,7 +253,7 @@ export interface CdlmorningstarOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -267,7 +267,7 @@ export interface CdlmorningstarResult {
    * +100 when the morning star is detected, 0 otherwise. Never negative (pattern is
    * exclusively bullish). `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -329,9 +329,10 @@ export function cdlmorningstarDisplayShift(outputIdx: number, options?: Cdlmorni
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdlmorningstarLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CdlmorningstarOptions}.
  * @returns `begIdx` and the values; see {@link CdlmorningstarResult}. Each output
@@ -367,7 +368,7 @@ export function cdlmorningstarDisplayShift(outputIdx: number, options?: Cdlmorni
  * @see [`cdlabandonedbaby`](https://ta-lib.org/functions/cdlabandonedbaby)
  * @see [`cdldojistar`](https://ta-lib.org/functions/cdldojistar)
  */
-export function cdlmorningstar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlmorningstarOptions): CdlmorningstarResult {
+export function cdlmorningstar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlmorningstarOptions): CdlmorningstarResult {
   requireArgument('CDLMORNINGSTAR', 'prices', prices);
   const o = optionsOf('CDLMORNINGSTAR', options);
   if (o.endIdx === undefined) {
@@ -953,9 +954,10 @@ export function cdlmorningstarOpenAndFillPositional(
  * Opens a live CDLMORNINGSTAR stream over the warm-up history: `value()` starts at
  * the last history bar, bit-identical to {@link cdlmorningstar} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdlmorningstarOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -984,7 +986,7 @@ export function cdlmorningstarOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlmorningstarOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlmorningstarOptions): CdlmorningstarStream {
+export function cdlmorningstarOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlmorningstarOptions): CdlmorningstarStream {
   requireArgument('CDLMORNINGSTAR open', 'prices', prices);
   const o = optionsOf('CDLMORNINGSTAR open', options);
   const optInPenetration = orDefault(o.penetration, Core.REAL_DEFAULT);
@@ -996,9 +998,10 @@ export function cdlmorningstarOpen(prices: { open: ArrayLike<number>; high: Arra
  * {@link cdlmorningstarOpen} that also computes the outputs over the whole history
  * in the same pass, bit-identically to {@link cdlmorningstar}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdlmorningstarOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1031,7 +1034,7 @@ export function cdlmorningstarOpen(prices: { open: ArrayLike<number>; high: Arra
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlmorningstarOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlmorningstarOptions): CdlmorningstarResult & { stream: CdlmorningstarStream } {
+export function cdlmorningstarOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlmorningstarOptions): CdlmorningstarResult & { stream: CdlmorningstarStream } {
   requireArgument('CDLMORNINGSTAR openAndFill', 'prices', prices);
   const o = optionsOf('CDLMORNINGSTAR openAndFill', options);
   const optInPenetration = orDefault(o.penetration, Core.REAL_DEFAULT);

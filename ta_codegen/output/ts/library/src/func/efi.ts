@@ -260,7 +260,7 @@ export interface EfiOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link efi} returns, and {@link efiOpenAndFill} with its stream. */
@@ -268,7 +268,7 @@ export interface EfiResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /** Smoothed force. `values[k]` is the value at input bar `begIdx + k`. */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -327,8 +327,9 @@ export function efiDisplayShift(outputIdx: number, options?: EfiOptions): number
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link efiLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `close`:
- *   Close price of each bar. `volume`: Volume of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `close`: Close price of
+ *   each bar. `volume`: Volume of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link EfiOptions}.
  * @returns `begIdx` and the values; see {@link EfiResult}. Each output is a view
@@ -359,7 +360,7 @@ export function efiDisplayShift(outputIdx: number, options?: EfiOptions): number
  * @see [`obv`](https://ta-lib.org/functions/obv)
  * @see [`pvo`](https://ta-lib.org/functions/pvo)
  */
-export function efi(prices: { close: ArrayLike<number>; volume: ArrayLike<number> }, options?: EfiOptions): EfiResult {
+export function efi(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: EfiOptions): EfiResult {
   requireArgument('EFI', 'prices', prices);
   const o = optionsOf('EFI', options);
   if (o.endIdx === undefined) {
@@ -861,8 +862,9 @@ export function efiOpenAndFillPositional(
  * Opens a live EFI stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link efi} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `close`: Close price of each bar. `volume`: Volume of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `close`: Close price of each bar. `volume`: Volume of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link EfiOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -885,7 +887,7 @@ export function efiOpenAndFillPositional(
  * const updated = stream.update(100.9, 12345); // the bar closes
  * ```
  */
-export function efiOpen(prices: { close: ArrayLike<number>; volume: ArrayLike<number> }, options?: EfiOptions): EfiStream {
+export function efiOpen(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: EfiOptions): EfiStream {
   requireArgument('EFI open', 'prices', prices);
   const o = optionsOf('EFI open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -897,8 +899,9 @@ export function efiOpen(prices: { close: ArrayLike<number>; volume: ArrayLike<nu
  * {@link efiOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link efi}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `close`: Close price of each bar. `volume`: Volume of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `close`: Close price of each bar. `volume`: Volume of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link EfiOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -927,7 +930,7 @@ export function efiOpen(prices: { close: ArrayLike<number>; volume: ArrayLike<nu
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function efiOpenAndFill(prices: { close: ArrayLike<number>; volume: ArrayLike<number> }, options?: EfiOptions): EfiResult & { stream: EfiStream } {
+export function efiOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: EfiOptions): EfiResult & { stream: EfiStream } {
   requireArgument('EFI openAndFill', 'prices', prices);
   const o = optionsOf('EFI openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

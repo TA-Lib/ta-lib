@@ -305,7 +305,7 @@ export interface MinmaxOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outMin?: Float64Array | undefined;
+  outMin?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outMax`, written from index 0 and allocated when omitted. It must
    * hold the values produced (for a batch call the input length always suffices, for
@@ -313,7 +313,7 @@ export interface MinmaxOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outMax?: Float64Array | undefined;
+  outMax?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link minmax} returns, and {@link minmaxOpenAndFill} with its stream. */
@@ -324,12 +324,12 @@ export interface MinmaxResult {
    * Lowest value in each rolling window. `outMin[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outMin: Float64Array;
+  outMin: Float64Array<ArrayBuffer>;
   /**
    * Highest value in each rolling window. `outMax[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outMax: Float64Array;
+  outMax: Float64Array<ArrayBuffer>;
 }
 
 /**

@@ -195,7 +195,7 @@ export interface WadOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link wad} returns, and {@link wadOpenAndFill} with its stream. */
@@ -206,7 +206,7 @@ export interface WadResult {
    * Cumulative accumulation/distribution. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -267,9 +267,9 @@ export function wadDisplayShift(outputIdx: number, options?: WadOptions): number
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link wadLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
- *   bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link WadOptions}.
  * @returns `begIdx` and the values; see {@link WadResult}. Each output is a view
@@ -301,7 +301,7 @@ export function wadDisplayShift(outputIdx: number, options?: WadOptions): number
  * @see [`obv`](https://ta-lib.org/functions/obv)
  * @see [`pvi`](https://ta-lib.org/functions/pvi)
  */
-export function wad(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: WadOptions): WadResult {
+export function wad(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: WadOptions): WadResult {
   requireArgument('WAD', 'prices', prices);
   const o = optionsOf('WAD', options);
   if (o.endIdx === undefined) {
@@ -688,9 +688,10 @@ export function wadOpenAndFillPositional(
  * Opens a live WAD stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link wad} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link WadOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -714,7 +715,7 @@ export function wadOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function wadOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: WadOptions): WadStream {
+export function wadOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: WadOptions): WadStream {
   requireArgument('WAD open', 'prices', prices);
   const o = optionsOf('WAD open', options);
   const core = coreOf('WAD open', o.core);
@@ -725,9 +726,10 @@ export function wadOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * {@link wadOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link wad}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link WadOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -755,7 +757,7 @@ export function wadOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function wadOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: WadOptions): WadResult & { stream: WadStream } {
+export function wadOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: WadOptions): WadResult & { stream: WadStream } {
   requireArgument('WAD openAndFill', 'prices', prices);
   const o = optionsOf('WAD openAndFill', options);
   const core = coreOf('WAD openAndFill', o.core);

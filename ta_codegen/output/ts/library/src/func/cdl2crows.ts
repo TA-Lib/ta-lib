@@ -201,7 +201,7 @@ export interface Cdl2crowsOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -215,7 +215,7 @@ export interface Cdl2crowsResult {
    * -100 on a detected pattern (always bearish), 0 otherwise. Never emits +100.
    * `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -274,9 +274,10 @@ export function cdl2crowsDisplayShift(outputIdx: number, options?: Cdl2crowsOpti
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdl2crowsLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link Cdl2crowsOptions}.
  * @returns `begIdx` and the values; see {@link Cdl2crowsResult}. Each output is a
@@ -307,7 +308,7 @@ export function cdl2crowsDisplayShift(outputIdx: number, options?: Cdl2crowsOpti
  * @see [`cdlupsidegap2crows`](https://ta-lib.org/functions/cdlupsidegap2crows)
  * @see [`cdlidentical3crows`](https://ta-lib.org/functions/cdlidentical3crows)
  */
-export function cdl2crows(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl2crowsOptions): Cdl2crowsResult {
+export function cdl2crows(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl2crowsOptions): Cdl2crowsResult {
   requireArgument('CDL2CROWS', 'prices', prices);
   const o = optionsOf('CDL2CROWS', options);
   if (o.endIdx === undefined) {
@@ -790,9 +791,10 @@ export function cdl2crowsOpenAndFillPositional(
  * Opens a live CDL2CROWS stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link cdl2crows} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link Cdl2crowsOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -818,7 +820,7 @@ export function cdl2crowsOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdl2crowsOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl2crowsOptions): Cdl2crowsStream {
+export function cdl2crowsOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl2crowsOptions): Cdl2crowsStream {
   requireArgument('CDL2CROWS open', 'prices', prices);
   const o = optionsOf('CDL2CROWS open', options);
   const core = coreOf('CDL2CROWS open', o.core);
@@ -829,9 +831,10 @@ export function cdl2crowsOpen(prices: { open: ArrayLike<number>; high: ArrayLike
  * {@link cdl2crowsOpen} that also computes the outputs over the whole history in
  * the same pass, bit-identically to {@link cdl2crows}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link Cdl2crowsOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -861,7 +864,7 @@ export function cdl2crowsOpen(prices: { open: ArrayLike<number>; high: ArrayLike
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdl2crowsOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl2crowsOptions): Cdl2crowsResult & { stream: Cdl2crowsStream } {
+export function cdl2crowsOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl2crowsOptions): Cdl2crowsResult & { stream: Cdl2crowsStream } {
   requireArgument('CDL2CROWS openAndFill', 'prices', prices);
   const o = optionsOf('CDL2CROWS openAndFill', options);
   const core = coreOf('CDL2CROWS openAndFill', o.core);

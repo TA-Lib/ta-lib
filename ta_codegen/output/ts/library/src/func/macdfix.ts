@@ -472,7 +472,7 @@ export interface MacdfixOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outMacd?: Float64Array | undefined;
+  outMacd?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outMacdSignal`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -480,7 +480,7 @@ export interface MacdfixOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outMacdSignal?: Float64Array | undefined;
+  outMacdSignal?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outMacdHist`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -488,7 +488,7 @@ export interface MacdfixOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outMacdHist?: Float64Array | undefined;
+  outMacdHist?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link macdfix} returns, and {@link macdfixOpenAndFill} with its stream. */
@@ -496,11 +496,11 @@ export interface MacdfixResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /** Fixed EMA12 minus EMA26. `outMacd[k]` is the value at input bar `begIdx + k`. */
-  outMacd: Float64Array;
+  outMacd: Float64Array<ArrayBuffer>;
   /** EMA of the MACD line. `outMacdSignal[k]` is the value at input bar `begIdx + k`. */
-  outMacdSignal: Float64Array;
+  outMacdSignal: Float64Array<ArrayBuffer>;
   /** MACD minus signal. `outMacdHist[k]` is the value at input bar `begIdx + k`. */
-  outMacdHist: Float64Array;
+  outMacdHist: Float64Array<ArrayBuffer>;
 }
 
 /**

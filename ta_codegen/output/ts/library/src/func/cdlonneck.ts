@@ -211,7 +211,7 @@ export interface CdlonneckOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -225,7 +225,7 @@ export interface CdlonneckResult {
    * -100 on a match, 0 otherwise. Only -100 is ever emitted (never +100); on-neck is
    * always bearish. `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -283,9 +283,10 @@ export function cdlonneckDisplayShift(outputIdx: number, options?: CdlonneckOpti
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdlonneckLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CdlonneckOptions}.
  * @returns `begIdx` and the values; see {@link CdlonneckResult}. Each output is a
@@ -316,7 +317,7 @@ export function cdlonneckDisplayShift(outputIdx: number, options?: CdlonneckOpti
  * @see [`cdlinneck`](https://ta-lib.org/functions/cdlinneck)
  * @see [`cdlthrusting`](https://ta-lib.org/functions/cdlthrusting)
  */
-export function cdlonneck(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlonneckOptions): CdlonneckResult {
+export function cdlonneck(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlonneckOptions): CdlonneckResult {
   requireArgument('CDLONNECK', 'prices', prices);
   const o = optionsOf('CDLONNECK', options);
   if (o.endIdx === undefined) {
@@ -838,9 +839,10 @@ export function cdlonneckOpenAndFillPositional(
  * Opens a live CDLONNECK stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link cdlonneck} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdlonneckOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -866,7 +868,7 @@ export function cdlonneckOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlonneckOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlonneckOptions): CdlonneckStream {
+export function cdlonneckOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlonneckOptions): CdlonneckStream {
   requireArgument('CDLONNECK open', 'prices', prices);
   const o = optionsOf('CDLONNECK open', options);
   const core = coreOf('CDLONNECK open', o.core);
@@ -877,9 +879,10 @@ export function cdlonneckOpen(prices: { open: ArrayLike<number>; high: ArrayLike
  * {@link cdlonneckOpen} that also computes the outputs over the whole history in
  * the same pass, bit-identically to {@link cdlonneck}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdlonneckOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -909,7 +912,7 @@ export function cdlonneckOpen(prices: { open: ArrayLike<number>; high: ArrayLike
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlonneckOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlonneckOptions): CdlonneckResult & { stream: CdlonneckStream } {
+export function cdlonneckOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlonneckOptions): CdlonneckResult & { stream: CdlonneckStream } {
   requireArgument('CDLONNECK openAndFill', 'prices', prices);
   const o = optionsOf('CDLONNECK openAndFill', options);
   const core = coreOf('CDLONNECK openAndFill', o.core);

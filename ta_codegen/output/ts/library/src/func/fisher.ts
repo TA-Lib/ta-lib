@@ -335,7 +335,7 @@ export interface FisherOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outFisher?: Float64Array | undefined;
+  outFisher?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outTrigger`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -343,7 +343,7 @@ export interface FisherOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outTrigger?: Float64Array | undefined;
+  outTrigger?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link fisher} returns, and {@link fisherOpenAndFill} with its stream. */
@@ -351,12 +351,12 @@ export interface FisherResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /** Fisher Transform value. `outFisher[k]` is the value at input bar `begIdx + k`. */
-  outFisher: Float64Array;
+  outFisher: Float64Array<ArrayBuffer>;
   /**
    * Fisher value of the previous bar. `outTrigger[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outTrigger: Float64Array;
+  outTrigger: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -416,8 +416,9 @@ export function fisherDisplayShift(outputIdx: number, options?: FisherOptions): 
  * as long as the number of values written, and nothing is padded. A range that
  * ends before {@link fisherLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link FisherOptions}.
  * @returns `begIdx` and the values; see {@link FisherResult}. Each output is a
@@ -449,7 +450,7 @@ export function fisherDisplayShift(outputIdx: number, options?: FisherOptions): 
  * @see [`midprice`](https://ta-lib.org/functions/midprice)
  * @see [`ibs`](https://ta-lib.org/functions/ibs)
  */
-export function fisher(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: FisherOptions): FisherResult {
+export function fisher(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: FisherOptions): FisherResult {
   requireArgument('FISHER', 'prices', prices);
   const o = optionsOf('FISHER', options);
   if (o.endIdx === undefined) {
@@ -1204,8 +1205,9 @@ export function fisherOpenAndFillPositional(
  * Opens a live FISHER stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link fisher} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link FisherOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1228,7 +1230,7 @@ export function fisherOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1); // the bar closes
  * ```
  */
-export function fisherOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: FisherOptions): FisherStream {
+export function fisherOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: FisherOptions): FisherStream {
   requireArgument('FISHER open', 'prices', prices);
   const o = optionsOf('FISHER open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -1240,8 +1242,9 @@ export function fisherOpen(prices: { high: ArrayLike<number>; low: ArrayLike<num
  * {@link fisherOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link fisher}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link FisherOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1273,7 +1276,7 @@ export function fisherOpen(prices: { high: ArrayLike<number>; low: ArrayLike<num
  * // outFisher[k] is the value at bar begIdx + k
  * ```
  */
-export function fisherOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: FisherOptions): FisherResult & { stream: FisherStream } {
+export function fisherOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: FisherOptions): FisherResult & { stream: FisherStream } {
   requireArgument('FISHER openAndFill', 'prices', prices);
   const o = optionsOf('FISHER openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

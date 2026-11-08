@@ -224,7 +224,7 @@ export interface CdlharamicrossOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -240,7 +240,7 @@ export interface CdlharamicrossResult {
    * inside the first body, 80 when one or both real-body ends match. `values[k]` is
    * the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -300,9 +300,10 @@ export function cdlharamicrossDisplayShift(outputIdx: number, options?: Cdlharam
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdlharamicrossLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CdlharamicrossOptions}.
  * @returns `begIdx` and the values; see {@link CdlharamicrossResult}. Each output
@@ -333,7 +334,7 @@ export function cdlharamicrossDisplayShift(outputIdx: number, options?: Cdlharam
  * @see [`cdlharami`](https://ta-lib.org/functions/cdlharami)
  * @see [`cdldoji`](https://ta-lib.org/functions/cdldoji)
  */
-export function cdlharamicross(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlharamicrossOptions): CdlharamicrossResult {
+export function cdlharamicross(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlharamicrossOptions): CdlharamicrossResult {
   requireArgument('CDLHARAMICROSS', 'prices', prices);
   const o = optionsOf('CDLHARAMICROSS', options);
   if (o.endIdx === undefined) {
@@ -884,9 +885,10 @@ export function cdlharamicrossOpenAndFillPositional(
  * Opens a live CDLHARAMICROSS stream over the warm-up history: `value()` starts at
  * the last history bar, bit-identical to {@link cdlharamicross} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdlharamicrossOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -912,7 +914,7 @@ export function cdlharamicrossOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlharamicrossOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlharamicrossOptions): CdlharamicrossStream {
+export function cdlharamicrossOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlharamicrossOptions): CdlharamicrossStream {
   requireArgument('CDLHARAMICROSS open', 'prices', prices);
   const o = optionsOf('CDLHARAMICROSS open', options);
   const core = coreOf('CDLHARAMICROSS open', o.core);
@@ -923,9 +925,10 @@ export function cdlharamicrossOpen(prices: { open: ArrayLike<number>; high: Arra
  * {@link cdlharamicrossOpen} that also computes the outputs over the whole history
  * in the same pass, bit-identically to {@link cdlharamicross}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdlharamicrossOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -955,7 +958,7 @@ export function cdlharamicrossOpen(prices: { open: ArrayLike<number>; high: Arra
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlharamicrossOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlharamicrossOptions): CdlharamicrossResult & { stream: CdlharamicrossStream } {
+export function cdlharamicrossOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlharamicrossOptions): CdlharamicrossResult & { stream: CdlharamicrossStream } {
   requireArgument('CDLHARAMICROSS openAndFill', 'prices', prices);
   const o = optionsOf('CDLHARAMICROSS openAndFill', options);
   const core = coreOf('CDLHARAMICROSS openAndFill', o.core);

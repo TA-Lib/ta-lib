@@ -208,7 +208,7 @@ export interface RvolOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link rvol} returns, and {@link rvolOpenAndFill} with its stream. */
@@ -219,7 +219,7 @@ export interface RvolResult {
    * Ratio of the current bar's volume to the average of the preceding window.
    * `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -285,8 +285,9 @@ export function rvolDisplayShift(outputIdx: number, options?: RvolOptions): numb
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link rvolLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `volume`:
- *   Volume of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `volume`: Volume of
+ *   each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link RvolOptions}.
  * @returns `begIdx` and the values; see {@link RvolResult}. Each output is a view
@@ -314,7 +315,7 @@ export function rvolDisplayShift(outputIdx: number, options?: RvolOptions): numb
  * @see [`vwma`](https://ta-lib.org/functions/vwma)
  * @see [`sma`](https://ta-lib.org/functions/sma)
  */
-export function rvol(prices: { volume: ArrayLike<number> }, options?: RvolOptions): RvolResult {
+export function rvol(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: RvolOptions): RvolResult {
   requireArgument('RVOL', 'prices', prices);
   const o = optionsOf('RVOL', options);
   if (o.endIdx === undefined) {
@@ -708,8 +709,9 @@ export function rvolOpenAndFillPositional(
  * Opens a live RVOL stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link rvol} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `volume`: Volume of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `volume`: Volume of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link RvolOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -729,7 +731,7 @@ export function rvolOpenAndFillPositional(
  * const updated = stream.update(12345); // the bar closes
  * ```
  */
-export function rvolOpen(prices: { volume: ArrayLike<number> }, options?: RvolOptions): RvolStream {
+export function rvolOpen(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: RvolOptions): RvolStream {
   requireArgument('RVOL open', 'prices', prices);
   const o = optionsOf('RVOL open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -741,8 +743,9 @@ export function rvolOpen(prices: { volume: ArrayLike<number> }, options?: RvolOp
  * {@link rvolOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link rvol}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `volume`: Volume of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `volume`: Volume of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link RvolOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -768,7 +771,7 @@ export function rvolOpen(prices: { volume: ArrayLike<number> }, options?: RvolOp
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function rvolOpenAndFill(prices: { volume: ArrayLike<number> }, options?: RvolOptions): RvolResult & { stream: RvolStream } {
+export function rvolOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high?: ArrayLike<number> | undefined; low?: ArrayLike<number> | undefined; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: RvolOptions): RvolResult & { stream: RvolStream } {
   requireArgument('RVOL openAndFill', 'prices', prices);
   const o = optionsOf('RVOL openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

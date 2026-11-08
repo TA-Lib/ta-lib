@@ -5220,11 +5220,11 @@ const TAIL_LO = 0xbeef1234;
 const TAIL_F64 = float64FromWords(TAIL_HI, TAIL_LO);
 const TAIL_I32 = 0x5eadbeef;
 
-function f64Out(len: number): Float64Array {
+function f64Out(len: number): Float64Array<ArrayBuffer> {
   return new Float64Array(len).fill(TAIL_F64);
 }
 
-function i32Out(len: number): Int32Array {
+function i32Out(len: number): Int32Array<ArrayBuffer> {
   return new Int32Array(len).fill(TAIL_I32);
 }
 

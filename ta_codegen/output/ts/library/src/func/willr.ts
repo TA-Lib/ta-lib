@@ -352,7 +352,7 @@ export interface WillrOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link willr} returns, and {@link willrOpenAndFill} with its stream. */
@@ -363,7 +363,7 @@ export interface WillrResult {
    * Williams' %R value in \[-100, 0]. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -414,9 +414,9 @@ export function willrDisplayShift(outputIdx: number, options?: WillrOptions): nu
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link willrLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
- *   bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link WillrOptions}.
  * @returns `begIdx` and the values; see {@link WillrResult}. Each output is a view
@@ -447,7 +447,7 @@ export function willrDisplayShift(outputIdx: number, options?: WillrOptions): nu
  * @see [`stochf`](https://ta-lib.org/functions/stochf)
  * @see [`minmax`](https://ta-lib.org/functions/minmax)
  */
-export function willr(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: WillrOptions): WillrResult {
+export function willr(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: WillrOptions): WillrResult {
   requireArgument('WILLR', 'prices', prices);
   const o = optionsOf('WILLR', options);
   if (o.endIdx === undefined) {
@@ -1038,9 +1038,10 @@ export function willrOpenAndFillPositional(
  * Opens a live WILLR stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link willr} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link WillrOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1065,7 +1066,7 @@ export function willrOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function willrOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: WillrOptions): WillrStream {
+export function willrOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: WillrOptions): WillrStream {
   requireArgument('WILLR open', 'prices', prices);
   const o = optionsOf('WILLR open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -1077,9 +1078,10 @@ export function willrOpen(prices: { high: ArrayLike<number>; low: ArrayLike<numb
  * {@link willrOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link willr}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link WillrOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1110,7 +1112,7 @@ export function willrOpen(prices: { high: ArrayLike<number>; low: ArrayLike<numb
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function willrOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: WillrOptions): WillrResult & { stream: WillrStream } {
+export function willrOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: WillrOptions): WillrResult & { stream: WillrStream } {
   requireArgument('WILLR openAndFill', 'prices', prices);
   const o = optionsOf('WILLR openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

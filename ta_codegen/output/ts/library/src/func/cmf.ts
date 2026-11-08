@@ -296,7 +296,7 @@ export interface CmfOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link cmf} returns, and {@link cmfOpenAndFill} with its stream. */
@@ -307,7 +307,7 @@ export interface CmfResult {
    * Chaikin money flow, in the range -1 to +1. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -388,9 +388,10 @@ export function cmfDisplayShift(outputIdx: number, options?: CmfOptions): number
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cmfLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
- *   bar. `volume`: Volume of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
+ *   `volume`: Volume of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CmfOptions}.
  * @returns `begIdx` and the values; see {@link CmfResult}. Each output is a view
@@ -426,7 +427,7 @@ export function cmfDisplayShift(outputIdx: number, options?: CmfOptions): number
  * @see [`mfi`](https://ta-lib.org/functions/mfi)
  * @see [`obv`](https://ta-lib.org/functions/obv)
  */
-export function cmf(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number> }, options?: CmfOptions): CmfResult {
+export function cmf(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: CmfOptions): CmfResult {
   requireArgument('CMF', 'prices', prices);
   const o = optionsOf('CMF', options);
   if (o.endIdx === undefined) {
@@ -989,9 +990,10 @@ export function cmfOpenAndFillPositional(
  * Opens a live CMF stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link cmf} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar. `volume`: Volume of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar. `volume`: Volume of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CmfOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1018,7 +1020,7 @@ export function cmfOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9, 12345); // the bar closes
  * ```
  */
-export function cmfOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number> }, options?: CmfOptions): CmfStream {
+export function cmfOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: CmfOptions): CmfStream {
   requireArgument('CMF open', 'prices', prices);
   const o = optionsOf('CMF open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -1030,9 +1032,10 @@ export function cmfOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * {@link cmfOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link cmf}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar. `volume`: Volume of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar. `volume`: Volume of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CmfOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1065,7 +1068,7 @@ export function cmfOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cmfOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number> }, options?: CmfOptions): CmfResult & { stream: CmfStream } {
+export function cmfOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: CmfOptions): CmfResult & { stream: CmfStream } {
   requireArgument('CMF openAndFill', 'prices', prices);
   const o = optionsOf('CMF openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

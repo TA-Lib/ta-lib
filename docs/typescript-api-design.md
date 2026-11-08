@@ -37,7 +37,7 @@ beta(seriesA, seriesB, { timePeriod: 5 })                // plain series: positi
 mavp(closes, periods, { minPeriod: 2, maxPeriod: 30 })
 ```
 
-- **Inputs.** The positional arguments are the function's inputs as the Abstract API lists them: a price input is one object holding the components it reads, keyed `open`, `high`, `low`, `close`, `volume`, `openInterest` (the metadata API's `PriceInput` shape), and any other input is an `ArrayLike<number>`. So `obv(closes, { volume })`, and swapped price arrays cannot compile. Positional names drop C's `in` (`real`, `real0`, `periods`); a price input is `prices`.
+- **Inputs.** The positional arguments are the function's inputs as the Abstract API lists them: a price input is one object holding the components it reads, keyed `open`, `high`, `low`, `close`, `volume`, `openInterest` as the metadata API's `PriceInput` is, the components it does not read optional and ignored, so a whole bar object passes; any other input is an `ArrayLike<number>`. So `obv(closes, { volume })`, and swapped price arrays cannot compile. Positional names drop C's `in` (`real`, `real0`, `periods`); a price input is `prices`.
 - **Parameter keys.** C's name without `optIn`, in camelCase by the word split of [rJ1](../website/src/spec/README.md#rj1): `timePeriod`, `nbDevUp`, `maType`, `fastDMaType`.
 - **Range.** `startIdx` defaults to 0 and `endIdx` to the last bar of the first input. `endIdx` is inclusive, as in every TA-Lib API; the TSDoc says so because `slice` is not. Bars before `startIdx` are still read as warm-up, which slicing the input would lose.
 - **`core`** defaults to `Core.DEFAULT`.
@@ -49,12 +49,13 @@ mavp(closes, periods, { minPeriod: 2, maxPeriod: 30 })
 ## 3. Results
 
 ```ts
-const { begIdx, values } = sma(closes, { timePeriod: 20 });             // Float64Array
+const { begIdx, values } = sma(closes, { timePeriod: 20 });             // Float64Array<ArrayBuffer>
 const { begIdx, outMacd, outMacdSignal, outMacdHist } = macd(closes);
-const { begIdx, values } = cdldoji({ open, high, low, close });         // Int32Array
+const { begIdx, values } = cdldoji({ open, high, low, close });         // Int32Array<ArrayBuffer>
 ```
 
 - `values[i]` (or `outX[i]`) is the value for input bar `begIdx + i`; every output is exactly as long as the count, so there is no `count` field.
+- Every output is typed `Float64Array<ArrayBuffer>` (`Int32Array<ArrayBuffer>` for an integer output): an allocated one is `ArrayBuffer`-backed, and a view of a caller's buffer is because the buffer keys require one. So a result goes to a `Blob`, a `fetch` body or `crypto.subtle` without a cast. Reading the declarations takes TypeScript 5.7 or later ([D4](typescript-backend.md)).
 - An empty result is a success: `begIdx` 0, empty arrays.
 - **Output names.** C's output name, camelCase with an acronym as one word (`outMACDSignal` is `outMacdSignal`), C's type word dropped (`outRealUpperBand` is `outUpperBand`, `outRealShort` is `outShort`). The `out` prefix keeps an output from ever meeting `begIdx` or a parameter key.
 - The warm-up is not padded; an aligned form is in section 10.
@@ -68,7 +69,7 @@ macd(closes, { outMacd: a, outMacdSignal: b, outMacdHist: c });   // no output a
 macd(closes, { outMacd: a });                               // the other two are allocated
 ```
 
-- A buffer key is the output's result name; a single output's key is `outReal` or `outInteger`.
+- A buffer key is the output's result name; a single output's key is `outReal` or `outInteger`. Its type is `Float64Array<ArrayBuffer>` (`Int32Array<ArrayBuffer>`): a buffer over a `SharedArrayBuffer` needs a cast, and the result's view is then typed `ArrayBuffer`-backed though it is not. The type is the whole rule; the call does not inspect the buffer's kind.
 - Each returned output is `buf.subarray(0, count)`: the same memory, trimmed to the values written. The buffer holds the values from index 0; what lies past them is as rW3 and rW6 say.
 - Each buffer is optional on its own. A given buffer that is too short, has the wrong element type, or shares memory with another output is `TA_BAD_PARAM`; an output may be its input (rW6), but not overlap it partly.
 
@@ -135,15 +136,11 @@ The spec's [TypeScript Caveats](../website/src/spec/README.md#typescript) state 
 | Input-aligned result (`align: 'input'`, NaN warm-up) | An exception to rW3 |
 | A stream opened before warm-up (`rsiStream(14)`, `undefined` until warm) | An exception to rS7 |
 | A shared stream interface type | For `Map<string, Stream>` and generic drivers |
-| Metadata: a `FunctionName` union for `byName`, `setOptInput` by name, boolean flag getters | |
-| Metadata opens a stream by name | An exception to rH9 |
+| Metadata: a `FunctionName` union for `byName`, `setOptInput` by name | |
 | `Core.create({ unstablePeriods, candleSettings })` beside the builder | |
 | Display shift by output name | |
-| `TALibError` fields `funcName`, `argName`; `ErrorOptions` with `cause` | |
+| `TALibError` fields `funcName`, `argName` | |
 | Output type check that survives a second realm (the check is `instanceof`) | |
 | TSDoc: `{@link}` instead of site URLs | |
-| `export { var_ as var }` for namespace imports | |
 | Stream internals non-enumerable | `console.log(stream)` dumps the ring |
-| An async-iterable adapter for streams | |
-| A `ta-lib/math` subpath for the math transforms (`max`, `sum`, `sqrt`) | Auto-import noise from the root |
 

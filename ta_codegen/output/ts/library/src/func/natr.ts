@@ -356,7 +356,7 @@ export interface NatrOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link natr} returns, and {@link natrOpenAndFill} with its stream. */
@@ -367,7 +367,7 @@ export interface NatrResult {
    * ATR as a percentage of the close. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -426,9 +426,9 @@ export function natrDisplayShift(outputIdx: number, options?: NatrOptions): numb
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link natrLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
- *   bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link NatrOptions}.
  * @returns `begIdx` and the values; see {@link NatrResult}. Each output is a view
@@ -459,7 +459,7 @@ export function natrDisplayShift(outputIdx: number, options?: NatrOptions): numb
  * @see [`trange`](https://ta-lib.org/functions/trange)
  * @see [`sma`](https://ta-lib.org/functions/sma)
  */
-export function natr(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: NatrOptions): NatrResult {
+export function natr(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: NatrOptions): NatrResult {
   requireArgument('NATR', 'prices', prices);
   const o = optionsOf('NATR', options);
   if (o.endIdx === undefined) {
@@ -1028,9 +1028,10 @@ export function natrOpenAndFillPositional(
  * Opens a live NATR stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link natr} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link NatrOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1055,7 +1056,7 @@ export function natrOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function natrOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: NatrOptions): NatrStream {
+export function natrOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: NatrOptions): NatrStream {
   requireArgument('NATR open', 'prices', prices);
   const o = optionsOf('NATR open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -1067,9 +1068,10 @@ export function natrOpen(prices: { high: ArrayLike<number>; low: ArrayLike<numbe
  * {@link natrOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link natr}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link NatrOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1100,7 +1102,7 @@ export function natrOpen(prices: { high: ArrayLike<number>; low: ArrayLike<numbe
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function natrOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: NatrOptions): NatrResult & { stream: NatrStream } {
+export function natrOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: NatrOptions): NatrResult & { stream: NatrStream } {
   requireArgument('NATR openAndFill', 'prices', prices);
   const o = optionsOf('NATR openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

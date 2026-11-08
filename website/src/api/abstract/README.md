@@ -151,7 +151,7 @@ const r = Functions.byName('SMA')!.newCall()
   .setInput(0, close)
   .setOptInput(0, 30)
   .setOutput(0, out)
-  .call(0, close.length - 1);
+  .call();                         // the whole series, as the typed call's defaults
 ```
 
 :::

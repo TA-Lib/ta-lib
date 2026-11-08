@@ -226,7 +226,7 @@ export interface RvirOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link rvir} returns, and {@link rvirOpenAndFill} with its stream. */
@@ -237,7 +237,7 @@ export interface RvirResult {
    * The averaged index, in 0..100. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -295,8 +295,9 @@ export function rvirDisplayShift(outputIdx: number, options?: RvirOptions): numb
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link rvirLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link RvirOptions}.
  * @returns `begIdx` and the values; see {@link RvirResult}. Each output is a view
@@ -328,7 +329,7 @@ export function rvirDisplayShift(outputIdx: number, options?: RvirOptions): numb
  * @see [`stddev`](https://ta-lib.org/functions/stddev)
  * @see [`atr`](https://ta-lib.org/functions/atr)
  */
-export function rvir(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: RvirOptions): RvirResult {
+export function rvir(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: RvirOptions): RvirResult {
   requireArgument('RVIR', 'prices', prices);
   const o = optionsOf('RVIR', options);
   if (o.endIdx === undefined) {
@@ -702,8 +703,9 @@ export function rvirOpenAndFillPositional(
  * Opens a live RVIR stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link rvir} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link RvirOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -726,7 +728,7 @@ export function rvirOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1); // the bar closes
  * ```
  */
-export function rvirOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: RvirOptions): RvirStream {
+export function rvirOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: RvirOptions): RvirStream {
   requireArgument('RVIR open', 'prices', prices);
   const o = optionsOf('RVIR open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -739,8 +741,9 @@ export function rvirOpen(prices: { high: ArrayLike<number>; low: ArrayLike<numbe
  * {@link rvirOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link rvir}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link RvirOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -770,7 +773,7 @@ export function rvirOpen(prices: { high: ArrayLike<number>; low: ArrayLike<numbe
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function rvirOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: RvirOptions): RvirResult & { stream: RvirStream } {
+export function rvirOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: RvirOptions): RvirResult & { stream: RvirStream } {
   requireArgument('RVIR openAndFill', 'prices', prices);
   const o = optionsOf('RVIR openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

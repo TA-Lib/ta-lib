@@ -717,7 +717,7 @@ export interface MamaOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outMama?: Float64Array | undefined;
+  outMama?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outFama`, written from index 0 and allocated when omitted. It must
    * hold the values produced (for a batch call the input length always suffices, for
@@ -725,7 +725,7 @@ export interface MamaOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outFama?: Float64Array | undefined;
+  outFama?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link mama} returns, and {@link mamaOpenAndFill} with its stream. */
@@ -736,12 +736,12 @@ export interface MamaResult {
    * Adaptive moving average (fast line). `outMama[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outMama: Float64Array;
+  outMama: Float64Array<ArrayBuffer>;
   /**
    * Following adaptive moving average, using half the alpha (slow line).
    * `outFama[k]` is the value at input bar `begIdx + k`.
    */
-  outFama: Float64Array;
+  outFama: Float64Array<ArrayBuffer>;
 }
 
 /**

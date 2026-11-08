@@ -171,7 +171,7 @@ export interface AvgdevOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link avgdev} returns, and {@link avgdevOpenAndFill} with its stream. */
@@ -182,7 +182,7 @@ export interface AvgdevResult {
    * mean absolute deviation over the window. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**

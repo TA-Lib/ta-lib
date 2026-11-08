@@ -199,7 +199,7 @@ export interface MaxindexOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link maxindex} returns, and {@link maxindexOpenAndFill} with its stream. */
@@ -210,7 +210,7 @@ export interface MaxindexResult {
    * Absolute index (into real) of the highest value in each window. `values[k]` is
    * the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**

@@ -391,7 +391,7 @@ export interface AlligatorOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outJaw?: Float64Array | undefined;
+  outJaw?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outTeeth`, written from index 0 and allocated when omitted. It must
    * hold the values produced (for a batch call the input length always suffices, for
@@ -399,7 +399,7 @@ export interface AlligatorOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outTeeth?: Float64Array | undefined;
+  outTeeth?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outLips`, written from index 0 and allocated when omitted. It must
    * hold the values produced (for a batch call the input length always suffices, for
@@ -407,7 +407,7 @@ export interface AlligatorOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outLips?: Float64Array | undefined;
+  outLips?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -421,17 +421,17 @@ export interface AlligatorResult {
    * Jaw: the slowest line, drawn ahead by the jaw shift. `outJaw[k]` is the value at
    * input bar `begIdx + k`.
    */
-  outJaw: Float64Array;
+  outJaw: Float64Array<ArrayBuffer>;
   /**
    * Teeth: the middle line, drawn ahead by the teeth shift. `outTeeth[k]` is the
    * value at input bar `begIdx + k`.
    */
-  outTeeth: Float64Array;
+  outTeeth: Float64Array<ArrayBuffer>;
   /**
    * Lips: the fastest line, drawn ahead by the lips shift. `outLips[k]` is the value
    * at input bar `begIdx + k`.
    */
-  outLips: Float64Array;
+  outLips: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -499,8 +499,9 @@ export function alligatorDisplayShift(outputIdx: number, options?: AlligatorOpti
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link alligatorLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link AlligatorOptions}.
  * @returns `begIdx` and the values; see {@link AlligatorResult}. Each output is a
@@ -538,7 +539,7 @@ export function alligatorDisplayShift(outputIdx: number, options?: AlligatorOpti
  * @see [`ac`](https://ta-lib.org/functions/ac)
  * @see [`ichimoku`](https://ta-lib.org/functions/ichimoku)
  */
-export function alligator(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: AlligatorOptions): AlligatorResult {
+export function alligator(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AlligatorOptions): AlligatorResult {
   requireArgument('ALLIGATOR', 'prices', prices);
   const o = optionsOf('ALLIGATOR', options);
   if (o.endIdx === undefined) {
@@ -1111,8 +1112,9 @@ export function alligatorOpenAndFillPositional(
  * Opens a live ALLIGATOR stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link alligator} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link AlligatorOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1142,7 +1144,7 @@ export function alligatorOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1); // the bar closes
  * ```
  */
-export function alligatorOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: AlligatorOptions): AlligatorStream {
+export function alligatorOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AlligatorOptions): AlligatorStream {
   requireArgument('ALLIGATOR open', 'prices', prices);
   const o = optionsOf('ALLIGATOR open', options);
   const optInJawPeriod = orDefault(o.jawPeriod, Core.INTEGER_DEFAULT);
@@ -1159,8 +1161,9 @@ export function alligatorOpen(prices: { high: ArrayLike<number>; low: ArrayLike<
  * {@link alligatorOpen} that also computes the outputs over the whole history in
  * the same pass, bit-identically to {@link alligator}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link AlligatorOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1200,7 +1203,7 @@ export function alligatorOpen(prices: { high: ArrayLike<number>; low: ArrayLike<
  * // outJaw[k] is the value at bar begIdx + k
  * ```
  */
-export function alligatorOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: AlligatorOptions): AlligatorResult & { stream: AlligatorStream } {
+export function alligatorOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AlligatorOptions): AlligatorResult & { stream: AlligatorStream } {
   requireArgument('ALLIGATOR openAndFill', 'prices', prices);
   const o = optionsOf('ALLIGATOR openAndFill', options);
   const optInJawPeriod = orDefault(o.jawPeriod, Core.INTEGER_DEFAULT);

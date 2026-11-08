@@ -304,7 +304,7 @@ export interface HaOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outHaOpen?: Float64Array | undefined;
+  outHaOpen?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outHaHigh`, written from index 0 and allocated when omitted. It must
    * hold the values produced (for a batch call the input length always suffices, for
@@ -312,7 +312,7 @@ export interface HaOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outHaHigh?: Float64Array | undefined;
+  outHaHigh?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outHaLow`, written from index 0 and allocated when omitted. It must
    * hold the values produced (for a batch call the input length always suffices, for
@@ -320,7 +320,7 @@ export interface HaOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outHaLow?: Float64Array | undefined;
+  outHaLow?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outHaClose`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -328,7 +328,7 @@ export interface HaOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outHaClose?: Float64Array | undefined;
+  outHaClose?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link ha} returns, and {@link haOpenAndFill} with its stream. */
@@ -336,13 +336,13 @@ export interface HaResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /** Heikin-Ashi open. `outHaOpen[k]` is the value at input bar `begIdx + k`. */
-  outHaOpen: Float64Array;
+  outHaOpen: Float64Array<ArrayBuffer>;
   /** Heikin-Ashi high. `outHaHigh[k]` is the value at input bar `begIdx + k`. */
-  outHaHigh: Float64Array;
+  outHaHigh: Float64Array<ArrayBuffer>;
   /** Heikin-Ashi low. `outHaLow[k]` is the value at input bar `begIdx + k`. */
-  outHaLow: Float64Array;
+  outHaLow: Float64Array<ArrayBuffer>;
   /** Heikin-Ashi close. `outHaClose[k]` is the value at input bar `begIdx + k`. */
-  outHaClose: Float64Array;
+  outHaClose: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -417,9 +417,10 @@ export function haDisplayShift(outputIdx: number, options?: HaOptions): number {
  * as long as the number of values written, and nothing is padded. A range that
  * ends before {@link haLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link HaOptions}.
  * @returns `begIdx` and the values; see {@link HaResult}. Each output is a view of
@@ -458,7 +459,7 @@ export function haDisplayShift(outputIdx: number, options?: HaOptions): number {
  * @see [`typprice`](https://ta-lib.org/functions/typprice)
  * @see [`wclprice`](https://ta-lib.org/functions/wclprice)
  */
-export function ha(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: HaOptions): HaResult {
+export function ha(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: HaOptions): HaResult {
   requireArgument('HA', 'prices', prices);
   const o = optionsOf('HA', options);
   if (o.endIdx === undefined) {
@@ -1134,9 +1135,10 @@ export function haOpenAndFillPositional(
  * Opens a live HA stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link ha} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link HaOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1162,7 +1164,7 @@ export function haOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function haOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: HaOptions): HaStream {
+export function haOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: HaOptions): HaStream {
   requireArgument('HA open', 'prices', prices);
   const o = optionsOf('HA open', options);
   const core = coreOf('HA open', o.core);
@@ -1173,9 +1175,10 @@ export function haOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number
  * {@link haOpen} that also computes the outputs over the whole history in the same
  * pass, bit-identically to {@link ha}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link HaOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1212,7 +1215,7 @@ export function haOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number
  * // outHaOpen[k] is the value at bar begIdx + k
  * ```
  */
-export function haOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: HaOptions): HaResult & { stream: HaStream } {
+export function haOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: HaOptions): HaResult & { stream: HaStream } {
   requireArgument('HA openAndFill', 'prices', prices);
   const o = optionsOf('HA openAndFill', options);
   const core = coreOf('HA openAndFill', o.core);

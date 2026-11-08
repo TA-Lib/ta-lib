@@ -171,7 +171,7 @@ export interface PercentrankOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -185,7 +185,7 @@ export interface PercentrankResult {
    * Percentage of the preceding window strictly below the current value, 0 to 100.
    * `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**

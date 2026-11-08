@@ -206,7 +206,7 @@ export interface DpoOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link dpo} returns, and {@link dpoOpenAndFill} with its stream. */
@@ -217,7 +217,7 @@ export interface DpoResult {
    * Detrended Price Oscillator value, in the units of the input. `values[k]` is the
    * value at input bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**

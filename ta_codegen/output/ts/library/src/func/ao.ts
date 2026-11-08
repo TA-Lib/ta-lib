@@ -276,7 +276,7 @@ export interface AoOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link ao} returns, and {@link aoOpenAndFill} with its stream. */
@@ -287,7 +287,7 @@ export interface AoResult {
    * Spread between the two moving averages, centred on zero. `values[k]` is the
    * value at input bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -346,8 +346,9 @@ export function aoDisplayShift(outputIdx: number, options?: AoOptions): number {
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link aoLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link AoOptions}.
  * @returns `begIdx` and the values; see {@link AoResult}. Each output is a view of
@@ -378,7 +379,7 @@ export function aoDisplayShift(outputIdx: number, options?: AoOptions): number {
  * @see [`ppo`](https://ta-lib.org/functions/ppo)
  * @see [`ultosc`](https://ta-lib.org/functions/ultosc)
  */
-export function ao(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: AoOptions): AoResult {
+export function ao(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AoOptions): AoResult {
   requireArgument('AO', 'prices', prices);
   const o = optionsOf('AO', options);
   if (o.endIdx === undefined) {
@@ -883,8 +884,9 @@ export function aoOpenAndFillPositional(
  * Opens a live AO stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link ao} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link AoOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -907,7 +909,7 @@ export function aoOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1); // the bar closes
  * ```
  */
-export function aoOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: AoOptions): AoStream {
+export function aoOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AoOptions): AoStream {
   requireArgument('AO open', 'prices', prices);
   const o = optionsOf('AO open', options);
   const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);
@@ -920,8 +922,9 @@ export function aoOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>
  * {@link aoOpen} that also computes the outputs over the whole history in the same
  * pass, bit-identically to {@link ao}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link AoOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -951,7 +954,7 @@ export function aoOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function aoOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: AoOptions): AoResult & { stream: AoStream } {
+export function aoOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: AoOptions): AoResult & { stream: AoStream } {
   requireArgument('AO openAndFill', 'prices', prices);
   const o = optionsOf('AO openAndFill', options);
   const optInFastPeriod = orDefault(o.fastPeriod, Core.INTEGER_DEFAULT);

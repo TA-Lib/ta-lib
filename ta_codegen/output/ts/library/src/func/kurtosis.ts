@@ -367,7 +367,7 @@ export interface KurtosisOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link kurtosis} returns, and {@link kurtosisOpenAndFill} with its stream. */
@@ -378,7 +378,7 @@ export interface KurtosisResult {
    * Excess kurtosis of the trailing window, or NaN where the window has no spread.
    * `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**

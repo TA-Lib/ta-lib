@@ -641,7 +641,7 @@ export interface SarextOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link sarext} returns, and {@link sarextOpenAndFill} with its stream. */
@@ -652,7 +652,7 @@ export interface SarextResult {
    * SAR stop level; positive while long, negative while short. `values[k]` is the
    * value at input bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -704,8 +704,9 @@ export function sarextDisplayShift(outputIdx: number, options?: SarextOptions): 
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link sarextLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link SarextOptions}.
  * @returns `begIdx` and the values; see {@link SarextResult}. Each output is a
@@ -742,7 +743,7 @@ export function sarextDisplayShift(outputIdx: number, options?: SarextOptions): 
  * @see [`sar`](https://ta-lib.org/functions/sar)
  * @see [`minusDm`](https://ta-lib.org/functions/minus_dm)
  */
-export function sarext(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: SarextOptions): SarextResult {
+export function sarext(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SarextOptions): SarextResult {
   requireArgument('SAREXT', 'prices', prices);
   const o = optionsOf('SAREXT', options);
   if (o.endIdx === undefined) {
@@ -1868,8 +1869,9 @@ export function sarextOpenAndFillPositional(
  * Opens a live SAREXT stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link sarext} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link SarextOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1901,7 +1903,7 @@ export function sarextOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1); // the bar closes
  * ```
  */
-export function sarextOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: SarextOptions): SarextStream {
+export function sarextOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SarextOptions): SarextStream {
   requireArgument('SAREXT open', 'prices', prices);
   const o = optionsOf('SAREXT open', options);
   const optInStartValue = orDefault(o.startValue, Core.REAL_DEFAULT);
@@ -1920,8 +1922,9 @@ export function sarextOpen(prices: { high: ArrayLike<number>; low: ArrayLike<num
  * {@link sarextOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link sarext}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link SarextOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1957,7 +1960,7 @@ export function sarextOpen(prices: { high: ArrayLike<number>; low: ArrayLike<num
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function sarextOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: SarextOptions): SarextResult & { stream: SarextStream } {
+export function sarextOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: SarextOptions): SarextResult & { stream: SarextStream } {
   requireArgument('SAREXT openAndFill', 'prices', prices);
   const o = optionsOf('SAREXT openAndFill', options);
   const optInStartValue = orDefault(o.startValue, Core.REAL_DEFAULT);

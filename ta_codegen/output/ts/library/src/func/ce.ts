@@ -426,7 +426,7 @@ export interface CeOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outLong?: Float64Array | undefined;
+  outLong?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outShort`, written from index 0 and allocated when omitted. It must
    * hold the values produced (for a batch call the input length always suffices, for
@@ -434,7 +434,7 @@ export interface CeOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outShort?: Float64Array | undefined;
+  outShort?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link ce} returns, and {@link ceOpenAndFill} with its stream. */
@@ -445,12 +445,12 @@ export interface CeResult {
    * Highest high less the multiple of the Average True Range; the stop for a long
    * position. `outLong[k]` is the value at input bar `begIdx + k`.
    */
-  outLong: Float64Array;
+  outLong: Float64Array<ArrayBuffer>;
   /**
    * Lowest low plus the multiple of the Average True Range; the stop for a short
    * position. `outShort[k]` is the value at input bar `begIdx + k`.
    */
-  outShort: Float64Array;
+  outShort: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -524,9 +524,9 @@ export function ceDisplayShift(outputIdx: number, options?: CeOptions): number {
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link ceLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
- *   bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CeOptions}.
  * @returns `begIdx` and the values; see {@link CeResult}. Each output is a view of
@@ -565,7 +565,7 @@ export function ceDisplayShift(outputIdx: number, options?: CeOptions): number {
  * @see [`kc`](https://ta-lib.org/functions/kc)
  * @see [`sar`](https://ta-lib.org/functions/sar)
  */
-export function ce(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CeOptions): CeResult {
+export function ce(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CeOptions): CeResult {
   requireArgument('CE', 'prices', prices);
   const o = optionsOf('CE', options);
   if (o.endIdx === undefined) {
@@ -1427,9 +1427,10 @@ export function ceOpenAndFillPositional(
  * Opens a live CE stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link ce} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CeOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1454,7 +1455,7 @@ export function ceOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function ceOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CeOptions): CeStream {
+export function ceOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CeOptions): CeStream {
   requireArgument('CE open', 'prices', prices);
   const o = optionsOf('CE open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -1467,9 +1468,10 @@ export function ceOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>
  * {@link ceOpen} that also computes the outputs over the whole history in the same
  * pass, bit-identically to {@link ce}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CeOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1501,7 +1503,7 @@ export function ceOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>
  * // outLong[k] is the value at bar begIdx + k
  * ```
  */
-export function ceOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CeOptions): CeResult & { stream: CeStream } {
+export function ceOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CeOptions): CeResult & { stream: CeStream } {
   requireArgument('CE openAndFill', 'prices', prices);
   const o = optionsOf('CE openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

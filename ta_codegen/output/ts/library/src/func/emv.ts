@@ -264,7 +264,7 @@ export interface EmvOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link emv} returns, and {@link emvOpenAndFill} with its stream. */
@@ -275,7 +275,7 @@ export interface EmvResult {
    * Ease of Movement, averaged over the window. `values[k]` is the value at input
    * bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -342,8 +342,9 @@ export function emvDisplayShift(outputIdx: number, options?: EmvOptions): number
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link emvLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar. `volume`: Volume of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar. `volume`: Volume of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link EmvOptions}.
  * @returns `begIdx` and the values; see {@link EmvResult}. Each output is a view
@@ -379,7 +380,7 @@ export function emvDisplayShift(outputIdx: number, options?: EmvOptions): number
  * @see [`sma`](https://ta-lib.org/functions/sma)
  * @see [`ema`](https://ta-lib.org/functions/ema)
  */
-export function emv(prices: { high: ArrayLike<number>; low: ArrayLike<number>; volume: ArrayLike<number> }, options?: EmvOptions): EmvResult {
+export function emv(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: EmvOptions): EmvResult {
   requireArgument('EMV', 'prices', prices);
   const o = optionsOf('EMV', options);
   if (o.endIdx === undefined) {
@@ -868,9 +869,10 @@ export function emvOpenAndFillPositional(
  * Opens a live EMV stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link emv} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `volume`:
- *   Volume of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `volume`: Volume
+ *   of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link EmvOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -898,7 +900,7 @@ export function emvOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 12345); // the bar closes
  * ```
  */
-export function emvOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; volume: ArrayLike<number> }, options?: EmvOptions): EmvStream {
+export function emvOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: EmvOptions): EmvStream {
   requireArgument('EMV open', 'prices', prices);
   const o = optionsOf('EMV open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -911,9 +913,10 @@ export function emvOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * {@link emvOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link emv}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `volume`:
- *   Volume of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `volume`: Volume
+ *   of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link EmvOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -945,7 +948,7 @@ export function emvOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function emvOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; volume: ArrayLike<number> }, options?: EmvOptions): EmvResult & { stream: EmvStream } {
+export function emvOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume: ArrayLike<number>; openInterest?: ArrayLike<number> | undefined }, options?: EmvOptions): EmvResult & { stream: EmvStream } {
   requireArgument('EMV openAndFill', 'prices', prices);
   const o = optionsOf('EMV openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

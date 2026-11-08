@@ -204,7 +204,7 @@ export interface CdltristarOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -219,7 +219,7 @@ export interface CdltristarResult {
    * pattern. Both signs are emitted. `values[k]` is the value at input bar
    * `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -277,9 +277,10 @@ export function cdltristarDisplayShift(outputIdx: number, options?: CdltristarOp
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdltristarLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CdltristarOptions}.
  * @returns `begIdx` and the values; see {@link CdltristarResult}. Each output is a
@@ -312,7 +313,7 @@ export function cdltristarDisplayShift(outputIdx: number, options?: CdltristarOp
  * @see [`cdlmorningdojistar`](https://ta-lib.org/functions/cdlmorningdojistar)
  * @see [`cdleveningdojistar`](https://ta-lib.org/functions/cdleveningdojistar)
  */
-export function cdltristar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdltristarOptions): CdltristarResult {
+export function cdltristar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdltristarOptions): CdltristarResult {
   requireArgument('CDLTRISTAR', 'prices', prices);
   const o = optionsOf('CDLTRISTAR', options);
   if (o.endIdx === undefined) {
@@ -806,9 +807,10 @@ export function cdltristarOpenAndFillPositional(
  * Opens a live CDLTRISTAR stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link cdltristar} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdltristarOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -834,7 +836,7 @@ export function cdltristarOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdltristarOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdltristarOptions): CdltristarStream {
+export function cdltristarOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdltristarOptions): CdltristarStream {
   requireArgument('CDLTRISTAR open', 'prices', prices);
   const o = optionsOf('CDLTRISTAR open', options);
   const core = coreOf('CDLTRISTAR open', o.core);
@@ -845,9 +847,10 @@ export function cdltristarOpen(prices: { open: ArrayLike<number>; high: ArrayLik
  * {@link cdltristarOpen} that also computes the outputs over the whole history in
  * the same pass, bit-identically to {@link cdltristar}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdltristarOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -877,7 +880,7 @@ export function cdltristarOpen(prices: { open: ArrayLike<number>; high: ArrayLik
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdltristarOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdltristarOptions): CdltristarResult & { stream: CdltristarStream } {
+export function cdltristarOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdltristarOptions): CdltristarResult & { stream: CdltristarStream } {
   requireArgument('CDLTRISTAR openAndFill', 'prices', prices);
   const o = optionsOf('CDLTRISTAR openAndFill', options);
   const core = coreOf('CDLTRISTAR openAndFill', o.core);

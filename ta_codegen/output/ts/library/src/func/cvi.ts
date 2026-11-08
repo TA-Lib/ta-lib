@@ -264,7 +264,7 @@ export interface CviOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link cvi} returns, and {@link cviOpenAndFill} with its stream. */
@@ -275,7 +275,7 @@ export interface CviResult {
    * Percent change of the smoothed high-low spread. `values[k]` is the value at
    * input bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -352,8 +352,9 @@ export function cviDisplayShift(outputIdx: number, options?: CviOptions): number
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cviLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price. `low`: Low price.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price.
+ *   `low`: Low price.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CviOptions}.
  * @returns `begIdx` and the values; see {@link CviResult}. Each output is a view
@@ -387,7 +388,7 @@ export function cviDisplayShift(outputIdx: number, options?: CviOptions): number
  * @see [`ema`](https://ta-lib.org/functions/ema)
  * @see [`rocp`](https://ta-lib.org/functions/rocp)
  */
-export function cvi(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: CviOptions): CviResult {
+export function cvi(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CviOptions): CviResult {
   requireArgument('CVI', 'prices', prices);
   const o = optionsOf('CVI', options);
   if (o.endIdx === undefined) {
@@ -843,8 +844,9 @@ export function cviOpenAndFillPositional(
  * Opens a live CVI stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link cvi} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price. `low`: Low price.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price. `low`: Low price.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CviOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -867,7 +869,7 @@ export function cviOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1); // the bar closes
  * ```
  */
-export function cviOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: CviOptions): CviStream {
+export function cviOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CviOptions): CviStream {
   requireArgument('CVI open', 'prices', prices);
   const o = optionsOf('CVI open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -880,8 +882,9 @@ export function cviOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * {@link cviOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link cvi}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price. `low`: Low price.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price. `low`: Low price.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CviOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -911,7 +914,7 @@ export function cviOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cviOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number> }, options?: CviOptions): CviResult & { stream: CviStream } {
+export function cviOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close?: ArrayLike<number> | undefined; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CviOptions): CviResult & { stream: CviStream } {
   requireArgument('CVI openAndFill', 'prices', prices);
   const o = optionsOf('CVI openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

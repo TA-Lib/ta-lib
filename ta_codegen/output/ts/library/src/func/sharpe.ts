@@ -367,7 +367,7 @@ export interface SharpeOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link sharpe} returns, and {@link sharpeOpenAndFill} with its stream. */
@@ -378,7 +378,7 @@ export interface SharpeResult {
    * Annualized Sharpe ratio of the trailing window, or ±Inf or NaN where the window
    * has no spread. `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**

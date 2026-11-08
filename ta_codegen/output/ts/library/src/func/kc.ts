@@ -307,7 +307,7 @@ export interface KcOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outUpperBand?: Float64Array | undefined;
+  outUpperBand?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outMiddleBand`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -315,7 +315,7 @@ export interface KcOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outMiddleBand?: Float64Array | undefined;
+  outMiddleBand?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outLowerBand`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -323,7 +323,7 @@ export interface KcOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outLowerBand?: Float64Array | undefined;
+  outLowerBand?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link kc} returns, and {@link kcOpenAndFill} with its stream. */
@@ -334,17 +334,17 @@ export interface KcResult {
    * Centre line plus the scaled Average True Range. `outUpperBand[k]` is the value
    * at input bar `begIdx + k`.
    */
-  outUpperBand: Float64Array;
+  outUpperBand: Float64Array<ArrayBuffer>;
   /**
    * Exponential moving average of the typical price. `outMiddleBand[k]` is the value
    * at input bar `begIdx + k`.
    */
-  outMiddleBand: Float64Array;
+  outMiddleBand: Float64Array<ArrayBuffer>;
   /**
    * Centre line minus the scaled Average True Range. `outLowerBand[k]` is the value
    * at input bar `begIdx + k`.
    */
-  outLowerBand: Float64Array;
+  outLowerBand: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -411,9 +411,9 @@ export function kcDisplayShift(outputIdx: number, options?: KcOptions): number {
  * exactly as long as the number of values written, and nothing is padded. A range
  * that ends before {@link kcLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
- *   bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link KcOptions}.
  * @returns `begIdx` and the values; see {@link KcResult}. Each output is a view of
@@ -452,7 +452,7 @@ export function kcDisplayShift(outputIdx: number, options?: KcOptions): number {
  * @see [`bbands`](https://ta-lib.org/functions/bbands)
  * @see [`accbands`](https://ta-lib.org/functions/accbands)
  */
-export function kc(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: KcOptions): KcResult {
+export function kc(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: KcOptions): KcResult {
   requireArgument('KC', 'prices', prices);
   const o = optionsOf('KC', options);
   if (o.endIdx === undefined) {
@@ -1019,9 +1019,10 @@ export function kcOpenAndFillPositional(
  * Opens a live KC stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link kc} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link KcOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1050,7 +1051,7 @@ export function kcOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function kcOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: KcOptions): KcStream {
+export function kcOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: KcOptions): KcStream {
   requireArgument('KC open', 'prices', prices);
   const o = optionsOf('KC open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -1064,9 +1065,10 @@ export function kcOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>
  * {@link kcOpen} that also computes the outputs over the whole history in the same
  * pass, bit-identically to {@link kc}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link KcOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1105,7 +1107,7 @@ export function kcOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>
  * // outUpperBand[k] is the value at bar begIdx + k
  * ```
  */
-export function kcOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: KcOptions): KcResult & { stream: KcStream } {
+export function kcOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: KcOptions): KcResult & { stream: KcStream } {
   requireArgument('KC openAndFill', 'prices', prices);
   const o = optionsOf('KC openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

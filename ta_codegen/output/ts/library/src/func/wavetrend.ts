@@ -537,7 +537,7 @@ export interface WavetrendOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outWt1?: Float64Array | undefined;
+  outWt1?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outWt2`, written from index 0 and allocated when omitted. It must
    * hold the values produced (for a batch call the input length always suffices, for
@@ -545,7 +545,7 @@ export interface WavetrendOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outWt2?: Float64Array | undefined;
+  outWt2?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -556,12 +556,12 @@ export interface WavetrendResult {
   /** Input bar of the first value; 0 when there is none. */
   begIdx: number;
   /** WaveTrend oscillator line. `outWt1[k]` is the value at input bar `begIdx + k`. */
-  outWt1: Float64Array;
+  outWt1: Float64Array<ArrayBuffer>;
   /**
    * Simple average of the oscillator line. `outWt2[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outWt2: Float64Array;
+  outWt2: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -636,8 +636,9 @@ export function wavetrendDisplayShift(outputIdx: number, options?: WavetrendOpti
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link wavetrendLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price series. `low`: Low price series. `close`: Close price series.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price
+ *   series. `low`: Low price series. `close`: Close price series.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link WavetrendOptions}.
  * @returns `begIdx` and the values; see {@link WavetrendResult}. Each output is a
@@ -673,7 +674,7 @@ export function wavetrendDisplayShift(outputIdx: number, options?: WavetrendOpti
  * @see [`stochrsi`](https://ta-lib.org/functions/stochrsi)
  * @see [`tsi`](https://ta-lib.org/functions/tsi)
  */
-export function wavetrend(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: WavetrendOptions): WavetrendResult {
+export function wavetrend(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: WavetrendOptions): WavetrendResult {
   requireArgument('WAVETREND', 'prices', prices);
   const o = optionsOf('WAVETREND', options);
   if (o.endIdx === undefined) {
@@ -1609,9 +1610,9 @@ export function wavetrendOpenAndFillPositional(
  * Opens a live WAVETREND stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link wavetrend} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price series. `low`: Low price series. `close`: Close price
- *   series.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price series. `low`: Low price series. `close`: Close price series.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link WavetrendOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1640,7 +1641,7 @@ export function wavetrendOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function wavetrendOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: WavetrendOptions): WavetrendStream {
+export function wavetrendOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: WavetrendOptions): WavetrendStream {
   requireArgument('WAVETREND open', 'prices', prices);
   const o = optionsOf('WAVETREND open', options);
   const optInChannelPeriod = orDefault(o.channelPeriod, Core.INTEGER_DEFAULT);
@@ -1654,9 +1655,9 @@ export function wavetrendOpen(prices: { high: ArrayLike<number>; low: ArrayLike<
  * {@link wavetrendOpen} that also computes the outputs over the whole history in
  * the same pass, bit-identically to {@link wavetrend}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price series. `low`: Low price series. `close`: Close price
- *   series.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price series. `low`: Low price series. `close`: Close price series.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link WavetrendOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1689,7 +1690,7 @@ export function wavetrendOpen(prices: { high: ArrayLike<number>; low: ArrayLike<
  * // outWt1[k] is the value at bar begIdx + k
  * ```
  */
-export function wavetrendOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: WavetrendOptions): WavetrendResult & { stream: WavetrendStream } {
+export function wavetrendOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: WavetrendOptions): WavetrendResult & { stream: WavetrendStream } {
   requireArgument('WAVETREND openAndFill', 'prices', prices);
   const o = optionsOf('WAVETREND openAndFill', options);
   const optInChannelPeriod = orDefault(o.channelPeriod, Core.INTEGER_DEFAULT);

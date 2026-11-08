@@ -263,7 +263,7 @@ export interface CdleveningdojistarOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -277,7 +277,7 @@ export interface CdleveningdojistarResult {
    * -100 when the pattern is detected, 0 otherwise. Always bearish; never emits
    * +100. `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -333,9 +333,10 @@ export function cdleveningdojistarDisplayShift(outputIdx: number, options?: Cdle
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdleveningdojistarLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CdleveningdojistarOptions}.
  * @returns `begIdx` and the values; see {@link CdleveningdojistarResult}. Each
@@ -371,7 +372,7 @@ export function cdleveningdojistarDisplayShift(outputIdx: number, options?: Cdle
  * @see [`cdldojistar`](https://ta-lib.org/functions/cdldojistar)
  * @see [`cdlabandonedbaby`](https://ta-lib.org/functions/cdlabandonedbaby)
  */
-export function cdleveningdojistar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdleveningdojistarOptions): CdleveningdojistarResult {
+export function cdleveningdojistar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdleveningdojistarOptions): CdleveningdojistarResult {
   requireArgument('CDLEVENINGDOJISTAR', 'prices', prices);
   const o = optionsOf('CDLEVENINGDOJISTAR', options);
   if (o.endIdx === undefined) {
@@ -1013,9 +1014,10 @@ export function cdleveningdojistarOpenAndFillPositional(
  * starts at the last history bar, bit-identical to {@link cdleveningdojistar}
  * there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdleveningdojistarOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1044,7 +1046,7 @@ export function cdleveningdojistarOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdleveningdojistarOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdleveningdojistarOptions): CdleveningdojistarStream {
+export function cdleveningdojistarOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdleveningdojistarOptions): CdleveningdojistarStream {
   requireArgument('CDLEVENINGDOJISTAR open', 'prices', prices);
   const o = optionsOf('CDLEVENINGDOJISTAR open', options);
   const optInPenetration = orDefault(o.penetration, Core.REAL_DEFAULT);
@@ -1056,9 +1058,10 @@ export function cdleveningdojistarOpen(prices: { open: ArrayLike<number>; high: 
  * {@link cdleveningdojistarOpen} that also computes the outputs over the whole
  * history in the same pass, bit-identically to {@link cdleveningdojistar}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdleveningdojistarOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1091,7 +1094,7 @@ export function cdleveningdojistarOpen(prices: { open: ArrayLike<number>; high: 
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdleveningdojistarOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdleveningdojistarOptions): CdleveningdojistarResult & { stream: CdleveningdojistarStream } {
+export function cdleveningdojistarOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdleveningdojistarOptions): CdleveningdojistarResult & { stream: CdleveningdojistarStream } {
   requireArgument('CDLEVENINGDOJISTAR openAndFill', 'prices', prices);
   const o = optionsOf('CDLEVENINGDOJISTAR openAndFill', options);
   const optInPenetration = orDefault(o.penetration, Core.REAL_DEFAULT);

@@ -117,7 +117,7 @@ fn api_input_params(b: &mut Block, func: &FuncDef, doc: &DocDef, lead: &str) {
                 .iter()
                 .map(|(i, expr)| format!("`{}`: {}", &expr[ts::PRICES_PARAM.len() + 1..], input_desc(&i.name, doc)))
                 .collect();
-            b.param(&a.name, &format!("{lead}One series per price component, all of one length. {}", parts.join(" ")));
+            b.param(&a.name, &format!("{lead}One series per price component this function reads, all of one length; other components may be present and are ignored. {}", parts.join(" ")));
         } else {
             b.param(&a.name, &format!("{lead}{}", input_desc(&a.legs[0].0.name, doc)));
         }

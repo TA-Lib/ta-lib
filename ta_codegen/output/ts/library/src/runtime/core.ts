@@ -280,6 +280,18 @@ export class Core {
     return this.unstablePeriods[id];
   }
 
+  /**
+   * The candle setting stored for one attribute.
+   *
+   * @throws `TALibError` with code `TA_BAD_PARAM` for the wildcard or a value that is not a `CandleSettingType`.
+   */
+  candleSetting(settingType: Exclude<CandleSettingType, typeof CandleSettingType.ALL_CANDLE_SETTINGS>): CandleSetting {
+    if (!isCandleSlot(settingType)) {
+      throw badParam(`candleSetting: ${settingType} is not a single CandleSettingType`);
+    }
+    return this.candleSettings[settingType];
+  }
+
   /** @internal The count for one call: the stored one, or under an Auto level that level's count. */
   unstableCount(slot: number, prec4: number, prec8: number): number {
     const stored = this.unstablePeriods[slot];

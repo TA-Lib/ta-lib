@@ -229,7 +229,7 @@ export interface CdlconcealbabyswallOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -243,7 +243,7 @@ export interface CdlconcealbabyswallResult {
    * +100 on a match, 0 otherwise; never emits -100 (pattern is always bullish).
    * `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -302,9 +302,10 @@ export function cdlconcealbabyswallDisplayShift(outputIdx: number, options?: Cdl
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdlconcealbabyswallLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see
  *   {@link CdlconcealbabyswallOptions}.
@@ -336,7 +337,7 @@ export function cdlconcealbabyswallDisplayShift(outputIdx: number, options?: Cdl
  * @see [`cdlmarubozu`](https://ta-lib.org/functions/cdlmarubozu)
  * @see [`cdlengulfing`](https://ta-lib.org/functions/cdlengulfing)
  */
-export function cdlconcealbabyswall(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlconcealbabyswallOptions): CdlconcealbabyswallResult {
+export function cdlconcealbabyswall(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlconcealbabyswallOptions): CdlconcealbabyswallResult {
   requireArgument('CDLCONCEALBABYSWALL', 'prices', prices);
   const o = optionsOf('CDLCONCEALBABYSWALL', options);
   if (o.endIdx === undefined) {
@@ -905,9 +906,10 @@ export function cdlconcealbabyswallOpenAndFillPositional(
  * starts at the last history bar, bit-identical to {@link cdlconcealbabyswall}
  * there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdlconcealbabyswallOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -933,7 +935,7 @@ export function cdlconcealbabyswallOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlconcealbabyswallOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlconcealbabyswallOptions): CdlconcealbabyswallStream {
+export function cdlconcealbabyswallOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlconcealbabyswallOptions): CdlconcealbabyswallStream {
   requireArgument('CDLCONCEALBABYSWALL open', 'prices', prices);
   const o = optionsOf('CDLCONCEALBABYSWALL open', options);
   const core = coreOf('CDLCONCEALBABYSWALL open', o.core);
@@ -944,9 +946,10 @@ export function cdlconcealbabyswallOpen(prices: { open: ArrayLike<number>; high:
  * {@link cdlconcealbabyswallOpen} that also computes the outputs over the whole
  * history in the same pass, bit-identically to {@link cdlconcealbabyswall}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdlconcealbabyswallOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -976,7 +979,7 @@ export function cdlconcealbabyswallOpen(prices: { open: ArrayLike<number>; high:
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlconcealbabyswallOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlconcealbabyswallOptions): CdlconcealbabyswallResult & { stream: CdlconcealbabyswallStream } {
+export function cdlconcealbabyswallOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlconcealbabyswallOptions): CdlconcealbabyswallResult & { stream: CdlconcealbabyswallStream } {
   requireArgument('CDLCONCEALBABYSWALL openAndFill', 'prices', prices);
   const o = optionsOf('CDLCONCEALBABYSWALL openAndFill', options);
   const core = coreOf('CDLCONCEALBABYSWALL openAndFill', o.core);

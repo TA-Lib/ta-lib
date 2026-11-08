@@ -433,7 +433,7 @@ export interface PercentbOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link percentb} returns, and {@link percentbOpenAndFill} with its stream. */
@@ -444,7 +444,7 @@ export interface PercentbResult {
    * Position of the input between the lower band (0) and the upper band (1).
    * `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**

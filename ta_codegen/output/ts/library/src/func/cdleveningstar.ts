@@ -252,7 +252,7 @@ export interface CdleveningstarOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -266,7 +266,7 @@ export interface CdleveningstarResult {
    * -100 when detected (always bearish), 0 otherwise. Never emits +100. `values[k]`
    * is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -323,9 +323,10 @@ export function cdleveningstarDisplayShift(outputIdx: number, options?: Cdleveni
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdleveningstarLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CdleveningstarOptions}.
  * @returns `begIdx` and the values; see {@link CdleveningstarResult}. Each output
@@ -360,7 +361,7 @@ export function cdleveningstarDisplayShift(outputIdx: number, options?: Cdleveni
  * @see [`cdlmorningstar`](https://ta-lib.org/functions/cdlmorningstar)
  * @see [`cdlmorningdojistar`](https://ta-lib.org/functions/cdlmorningdojistar)
  */
-export function cdleveningstar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdleveningstarOptions): CdleveningstarResult {
+export function cdleveningstar(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdleveningstarOptions): CdleveningstarResult {
   requireArgument('CDLEVENINGSTAR', 'prices', prices);
   const o = optionsOf('CDLEVENINGSTAR', options);
   if (o.endIdx === undefined) {
@@ -946,9 +947,10 @@ export function cdleveningstarOpenAndFillPositional(
  * Opens a live CDLEVENINGSTAR stream over the warm-up history: `value()` starts at
  * the last history bar, bit-identical to {@link cdleveningstar} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdleveningstarOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -977,7 +979,7 @@ export function cdleveningstarOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdleveningstarOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdleveningstarOptions): CdleveningstarStream {
+export function cdleveningstarOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdleveningstarOptions): CdleveningstarStream {
   requireArgument('CDLEVENINGSTAR open', 'prices', prices);
   const o = optionsOf('CDLEVENINGSTAR open', options);
   const optInPenetration = orDefault(o.penetration, Core.REAL_DEFAULT);
@@ -989,9 +991,10 @@ export function cdleveningstarOpen(prices: { open: ArrayLike<number>; high: Arra
  * {@link cdleveningstarOpen} that also computes the outputs over the whole history
  * in the same pass, bit-identically to {@link cdleveningstar}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdleveningstarOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1024,7 +1027,7 @@ export function cdleveningstarOpen(prices: { open: ArrayLike<number>; high: Arra
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdleveningstarOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdleveningstarOptions): CdleveningstarResult & { stream: CdleveningstarStream } {
+export function cdleveningstarOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdleveningstarOptions): CdleveningstarResult & { stream: CdleveningstarStream } {
   requireArgument('CDLEVENINGSTAR openAndFill', 'prices', prices);
   const o = optionsOf('CDLEVENINGSTAR openAndFill', options);
   const optInPenetration = orDefault(o.penetration, Core.REAL_DEFAULT);

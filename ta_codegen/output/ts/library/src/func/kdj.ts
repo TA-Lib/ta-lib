@@ -306,7 +306,7 @@ export interface KdjOptions {
    * or with an input; a batch call may compute in place over a `Float64Array` input
    * of the same length.
    */
-  outK?: Float64Array | undefined;
+  outK?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outD`, written from index 0 and allocated when omitted. It must hold
    * the values produced (for a batch call the input length always suffices, for an
@@ -314,7 +314,7 @@ export interface KdjOptions {
    * or with an input; a batch call may compute in place over a `Float64Array` input
    * of the same length.
    */
-  outD?: Float64Array | undefined;
+  outD?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outJ`, written from index 0 and allocated when omitted. It must hold
    * the values produced (for a batch call the input length always suffices, for an
@@ -322,7 +322,7 @@ export interface KdjOptions {
    * or with an input; a batch call may compute in place over a `Float64Array` input
    * of the same length.
    */
-  outJ?: Float64Array | undefined;
+  outJ?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link kdj} returns, and {@link kdjOpenAndFill} with its stream. */
@@ -333,17 +333,17 @@ export interface KdjResult {
    * Raw stochastic smoothed by SlowK_Period MA. `outK[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outK: Float64Array;
+  outK: Float64Array<ArrayBuffer>;
   /**
    * Signal line: K smoothed by SlowD_Period MA. `outD[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outD: Float64Array;
+  outD: Float64Array<ArrayBuffer>;
   /**
    * Divergence line, three parts K less two parts D. `outJ[k]` is the value at input
    * bar `begIdx + k`.
    */
-  outJ: Float64Array;
+  outJ: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -414,9 +414,9 @@ export function kdjDisplayShift(outputIdx: number, options?: KdjOptions): number
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link kdjLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price of each bar. `low`: Low price of each bar. `close`: Close price of each
- *   bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price of
+ *   each bar. `low`: Low price of each bar. `close`: Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link KdjOptions}.
  * @returns `begIdx` and the values; see {@link KdjResult}. Each output is a view
@@ -454,7 +454,7 @@ export function kdjDisplayShift(outputIdx: number, options?: KdjOptions): number
  * @see [`rma`](https://ta-lib.org/functions/rma)
  * @see [`ma`](https://ta-lib.org/functions/ma)
  */
-export function kdj(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: KdjOptions): KdjResult {
+export function kdj(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: KdjOptions): KdjResult {
   requireArgument('KDJ', 'prices', prices);
   const o = optionsOf('KDJ', options);
   if (o.endIdx === undefined) {
@@ -1010,9 +1010,10 @@ export function kdjOpenAndFillPositional(
  * Opens a live KDJ stream over the warm-up history: `value()` starts at the last
  * history bar, bit-identical to {@link kdj} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link KdjOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1043,7 +1044,7 @@ export function kdjOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function kdjOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: KdjOptions): KdjStream {
+export function kdjOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: KdjOptions): KdjStream {
   requireArgument('KDJ open', 'prices', prices);
   const o = optionsOf('KDJ open', options);
   const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);
@@ -1059,9 +1060,10 @@ export function kdjOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * {@link kdjOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link kdj}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price of each bar. `low`: Low price of each bar. `close`:
- *   Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price of each bar. `low`: Low price of each bar. `close`: Close
+ *   price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link KdjOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1096,7 +1098,7 @@ export function kdjOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number
  * // outK[k] is the value at bar begIdx + k
  * ```
  */
-export function kdjOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: KdjOptions): KdjResult & { stream: KdjStream } {
+export function kdjOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: KdjOptions): KdjResult & { stream: KdjStream } {
   requireArgument('KDJ openAndFill', 'prices', prices);
   const o = optionsOf('KDJ openAndFill', options);
   const optInFastK_Period = orDefault(o.fastKPeriod, Core.INTEGER_DEFAULT);

@@ -344,7 +344,7 @@ export interface VortexOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outPlusVi?: Float64Array | undefined;
+  outPlusVi?: Float64Array<ArrayBuffer> | undefined;
   /**
    * Buffer for `outMinusVi`, written from index 0 and allocated when omitted. It
    * must hold the values produced (for a batch call the input length always
@@ -352,7 +352,7 @@ export interface VortexOptions {
    * with another buffer or with an input; a batch call may compute in place over a
    * `Float64Array` input of the same length.
    */
-  outMinusVi?: Float64Array | undefined;
+  outMinusVi?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link vortex} returns, and {@link vortexOpenAndFill} with its stream. */
@@ -363,12 +363,12 @@ export interface VortexResult {
    * Positive vortex line (+VI). `outPlusVi[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outPlusVi: Float64Array;
+  outPlusVi: Float64Array<ArrayBuffer>;
   /**
    * Negative vortex line (−VI). `outMinusVi[k]` is the value at input bar
    * `begIdx + k`.
    */
-  outMinusVi: Float64Array;
+  outMinusVi: Float64Array<ArrayBuffer>;
 }
 
 /**
@@ -429,8 +429,9 @@ export function vortexDisplayShift(outputIdx: number, options?: VortexOptions): 
  * as long as the number of values written, and nothing is padded. A range that
  * ends before {@link vortexLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `high`: High
- *   price series. `low`: Low price series. `close`: Close price series.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `high`: High price
+ *   series. `low`: Low price series. `close`: Close price series.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link VortexOptions}.
  * @returns `begIdx` and the values; see {@link VortexResult}. Each output is a
@@ -464,7 +465,7 @@ export function vortexDisplayShift(outputIdx: number, options?: VortexOptions): 
  * @see [`minusDi`](https://ta-lib.org/functions/minus_di)
  * @see [`adx`](https://ta-lib.org/functions/adx)
  */
-export function vortex(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: VortexOptions): VortexResult {
+export function vortex(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: VortexOptions): VortexResult {
   requireArgument('VORTEX', 'prices', prices);
   const o = optionsOf('VORTEX', options);
   if (o.endIdx === undefined) {
@@ -1293,9 +1294,9 @@ export function vortexOpenAndFillPositional(
  * Opens a live VORTEX stream over the warm-up history: `value()` starts at the
  * last history bar, bit-identical to {@link vortex} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price series. `low`: Low price series. `close`: Close price
- *   series.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price series. `low`: Low price series. `close`: Close price series.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link VortexOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1320,7 +1321,7 @@ export function vortexOpenAndFillPositional(
  * const updated = stream.update(101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function vortexOpen(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: VortexOptions): VortexStream {
+export function vortexOpen(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: VortexOptions): VortexStream {
   requireArgument('VORTEX open', 'prices', prices);
   const o = optionsOf('VORTEX open', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);
@@ -1332,9 +1333,9 @@ export function vortexOpen(prices: { high: ArrayLike<number>; low: ArrayLike<num
  * {@link vortexOpen} that also computes the outputs over the whole history in the
  * same pass, bit-identically to {@link vortex}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `high`: High price series. `low`: Low price series. `close`: Close price
- *   series.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `high`: High price series. `low`: Low price series. `close`: Close price series.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link VortexOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1368,7 +1369,7 @@ export function vortexOpen(prices: { high: ArrayLike<number>; low: ArrayLike<num
  * // outPlusVi[k] is the value at bar begIdx + k
  * ```
  */
-export function vortexOpenAndFill(prices: { high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: VortexOptions): VortexResult & { stream: VortexStream } {
+export function vortexOpenAndFill(prices: { open?: ArrayLike<number> | undefined; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: VortexOptions): VortexResult & { stream: VortexStream } {
   requireArgument('VORTEX openAndFill', 'prices', prices);
   const o = optionsOf('VORTEX openAndFill', options);
   const optInTimePeriod = orDefault(o.timePeriod, Core.INTEGER_DEFAULT);

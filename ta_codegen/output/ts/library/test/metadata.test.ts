@@ -237,3 +237,18 @@ test('getRuntimeInfo and FunctionDescription', () => {
   assert.ok(xml.startsWith('<?xml'));
   assert.ok(xml.includes('<Abbreviation>SMA</Abbreviation>'));
 });
+
+test('call defaults its range as the typed call does', () => {
+  const whole = new Float64Array(N);
+  const explicit = new Float64Array(N);
+  const r = info('SMA').newCall().setInput(0, close).setOptInput(0, 20).setOutput(0, whole).call();
+  const e = info('SMA').newCall().setInput(0, close).setOptInput(0, 20).setOutput(0, explicit).call(0, N - 1);
+  assert.deepEqual([r.begIdx, r.count], [e.begIdx, e.count]);
+  assert.deepEqual(Array.from(whole), Array.from(explicit));
+  const from25 = info('SMA').newCall().setInput(0, close).setOptInput(0, 20).setOutput(0, new Float64Array(N)).call(25);
+  assert.deepEqual([from25.begIdx, from25.count], [25, N - 25]);
+  // The default reads the input's length, so an empty one is the typed call's rejection, not a range fault.
+  rejects('TA_BAD_PARAM', () => info('SMA').newCall().setInput(0, new Float64Array(0)).setOutput(0, new Float64Array(1)).call());
+  const priced = info('ATR').newCall().setPriceInput(0, { high, low, close }).setOutput(0, new Float64Array(N)).call();
+  assert.deepEqual([priced.begIdx, priced.count], [14, N - 14]);
+});

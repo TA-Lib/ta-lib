@@ -224,7 +224,7 @@ export interface Cdl3linestrikeOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -239,7 +239,7 @@ export interface Cdl3linestrikeResult {
    * three-line strike, 0 otherwise. Sign is the color of the first three candles:
    * candlecolor(i-1)*100. `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -302,9 +302,10 @@ export function cdl3linestrikeDisplayShift(outputIdx: number, options?: Cdl3line
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdl3linestrikeLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link Cdl3linestrikeOptions}.
  * @returns `begIdx` and the values; see {@link Cdl3linestrikeResult}. Each output
@@ -335,7 +336,7 @@ export function cdl3linestrikeDisplayShift(outputIdx: number, options?: Cdl3line
  * @see [`cdl3whitesoldiers`](https://ta-lib.org/functions/cdl3whitesoldiers)
  * @see [`cdl3blackcrows`](https://ta-lib.org/functions/cdl3blackcrows)
  */
-export function cdl3linestrike(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3linestrikeOptions): Cdl3linestrikeResult {
+export function cdl3linestrike(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3linestrikeOptions): Cdl3linestrikeResult {
   requireArgument('CDL3LINESTRIKE', 'prices', prices);
   const o = optionsOf('CDL3LINESTRIKE', options);
   if (o.endIdx === undefined) {
@@ -893,9 +894,10 @@ export function cdl3linestrikeOpenAndFillPositional(
  * Opens a live CDL3LINESTRIKE stream over the warm-up history: `value()` starts at
  * the last history bar, bit-identical to {@link cdl3linestrike} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link Cdl3linestrikeOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -921,7 +923,7 @@ export function cdl3linestrikeOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdl3linestrikeOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3linestrikeOptions): Cdl3linestrikeStream {
+export function cdl3linestrikeOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3linestrikeOptions): Cdl3linestrikeStream {
   requireArgument('CDL3LINESTRIKE open', 'prices', prices);
   const o = optionsOf('CDL3LINESTRIKE open', options);
   const core = coreOf('CDL3LINESTRIKE open', o.core);
@@ -932,9 +934,10 @@ export function cdl3linestrikeOpen(prices: { open: ArrayLike<number>; high: Arra
  * {@link cdl3linestrikeOpen} that also computes the outputs over the whole history
  * in the same pass, bit-identically to {@link cdl3linestrike}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link Cdl3linestrikeOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -964,7 +967,7 @@ export function cdl3linestrikeOpen(prices: { open: ArrayLike<number>; high: Arra
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdl3linestrikeOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3linestrikeOptions): Cdl3linestrikeResult & { stream: Cdl3linestrikeStream } {
+export function cdl3linestrikeOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3linestrikeOptions): Cdl3linestrikeResult & { stream: Cdl3linestrikeStream } {
   requireArgument('CDL3LINESTRIKE openAndFill', 'prices', prices);
   const o = optionsOf('CDL3LINESTRIKE openAndFill', options);
   const core = coreOf('CDL3LINESTRIKE openAndFill', o.core);

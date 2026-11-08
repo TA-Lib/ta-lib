@@ -334,7 +334,7 @@ export interface SkewOptions {
    * buffer or with an input; a batch call may compute in place over a `Float64Array`
    * input of the same length.
    */
-  outReal?: Float64Array | undefined;
+  outReal?: Float64Array<ArrayBuffer> | undefined;
 }
 
 /** What {@link skew} returns, and {@link skewOpenAndFill} with its stream. */
@@ -345,7 +345,7 @@ export interface SkewResult {
    * Skewness of the trailing window, or 0 where the window has no spread.
    * `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Float64Array;
+  values: Float64Array<ArrayBuffer>;
 }
 
 /**

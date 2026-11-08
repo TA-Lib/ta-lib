@@ -268,7 +268,7 @@ export interface Cdl3starsinsouthOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -282,7 +282,7 @@ export interface Cdl3starsinsouthResult {
    * +100 on the bar where the pattern completes (always bullish), 0 otherwise. Never
    * emits -100. `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -344,9 +344,10 @@ export function cdl3starsinsouthDisplayShift(outputIdx: number, options?: Cdl3st
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdl3starsinsouthLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link Cdl3starsinsouthOptions}.
  * @returns `begIdx` and the values; see {@link Cdl3starsinsouthResult}. Each
@@ -378,7 +379,7 @@ export function cdl3starsinsouthDisplayShift(outputIdx: number, options?: Cdl3st
  * @see [`cdlidentical3crows`](https://ta-lib.org/functions/cdlidentical3crows)
  * @see [`cdl3whitesoldiers`](https://ta-lib.org/functions/cdl3whitesoldiers)
  */
-export function cdl3starsinsouth(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3starsinsouthOptions): Cdl3starsinsouthResult {
+export function cdl3starsinsouth(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3starsinsouthOptions): Cdl3starsinsouthResult {
   requireArgument('CDL3STARSINSOUTH', 'prices', prices);
   const o = optionsOf('CDL3STARSINSOUTH', options);
   if (o.endIdx === undefined) {
@@ -1115,9 +1116,10 @@ export function cdl3starsinsouthOpenAndFillPositional(
  * Opens a live CDL3STARSINSOUTH stream over the warm-up history: `value()` starts
  * at the last history bar, bit-identical to {@link cdl3starsinsouth} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link Cdl3starsinsouthOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1143,7 +1145,7 @@ export function cdl3starsinsouthOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdl3starsinsouthOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3starsinsouthOptions): Cdl3starsinsouthStream {
+export function cdl3starsinsouthOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3starsinsouthOptions): Cdl3starsinsouthStream {
   requireArgument('CDL3STARSINSOUTH open', 'prices', prices);
   const o = optionsOf('CDL3STARSINSOUTH open', options);
   const core = coreOf('CDL3STARSINSOUTH open', o.core);
@@ -1154,9 +1156,10 @@ export function cdl3starsinsouthOpen(prices: { open: ArrayLike<number>; high: Ar
  * {@link cdl3starsinsouthOpen} that also computes the outputs over the whole
  * history in the same pass, bit-identically to {@link cdl3starsinsouth}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link Cdl3starsinsouthOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1186,7 +1189,7 @@ export function cdl3starsinsouthOpen(prices: { open: ArrayLike<number>; high: Ar
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdl3starsinsouthOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdl3starsinsouthOptions): Cdl3starsinsouthResult & { stream: Cdl3starsinsouthStream } {
+export function cdl3starsinsouthOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdl3starsinsouthOptions): Cdl3starsinsouthResult & { stream: Cdl3starsinsouthStream } {
   requireArgument('CDL3STARSINSOUTH openAndFill', 'prices', prices);
   const o = optionsOf('CDL3STARSINSOUTH openAndFill', options);
   const core = coreOf('CDL3STARSINSOUTH openAndFill', o.core);

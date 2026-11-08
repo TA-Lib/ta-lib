@@ -281,7 +281,7 @@ export interface CdlstalledpatternOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -295,7 +295,7 @@ export interface CdlstalledpatternResult {
    * -100 when the pattern is detected (always bearish), 0 otherwise. Never emits
    * +100. `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -355,9 +355,10 @@ export function cdlstalledpatternDisplayShift(outputIdx: number, options?: Cdlst
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdlstalledpatternLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see {@link CdlstalledpatternOptions}.
  * @returns `begIdx` and the values; see {@link CdlstalledpatternResult}. Each
@@ -389,7 +390,7 @@ export function cdlstalledpatternDisplayShift(outputIdx: number, options?: Cdlst
  * @see [`cdl3whitesoldiers`](https://ta-lib.org/functions/cdl3whitesoldiers)
  * @see [`cdlxsidegap3methods`](https://ta-lib.org/functions/cdlxsidegap3methods)
  */
-export function cdlstalledpattern(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlstalledpatternOptions): CdlstalledpatternResult {
+export function cdlstalledpattern(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlstalledpatternOptions): CdlstalledpatternResult {
   requireArgument('CDLSTALLEDPATTERN', 'prices', prices);
   const o = optionsOf('CDLSTALLEDPATTERN', options);
   if (o.endIdx === undefined) {
@@ -1148,9 +1149,10 @@ export function cdlstalledpatternOpenAndFillPositional(
  * Opens a live CDLSTALLEDPATTERN stream over the warm-up history: `value()` starts
  * at the last history bar, bit-identical to {@link cdlstalledpattern} there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link CdlstalledpatternOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1176,7 +1178,7 @@ export function cdlstalledpatternOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlstalledpatternOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlstalledpatternOptions): CdlstalledpatternStream {
+export function cdlstalledpatternOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlstalledpatternOptions): CdlstalledpatternStream {
   requireArgument('CDLSTALLEDPATTERN open', 'prices', prices);
   const o = optionsOf('CDLSTALLEDPATTERN open', options);
   const core = coreOf('CDLSTALLEDPATTERN open', o.core);
@@ -1187,9 +1189,10 @@ export function cdlstalledpatternOpen(prices: { open: ArrayLike<number>; high: A
  * {@link cdlstalledpatternOpen} that also computes the outputs over the whole
  * history in the same pass, bit-identically to {@link cdlstalledpattern}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link CdlstalledpatternOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1219,7 +1222,7 @@ export function cdlstalledpatternOpen(prices: { open: ArrayLike<number>; high: A
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlstalledpatternOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: CdlstalledpatternOptions): CdlstalledpatternResult & { stream: CdlstalledpatternStream } {
+export function cdlstalledpatternOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: CdlstalledpatternOptions): CdlstalledpatternResult & { stream: CdlstalledpatternStream } {
   requireArgument('CDLSTALLEDPATTERN openAndFill', 'prices', prices);
   const o = optionsOf('CDLSTALLEDPATTERN openAndFill', options);
   const core = coreOf('CDLSTALLEDPATTERN openAndFill', o.core);

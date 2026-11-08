@@ -255,7 +255,7 @@ export interface Cdlrisefall3methodsOptions {
    * an `OpenAndFill` `historyLen - lookback`), and share no memory with another
    * buffer or with an input.
    */
-  outInteger?: Int32Array | undefined;
+  outInteger?: Int32Array<ArrayBuffer> | undefined;
 }
 
 /**
@@ -270,7 +270,7 @@ export interface Cdlrisefall3methodsResult {
    * black (falling/bearish continuation), 0 otherwise. Sign = 100 * color of candle 1.
    * `values[k]` is the value at input bar `begIdx + k`.
    */
-  values: Int32Array;
+  values: Int32Array<ArrayBuffer>;
 }
 
 /**
@@ -335,9 +335,10 @@ export function cdlrisefall3methodsDisplayShift(outputIdx: number, options?: Cdl
  * long as the number of values written, and nothing is padded. A range that ends
  * before {@link cdlrisefall3methodsLookback} is a success with empty outputs.
  *
- * @param prices - One series per price component, all of one length. `open`: Open
- *   price of each bar. `high`: High price of each bar. `low`: Low price of each bar.
- *   `close`: Close price of each bar.
+ * @param prices - One series per price component this function reads, all of one
+ *   length; other components may be present and are ignored. `open`: Open price of
+ *   each bar. `high`: High price of each bar. `low`: Low price of each bar. `close`:
+ *   Close price of each bar.
  * @param options - Parameters, the range `startIdx` to `endIdx` (inclusive),
  *   `core` and output buffers, each optional; see
  *   {@link Cdlrisefall3methodsOptions}.
@@ -370,7 +371,7 @@ export function cdlrisefall3methodsDisplayShift(outputIdx: number, options?: Cdl
  * @see [`cdl3inside`](https://ta-lib.org/functions/cdl3inside)
  * @see [`cdl3outside`](https://ta-lib.org/functions/cdl3outside)
  */
-export function cdlrisefall3methods(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdlrisefall3methodsOptions): Cdlrisefall3methodsResult {
+export function cdlrisefall3methods(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlrisefall3methodsOptions): Cdlrisefall3methodsResult {
   requireArgument('CDLRISEFALL3METHODS', 'prices', prices);
   const o = optionsOf('CDLRISEFALL3METHODS', options);
   if (o.endIdx === undefined) {
@@ -1046,9 +1047,10 @@ export function cdlrisefall3methodsOpenAndFillPositional(
  * starts at the last history bar, bit-identical to {@link cdlrisefall3methods}
  * there.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters and `core`; other keys are ignored. See
  *   {@link Cdlrisefall3methodsOptions}.
  * @returns The stream, positioned on the last history bar.
@@ -1074,7 +1076,7 @@ export function cdlrisefall3methodsOpenAndFillPositional(
  * const updated = stream.update(100.2, 101.4, 99.1, 100.9); // the bar closes
  * ```
  */
-export function cdlrisefall3methodsOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdlrisefall3methodsOptions): Cdlrisefall3methodsStream {
+export function cdlrisefall3methodsOpen(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlrisefall3methodsOptions): Cdlrisefall3methodsStream {
   requireArgument('CDLRISEFALL3METHODS open', 'prices', prices);
   const o = optionsOf('CDLRISEFALL3METHODS open', options);
   const core = coreOf('CDLRISEFALL3METHODS open', o.core);
@@ -1085,9 +1087,10 @@ export function cdlrisefall3methodsOpen(prices: { open: ArrayLike<number>; high:
  * {@link cdlrisefall3methodsOpen} that also computes the outputs over the whole
  * history in the same pass, bit-identically to {@link cdlrisefall3methods}.
  *
- * @param prices - Warm-up history. One series per price component, all of one
- *   length. `open`: Open price of each bar. `high`: High price of each bar. `low`:
- *   Low price of each bar. `close`: Close price of each bar.
+ * @param prices - Warm-up history. One series per price component this function
+ *   reads, all of one length; other components may be present and are ignored.
+ *   `open`: Open price of each bar. `high`: High price of each bar. `low`: Low price
+ *   of each bar. `close`: Close price of each bar.
  * @param options - The parameters, `core` and output buffers; other keys are
  *   ignored. See {@link Cdlrisefall3methodsOptions}.
  * @returns The stream, positioned on the last history bar, with `begIdx` and the
@@ -1117,7 +1120,7 @@ export function cdlrisefall3methodsOpen(prices: { open: ArrayLike<number>; high:
  * // values[k] is the value at bar begIdx + k
  * ```
  */
-export function cdlrisefall3methodsOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number> }, options?: Cdlrisefall3methodsOptions): Cdlrisefall3methodsResult & { stream: Cdlrisefall3methodsStream } {
+export function cdlrisefall3methodsOpenAndFill(prices: { open: ArrayLike<number>; high: ArrayLike<number>; low: ArrayLike<number>; close: ArrayLike<number>; volume?: ArrayLike<number> | undefined; openInterest?: ArrayLike<number> | undefined }, options?: Cdlrisefall3methodsOptions): Cdlrisefall3methodsResult & { stream: Cdlrisefall3methodsStream } {
   requireArgument('CDLRISEFALL3METHODS openAndFill', 'prices', prices);
   const o = optionsOf('CDLRISEFALL3METHODS openAndFill', options);
   const core = coreOf('CDLRISEFALL3METHODS openAndFill', o.core);
