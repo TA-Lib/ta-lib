@@ -434,9 +434,10 @@ export function fisherDisplayShift(outputIdx: number, options?: FisherOptions): 
  * Ehlers' Fisher Transform: an oscillator that reshapes the midpoint's position in
  * its rolling channel into a near-normal distribution. Extreme values become rare
  * and turning points sharp, where a plain channel position spends much of its time
- * pinned near the edges. The output is unbounded and centred on zero. A peak or
- * trough marks a likely turn, and the Fisher line crossing its Trigger, the same
- * line one bar later, is the author's entry signal.
+ * pinned near the edges. The output is centred on zero and stays within ±7.6: the
+ * smoothed position is limited to ±0.999 before the transform. A peak or trough
+ * marks a likely turn, and the Fisher line crossing its Trigger, the same line one
+ * bar later, is the author's entry signal.
  *
  * Formula and more info at
  * [ta-lib.org/functions/fisher](https://ta-lib.org/functions/fisher).
