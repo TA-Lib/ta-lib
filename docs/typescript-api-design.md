@@ -23,6 +23,10 @@
 | A15 | Errors are exceptions; `RetCode` is exported | Adopted |
 | A16 | An empty history is `TA_INSUFFICIENT_HISTORY` in all five backends | Adopted |
 | A17 | No C leftovers in the public types; function names keep the shared rule | Adopted |
+| A18 | Output types carry the buffer type: `Float64Array<ArrayBuffer>`, `Int32Array<ArrayBuffer>`, on result fields and buffer keys | Ruled (owner, 2026-11-07) |
+| A19 | A price object requires the components the function reads and takes the other components as optional, ignored | Ruled (owner, 2026-11-07) |
+| A20 | `ParamHolder.call` defaults its range as the typed call does | Ruled (owner, 2026-11-07) |
+| A21 | `Core.candleSetting(settingType)` reads a candle setting back, in TypeScript and Java | Ruled (owner, 2026-11-07) |
 
 ## 2. Batch call
 
