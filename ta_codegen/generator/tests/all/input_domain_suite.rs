@@ -34,11 +34,12 @@ fn the_math_groups_declare_synthetic_series() {
         assert_eq!(func.inputs[0].series, Series::Ramp, "{name}: series");
         assert_eq!(func.inputs[0].domain, Some((lo, hi)), "{name}: domain");
     }
-    for name in ["add", "sub", "mult", "div"] {
+    // The operators straddle zero to show a negative input; the divisor alone keeps off it.
+    for (name, divisor) in [("add", (-5.0, 5.0)), ("sub", (-5.0, 5.0)), ("mult", (-5.0, 5.0)), ("div", (1.0, 6.0))] {
         let (func, _) = common::load_indicator(name);
         assert_eq!(func.inputs.len(), 2, "{name}");
-        assert_eq!((func.inputs[0].series, func.inputs[0].domain), (Series::Sine, Some((90.0, 110.0))), "{name}: inReal0");
-        assert_eq!((func.inputs[1].series, func.inputs[1].domain), (Series::Ramp, Some((95.0, 105.0))), "{name}: inReal1");
+        assert_eq!((func.inputs[0].series, func.inputs[0].domain), (Series::Sine, Some((-10.0, 10.0))), "{name}: inReal0");
+        assert_eq!((func.inputs[1].series, func.inputs[1].domain), (Series::Ramp, Some(divisor)), "{name}: inReal1");
     }
     let mut on_prices = 0;
     for name in common::discover_indicators() {
@@ -148,8 +149,8 @@ fn the_rust_doctests_feed_the_declared_series_not_the_price_scale() {
         assert!(lines.iter().any(|l| l.contains(expected)), "{name}: no `{expected}` in {lines:#?}");
     }
     let add = rust_doc_lines("add");
-    assert!(add.iter().any(|l| l.contains("let series0: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();")), "{add:#?}");
-    assert!(add.iter().any(|l| l.contains("let series1: Vec<f64> = (0..252).map(|i| 95.0 + 10.0 * i as f64 / 251.0).collect();")), "{add:#?}");
+    assert!(add.iter().any(|l| l.contains("let series0: Vec<f64>") && l.contains("10.0 * (0.1 * i as f64).sin()") && !l.contains("100.0")), "{add:#?}");
+    assert!(add.iter().any(|l| l.contains("let series1: Vec<f64>") && l.contains("-5.0 + 10.0 * i as f64 / 251.0")), "{add:#?}");
     let sma = rust_doc_lines("sma");
     assert!(sma.iter().any(|l| l.contains("100.0 + 10.0 * (0.1 * i as f64).sin()")), "sma keeps the price series");
 }
@@ -161,7 +162,7 @@ fn the_typescript_examples_feed_the_declared_series_not_the_price_scale() {
         ("acos", "(_, i) => -1 + 2 * i / 251.0);", "0.42"),
         ("tanh", "(_, i) => -3 + 6 * i / 251.0);", "1.26"),
         ("cosh", "(_, i) => -5 + 10 * i / 251.0);", "2.1"),
-        ("div", "(_, i) => 95 + 10 * i / 251.0);", "102.1"),
+        ("div", "(_, i) => 1 + 5 * i / 251.0);", "4.55"),
     ] {
         let (func, _) = common::load_indicator(name);
         let examples = backends::ts_doc::examples(&func, &enums);
@@ -183,8 +184,9 @@ fn the_refdata_header_lists_the_series_kind() {
     let text = std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
     assert!(text.contains("char series; double lo, hi; } REFDATA_DOMAIN[] = {"), "{text}");
     assert!(text.contains("    { \"ACOS\", \"inReal\", 'r', -1.0, 1.0 },"), "{text}");
-    assert!(text.contains("    { \"ADD\", \"inReal0\", 's', 90.0, 110.0 },"), "{text}");
-    assert!(text.contains("    { \"ADD\", \"inReal1\", 'r', 95.0, 105.0 },"), "{text}");
+    assert!(text.contains("    { \"ADD\", \"inReal0\", 's', -10.0, 10.0 },"), "{text}");
+    assert!(text.contains("    { \"ADD\", \"inReal1\", 'r', -5.0, 5.0 },"), "{text}");
+    assert!(text.contains("    { \"DIV\", \"inReal1\", 'r', 1.0, 6.0 },"), "{text}");
     assert!(text.contains("    { \"LN\", \"inReal\", 'r', 0.1, 10.0 },"), "{text}");
     assert!(!text.contains("\"SMA\"") && !text.contains("\"MAX\"") && !text.contains("\"BETA\""), "{text}");
     assert!(text.ends_with("    { NULL, NULL, 0, 0.0, 0.0 }\n};\n"), "{text}");

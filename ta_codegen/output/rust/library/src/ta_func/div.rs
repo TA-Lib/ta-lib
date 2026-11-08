@@ -171,9 +171,9 @@ impl Core {
     /// use ta_lib::Core;
     ///
     /// let series0 = vec![0.0; 252]; // your data, oldest first
-    /// # let series0: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// # let series0: Vec<f64> = (0..252).map(|i| 10.0 * (0.1 * i as f64).sin()).collect();
     /// let series1 = vec![0.0; 252]; // your data, oldest first
-    /// # let series1: Vec<f64> = (0..252).map(|i| 95.0 + 10.0 * i as f64 / 251.0).collect();
+    /// # let series1: Vec<f64> = (0..252).map(|i| 1.0 + 5.0 * i as f64 / 251.0).collect();
     /// let mut out = vec![0.0; 252];
     ///
     /// let core = Core::new();
@@ -331,15 +331,15 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let series0: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let series1: Vec<f64> = (0..252).map(|i| 95.0 + 10.0 * i as f64 / 251.0).collect();
+    /// let series0: Vec<f64> = (0..252).map(|i| 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series1: Vec<f64> = (0..252).map(|i| 1.0 + 5.0 * i as f64 / 251.0).collect();
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.div_open(&series0, &series1).expect("enough history");
     /// let r0 = s.out_range();
-    /// let peeked = s.peek(104.2, 102.1).expect("a finite bar");
+    /// let peeked = s.peek(4.2, 4.55).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
-    /// let updated = s.update(104.2, 102.1).expect("a finite bar");
+    /// let updated = s.update(4.2, 4.55).expect("a finite bar");
     /// assert_eq!(s.out_range().beg_idx, r0.beg_idx);
     /// assert_eq!(s.out_range().count, r0.count + 1);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
@@ -363,8 +363,8 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let series0: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let series1: Vec<f64> = (0..252).map(|i| 95.0 + 10.0 * i as f64 / 251.0).collect();
+    /// let series0: Vec<f64> = (0..252).map(|i| 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series1: Vec<f64> = (0..252).map(|i| 1.0 + 5.0 * i as f64 / 251.0).collect();
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];

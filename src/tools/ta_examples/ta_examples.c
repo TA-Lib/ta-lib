@@ -166,8 +166,8 @@ static int example_ADD( void )
    double series1[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series0[i] = 100 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) series1[i] = 95 + 10 * i / 251.0; }
+   { int i; for( i = 0; i < n; i++ ) series0[i] = 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series1[i] = -5 + 10 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -2370,8 +2370,8 @@ static int example_DIV( void )
    double series1[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series0[i] = 100 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) series1[i] = 95 + 10 * i / 251.0; }
+   { int i; for( i = 0; i < n; i++ ) series0[i] = 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series1[i] = 1 + 5 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -3605,8 +3605,8 @@ static int example_MULT( void )
    double series1[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series0[i] = 100 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) series1[i] = 95 + 10 * i / 251.0; }
+   { int i; for( i = 0; i < n; i++ ) series0[i] = 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series1[i] = -5 + 10 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -4426,8 +4426,8 @@ static int example_SUB( void )
    double series1[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series0[i] = 100 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) series1[i] = 95 + 10 * i / 251.0; }
+   { int i; for( i = 0; i < n; i++ ) series0[i] = 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series1[i] = -5 + 10 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();

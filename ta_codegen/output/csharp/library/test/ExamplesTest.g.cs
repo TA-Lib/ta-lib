@@ -158,9 +158,9 @@ public static class ExamplesTest
     private static void Add()
     {
         var series0 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series0[i] = 10 * Math.Sin(0.1 * i);
         var series1 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
+        for (int i = 0; i < 252; i++) series1[i] = -5 + 10 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -1864,9 +1864,9 @@ public static class ExamplesTest
     private static void Div()
     {
         var series0 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series0[i] = 10 * Math.Sin(0.1 * i);
         var series1 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
+        for (int i = 0; i < 252; i++) series1[i] = 1 + 5 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -2809,9 +2809,9 @@ public static class ExamplesTest
     private static void Mult()
     {
         var series0 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series0[i] = 10 * Math.Sin(0.1 * i);
         var series1 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
+        for (int i = 0; i < 252; i++) series1[i] = -5 + 10 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -3423,9 +3423,9 @@ public static class ExamplesTest
     private static void Sub()
     {
         var series0 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series0[i] = 10 * Math.Sin(0.1 * i);
         var series1 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
+        for (int i = 0; i < 252; i++) series1[i] = -5 + 10 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;

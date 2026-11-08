@@ -144,9 +144,9 @@ public class ExamplesTest {
 
     static void add() {
         double[] series0 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series0[i] = 10 * Math.sin(0.1 * i);
         double[] series1 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
+        for (int i = 0; i < 252; i++) series1[i] = -5 + 10 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -1749,9 +1749,9 @@ public class ExamplesTest {
 
     static void div() {
         double[] series0 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series0[i] = 10 * Math.sin(0.1 * i);
         double[] series1 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
+        for (int i = 0; i < 252; i++) series1[i] = 1 + 5 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -2630,9 +2630,9 @@ public class ExamplesTest {
 
     static void mult() {
         double[] series0 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series0[i] = 10 * Math.sin(0.1 * i);
         double[] series1 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
+        for (int i = 0; i < 252; i++) series1[i] = -5 + 10 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -3202,9 +3202,9 @@ public class ExamplesTest {
 
     static void sub() {
         double[] series0 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series0[i] = 10 * Math.sin(0.1 * i);
         double[] series1 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
+        for (int i = 0; i < 252; i++) series1[i] = -5 + 10 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;

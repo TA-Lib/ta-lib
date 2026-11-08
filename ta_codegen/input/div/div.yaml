@@ -6,11 +6,11 @@ inputs:
   - name: inReal0
     type: real
     series: sine
-    domain: [90, 110]
+    domain: [-10, 10]
   - name: inReal1
     type: real
     series: ramp
-    domain: [95, 105]
+    domain: [1, 6]
 outputs:
   - name: outReal
     type: real
