@@ -32,6 +32,7 @@ outputs:
   - name: outWT1
     type: real
     flags: [line, zero, positive, negative]
+    levels: [-60, -53, 53, 60]
   - name: outWT2
     type: real
     flags: [dash_line, zero, positive, negative]

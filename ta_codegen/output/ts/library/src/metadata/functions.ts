@@ -125,7 +125,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     [
       { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
-    '{}'),
+    '{"outputs":{"outReal":{"levels":[25]}}}'),
   FuncInfo.of('ADXR', 'Momentum Indicators', 'Average Directional Movement Index Rating', 0x02000000,
     [
       { type: InputType.PRICE, paramName: 'inPriceHLC', key: 'prices', flags: 0x0000000E },
@@ -136,7 +136,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     [
       { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
-    '{}'),
+    '{"outputs":{"outReal":{"levels":[25]}}}'),
   FuncInfo.of('ALLIGATOR', 'Overlap Studies', 'Williams Alligator', 0x03000002,
     [
       { type: InputType.PRICE, paramName: 'inPriceHL', key: 'prices', flags: 0x00000006 },
@@ -204,7 +204,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OutputType.REAL, paramName: 'outAroonDown', key: 'outAroonDown', flags: 0x00000504 },
       { type: OutputType.REAL, paramName: 'outAroonUp', key: 'outAroonUp', flags: 0x00000501 },
     ],
-    '{}'),
+    '{"outputs":{"outAroonUp":{"levels":[30,70]}}}'),
   FuncInfo.of('AROONOSC', 'Momentum Indicators', 'Aroon Oscillator', 0x02000000,
     [
       { type: InputType.PRICE, paramName: 'inPriceHL', key: 'prices', flags: 0x00000006 },
@@ -337,7 +337,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     [
       { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
-    '{}'),
+    '{"outputs":{"outReal":{"levels":[-100,100]}}}'),
   FuncInfo.of('CDL2CROWS', 'Pattern Recognition', 'Two Crows', 0x12000000,
     [
       { type: InputType.PRICE, paramName: 'inPriceOHLC', key: 'prices', flags: 0x0000000F },
@@ -944,7 +944,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     [
       { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
-    '{}'),
+    '{"outputs":{"outReal":{"levels":[38.2,61.8]}}}'),
   FuncInfo.of('CHOPTR', 'Momentum Indicators', 'Choppiness Index (True Range Box)', 0x02000004,
     [
       { type: InputType.PRICE, paramName: 'inPriceHLC', key: 'prices', flags: 0x0000000E },
@@ -991,7 +991,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     [
       { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
-    '{}'),
+    '{"outputs":{"outReal":{"levels":[-50,50]}}}'),
   FuncInfo.of('CMOU', 'Momentum Indicators', 'Chande Momentum Oscillator (Unsmoothed)', 0x02000000,
     [
       { type: InputType.REAL, paramName: 'inReal', key: 'real', flags: 0x00000000 },
@@ -1058,7 +1058,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     [
       { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
-    '{}'),
+    '{"outputs":{"outReal":{"levels":[10,90]}}}'),
   FuncInfo.of('CTI', 'Momentum Indicators', 'Correlation Trend Indicator', 0x02000000,
     [
       { type: InputType.REAL, paramName: 'inReal', key: 'real', flags: 0x00000000 },
@@ -1370,7 +1370,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     [
       { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
-    '{}'),
+    '{"outputs":{"outReal":{"levels":[0.2,0.8]}}}'),
   FuncInfo.of('ICHIMOKU', 'Overlap Studies', 'Ichimoku Kinko Hyo', 0x03000002,
     [
       { type: InputType.PRICE, paramName: 'inPriceHL', key: 'prices', flags: 0x00000006 },
@@ -1397,7 +1397,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     [
       { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
-    '{}'),
+    '{"outputs":{"outReal":{"levels":[30,70]}}}'),
   FuncInfo.of('KAMA', 'Overlap Studies', 'Kaufman Adaptive Moving Average', 0x0B000001,
     [
       { type: InputType.REAL, paramName: 'inReal', key: 'real', flags: 0x00000000 },
@@ -1440,7 +1440,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OutputType.REAL, paramName: 'outD', key: 'outD', flags: 0x00000704 },
       { type: OutputType.REAL, paramName: 'outJ', key: 'outJ', flags: 0x00000701 },
     ],
-    '{}'),
+    '{"outputs":{"outK":{"levels":[20,80]}}}'),
   FuncInfo.of('KST', 'Momentum Indicators', 'Know Sure Thing (Pring)', 0x02000008,
     [
       { type: InputType.REAL, paramName: 'inReal', key: 'real', flags: 0x00000000 },
@@ -1642,7 +1642,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OutputType.REAL, paramName: 'outMACDVSignal', key: 'outMacdvSignal', flags: 0x00000704 },
       { type: OutputType.REAL, paramName: 'outMACDVHist', key: 'outMacdvHist', flags: 0x00000710 },
     ],
-    '{}'),
+    '{"outputs":{"outMACDV":{"levels":[-150,-50,50,150]}}}'),
   FuncInfo.of('MAMA', 'Overlap Studies', 'MESA Adaptive Moving Average', 0x0B000004,
     [
       { type: InputType.REAL, paramName: 'inReal', key: 'real', flags: 0x00000000 },
@@ -1676,7 +1676,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     [
       { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000101 },
     ],
-    '{}'),
+    '{"outputs":{"outReal":{"levels":[26.5,27]}}}'),
   FuncInfo.of('MAVP', 'Overlap Studies', 'Moving average with variable period', 0x03000000,
     [
       { type: InputType.REAL, paramName: 'inReal', key: 'real', flags: 0x00000000 },
@@ -1754,7 +1754,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     [
       { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
-    '{}'),
+    '{"outputs":{"outReal":{"levels":[20,80]}}}'),
   FuncInfo.of('MIDPOINT', 'Overlap Studies', 'MidPoint over period', 0x03000000,
     [
       { type: InputType.REAL, paramName: 'inReal', key: 'real', flags: 0x00000000 },
@@ -1909,7 +1909,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     [
       { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
-    '{}'),
+    '{"outputs":{"outReal":{"levels":[0,1]}}}'),
   FuncInfo.of('PERCENTILE', 'Statistic Functions', 'Percentile (nearest rank)', 0x03000000,
     [
       { type: InputType.REAL, paramName: 'inReal', key: 'real', flags: 0x00000000 },
@@ -1979,7 +1979,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     [
       { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000701 },
     ],
-    '{}'),
+    '{"outputs":{"outReal":{"levels":[-0.9,-0.2,0.2,0.9]}}}'),
   FuncInfo.of('PVI', 'Volume Indicators', 'Positive Volume Index', 0x22000008,
     [
       { type: InputType.PRICE, paramName: 'inPriceCV', key: 'prices', flags: 0x00000018 },
@@ -2243,7 +2243,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OutputType.REAL, paramName: 'outSMI', key: 'outSmi', flags: 0x00000701 },
       { type: OutputType.REAL, paramName: 'outSMISignal', key: 'outSmiSignal', flags: 0x00000704 },
     ],
-    '{}'),
+    '{"outputs":{"outSMI":{"levels":[-40,40]}}}'),
   FuncInfo.of('SORTINO', 'Statistic Functions', 'Rolling Sortino Ratio', 0x42000000,
     [
       { type: InputType.REAL, paramName: 'inReal', key: 'real', flags: 0x00000000 },
@@ -2295,7 +2295,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     [
       { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
-    '{}'),
+    '{"outputs":{"outReal":{"levels":[25,75]}}}'),
   FuncInfo.of('STDDEV', 'Statistic Functions', 'Standard Deviation', 0x02000000,
     [
       { type: InputType.REAL, paramName: 'inReal', key: 'real', flags: 0x00000000 },
@@ -2323,7 +2323,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OutputType.REAL, paramName: 'outSlowK', key: 'outSlowK', flags: 0x00000701 },
       { type: OutputType.REAL, paramName: 'outSlowD', key: 'outSlowD', flags: 0x00000704 },
     ],
-    '{}'),
+    '{"outputs":{"outSlowK":{"levels":[20,80]}}}'),
   FuncInfo.of('STOCHF', 'Momentum Indicators', 'Stochastic Fast', 0x02000000,
     [
       { type: InputType.PRICE, paramName: 'inPriceHLC', key: 'prices', flags: 0x0000000E },
@@ -2337,7 +2337,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OutputType.REAL, paramName: 'outFastK', key: 'outFastK', flags: 0x00000501 },
       { type: OutputType.REAL, paramName: 'outFastD', key: 'outFastD', flags: 0x00000704 },
     ],
-    '{}'),
+    '{"outputs":{"outFastK":{"levels":[20,80]}}}'),
   FuncInfo.of('STOCHRSI', 'Momentum Indicators', 'Stochastic Relative Strength Index', 0x02000000,
     [
       { type: InputType.REAL, paramName: 'inReal', key: 'real', flags: 0x00000000 },
@@ -2352,7 +2352,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OutputType.REAL, paramName: 'outFastK', key: 'outFastK', flags: 0x00000501 },
       { type: OutputType.REAL, paramName: 'outFastD', key: 'outFastD', flags: 0x00000704 },
     ],
-    '{}'),
+    '{"outputs":{"outFastK":{"levels":[20,80]}}}'),
   FuncInfo.of('SUB', 'Math Operators', 'Vector Arithmetic Subtraction', 0x02000000,
     [
       { type: InputType.REAL, paramName: 'inReal0', key: 'real0', flags: 0x00000000 },
@@ -2559,7 +2559,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     [
       { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000501 },
     ],
-    '{}'),
+    '{"outputs":{"outReal":{"levels":[30,70]}}}'),
   FuncInfo.of('VAR', 'Statistic Functions', 'Variance', 0x02000000,
     [
       { type: InputType.REAL, paramName: 'inReal', key: 'real', flags: 0x00000000 },
@@ -2650,7 +2650,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
       { type: OutputType.REAL, paramName: 'outWT1', key: 'outWt1', flags: 0x00000701 },
       { type: OutputType.REAL, paramName: 'outWT2', key: 'outWt2', flags: 0x00000704 },
     ],
-    '{}'),
+    '{"outputs":{"outWT1":{"levels":[-60,-53,53,60]}}}'),
   FuncInfo.of('WCLPRICE', 'Price Transform', 'Weighted Close Price', 0x03000000,
     [
       { type: InputType.PRICE, paramName: 'inPriceHLC', key: 'prices', flags: 0x0000000E },
@@ -2670,7 +2670,7 @@ const ALL: readonly FuncInfo[] = Object.freeze([
     [
       { type: OutputType.REAL, paramName: 'outReal', key: 'values', flags: 0x00000601 },
     ],
-    '{}'),
+    '{"outputs":{"outReal":{"levels":[-80,-20]}}}'),
   FuncInfo.of('WMA', 'Overlap Studies', 'Weighted Moving Average', 0x03000001,
     [
       { type: InputType.REAL, paramName: 'inReal', key: 'real', flags: 0x00000000 },

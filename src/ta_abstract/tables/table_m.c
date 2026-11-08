@@ -322,11 +322,12 @@ static const TA_OptInputParameterInfo *TA_MACDV_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( MACDV,
-              TA_GroupId_MomentumIndicators,
-              "MACD-V, Volatility Normalised Momentum",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( MACDV,
+                         TA_GroupId_MomentumIndicators,
+                         "MACD-V, Volatility Normalised Momentum",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outMACDV\":{\"levels\":[-150,-50,50,150]}}}"
+                       );
 /* MACDV END */
 
 /* MAMA BEGIN */
@@ -504,11 +505,12 @@ static const TA_OptInputParameterInfo *TA_MASSI_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( MASSI,
-              TA_GroupId_VolatilityIndicators,
-              "Mass Index",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( MASSI,
+                         TA_GroupId_VolatilityIndicators,
+                         "Mass Index",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outReal\":{\"levels\":[26.5,27]}}}"
+                       );
 /* MASSI END */
 
 /* MAVP BEGIN */
@@ -778,11 +780,12 @@ static const TA_OptInputParameterInfo *TA_MFI_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( MFI,
-              TA_GroupId_MomentumIndicators,
-              "Money Flow Index",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( MFI,
+                         TA_GroupId_MomentumIndicators,
+                         "Money Flow Index",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outReal\":{\"levels\":[20,80]}}}"
+                       );
 /* MFI END */
 
 /* MIDPOINT BEGIN */

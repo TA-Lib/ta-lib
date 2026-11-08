@@ -256,11 +256,12 @@ static const TA_OptInputParameterInfo *TA_KDJ_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( KDJ,
-              TA_GroupId_MomentumIndicators,
-              "KDJ Stochastic",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( KDJ,
+                         TA_GroupId_MomentumIndicators,
+                         "KDJ Stochastic",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outK\":{\"levels\":[20,80]}}}"
+                       );
 /* KDJ END */
 
 /* KST BEGIN */

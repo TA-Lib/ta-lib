@@ -32,6 +32,7 @@ outputs:
   - name: outMACDV
     type: real
     flags: [line, zero, positive, negative]
+    levels: [-150, -50, 50, 150]
   - name: outMACDVSignal
     type: real
     flags: [dash_line, zero, positive, negative]

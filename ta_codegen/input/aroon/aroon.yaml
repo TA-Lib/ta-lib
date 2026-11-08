@@ -21,3 +21,4 @@ outputs:
   - name: outAroonUp
     type: real
     flags: [line, zero, positive]
+    levels: [30, 70]

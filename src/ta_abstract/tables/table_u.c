@@ -103,11 +103,12 @@ static const TA_OptInputParameterInfo *TA_ULTOSC_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( ULTOSC,
-              TA_GroupId_MomentumIndicators,
-              "Ultimate Oscillator",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( ULTOSC,
+                         TA_GroupId_MomentumIndicators,
+                         "Ultimate Oscillator",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outReal\":{\"levels\":[30,70]}}}"
+                       );
 /* ULTOSC END */
 
 /****************************************************************************

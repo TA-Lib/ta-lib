@@ -42,6 +42,7 @@ outputs:
   - name: outSlowK
     type: real
     flags: [line, zero, positive, negative]
+    levels: [20, 80]
   - name: outSlowD
     type: real
     flags: [dash_line, zero, positive, negative]

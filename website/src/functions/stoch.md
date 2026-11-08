@@ -9,13 +9,13 @@ Slow Stochastic oscillator: locates the close within the high-low range over a l
 
 ## Chart
 
-<ta-chart src="/functions/stoch.svg" ratio="720:416" label="STOCH over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSlowK as a solid line and outSlowD as a dashed line."></ta-chart>
+<ta-chart src="/functions/stoch.svg" ratio="720:416" label="STOCH over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSlowK as a solid line with dashed rules at 20 and 80 and outSlowD as a dashed line."></ta-chart>
 
 ::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
 
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSlowK as a solid line and outSlowD as a dashed line.
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSlowK as a solid line with dashed rules at 20 and 80 and outSlowD as a dashed line.
 
-Metadata flags used: `inPriceHLC: high, low, close` · `outSlowK: line, positive, negative` · `outSlowD: dash_line, positive, negative`
+Metadata flags used: `inPriceHLC: high, low, close` · `outSlowK: line, positive, negative, levels 20, 80` · `outSlowD: dash_line, positive, negative`
 
 :::
 

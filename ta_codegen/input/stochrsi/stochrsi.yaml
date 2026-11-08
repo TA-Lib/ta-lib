@@ -36,6 +36,7 @@ outputs:
   - name: outFastK
     type: real
     flags: [line, zero, positive]
+    levels: [20, 80]
   - name: outFastD
     type: real
     flags: [dash_line, zero, positive, negative]

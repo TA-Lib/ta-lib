@@ -9,13 +9,13 @@ Stochastic Momentum Index: where the close sits relative to the **midpoint** of 
 
 ## Chart
 
-<ta-chart src="/functions/smi.svg" ratio="720:416" label="SMI over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSMI as a solid line and outSMISignal as a dashed line."></ta-chart>
+<ta-chart src="/functions/smi.svg" ratio="720:416" label="SMI over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSMI as a solid line with dashed rules at -40 and 40 and outSMISignal as a dashed line."></ta-chart>
 
 ::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
 
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSMI as a solid line and outSMISignal as a dashed line.
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSMI as a solid line with dashed rules at -40 and 40 and outSMISignal as a dashed line.
 
-Metadata flags used: `inPriceHLC: high, low, close` · `outSMI: line, positive, negative` · `outSMISignal: dash_line, positive, negative`
+Metadata flags used: `inPriceHLC: high, low, close` · `outSMI: line, positive, negative, levels -40, 40` · `outSMISignal: dash_line, positive, negative`
 
 :::
 

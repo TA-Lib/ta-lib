@@ -151,11 +151,12 @@ static const TA_OptInputParameterInfo *TA_WAVETREND_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( WAVETREND,
-              TA_GroupId_MomentumIndicators,
-              "WaveTrend Oscillator",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( WAVETREND,
+                         TA_GroupId_MomentumIndicators,
+                         "WaveTrend Oscillator",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outWT1\":{\"levels\":[-60,-53,53,60]}}}"
+                       );
 /* WAVETREND END */
 
 /* WCLPRICE BEGIN */
@@ -202,11 +203,12 @@ static const TA_OptInputParameterInfo *TA_WILLR_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( WILLR,
-              TA_GroupId_MomentumIndicators,
-              "Williams' %R",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( WILLR,
+                         TA_GroupId_MomentumIndicators,
+                         "Williams' %R",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outReal\":{\"levels\":[-80,-20]}}}"
+                       );
 /* WILLR END */
 
 /* WMA BEGIN */

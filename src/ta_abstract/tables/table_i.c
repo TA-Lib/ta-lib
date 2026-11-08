@@ -57,11 +57,12 @@ static const TA_OutputParameterInfo   *TA_IBS_Outputs[]   =
 static const TA_OptInputParameterInfo *TA_IBS_OptInputs[] =
 { NULL };
 
-DEF_FUNCTION( IBS,
-              TA_GroupId_MomentumIndicators,
-              "Internal Bar Strength",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( IBS,
+                         TA_GroupId_MomentumIndicators,
+                         "Internal Bar Strength",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outReal\":{\"levels\":[0.2,0.8]}}}"
+                       );
 /* IBS END */
 
 /* ICHIMOKU BEGIN */
@@ -169,11 +170,12 @@ static const TA_OptInputParameterInfo *TA_IMI_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( IMI,
-              TA_GroupId_MomentumIndicators,
-              "Intraday Momentum Index",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( IMI,
+                         TA_GroupId_MomentumIndicators,
+                         "Intraday Momentum Index",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outReal\":{\"levels\":[30,70]}}}"
+                       );
 /* IMI END */
 
 /****************************************************************************

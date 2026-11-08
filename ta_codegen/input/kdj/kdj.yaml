@@ -42,6 +42,7 @@ outputs:
   - name: outK
     type: real
     flags: [line, zero, positive, negative]
+    levels: [20, 80]
   - name: outD
     type: real
     flags: [dash_line, zero, positive, negative]

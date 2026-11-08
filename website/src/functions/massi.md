@@ -11,13 +11,13 @@ Read it as a bulge detector, not a direction. A ratio above one means the range 
 
 ## Chart
 
-<ta-chart src="/functions/massi.svg" ratio="720:416" label="MASSI over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+<ta-chart src="/functions/massi.svg" ratio="720:416" label="MASSI over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line with dashed rules at 26.5 and 27."></ta-chart>
 
 ::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
 
-Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line.
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line with dashed rules at 26.5 and 27.
 
-Metadata flags used: `inPriceHL: high, low` · `outReal: line`
+Metadata flags used: `inPriceHL: high, low` · `outReal: line, levels 26.5, 27`
 
 :::
 

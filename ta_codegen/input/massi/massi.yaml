@@ -25,3 +25,4 @@ outputs:
   - name: outReal
     type: real
     flags: [line, positive]
+    levels: [26.5, 27]

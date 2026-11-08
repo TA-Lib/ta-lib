@@ -67,7 +67,30 @@ public final class Functions {
     private Functions() { }
 
    private static final Map<String, String> ATTRIBUTES = Map.ofEntries(
-      Map.entry("RSI", "{\"outputs\":{\"outReal\":{\"levels\":[30,70]}}}")
+      Map.entry("ADX", "{\"outputs\":{\"outReal\":{\"levels\":[25]}}}"),
+      Map.entry("ADXR", "{\"outputs\":{\"outReal\":{\"levels\":[25]}}}"),
+      Map.entry("AROON", "{\"outputs\":{\"outAroonUp\":{\"levels\":[30,70]}}}"),
+      Map.entry("CCI", "{\"outputs\":{\"outReal\":{\"levels\":[-100,100]}}}"),
+      Map.entry("CHOP", "{\"outputs\":{\"outReal\":{\"levels\":[38.2,61.8]}}}"),
+      Map.entry("CMO", "{\"outputs\":{\"outReal\":{\"levels\":[-50,50]}}}"),
+      Map.entry("CRSI", "{\"outputs\":{\"outReal\":{\"levels\":[10,90]}}}"),
+      Map.entry("IBS", "{\"outputs\":{\"outReal\":{\"levels\":[0.2,0.8]}}}"),
+      Map.entry("IMI", "{\"outputs\":{\"outReal\":{\"levels\":[30,70]}}}"),
+      Map.entry("KDJ", "{\"outputs\":{\"outK\":{\"levels\":[20,80]}}}"),
+      Map.entry("MACDV", "{\"outputs\":{\"outMACDV\":{\"levels\":[-150,-50,50,150]}}}"),
+      Map.entry("MASSI", "{\"outputs\":{\"outReal\":{\"levels\":[26.5,27]}}}"),
+      Map.entry("MFI", "{\"outputs\":{\"outReal\":{\"levels\":[20,80]}}}"),
+      Map.entry("PERCENTB", "{\"outputs\":{\"outReal\":{\"levels\":[0,1]}}}"),
+      Map.entry("PSO", "{\"outputs\":{\"outReal\":{\"levels\":[-0.9,-0.2,0.2,0.9]}}}"),
+      Map.entry("RSI", "{\"outputs\":{\"outReal\":{\"levels\":[30,70]}}}"),
+      Map.entry("SMI", "{\"outputs\":{\"outSMI\":{\"levels\":[-40,40]}}}"),
+      Map.entry("STC", "{\"outputs\":{\"outReal\":{\"levels\":[25,75]}}}"),
+      Map.entry("STOCH", "{\"outputs\":{\"outSlowK\":{\"levels\":[20,80]}}}"),
+      Map.entry("STOCHF", "{\"outputs\":{\"outFastK\":{\"levels\":[20,80]}}}"),
+      Map.entry("STOCHRSI", "{\"outputs\":{\"outFastK\":{\"levels\":[20,80]}}}"),
+      Map.entry("ULTOSC", "{\"outputs\":{\"outReal\":{\"levels\":[30,70]}}}"),
+      Map.entry("WAVETREND", "{\"outputs\":{\"outWT1\":{\"levels\":[-60,-53,53,60]}}}"),
+      Map.entry("WILLR", "{\"outputs\":{\"outReal\":{\"levels\":[-80,-20]}}}")
    );
 
    private static final Map<String, FuncInfo> BY_NAME = build();

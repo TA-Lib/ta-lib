@@ -331,11 +331,12 @@ static const TA_OptInputParameterInfo *TA_ADX_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( ADX,
-              TA_GroupId_MomentumIndicators,
-              "Average Directional Movement Index",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( ADX,
+                         TA_GroupId_MomentumIndicators,
+                         "Average Directional Movement Index",
+                         TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outReal\":{\"levels\":[25]}}}"
+                       );
 /* ADX END */
 
 /* ADXR BEGIN */
@@ -359,11 +360,12 @@ static const TA_OptInputParameterInfo *TA_ADXR_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( ADXR,
-              TA_GroupId_MomentumIndicators,
-              "Average Directional Movement Index Rating",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( ADXR,
+                         TA_GroupId_MomentumIndicators,
+                         "Average Directional Movement Index Rating",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outReal\":{\"levels\":[25]}}}"
+                       );
 /* ADXR END */
 
 /* ALLIGATOR BEGIN */
@@ -733,11 +735,12 @@ static const TA_OptInputParameterInfo *TA_AROON_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( AROON,
-              TA_GroupId_MomentumIndicators,
-              "Aroon",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( AROON,
+                         TA_GroupId_MomentumIndicators,
+                         "Aroon",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outAroonUp\":{\"levels\":[30,70]}}}"
+                       );
 /* AROON END */
 
 /* AROONOSC BEGIN */

@@ -10,3 +10,4 @@ outputs:
   - name: outReal
     type: real
     flags: [line, zero, positive]
+    levels: [0.2, 0.8]

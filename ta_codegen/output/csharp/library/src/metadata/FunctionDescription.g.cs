@@ -423,6 +423,7 @@ public static class FunctionDescription
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outReal"":{""levels"":[25]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -474,6 +475,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outReal"":{""levels"":[25]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -850,6 +852,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outAroonUp"":{""levels"":[30,70]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -1463,6 +1466,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outReal"":{""levels"":[-100,100]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -4362,6 +4366,7 @@ public static class FunctionDescription
 			<Flag>Streaming</Flag>
 			<Flag>Uses Transcendental</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outReal"":{""levels"":[38.2,61.8]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -4606,6 +4611,7 @@ public static class FunctionDescription
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outReal"":{""levels"":[-50,50]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -4871,6 +4877,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outReal"":{""levels"":[10,90]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -6244,6 +6251,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outReal"":{""levels"":[0.2,0.8]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -6376,6 +6384,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outReal"":{""levels"":[30,70]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Open</Type>
@@ -6558,6 +6567,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outK"":{""levels"":[20,80]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -7683,6 +7693,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outMACDV"":{""levels"":[-150,-50,50,150]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -7883,6 +7894,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outReal"":{""levels"":[26.5,27]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -8208,6 +8220,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outReal"":{""levels"":[20,80]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -8832,6 +8845,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outReal"":{""levels"":[0,1]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -9177,6 +9191,7 @@ public static class FunctionDescription
 			<Flag>Streaming</Flag>
 			<Flag>Uses Transcendental</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outReal"":{""levels"":[-0.9,-0.2,0.2,0.9]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -10407,6 +10422,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outSMI"":{""levels"":[-40,40]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -10740,6 +10756,7 @@ public static class FunctionDescription
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outReal"":{""levels"":[25,75]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -10867,6 +10884,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outSlowK"":{""levels"":[20,80]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -10967,6 +10985,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outFastK"":{""levels"":[20,80]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -11047,6 +11066,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outFastK"":{""levels"":[20,80]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>
@@ -11943,6 +11963,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outReal"":{""levels"":[30,70]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -12363,6 +12384,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outWT1"":{""levels"":[-60,-53,53,60]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>
@@ -12486,6 +12508,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outReal"":{""levels"":[-80,-20]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>High</Type>

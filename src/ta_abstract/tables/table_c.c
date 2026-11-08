@@ -59,11 +59,12 @@ static const TA_OptInputParameterInfo *TA_CCI_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( CCI,
-              TA_GroupId_MomentumIndicators,
-              "Commodity Channel Index",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( CCI,
+                         TA_GroupId_MomentumIndicators,
+                         "Commodity Channel Index",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outReal\":{\"levels\":[-100,100]}}}"
+                       );
 /* CCI END */
 
 /* CDL2CROWS BEGIN */
@@ -1826,11 +1827,12 @@ static const TA_OptInputParameterInfo *TA_CHOP_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( CHOP,
-              TA_GroupId_MomentumIndicators,
-              "Choppiness Index",
-              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
-             );
+DEF_FUNCTION_ATTRIBUTES( CHOP,
+                         TA_GroupId_MomentumIndicators,
+                         "Choppiness Index",
+                         TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL,
+                         "{\"outputs\":{\"outReal\":{\"levels\":[38.2,61.8]}}}"
+                       );
 /* CHOP END */
 
 /* CHOPTR BEGIN */
@@ -1996,11 +1998,12 @@ static const TA_OptInputParameterInfo *TA_CMO_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( CMO,
-              TA_GroupId_MomentumIndicators,
-              "Chande Momentum Oscillator",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( CMO,
+                         TA_GroupId_MomentumIndicators,
+                         "Chande Momentum Oscillator",
+                         TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outReal\":{\"levels\":[-50,50]}}}"
+                       );
 /* CMO END */
 
 /* CMOU BEGIN */
@@ -2276,11 +2279,12 @@ static const TA_OptInputParameterInfo *TA_CRSI_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( CRSI,
-              TA_GroupId_MomentumIndicators,
-              "Connors Relative Strength Index",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( CRSI,
+                         TA_GroupId_MomentumIndicators,
+                         "Connors Relative Strength Index",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outReal\":{\"levels\":[10,90]}}}"
+                       );
 /* CRSI END */
 
 /* CTI BEGIN */

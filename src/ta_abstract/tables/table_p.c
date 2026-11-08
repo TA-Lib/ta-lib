@@ -110,11 +110,12 @@ static const TA_OptInputParameterInfo *TA_PERCENTB_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( PERCENTB,
-              TA_GroupId_VolatilityIndicators,
-              "Bollinger Bands %B",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( PERCENTB,
+                         TA_GroupId_VolatilityIndicators,
+                         "Bollinger Bands %B",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outReal\":{\"levels\":[0,1]}}}"
+                       );
 /* PERCENTB END */
 
 /* PERCENTILE BEGIN */
@@ -391,11 +392,12 @@ static const TA_OptInputParameterInfo *TA_PSO_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( PSO,
-              TA_GroupId_MomentumIndicators,
-              "Premier Stochastic Oscillator",
-              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL
-             );
+DEF_FUNCTION_ATTRIBUTES( PSO,
+                         TA_GroupId_MomentumIndicators,
+                         "Premier Stochastic Oscillator",
+                         TA_FUNC_FLG_STREAM | TA_FUNC_FLG_USES_TRANSCENDENTAL,
+                         "{\"outputs\":{\"outReal\":{\"levels\":[-0.9,-0.2,0.2,0.9]}}}"
+                       );
 /* PSO END */
 
 /* PVI BEGIN */

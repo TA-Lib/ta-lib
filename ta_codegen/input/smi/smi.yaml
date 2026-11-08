@@ -39,6 +39,7 @@ outputs:
   - name: outSMI
     type: real
     flags: [line, zero, positive, negative]
+    levels: [-40, 40]
   - name: outSMISignal
     type: real
     flags: [dash_line, zero, positive, negative]

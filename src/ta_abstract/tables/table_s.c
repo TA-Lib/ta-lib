@@ -725,11 +725,12 @@ static const TA_OptInputParameterInfo *TA_SMI_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( SMI,
-              TA_GroupId_MomentumIndicators,
-              "Stochastic Momentum Index",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( SMI,
+                         TA_GroupId_MomentumIndicators,
+                         "Stochastic Momentum Index",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outSMI\":{\"levels\":[-40,40]}}}"
+                       );
 /* SMI END */
 
 /* SORTINO BEGIN */
@@ -1085,11 +1086,12 @@ static const TA_OptInputParameterInfo *TA_STC_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( STC,
-              TA_GroupId_MomentumIndicators,
-              "Schaff Trend Cycle",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( STC,
+                         TA_GroupId_MomentumIndicators,
+                         "Schaff Trend Cycle",
+                         TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outReal\":{\"levels\":[25,75]}}}"
+                       );
 /* STC END */
 
 /* STDDEV BEGIN */
@@ -1220,11 +1222,12 @@ static const TA_OptInputParameterInfo *TA_STOCH_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( STOCH,
-              TA_GroupId_MomentumIndicators,
-              "Stochastic",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( STOCH,
+                         TA_GroupId_MomentumIndicators,
+                         "Stochastic",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outSlowK\":{\"levels\":[20,80]}}}"
+                       );
 /* STOCH END */
 
 /* STOCHF BEGIN */
@@ -1296,11 +1299,12 @@ static const TA_OptInputParameterInfo *TA_STOCHF_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( STOCHF,
-              TA_GroupId_MomentumIndicators,
-              "Stochastic Fast",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( STOCHF,
+                         TA_GroupId_MomentumIndicators,
+                         "Stochastic Fast",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outFastK\":{\"levels\":[20,80]}}}"
+                       );
 /* STOCHF END */
 
 /* STOCHRSI BEGIN */
@@ -1373,11 +1377,12 @@ static const TA_OptInputParameterInfo *TA_STOCHRSI_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( STOCHRSI,
-              TA_GroupId_MomentumIndicators,
-              "Stochastic Relative Strength Index",
-              TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( STOCHRSI,
+                         TA_GroupId_MomentumIndicators,
+                         "Stochastic Relative Strength Index",
+                         TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outFastK\":{\"levels\":[20,80]}}}"
+                       );
 /* STOCHRSI END */
 
 /* SUB BEGIN */
