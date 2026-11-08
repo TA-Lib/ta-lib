@@ -265,7 +265,7 @@ there is no list of function names and none may be added.
 | finite | a real output is NaN or ±Inf, the function lacks `TA_FUNC_FLG_NAN_INF_OUT`, and every input bar the call could read is finite and at most `1e75` in magnitude. A call computed in place is not judged: its inputs are gone |
 | display shift | an output's shift for the call's parameters is non-zero without `TA_OUT_DISPLAY_SHIFT` |
 | pattern values | a pattern output of rule rW7 writes a value its flags do not declare |
-| signs | any other output declaring a sign flag writes a value of an undeclared sign. A real output is judged only on calls inside the flags' domain (every bar well-formed, every non-volume input positive under `TA_FUNC_FLG_POSITIVE_INPUT`); a nonzero wrong sign within `SIGN_SLACK` of the call's largest output is running-sum drift (test_adr.c holds one such call), an exact 0 never is |
+| signs | any other output declaring a sign flag writes a value of an undeclared sign. A real output is judged only on calls inside the flags' domain (every bar well-formed, every non-volume input positive under `TA_FUNC_FLG_POSITIVE_INPUT`); a nonzero wrong sign within 64 units in the last place of that output's largest magnitude in the call is running-sum drift (test_adr.c holds one such call), an exact 0 never is. A call computed in place is not judged |
 | absent output | a successful call was given NULL for an output |
 | range | `outBegIdx` / `outNBElement` are not `max(startIdx, lookback)` to `endIdx`, or not `0, 0` when nothing fits |
 

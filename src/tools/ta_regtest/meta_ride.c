@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <float.h>
 #include <math.h>
 
 #include "ta_libc.h"
@@ -37,10 +38,10 @@
  * output is overflow, which TA_FUNC_FLG_NAN_INF_OUT does not describe. */
 #define ORDINARY_MAX 1e75
 
-/* A nonzero real value of an undeclared sign this close to zero, relative to
- * the call's largest output, is running-sum drift, which the sign flags do not
- * count. An exact 0 is never excused. */
-#define SIGN_SLACK 1e-9
+/* A nonzero real value of an undeclared sign within this many units in the last
+ * place of its output's largest magnitude in the call is running-sum drift, which
+ * the sign flags do not count. An exact 0 is never excused. */
+#define SIGN_SLACK (64.0 * DBL_EPSILON)
 
 /* What each in[] slot of a call holds, in the order the call passes them. */
 #define IN_OPEN   0
