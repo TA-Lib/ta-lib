@@ -46,6 +46,7 @@ extern TA_Real TA_SREF_volume_daily_ref_0_PRIV[];
 typedef struct {
     char name[256];
     char label[256];                    /* `# label:` line of the file, else its name */
+    int synthetic;                      /* `# synthetic:` line present */
     int n;
     char (*date)[11];
     double *o, *h, *l, *c, *v;
@@ -321,6 +322,7 @@ static void load_corpus(const char *dir)
         corpus[i] = series_from_rows(names[i], t.nRows, t.cells);
         snprintf(corpus[i].label, sizeof corpus[i].label, "%s",
                  table_meta(&t, "label") ? table_meta(&t, "label") : names[i]);
+        corpus[i].synthetic = table_meta(&t, "synthetic") != NULL;
         if (corpus[i].n > maxRows) maxRows = corpus[i].n;
         if (strcmp(names[i], CORPUS_REF) == 0) refSeries = i;
     }
@@ -683,17 +685,19 @@ static void one_function(const TA_FuncInfo *fi, void *opaque)
     if (run_is_pattern(&r)) {
         /* Every full window of lookback + WINDOW_BARS bars, in every file, scored
          * by its flagged bars; the default window is always a candidate so one
-         * 252-bar file still has one. Ties: count desc, file asc, start asc. */
+         * 252-bar file still has one. Ties: count desc, file asc, start asc.
+         * A synthetic file is a candidate only when no market file fires. */
         const int lb = r.lookback;
-        int f;
+        int f, pass;
         bestCount = 0;
         rc = run_call(&r, best, 0, best->n, NULL);
         if (rc != TA_SUCCESS) die("%s over %s: TA_CallFunc returned %d", fi->name, best->name, (int)rc);
         for (k = 0; k < best->n; k++) bestCount += run_flagged(&r, k);
+        for (pass = 0; pass < 2 && (pass == 0 || bestCount == 0); pass++)
         for (f = 0; f < nCorpus; f++) {
             const Series *s = &corpus[f];
             int start, count = 0;
-            if (s->n < lb + WINDOW_BARS) continue;
+            if (s->synthetic != pass || s->n < lb + WINDOW_BARS) continue;
             rc = run_call(&r, s, 0, s->n, NULL);
             if (rc != TA_SUCCESS) die("%s over %s: TA_CallFunc returned %d", fi->name, s->name, (int)rc);
             for (k = lb; k < lb + WINDOW_BARS; k++) count += run_flagged(&r, k);
