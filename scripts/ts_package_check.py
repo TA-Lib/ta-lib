@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 """Package gate for the TypeScript library: pack it, check what ships, then consume it.
 
-  1. Pack. `npm ci` in the tooling root when its lock stamp is stale, a fresh
-     `tsc` into an emptied library/dist, then `npm pack`. Without --allow-dirty
+  1. Pack. `npm ci` in the tooling root when its lock stamp is stale, two `tsc`
+     emits into an emptied library/dist (the JavaScript with removeComments, so
+     only the /*! licence block stays; the declarations apart, with their
+     TSDoc), then `npm pack`. Without --allow-dirty
      the library directory (test/ and dist/ aside) must match HEAD: a stray .ts
      under src/ compiles into dist/ and ships.
 
   2. Contents. The tarball holds exactly package.json, README.md, LICENSE and
-     one .js plus one .d.ts per src/ module; LICENSE and README are
-     byte-identical to their sources; the version is VERSION; every `exports`
-     subpath lists "types" first and "default" last, each target ships, and
-     each non-root subpath has a typesVersions entry naming its types.
+     one .js plus one .d.ts per src/ module; every packed .js opens with the
+     licence and holds no other comment, and every function's .d.ts keeps its
+     TSDoc; LICENSE and README are
+     byte-identical to their sources; the version is VERSION; every code
+     `exports` subpath lists "types" first and "default" last and each
+     non-root one has a typesVersions entry naming its types; a file subpath
+     ("./package.json") ships; every target ships.
      No name tagged @internal in src/ appears in a packed .d.ts, as a member of
      its class's declaration, or among any subpath's runtime exports. When
      ta_codegen/output/ts/PublicAPI.Shipped.txt exists, every declaration line
@@ -126,8 +131,12 @@ def pack(out_dir, allow_dirty):
     if not ensure_tooling():
         return ["npm ci failed in %s; see its output above" % TS_REL]
     shutil.rmtree(os.path.join(LIB_DIR, "dist"), ignore_errors=True)
-    if run([TSC, "-p", LIB_DIR]).returncode:
-        return ["tsc failed on the library; see its output above"]
+    # As build-libraries emits it: the JavaScript without comments but the /*! licence,
+    # the declarations apart so they keep their TSDoc.
+    if run([TSC, "-p", LIB_DIR, "--removeComments", "--declaration", "false"]).returncode:
+        return ["tsc failed on the library's JavaScript; see its output above"]
+    if run([TSC, "-p", LIB_DIR, "--emitDeclarationOnly"]).returncode:
+        return ["tsc failed on the library's declarations; see its output above"]
     if run([NPM, "pack", "--pack-destination", out_dir], cwd=LIB_DIR).returncode:
         return ["npm pack failed; see its output above"]
     return []
@@ -271,6 +280,14 @@ def check_package(out_dir, ver, diff_snapshot):
     if not isinstance(exports, dict) or "." not in exports:
         return failures + ["the packed package.json has no exports \".\" entry"], None
     for subpath, conditions in exports.items():
+        if isinstance(conditions, str):
+            # The one file subpath: consume() loads it as JSON.
+            if subpath != "./package.json" or conditions != "./package.json":
+                failures.append("exports %r is the file %s; only \"./package.json\" may be a file subpath"
+                                % (subpath, conditions))
+            elif "package/package.json" not in entries:
+                failures.append("exports %r points at %s, which is not packed" % (subpath, conditions))
+            continue
         keys = list(conditions) if isinstance(conditions, dict) else []
         if not keys or keys[0] != "types" or keys[-1] != "default":
             failures.append("exports %r lists %s; \"types\" must come first and \"default\" last"
@@ -290,6 +307,8 @@ def check_package(out_dir, ver, diff_snapshot):
         if mapped.get(subpath.removeprefix("./")) != [conditions.get("types")]:
             failures.append("exports %r has no typesVersions \"*\" entry naming %s"
                             % (subpath, conditions.get("types")))
+
+    failures += dist_comment_failures(entries)
 
     tops, members, parse_failures = internal_names()
     failures += parse_failures
@@ -316,10 +335,32 @@ def check_package(out_dir, ver, diff_snapshot):
     return failures, (manifest, entries, tops)
 
 
+def dist_comment_failures(entries):
+    """The two emits' proof over the packed dist: every .js opens with the /*! licence
+    and holds no other comment; every function's .d.ts keeps its TSDoc."""
+    js = sorted(e for e in entries if e.startswith("package/dist/") and e.endswith(".js"))
+    dts = sorted(e for e in entries if e.startswith("package/dist/func/") and e.endswith(".d.ts"))
+    bad = [e for e in js
+           if not entries[e].startswith(b"/*! TA-LIB Copyright") or entries[e].count(b"/*") != 1
+           or any(line.lstrip().startswith(b"//") for line in entries[e].splitlines())]
+    bad += [e for e in dts if b"/**" not in entries[e]]
+    failures = []
+    if bad:
+        failures.append("JavaScript with a comment beyond the licence, or a function's .d.ts without TSDoc: %s"
+                        % ", ".join(e[len("package/"):] for e in bad[:10]))
+    print("--- comments checked: %d .js hold the licence alone, %d function .d.ts keep their TSDoc"
+          % (len(js) - sum(e in bad for e in js), len(dts) - sum(e in bad for e in dts)))
+    return failures
+
+
 def consume(out_dir, manifest, tops):
     tarball = os.path.join(out_dir, [n for n in os.listdir(out_dir) if n.endswith(".tgz")][0])
     name = manifest["name"]
-    specs = [name if s == "." else name + s.removeprefix(".") for s in manifest["exports"]]
+    # The loaders import the code subpaths; "./package.json" loads as a consumer loads
+    # JSON: require(), and import with the json attribute.
+    code = [s for s, c in manifest["exports"].items() if isinstance(c, dict)]
+    files = [s for s, c in manifest["exports"].items() if isinstance(c, str)]
+    specs = [name if s == "." else name + s.removeprefix(".") for s in code]
     work = tempfile.mkdtemp(prefix="talib-ts-consumer-")
     try:
         for entry in os.listdir(CONSUMER_DIR):
@@ -343,6 +384,16 @@ def consume(out_dir, manifest, tops):
                     % (results["import.mjs"], results["require.cjs"])]
         got = results["import.mjs"]
         failures = []
+        for s in files:
+            spec = name + s.removeprefix(".")
+            want = manifest["version"]
+            probes = (("require()", ["node", "-e", "console.log(require(%r).version)" % spec]),
+                      ("import", ["node", "--input-type=module", "-e",
+                                  "const m = await import(%r, { with: { type: 'json' } }); console.log(m.default.version)" % spec]))
+            for label, cmd in probes:
+                r = run(cmd, cwd=work, capture=True)
+                if r.returncode or r.stdout.strip() != want:
+                    failures.append("%s by %s gave %r, not the packed version %r" % (spec, label, r.stdout.strip(), want))
         if got["sma"] != [2, 8, 2, 3, 4, 5, 6, 7, 8, 9]:
             failures.append("the consumer's SMA(3) over 1..10 is %r" % got["sma"])
         for spec, keys in got["exports"].items():
@@ -351,7 +402,7 @@ def consume(out_dir, manifest, tops):
                 failures.append("%s exports @internal %s at run time" % (spec, ", ".join(leaked[:10])))
             if not keys:
                 failures.append("%s exports nothing" % spec)
-        print("--- consumer loaded %s by import and require()" % ", ".join(specs))
+        print("--- consumer loaded %s by import and require(); %s as JSON" % (", ".join(specs), ", ".join(name + s.removeprefix(".") for s in files) or "no file subpath"))
         return failures
     finally:
         shutil.rmtree(work, ignore_errors=True)

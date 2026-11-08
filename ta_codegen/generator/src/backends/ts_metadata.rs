@@ -64,7 +64,7 @@ fn clean_stale(dir: &Path, keep: &[&str]) {
 }
 
 fn header() -> String {
-    format!("{}\n{MARKER}\n\n", super::ta_abstract_c::LICENSE)
+    format!("{}\n{MARKER}\n\n", super::ts::ts_license())
 }
 
 /// A single-quoted TS string literal.

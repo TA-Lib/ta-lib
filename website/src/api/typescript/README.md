@@ -67,7 +67,7 @@ Then depend on the built directory from your project's `package.json`:
 }
 ```
 
-The package is ESM only, with no top-level await, so `require('ta-lib')` works too. It needs Node.js 22.12 or later, and the library imports nothing specific to Node. A TypeScript consumer needs TypeScript 5.7 or later: the declarations spell typed arrays with their buffer type.
+The published package is emitted from the same sources twice: `--removeComments --declaration false` for the JavaScript, so its `.js` keep no comment but the licence block, and `--emitDeclarationOnly` for the declarations, which keep the documentation. The package is ESM only, with no top-level await, so `require('ta-lib')` works too. It needs Node.js 22.12 or later, and the library imports nothing specific to Node. A TypeScript consumer needs TypeScript 5.7 or later: the declarations spell typed arrays with their buffer type.
 
 ## 3.0 Calling into TA-Lib {#ta_func}
 
