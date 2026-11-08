@@ -41,12 +41,14 @@ fn the_math_groups_declare_synthetic_series() {
         assert_eq!((func.inputs[0].series, func.inputs[0].domain), (Series::Sine, Some((-10.0, 10.0))), "{name}: inReal0");
         assert_eq!((func.inputs[1].series, func.inputs[1].domain), (Series::Ramp, Some(divisor)), "{name}: inReal1");
     }
+    // A synthetic series appears in the two math groups alone (the gate fixtures sit in
+    // those groups too and keep the price series, so the rule is one-way).
     let mut on_prices = 0;
     for name in common::discover_indicators() {
         let (func, _) = common::load_indicator(&name);
         let synthetic = func.inputs.iter().any(|i| i.series != Series::Price);
         let math = matches!(func.group.as_str(), "Math Transform" | "Math Operators");
-        assert_eq!(synthetic, math && !["max", "min", "sum", "cumsum", "minmax", "maxindex", "minindex", "minmaxindex", "beta", "correl"].contains(&name.as_str()), "{name}");
+        assert!(!synthetic || math, "{name}: a synthetic series outside the math groups");
         on_prices += usize::from(!synthetic);
     }
     assert!(on_prices > 150, "{on_prices} functions on the price series");
