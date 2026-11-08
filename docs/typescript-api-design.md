@@ -146,5 +146,4 @@ The spec's [TypeScript Caveats](../website/src/spec/README.md#typescript) state 
 | `TALibError` fields `funcName`, `argName` | |
 | Output type check that survives a second realm (the check is `instanceof`) | |
 | TSDoc: `{@link}` instead of site URLs | |
-| Stream internals non-enumerable | `console.log(stream)` dumps the ring |
 
