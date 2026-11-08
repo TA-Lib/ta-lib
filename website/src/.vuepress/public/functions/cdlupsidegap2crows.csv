@@ -1,5 +1,5 @@
 # TA-Lib reference data: CDLUPSIDEGAP2CROWS
-# series: Simulated stock data, daily
+# series: Stock data, daily
 # input: simulated_2002-03-01.csv; window 2002-03-19..2002-04-25 (28 bars) plus 12 lookback bars before it; flagged bars: 2
 # parameters: (defaults)
 # inputs: inPriceOHLC=OHLC

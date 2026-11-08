@@ -9,7 +9,7 @@ A three-candle reversal pattern: a long body, then a gapped-away doji, then a bo
 
 ## Chart
 
-<ta-chart src="/functions/cdlabandonedbaby.svg" ratio="720:274" label="CDLABANDONEDBABY over Simulated stock data, daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
+<ta-chart src="/functions/cdlabandonedbaby.svg" ratio="720:274" label="CDLABANDONEDBABY over Stock data, daily" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
 
 ::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
 

@@ -1,5 +1,5 @@
 # TA-Lib reference data: CDLBREAKAWAY
-# series: Simulated stock data, daily
+# series: Stock data, daily
 # input: simulated_2004-01-01.csv; window 2004-01-21..2004-02-25 (26 bars) plus 14 lookback bars before it; flagged bars: 2
 # parameters: (defaults)
 # inputs: inPriceOHLC=OHLC

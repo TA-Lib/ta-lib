@@ -1,5 +1,5 @@
 # TA-Lib reference data: CDLCONCEALBABYSWALL
-# series: Simulated stock data, daily
+# series: Stock data, daily
 # input: simulated_2004-10-05.csv; window 2004-10-22..2004-11-29 (27 bars) plus 13 lookback bars before it; flagged bars: 1
 # parameters: (defaults)
 # inputs: inPriceOHLC=OHLC

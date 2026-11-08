@@ -1,5 +1,5 @@
 # TA-Lib reference data: CDLKICKINGBYLENGTH
-# series: Simulated stock data, daily
+# series: Stock data, daily
 # input: simulated_2002-04-11.csv; window 2002-04-26..2002-06-05 (29 bars) plus 11 lookback bars before it; flagged bars: 1
 # parameters: (defaults)
 # inputs: inPriceOHLC=OHLC

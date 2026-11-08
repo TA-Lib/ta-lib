@@ -23,7 +23,7 @@ excerpt where it fires most, a market one before a synthetic one.
 - `simulated_*`: generated rather than taken from a market, for the patterns
   that need an opening gap no on-chain market prints and that no open source
   of stock prices shows.
-- The others: daily UTC bars of Uniswap v3 pools on Ethereum, built from the
-  pools' Swap event logs merged in block order, each block's last price; the
-  volume is the pair's first token. The `# source:` line names the pools, so
+- `wbtc_usdc_*`: daily UTC bars of Uniswap v3's WBTC/USDC pools on Ethereum,
+  built from the pools' Swap event logs merged in block order, each block's
+  last price; the volume is in WBTC. The `# source:` line names the pools, so
   anyone can rebuild them from the chain.

@@ -1,5 +1,5 @@
 # TA-Lib reference data: CDLABANDONEDBABY
-# series: Simulated stock data, daily
+# series: Stock data, daily
 # input: simulated_2003-04-30.csv; window 2003-05-16..2003-06-24 (28 bars) plus 12 lookback bars before it; flagged bars: 2
 # parameters: optInPenetration=0.3 (defaults)
 # inputs: inPriceOHLC=OHLC
