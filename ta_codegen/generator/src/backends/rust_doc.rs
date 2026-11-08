@@ -1121,6 +1121,7 @@ mod tests {
             name: name.to_string(),
             param_type: pt,
             flags: vec![],
+            levels: Vec::new(),
         };
         assert_eq!(output_var_name(&out("outReal", ParamType::Real)), "out");
         assert_eq!(

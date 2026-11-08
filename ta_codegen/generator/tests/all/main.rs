@@ -7,6 +7,7 @@ mod abstract_rows_suite;
 mod added_in_suite;
 mod alt_suite;
 mod arg_order_suite;
+mod attributes_suite;
 mod c_hygiene_suite;
 mod c_render_statement_suite;
 mod candle_range_suite;

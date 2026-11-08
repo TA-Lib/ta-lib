@@ -866,6 +866,11 @@ pub struct FuncInfo {
     pub opt_inputs: &'static [OptInputInfo],
     /// Outputs, in call order.
     pub outputs: &'static [OutputInfo],
+    /// Metadata no flag can carry, such as an output's reference levels, as one
+    /// JSON object; `"{}"` when none. The same bytes as C's `TA_GetFuncAttributes`.
+    /// Ignore a key you do not know: a release may add one
+    /// ([keys](https://ta-lib.org/spec/abstract/#attributes)).
+    pub attributes: &'static str,
     /// Stable unstable-period id (the one metadata kept aligned to C); `None` if N/A.
     pub unst_id: Option<FuncUnstId>,
 }
@@ -891,6 +896,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 5, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 34, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing for the signal line (period length)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 5, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000010) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -902,6 +908,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outRealUpperBand", kind: OutputType::Real, flags: OutputFlags(0x00000800) }, OutputInfo { param_name: "outRealMiddleBand", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outRealLowerBand", kind: OutputType::Real, flags: OutputFlags(0x00001000) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -913,6 +920,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -924,6 +932,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLCV", kind: InputType::Price, flags: InputFlags(0x0000001e) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -935,6 +944,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal0", kind: InputType::Real, flags: InputFlags(0x00000000) }, InputInfo { param_name: "inReal1", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -946,6 +956,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLCV", kind: InputType::Price, flags: InputFlags(0x0000001e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 3, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -957,6 +968,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -968,6 +980,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::ADX),
     },
     FuncInfo {
@@ -979,6 +992,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -990,6 +1004,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSigma", display_name: "Sigma", hint: "Gaussian width divisor", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.01, max: 3e37, precision: 2, default: 6.0, suggested: (1.0, 20.0, 0.5) } }, OptInputInfo { param_name: "optInOffset", display_name: "Offset", hint: "Position of the peak weight", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 1.0, precision: 2, default: 0.85, suggested: (0.0, 1.0, 0.05) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1001,6 +1016,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 5, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 34, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000010) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1012,6 +1028,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 1 } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1023,6 +1040,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outAroonDown", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, OutputInfo { param_name: "outAroonUp", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1034,6 +1052,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1045,6 +1064,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInLimitMove", display_name: "Limit Move", hint: "Largest one-bar price move the index is scaled against, in price units", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 1e-8, max: 3e37, precision: 4, default: 3.0, suggested: (0.5, 30.0, 0.5) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1056,6 +1076,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1067,6 +1088,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1078,6 +1100,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::ATR),
     },
     FuncInfo {
@@ -1089,6 +1112,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1100,6 +1124,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1111,6 +1136,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInNbDevUp", display_name: "Deviations up", hint: "Deviation multiplier for upper band", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 2, default: 2.0, suggested: (-2.0, 2.0, 0.2) } }, OptInputInfo { param_name: "optInNbDevDn", display_name: "Deviations down", hint: "Deviation multiplier for lower band", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 2, default: 2.0, suggested: (-2.0, 2.0, 0.2) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 0 } }, ],
         outputs: &[OutputInfo { param_name: "outRealUpperBand", kind: OutputType::Real, flags: OutputFlags(0x00000800) }, OutputInfo { param_name: "outRealMiddleBand", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outRealLowerBand", kind: OutputType::Real, flags: OutputFlags(0x00001000) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1122,6 +1148,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInNbDevUp", display_name: "Deviations up", hint: "Deviation multiplier for upper band", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 2, default: 2.0, suggested: (-2.0, 2.0, 0.2) } }, OptInputInfo { param_name: "optInNbDevDn", display_name: "Deviations down", hint: "Deviation multiplier for lower band", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 2, default: 2.0, suggested: (-2.0, 2.0, 0.2) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 0 } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1133,6 +1160,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal0", kind: InputType::Real, flags: InputFlags(0x00000000) }, InputInfo { param_name: "inReal1", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 5, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1144,6 +1172,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1155,6 +1184,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1166,6 +1196,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1177,6 +1208,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1188,6 +1220,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1199,6 +1232,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1210,6 +1244,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1221,6 +1256,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1232,6 +1268,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1243,6 +1280,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInPenetration", display_name: "Penetration", hint: "Percentage of penetration of a candle within another candle", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 0, default: 0.3, suggested: (0.0, 0.0, 0.0) } }, ],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1254,6 +1292,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1265,6 +1304,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1276,6 +1316,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1287,6 +1328,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1298,6 +1340,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1309,6 +1352,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1320,6 +1364,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInPenetration", display_name: "Penetration", hint: "Percentage of penetration of a candle within another candle", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 0, default: 0.5, suggested: (0.0, 0.0, 0.0) } }, ],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1331,6 +1376,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000521) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1342,6 +1388,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1353,6 +1400,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000521) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1364,6 +1412,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00008741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1375,6 +1424,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInPenetration", display_name: "Penetration", hint: "Percentage of penetration of a candle within another candle", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 0, default: 0.3, suggested: (0.0, 0.0, 0.0) } }, ],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1386,6 +1436,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInPenetration", display_name: "Penetration", hint: "Percentage of penetration of a candle within another candle", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 0, default: 0.3, suggested: (0.0, 0.0, 0.0) } }, ],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1397,6 +1448,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1408,6 +1460,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000521) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1419,6 +1472,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1430,6 +1484,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1441,6 +1496,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00008741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1452,6 +1508,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00008741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1463,6 +1520,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000701) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1474,6 +1532,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x000007c1) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1485,6 +1544,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x000007c1) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1496,6 +1556,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1507,6 +1568,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1518,6 +1580,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1529,6 +1592,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1540,6 +1604,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1551,6 +1616,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1562,6 +1628,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1573,6 +1640,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000521) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1584,6 +1652,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1595,6 +1664,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1606,6 +1676,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1617,6 +1688,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInPenetration", display_name: "Penetration", hint: "Percentage of penetration of a candle within another candle", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 0, default: 0.5, suggested: (0.0, 0.0, 0.0) } }, ],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1628,6 +1700,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInPenetration", display_name: "Penetration", hint: "Percentage of penetration of a candle within another candle", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 0, default: 0.3, suggested: (0.0, 0.0, 0.0) } }, ],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1639,6 +1712,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInPenetration", display_name: "Penetration", hint: "Percentage of penetration of a candle within another candle", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 0, default: 0.3, suggested: (0.0, 0.0, 0.0) } }, ],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1650,6 +1724,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1661,6 +1736,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1672,6 +1748,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000521) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1683,6 +1760,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1694,6 +1772,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1705,6 +1784,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1716,6 +1796,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000701) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1727,6 +1808,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000701) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1738,6 +1820,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1749,6 +1832,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1760,6 +1844,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000521) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1771,6 +1856,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1782,6 +1868,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1793,6 +1880,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1804,6 +1892,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000541) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1815,6 +1904,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000641) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1826,6 +1916,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000741) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1837,6 +1928,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1848,6 +1940,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of bars in the window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1859,6 +1952,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1870,6 +1964,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1881,6 +1976,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "ATR and extreme window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMultiplier", display_name: "Multiplier", hint: "ATR multiplier", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 2, default: 1.0, suggested: (0.5, 5.0, 0.5) } }, OptInputInfo { param_name: "optInStopPeriod", display_name: "Stop Period", hint: "Stop window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outHighStop", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outLowStop", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1892,6 +1988,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLCV", kind: InputType::Price, flags: InputFlags(0x0000001e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1903,6 +2000,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::CMO),
     },
     FuncInfo {
@@ -1914,6 +2012,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1925,6 +2024,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInWMAPeriod", display_name: "WMA Period", hint: "Smoothing period for the ROC sum", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInROC1Period", display_name: "ROC-1 Period", hint: "Short rate-of-change period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 11, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInROC2Period", display_name: "ROC-2 Period", hint: "Long rate-of-change period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1936,6 +2036,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal0", kind: InputType::Real, flags: InputFlags(0x00000000) }, InputInfo { param_name: "inReal1", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1947,6 +2048,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1958,6 +2060,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1969,6 +2072,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 3, suggested: (2, 20, 1) } }, OptInputInfo { param_name: "optInStreakPeriod", display_name: "Streak Period", hint: "Time period of the RSI of the up/down streak", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 2, suggested: (2, 20, 1) } }, OptInputInfo { param_name: "optInRankPeriod", display_name: "Rank Period", hint: "Number of previous one-bar returns the current one is ranked against", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 10000, default: 100, suggested: (20, 200, 20) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1980,6 +2084,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of bars correlated against the ramp", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (5, 50, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -1991,6 +2096,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2002,6 +2108,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Period of the EMA smoothing the high-low spread", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInROCPeriod", display_name: "ROC Period", hint: "Number of bars the rate of change reaches back", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2013,6 +2120,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2024,6 +2132,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal0", kind: InputType::Real, flags: InputFlags(0x00000000) }, InputInfo { param_name: "inReal1", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2035,6 +2144,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outRealUpperBand", kind: OutputType::Real, flags: OutputFlags(0x00000800) }, OutputInfo { param_name: "outRealMiddleBand", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outRealLowerBand", kind: OutputType::Real, flags: OutputFlags(0x00001000) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2046,6 +2156,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Period of the RSI", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInFirstPeriod", display_name: "First Smoothing Period", hint: "Period of the first smoothing, applied to the RSI", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 5, suggested: (2, 50, 1) } }, OptInputInfo { param_name: "optInSecondPeriod", display_name: "Second Smoothing Period", hint: "Period of the second smoothing, applied to the first", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 3, suggested: (2, 50, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Period of the simple average subtracted from the smoothed line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 9, suggested: (2, 50, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000010) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2057,6 +2168,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (10, 60, 5) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00004001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2068,6 +2180,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::DX),
     },
     FuncInfo {
@@ -2079,6 +2192,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceCV", kind: InputType::Price, flags: InputFlags(0x00000018) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 13, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2090,6 +2204,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::EMA),
     },
     FuncInfo {
@@ -2101,6 +2216,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLV", kind: InputType::Price, flags: InputFlags(0x00000016) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Bars in the SMA of the one-bar values (1 = unsmoothed)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInVolumeDivisor", display_name: "Volume Divisor", hint: "Volume is divided by this before forming the box ratio", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 1.0, max: 3e37, precision: 0, default: 10000.0, suggested: (0.0, 0.0, 0.0) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2112,6 +2228,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of one-bar changes in the path sum", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (2, 100, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2123,6 +2240,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of bars in the EMA of close", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 13, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outBullPower", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outBearPower", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2134,6 +2252,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2145,6 +2264,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (5, 50, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outFisher", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outTrigger", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::FISHER),
     },
     FuncInfo {
@@ -2156,6 +2276,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2167,6 +2288,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 5, suggested: (2, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2178,6 +2300,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInLeftBars", display_name: "Left Bars", hint: "Number of bars required to be lower/higher before the pivot", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 2, suggested: (1, 10, 1) } }, OptInputInfo { param_name: "optInRightBars", display_name: "Right Bars", hint: "Number of bars required to be lower/higher after the pivot", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 2, suggested: (1, 10, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outSwingHigh", kind: OutputType::Integer, flags: OutputFlags(0x00004521) }, OutputInfo { param_name: "outSwingLow", kind: OutputType::Integer, flags: OutputFlags(0x00004521) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2189,6 +2312,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of bars, even; the window is split into two halves of optInTimePeriod/2 bars", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 16, suggested: (4, 200, 2) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::FRAMA),
     },
     FuncInfo {
@@ -2200,6 +2324,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outHAOpen", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outHAHigh", kind: OutputType::Real, flags: OutputFlags(0x00000801) }, OutputInfo { param_name: "outHALow", kind: OutputType::Real, flags: OutputFlags(0x00001001) }, OutputInfo { param_name: "outHAClose", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::HA),
     },
     FuncInfo {
@@ -2211,6 +2336,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 20, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2222,6 +2348,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::HT_DCPERIOD),
     },
     FuncInfo {
@@ -2233,6 +2360,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::HT_DCPHASE),
     },
     FuncInfo {
@@ -2244,6 +2372,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInPhase", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outQuadrature", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::HT_PHASOR),
     },
     FuncInfo {
@@ -2255,6 +2384,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outSine", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outLeadSine", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::HT_SINE),
     },
     FuncInfo {
@@ -2266,6 +2396,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::HT_TRENDLINE),
     },
     FuncInfo {
@@ -2277,6 +2408,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::HT_TRENDMODE),
     },
     FuncInfo {
@@ -2288,6 +2420,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2299,6 +2432,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTenkanPeriod", display_name: "Tenkan Period", hint: "Period of the conversion line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 9, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInKijunPeriod", display_name: "Kijun Period", hint: "Period of the base line, and the forward shift of the two spans", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSenkouBPeriod", display_name: "Senkou B Period", hint: "Period of the second leading span", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 52, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outTenkanSen", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outKijunSen", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outSenkouSpanA", kind: OutputType::Real, flags: OutputFlags(0x00004001) }, OutputInfo { param_name: "outSenkouSpanB", kind: OutputType::Real, flags: OutputFlags(0x00004001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2310,6 +2444,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOC", kind: InputType::Price, flags: InputFlags(0x00000009) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2321,6 +2456,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::KAMA),
     },
     FuncInfo {
@@ -2332,6 +2468,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period for the typical price moving average", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInATRPeriod", display_name: "ATR Period", hint: "Time period for the Average True Range", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInNbDev", display_name: "Deviations", hint: "Multiplier applied to the Average True Range", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 2, default: 2.0, suggested: (1.0, 3.0, 0.5) } }, ],
         outputs: &[OutputInfo { param_name: "outRealUpperBand", kind: OutputType::Real, flags: OutputFlags(0x00000800) }, OutputInfo { param_name: "outRealMiddleBand", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outRealLowerBand", kind: OutputType::Real, flags: OutputFlags(0x00001000) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2343,6 +2480,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastK_Period", display_name: "Fast-K Period", hint: "Time period for building the Fast-K line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSlowK_Period", display_name: "Slow-K Period", hint: "Smoothing for making the Slow-K line. Usually set to 3", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 3, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSlowK_MAType", display_name: "Slow-K MA", hint: "Type of Moving Average for Slow-K", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 13 } }, OptInputInfo { param_name: "optInSlowD_Period", display_name: "Slow-D Period", hint: "Smoothing for making the Slow-D line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 3, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSlowD_MAType", display_name: "Slow-D MA", hint: "Type of Moving Average for Slow-D", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 13 } }, ],
         outputs: &[OutputInfo { param_name: "outK", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outD", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outJ", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2354,6 +2492,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInROC1Period", display_name: "ROC-1 Period", hint: "Rate-of-change period of leg 1", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInROC2Period", display_name: "ROC-2 Period", hint: "Rate-of-change period of leg 2", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 15, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInROC3Period", display_name: "ROC-3 Period", hint: "Rate-of-change period of leg 3", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 20, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInROC4Period", display_name: "ROC-4 Period", hint: "Rate-of-change period of leg 4", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSMA1Period", display_name: "SMA-1 Period", hint: "Smoothing period of leg 1", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSMA2Period", display_name: "SMA-2 Period", hint: "Smoothing period of leg 2", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSMA3Period", display_name: "SMA-3 Period", hint: "Smoothing period of leg 3", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSMA4Period", display_name: "SMA-4 Period", hint: "Smoothing period of leg 4", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 15, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing period of the signal line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outKST", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outKSTSignal", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2365,6 +2504,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInROC1Period", display_name: "ROC-1 Period", hint: "Rate-of-change period of leg 1", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInROC2Period", display_name: "ROC-2 Period", hint: "Rate-of-change period of leg 2", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 15, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInROC3Period", display_name: "ROC-3 Period", hint: "Rate-of-change period of leg 3", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 20, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInROC4Period", display_name: "ROC-4 Period", hint: "Rate-of-change period of leg 4", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInMA1Period", display_name: "MA-1 Period", hint: "Smoothing period of leg 1", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInMA2Period", display_name: "MA-2 Period", hint: "Smoothing period of leg 2", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInMA3Period", display_name: "MA-3 Period", hint: "Smoothing period of leg 3", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInMA4Period", display_name: "MA-4 Period", hint: "Smoothing period of leg 4", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 15, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing period of the signal line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInROCMAType", display_name: "ROC MA", hint: "Type of Moving Average smoothing the four legs", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 0 } }, OptInputInfo { param_name: "optInSignalMAType", display_name: "Signal MA", hint: "Type of Moving Average for signal line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 0 } }, ],
         outputs: &[OutputInfo { param_name: "outKST", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outKSTSignal", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2376,6 +2516,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 4, max: 10000, default: 30, suggested: (10, 200, 5) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2387,6 +2528,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLCV", kind: InputType::Price, flags: InputFlags(0x0000001e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the faster smoothing of the volume force", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 34, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slower smoothing of the volume force", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 55, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing for the trigger line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 13, suggested: (2, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outKVO", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outKVOSignal", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2398,6 +2540,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2409,6 +2552,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2420,6 +2564,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2431,6 +2576,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2442,6 +2588,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2453,6 +2600,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2464,6 +2612,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 0 } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2475,6 +2624,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing for the signal line (period length)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outMACD", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outMACDSignal", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, OutputInfo { param_name: "outMACDHist", kind: OutputType::Real, flags: OutputFlags(0x00000010) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2486,6 +2636,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInFastMAType", display_name: "Fast MA", hint: "Type of Moving Average for fast MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 0 } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowMAType", display_name: "Slow MA", hint: "Type of Moving Average for slow MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 0 } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing for the signal line (period length)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSignalMAType", display_name: "Signal MA", hint: "Type of Moving Average for signal line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 0 } }, ],
         outputs: &[OutputInfo { param_name: "outMACD", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outMACDSignal", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, OutputInfo { param_name: "outMACDHist", kind: OutputType::Real, flags: OutputFlags(0x00000010) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2497,6 +2648,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing for the signal line (period length)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outMACD", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outMACDSignal", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, OutputInfo { param_name: "outMACDHist", kind: OutputType::Real, flags: OutputFlags(0x00000010) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2508,6 +2660,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastLimit", display_name: "Fast Limit", hint: "Upper limit use in the adaptive algorithm", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.01, max: 0.99, precision: 2, default: 0.5, suggested: (0.21, 0.8, 0.01) } }, OptInputInfo { param_name: "optInSlowLimit", display_name: "Slow Limit", hint: "Lower limit use in the adaptive algorithm", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.01, max: 0.99, precision: 2, default: 0.05, suggested: (0.01, 0.6, 0.01) } }, ],
         outputs: &[OutputInfo { param_name: "outMAMA", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outFAMA", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::MAMA),
     },
     FuncInfo {
@@ -2519,6 +2672,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLV", kind: InputType::Price, flags: InputFlags(0x00000016) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2530,6 +2684,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of both exponential averages of the high-low range", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 9, suggested: (2, 50, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Number of bars the ratio is summed over", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 25, suggested: (10, 50, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2541,6 +2696,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, InputInfo { param_name: "inPeriods", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInMinPeriod", display_name: "Minimum Period", hint: "Value less than minimum will be changed to Minimum period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 10000, default: 2, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInMaxPeriod", display_name: "Maximum Period", hint: "Value higher than maximum will be changed to Maximum period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 10000, default: 30, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 0 } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2552,6 +2708,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 30, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2563,6 +2720,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 30, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2574,6 +2732,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (2, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::MCGD),
     },
     FuncInfo {
@@ -2585,6 +2744,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of bars in the window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 10000, default: 30, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2596,6 +2756,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2607,6 +2768,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLCV", kind: InputType::Price, flags: InputFlags(0x0000001e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2618,6 +2780,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2629,6 +2792,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2640,6 +2804,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 30, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2651,6 +2816,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 30, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2662,6 +2828,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 30, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outMin", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outMax", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2673,6 +2840,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 30, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outMinIdx", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outMaxIdx", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2684,6 +2852,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::MINUS_DI),
     },
     FuncInfo {
@@ -2695,6 +2864,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::MINUS_DM),
     },
     FuncInfo {
@@ -2706,6 +2876,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2717,6 +2888,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal0", kind: InputType::Real, flags: InputFlags(0x00000000) }, InputInfo { param_name: "inReal1", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2728,6 +2900,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::NATR),
     },
     FuncInfo {
@@ -2739,6 +2912,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceCV", kind: InputType::Price, flags: InputFlags(0x00000018) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2750,6 +2924,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, InputInfo { param_name: "inPriceV", kind: InputType::Price, flags: InputFlags(0x00000010) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2761,6 +2936,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInNbDevUp", display_name: "Deviations up", hint: "Deviation multiplier for upper band", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 2, default: 2.0, suggested: (-2.0, 2.0, 0.2) } }, OptInputInfo { param_name: "optInNbDevDn", display_name: "Deviations down", hint: "Deviation multiplier for lower band", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 2, default: 2.0, suggested: (-2.0, 2.0, 0.2) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 0 } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2772,6 +2948,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of bars in the window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 10000, default: 100, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInPercentile", display_name: "Percentile", hint: "Percentile to report", flags: OptInputFlags(0x00100000), kind: OptInputType::RealRange { min: 0.0, max: 100.0, precision: 2, default: 50.0, suggested: (10.0, 90.0, 5.0) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2783,6 +2960,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 10000, default: 100, suggested: (20, 200, 20) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2794,6 +2972,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::PLUS_DI),
     },
     FuncInfo {
@@ -2805,6 +2984,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::PLUS_DM),
     },
     FuncInfo {
@@ -2816,6 +2996,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 1 } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2827,6 +3008,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastK_Period", display_name: "Fast-K Period", hint: "Time period for building the Fast-K line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 8, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInEMAPeriod", display_name: "EMA Period", hint: "Period of each of the two smoothing passes", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 5, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2838,6 +3020,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceCV", kind: InputType::Price, flags: InputFlags(0x00000018) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2849,6 +3032,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceV", kind: InputType::Price, flags: InputFlags(0x00000010) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMAType", display_name: "MA Type", hint: "Type of Moving Average", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 1 } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2860,6 +3044,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceCV", kind: InputType::Price, flags: InputFlags(0x00000018) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2871,6 +3056,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOC", kind: InputType::Price, flags: InputFlags(0x00000009) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2882,6 +3068,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::RMA),
     },
     FuncInfo {
@@ -2893,6 +3080,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2904,6 +3092,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2915,6 +3104,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2926,6 +3116,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2937,6 +3128,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of bars in the window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (2, 200, 1) } }, OptInputInfo { param_name: "optInAnnualization", display_name: "Annualization", hint: "Periods per year; 1 leaves the per-bar figure", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 2, default: 252.0, suggested: (1.0, 365.0, 1.0) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2948,6 +3140,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{\"outputs\":{\"outReal\":{\"levels\":[30,70]}}}",
         unst_id: Some(FuncUnstId::RSI),
     },
     FuncInfo {
@@ -2959,6 +3152,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period of the Wilder smoothing applied to both legs", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInStdDevPeriod", display_name: "StdDev Period", hint: "Time period of the standard deviation", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::RVI),
     },
     FuncInfo {
@@ -2970,6 +3164,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period of the Wilder smoothing applied to both indices", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInStdDevPeriod", display_name: "StdDev Period", hint: "Time period of the standard deviation", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2981,6 +3176,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceV", kind: InputType::Price, flags: InputFlags(0x00000010) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 20, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -2992,6 +3188,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInAcceleration", display_name: "Acceleration Factor", hint: "Acceleration Factor used up to the Maximum value", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 4, default: 0.02, suggested: (0.01, 0.2, 0.01) } }, OptInputInfo { param_name: "optInMaximum", display_name: "AF Maximum", hint: "Acceleration Factor Maximum value", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 4, default: 0.2, suggested: (0.2, 0.4, 0.01) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000008) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3003,6 +3200,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInStartValue", display_name: "Start Value", hint: "Start value and direction. 0 for Auto, >0 for Long, <0 for Short", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 4, default: 0.0, suggested: (0.0, 0.0, 0.0) } }, OptInputInfo { param_name: "optInOffsetOnReverse", display_name: "Offset on Reverse", hint: "Percent offset added/removed to initial stop on short/long reversal", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 4, default: 0.0, suggested: (0.01, 0.15, 0.01) } }, OptInputInfo { param_name: "optInAccelerationInitLong", display_name: "AF Init Long", hint: "Acceleration Factor initial value for the Long direction", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 4, default: 0.02, suggested: (0.01, 0.19, 0.01) } }, OptInputInfo { param_name: "optInAccelerationLong", display_name: "AF Long", hint: "Acceleration Factor for the Long direction", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 4, default: 0.02, suggested: (0.01, 0.2, 0.01) } }, OptInputInfo { param_name: "optInAccelerationMaxLong", display_name: "AF Max Long", hint: "Acceleration Factor maximum value for the Long direction", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 4, default: 0.2, suggested: (0.2, 0.4, 0.01) } }, OptInputInfo { param_name: "optInAccelerationInitShort", display_name: "AF Init Short", hint: "Acceleration Factor initial value for the Short direction", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 4, default: 0.02, suggested: (0.01, 0.19, 0.01) } }, OptInputInfo { param_name: "optInAccelerationShort", display_name: "AF Short", hint: "Acceleration Factor for the Short direction", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 4, default: 0.02, suggested: (0.01, 0.2, 0.01) } }, OptInputInfo { param_name: "optInAccelerationMaxShort", display_name: "AF Max Short", hint: "Acceleration Factor maximum value for the Short direction", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 4, default: 0.2, suggested: (0.2, 0.4, 0.01) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000008) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3014,6 +3212,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInLimitMove", display_name: "Limit Move", hint: "Largest one-bar price move the index is scaled against, in price units", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 1e-8, max: 3e37, precision: 4, default: 3.0, suggested: (0.5, 30.0, 0.5) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3025,6 +3224,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3036,6 +3236,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3047,6 +3248,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3058,6 +3260,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Period of the high/low range", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 13, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the second smoothing, applied to the first", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 2, suggested: (2, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the first smoothing, applied to the raw momentum", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 25, suggested: (2, 200, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing for the signal line (period length)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 9, suggested: (2, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outSMI", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outSMISignal", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3069,6 +3272,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3080,6 +3284,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInBBPeriod", display_name: "BB Period", hint: "Period of the Bollinger Bands", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInNbDev", display_name: "Deviations", hint: "Deviation multiplier for both Bollinger Bands", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 2, default: 2.0, suggested: (1.0, 3.0, 0.5) } }, OptInputInfo { param_name: "optInKCPeriod", display_name: "KC Period", hint: "Period of the Keltner Channel, and of the momentum regression", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInFactorWide", display_name: "Wide Factor", hint: "Keltner width for the widest compression test", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 1, default: 2.0, suggested: (1.0, 3.0, 0.5) } }, OptInputInfo { param_name: "optInFactorNormal", display_name: "Normal Factor", hint: "Keltner width for the classic squeeze test", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 1, default: 1.5, suggested: (1.0, 3.0, 0.5) } }, OptInputInfo { param_name: "optInFactorNarrow", display_name: "Narrow Factor", hint: "Keltner width for the tightest compression test", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 1, default: 1.0, suggested: (0.5, 2.0, 0.5) } }, ],
         outputs: &[OutputInfo { param_name: "outMomentum", kind: OutputType::Real, flags: OutputFlags(0x00000010) }, OutputInfo { param_name: "outSqueeze", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3091,6 +3296,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast EMA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 23, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow EMA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 50, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInCyclePeriod", display_name: "Cycle Period", hint: "Window of both stochastic stages", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (2, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::STC),
     },
     FuncInfo {
@@ -3102,6 +3308,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 5, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInNbDev", display_name: "Deviations", hint: "Nb of deviations", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 2, default: 1.0, suggested: (-2.0, 2.0, 0.2) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3113,6 +3320,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastK_Period", display_name: "Fast-K Period", hint: "Time period for building the Fast-K line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 5, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSlowK_Period", display_name: "Slow-K Period", hint: "Smoothing for making the Slow-K line. Usually set to 3", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 3, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSlowK_MAType", display_name: "Slow-K MA", hint: "Type of Moving Average for Slow-K", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 0 } }, OptInputInfo { param_name: "optInSlowD_Period", display_name: "Slow-D Period", hint: "Smoothing for making the Slow-D line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 3, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSlowD_MAType", display_name: "Slow-D MA", hint: "Type of Moving Average for Slow-D", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 0 } }, ],
         outputs: &[OutputInfo { param_name: "outSlowK", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, OutputInfo { param_name: "outSlowD", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3124,6 +3332,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastK_Period", display_name: "Fast-K Period", hint: "Time period for building the Fast-K line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 5, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInFastD_Period", display_name: "Fast-D Period", hint: "Smoothing for making the Fast-D line. Usually set to 3", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 3, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInFastD_MAType", display_name: "Fast-D MA", hint: "Type of Moving Average for Fast-D", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 0 } }, ],
         outputs: &[OutputInfo { param_name: "outFastK", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outFastD", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3135,6 +3344,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInFastK_Period", display_name: "Fast-K Period", hint: "Time period for building the Fast-K line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 5, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInFastD_Period", display_name: "Fast-D Period", hint: "Smoothing for making the Fast-D line. Usually set to 3", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 3, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInFastD_MAType", display_name: "Fast-D MA", hint: "Type of Moving Average for Fast-D", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerList { values: &[(0, "SMA"), (1, "EMA"), (2, "WMA"), (3, "DEMA"), (4, "TEMA"), (5, "TRIMA"), (6, "KAMA"), (7, "MAMA"), (8, "T3"), (9, "HMA"), (10, "DISABLED"), (11, "DEFAULT"), (12, "ZLEMA"), (13, "RMA"), (14, "VIDYA"), (15, "ALMA"), ], default: 0 } }, ],
         outputs: &[OutputInfo { param_name: "outFastK", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outFastD", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3146,6 +3356,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal0", kind: InputType::Real, flags: InputFlags(0x00000000) }, InputInfo { param_name: "inReal1", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3157,6 +3368,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 30, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3168,6 +3380,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period for the Average True Range", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMultiplier", display_name: "Multiplier", hint: "ATR multiplier for band width", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 1, default: 3.0, suggested: (1.0, 4.0, 0.5) } }, ],
         outputs: &[OutputInfo { param_name: "outSupertrend", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outTrend", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3179,6 +3392,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Cutoff period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 10000, default: 20, suggested: (5, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::SWAK_2PHP),
     },
     FuncInfo {
@@ -3190,6 +3404,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Center period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 5, max: 2000, default: 20, suggested: (5, 200, 1) } }, OptInputInfo { param_name: "optInDelta", display_name: "Delta", hint: "Half-bandwidth as a fraction of the center period", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.05, max: 0.5, precision: 2, default: 0.1, suggested: (0.05, 0.5, 0.05) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::SWAK_BP),
     },
     FuncInfo {
@@ -3201,6 +3416,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Cutoff period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 10000, default: 20, suggested: (5, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::SWAK_BUTTER),
     },
     FuncInfo {
@@ -3212,6 +3428,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Cutoff period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 10000, default: 20, suggested: (5, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::SWAK_GAUSS),
     },
     FuncInfo {
@@ -3223,6 +3440,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Cutoff period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 5, max: 100000, default: 20, suggested: (5, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::SWAK_HP),
     },
     FuncInfo {
@@ -3234,6 +3452,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 5, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInVFactor", display_name: "Volume Factor", hint: "Volume Factor", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 1.0, precision: 2, default: 0.7, suggested: (0.01, 1.0, 0.05) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::T3),
     },
     FuncInfo {
@@ -3245,6 +3464,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3256,6 +3476,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3267,6 +3488,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3278,6 +3500,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3289,6 +3512,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3300,6 +3524,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3311,6 +3536,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3322,6 +3548,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFirstPeriod", display_name: "First Smoothing Period", hint: "Period of the first smoothing, applied to the raw momentum", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 25, suggested: (2, 100, 1) } }, OptInputInfo { param_name: "optInSecondPeriod", display_name: "Second Smoothing Period", hint: "Period of the second smoothing, applied to the first", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 13, suggested: (2, 50, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3333,6 +3560,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3344,6 +3572,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod1", display_name: "First Period", hint: "Number of bars for 1st period.", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 7, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInTimePeriod2", display_name: "Second Period", hint: "Number of bars fro 2nd period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInTimePeriod3", display_name: "Third Period", hint: "Number of bars for 3rd period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 28, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3355,6 +3584,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 5, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInNbDev", display_name: "Deviations", hint: "Nb of deviations", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 2, default: 1.0, suggested: (-2.0, 2.0, 0.2) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3366,6 +3596,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 28, suggested: (14, 56, 7) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3377,6 +3608,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "EMA-equivalent smoothing period, alpha = 2/(n+1)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInCMOPeriod", display_name: "CMO Period", hint: "Period of the unsmoothed CMO that scales alpha", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 9, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: Some(FuncUnstId::VIDYA),
     },
     FuncInfo {
@@ -3388,6 +3620,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of bars in the rolling sums", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outPlusVI", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outMinusVI", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3399,6 +3632,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLCV", kind: InputType::Price, flags: InputFlags(0x0000001e) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3410,6 +3644,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, InputInfo { param_name: "inPriceV", kind: InputType::Price, flags: InputFlags(0x00000010) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3421,6 +3656,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3432,6 +3668,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInChannelPeriod", display_name: "Channel Period", hint: "Period of the price channel, used by both the average and the deviation", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (2, 200, 1) } }, OptInputInfo { param_name: "optInAveragePeriod", display_name: "Average Period", hint: "Smoothing for the oscillator line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 21, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Simple average of the oscillator line, making the signal line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 4, suggested: (1, 50, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outWT1", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outWT2", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3443,6 +3680,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3454,6 +3692,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3465,6 +3704,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3476,6 +3716,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInSensitivity", display_name: "Sensitivity", hint: "Minimum move away from the current extreme that reverses the leg, in percent", flags: OptInputFlags(0x00100000), kind: OptInputType::RealRange { min: 0.0, max: 100.0, precision: 2, default: 5.0, suggested: (1.0, 20.0, 1.0) } }, OptInputInfo { param_name: "optInMinTrendLength", display_name: "Minimum Trend Length", hint: "Minimum number of bars between two pivots", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 1, suggested: (1, 20, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outZigZag", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outTrend", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outPivotIdx", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3487,6 +3728,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3498,6 +3740,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "ATR and extreme window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 22, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMultiplier", display_name: "Multiplier", hint: "ATR multiplier", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 2, default: 3.0, suggested: (1.0, 5.0, 0.5) } }, ],
         outputs: &[OutputInfo { param_name: "outRealLong", kind: OutputType::Real, flags: OutputFlags(0x00001000) }, OutputInfo { param_name: "outRealShort", kind: OutputType::Real, flags: OutputFlags(0x00000800) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3509,6 +3752,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 12, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA and of the ATR", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 26, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing for the signal line (period length)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 9, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outMACDV", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outMACDVSignal", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, OutputInfo { param_name: "outMACDVHist", kind: OutputType::Real, flags: OutputFlags(0x00000010) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3520,6 +3764,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 3, max: 100000, default: 30, suggested: (10, 200, 5) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3531,6 +3776,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of returns in the window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInRiskFreeRate", display_name: "Risk-Free Rate per Bar", hint: "Risk-free return per bar", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 8, default: 0.0, suggested: (0.0, 0.001, 0.0001) } }, OptInputInfo { param_name: "optInAnnualization", display_name: "Annualization", hint: "Bars per year", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 2, default: 252.0, suggested: (1.0, 365.0, 1.0) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3542,6 +3788,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of returns in the window", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMAR", display_name: "Minimum Acceptable Return per Bar", hint: "Minimum acceptable return per bar", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: -3e37, max: 3e37, precision: 8, default: 0.0, suggested: (0.0, 0.001, 0.0001) } }, OptInputInfo { param_name: "optInAnnualization", display_name: "Annualization", hint: "Bars per year", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 2, default: 252.0, suggested: (1.0, 365.0, 1.0) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
     FuncInfo {
@@ -3553,6 +3800,7 @@ static FUNC_TABLE: [FuncInfo; 243] = [
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInJawPeriod", display_name: "Jaw Period", hint: "Time period for the jaw line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 13, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInJawShift", display_name: "Jaw Shift", hint: "Bars ahead the jaw line is drawn", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 0, max: 100000, default: 8, suggested: (0, 30, 1) } }, OptInputInfo { param_name: "optInTeethPeriod", display_name: "Teeth Period", hint: "Time period for the teeth line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 8, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInTeethShift", display_name: "Teeth Shift", hint: "Bars ahead the teeth line is drawn", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 0, max: 100000, default: 5, suggested: (0, 30, 1) } }, OptInputInfo { param_name: "optInLipsPeriod", display_name: "Lips Period", hint: "Time period for the lips line", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 5, suggested: (1, 200, 1) } }, OptInputInfo { param_name: "optInLipsShift", display_name: "Lips Shift", hint: "Bars ahead the lips line is drawn", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 0, max: 100000, default: 3, suggested: (0, 30, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outJaw", kind: OutputType::Real, flags: OutputFlags(0x00004001) }, OutputInfo { param_name: "outTeeth", kind: OutputType::Real, flags: OutputFlags(0x00004001) }, OutputInfo { param_name: "outLips", kind: OutputType::Real, flags: OutputFlags(0x00004001) }, ],
+        attributes: "{}",
         unst_id: None,
     },
 ];

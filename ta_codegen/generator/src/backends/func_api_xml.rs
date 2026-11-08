@@ -49,6 +49,10 @@ fn write_function(out: &mut String, func: &FuncDef) {
     let _ = writeln!(out, "\t\t<GroupId>{}</GroupId>", func.group);
 
     write_func_flags(out, &func.flags);
+    let attributes = super::ta_abstract_c::attributes_json(func);
+    if attributes != crate::attributes::EMPTY {
+        let _ = writeln!(out, "\t\t<Attributes><![CDATA[{attributes}]]></Attributes>");
+    }
     write_inputs(out, func);
     if !func.optional_inputs.is_empty() {
         write_optional_inputs(out, func);

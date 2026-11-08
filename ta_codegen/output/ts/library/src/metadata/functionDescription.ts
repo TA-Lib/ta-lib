@@ -9408,6 +9408,7 @@ const LINES: readonly string[] = [
   '\t\t\t<Flag>Unstable Period</Flag>',
   '\t\t\t<Flag>Streaming</Flag>',
   '\t\t</Flags>',
+  '\t\t<Attributes><![CDATA[{"outputs":{"outReal":{"levels":[30,70]}}}]]></Attributes>',
   '\t\t<RequiredInputArguments>',
   '\t\t\t<RequiredInputArgument>',
   '\t\t\t\t<Type>Double Array</Type>',

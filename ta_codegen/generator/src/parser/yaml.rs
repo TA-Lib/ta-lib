@@ -77,6 +77,7 @@ struct YamlOutput {
     param_type: String,
     #[serde(default)]
     flags: YamlFlags,
+    levels: Option<Vec<f64>>,
 }
 
 fn yaml_val_to_f64(v: &serde_yaml::Value) -> f64 {
@@ -130,6 +131,23 @@ fn parse_input_type(p: &mut YamlInput, path: &Path) -> (ParamType, Series, Optio
         p.name
     );
     (pt, series, domain)
+}
+
+fn parse_output(p: YamlOutput, path: &Path) -> Output {
+    let param_type = parse_param_type(&p.param_type, None);
+    let levels = p.levels.map_or_else(Vec::new, |v| {
+        assert!(
+            param_type == ParamType::Real,
+            "{}: output `{}`: `levels` needs a `real` output",
+            path.display(),
+            p.name
+        );
+        if let Err(e) = crate::attributes::key("levels").ty.check(&v) {
+            panic!("{}: output `{}`: `levels` is {e}", path.display(), p.name);
+        }
+        v
+    });
+    Output { name: p.name, param_type, flags: p.flags.into_vec(), levels }
 }
 
 fn parse_param_type(s: &str, price_components: Option<Vec<String>>) -> ParamType {
@@ -318,11 +336,7 @@ pub fn parse_yaml_str(content: &str, path: &Path) -> FuncDef {
     let outputs: Vec<Output> = yaml
         .outputs
         .into_iter()
-        .map(|p| Output {
-            name: p.name,
-            param_type: parse_param_type(&p.param_type, None),
-            flags: p.flags.into_vec(),
-        })
+        .map(|p| parse_output(p, path))
         .collect();
 
     let mut flags = yaml.flags.into_vec();

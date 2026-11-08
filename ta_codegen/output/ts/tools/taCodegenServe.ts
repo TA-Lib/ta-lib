@@ -471,6 +471,12 @@ function absFuncInfo(p: Params): string {
     + `,"nbOutput":${f.outputs.length}}`;
 }
 
+function absFuncAttributes(p: Params): string {
+  const f = absLookup(p);
+  if (f === undefined) return '{"retCode":2}';
+  return `{"attributes":${JSON.stringify(f.attributes)}}`;
+}
+
 function absInputInfo(p: Params): string {
   const f = absLookup(p);
   const i = int(p, 'paramIndex', -1);
@@ -18217,6 +18223,7 @@ function handleRequest(line: string): string {
     case 'abstract_get_lookback': return `{"lookback":${lookback(p)}}`;
     case 'abstract_get_display_shift': return `{"displayShift":${displayShift(p)}}`;
     case 'TA_GetFuncInfo': return absFuncInfo(p);
+    case 'TA_GetFuncAttributes': return absFuncAttributes(p);
     case 'TA_GetInputParameterInfo': return absInputInfo(p);
     case 'TA_GetOptInputParameterInfo': return absOptInputInfo(p);
     case 'TA_GetOutputParameterInfo': return absOutputInfo(p);

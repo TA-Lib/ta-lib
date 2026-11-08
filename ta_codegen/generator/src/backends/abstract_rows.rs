@@ -315,6 +315,8 @@ pub struct FuncRow {
     pub opt_inputs: Vec<OptRow>,
     pub outputs: Vec<OutputRow>,
     pub unst: Option<UnstRow>,
+    /// The canonical JSON of [`crate::attributes`]; `{}` when none.
+    pub attributes: String,
 }
 
 /// Build every function's row, name-sorted — the order every registry enumerates in.
@@ -327,16 +329,87 @@ pub fn rows(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> Vec<FuncRow>
 
 #[allow(clippy::implicit_hasher)]
 fn row(f: &FuncDef, enums: &HashMap<String, EnumDef>) -> FuncRow {
+    let inputs = input_rows(&f.inputs);
+    let attributes = attributes_json(f, &inputs);
     FuncRow {
         name: f.name.clone(),
         group: Group::parse(&f.group),
         hint: f.hint.clone().unwrap_or_default(),
         flags: func_flag_bits(&f.flags),
-        inputs: input_rows(&f.inputs),
+        inputs,
         opt_inputs: f.optional_inputs.iter().map(|o| opt_row(o, enums)).collect(),
         outputs: output_rows(&f.outputs),
         unst: unst_row(&f.name, enums),
+        attributes,
     }
+}
+
+/// Keyed by the row's `param_name`, so a price bundle is one input as it is in
+/// every registry. Must stay byte-identical to `ta_abstract_c`'s rendering,
+/// which `test_abstract.c` holds it to; neither may call the other.
+fn attributes_json(f: &FuncDef, inputs: &[InputRow]) -> String {
+    use crate::attributes::{KEYS, INPUTS, OPT_INPUTS, OUTPUTS};
+    fn object(entries: &[(&str, String)]) -> String {
+        let body: Vec<String> = entries.iter().map(|(k, v)| format!("\"{k}\":{v}")).collect();
+        format!("{{{}}}", body.join(","))
+    }
+    fn values<'a>(read: impl Fn(&crate::attributes::Key) -> Option<crate::attributes::Value<'a>>) -> Vec<(&'static str, String)> {
+        KEYS.iter()
+            .filter_map(|k| {
+                read(k).map(|v| {
+                    let mut s = String::new();
+                    v.write_json(&mut s);
+                    (k.name, s)
+                })
+            })
+            .collect()
+    }
+    let mut top = values(|k| k.of_function(f));
+    let mut input_section: Vec<(&str, String)> = Vec::new();
+    for (slot, grouped) in price_bundle::group(&f.inputs).into_iter().enumerate() {
+        match grouped {
+            price_bundle::Grouped::Price(bundle) => {
+                for inp in bundle {
+                    assert!(
+                        values(|k| k.of_input(inp)).is_empty(),
+                        "{}: an attribute on price component `{}` is not modelled",
+                        f.name,
+                        inp.name
+                    );
+                }
+            }
+            price_bundle::Grouped::Single(inp) => {
+                let vals = values(|k| k.of_input(inp));
+                if !vals.is_empty() {
+                    input_section.push((inputs[slot].param_name.as_str(), object(&vals)));
+                }
+            }
+        }
+    }
+    let opt_section: Vec<(&str, String)> = f
+        .optional_inputs
+        .iter()
+        .filter_map(|o| {
+            let vals = values(|k| k.of_opt_input(o));
+            (!vals.is_empty()).then(|| (o.name.as_str(), object(&vals)))
+        })
+        .collect();
+    let output_section: Vec<(&str, String)> = f
+        .outputs
+        .iter()
+        .filter_map(|o| {
+            let vals = values(|k| k.of_output(o));
+            (!vals.is_empty()).then(|| (o.name.as_str(), object(&vals)))
+        })
+        .collect();
+    for (section, entries) in [(INPUTS, input_section), (OPT_INPUTS, opt_section), (OUTPUTS, output_section)] {
+        if !entries.is_empty() {
+            top.push((section, object(&entries)));
+        }
+    }
+    let json = object(&top);
+    crate::attributes::assert_embeddable(&f.name, &json);
+    json
 }
 
 /// Fold the parser's expanded price components back into a single `Price` input

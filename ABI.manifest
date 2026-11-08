@@ -4,7 +4,7 @@ format 9
 soname libta-lib.so.1
 version-info 4:0:3
 headers ta_abstract.h ta_common.h ta_defs.h ta_func.h ta_libc.h
-function-count 3200
+function-count 3201
 platform pointer=8 long=8 int=4 enum=4
 type TA_FuncInfo sizeof=48 name:const_char_*=0 group:const_char_*=8 hint:const_char_*=16 flags:TA_FuncFlags=24 nbInput:unsigned_int=28 nbOptInput:unsigned_int=32 nbOutput:unsigned_int=36 handle:const_TA_FuncHandle_*=40
 type TA_InputParameterInfo sizeof=24 type:TA_InputParameterType=0 paramName:const_char_*=8 flags:TA_InputFlags=16
@@ -1408,6 +1408,7 @@ function TA_RetCode TA_ForEachFunc(TA_CallForEachFunc, void *)
 function TA_RetCode TA_FuncTableAlloc(const char *, TA_StringTable **)
 function TA_RetCode TA_FuncTableFree(TA_StringTable *)
 function TA_RetCode TA_GetDisplayShift(const TA_ParamHolder *, unsigned int, TA_Integer *)
+function TA_RetCode TA_GetFuncAttributes(const TA_FuncHandle *, const char **)
 function TA_RetCode TA_GetFuncHandle(const char *, const TA_FuncHandle **)
 function TA_RetCode TA_GetFuncInfo(const TA_FuncHandle *, const TA_FuncInfo **)
 function TA_RetCode TA_GetInputParameterInfo(const TA_FuncHandle *, unsigned int, const TA_InputParameterInfo **)

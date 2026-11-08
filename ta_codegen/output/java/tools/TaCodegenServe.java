@@ -239728,6 +239728,13 @@ public class TaCodegenServe {
              + ",\"nbOptInput\":" + f.optInputs.length + ",\"nbOutput\":" + f.outputs.length + "}";
     }
 
+    // The shipped registry answers, so the comparison holds the shipped string.
+    static String handleGetFuncAttributes(String json) {
+        io.github.talib.metadata.FuncInfo f = io.github.talib.metadata.Functions.byName(jsonString(json, "funcName"));
+        if (f == null) return "{\"retCode\":2}";
+        return "{\"attributes\":" + absStr(f.attributes()) + "}";
+    }
+
     static String handleGetInputParameterInfo(String json) {
         AbsFunc f = ABSTRACT.get(jsonString(json, "funcName"));
         int idx = jsonInt(json, "paramIndex");
@@ -240409,6 +240416,7 @@ public class TaCodegenServe {
             return "{\"outInteger\":" + intArrayToJson(out, n) + "}";
         }
         else if (json.contains("\"TA_GetFuncInfo\"")) return handleGetFuncInfo(json);
+        else if (json.contains("\"TA_GetFuncAttributes\"")) return handleGetFuncAttributes(json);
         else if (json.contains("\"TA_GetInputParameterInfo\"")) return handleGetInputParameterInfo(json);
         else if (json.contains("\"TA_GetOptInputParameterInfo\"")) return handleGetOptInputParameterInfo(json);
         else if (json.contains("\"TA_GetOutputParameterInfo\"")) return handleGetOutputParameterInfo(json);

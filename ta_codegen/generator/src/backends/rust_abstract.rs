@@ -209,6 +209,7 @@ fn emit_func(o: &mut String, f: &FuncRow) {
         emit_output(o, out);
     }
     o.push_str("],\n");
+    let _ = writeln!(o, "        attributes: {:?},", f.attributes);
 
     match &f.unst {
         Some(u) => {
@@ -1894,6 +1895,11 @@ pub struct FuncInfo {
     pub opt_inputs: &'static [OptInputInfo],
     /// Outputs, in call order.
     pub outputs: &'static [OutputInfo],
+    /// Metadata no flag can carry, such as an output's reference levels, as one
+    /// JSON object; `"{}"` when none. The same bytes as C's `TA_GetFuncAttributes`.
+    /// Ignore a key you do not know: a release may add one
+    /// ([keys](https://ta-lib.org/spec/abstract/#attributes)).
+    pub attributes: &'static str,
     /// Stable unstable-period id (the one metadata kept aligned to C); `None` if N/A.
     pub unst_id: Option<FuncUnstId>,
 }

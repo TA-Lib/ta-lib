@@ -142,13 +142,15 @@ typedef struct
    const TA_FrameFunction function;
    const TA_FrameLookback lookback;
    const TA_FrameDisplayShift displayShift;
+   const char * const attributes;
 } TA_FuncDef;
 
 #if !defined( TA_GEN_CODE )
-   #define DEF_FUNCTION( name, \
-                         groupId, \
-                         hint, \
-                         flags ) \
+   #define DEF_FUNCTION_ATTRIBUTES( name, \
+                                    groupId, \
+                                    hint, \
+                                    flags, \
+                                    attributes ) \
    \
    TA_FuncInfo TA_INFO_##name; \
    \
@@ -162,7 +164,8 @@ typedef struct
       (const TA_OutputParameterInfo   * const)&TA_##name##_Outputs[0],   \
       TA_##name##_FramePP, \
       TA_##name##_FramePPLB, \
-      TA_##name##_FramePPDS \
+      TA_##name##_FramePPDS, \
+      attributes \
    }; \
    TA_FuncInfo TA_INFO_##name = \
    { \
@@ -176,10 +179,11 @@ typedef struct
       (const TA_FuncHandle * const)&TA_DEF_##name \
    };
 #else
-   #define DEF_FUNCTION( name, \
-                         groupId, \
-                         hint, \
-                         flags ) \
+   #define DEF_FUNCTION_ATTRIBUTES( name, \
+                                    groupId, \
+                                    hint, \
+                                    flags, \
+                                    attributes ) \
    \
    TA_FuncInfo TA_INFO_##name; \
    \
@@ -193,7 +197,8 @@ typedef struct
       (const TA_OutputParameterInfo   * const)&TA_##name##_Outputs[0],   \
       NULL, \
       NULL, \
-      NULL \
+      NULL, \
+      attributes \
    }; \
    TA_FuncInfo TA_INFO_##name = \
    { \
@@ -207,6 +212,9 @@ typedef struct
       (const TA_FuncHandle * const)&TA_DEF_##name \
    };
 #endif
+
+#define DEF_FUNCTION( name, groupId, hint, flags ) \
+   DEF_FUNCTION_ATTRIBUTES( name, groupId, hint, flags, "{}" )
 
 #define ADD_TO_TABLE(name) &TA_DEF_##name
 

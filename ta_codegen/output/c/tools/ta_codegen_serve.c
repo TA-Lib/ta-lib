@@ -130685,6 +130685,11 @@ static void handle_request(const char *json, char *resp, int resp_size) {
     else if ( methodLen == 14 && strncmp(method, "TA_GetFuncInfo", 14) == 0 ) {
         handle_TA_GetFuncInfo(json, resp, resp_size);
     }
+#ifndef TA_REF_SERVE
+    else if ( methodLen == 20 && strncmp(method, "TA_GetFuncAttributes", 20) == 0 ) {
+        handle_TA_GetFuncAttributes(json, resp, resp_size);
+    }
+#endif /* TA_REF_SERVE */
     else if ( methodLen == 24 && strncmp(method, "TA_GetInputParameterInfo", 24) == 0 ) {
         handle_TA_GetInputParameterInfo(json, resp, resp_size);
     }

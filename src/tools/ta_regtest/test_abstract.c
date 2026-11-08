@@ -495,6 +495,33 @@ static int abstract_json_get_string(const char *json, const char *field,
     return 1;
 }
 
+/* A JSON string value, unescaped. 0 when the field is absent, the string is
+ * unterminated, or it does not fit. */
+static int abstract_json_get_unescaped(const char *json, const char *field,
+                                       char *out, int outSize)
+{
+    char pattern[256];
+    snprintf(pattern, sizeof(pattern), "\"%s\":\"", field);
+    const char *p = strstr(json, pattern);
+    if( !p ) return 0;
+    p += strlen(pattern);
+    int i = 0;
+    while( *p && *p != '"' ) {
+        char c = *p++;
+        if( c == '\\' ) {
+            c = *p++;
+            if( c == 'n' ) c = '\n';
+            else if( c == 't' ) c = '\t';
+            else if( c == 'r' ) c = '\r';
+            else if( c != '"' && c != '\\' && c != '/' ) return 0;
+        }
+        if( i >= outSize - 1 ) return 0;
+        out[i++] = c;
+    }
+    out[i] = '\0';
+    return *p == '"';
+}
+
 #define CODEGEN_EPSILON 1e-6
 
 /* Coverage counters for the metadata sweep. Printed and asserted by
@@ -502,6 +529,7 @@ static int abstract_json_get_string(const char *json, const char *field,
  * like one that passed. */
 static int g_optHintCompared = 0;
 static int g_optExtendedCompared = 0;
+static int g_attrNonEmptyCompared = 0;
 
 /* Verify all ta_abstract metadata for a function against the server.
  * Calls TA_GetFuncInfo, TA_GetInputParameterInfo, TA_GetOptInputParameterInfo,
@@ -572,6 +600,34 @@ static ErrorNumber abstract_verify_func_metadata(
         printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo flags C=%d server=%d\n",
                funcName, (int)fi->flags, srvFlags);
         return TA_ABSTRACT_CALL_MISMATCH;
+    }
+
+    {
+        const char *cAttr = NULL;
+        char srvAttr[4096];
+        if( TA_GetFuncAttributes(handle, &cAttr) != TA_SUCCESS || !cAttr ) {
+            printf("  ABSTRACT ERROR [%s]: C TA_GetFuncAttributes failed\n", funcName);
+            return TA_ABSTRACT_CALL_MISMATCH;
+        }
+        snprintf(g_abstractReqBuf, ABSTRACT_JSON_BUF_SIZE,
+            "{\"method\":\"TA_GetFuncAttributes\",\"params\":{\"funcName\":\"%s\"}}",
+            funcName);
+        err = codegen_pipe_call(g_abstractPipe, g_abstractReqBuf,
+                                g_abstractRespBuf, ABSTRACT_JSON_BUF_SIZE);
+        if( err != TA_TEST_PASS || abstract_json_is_error(g_abstractRespBuf) ||
+            !abstract_json_get_unescaped(g_abstractRespBuf, "attributes", srvAttr, sizeof(srvAttr)) )
+        {
+            printf("  ABSTRACT ERROR [%s]: TA_GetFuncAttributes server error: %.200s\n",
+                   funcName, g_abstractRespBuf);
+            return TA_ABSTRACT_SERVER_ERROR;
+        }
+        if( strcmp(srvAttr, cAttr) != 0 ) {
+            printf("  ABSTRACT ERROR [%s]: TA_GetFuncAttributes C=%s server=%s\n",
+                   funcName, cAttr, srvAttr);
+            return TA_ABSTRACT_CALL_MISMATCH;
+        }
+        if( strcmp(cAttr, "{}") != 0 )
+            g_attrNonEmptyCompared++;
     }
 
     /* TA_GetInputParameterInfo for each input */
@@ -1033,6 +1089,7 @@ ErrorNumber test_abstract_server_metadata( const char *functionFilter )
     ctx.filter   = functionFilter;
     g_optHintCompared = 0;
     g_optExtendedCompared = 0;
+    g_attrNonEmptyCompared = 0;
     g_metaParityChecked = 0;
     TA_ForEachFunc( metaParityCb, &ctx );
     g_metaParityChecked = ctx.checked;
@@ -1062,11 +1119,13 @@ ErrorNumber test_abstract_server_metadata( const char *functionFilter )
      * would mean TA_ForEachFunc enumerated nothing, and
      * abstract_verify_for_each_func fails on that unconditionally. */
     if( functionFilter == NULL &&
-        (ctx.checked == 0 || g_optHintCompared == 0 || g_optExtendedCompared == 0) )
+        (ctx.checked == 0 || g_optHintCompared == 0 || g_optExtendedCompared == 0 ||
+         g_attrNonEmptyCompared == 0) )
     {
-        printf( "  ABSTRACT ERROR: metadata parity compared %d functions, %d opt hints "
-                "and %d opt ranges/lists over the whole library — expected all non-zero\n",
-                ctx.checked, g_optHintCompared, g_optExtendedCompared );
+        printf( "  ABSTRACT ERROR: metadata parity compared %d functions, %d opt hints, "
+                "%d opt ranges/lists and %d attribute strings other than {} over the whole "
+                "library — expected all non-zero\n",
+                ctx.checked, g_optHintCompared, g_optExtendedCompared, g_attrNonEmptyCompared );
         freeLib();
         return TA_ABSTRACT_CALL_MISMATCH;
     }
@@ -4975,9 +5034,15 @@ static ErrorNumber test_default_calls(void)
       const TA_OptInputParameterInfo *optInfo = NULL;
       const TA_OutputParameterInfo *outInfo = NULL;
       TA_ParamHolder *holder = NULL;
+      const char *attributes = NULL;
 
       if( TA_GetFuncHandle( "SMA", &sma ) != TA_SUCCESS ||
           TA_GetFuncInfo( sma, &info ) != TA_SUCCESS ||
+          TA_GetFuncAttributes( sma, &attributes ) != TA_SUCCESS || !attributes ||
+          strcmp( attributes, "{}" ) != 0 ||
+          TA_GetFuncAttributes( forged, &attributes ) != TA_INVALID_HANDLE ||
+          TA_GetFuncAttributes( NULL, &attributes ) != TA_BAD_PARAM ||
+          TA_GetFuncAttributes( sma, NULL ) != TA_BAD_PARAM ||
           TA_GetFuncInfo( forged, &noInfo ) != TA_INVALID_HANDLE ||
           TA_GetInputParameterInfo( forged, 0, &inInfo ) != TA_INVALID_HANDLE ||
           TA_GetOptInputParameterInfo( forged, 0, &optInfo ) != TA_INVALID_HANDLE ||

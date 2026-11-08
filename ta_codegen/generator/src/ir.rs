@@ -703,6 +703,8 @@ pub struct Output {
     pub name: String,
     pub param_type: ParamType,
     pub flags: Vec<String>,
+    /// The `levels` attribute (`crate::attributes`); empty when undeclared.
+    pub levels: Vec<f64>,
 }
 
 /// What the sign of a pattern output's value means (spec rW7).

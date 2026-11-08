@@ -54,6 +54,12 @@ import java.util.List;
  * @param inputs        inputs in call order
  * @param optInputs     optional parameters in call order
  * @param outputs       outputs in call order
+ * @param attributes    metadata no flag can carry, such as an output's
+ *                      reference levels, as one JSON object; {@code "{}"}
+ *                      when none. The same bytes as C's
+ *                      {@code TA_GetFuncAttributes}. Ignore a key you do not
+ *                      know: a release may add one
+ *                      (<a href="https://ta-lib.org/spec/abstract/#attributes">keys</a>)
  */
 public record FuncInfo(
        String name,
@@ -62,7 +68,8 @@ public record FuncInfo(
        int flags,
        List<InputInfo> inputs,
        List<OptInputInfo> optInputs,
-       List<OutputInfo> outputs) {
+       List<OutputInfo> outputs,
+       String attributes) {
 
     /** Whether every bit in {@code mask} is set (see {@link FuncFlags}). */
     public boolean hasFlags(int mask) {

@@ -39,7 +39,7 @@ const SERIES_CAPTION: &str = "IBM, daily, 1999";
 /// The chart's whole look, shipped inside every SVG: the `var(--vp-c-*, fallback)` hooks
 /// take the site's theme when the component inlines the file, and the fallbacks make the
 /// bare file render on its own (noscript image, direct link, a crawler).
-pub const STYLE: &str = ".ta-chart{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;--ta-text:var(--vp-c-text,#3c3c43);--ta-mute:var(--vp-c-text-mute,#6b6b74);--ta-grid:var(--vp-c-divider,#e2e2e3);--ta-up:#1f9d55;--ta-down:#d6454a;--ta-s1:#2a78d6;--ta-s2:#eb6834;--ta-s3:#1baf7a;--ta-s4:#6250d6;--ta-s5:#eda100;--ta-vol:var(--vp-c-border,#c2c2c4)}[data-theme=\"dark\"] .ta-chart{--ta-up:#3cc47a;--ta-down:#ef6b6b;--ta-s1:#3987e5;--ta-s2:#e2693a;--ta-s3:#199e70;--ta-s4:#9085e9;--ta-s5:#c98500}.ta-chart text{fill:var(--ta-mute)}.ta-chart .grid{stroke:var(--ta-grid);stroke-width:1}.ta-chart .zero{stroke:var(--ta-mute);stroke-width:1;stroke-dasharray:3 3}.ta-chart .close{stroke:var(--ta-text);stroke-width:1.3;fill:none;opacity:.75}.ta-chart .up{stroke:var(--ta-up);fill:var(--ta-up)}.ta-chart .down{stroke:var(--ta-down);fill:var(--ta-down)}.ta-chart .wick{stroke-width:.8}.ta-chart .line{fill:none;stroke-width:1.6;stroke-linejoin:round}.ta-chart .dash{stroke-dasharray:5 3}.ta-chart .edge{fill:none;stroke-width:1.1}.ta-chart .fill{opacity:.1}.ta-chart .s1{stroke:var(--ta-s1)}.ta-chart .s2{stroke:var(--ta-s2)}.ta-chart .s3{stroke:var(--ta-s3)}.ta-chart .s4{stroke:var(--ta-s4)}.ta-chart .s5{stroke:var(--ta-s5)}.ta-chart .f1{fill:var(--ta-s1)}.ta-chart .f2{fill:var(--ta-s2)}.ta-chart .f3{fill:var(--ta-s3)}.ta-chart .f4{fill:var(--ta-s4)}.ta-chart .f5{fill:var(--ta-s5)}.ta-chart .vol{fill:var(--ta-vol)}.ta-chart .hollow{fill:none;stroke-width:1.2}.ta-chart .legend{fill:var(--ta-text);font-family:var(--vp-font-mono,ui-monospace,monospace);font-size:10.5px}.ta-chart .mono{font-family:var(--vp-font-mono,ui-monospace,monospace)}";
+pub const STYLE: &str = ".ta-chart{font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;--ta-text:var(--vp-c-text,#3c3c43);--ta-mute:var(--vp-c-text-mute,#6b6b74);--ta-grid:var(--vp-c-divider,#e2e2e3);--ta-up:#1f9d55;--ta-down:#d6454a;--ta-s1:#2a78d6;--ta-s2:#eb6834;--ta-s3:#1baf7a;--ta-s4:#6250d6;--ta-s5:#eda100;--ta-vol:var(--vp-c-border,#c2c2c4)}[data-theme=\"dark\"] .ta-chart{--ta-up:#3cc47a;--ta-down:#ef6b6b;--ta-s1:#3987e5;--ta-s2:#e2693a;--ta-s3:#199e70;--ta-s4:#9085e9;--ta-s5:#c98500}.ta-chart text{fill:var(--ta-mute)}.ta-chart .grid{stroke:var(--ta-grid);stroke-width:1}.ta-chart .zero{stroke:var(--ta-mute);stroke-width:1;stroke-dasharray:3 3}.ta-chart .level{stroke:var(--ta-mute);stroke-width:1;stroke-dasharray:6 4}.ta-chart .close{stroke:var(--ta-text);stroke-width:1.3;fill:none;opacity:.75}.ta-chart .up{stroke:var(--ta-up);fill:var(--ta-up)}.ta-chart .down{stroke:var(--ta-down);fill:var(--ta-down)}.ta-chart .wick{stroke-width:.8}.ta-chart .line{fill:none;stroke-width:1.6;stroke-linejoin:round}.ta-chart .dash{stroke-dasharray:5 3}.ta-chart .edge{fill:none;stroke-width:1.1}.ta-chart .fill{opacity:.1}.ta-chart .s1{stroke:var(--ta-s1)}.ta-chart .s2{stroke:var(--ta-s2)}.ta-chart .s3{stroke:var(--ta-s3)}.ta-chart .s4{stroke:var(--ta-s4)}.ta-chart .s5{stroke:var(--ta-s5)}.ta-chart .f1{fill:var(--ta-s1)}.ta-chart .f2{fill:var(--ta-s2)}.ta-chart .f3{fill:var(--ta-s3)}.ta-chart .f4{fill:var(--ta-s4)}.ta-chart .f5{fill:var(--ta-s5)}.ta-chart .vol{fill:var(--ta-vol)}.ta-chart .hollow{fill:none;stroke-width:1.2}.ta-chart .legend{fill:var(--ta-text);font-family:var(--vp-font-mono,ui-monospace,monospace);font-size:10.5px}.ta-chart .mono{font-family:var(--vp-font-mono,ui-monospace,monospace)}";
 
 
 /// The reference run's CSV, as `ta_refdata` lays it out: `#` header lines, then
@@ -581,6 +581,21 @@ impl<'a> Canvas<'a> {
         }
     }
 
+    /// An output's levels: each a dashed rule across the pane, labelled with its value.
+    fn levels(&mut self, p: &Pane, levels: &[f64]) {
+        for v in levels {
+            let yy = fmt(p.sy(*v));
+            let _ = writeln!(
+                self.out,
+                "<line class=\"level\" x1=\"{}\" x2=\"{}\" y1=\"{yy}\" y2=\"{yy}\"/>\n<text class=\"mono\" x=\"{}\" y=\"{}\">{v}</text>",
+                fmt(PAD_L),
+                fmt(W - PAD_R),
+                fmt(PAD_L + 4.0),
+                fmt(p.sy(*v) - 3.0)
+            );
+        }
+    }
+
     /// A polyline with a gap wherever a value is missing.
     fn polyline(&mut self, p: &Pane, vals: &[Option<f64>], cls: &str, shift: i32) {
         let mut segs: Vec<Vec<(String, String)>> = Vec::new();
@@ -846,6 +861,19 @@ fn shift_phrase(shift: i32) -> String {
     }
 }
 
+/// The levels as the YAML wrote them.
+fn level_items(levels: &[f64]) -> Vec<String> {
+    levels.iter().map(|v| format!("{v}")).collect()
+}
+
+fn level_phrase(o: &Output) -> String {
+    if o.levels.is_empty() {
+        String::new()
+    } else {
+        format!(" with dashed rules at {}", join_and(&level_items(&o.levels)))
+    }
+}
+
 fn line_class(slot: &str, dashed: bool) -> String {
     format!("line {slot}{}", if dashed { " dash" } else { "" })
 }
@@ -957,6 +985,9 @@ fn flags_used(func: &FuncDef, data: &RefData, plan: &Plan<'_>) -> Vec<String> {
                 .filter(|f| keep.contains(&f.as_str()))
                 .map(|f| if f == "display_shift" && shift != 0 { format!("{f} ({shift:+})") } else { f.clone() }),
         );
+        if !o.levels.is_empty() {
+            flags.push(format!("levels {}", level_items(&o.levels).join(", ")));
+        }
         used.push(if flags.is_empty() { o.name.clone() } else { format!("{}: {}", o.name, flags.join(", ")) });
     }
     used
@@ -979,6 +1010,9 @@ fn draw_price_outputs<'p>(
     let band = (upper.len() == 1 && lower.len() == 1).then(|| (upper[0], lower[0]));
 
     let mut phrases: Vec<String> = Vec::new();
+    for o in &plan.price_outs {
+        cv.levels(price, &o.levels);
+    }
     for (slot, o) in plan.price_outs.iter().enumerate() {
         let sh = data.shift(&o.name);
         let cls = SLOTS[slot % SLOTS.len()];
@@ -1006,6 +1040,9 @@ fn draw_price_outputs<'p>(
             legend.push(LegendItem { mark: LegendMark::Line { cls, dashed }, text: o.name.clone() });
         }
         if band.is_some_and(|(u, l)| u == slot || l == slot) {
+            if !o.levels.is_empty() {
+                phrases.push(format!("dashed rules at {}'s levels {}", o.name, join_and(&level_items(&o.levels))));
+            }
             continue;
         }
         let mut ph = if is_edge {
@@ -1014,6 +1051,7 @@ fn draw_price_outputs<'p>(
             format!("{} as {}", o.name, stroke_word(&o.flags))
         };
         ph.push_str(&shift_phrase(sh));
+        ph.push_str(&level_phrase(o));
         phrases.push(ph);
     }
 
@@ -1207,12 +1245,16 @@ fn draw_indicator_pane(cv: &mut Canvas<'_>, plan: &Plan<'_>, ind: &mut Pane) -> 
     let data = cv.data;
     for o in &plan.ind_outs {
         ind.extend(data.output(&o.name));
+        ind.extend_plain(&o.levels);
     }
     let want_zero = plan.ind_outs.iter().any(|o| {
         has(&o.flags, "zero") || has(&o.flags, "negative") || has(&o.flags, "histogram")
     });
     ind.finish(0.08, want_zero);
     cv.grid(ind, true);
+    for o in &plan.ind_outs {
+        cv.levels(ind, &o.levels);
+    }
     let mut legend: Vec<LegendItem<'_>> = Vec::new();
     let mut slot = 0usize;
     let mut phrases: Vec<String> = Vec::new();
@@ -1223,12 +1265,12 @@ fn draw_indicator_pane(cv: &mut Canvas<'_>, plan: &Plan<'_>, ind: &mut Pane) -> 
         if has(&o.flags, "histogram") {
             cv.histogram(ind, vals, sh);
             legend.push(LegendItem { mark: LegendMark::Hist, text: o.name.clone() });
-            phrases.push(format!("{} as a sign-coloured histogram{}", o.name, shift_phrase(sh)));
+            phrases.push(format!("{} as a sign-coloured histogram{}{}", o.name, shift_phrase(sh), level_phrase(o)));
         } else {
             let dashed = has(&o.flags, "dash_line");
             cv.polyline(ind, vals, &line_class(cls, dashed), sh);
             legend.push(LegendItem { mark: LegendMark::Line { cls, dashed }, text: o.name.clone() });
-            phrases.push(format!("{} as {}{}", o.name, stroke_word(&o.flags), shift_phrase(sh)));
+            phrases.push(format!("{} as {}{}{}", o.name, stroke_word(&o.flags), shift_phrase(sh), level_phrase(o)));
             slot += 1;
         }
     }
@@ -1437,6 +1479,7 @@ pub fn render(func: &FuncDef, data: &RefData) -> Chart {
     }
     for o in &plan.price_outs {
         price.extend(data.output(&o.name));
+        price.extend_plain(&o.levels);
     }
     price.finish(0.05, false);
 
@@ -1603,6 +1646,7 @@ mod tests {
             name: name.to_string(),
             param_type: ty,
             flags: flags.iter().map(|s| (*s).to_string()).collect(),
+            levels: Vec::new(),
         }
     }
 
@@ -1732,6 +1776,33 @@ mod tests {
         let chart = render(&f, &d);
         assert!(first_path(&chart.svg, "<path class=\"f1\" d=\"M").unwrap().starts_with("M17 9l4 4"), "{}", chart.svg);
         assert!(first_path(&chart.svg, "<path class=\"up\" d=\"M").is_none(), "{}", chart.svg);
+    }
+
+    /// Levels outside the data still reach the pane: a rule and a label each, in
+    /// the fold and in the sentence.
+    #[test]
+    fn an_outputs_levels_are_ruled_on_its_pane() {
+        let mut o = out("outReal", ParamType::Real, &["line"]);
+        o.levels = vec![30.0, 70.0];
+        let rsi = func("RSI", &[], vec![Input::new("inReal", ParamType::Real)], vec![o]);
+        let mut csv = String::from("# input: test.csv; window 1999-01-04..1999-01-06 (3 bars)\n# parameters: optInTimePeriod=14 (defaults)\n# inputs: inReal=close\n# outputs: outReal (shift 0)\ndate,open,high,low,close,volume,outReal\n");
+        csv.push_str("1999-01-04,1,2,0.5,1.5,100,45\n1999-01-05,1,2,0.5,1.6,100,55\n1999-01-06,1,2,0.5,1.4,100,50\n");
+        let chart = render(&rsi, &RefData::parse(&csv).unwrap());
+        assert_eq!(chart.flags_used, vec!["outReal: line, levels 30, 70"]);
+        assert!(chart.sentence.contains("outReal as a solid line with dashed rules at 30 and 70"), "{}", chart.sentence);
+        let rules: Vec<f64> = chart
+            .svg
+            .lines()
+            .filter(|l| l.starts_with("<line class=\"level\""))
+            .map(|l| l.split("y1=\"").nth(1).and_then(|r| r.split('"').next()).unwrap().parse().unwrap())
+            .collect();
+        assert_eq!(rules.len(), 2, "{}", chart.svg);
+        assert!(rules[0] > rules[1], "70 is drawn above 30: {rules:?}");
+        let ind = layout(&plan(&rsi, &RefData::parse(&csv).unwrap())).ind.unwrap();
+        for y in &rules {
+            assert!(*y > ind.y && *y < ind.y + ind.h, "a level rule left its pane: {y} vs {}..{}", ind.y, ind.y + ind.h);
+        }
+        assert!(chart.svg.contains(">30</text>") && chart.svg.contains(">70</text>"), "{}", chart.svg);
     }
 
     /// `flags_used` names only what each output class's drawing read: no `line` on

@@ -298,8 +298,8 @@ fn loop_bodies_in(template: &str, body: &str) -> (Vec<Statement>, Vec<Statement>
     let parsed = crate::parser::c_source::parse_c_source_str(&template.replace("BODY", body));
     let f = parsed.functions.into_iter().find(|f| f.name == "f").expect("the template parses");
     let outputs = [
-        Output { name: "outInteger".into(), param_type: ParamType::Integer, flags: Vec::new() },
-        Output { name: "outReal".into(), param_type: ParamType::Real, flags: Vec::new() },
+        Output { name: "outInteger".into(), param_type: ParamType::Integer, flags: Vec::new(), levels: Vec::new() },
+        Output { name: "outReal".into(), param_type: ParamType::Real, flags: Vec::new(), levels: Vec::new() },
     ];
     let declared = Declared {
         arrays: ["inClose", "inHigh"].map(String::from).to_vec(),

@@ -429,6 +429,7 @@ public sealed record FuncInfo
                           ImmutableArray<InputInfo> inputs,
                           ImmutableArray<OptInputInfo> optInputs,
                           ImmutableArray<OutputInfo> outputs,
+                          string attributes,
                           LookbackThunk lookback, DisplayShiftThunk displayShift,
                           InvokeThunk invoke)
     {
@@ -440,6 +441,7 @@ public sealed record FuncInfo
         Inputs = inputs;
         OptInputs = optInputs;
         Outputs = outputs;
+        Attributes = attributes;
         Lookback = lookback;
         DisplayShift = displayShift;
         Invoke = invoke;
@@ -473,6 +475,13 @@ public sealed record FuncInfo
 
     /// <summary>The outputs, in call order.</summary>
     public ImmutableArray<OutputInfo> Outputs { get; }
+
+    /// <summary>Metadata no flag can carry, such as an output's reference levels,
+    /// as one JSON object; <c>"{}"</c> when none. The same bytes as C's
+    /// <c>TA_GetFuncAttributes</c>.</summary>
+    /// <remarks>Ignore a key you do not know: a release may add one
+    /// (<see href="https://ta-lib.org/spec/abstract/#attributes">keys</see>).</remarks>
+    public string Attributes { get; }
 
     internal LookbackThunk Lookback { get; }
 

@@ -11,7 +11,7 @@ A five-candle bullish continuation pattern: a long white candle, an upside real-
 
 <ta-chart src="/functions/cdlmathold.svg" ratio="720:274" label="CDLMATHOLD over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call (no occurrence in the reference data)."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
 
 Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call (no occurrence in the reference data).
 

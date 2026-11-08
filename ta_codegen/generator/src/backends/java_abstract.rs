@@ -189,6 +189,7 @@ const META_CLASSES: &str = r"    // ---- ta_abstract metadata (issue #114) ----
 
 /// The metadata RPC handler methods + a JSON string-escaper. The XML facts are
 /// measured at run time from the shipped `FunctionDescription`, not baked here.
+#[allow(clippy::too_many_lines)]
 fn emit_handlers() -> String {
     let mut s = String::new();
     s.push_str(
@@ -229,6 +230,13 @@ fn emit_handlers() -> String {
              + ",\"hint\":" + absStr(f.hint)
              + ",\"flags\":" + f.flags + ",\"nbInput\":" + f.inputs.length
              + ",\"nbOptInput\":" + f.optInputs.length + ",\"nbOutput\":" + f.outputs.length + "}";
+    }
+
+    // The shipped registry answers, so the comparison holds the shipped string.
+    static String handleGetFuncAttributes(String json) {
+        io.github.talib.metadata.FuncInfo f = io.github.talib.metadata.Functions.byName(jsonString(json, "funcName"));
+        if (f == null) return "{\"retCode\":2}";
+        return "{\"attributes\":" + absStr(f.attributes()) + "}";
     }
 
     static String handleGetInputParameterInfo(String json) {

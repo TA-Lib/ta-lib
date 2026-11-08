@@ -251,16 +251,18 @@ fn gen_def_ui_h() -> String {
          \x20  const TA_FrameFunction function;\n\
          \x20  const TA_FrameLookback lookback;\n\
          \x20  const TA_FrameDisplayShift displayShift;\n\
+         \x20  const char * const attributes;\n\
          } TA_FuncDef;\n\n",
     );
 
     // DEF_FUNCTION macro
     o.push_str(
         "#if !defined( TA_GEN_CODE )\n\
-         \x20  #define DEF_FUNCTION( name, \\\n\
-         \x20                        groupId, \\\n\
-         \x20                        hint, \\\n\
-         \x20                        flags ) \\\n\
+         \x20  #define DEF_FUNCTION_ATTRIBUTES( name, \\\n\
+         \x20                                   groupId, \\\n\
+         \x20                                   hint, \\\n\
+         \x20                                   flags, \\\n\
+         \x20                                   attributes ) \\\n\
          \x20  \\\n\
          \x20  TA_FuncInfo TA_INFO_##name; \\\n\
          \x20  \\\n\
@@ -274,7 +276,8 @@ fn gen_def_ui_h() -> String {
          \x20     (const TA_OutputParameterInfo   * const)&TA_##name##_Outputs[0],   \\\n\
          \x20     TA_##name##_FramePP, \\\n\
          \x20     TA_##name##_FramePPLB, \\\n\
-         \x20     TA_##name##_FramePPDS \\\n\
+         \x20     TA_##name##_FramePPDS, \\\n\
+         \x20     attributes \\\n\
          \x20  }; \\\n\
          \x20  TA_FuncInfo TA_INFO_##name = \\\n\
          \x20  { \\\n\
@@ -288,10 +291,11 @@ fn gen_def_ui_h() -> String {
          \x20     (const TA_FuncHandle * const)&TA_DEF_##name \\\n\
          \x20  };\n\
          #else\n\
-         \x20  #define DEF_FUNCTION( name, \\\n\
-         \x20                        groupId, \\\n\
-         \x20                        hint, \\\n\
-         \x20                        flags ) \\\n\
+         \x20  #define DEF_FUNCTION_ATTRIBUTES( name, \\\n\
+         \x20                                   groupId, \\\n\
+         \x20                                   hint, \\\n\
+         \x20                                   flags, \\\n\
+         \x20                                   attributes ) \\\n\
          \x20  \\\n\
          \x20  TA_FuncInfo TA_INFO_##name; \\\n\
          \x20  \\\n\
@@ -305,7 +309,8 @@ fn gen_def_ui_h() -> String {
          \x20     (const TA_OutputParameterInfo   * const)&TA_##name##_Outputs[0],   \\\n\
          \x20     NULL, \\\n\
          \x20     NULL, \\\n\
-         \x20     NULL \\\n\
+         \x20     NULL, \\\n\
+         \x20     attributes \\\n\
          \x20  }; \\\n\
          \x20  TA_FuncInfo TA_INFO_##name = \\\n\
          \x20  { \\\n\
@@ -318,7 +323,9 @@ fn gen_def_ui_h() -> String {
          \x20     (sizeof(TA_##name##_Outputs)  / sizeof(TA_OutputParameterInfo *))  - 1, \\\n\
          \x20     (const TA_FuncHandle * const)&TA_DEF_##name \\\n\
          \x20  };\n\
-         #endif\n\n",
+         #endif\n\n\
+         #define DEF_FUNCTION( name, groupId, hint, flags ) \\\n\
+         \x20  DEF_FUNCTION_ATTRIBUTES( name, groupId, hint, flags, \"{}\" )\n\n",
     );
 
     o.push_str("#define ADD_TO_TABLE(name) &TA_DEF_##name\n\n");
@@ -1261,15 +1268,104 @@ fn emit_table_function(o: &mut String, func: &FuncDef) {
     let hint = func.hint.as_deref().unwrap_or("");
     let flags_str = func_flags_string(&func.flags);
 
-    let _ = writeln!(
-        o,
-        "DEF_FUNCTION( {name},\n\
-         \x20             {group_id},\n\
-         \x20             \"{hint}\",\n\
-         \x20             {flags_str}\n\
-         \x20            );"
-    );
+    let attributes = attributes_json(func);
+    if attributes == crate::attributes::EMPTY {
+        let _ = writeln!(
+            o,
+            "DEF_FUNCTION( {name},\n\
+             \x20             {group_id},\n\
+             \x20             \"{hint}\",\n\
+             \x20             {flags_str}\n\
+             \x20            );"
+        );
+    } else {
+        let _ = writeln!(
+            o,
+            "DEF_FUNCTION_ATTRIBUTES( {name},\n\
+             \x20                        {group_id},\n\
+             \x20                        \"{hint}\",\n\
+             \x20                        {flags_str},\n\
+             \x20                        \"{}\"\n\
+             \x20                      );",
+            attributes.replace('\\', "\\\\").replace('"', "\\\"")
+        );
+    }
     let _ = writeln!(o, "/* {name} END */\n");
+}
+
+/// `TA_GetFuncAttributes`' string, also embedded in `ta_func_api.xml`. Rendered
+/// here independently of `abstract_rows`, whose string `test_abstract.c` holds
+/// byte-identical to this one; neither may call the other.
+pub fn attributes_json(func: &FuncDef) -> String {
+    use crate::attributes::{Key, Value, INPUTS, KEYS, OPT_INPUTS, OUTPUTS};
+    fn members<'a>(out: &mut String, read: impl Fn(&Key) -> Option<Value<'a>>) -> bool {
+        let start = out.len();
+        for k in KEYS {
+            if let Some(v) = read(k) {
+                out.push(if out.len() == start { '{' } else { ',' });
+                let _ = write!(out, "\"{}\":", k.name);
+                v.write_json(out);
+            }
+        }
+        if out.len() == start {
+            return false;
+        }
+        out.push('}');
+        true
+    }
+    fn section<'a, T: 'a>(
+        out: &mut String,
+        name: &str,
+        items: impl Iterator<Item = (&'a str, &'a T)>,
+        read: impl Fn(&Key, &'a T) -> Option<Value<'a>>,
+    ) {
+        let mut body = String::new();
+        for (param, item) in items {
+            let mut obj = String::new();
+            if members(&mut obj, |k| read(k, item)) {
+                if !body.is_empty() {
+                    body.push(',');
+                }
+                let _ = write!(body, "\"{param}\":{obj}");
+            }
+        }
+        if !body.is_empty() {
+            if out.len() > 1 {
+                out.push(',');
+            }
+            let _ = write!(out, "\"{name}\":{{{body}}}");
+        }
+    }
+
+    let mut out = String::from("{");
+    for k in KEYS {
+        if let Some(v) = k.of_function(func) {
+            if out.len() > 1 {
+                out.push(',');
+            }
+            let _ = write!(out, "\"{}\":", k.name);
+            v.write_json(&mut out);
+        }
+    }
+    for inp in func.inputs.iter().filter(|i| i.price.is_some()) {
+        assert!(
+            KEYS.iter().all(|k| k.of_input(inp).is_none()),
+            "{}: an attribute on price component `{}` is not modelled",
+            func.name,
+            inp.name
+        );
+    }
+    section(
+        &mut out,
+        INPUTS,
+        func.inputs.iter().filter(|i| i.price.is_none()).map(|i| (i.name.as_str(), i)),
+        Key::of_input,
+    );
+    section(&mut out, OPT_INPUTS, func.optional_inputs.iter().map(|o| (o.name.as_str(), o)), Key::of_opt_input);
+    section(&mut out, OUTPUTS, func.outputs.iter().map(|o| (o.name.as_str(), o)), Key::of_output);
+    out.push('}');
+    crate::attributes::assert_embeddable(&func.name, &out);
+    out
 }
 
 /// Return the pre-defined C extern reference for an input, e.g. `TA_DEF_UI_Input_Real`.
@@ -2216,6 +2312,26 @@ fn gen_ta_abstract_c() -> String {
          \x20  *funcInfo = funcDef->funcInfo;\n\
          \x20  if( !funcDef->funcInfo )\n\
          \x20     return TA_INVALID_HANDLE;\n\n\
+         \x20  return TA_SUCCESS;\n\
+         }\n\n",
+    );
+
+    // --- TA_GetFuncAttributes ---
+    o.push_str(
+        "TA_RetCode TA_GetFuncAttributes( const TA_FuncHandle *handle,\n\
+         \x20                                const char **json )\n\
+         {\n\
+         \x20  const TA_FuncDef *funcDef;\n\n\
+         \x20  if( !json || !handle )\n\
+         \x20  {\n\
+         \x20     return TA_BAD_PARAM;\n\
+         \x20  }\n\n\
+         \x20  funcDef = (const TA_FuncDef *)handle;\n\
+         \x20  if( (funcDef->magicNumber != TA_FUNC_DEF_MAGIC_NB) || !funcDef->attributes )\n\
+         \x20  {\n\
+         \x20     return TA_INVALID_HANDLE;\n\
+         \x20  }\n\n\
+         \x20  *json = funcDef->attributes;\n\n\
          \x20  return TA_SUCCESS;\n\
          }\n\n",
     );

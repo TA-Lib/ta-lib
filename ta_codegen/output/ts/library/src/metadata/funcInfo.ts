@@ -169,6 +169,13 @@ export class FuncInfo {
   readonly optInputs: readonly OptInputInfo[];
   /** The outputs, in call order. */
   readonly outputs: readonly OutputInfo[];
+  /**
+   * Metadata no flag can carry, such as an output's reference levels, as one JSON
+   * object; `'{}'` when none. The same bytes as C's `TA_GetFuncAttributes`. Ignore a
+   * key you do not know: a release may add one
+   * ([keys](https://ta-lib.org/spec/abstract/#attributes)).
+   */
+  readonly attributes: string;
 
   private constructor(
     name: string,
@@ -178,6 +185,7 @@ export class FuncInfo {
     inputs: readonly InputInfo[],
     optInputs: readonly OptInputInfo[],
     outputs: readonly OutputInfo[],
+    attributes: string,
   ) {
     this.name = name;
     this.group = group;
@@ -186,6 +194,7 @@ export class FuncInfo {
     this.inputs = freezeAll(inputs);
     this.optInputs = freezeAll(optInputs);
     this.outputs = freezeAll(outputs);
+    this.attributes = attributes;
     Object.freeze(this);
   }
 
@@ -198,8 +207,9 @@ export class FuncInfo {
     inputs: readonly InputInfo[],
     optInputs: readonly OptInputInfo[],
     outputs: readonly OutputInfo[],
+    attributes: string,
   ): FuncInfo {
-    return new FuncInfo(name, group, hint, flags, inputs, optInputs, outputs);
+    return new FuncInfo(name, group, hint, flags, inputs, optInputs, outputs, attributes);
   }
 
   /**

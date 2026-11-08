@@ -453,6 +453,33 @@ static void handle_TA_GetFuncInfo(const char *json, char *resp, int resp_size) {
       fi->nbInput, fi->nbOptInput, fi->nbOutput);
 }
 
+/* ---- TA_GetFuncAttributes ----
+ * Returns: attributes, the JSON object as one JSON string
+ */
+
+#ifndef TA_REF_SERVE
+static void handle_TA_GetFuncAttributes(const char *json, char *resp, int resp_size) {
+   char funcName[64];
+   const TA_FuncHandle *handle;
+   const char *attributes, *c;
+   int pos;
+   if( !abstract_parse_func_name(json, funcName, sizeof(funcName), &handle, resp, resp_size) )
+      return;
+
+   if( TA_GetFuncAttributes(handle, &attributes) != TA_SUCCESS ) {
+      snprintf(resp, resp_size, "{\"error\":\"TA_GetFuncAttributes failed\"}");
+      return;
+   }
+   pos = json_appendf(resp, resp_size, 0, "{\"attributes\":\"");
+   for( c = attributes; *c; c++ ) {
+      if( *c == '"' || *c == '\\' )
+         pos = json_appendf(resp, resp_size, pos, "\\");
+      pos = json_appendf(resp, resp_size, pos, "%c", *c);
+   }
+   json_appendf(resp, resp_size, pos, "\"}");
+}
+#endif
+
 /* ---- TA_GetInputParameterInfo ----
  * Mirrors: TA_GetInputParameterInfo
  * Params:  funcName, paramIndex

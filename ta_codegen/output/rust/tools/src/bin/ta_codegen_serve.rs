@@ -1573,6 +1573,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 None => "{\"retCode\":2}".to_string(),
             }
         }
+        "TA_GetFuncAttributes" => {
+            let name = params["funcName"].as_str().unwrap_or("");
+            match abstract_api::get_func_handle(name) {
+                Some(id) => serde_json::json!({ "attributes": id.info().attributes }).to_string(),
+                None => "{\"retCode\":2}".to_string(),
+            }
+        }
         "TA_GetInputParameterInfo" => {
             let name = params["funcName"].as_str().unwrap_or("");
             let idx = params["paramIndex"].as_u64().unwrap_or(0) as usize;

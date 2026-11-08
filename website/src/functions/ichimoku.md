@@ -11,7 +11,7 @@ Ichimoku Kinko Hyo, "one glance equilibrium chart": four lines built from highs 
 
 <ta-chart src="/functions/ichimoku.svg" ratio="720:274" label="ICHIMOKU over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outTenkanSen as a solid line, outKijunSen as a solid line, outSenkouSpanA as a solid line moved 26 bars forward and outSenkouSpanB as a solid line moved 26 bars forward."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
 
 Drawn on the price pane over candles, with outTenkanSen as a solid line, outKijunSen as a solid line, outSenkouSpanA as a solid line moved 26 bars forward and outSenkouSpanB as a solid line moved 26 bars forward.
 

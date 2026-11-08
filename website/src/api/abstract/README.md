@@ -17,7 +17,7 @@ If you only need a handful of specific functions, calling them directly is simpl
 
 ## Describe a function
 
-Look a function up by name, or enumerate them all. Each one reports its group, its inputs, its optional parameters (type, range, default) and its outputs, with flags. Every flag is listed in the specification: [Abstract API and Metadata](/spec/abstract/#flags).
+Look a function up by name, or enumerate them all. Each one reports its group, its inputs, its optional parameters (type, range, default) and its outputs, with flags, plus a JSON string of attributes no flag can carry, such as RSI's 30/70 reference levels. The specification lists every [flag](/spec/abstract/#flags) and [attribute](/spec/abstract/#attributes).
 
 ::: code-tabs#lang
 
@@ -29,10 +29,12 @@ Look a function up by name, or enumerate them all. Each one reports its group, i
 const TA_FuncHandle *handle;
 const TA_FuncInfo *info;
 const TA_OptInputParameterInfo *opt;
+const char *json;
 
 TA_GetFuncHandle( "SMA", &handle );
 TA_GetFuncInfo( handle, &info );          /* name, group, hint, flags, nbInput, nbOptInput, nbOutput */
 TA_GetOptInputParameterInfo( handle, 0, &opt );   /* displayName, type, dataSet (range), defaultValue */
+TA_GetFuncAttributes( handle, &json );            /* "{}"; RSI: {"outputs":{"outReal":{"levels":[30,70]}}} */
 
 /* Every function: TA_ForEachFunc( callback, opaqueData ); */
 ```
@@ -43,7 +45,7 @@ TA_GetOptInputParameterInfo( handle, 0, &opt );   /* displayName, type, dataSet 
 use ta_lib::abstract_api::{for_each_func, get_func_handle};
 
 let id = get_func_handle("SMA").expect("unknown function");
-let info = id.info();   // name, group, hint, flags, inputs, opt_inputs, outputs
+let info = id.info();   // name, group, hint, flags, inputs, opt_inputs, outputs, attributes
 
 for_each_func(|f| println!("{} ({:?})", f.name, f.group));
 ```
@@ -54,7 +56,7 @@ for_each_func(|f| println!("{} ({:?})", f.name, f.group));
 import io.github.talib.metadata.FuncInfo;
 import io.github.talib.metadata.Functions;
 
-FuncInfo f = Functions.byName("SMA");   // name(), group(), hint(), flags(), inputs(), optInputs(), outputs()
+FuncInfo f = Functions.byName("SMA");   // name(), group(), hint(), flags(), inputs(), optInputs(), outputs(), attributes()
 
 Functions.all().forEach(fi -> System.out.println(fi.name() + " (" + fi.group() + ")"));
 ```
@@ -65,7 +67,7 @@ Functions.all().forEach(fi -> System.out.println(fi.name() + " (" + fi.group() +
 using TALib;
 using TALib.Metadata;
 
-FuncInfo f = Core.Functions["SMA"];   // Name, Group, Hint, Flags, Inputs, OptInputs, Outputs
+FuncInfo f = Core.Functions["SMA"];   // Name, Group, Hint, Flags, Inputs, OptInputs, Outputs, Attributes
 
 foreach (var fi in Core.Functions)
 {
@@ -78,7 +80,7 @@ foreach (var fi in Core.Functions)
 ```ts
 import { Functions } from 'ta-lib/metadata';
 
-const f = Functions.byName('SMA');   // name, group, hint, flags, inputs, optInputs, outputs
+const f = Functions.byName('SMA');   // name, group, hint, flags, inputs, optInputs, outputs, attributes
 
 for (const fi of Functions.all()) {
   console.log(`${fi.name} (${fi.group})`);

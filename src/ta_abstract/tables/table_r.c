@@ -254,11 +254,12 @@ static const TA_OptInputParameterInfo *TA_RSI_OptInputs[] =
   NULL
 };
 
-DEF_FUNCTION( RSI,
-              TA_GroupId_MomentumIndicators,
-              "Relative Strength Index",
-              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
-             );
+DEF_FUNCTION_ATTRIBUTES( RSI,
+                         TA_GroupId_MomentumIndicators,
+                         "Relative Strength Index",
+                         TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM,
+                         "{\"outputs\":{\"outReal\":{\"levels\":[30,70]}}}"
+                       );
 /* RSI END */
 
 /* RVI BEGIN */

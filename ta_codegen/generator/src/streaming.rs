@@ -10408,6 +10408,7 @@ mod tests {
                 name: "outReal".into(),
                 param_type: ParamType::Real,
                 flags: vec![],
+                levels: Vec::new(),
             }],
             lookback: None,
             display_shift: None,

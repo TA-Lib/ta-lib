@@ -1358,6 +1358,17 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
     s.push_str("        handle_TA_GetFuncInfo(json, resp, resp_size);\n");
     s.push_str("    }\n");
 
+    // Absent from a frozen release, which has no TA_GetFuncAttributes to call.
+    let m = "TA_GetFuncAttributes";
+    s.push_str("#ifndef TA_REF_SERVE\n");
+    s.push_str(&format!(
+        "    else if ( methodLen == {n} && strncmp(method, \"{m}\", {n}) == 0 ) {{\n",
+        n = m.len()
+    ));
+    s.push_str("        handle_TA_GetFuncAttributes(json, resp, resp_size);\n");
+    s.push_str("    }\n");
+    s.push_str("#endif /* TA_REF_SERVE */\n");
+
     // TA_GetInputParameterInfo
     s.push_str("    else if ( methodLen == 24 && strncmp(method, \"TA_GetInputParameterInfo\", 24) == 0 ) {\n");
     s.push_str("        handle_TA_GetInputParameterInfo(json, resp, resp_size);\n");
@@ -2003,6 +2014,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
     // ta_abstract introspection RPCs (issue #114) — metadata parity with C/Rust via test_abstract.c.
     s.push_str("        else if (json.contains(\"\\\"TA_GetFuncInfo\\\"\")) return handleGetFuncInfo(json);\n");
+    s.push_str("        else if (json.contains(\"\\\"TA_GetFuncAttributes\\\"\")) return handleGetFuncAttributes(json);\n");
     s.push_str("        else if (json.contains(\"\\\"TA_GetInputParameterInfo\\\"\")) return handleGetInputParameterInfo(json);\n");
     s.push_str("        else if (json.contains(\"\\\"TA_GetOptInputParameterInfo\\\"\")) return handleGetOptInputParameterInfo(json);\n");
     s.push_str("        else if (json.contains(\"\\\"TA_GetOutputParameterInfo\\\"\")) return handleGetOutputParameterInfo(json);\n");
@@ -2975,6 +2987,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     // server has no table of its own). test_abstract.c therefore proves the
     // shipped artifact against the C library rather than a test-only copy.
     s.push_str("            else if (method == \"TA_GetFuncInfo\") return AbsFuncInfo(p);\n");
+    s.push_str("            else if (method == \"TA_GetFuncAttributes\") return AbsFuncAttributes(p);\n");
     s.push_str("            else if (method == \"TA_GetInputParameterInfo\") return AbsInputInfo(p);\n");
     s.push_str("            else if (method == \"TA_GetOptInputParameterInfo\") return AbsOptInputInfo(p);\n");
     s.push_str("            else if (method == \"TA_GetOutputParameterInfo\") return AbsOutputInfo(p);\n");
@@ -4459,6 +4472,13 @@ const RUST_ABSTRACT_METADATA_HANDLERS: &str = r#"        "TA_GetFuncInfo" => {
                 None => "{\"retCode\":2}".to_string(),
             }
         }
+        "TA_GetFuncAttributes" => {
+            let name = params["funcName"].as_str().unwrap_or("");
+            match abstract_api::get_func_handle(name) {
+                Some(id) => serde_json::json!({ "attributes": id.info().attributes }).to_string(),
+                None => "{\"retCode\":2}".to_string(),
+            }
+        }
         "TA_GetInputParameterInfo" => {
             let name = params["funcName"].as_str().unwrap_or("");
             let idx = params["paramIndex"].as_u64().unwrap_or(0) as usize;
@@ -4941,6 +4961,11 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
              + $",\"nbOptInput\":{f.OptInputs.Length},\"nbOutput\":{f.Outputs.Length}}}";
     }
 
+    static string AbsFuncAttributes(JsonElement p) {
+        var f = AbsLookup(p);
+        return f is null ? "{\"retCode\":2}" : $"{{\"attributes\":{AbsStr(f.Attributes)}}}";
+    }
+
     static string AbsInputInfo(JsonElement p) {
         var f = AbsLookup(p);
         int i = GetInt(p, "paramIndex", -1);
@@ -5364,6 +5389,12 @@ function absFuncInfo(p: Params): string {
     + `,"nbOutput":${f.outputs.length}}`;
 }
 
+function absFuncAttributes(p: Params): string {
+  const f = absLookup(p);
+  if (f === undefined) return '{"retCode":2}';
+  return `{"attributes":${JSON.stringify(f.attributes)}}`;
+}
+
 function absInputInfo(p: Params): string {
   const f = absLookup(p);
   const i = int(p, 'paramIndex', -1);
@@ -5678,6 +5709,7 @@ pub fn generate_ts_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -
         ("abstract_get_lookback", "`{\"lookback\":${lookback(p)}}`", false),
         ("abstract_get_display_shift", "`{\"displayShift\":${displayShift(p)}}`", false),
         ("TA_GetFuncInfo", "absFuncInfo(p)", false),
+        ("TA_GetFuncAttributes", "absFuncAttributes(p)", false),
         ("TA_GetInputParameterInfo", "absInputInfo(p)", false),
         ("TA_GetOptInputParameterInfo", "absOptInputInfo(p)", false),
         ("TA_GetOutputParameterInfo", "absOutputInfo(p)", false),

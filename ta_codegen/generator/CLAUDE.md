@@ -74,6 +74,7 @@ that names no indicator.
 | `backends/{c,rust,java,csharp,ts}_stream.rs` | The streaming emitters, each rendering the *same* backend-neutral analysis from `streaming.rs`. A new backend means writing only its emitter |
 | `backends/rust_doc.rs`, `csharp_doc.rs`, `ts_doc.rs` | Per-language rendering of each function's canonical `<name>.md` |
 | `backends/ir_cleanup.rs` | Backend-selected, length-preserving IR passes between the streaming decision and rendering |
+| `attributes` | The attribute keys (`levels`, ...): one row per key, read by the two renderers `test_abstract.c` compares, `abstract_rows` and `ta_abstract_c` |
 | `backends/abstract_rows.rs` | The backend-neutral `ta_abstract` row model, rendered by Rust, Java, C# and TS — but deliberately not by C (below) |
 | `backends/{rust,java,csharp,ts}_metadata.rs`, `java_abstract.rs` | The per-language introspection registries |
 | `backends/ta_abstract_c.rs` | C's `ta_abstract` layer: tables, frames, group index, runtime API |

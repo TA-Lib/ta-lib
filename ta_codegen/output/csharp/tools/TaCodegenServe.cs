@@ -940,6 +940,7 @@ public class TaCodegenServe {
                 return $"{{\"displayShift\":{ComputeDisplayShift(fn, p)}}}";
             }
             else if (method == "TA_GetFuncInfo") return AbsFuncInfo(p);
+            else if (method == "TA_GetFuncAttributes") return AbsFuncAttributes(p);
             else if (method == "TA_GetInputParameterInfo") return AbsInputInfo(p);
             else if (method == "TA_GetOptInputParameterInfo") return AbsOptInputInfo(p);
             else if (method == "TA_GetOutputParameterInfo") return AbsOutputInfo(p);
@@ -1002,6 +1003,11 @@ public class TaCodegenServe {
              + $",\"hint\":{AbsStr(f.Hint)}"
              + $",\"flags\":{(uint)f.Flags},\"nbInput\":{f.Inputs.Length}"
              + $",\"nbOptInput\":{f.OptInputs.Length},\"nbOutput\":{f.Outputs.Length}}}";
+    }
+
+    static string AbsFuncAttributes(JsonElement p) {
+        var f = AbsLookup(p);
+        return f is null ? "{\"retCode\":2}" : $"{{\"attributes\":{AbsStr(f.Attributes)}}}";
     }
 
     static string AbsInputInfo(JsonElement p) {

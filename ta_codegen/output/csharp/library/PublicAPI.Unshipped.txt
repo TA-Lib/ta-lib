@@ -1,1 +1,2 @@
 #nullable enable
+TALib.Metadata.FuncInfo.Attributes.get -> string!

@@ -15,7 +15,7 @@ fn folds_with(src: &str, declared: &Declared) -> bool {
     let text = format!("{HEAD}{src}\n   return TA_SUCCESS;\n}}\n");
     let parsed = crate::parser::c_source::parse_c_source_str(&text);
     let f = parsed.functions.into_iter().find(|f| f.name == "f").expect("parses");
-    let outputs = [Output { name: "outInteger".into(), param_type: ParamType::Integer, flags: Vec::new() }];
+    let outputs = [Output { name: "outInteger".into(), param_type: ParamType::Integer, flags: Vec::new(), levels: Vec::new() }];
     let t = format!("{:?}", rewrite(&f.body, declared, &outputs, &HelperRegistry::empty()));
     t.contains(SELECT) || t.contains(GUARD) || t.contains(EAGER_ALL)
 }

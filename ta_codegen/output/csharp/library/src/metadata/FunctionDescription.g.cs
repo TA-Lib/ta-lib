@@ -9426,6 +9426,7 @@ public static class FunctionDescription
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
 		</Flags>
+		<Attributes><![CDATA[{""outputs"":{""outReal"":{""levels"":[30,70]}}}]]></Attributes>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
 				<Type>Double Array</Type>

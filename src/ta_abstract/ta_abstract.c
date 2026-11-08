@@ -412,6 +412,27 @@ TA_RetCode TA_GetFuncInfo(  const TA_FuncHandle *handle,
    return TA_SUCCESS;
 }
 
+TA_RetCode TA_GetFuncAttributes( const TA_FuncHandle *handle,
+                                 const char **json )
+{
+   const TA_FuncDef *funcDef;
+
+   if( !json || !handle )
+   {
+      return TA_BAD_PARAM;
+   }
+
+   funcDef = (const TA_FuncDef *)handle;
+   if( (funcDef->magicNumber != TA_FUNC_DEF_MAGIC_NB) || !funcDef->attributes )
+   {
+      return TA_INVALID_HANDLE;
+   }
+
+   *json = funcDef->attributes;
+
+   return TA_SUCCESS;
+}
+
 TA_RetCode TA_GetInputParameterInfo( const TA_FuncHandle *handle,
                                      unsigned int paramIndex,
                                      const TA_InputParameterInfo **info )

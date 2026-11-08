@@ -1521,7 +1521,7 @@ mod tests {
 
     #[test]
     fn a_name_declared_with_two_types_is_not_real() {
-        let outputs = [Output { name: "out".into(), param_type: ParamType::Integer, flags: Vec::new() }];
+        let outputs = [Output { name: "out".into(), param_type: ParamType::Integer, flags: Vec::new(), levels: Vec::new() }];
         let decl = |t: VarType| Statement::VarDecl { var_type: t, name: "z".into(), init: Some(int(0)) };
         let tree = simple_if(bin(gt(var("z"), int(1)), BinOp::And, a_gt_b()), int(1));
         let folds = |body: &[Statement]| {
@@ -1697,7 +1697,7 @@ mod tests {
 
     #[test]
     fn rewrite_reads_outputs_by_name() {
-        let outputs = [Output { name: "out".into(), param_type: ParamType::Integer, flags: Vec::new() }];
+        let outputs = [Output { name: "out".into(), param_type: ParamType::Integer, flags: Vec::new(), levels: Vec::new() }];
         let body = in_loop(simple_if(a_gt_b(), int(1)));
         let Statement::While { body: inner, .. } = &rewrite(&body, declared(), &outputs, helpers())[0] else { panic!() };
         assert!(is_fold(&inner[0]));

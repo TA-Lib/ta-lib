@@ -638,6 +638,12 @@ fn function_info_record() -> String {
          \x20* @param inputs        inputs in call order\n\
          \x20* @param optInputs     optional parameters in call order\n\
          \x20* @param outputs       outputs in call order\n\
+         \x20* @param attributes    metadata no flag can carry, such as an output's\n\
+         \x20*                      reference levels, as one JSON object; {@code \"{}\"}\n\
+         \x20*                      when none. The same bytes as C's\n\
+         \x20*                      {@code TA_GetFuncAttributes}. Ignore a key you do not\n\
+         \x20*                      know: a release may add one\n\
+         \x20*                      (<a href=\"https://ta-lib.org/spec/abstract/#attributes\">keys</a>)\n\
          \x20*/\n\
          public record FuncInfo(\n\
          \x20      String name,\n\
@@ -646,7 +652,8 @@ fn function_info_record() -> String {
          \x20      int flags,\n\
          \x20      List<InputInfo> inputs,\n\
          \x20      List<OptInputInfo> optInputs,\n\
-         \x20      List<OutputInfo> outputs) {\n\
+         \x20      List<OutputInfo> outputs,\n\
+         \x20      String attributes) {\n\
          \n\
          \x20   /** Whether every bit in {@code mask} is set (see {@link FuncFlags}). */\n\
          \x20   public boolean hasFlags(int mask) {\n\
@@ -871,7 +878,7 @@ fn emit_function_factory(s: &mut String, f: &FuncRow) {
     }
 
     if f.outputs.is_empty() {
-        s.push_str("         List.of());\n");
+        s.push_str("         List.of(),\n");
     } else {
         s.push_str("         List.of(\n");
         for (i, out) in f.outputs.iter().enumerate() {
@@ -884,8 +891,9 @@ fn emit_function_factory(s: &mut String, f: &FuncRow) {
                 out.flags
             );
         }
-        s.push_str("         ));\n");
+        s.push_str("         ),\n");
     }
+    let _ = writeln!(s, "         {});", js(&f.attributes));
     s.push_str("   }\n\n");
 }
 

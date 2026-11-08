@@ -199,7 +199,8 @@ meaningful.
 
 Three properties keep the sweep from passing vacuously: a missing server is a
 hard failure when its language was named, not a skip; `ctx.checked == 0` fails,
-as does comparing zero opt-level hints or zero ranges on an unfiltered run; and
+as does comparing zero opt-level hints, zero ranges or no attribute string other
+than `{}` on an unfiltered run; and
 `if( crefOpt->dataSet )` — which silently skips five field comparisons — is
 counted by `g_optExtendedCompared`, so "compared all the ranges" is
 distinguishable from "looked at none".

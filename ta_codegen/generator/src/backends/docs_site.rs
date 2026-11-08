@@ -127,9 +127,9 @@ fn load_chart(func: &FuncDef, public_dir: &Path) -> Option<Chart> {
 /// The drawing description and the flags behind it are detail most readers skip, so the
 /// site folds them; the tag, the links and the fold's text are all an agent's twin shows.
 fn chart_section(func: &FuncDef, chart: &Chart) -> String {
-    const TIP: &str = "The chart is drawn from the function's metadata: the flags the abstract \
-                       API reports for it and for each output, and the input series its reference \
-                       run declares.";
+    const TIP: &str = "The chart is drawn from the function's metadata: the flags and attributes \
+                       the abstract API reports for it and for each output, and the input series its \
+                       reference run declares.";
     let dir = func.name.to_lowercase();
     let attr = |s: &str| s.replace('&', "&amp;").replace('"', "&quot;");
     let (label, alt) = (attr(&chart.label), attr(&chart.sentence));
@@ -1727,6 +1727,7 @@ mod tests {
                 name: (*n).to_string(),
                 param_type: ParamType::Real,
                 flags: vec![],
+                levels: Vec::new(),
             })
             .collect();
         f
@@ -1743,6 +1744,7 @@ mod tests {
                 name: (*n).to_string(),
                 param_type: ParamType::Integer,
                 flags: flags.iter().map(|s| (*s).to_string()).collect(),
+                levels: Vec::new(),
             })
             .collect();
         f

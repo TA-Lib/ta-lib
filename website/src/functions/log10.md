@@ -11,7 +11,7 @@ Element-wise base-10 logarithm of the input series.
 
 <ta-chart src="/functions/log10.svg" ratio="720:416" label="LOG10 over a ramp from 0.1 to 10" alt="Drawn on the price pane over a ramp from 0.1 to 10 as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
 
-::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares." data-tip="The chart is drawn from the function's metadata: the flags and attributes the abstract API reports for it and for each output, and the input series its reference run declares.">i</span>
 
 Drawn on the price pane over a ramp from 0.1 to 10 as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line.
 
