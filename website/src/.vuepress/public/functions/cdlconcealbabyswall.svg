@@ -11,8 +11,10 @@
 <text class="legend" x="12" y="17">outInteger: 1 bar flagged</text>
 <line class="grid" x1="10" x2="662" y1="240" y2="240"/>
 <line class="grid" x1="10" x2="10" y1="240" y2="244"/>
-<text x="13" y="254">Oct</text>
-<line class="grid" x1="319.7" x2="319.7" y1="240" y2="244"/>
-<text x="322.7" y="254">Nov</text>
+<text x="13" y="254">Nov</text>
+<line class="grid" x1="42.6" x2="42.6" y1="240" y2="244"/>
+<text x="45.6" y="254">Dec</text>
+<line class="grid" x1="401.2" x2="401.2" y1="240" y2="244"/>
+<text x="404.2" y="254">Jan</text>
 <text x="10" y="270">Stock data, daily · input: open, high, low, close</text>
 </svg>

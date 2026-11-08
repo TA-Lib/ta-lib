@@ -10,10 +10,10 @@
 <text class="legend" x="12" y="17">outInteger: 2 bars flagged</text>
 <line class="grid" x1="10" x2="662" y1="240" y2="240"/>
 <line class="grid" x1="10" x2="10" y1="240" y2="244"/>
-<text x="13" y="254">Nov</text>
-<line class="grid" x1="156.7" x2="156.7" y1="240" y2="244"/>
-<text x="159.7" y="254">Dec</text>
-<line class="grid" x1="499" x2="499" y1="240" y2="244"/>
-<text x="502" y="254">Jan</text>
+<text x="13" y="254">Dec</text>
+<line class="grid" x1="303.4" x2="303.4" y1="240" y2="244"/>
+<text x="306.4" y="254">Jan</text>
+<line class="grid" x1="645.7" x2="645.7" y1="240" y2="244"/>
+<text x="648.7" y="254">Feb</text>
 <text x="10" y="270">Stock data, daily · input: open, high, low, close</text>
 </svg>
