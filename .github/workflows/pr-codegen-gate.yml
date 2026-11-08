@@ -293,7 +293,7 @@ jobs:
   #
   # CMake + gcc, both preinstalled. Release is what ships; the tools build with
   # the library, so ta_regtest and ta_bench are covered too. RUNNING them stays
-  # in the nightly.
+  # in the nightly; ta_refdata is the exception, at about a second.
   c-compiles:
     name: Generated C compiles
     runs-on: ubuntu-latest
@@ -311,6 +311,11 @@ jobs:
             echo "::error::The generated C does not compile. Fix the emitter (ta_codegen/generator/src/backends/c*.rs), never the generated file. 'assignment of member ... in read-only object' inside a TA_<N>_Peek means the peek frame writes a state field the emitter failed to localize."
             exit 1
           fi
+
+      # A change to a function's numerics must come with its page's reference
+      # CSV; the nightly keeps the same check for direct pushes to dev.
+      - name: Check the function pages' reference data
+        run: python3 scripts/build.py refdata --check
 
       # The SONAME is the only thing telling a loader that one build can stand in
       # for another, and nothing enforces it -- a removed symbol fails loudly at
