@@ -396,12 +396,17 @@ static TA_RetCode TA_ROCR100_OpenImpl( struct TA_ROCR100_Stream **stream, const 
 TA_RetCode TA_ROCR100_OpenInternal( struct TA_ROCR100_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
 {
    TA_RetCode retCode;
+   int begIdx;
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_ROCR100_OpenImpl( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_ROCR100_OpenImpl( stream, inReal, startIdx + 1 < historyLen ? historyLen - 1 : startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
+      begIdx = TA_ROCR100_Lookback( optInTimePeriod );
+      if( begIdx < startIdx ) begIdx = startIdx;
+      (*stream)->outRangeBegIdx = begIdx;
+      (*stream)->outRangeCount = historyLen - begIdx;
       *outReal = sink_outReal;
    }
    return retCode;

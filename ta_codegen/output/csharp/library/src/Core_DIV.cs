@@ -491,10 +491,10 @@ public partial class Core
    {
       DivStream sp = new DivStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = DivOpenImpl(sp, inReal0, inReal1, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
+      RetCode retCode = DivOpenImpl(sp, inReal0, inReal1, startIdx + 1 < inReal0.Length ? inReal0.Length - 1 : startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       if( retCode == RetCode.Success ) {
+         sp.outRangeBegIdx = Math.Max(startIdx, DivLookback());
+         sp.outRangeCount = inReal0.Length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.InsufficientHistory ) {

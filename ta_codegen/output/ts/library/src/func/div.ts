@@ -447,10 +447,11 @@ export function divOpenInternal(
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);
-  const retCode = divOpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-  sp.outRangeBegIdx = outBegIdx.value;
-  sp.outRangeCount = outNBElement.value;
+  const retCode = divOpenImpl(sp, inReal0, inReal1, startIdx + 1 < inReal0.length ? inReal0.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
   if (retCode === RetCode.SUCCESS) {
+    const begIdx = divLookbackPositional(core);
+    sp.outRangeBegIdx = begIdx < startIdx ? startIdx : begIdx;
+    sp.outRangeCount = inReal0.length - sp.outRangeBegIdx;
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {

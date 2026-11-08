@@ -202,12 +202,17 @@ static TA_RetCode TA_LN_OpenImpl( struct TA_LN_Stream **stream, const double inR
 TA_RetCode TA_LN_OpenInternal( struct TA_LN_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal )
 {
    TA_RetCode retCode;
+   int begIdx;
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_LN_OpenImpl( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_LN_OpenImpl( stream, inReal, startIdx + 1 < historyLen ? historyLen - 1 : startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
+      begIdx = TA_LN_Lookback(  );
+      if( begIdx < startIdx ) begIdx = startIdx;
+      (*stream)->outRangeBegIdx = begIdx;
+      (*stream)->outRangeCount = historyLen - begIdx;
       *outReal = sink_outReal;
    }
    return retCode;

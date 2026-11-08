@@ -232,12 +232,17 @@ static TA_RetCode TA_TYPPRICE_OpenImpl( struct TA_TYPPRICE_Stream **stream, cons
 TA_RetCode TA_TYPPRICE_OpenInternal( struct TA_TYPPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double *outReal )
 {
    TA_RetCode retCode;
+   int begIdx;
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_TYPPRICE_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_TYPPRICE_OpenImpl( stream, inHigh, inLow, inClose, startIdx + 1 < historyLen ? historyLen - 1 : startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
+      begIdx = TA_TYPPRICE_Lookback(  );
+      if( begIdx < startIdx ) begIdx = startIdx;
+      (*stream)->outRangeBegIdx = begIdx;
+      (*stream)->outRangeCount = historyLen - begIdx;
       *outReal = sink_outReal;
    }
    return retCode;

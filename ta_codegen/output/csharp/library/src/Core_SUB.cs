@@ -487,10 +487,10 @@ public partial class Core
    {
       SubStream sp = new SubStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = SubOpenImpl(sp, inReal0, inReal1, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
+      RetCode retCode = SubOpenImpl(sp, inReal0, inReal1, startIdx + 1 < inReal0.Length ? inReal0.Length - 1 : startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       if( retCode == RetCode.Success ) {
+         sp.outRangeBegIdx = Math.Max(startIdx, SubLookback());
+         sp.outRangeCount = inReal0.Length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.InsufficientHistory ) {

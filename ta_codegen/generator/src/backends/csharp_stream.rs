@@ -578,7 +578,7 @@ fn emit_loop_shape(
         counter,
     );
     emit_open_and_fill_internal_wrapper(o, func, true);
-    emit_open_wrappers(o, func, true, enums);
+    emit_open_wrappers(o, func, true, model.open_needs_last_bar_only(), enums);
 }
 
 /// Prefix every non-empty line of `s` with `extra` spaces — cosmetic re-indent
@@ -2548,22 +2548,25 @@ fn emit_cur_capture(o: &mut String, outputs: &[String], source: CurSource) {
 // Public wrappers
 // ---------------------------------------------------------------------------
 
+/// `<Base>Lookback(<optIns>)`.
+fn lookback_call(func: &FuncDef) -> String {
+    let opts: Vec<&str> = func.optional_inputs.iter().map(|p| p.name.as_str()).collect();
+    format!("{}Lookback({})", pascal_words(&base_name(func)), opts.join(", "))
+}
+
 /// The reject-conversion tail shared by `OpenInternal` / `OpenAndFill`.
 ///
 /// Rule rS7 is answered with its counts; every other code goes through
 /// `Core.StreamFailure`, which single-sources the `"<NAME> <verb>: "` prefix the
 /// stream gate greps. `anchor` is the seam's `startIdx`, or `None` at a public
 /// frame (anchor 0).
-fn emit_reject_conversion(o: &mut String, func: &FuncDef, what: &str, anchor: Option<&str>) {
+fn emit_reject_conversion(o: &mut String, func: &FuncDef, what: &str, anchor: Option<&str>, on_success: &str) {
     let n = func.name.to_uppercase();
     let history = &streaming::input_array_names(func)[0];
-    let lookback = format!(
-        "{}Lookback({})",
-        pascal_words(&base_name(func)),
-        func.optional_inputs.iter().map(|p| p.name.as_str()).collect::<Vec<_>>().join(", ")
-    );
+    let lookback = lookback_call(func);
     let anchor = anchor.unwrap_or("0");
     let _ = writeln!(o, "      if( retCode == RetCode.Success ) {{");
+    o.push_str(on_success);
     let _ = writeln!(o, "         return sp;");
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      if( retCode == RetCode.InsufficientHistory ) {{");
@@ -2642,7 +2645,7 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef, merged: b
     // composed sub-handle is opened through (issue #241).
     let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx;");
     let _ = writeln!(o, "      sp.outRangeCount = outNBElement;");
-    emit_reject_conversion(o, func, "openAndFill", Some("startIdx"));
+    emit_reject_conversion(o, func, "openAndFill", Some("startIdx"), "");
     let _ = writeln!(o, "   }}");
 }
 
@@ -2757,6 +2760,7 @@ fn emit_open_wrappers(
     o: &mut String,
     func: &FuncDef,
     merged: bool,
+    last_bar_only: bool,
     enums: &HashMap<String, EnumDef>,
 ) {
     let base = pascal_words(&base_name(func));
@@ -2801,10 +2805,16 @@ fn emit_open_wrappers(
     );
     let _ = writeln!(o, "   {{");
     let _ = writeln!(o, "      {class} sp = new {class}(this);");
+    let mut on_success = String::new();
     if merged {
         let mut args: Vec<String> = vec!["sp".to_string()];
         args.extend(in_fwd.iter().cloned());
-        args.push("startIdx".to_string());
+        let history = &in_fwd[0];
+        args.push(if last_bar_only {
+            format!("startIdx + 1 < {history}.Length ? {history}.Length - 1 : startIdx")
+        } else {
+            "startIdx".to_string()
+        });
         args.extend(opt_fwd.iter().cloned());
         args.push("out int outBegIdx".to_string());
         args.push("out int outNBElement".to_string());
@@ -2817,11 +2827,16 @@ fn emit_open_wrappers(
         // holds the last history value — what `sp.cur_*` is seeded from.
         args.push("0".to_string());
         let _ = writeln!(o, "      RetCode retCode = {cbase}OpenImpl({});", args.join(", "));
-        // The numerics report their range through the pair whatever the stride,
-        // so the plain open gets the same numbers a fill would — read back
-        // rather than re-derived from the lookback (issue #241).
-        let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx;");
-        let _ = writeln!(o, "      sp.outRangeCount = outNBElement;");
+        if last_bar_only {
+            let _ = writeln!(on_success, "         sp.outRangeBegIdx = Math.Max(startIdx, {});", lookback_call(func));
+            let _ = writeln!(on_success, "         sp.outRangeCount = {history}.Length - sp.outRangeBegIdx;");
+        } else {
+            // The numerics report their range through the pair whatever the stride,
+            // so the plain open gets the same numbers a fill would — read back
+            // rather than re-derived from the lookback (issue #241).
+            let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx;");
+            let _ = writeln!(o, "      sp.outRangeCount = outNBElement;");
+        }
     } else {
         let _ = writeln!(
             o,
@@ -2829,7 +2844,7 @@ fn emit_open_wrappers(
             in_fwd.join(", ")
         );
     }
-    emit_reject_conversion(o, func, "open", Some("startIdx"));
+    emit_reject_conversion(o, func, "open", Some("startIdx"), &on_success);
     let _ = writeln!(o, "   }}");
 
     // --- public Open ---------------------------------------------------------
@@ -3029,7 +3044,7 @@ fn emit_open_wrappers(
         );
         let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx;");
         let _ = writeln!(o, "      sp.outRangeCount = outNBElement;");
-        emit_reject_conversion(o, func, "openAndFill", None);
+        emit_reject_conversion(o, func, "openAndFill", None, "");
     }
     let _ = writeln!(o, "   }}");
 }
@@ -3260,7 +3275,7 @@ fn emit_dual_mode(
     }
     emit_open_and_fill_internal_wrapper(o, func, true);
 
-    emit_open_wrappers(o, func, true, enums);
+    emit_open_wrappers(o, func, true, false, enums);
 }
 
 // ---------------------------------------------------------------------------
@@ -3610,7 +3625,7 @@ fn emit_dispatch(
         let _ = writeln!(o, "   }}");
     }
 
-    emit_open_wrappers(o, func, false, enums);
+    emit_open_wrappers(o, func, false, false, enums);
     emit_open_and_fill_internal_wrapper(o, func, false);
 }
 
@@ -4251,7 +4266,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "      return RetCode.Success;");
     let _ = writeln!(o, "   }}");
 
-    emit_open_wrappers(o, func, false, enums);
+    emit_open_wrappers(o, func, false, false, enums);
 }
 
 // ---------------------------------------------------------------------------
@@ -5072,5 +5087,5 @@ fn emit_composed(
         o, func, cp, &step_settings, stream_fma, &outputs, enums, registry, helpers, counter,
     );
     emit_open_and_fill_internal_wrapper(o, func, true);
-    emit_open_wrappers(o, func, true, enums);
+    emit_open_wrappers(o, func, true, false, enums);
 }

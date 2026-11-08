@@ -597,7 +597,7 @@ fn emit_loop_shape(
         helpers, counter,
     );
     emit_open_and_fill_internal_wrapper(o, func, true);
-    emit_open_wrappers(o, func, true, enums);
+    emit_open_wrappers(o, func, true, model.open_needs_last_bar_only(), enums);
     if registry.in_tape_set(&func.name.to_lowercase()) {
         let tier = TapeTier { models: &[model], dual: None, fields: &fields, step_settings: &step_settings };
         emit_tape_entries(o, func, &tier, stream_fma, enums, registry, helpers, counter);
@@ -2503,20 +2503,23 @@ fn emit_cur_capture(o: &mut String, outputs: &[String], source: CurSource) {
 // Public wrappers
 // ---------------------------------------------------------------------------
 
+/// `<base>Lookback(<optIns>)`.
+fn lookback_call(func: &FuncDef) -> String {
+    let opts: Vec<&str> = func.optional_inputs.iter().map(|p| p.name.as_str()).collect();
+    format!("{}Lookback({})", method_base(func), opts.join(", "))
+}
+
 /// The reject-conversion tail shared by openInternal / openAndFill: rule rS7
 /// with its counts, then `Core.streamFailure` for every other code, which
 /// single-sources the stable message prefix. `anchor` is the seam's
 /// `startIdx`, or `None` at a public frame (anchor 0).
-fn emit_reject_conversion(o: &mut String, func: &FuncDef, what: &str, anchor: Option<&str>) {
+fn emit_reject_conversion(o: &mut String, func: &FuncDef, what: &str, anchor: Option<&str>, on_success: &str) {
     let n = func.name.to_uppercase();
     let history = &streaming::input_array_names(func)[0];
-    let lookback = format!(
-        "{}Lookback({})",
-        method_base(func),
-        func.optional_inputs.iter().map(|p| p.name.as_str()).collect::<Vec<_>>().join(", ")
-    );
+    let lookback = lookback_call(func);
     let anchor = anchor.unwrap_or("0");
     let _ = writeln!(o, "      if( retCode == RetCode.SUCCESS ) {{");
+    o.push_str(on_success);
     let _ = writeln!(o, "         return sp;");
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      if( retCode == RetCode.INSUFFICIENT_HISTORY ) {{");
@@ -2534,10 +2537,12 @@ fn emit_reject_conversion(o: &mut String, func: &FuncDef, what: &str, anchor: Op
 /// server drives to check an anchored range against the batch — 176 call sites,
 /// one per function, which is why it is emitted for every tier and not only the
 /// ones something composes over.
+#[allow(clippy::too_many_arguments)]
 fn emit_open_internal_seam(
     o: &mut String,
     func: &FuncDef,
     merged: bool,
+    last_bar_only: bool,
     in_sig: &[String],
     in_fwd: &[String],
     opt_sig_str: &str,
@@ -2555,12 +2560,18 @@ fn emit_open_internal_seam(
         in_sig.join(", ")
     );
     let _ = writeln!(o, "      {class} sp = new {class}(this);");
+    let mut on_success = String::new();
     if merged {
         let _ = writeln!(o, "      MInteger outBegIdx = new MInteger();");
         let _ = writeln!(o, "      MInteger outNBElement = new MInteger();");
         let mut args: Vec<String> = vec!["sp".to_string()];
         args.extend(in_fwd.iter().cloned());
-        args.push("startIdx".to_string());
+        let history = &in_fwd[0];
+        args.push(if last_bar_only {
+            format!("startIdx + 1 < {history}.length ? {history}.length - 1 : startIdx")
+        } else {
+            "startIdx".to_string()
+        });
         for p in &func.optional_inputs { args.push(p.name.clone()); }
         args.push("outBegIdx".to_string());
         args.push("outNBElement".to_string());
@@ -2573,11 +2584,16 @@ fn emit_open_internal_seam(
         // holds the last history value — what `sp.cur_*` is seeded from.
         args.push("0".to_string());
         let _ = writeln!(o, "      RetCode retCode = {base}OpenImpl({});", args.join(", "));
-        // The numerics report their range through the pair whatever the stride,
-        // so the plain open gets the same numbers a fill would — read back
-        // rather than re-derived from the lookback (issue #241).
-        let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx.value;");
-        let _ = writeln!(o, "      sp.outRangeCount = outNBElement.value;");
+        if last_bar_only {
+            let _ = writeln!(on_success, "         sp.outRangeBegIdx = Math.max(startIdx, {});", lookback_call(func));
+            let _ = writeln!(on_success, "         sp.outRangeCount = {history}.length - sp.outRangeBegIdx;");
+        } else {
+            // The numerics report their range through the pair whatever the stride,
+            // so the plain open gets the same numbers a fill would — read back
+            // rather than re-derived from the lookback (issue #241).
+            let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx.value;");
+            let _ = writeln!(o, "      sp.outRangeCount = outNBElement.value;");
+        }
     } else {
         let _ = writeln!(
             o,
@@ -2585,7 +2601,7 @@ fn emit_open_internal_seam(
             in_fwd.join(", ")
         );
     }
-    emit_reject_conversion(o, func, "open", Some("startIdx"));
+    emit_reject_conversion(o, func, "open", Some("startIdx"), &on_success);
     let _ = writeln!(o, "   }}");
 
 }
@@ -2772,6 +2788,7 @@ fn emit_open_wrappers(
     o: &mut String,
     func: &FuncDef,
     merged: bool,
+    last_bar_only: bool,
     enums: &HashMap<String, EnumDef>,
 ) {
     let jbase = method_base(func);
@@ -2793,7 +2810,7 @@ fn emit_open_wrappers(
     let opt_sig_str = if opt_sig.is_empty() { String::new() } else { format!(", {}", opt_sig.join(", ")) };
     let opt_fwd_str = if opt_fwd.is_empty() { String::new() } else { format!(", {}", opt_fwd.join(", ")) };
 
-    emit_open_internal_seam(o, func, merged, &in_sig, &in_fwd, &opt_sig_str, &opt_fwd_str);
+    emit_open_internal_seam(o, func, merged, last_bar_only, &in_sig, &in_fwd, &opt_sig_str, &opt_fwd_str);
 
     emit_public_open_doc(o, func, enums, &n, &jbase);
     let _ = writeln!(
@@ -2885,7 +2902,7 @@ fn emit_open_wrappers(
         );
         let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx.value;");
         let _ = writeln!(o, "      sp.outRangeCount = outNBElement.value;");
-        emit_reject_conversion(o, func, "openAndFill", None);
+        emit_reject_conversion(o, func, "openAndFill", None, "");
     }
     let _ = writeln!(o, "   }}");
 }
@@ -3101,7 +3118,7 @@ fn emit_dual_mode(
     }
     emit_open_and_fill_internal_wrapper(o, func, true);
 
-    emit_open_wrappers(o, func, true, enums);
+    emit_open_wrappers(o, func, true, false, enums);
     if registry.in_tape_set(&func.name.to_lowercase()) {
         let tier = TapeTier { models: &[ma, mb], dual: Some(dmp), fields: &fields, step_settings: &step_settings };
         emit_tape_entries(o, func, &tier, stream_fma, enums, registry, helpers, counter);
@@ -3483,7 +3500,7 @@ fn emit_dispatch(
         let _ = writeln!(o, "   }}");
     }
 
-    emit_open_wrappers(o, func, false, enums);
+    emit_open_wrappers(o, func, false, false, enums);
     emit_open_and_fill_internal_wrapper(o, func, false);
     if registry.in_tape_set(&func.name.to_lowercase()) {
         emit_dispatch_tape(o, func, dp, registry);
@@ -3994,7 +4011,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "      return RetCode.SUCCESS;");
     let _ = writeln!(o, "   }}");
 
-    emit_open_wrappers(o, func, false, enums);
+    emit_open_wrappers(o, func, false, false, enums);
 }
 
 // ---------------------------------------------------------------------------
@@ -4752,7 +4769,7 @@ fn emit_composed(
         o, func, cp, &step_settings, stream_fma, &outputs, enums, registry, helpers, counter,
     );
     emit_open_and_fill_internal_wrapper(o, func, true);
-    emit_open_wrappers(o, func, true, enums);
+    emit_open_wrappers(o, func, true, false, enums);
 }
 
 /// `<base>OpenAndFillInternal`: `OpenAndFill` anchored at the caller's
@@ -4822,6 +4839,6 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef, merged: b
     // composed sub-handle is opened through (issue #241).
     let _ = writeln!(o, "      sp.outRangeBegIdx = outBegIdx.value;");
     let _ = writeln!(o, "      sp.outRangeCount = outNBElement.value;");
-    emit_reject_conversion(o, func, "openAndFill", Some("startIdx"));
+    emit_reject_conversion(o, func, "openAndFill", Some("startIdx"), "");
     let _ = writeln!(o, "   }}");
 }

@@ -3094,10 +3094,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = acosOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = acosOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, acosLookback());
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -4125,10 +4125,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = addOpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = addOpenImpl(sp, inReal0, inReal1, startIdx + 1 < inReal0.length ? inReal0.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, addLookback());
+         sp.outRangeCount = inReal0.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -14908,10 +14908,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = asinOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = asinOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, asinLookback());
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -15340,10 +15340,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = atanOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = atanOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, atanLookback());
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -17335,10 +17335,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = avgpriceOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = avgpriceOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx + 1 < inOpen.length ? inOpen.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, avgpriceLookback());
+         sp.outRangeCount = inOpen.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -22059,10 +22059,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = bopOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = bopOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx + 1 < inOpen.length ? inOpen.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, bopLookback());
+         sp.outRangeCount = inOpen.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -77742,10 +77742,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = ceilOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = ceilOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, ceilLookback());
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -89990,10 +89990,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = cosOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = cosOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, cosLookback());
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -90428,10 +90428,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = coshOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = coshOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, coshLookback());
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -95146,10 +95146,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = divOpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = divOpenImpl(sp, inReal0, inReal1, startIdx + 1 < inReal0.length ? inReal0.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, divLookback());
+         sp.outRangeCount = inReal0.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -104303,10 +104303,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = expOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = expOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, expLookback());
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -105920,10 +105920,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = floorOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = floorOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, floorLookback());
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -125484,10 +125484,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = ibsOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = ibsOpenImpl(sp, inHigh, inLow, inClose, startIdx + 1 < inHigh.length ? inHigh.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, ibsLookback());
+         sp.outRangeCount = inHigh.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -140741,10 +140741,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = lnOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = lnOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, lnLookback());
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -141177,10 +141177,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = log10OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = log10OpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, log10Lookback());
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -150817,10 +150817,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = marketfiOpenImpl(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = marketfiOpenImpl(sp, inHigh, inLow, inVolume, startIdx + 1 < inHigh.length ? inHigh.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, marketfiLookback());
+         sp.outRangeCount = inHigh.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -157095,10 +157095,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = medpriceOpenImpl(sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = medpriceOpenImpl(sp, inHigh, inLow, startIdx + 1 < inHigh.length ? inHigh.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, medpriceLookback());
+         sp.outRangeCount = inHigh.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -167822,10 +167822,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = momOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = momOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, momLookback(optInTimePeriod));
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -168277,10 +168277,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = multOpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = multOpenImpl(sp, inReal0, inReal1, startIdx + 1 < inReal0.length ? inReal0.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, multLookback());
+         sp.outRangeCount = inReal0.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -183601,10 +183601,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = rocOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = rocOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, rocLookback(optInTimePeriod));
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -184255,10 +184255,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = rocpOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = rocpOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, rocpLookback(optInTimePeriod));
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -184911,10 +184911,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = rocrOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = rocrOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, rocrLookback(optInTimePeriod));
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -185569,10 +185569,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = rocr100OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = rocr100OpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, rocr100Lookback(optInTimePeriod));
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -196281,10 +196281,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = sinOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = sinOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, sinLookback());
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -196717,10 +196717,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = sinhOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = sinhOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, sinhLookback());
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -202052,10 +202052,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = sqrtOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = sqrtOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, sqrtLookback());
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -210096,10 +210096,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = subOpenImpl(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = subOpenImpl(sp, inReal0, inReal1, startIdx + 1 < inReal0.length ? inReal0.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, subLookback());
+         sp.outRangeCount = inReal0.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -217215,10 +217215,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = tanOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = tanOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, tanLookback());
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -217645,10 +217645,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = tanhOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = tanhOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, tanhLookback());
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -224120,10 +224120,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = typpriceOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = typpriceOpenImpl(sp, inHigh, inLow, inClose, startIdx + 1 < inHigh.length ? inHigh.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, typpriceLookback());
+         sp.outRangeCount = inHigh.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {
@@ -234321,10 +234321,10 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = wclpriceOpenImpl(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = wclpriceOpenImpl(sp, inHigh, inLow, inClose, startIdx + 1 < inHigh.length ? inHigh.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, wclpriceLookback());
+         sp.outRangeCount = inHigh.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {

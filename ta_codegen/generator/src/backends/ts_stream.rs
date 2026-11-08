@@ -563,7 +563,7 @@ fn emit_loop_shape(o: &mut String, em: &Em, model: &StreamModel, body: &[Stateme
     emit_step(o, em, model, &fields, &step_settings);
     emit_open_body(o, em, model, body, &fields, &step_settings);
     emit_open_and_fill_internal_wrapper(o, em, true);
-    emit_open_wrappers(o, em, true);
+    emit_open_wrappers(o, em, true, model.open_needs_last_bar_only());
     if em.svc.registry.in_tape_set(&em.func.name.to_lowercase()) {
         let tier = TapeTier { models: &[model], dual: None, fields: &fields, step_settings: &step_settings };
         emit_tape_entries(o, em, &tier);
@@ -1531,11 +1531,11 @@ fn emit_cur_capture(o: &mut String, outputs: &[String], source: CurSource) {
 // ---------------------------------------------------------------------------
 
 /// Rule rS7 with its counts, then `streamFailure` for every other code.
-fn emit_reject_conversion(o: &mut String, em: &Em, what: &str, anchor: Option<&str>) {
+fn emit_reject_conversion(o: &mut String, em: &Em, what: &str, anchor: Option<&str>, on_success: &str) {
     let n = em.name();
     let history = &streaming::input_array_names(em.func)[0];
     let anchor = anchor.unwrap_or("0");
-    let _ = writeln!(o, "  if (retCode === RetCode.SUCCESS) {{\n    return sp;\n  }}");
+    let _ = writeln!(o, "  if (retCode === RetCode.SUCCESS) {{\n{on_success}    return sp;\n  }}");
     let _ = writeln!(
         o,
         "  if (retCode === RetCode.INSUFFICIENT_HISTORY) {{\n    throw insufficientHistory('{n} {what}', {history}.length, {anchor}, {});\n  }}",
@@ -1551,7 +1551,7 @@ fn internal_in_sig(func: &FuncDef) -> Vec<String> {
     streaming::input_array_names(func).iter().map(|i| format!("{i}: Float64Array")).collect()
 }
 
-fn emit_open_internal_seam(o: &mut String, em: &Em, merged: bool) {
+fn emit_open_internal_seam(o: &mut String, em: &Em, merged: bool, last_bar_only: bool) {
     let func = em.func;
     let base = em.base();
     let class = em.class();
@@ -1564,8 +1564,14 @@ fn emit_open_internal_seam(o: &mut String, em: &Em, merged: bool) {
     let _ = writeln!(o, "  const sp = {class}.of(core);");
     let mut args: Vec<String> = vec!["sp".to_string()];
     args.extend(in_fwd.iter().cloned());
-    args.push("startIdx".to_string());
+    let history = &in_fwd[0];
+    args.push(if last_bar_only {
+        format!("startIdx + 1 < {history}.length ? {history}.length - 1 : startIdx")
+    } else {
+        "startIdx".to_string()
+    });
     args.extend(opt_fwd(func));
+    let mut on_success = String::new();
     if merged {
         let _ = writeln!(o, "  const outBegIdx = new MInteger();\n  const outNBElement = new MInteger();");
         args.push("outBegIdx".to_string());
@@ -1576,11 +1582,17 @@ fn emit_open_internal_seam(o: &mut String, em: &Em, merged: bool) {
         }
         args.push("0".to_string());
         let _ = writeln!(o, "  const retCode = {base}OpenImpl({});", args.join(", "));
-        let _ = writeln!(o, "  sp.outRangeBegIdx = outBegIdx.value;\n  sp.outRangeCount = outNBElement.value;");
+        if last_bar_only {
+            let _ = writeln!(on_success, "    const begIdx = {};", em.lookback());
+            let _ = writeln!(on_success, "    sp.outRangeBegIdx = begIdx < startIdx ? startIdx : begIdx;");
+            let _ = writeln!(on_success, "    sp.outRangeCount = {history}.length - sp.outRangeBegIdx;");
+        } else {
+            let _ = writeln!(o, "  sp.outRangeBegIdx = outBegIdx.value;\n  sp.outRangeCount = outNBElement.value;");
+        }
     } else {
         let _ = writeln!(o, "  const retCode = {base}OpenImpl({});", args.join(", "));
     }
-    emit_reject_conversion(o, em, "open", Some("startIdx"));
+    emit_reject_conversion(o, em, "open", Some("startIdx"), &on_success);
     let _ = writeln!(o, "}}");
 }
 
@@ -1640,13 +1652,13 @@ fn public_sig(func: &FuncDef, with_outputs: bool) -> Vec<String> {
     sig
 }
 
-fn emit_open_wrappers(o: &mut String, em: &Em, merged: bool) {
+fn emit_open_wrappers(o: &mut String, em: &Em, merged: bool, last_bar_only: bool) {
     let func = em.func;
     let base = em.base();
     let class = em.class();
     let names = ts_names(&func.name);
     let inputs = streaming::input_array_names(func);
-    emit_open_internal_seam(o, em, merged);
+    emit_open_internal_seam(o, em, merged, last_bar_only);
 
     let _ = writeln!(o, "\n/** @internal */\nexport function {}(\n  {},\n): {class} {{", names.open_positional, public_sig(func, false).join(",\n  "));
     emit_public_open_guards(o, em, "open", false);
@@ -1679,7 +1691,7 @@ fn emit_open_wrappers(o: &mut String, em: &Em, merged: bool) {
         fwd.extend(func.outputs.iter().map(|out| out.name.clone()));
         let _ = writeln!(o, "  const retCode = {base}OpenAndFillImpl({});", fwd.join(", "));
         let _ = writeln!(o, "  sp.outRangeBegIdx = outBegIdx.value;\n  sp.outRangeCount = outNBElement.value;");
-        emit_reject_conversion(o, em, "openAndFill", None);
+        emit_reject_conversion(o, em, "openAndFill", None, "");
     }
     let _ = writeln!(o, "}}");
     emit_api_openers(o, em);
@@ -1752,7 +1764,7 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, em: &Em, merged: bool) {
         let _ = writeln!(o, "  const retCode = {base}OpenAndFillInternalImpl({});", args.join(", "));
     }
     let _ = writeln!(o, "  sp.outRangeBegIdx = outBegIdx.value;\n  sp.outRangeCount = outNBElement.value;");
-    emit_reject_conversion(o, em, "openAndFill", Some("startIdx"));
+    emit_reject_conversion(o, em, "openAndFill", Some("startIdx"), "");
     let _ = writeln!(o, "}}");
 }
 
@@ -1874,7 +1886,7 @@ fn emit_dual_mode(o: &mut String, em: &Em, dmp: &streaming::DualModePlan) {
     o.push_str(&with_core(&s));
     let _ = writeln!(o, "}}");
     emit_open_and_fill_internal_wrapper(o, em, true);
-    emit_open_wrappers(o, em, true);
+    emit_open_wrappers(o, em, true, false);
     if em.svc.registry.in_tape_set(&func.name.to_lowercase()) {
         let tier = TapeTier { models: &[ma, mb], dual: Some(dmp), fields: &fields, step_settings: &step_settings };
         emit_tape_entries(o, em, &tier);
@@ -1963,7 +1975,7 @@ fn emit_dispatch(o: &mut String, em: &Em, dp: &streaming::DispatchPlan) {
         emit_dispatch_open(o, em, dp, mode, &ctx);
     }
 
-    emit_open_wrappers(o, em, false);
+    emit_open_wrappers(o, em, false, false);
     emit_open_and_fill_internal_wrapper(o, em, false);
     if em.svc.registry.in_tape_set(&func.name.to_lowercase()) {
         emit_dispatch_tape(o, em, dp, &mut scratch);
@@ -2517,7 +2529,7 @@ fn emit_period_bank(o: &mut String, em: &Em, plan: &streaming::PeriodBankPlan) {
     o.push_str(&with_core(&s));
     let _ = writeln!(o, "}}");
 
-    emit_open_wrappers(o, em, false);
+    emit_open_wrappers(o, em, false, false);
 }
 
 // ---------------------------------------------------------------------------
@@ -2863,6 +2875,6 @@ fn emit_composed(o: &mut String, em: &Em, cp: &streaming::ComposedPlan) {
     emit_composed_step(o, em, cp, &step_settings, &inputs, &outputs, &fields, false, &mut scratch);
     emit_composed_open(o, em, cp, &step_settings, &outputs);
     emit_open_and_fill_internal_wrapper(o, em, true);
-    emit_open_wrappers(o, em, true);
+    emit_open_wrappers(o, em, true, false);
     emit_scratch_decls(o, &scratch);
 }

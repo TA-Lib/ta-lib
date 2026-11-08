@@ -805,7 +805,7 @@ fn a_fused_stream_update_is_fma_dispatched() {
             let plan = ta_codegen_lib::streaming::validate_streamable(&func, common::make_registry())
                 .unwrap_or_else(|e| panic!("{name}: {e}"));
             let kept = backends::rust_stream::open_keeps_one_path(&func, &plan);
-            let is_map = matches!(&plan, ta_codegen_lib::streaming::StreamPlan::Loop(m) if m.tier == ir::StreamTier::T1);
+            let is_map = matches!(&plan, ta_codegen_lib::streaming::StreamPlan::Loop(m) if m.open_needs_last_bar_only());
             one_path_maps += usize::from(fuses && kept && is_map);
             one_path_named += usize::from(fuses && kept && !is_map);
             let fuses = fuses && !kept;

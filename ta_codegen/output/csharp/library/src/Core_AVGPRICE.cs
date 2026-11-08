@@ -518,10 +518,10 @@ public partial class Core
    {
       AvgpriceStream sp = new AvgpriceStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = AvgpriceOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
+      RetCode retCode = AvgpriceOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx + 1 < inOpen.Length ? inOpen.Length - 1 : startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       if( retCode == RetCode.Success ) {
+         sp.outRangeBegIdx = Math.Max(startIdx, AvgpriceLookback());
+         sp.outRangeCount = inOpen.Length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.InsufficientHistory ) {

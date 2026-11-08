@@ -561,16 +561,14 @@ pub fn generate(
     o
 }
 
-/// A stateless map's scalar-sink open needs only its last bar, and the
-/// optimizer reduces it to that once the stride of 0 reaches the loop. An FMA
-/// clone cannot inline into the seam, so the stride would stay a runtime value
-/// and the open would walk the whole history.
+/// An open that replays its last bar alone could gain from a clone only on the
+/// fill, where it is unmeasured.
 ///
 /// `HT_TRENDMODE` is here by measurement: its clone runs the open 37% slower
 /// on an i7-13700K and no faster on a Ryzen 7 8840U.
 pub fn open_keeps_one_path(func: &FuncDef, plan: &StreamPlan) -> bool {
     func.name.eq_ignore_ascii_case("HT_TRENDMODE")
-        || matches!(plan, StreamPlan::Loop(model) if model.tier == crate::ir::StreamTier::T1)
+        || matches!(plan, StreamPlan::Loop(model) if model.open_needs_last_bar_only())
 }
 
 /// Fused sites a step needs before `update` is FMA-dispatched.
@@ -728,7 +726,7 @@ fn emit_loop(
         emit_step_tape_impl(o, func, &[model], None, &typing, &split, enums, registry, helpers, counter);
     }
     emit_open_internal(o, func, model, &typing, &split, model.body, enums, registry, helpers, counter);
-    emit_open_internal_wrapper(o, func, model, enums);
+    emit_open_internal_wrapper(o, func, model, model.open_needs_last_bar_only(), enums);
     emit_open_wrapper(o, func, enums);
     emit_open_and_fill_wrapper(o, func, enums);
     emit_open_and_fill_internal_wrapper(o, func, enums);
@@ -751,9 +749,10 @@ fn emit_open_internal_wrapper(
     o: &mut String,
     func: &FuncDef,
     model: &StreamModel,
+    last_bar_only: bool,
     enums: &HashMap<String, EnumDef>,
 ) {
-    emit_open_internal_wrapper_named(o, func, &model.outputs, enums);
+    emit_open_internal_wrapper_named(o, func, &model.outputs, last_bar_only, enums);
 }
 
 /// [`emit_open_internal_wrapper`] over an explicit output-name list, for tiers
@@ -762,6 +761,7 @@ fn emit_open_internal_wrapper_named(
     o: &mut String,
     func: &FuncDef,
     outputs: &[String],
+    last_bar_only: bool,
     enums: &HashMap<String, EnumDef>,
 ) {
     let sn = snake(func);
@@ -776,15 +776,29 @@ fn emit_open_internal_wrapper_named(
     let opts: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let sinks: Vec<String> = outputs.iter().map(|o2| format!("&mut sink_{o2}")).collect();
     let mut args = ins.join(", ");
-    let _ = write!(args, ", startIdx");
+    let history = &ins[0];
+    if last_bar_only {
+        let _ = writeln!(
+            o,
+            "        let lastIdx = if startIdx + 1 < {history}.len() {{ {history}.len() - 1 }} else {{ startIdx }};"
+        );
+        let _ = write!(args, ", lastIdx");
+    } else {
+        let _ = write!(args, ", startIdx");
+    }
     for opt in &opts {
         let _ = write!(args, ", {opt}");
     }
+    let binding = if last_bar_only { "mut handle" } else { "handle" };
     let _ = writeln!(
         o,
-        "        let handle = self.{sn}_open_impl({args}, &mut dummyBegIdx, &mut dummyNBElement, {}, 0)?;",
+        "        let {binding} = self.{sn}_open_impl({args}, &mut dummyBegIdx, &mut dummyNBElement, {}, 0)?;",
         sinks.join(", ")
     );
+    if last_bar_only {
+        let _ = writeln!(o, "        let begIdx = startIdx.max(self.{sn}_lookback({})?);", opts.join(", "));
+        let _ = writeln!(o, "        handle.out = OutRange {{ beg_idx: begIdx, count: {history}.len() - begIdx }};");
+    }
     let vals: Vec<String> = outputs.iter().map(|o2| format!("sink_{o2}[0]")).collect();
     let value = if vals.len() == 1 { vals[0].clone() } else { format!("({})", vals.join(", ")) };
     let _ = writeln!(o, "        Ok((handle, {value}))");
@@ -3719,7 +3733,7 @@ fn emit_dual_mode(
     }
 
     emit_dual_open(o, func, dmp, &typing, &split, &union_scalars, enums, registry, helpers, counter);
-    emit_open_internal_wrapper(o, func, ma, enums);
+    emit_open_internal_wrapper(o, func, ma, false, enums);
     emit_open_wrapper(o, func, enums);
     emit_open_and_fill_wrapper(o, func, enums);
     emit_open_and_fill_internal_wrapper(o, func, enums);
@@ -5770,7 +5784,7 @@ fn emit_composed(
     emit_composed_open(
         o, func, cp, &typing, &split, &outputs, enums, registry, helpers, counter,
     );
-    emit_open_internal_wrapper_named(o, func, &outputs, enums);
+    emit_open_internal_wrapper_named(o, func, &outputs, false, enums);
     emit_open_wrapper(o, func, enums);
     emit_open_and_fill_wrapper(o, func, enums);
     emit_open_and_fill_internal_wrapper(o, func, enums);

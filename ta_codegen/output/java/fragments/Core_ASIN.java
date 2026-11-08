@@ -388,10 +388,10 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = asinOpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = asinOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, asinLookback());
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {

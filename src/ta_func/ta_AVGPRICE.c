@@ -238,12 +238,17 @@ static TA_RetCode TA_AVGPRICE_OpenImpl( struct TA_AVGPRICE_Stream **stream, cons
 TA_RetCode TA_AVGPRICE_OpenInternal( struct TA_AVGPRICE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double *outReal )
 {
    TA_RetCode retCode;
+   int begIdx;
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_AVGPRICE_OpenImpl( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_AVGPRICE_OpenImpl( stream, inOpen, inHigh, inLow, inClose, startIdx + 1 < historyLen ? historyLen - 1 : startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
+      begIdx = TA_AVGPRICE_Lookback(  );
+      if( begIdx < startIdx ) begIdx = startIdx;
+      (*stream)->outRangeBegIdx = begIdx;
+      (*stream)->outRangeCount = historyLen - begIdx;
       *outReal = sink_outReal;
    }
    return retCode;

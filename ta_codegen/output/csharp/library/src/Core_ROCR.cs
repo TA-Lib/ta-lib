@@ -691,10 +691,10 @@ public partial class Core
    {
       RocrStream sp = new RocrStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = RocrOpenImpl(sp, inReal, startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
+      RetCode retCode = RocrOpenImpl(sp, inReal, startIdx + 1 < inReal.Length ? inReal.Length - 1 : startIdx, optInTimePeriod, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       if( retCode == RetCode.Success ) {
+         sp.outRangeBegIdx = Math.Max(startIdx, RocrLookback(optInTimePeriod));
+         sp.outRangeCount = inReal.Length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.InsufficientHistory ) {

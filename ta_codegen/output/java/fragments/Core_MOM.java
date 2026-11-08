@@ -563,10 +563,10 @@
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      RetCode retCode = momOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx.value;
-      sp.outRangeCount = outNBElement.value;
+      RetCode retCode = momOpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
       if( retCode == RetCode.SUCCESS ) {
+         sp.outRangeBegIdx = Math.max(startIdx, momLookback(optInTimePeriod));
+         sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.INSUFFICIENT_HISTORY ) {

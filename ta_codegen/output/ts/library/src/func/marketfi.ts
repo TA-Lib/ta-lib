@@ -560,10 +560,11 @@ export function marketfiOpenInternal(
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);
-  const retCode = marketfiOpenImpl(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-  sp.outRangeBegIdx = outBegIdx.value;
-  sp.outRangeCount = outNBElement.value;
+  const retCode = marketfiOpenImpl(sp, inHigh, inLow, inVolume, startIdx + 1 < inHigh.length ? inHigh.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
   if (retCode === RetCode.SUCCESS) {
+    const begIdx = marketfiLookbackPositional(core);
+    sp.outRangeBegIdx = begIdx < startIdx ? startIdx : begIdx;
+    sp.outRangeCount = inHigh.length - sp.outRangeBegIdx;
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {

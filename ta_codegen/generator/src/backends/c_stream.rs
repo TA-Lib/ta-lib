@@ -581,10 +581,13 @@ fn emit_open_wrapper(o: &mut String, func: &FuncDef) {
 /// the caller's array; at stride 0 every per-bar write lands on slot 0, so after
 /// the replay it holds the last history value. Copied out only on success, which
 /// is what the two separate bodies did (an error path left `*out` untouched).
-fn emit_open_internal_wrapper(o: &mut String, func: &FuncDef) {
+fn emit_open_internal_wrapper(o: &mut String, func: &FuncDef, last_bar_only: bool) {
     let n = uname(func);
     let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", open_internal_signature(func));
     let _ = writeln!(o, "   TA_RetCode retCode;");
+    if last_bar_only {
+        let _ = writeln!(o, "   int begIdx;");
+    }
     let _ = writeln!(o, "   int dummyBegIdx = 0;");
     let _ = writeln!(o, "   int dummyNBElement = 0;");
     for out in &func.outputs {
@@ -593,13 +596,22 @@ fn emit_open_internal_wrapper(o: &mut String, func: &FuncDef) {
         let _ = writeln!(o, "   {ty} sink_{} = {init};", out.name);
     }
     let sinks: Vec<String> = func.outputs.iter().map(|out| format!("&sink_{}", out.name)).collect();
+    // `historyLen` is unchecked here: no arithmetic on it may overflow.
+    let start = if last_bar_only { "startIdx + 1 < historyLen ? historyLen - 1 : startIdx" } else { "startIdx" };
     let _ = writeln!(
         o,
         "   retCode = TA_{n}_OpenImpl( {}&dummyBegIdx, &dummyNBElement, {}, 0 );",
-        open_core_call_head(func, "startIdx"),
+        open_core_call_head(func, start),
         sinks.join(", ")
     );
     let _ = writeln!(o, "   if( retCode == TA_SUCCESS )\n   {{");
+    if last_bar_only {
+        let opts: Vec<&str> = func.optional_inputs.iter().map(|p| p.name.as_str()).collect();
+        let _ = writeln!(o, "      begIdx = TA_{n}_Lookback( {} );", opts.join(", "));
+        let _ = writeln!(o, "      if( begIdx < startIdx ) begIdx = startIdx;");
+        let _ = writeln!(o, "      (*stream)->outRangeBegIdx = begIdx;");
+        let _ = writeln!(o, "      (*stream)->outRangeCount = historyLen - begIdx;");
+    }
     for out in &func.outputs {
         let _ = writeln!(o, "      *{0} = sink_{0};", out.name);
     }
@@ -1867,7 +1879,7 @@ fn emit_composed(
 
     // --- Open ------------------------------------------------------------------
     emit_composed_open(o, func, cp, &outputs, &cleanup, enums, registry, helpers, counter);
-    emit_open_internal_wrapper(o, func);
+    emit_open_internal_wrapper(o, func, false);
     emit_open_wrapper(o, func);
     emit_open_and_fill_wrapper(o, func);
     emit_open_and_fill_internal_wrapper(o, func);
@@ -3511,7 +3523,7 @@ fn emit_dual_mode(
         "\n   return TA_INTERNAL_ERROR({});\n}}\n",
         crate::internal_error_ids::site("dualmode")
     );
-    emit_open_internal_wrapper(o, func);
+    emit_open_internal_wrapper(o, func, false);
     emit_open_wrapper(o, func);
     emit_open_and_fill_wrapper(o, func);
     emit_open_and_fill_internal_wrapper(o, func);
@@ -4747,7 +4759,7 @@ fn emit_open_core_body(
     emit_open_head(o, func, model, model.circs(), registry, helpers, counter, enums, &arm);
     o.push_str(&arm);
     let _ = writeln!(o, "}}\n");
-    emit_open_internal_wrapper(o, func);
+    emit_open_internal_wrapper(o, func, model.open_needs_last_bar_only());
     emit_open_wrapper(o, func);
     emit_open_and_fill_wrapper(o, func);
     emit_open_and_fill_internal_wrapper(o, func);

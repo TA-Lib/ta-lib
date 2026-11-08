@@ -531,10 +531,11 @@ export function bopOpenInternal(
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);
-  const retCode = bopOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-  sp.outRangeBegIdx = outBegIdx.value;
-  sp.outRangeCount = outNBElement.value;
+  const retCode = bopOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx + 1 < inOpen.length ? inOpen.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
   if (retCode === RetCode.SUCCESS) {
+    const begIdx = bopLookbackPositional(core);
+    sp.outRangeBegIdx = begIdx < startIdx ? startIdx : begIdx;
+    sp.outRangeCount = inOpen.length - sp.outRangeBegIdx;
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {

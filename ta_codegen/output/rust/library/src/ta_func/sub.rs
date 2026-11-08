@@ -317,7 +317,10 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.sub_open_impl(inReal0, inReal1, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let lastIdx = if startIdx + 1 < inReal0.len() { inReal0.len() - 1 } else { startIdx };
+        let mut handle = self.sub_open_impl(inReal0, inReal1, lastIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let begIdx = startIdx.max(self.sub_lookback()?);
+        handle.out = OutRange { beg_idx: begIdx, count: inReal0.len() - begIdx };
         Ok((handle, sink_outReal[0]))
     }
 

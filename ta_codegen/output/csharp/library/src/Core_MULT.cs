@@ -497,10 +497,10 @@ public partial class Core
    {
       MultStream sp = new MultStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = MultOpenImpl(sp, inReal0, inReal1, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
+      RetCode retCode = MultOpenImpl(sp, inReal0, inReal1, startIdx + 1 < inReal0.Length ? inReal0.Length - 1 : startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       if( retCode == RetCode.Success ) {
+         sp.outRangeBegIdx = Math.Max(startIdx, MultLookback());
+         sp.outRangeCount = inReal0.Length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.InsufficientHistory ) {

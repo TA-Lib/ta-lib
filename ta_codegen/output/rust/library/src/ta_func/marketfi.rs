@@ -407,7 +407,10 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.marketfi_open_impl(inHigh, inLow, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let lastIdx = if startIdx + 1 < inHigh.len() { inHigh.len() - 1 } else { startIdx };
+        let mut handle = self.marketfi_open_impl(inHigh, inLow, inVolume, lastIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let begIdx = startIdx.max(self.marketfi_lookback()?);
+        handle.out = OutRange { beg_idx: begIdx, count: inHigh.len() - begIdx };
         Ok((handle, sink_outReal[0]))
     }
 

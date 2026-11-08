@@ -474,10 +474,10 @@ public partial class Core
    {
       TanStream sp = new TanStream(this);
       double[] sink_outReal = new double[1];
-      RetCode retCode = TanOpenImpl(sp, inReal, startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
-      sp.outRangeBegIdx = outBegIdx;
-      sp.outRangeCount = outNBElement;
+      RetCode retCode = TanOpenImpl(sp, inReal, startIdx + 1 < inReal.Length ? inReal.Length - 1 : startIdx, out int outBegIdx, out int outNBElement, sink_outReal, 0);
       if( retCode == RetCode.Success ) {
+         sp.outRangeBegIdx = Math.Max(startIdx, TanLookback());
+         sp.outRangeCount = inReal.Length - sp.outRangeBegIdx;
          return sp;
       }
       if( retCode == RetCode.InsufficientHistory ) {

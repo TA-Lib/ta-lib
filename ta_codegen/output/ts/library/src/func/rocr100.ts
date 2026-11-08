@@ -634,10 +634,11 @@ export function rocr100OpenInternal(
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);
-  const retCode = rocr100OpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
-  sp.outRangeBegIdx = outBegIdx.value;
-  sp.outRangeCount = outNBElement.value;
+  const retCode = rocr100OpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
   if (retCode === RetCode.SUCCESS) {
+    const begIdx = rocr100LookbackPositional(optInTimePeriod, core);
+    sp.outRangeBegIdx = begIdx < startIdx ? startIdx : begIdx;
+    sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {

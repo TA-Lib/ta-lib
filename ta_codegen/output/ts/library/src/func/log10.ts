@@ -427,10 +427,11 @@ export function log10OpenInternal(
   const outBegIdx = new MInteger();
   const outNBElement = new MInteger();
   const sink_outReal = new Float64Array(1);
-  const retCode = log10OpenImpl(sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0);
-  sp.outRangeBegIdx = outBegIdx.value;
-  sp.outRangeCount = outNBElement.value;
+  const retCode = log10OpenImpl(sp, inReal, startIdx + 1 < inReal.length ? inReal.length - 1 : startIdx, outBegIdx, outNBElement, sink_outReal, 0);
   if (retCode === RetCode.SUCCESS) {
+    const begIdx = log10LookbackPositional(core);
+    sp.outRangeBegIdx = begIdx < startIdx ? startIdx : begIdx;
+    sp.outRangeCount = inReal.length - sp.outRangeBegIdx;
     return sp;
   }
   if (retCode === RetCode.INSUFFICIENT_HISTORY) {

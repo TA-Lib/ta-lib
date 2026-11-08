@@ -470,7 +470,10 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.rocp_open_impl(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let lastIdx = if startIdx + 1 < inReal.len() { inReal.len() - 1 } else { startIdx };
+        let mut handle = self.rocp_open_impl(inReal, lastIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let begIdx = startIdx.max(self.rocp_lookback(optInTimePeriod)?);
+        handle.out = OutRange { beg_idx: begIdx, count: inReal.len() - begIdx };
         Ok((handle, sink_outReal[0]))
     }
 

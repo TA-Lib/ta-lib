@@ -288,12 +288,17 @@ static TA_RetCode TA_IBS_OpenImpl( struct TA_IBS_Stream **stream, const double i
 TA_RetCode TA_IBS_OpenInternal( struct TA_IBS_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double *outReal )
 {
    TA_RetCode retCode;
+   int begIdx;
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_IBS_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_IBS_OpenImpl( stream, inHigh, inLow, inClose, startIdx + 1 < historyLen ? historyLen - 1 : startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
+      begIdx = TA_IBS_Lookback(  );
+      if( begIdx < startIdx ) begIdx = startIdx;
+      (*stream)->outRangeBegIdx = begIdx;
+      (*stream)->outRangeCount = historyLen - begIdx;
       *outReal = sink_outReal;
    }
    return retCode;
