@@ -140,7 +140,7 @@ The spec's [TypeScript Caveats](../website/src/spec/README.md#typescript) state 
 | Input-aligned result (`align: 'input'`, NaN warm-up) | An exception to rW3 |
 | A stream opened before warm-up (`rsiStream(14)`, `undefined` until warm) | An exception to rS7 |
 | A shared stream interface type | For `Map<string, Stream>` and generic drivers |
-| Metadata: a `FunctionName` union for `byName`, `setOptInput` by name | |
+| Metadata: a `FunctionName` union for `byName` | |
 | `Core.create({ unstablePeriods, candleSettings })` beside the builder | |
 | Display shift by output name | |
 | `TALibError` fields `funcName`, `argName` | |

@@ -298,6 +298,8 @@ export interface InputInfo {
   readonly type: InputType;
   /** The parameter's name, e.g. `inReal` or `inPriceHLC`. */
   readonly paramName: string;
+  /** The typed call's parameter name: `real`, `real0`, `periods`, or `prices` for a price input. */
+  readonly key: string;
   /** For a price input, the components it consumes (`InputFlags`); otherwise 0. */
   readonly flags: number;
 }
@@ -308,6 +310,8 @@ export interface OutputInfo {
   readonly type: OutputType;
   /** The parameter's name, e.g. `outReal`. */
   readonly paramName: string;
+  /** The typed call's result key: `values` for a single output, else e.g. `outUpperBand`. */
+  readonly key: string;
   /** Drawing and value hints (`OutputFlags`). */
   readonly flags: number;
 }
@@ -316,6 +320,8 @@ export interface OutputInfo {
 export interface OptInputInfoBase {
   /** The parameter's name, e.g. `optInTimePeriod`. */
   readonly paramName: string;
+  /** The typed call's options key, e.g. `timePeriod`; `setOptInput` takes it. */
+  readonly key: string;
   /** Display hints (`OptInputFlags`). */
   readonly flags: number;
   /** A human-readable label, e.g. `Time Period`. */
@@ -631,11 +637,17 @@ export class ParamHolder {
    * `Core.INTEGER_DEFAULT` selects the default; a real domain takes any number,
    * and `Core.REAL_DEFAULT` selects the default.
    *
-   * @param idx - The parameter's position in `FuncInfo.optInputs`.
+   * @param slot - The parameter's position in `FuncInfo.optInputs`, or its `key`.
    * @param value - The parameter's value, or the domain's default sentinel.
+   * @throws `TALibError` `TA_BAD_PARAM` for a position out of range or a key that
+   *   names no parameter of this function.
    */
-  setOptInput(idx: number, value: number): this {
+  setOptInput(slot: number | string, value: number): this {
     const name = this.info.name;
+    const idx = typeof slot === 'string' ? this.info.optInputs.findIndex((o) => o.key === slot) : slot;
+    if (idx < 0 && typeof slot === 'string') {
+      throw bad(RetCode.BAD_PARAM, `${name}: no optional parameter keyed ${JSON.stringify(slot)}`);
+    }
     checkIndex(name, 'optInput', idx, this.info.optInputs.length);
     const type = this.info.optInputs[idx].type;
     if (type === OptInputType.INTEGER_RANGE || type === OptInputType.INTEGER_LIST) {
@@ -863,6 +875,23 @@ export const Functions = Object.freeze({
     s
 }
 
+/// The typed call's name for an input row: the positional parameter, or `prices`.
+fn input_key(kind: InputKind, param_name: &str) -> String {
+    match kind {
+        InputKind::Price => super::ts::PRICES_PARAM.to_string(),
+        InputKind::Real | InputKind::Integer => super::ts::input_param_name(param_name),
+    }
+}
+
+/// The typed call's result key for an output row: `values` for a function's only output.
+fn output_row_key(single: bool, param_name: &str) -> String {
+    if single {
+        "values".to_string()
+    } else {
+        super::ts::output_key(param_name)
+    }
+}
+
 fn emit_row(s: &mut String, r: &FuncRow) {
     let _ = writeln!(
         s,
@@ -882,8 +911,9 @@ fn emit_row(s: &mut String, r: &FuncRow) {
                 InputKind::Integer => "INTEGER",
             };
             format!(
-                "{{ type: InputType.{ty}, paramName: {}, flags: 0x{:08X} }}",
+                "{{ type: InputType.{ty}, paramName: {}, key: {}, flags: 0x{:08X} }}",
                 lit(&i.param_name),
+                lit(&input_key(i.kind, &i.param_name)),
                 i.flags
             )
         })
@@ -893,8 +923,9 @@ fn emit_row(s: &mut String, r: &FuncRow) {
         .iter()
         .map(|o| {
             let common = format!(
-                "paramName: {}, flags: 0x{:08X}, displayName: {}, hint: {}, defaultValue: {}",
+                "paramName: {}, key: {}, flags: 0x{:08X}, displayName: {}, hint: {}, defaultValue: {}",
                 lit(&o.param_name),
+                lit(&super::ts::param_key(&o.param_name)),
                 o.flags,
                 lit(&o.display_name),
                 lit(&o.hint),
@@ -941,8 +972,9 @@ fn emit_row(s: &mut String, r: &FuncRow) {
                 OutputKind::Integer => "INTEGER",
             };
             format!(
-                "{{ type: OutputType.{ty}, paramName: {}, flags: 0x{:08X} }}",
+                "{{ type: OutputType.{ty}, paramName: {}, key: {}, flags: 0x{:08X} }}",
                 lit(&o.param_name),
+                lit(&output_row_key(r.outputs.len() == 1, &o.param_name)),
                 o.flags
             )
         })

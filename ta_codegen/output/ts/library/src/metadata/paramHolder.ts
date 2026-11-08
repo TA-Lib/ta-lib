@@ -179,11 +179,17 @@ export class ParamHolder {
    * `Core.INTEGER_DEFAULT` selects the default; a real domain takes any number,
    * and `Core.REAL_DEFAULT` selects the default.
    *
-   * @param idx - The parameter's position in `FuncInfo.optInputs`.
+   * @param slot - The parameter's position in `FuncInfo.optInputs`, or its `key`.
    * @param value - The parameter's value, or the domain's default sentinel.
+   * @throws `TALibError` `TA_BAD_PARAM` for a position out of range or a key that
+   *   names no parameter of this function.
    */
-  setOptInput(idx: number, value: number): this {
+  setOptInput(slot: number | string, value: number): this {
     const name = this.info.name;
+    const idx = typeof slot === 'string' ? this.info.optInputs.findIndex((o) => o.key === slot) : slot;
+    if (idx < 0 && typeof slot === 'string') {
+      throw bad(RetCode.BAD_PARAM, `${name}: no optional parameter keyed ${JSON.stringify(slot)}`);
+    }
     checkIndex(name, 'optInput', idx, this.info.optInputs.length);
     const type = this.info.optInputs[idx].type;
     if (type === OptInputType.INTEGER_RANGE || type === OptInputType.INTEGER_LIST) {

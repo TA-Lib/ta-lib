@@ -46,6 +46,8 @@ export interface InputInfo {
   readonly type: InputType;
   /** The parameter's name, e.g. `inReal` or `inPriceHLC`. */
   readonly paramName: string;
+  /** The typed call's parameter name: `real`, `real0`, `periods`, or `prices` for a price input. */
+  readonly key: string;
   /** For a price input, the components it consumes (`InputFlags`); otherwise 0. */
   readonly flags: number;
 }
@@ -56,6 +58,8 @@ export interface OutputInfo {
   readonly type: OutputType;
   /** The parameter's name, e.g. `outReal`. */
   readonly paramName: string;
+  /** The typed call's result key: `values` for a single output, else e.g. `outUpperBand`. */
+  readonly key: string;
   /** Drawing and value hints (`OutputFlags`). */
   readonly flags: number;
 }
@@ -64,6 +68,8 @@ export interface OutputInfo {
 export interface OptInputInfoBase {
   /** The parameter's name, e.g. `optInTimePeriod`. */
   readonly paramName: string;
+  /** The typed call's options key, e.g. `timePeriod`; `setOptInput` takes it. */
+  readonly key: string;
   /** Display hints (`OptInputFlags`). */
   readonly flags: number;
   /** A human-readable label, e.g. `Time Period`. */

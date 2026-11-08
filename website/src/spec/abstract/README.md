@@ -49,7 +49,7 @@ What a descriptor holds:
 | optional parameter | name, display name, hint, [flags](/spec/abstract/#flags-display), kind, default, and its accepted values ([rP2](/spec/inputs-outputs/#rp2)): for a range its bounds, a suggested sweep (start, end, increment) and, for a real range, a display precision; for a list its named values |
 | output | name, kind, [flags](/spec/abstract/#flags) |
 
-A slot is one input, one optional parameter or one output. A bind call names it by its position among the function's inputs, optional parameters or outputs, from 0. A price input is one input, whatever number of series it consumes. An MA-type parameter is an integer list of the MA types. The kind types are `TA_InputParameterType`, `TA_OptInputParameterType` and `TA_OutputParameterType` in C; `InputType`, `OptInputType` and `OutputType` in Rust, Java and TypeScript; `InputKind`, `OptInputDomain` and `OutputKind` in C#.
+A slot is one input, one optional parameter or one output. A bind call names it by its position among the function's inputs, optional parameters or outputs, from 0 (TypeScript Caveat: [rJ6](/spec/#rj6)). A price input is one input, whatever number of series it consumes. An MA-type parameter is an integer list of the MA types. The kind types are `TA_InputParameterType`, `TA_OptInputParameterType` and `TA_OutputParameterType` in C; `InputType`, `OptInputType` and `OutputType` in Rust, Java and TypeScript; `InputKind`, `OptInputDomain` and `OutputKind` in C#.
 
 ## Rules {#rules}
 

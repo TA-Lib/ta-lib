@@ -60,7 +60,7 @@ const TESTS: Record<string, number> = {
   'batchContract.test.ts': 10,
   'inputForms.test.ts': 1,
   'mavpBank.test.ts': 2,
-  'metadata.test.ts': 11,
+  'metadata.test.ts': 12,
   'metadataSweep.test.ts': 6,
   'options.test.ts': 8,
   'phantomIo.test.ts': 5,

@@ -149,14 +149,14 @@ OutRange r = Core.Functions["SMA"].CreateCall()
 ```ts
 const r = Functions.byName('SMA')!.newCall()
   .setInput(0, close)
-  .setOptInput(0, 30)
+  .setOptInput('timePeriod', 30)   // a parameter by its options key, or by position: 0
   .setOutput(0, out)
   .call();                         // the whole series, as the typed call's defaults
 ```
 
 :::
 
-The call behaves like the typed one: same values, same range, same rejections. A parameter holder is not thread-safe: confine one to one thread, or build one per call. The exact rules: [Abstract API and Metadata](/spec/abstract/).
+The call behaves like the typed one: same values, same range, same rejections. In TypeScript every row also carries the typed call's `key` (`timePeriod`, `prices`, `outUpperBand`), and a parameter binds by that key or by position. A parameter holder is not thread-safe: confine one to one thread, or build one per call. The exact rules: [Abstract API and Metadata](/spec/abstract/).
 
 ## Lookback and display shift
 

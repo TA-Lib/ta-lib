@@ -252,3 +252,22 @@ test('call defaults its range as the typed call does', () => {
   const priced = info('ATR').newCall().setPriceInput(0, { high, low, close }).setOutput(0, new Float64Array(N)).call();
   assert.deepEqual([priced.begIdx, priced.count], [14, N - 14]);
 });
+
+test('rows carry the typed call keys, and setOptInput takes the key as well as the position', () => {
+  const s = info('SMA');
+  assert.deepEqual([s.inputs[0].key, s.optInputs[0].key, s.outputs[0].key], ['real', 'timePeriod', 'values']);
+  const st = info('STOCH');
+  assert.equal(st.inputs[0].key, 'prices');
+  assert.deepEqual(st.optInputs.map((o) => o.key), ['fastKPeriod', 'slowKPeriod', 'slowKMaType', 'slowDPeriod', 'slowDMaType']);
+  assert.deepEqual(st.outputs.map((o) => o.key), ['outSlowK', 'outSlowD']);
+  assert.deepEqual(info('MAVP').inputs.map((i) => i.key), ['real', 'periods']);
+  assert.deepEqual(info('BETA').inputs.map((i) => i.key), ['real0', 'real1']);
+  const byKey = new Float64Array(N);
+  const byIndex = new Float64Array(N);
+  const rk = info('SMA').newCall().setInput(0, close).setOptInput('timePeriod', 20).setOutput(0, byKey).call();
+  const ri = info('SMA').newCall().setInput(0, close).setOptInput(0, 20).setOutput(0, byIndex).call();
+  assert.deepEqual([rk.begIdx, rk.count], [ri.begIdx, ri.count]);
+  assert.deepEqual(Array.from(byKey), Array.from(byIndex));
+  rejects('TA_BAD_PARAM', () => info('SMA').newCall().setOptInput('timeperiod', 20));
+  rejects('TA_BAD_PARAM', () => info('SMA').newCall().setOptInput('optInTimePeriod', 20));
+});
