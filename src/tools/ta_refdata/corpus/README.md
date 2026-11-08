@@ -9,18 +9,20 @@ first line `# label: <text>` names the series the way a chart caption does
 `# synthetic: <how it was made>` line marks a generated series instead.
 
 `ibm_1999.csv`: IBM, 252 trading days of 1999, and every page's series unless
-a candlestick pattern never fires on it. The prices are split-adjusted and the
-volume is unadjusted, exactly as in ta_regtest's `TA_SREF_*_daily_ref_0_PRIV`
-arrays (`src/tools/ta_regtest/test_data.c`), which is why a freshly downloaded
-series matches neither; the dates come from the `daily_ref_0.csv` that produced
-those arrays. `ta_refdata` refuses to run when the file and the arrays differ.
+the page's pattern function never fires on it. The prices are split-adjusted
+and the volume is unadjusted, exactly as in ta_regtest's
+`TA_SREF_*_daily_ref_0_PRIV` arrays (`src/tools/ta_regtest/test_data.c`), which
+is why a freshly downloaded series matches neither; the dates come from the
+`daily_ref_0.csv` that produced those arrays. `ta_refdata` refuses to run when the file and the arrays differ.
 
-Every other file is a 40-bar excerpt, charted whole with the pattern's
-lookback, for a pattern IBM 1999 never shows. Such a pattern takes the excerpt
-where it fires most, a market one before a synthetic one.
+Every other file is a 40-bar excerpt, the pattern's lookback among them,
+charted whole, for a pattern IBM 1999 never shows. Such a pattern takes the
+excerpt where it fires most, a market one before a synthetic one.
 
-- `wbtc_usdc_*`, `link_weth_*`, ...: daily UTC bars of Uniswap v3 pools on
-  Ethereum, built from the pools' Swap event logs (post-swap price); the
-  `# source:` line names the pools, so anyone can rebuild them from the chain.
-- `simulated_*`: a seeded random walk, for the patterns that need an opening
-  gap no on-chain market prints and that no open source of stock prices shows.
+- `simulated_*`: generated rather than taken from a market, for the patterns
+  that need an opening gap no on-chain market prints and that no open source
+  of stock prices shows.
+- The others: daily UTC bars of Uniswap v3 pools on Ethereum, built from the
+  pools' Swap event logs merged in block order, each block's last price; the
+  volume is the pair's first token. The `# source:` line names the pools, so
+  anyone can rebuild them from the chain.

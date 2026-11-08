@@ -339,12 +339,12 @@ static void load_corpus(const char *dir)
     }
 }
 
-/* ---- one run: a function over `rows` bars of a series from `first` ---- */
+/* ---- one run: a function over a whole series ---- */
 typedef struct {
     const TA_FuncInfo *fi;
     TA_ParamHolder *h;
     const Series *s;
-    int first, rows;
+    int rows;
     int nExtra;                         /* derived inputs: one CSV column each, after the prices */
     const char *extraName[MAXEXTRA];
     double *extra[MAXEXTRA];
@@ -415,20 +415,21 @@ static void column_from_table(const Table *t, const char *name, double *dst, con
     }
 }
 
-/* Binds the inputs over s[first .. first+rows) and calls the function with
+/* Binds the inputs over the whole series and calls the function with
  * startIdx 0: what a reader of the written rows can reproduce. A derived input
  * (not a plain price column) is synthesised over the rows, with the formula the
  * generated examples use, or, under --replay, read from `fromFile`'s column of
  * its name. */
-static TA_RetCode run_call(Run *r, const Series *s, int first, int rows, const Table *fromFile)
+static TA_RetCode run_call(Run *r, const Series *s, const Table *fromFile)
 {
     const TA_FuncInfo *fi = r->fi;
     unsigned i;
     int realIdx = 0, b;
     double lo, hi;
     char kind;
-    const double *o = s->o + first, *h = s->h + first, *l = s->l + first, *c = s->c + first, *v = s->v + first;
-    r->s = s; r->first = first; r->rows = rows;
+    const double *o = s->o, *h = s->h, *l = s->l, *c = s->c, *v = s->v;
+    const int rows = s->n;
+    r->s = s; r->rows = rows;
     r->inputs[0] = 0;
     r->nExtra = 0;
     for (i = 0; i < fi->nbInput; i++) {
@@ -544,7 +545,7 @@ static void render(const Run *r, Buf *b, int flaggedBars)
     const int outRows = r->rows > lb ? r->rows - lb : 0;
     buf_addf(b, "# TA-Lib reference data: %s\n# series: %s\n", fi->name, r->s->label);
     buf_addf(b, "# input: %s; window %s..%s (%d bars)", r->s->name,
-             outRows ? r->s->date[r->first + lb] : "-", outRows ? r->s->date[r->first + r->rows - 1] : "-", outRows);
+             outRows ? r->s->date[lb] : "-", outRows ? r->s->date[r->rows - 1] : "-", outRows);
     if (lb) buf_addf(b, " plus %d lookback bar%s before it", lb, lb == 1 ? "" : "s");
     if (run_is_pattern(r)) buf_addf(b, "; flagged bars: %d", flaggedBars);
     buf_add(b, "\n# parameters:");
@@ -576,7 +577,7 @@ static void render(const Run *r, Buf *b, int flaggedBars)
     }
     buf_add(b, "\n");
     for (row = 0; row < r->rows; row++) {
-        int a = r->first + row, k = row - r->beg;
+        int a = row, k = row - r->beg;
         buf_addf(b, "%s,%s", r->s->date[a], fmt_real(num, sizeof num, r->s->o[a]));
         buf_addf(b, ",%s", fmt_real(num, sizeof num, r->s->h[a]));
         buf_addf(b, ",%s", fmt_real(num, sizeof num, r->s->l[a]));
@@ -667,7 +668,7 @@ static void one_function(const TA_FuncInfo *fi, void *opaque)
     const Ctx *ctx = opaque;
     Run r;
     const Series *best = &corpus[refSeries];
-    int bestRows = best->n, bestCount = -1, k, flagged = 0;
+    int bestCount = -1, k, flagged = 0;
     char lower[64], path[1024];
     Buf text = { NULL, 0, 0 };
     Table computed, committed;
@@ -685,10 +686,10 @@ static void one_function(const TA_FuncInfo *fi, void *opaque)
         /* The reference file when it fires at all; otherwise the other file
          * holding the most flagged bars, a market file before a synthetic one.
          * Every file but the reference is an excerpt charted whole, its
-         * lookback included. Ties: file name asc. */
+         * lookback included. Files come in name order, so a tie keeps the first. */
         int f, pass;
         bestCount = 0;
-        rc = run_call(&r, best, 0, best->n, NULL);
+        rc = run_call(&r, best, NULL);
         if (rc != TA_SUCCESS) die("%s over %s: TA_CallFunc returned %d", fi->name, best->name, (int)rc);
         for (k = 0; k < best->n; k++) bestCount += run_flagged(&r, k);
         for (pass = 0; pass < 2 && bestCount == 0; pass++)
@@ -696,18 +697,17 @@ static void one_function(const TA_FuncInfo *fi, void *opaque)
             const Series *s = &corpus[f];
             int count = 0;
             if (f == refSeries || s->synthetic != pass || s->n <= r.lookback) continue;
-            rc = run_call(&r, s, 0, s->n, NULL);
+            rc = run_call(&r, s, NULL);
             if (rc != TA_SUCCESS) die("%s over %s: TA_CallFunc returned %d", fi->name, s->name, (int)rc);
             for (k = 0; k < s->n; k++) count += run_flagged(&r, k);
-            if (count > bestCount || (count && count == bestCount && strcmp(s->name, best->name) < 0)) {
+            if (count > bestCount) {
                 bestCount = count; best = s;
             }
         }
         if (bestCount == 0) best = &corpus[refSeries];
-        bestRows = best->n;
     }
 
-    rc = run_call(&r, best, 0, bestRows, NULL);
+    rc = run_call(&r, best, NULL);
     if (rc != TA_SUCCESS) die("%s over %s: TA_CallFunc returned %d", fi->name, best->name, (int)rc);
     if (r.nb <= 0)
         die("%s: lookback %d leaves no output bar over %d rows", fi->name, r.lookback, r.rows);
@@ -793,7 +793,7 @@ static int replay(const char *path)
     lower_name(lower, sizeof lower, name);
     s = series_from_rows(lower, t.nRows, t.cells);
     run_alloc(&r, fi, s.n ? s.n : 1);
-    if (run_call(&r, &s, 0, s.n, &t) != TA_SUCCESS) die("%s: TA_CallFunc failed", path);
+    if (run_call(&r, &s, &t) != TA_SUCCESS) die("%s: TA_CallFunc failed", path);
     firstOut = PRICE_COLS + r.nExtra;
     for (i = 0; i < r.nExtra; i++)
         if (PRICE_COLS + i >= t.nCols || strcmp(t.cols[PRICE_COLS + i], r.extraName[i]) != 0)

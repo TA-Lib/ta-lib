@@ -1,5 +1,5 @@
 # label: Simulated stock data, daily
-# synthetic: seeded random walk
+# synthetic: generated random walk
 date,open,high,low,close,volume
 2003-04-30,38.28,39.07,38.04,38.77,2524652
 2003-05-01,38.80,39.08,38.64,39.07,1444860
