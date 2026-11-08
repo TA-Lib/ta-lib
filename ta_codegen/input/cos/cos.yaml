@@ -5,6 +5,8 @@ flags: [stream, uses_transcendental]
 inputs:
   - name: inReal
     type: real
+    series: ramp
+    domain: [-6.3, 6.3]
 outputs:
   - name: outReal
     type: real

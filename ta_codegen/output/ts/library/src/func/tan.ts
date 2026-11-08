@@ -482,10 +482,10 @@ export function tanOpenAndFillPositional(
  * import { tanOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   -1.2 + 2.4 * i / 251.0);
  * const stream = tanOpen(series);
- * const peeked = stream.peek(100.9); // a forming bar: commits nothing
- * const updated = stream.update(100.9); // the bar closes
+ * const peeked = stream.peek(0.504); // a forming bar: commits nothing
+ * const updated = stream.update(0.504); // the bar closes
  * ```
  */
 export function tanOpen(real: ArrayLike<number>, options?: TanOptions): TanStream {
@@ -516,7 +516,7 @@ export function tanOpen(real: ArrayLike<number>, options?: TanOptions): TanStrea
  * import { tanOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   -1.2 + 2.4 * i / 251.0);
  * const { stream, begIdx, values } = tanOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```

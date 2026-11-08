@@ -9,9 +9,17 @@ Element-wise floor (round down to the nearest integer) of the input series.
 
 ## Chart
 
-<ta-chart src="/functions/floor.svg" ratio="720:416" label="FLOOR over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+<ta-chart src="/functions/floor.svg" ratio="720:416" label="FLOOR over a ramp from -3 to 3" alt="Drawn on the price pane over a ramp from -3 to 3 as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/floor.csv) · [Chart (SVG)](/functions/floor.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over a ramp from -3 to 3 as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line.
+
+Metadata flags used: `inReal: series ramp [-3, 3]` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/floor.csv) · [Chart (SVG)](/functions/floor.svg)
 
 ## Formula
 

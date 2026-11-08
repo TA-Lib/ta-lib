@@ -126,7 +126,7 @@ public static class ExamplesTest
     private static void Acos()
     {
         var series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -1 + 2 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -160,7 +160,7 @@ public static class ExamplesTest
         var series0 = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.Sin(0.1 * i);
         var series1 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series1[i] = 100 + 10 * Math.Sin(0.1 * i + 0.7);
+        for (int i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -349,7 +349,7 @@ public static class ExamplesTest
     private static void Asin()
     {
         var series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -1 + 2 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -362,7 +362,7 @@ public static class ExamplesTest
     private static void Atan()
     {
         var series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -5 + 10 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -1620,7 +1620,7 @@ public static class ExamplesTest
     private static void Ceil()
     {
         var series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -3 + 6 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -1771,7 +1771,7 @@ public static class ExamplesTest
     private static void Cos()
     {
         var series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -6.3 + 12.6 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -1784,7 +1784,7 @@ public static class ExamplesTest
     private static void Cosh()
     {
         var series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 5 * Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -5 + 10 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -1866,7 +1866,7 @@ public static class ExamplesTest
         var series0 = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.Sin(0.1 * i);
         var series1 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series1[i] = 100 + 10 * Math.Sin(0.1 * i + 0.7);
+        for (int i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -2015,7 +2015,7 @@ public static class ExamplesTest
     private static void Exp()
     {
         var series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 5 * Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -5 + 10 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -2044,7 +2044,7 @@ public static class ExamplesTest
     private static void Floor()
     {
         var series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -3 + 6 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -2433,7 +2433,7 @@ public static class ExamplesTest
     private static void Ln()
     {
         var series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = 0.1 + 9.9 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -2446,7 +2446,7 @@ public static class ExamplesTest
     private static void Log10()
     {
         var series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = 0.1 + 9.9 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -2811,7 +2811,7 @@ public static class ExamplesTest
         var series0 = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.Sin(0.1 * i);
         var series1 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series1[i] = 100 + 10 * Math.Sin(0.1 * i + 0.7);
+        for (int i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -3231,7 +3231,7 @@ public static class ExamplesTest
     private static void Sin()
     {
         var series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -6.3 + 12.6 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -3244,7 +3244,7 @@ public static class ExamplesTest
     private static void Sinh()
     {
         var series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 5 * Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -5 + 10 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -3314,7 +3314,7 @@ public static class ExamplesTest
     private static void Sqrt()
     {
         var series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = 100 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -3425,7 +3425,7 @@ public static class ExamplesTest
         var series0 = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.Sin(0.1 * i);
         var series1 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series1[i] = 100 + 10 * Math.Sin(0.1 * i + 0.7);
+        for (int i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -3547,7 +3547,7 @@ public static class ExamplesTest
     private static void Tan()
     {
         var series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -1.2 + 2.4 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;
@@ -3560,7 +3560,7 @@ public static class ExamplesTest
     private static void Tanh()
     {
         var series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 3 * Math.Sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -3 + 6 * i / 251.0;
         var outReal = new double[252];
 
         var core = Core.Default;

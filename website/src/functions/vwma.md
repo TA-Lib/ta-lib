@@ -15,7 +15,15 @@ It has no attributable inventor — charting-package folklore — and every publ
 
 <ta-chart src="/functions/vwma.svg" ratio="720:342" label="VWMA over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line, with outReal as a solid line; below it, a volume pane."></ta-chart>
 
-Drawn on the price pane over the close as a line, with outReal as a solid line; below it, a volume pane. [Reference data (CSV)](/functions/vwma.csv) · [Chart (SVG)](/functions/vwma.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line; below it, a volume pane.
+
+Metadata flags used: `overlap` · `inPriceV: volume` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/vwma.csv) · [Chart (SVG)](/functions/vwma.svg)
 
 ## Formula
 

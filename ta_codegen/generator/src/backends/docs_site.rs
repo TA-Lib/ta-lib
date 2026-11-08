@@ -124,15 +124,28 @@ fn load_chart(func: &FuncDef, public_dir: &Path) -> Option<Chart> {
 
 /// The `## Chart` section: the component tag the site inlines the SVG through, then the
 /// sentence and the links, which is all an agent or a no-JS reader sees.
+/// The drawing description and the flags behind it are detail most readers skip, so the
+/// site folds them; the tag, the links and the fold's text are all an agent's twin shows.
 fn chart_section(func: &FuncDef, chart: &Chart) -> String {
+    const TIP: &str = "The chart is drawn from the function's metadata alone: the flags the \
+                       abstract API reports for it and for each output.";
     let dir = func.name.to_lowercase();
     let attr = |s: &str| s.replace('&', "&amp;").replace('"', "&quot;");
     let (label, alt) = (attr(&chart.label), attr(&chart.sentence));
     format!(
         "## Chart\n\n<ta-chart src=\"/functions/{dir}.svg\" ratio=\"{}:{}\" label=\"{label}\" alt=\"{alt}\"></ta-chart>\n\n\
-         {} [Reference data (CSV)](/functions/{dir}.csv) · [Chart (SVG)](/functions/{dir}.svg)\n",
-        chart.width, chart.height, chart.sentence
+         ::: details Chart metadata <span class=\"flag-tip\" tabindex=\"0\" role=\"note\" aria-label=\"{TIP}\" data-tip=\"{TIP}\">i</span>\n\n\
+         {}\n\nMetadata flags used: {}\n\n:::\n\n\
+         [Reference data (CSV)](/functions/{dir}.csv) · [Chart (SVG)](/functions/{dir}.svg)\n",
+        chart.width, chart.height, chart.sentence, flags_used_text(chart)
     )
+}
+
+fn flags_used_text(chart: &Chart) -> String {
+    if chart.flags_used.is_empty() {
+        return "none".to_string();
+    }
+    chart.flags_used.iter().map(|f| format!("`{f}`")).collect::<Vec<_>>().join(" · ")
 }
 
 /// Insert the Chart section right after `## Summary` (or at the top when there is none).
@@ -338,8 +351,8 @@ impl Releases {
             format!("{name}: group {:?} has no ta-lib-python group page", func.group)
         })?;
         let pending = *release == self.pending;
-        let wrapped = pending || version_key(release) >= WRAPPER_FROM;
-        let line = if wrapped && !pending {
+        let wrapped = !pending && version_key(release) >= WRAPPER_FROM;
+        let line = if wrapped {
             format!("Added in {release} (ta-lib-python {release}).")
         } else {
             format!("Added in {release}.")
@@ -1594,9 +1607,8 @@ fn build_index(funcs: &[&FuncDef]) -> String {
          Each page charts the function over one fixed price series (IBM, daily, 1999, the series \
          `ta_regtest` ships) at default parameters and links a CSV of the inputs and every output, \
          computed by the C library. Running TA-Lib over the CSV's own input columns from its first \
-         row reproduces the output columns. Compare with a tolerance rather than bit for bit: a \
-         function that [uses a transcendental](/spec/versions/#transcendental) may differ in the \
-         last bits [across machines](/spec/versions/#machines).\n",
+         row reproduces the output columns. [Compare with a tolerance](/spec/versions/#tolerance) \
+         rather than bit for bit.\n",
     );
     for (group, fns) in &by_group {
         s.push_str(&format!("\n## {group}\n\n"));
@@ -1657,6 +1669,7 @@ mod tests {
                 group: 0,
                 component: *c,
             }),
+            series: crate::ir::Series::Price,
             domain: None,
         })
         .collect();

@@ -8,7 +8,7 @@
 //! from what compiled.
 
 use super::doc_meta;
-use crate::ir::{EnumDef, FuncDef, OptInput, ParamType};
+use crate::ir::{self, EnumDef, FuncDef, OptInput, ParamType};
 use std::collections::HashMap;
 
 /// Bars in every example series: one trading year, comfortably past the largest
@@ -64,6 +64,8 @@ pub enum Term {
     Sin { amp: f64, freq: f64, phase: f64 },
     /// `(i % m)`
     Mod(i64),
+    /// `lo + (hi - lo) * i / (LEN - 1)`: `lo` on the first bar, `hi` on the last.
+    Ramp { lo: f64, hi: f64 },
 }
 
 /// The synthetic series of one input and the variable that holds it.
@@ -83,18 +85,30 @@ const SIN: Term = Term::Sin { amp: 10.0, freq: 0.1, phase: 0.0 };
 /// never reaches 1.0. `close` carries a second harmonic so it is never at the exact
 /// midpoint of the bar, which left the money-flow multiplier identically zero and the
 /// AD/ADOSC/CMF examples unable to fail (#136). `volume` rises overall but falls on
-/// some bars, or NVI never takes its down-volume branch. An input with a `domain`
-/// gets the default sine mapped affinely onto it.
+/// some bars, or NVI never takes its down-volume branch. An input declaring a
+/// synthetic `series` gets it over its `domain`: the default sine mapped affinely
+/// onto it, or a ramp from `lo` to `hi`. `ta_refdata` feeds the same two formulas.
 pub fn series(func: &FuncDef, input: &str) -> Option<Series> {
     const DATA: &str = "your data, oldest first";
-    if let Some((lo, hi)) = func.inputs.iter().find(|i| i.name == input).and_then(|i| i.domain) {
-        let (mid, half) = (f64::midpoint(lo, hi), (hi - lo) / 2.0);
+    let decl = func.inputs.iter().find(|i| i.name == input);
+    if let Some((kind, (lo, hi))) = decl.and_then(|i| i.domain.map(|d| (i.series, d))) {
+        let var = match input {
+            "inReal0" => "series0",
+            "inReal1" => "series1",
+            _ => "series",
+        };
         let mut terms = Vec::new();
-        if mid != 0.0 {
-            terms.push(Term::Const(mid));
+        match kind {
+            ir::Series::Ramp => terms.push(Term::Ramp { lo, hi }),
+            ir::Series::Sine | ir::Series::Price => {
+                let (mid, half) = (f64::midpoint(lo, hi), (hi - lo) / 2.0);
+                if mid != 0.0 {
+                    terms.push(Term::Const(mid));
+                }
+                terms.push(Term::Sin { amp: half, freq: 0.1, phase: 0.0 });
+            }
         }
-        terms.push(Term::Sin { amp: half, freq: 0.1, phase: 0.0 });
-        return Some(Series { var: "series", comment: DATA, terms });
+        return Some(Series { var, comment: DATA, terms });
     }
     let (var, terms) = match input {
         "inOpen" => ("open", vec![Term::Const(100.0), Term::Sin { amp: 10.0, freq: 0.1, phase: -0.05 }]),
@@ -158,6 +172,12 @@ pub fn render(series: &Series, syn: &Syntax) -> String {
                 if amp == 1.0 { s } else { format!("{} * {s}", (syn.real)(amp)) }
             }
             Term::Mod(m) => (syn.modulo)(m),
+            // The divisor is spelled `251.0` in every language: `i` is an integer
+            // in C, Java and C#, and `span * i / 251` would divide as one.
+            Term::Ramp { lo, hi } => {
+                let ramp = format!("{} * {} / {}.0", (syn.real)(hi - lo), syn.bar, LEN - 1);
+                if lo == 0.0 { ramp } else { format!("{} + {ramp}", (syn.real)(lo)) }
+            }
         };
         if !out.is_empty() {
             out.push_str(" + ");
@@ -252,13 +272,17 @@ mod tests {
     }
 
     fn fixture(input: &str, domain: Option<(f64, f64)>) -> FuncDef {
+        fixture_series(input, if domain.is_some() { ir::Series::Sine } else { ir::Series::Price }, domain)
+    }
+
+    fn fixture_series(input: &str, series: ir::Series, domain: Option<(f64, f64)>) -> FuncDef {
         FuncDef {
             name: "X".to_string(),
             group: String::new(),
             description: None,
             hint: None,
             flags: vec![],
-            inputs: vec![crate::ir::Input { name: input.to_string(), param_type: ParamType::Real, price: None, domain }],
+            inputs: vec![crate::ir::Input { name: input.to_string(), param_type: ParamType::Real, price: None, series, domain }],
             optional_inputs: vec![],
             outputs: vec![],
             lookback: None,
@@ -305,6 +329,22 @@ mod tests {
         let offset = series(&fixture("inReal", Some((0.0, 5.0))), "inReal").unwrap();
         assert_eq!(render(&offset, &MATH_SIN), "2.5 + 2.5 * Math.sin(0.1 * i)");
         assert!(series(&fixture("inNonesuch", None), "inNonesuch").is_none());
+    }
+
+    #[test]
+    fn a_ramp_runs_from_lo_to_hi_with_a_real_divisor() {
+        let unit = series(&fixture_series("inReal", ir::Series::Ramp, Some((-1.0, 1.0))), "inReal").unwrap();
+        assert_eq!(unit.var, "series");
+        assert_eq!(render(&unit, &rust_syntax()), "-1.0 + 2.0 * i as f64 / 251.0");
+        assert_eq!(render(&unit, &MATH_SIN), "-1 + 2 * i / 251.0");
+        let from_zero = series(&fixture_series("inReal", ir::Series::Ramp, Some((0.0, 100.0))), "inReal").unwrap();
+        assert_eq!(render(&from_zero, &MATH_SIN), "100 * i / 251.0");
+        let second = series(&fixture_series("inReal1", ir::Series::Ramp, Some((95.0, 105.0))), "inReal1").unwrap();
+        assert_eq!(second.var, "series1");
+        assert_eq!(render(&second, &MATH_SIN), "95 + 10 * i / 251.0");
+        let first = series(&fixture_series("inReal0", ir::Series::Sine, Some((90.0, 110.0))), "inReal0").unwrap();
+        assert_eq!(first.var, "series0");
+        assert_eq!(render(&first, &MATH_SIN), "100 + 10 * Math.sin(0.1 * i)");
     }
 
     #[test]

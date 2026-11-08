@@ -15,7 +15,15 @@ The output scales with the instrument's volume and with the volume divisor, so i
 
 <ta-chart src="/functions/emv.svg" ratio="720:484" label="EMV over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane."></ta-chart>
 
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane. [Reference data (CSV)](/functions/emv.csv) · [Chart (SVG)](/functions/emv.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane.
+
+Metadata flags used: `inPriceHLV: high, low, volume` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/emv.csv) · [Chart (SVG)](/functions/emv.svg)
 
 ## Formula
 

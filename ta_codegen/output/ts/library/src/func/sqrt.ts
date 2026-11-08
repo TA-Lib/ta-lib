@@ -484,11 +484,10 @@ export function sqrtOpenAndFillPositional(
  * ```ts
  * import { sqrtOpen } from 'ta-lib';
  *
- * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ * const series = Float64Array.from({ length: 252 }, (_, i) => 100 * i / 251.0);
  * const stream = sqrtOpen(series);
- * const peeked = stream.peek(100.9); // a forming bar: commits nothing
- * const updated = stream.update(100.9); // the bar closes
+ * const peeked = stream.peek(71); // a forming bar: commits nothing
+ * const updated = stream.update(71); // the bar closes
  * ```
  */
 export function sqrtOpen(real: ArrayLike<number>, options?: SqrtOptions): SqrtStream {
@@ -518,8 +517,7 @@ export function sqrtOpen(real: ArrayLike<number>, options?: SqrtOptions): SqrtSt
  * ```ts
  * import { sqrtOpenAndFill } from 'ta-lib';
  *
- * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ * const series = Float64Array.from({ length: 252 }, (_, i) => 100 * i / 251.0);
  * const { stream, begIdx, values } = sqrtOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```

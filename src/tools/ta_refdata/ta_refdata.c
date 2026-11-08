@@ -354,13 +354,14 @@ typedef struct {
     char inputs[512];
 } Run;
 
-static int domain_input(const TA_FuncInfo *fi, const char *input, double *lo, double *hi)
+/* The input's synthetic series ('r' ramp, 's' sine) over [lo, hi], or 0 for a price column. */
+static char series_input(const TA_FuncInfo *fi, const char *input, double *lo, double *hi)
 {
     size_t i;
     for (i = 0; REFDATA_DOMAIN[i].func; i++)
         if (strcmp(fi->name, REFDATA_DOMAIN[i].func) == 0 && strcmp(input, REFDATA_DOMAIN[i].input) == 0) {
             *lo = REFDATA_DOMAIN[i].lo; *hi = REFDATA_DOMAIN[i].hi;
-            return 1;
+            return REFDATA_DOMAIN[i].series;
         }
     return 0;
 }
@@ -415,20 +416,20 @@ static void column_from_table(const Table *t, const char *name, double *dst, con
 
 /* Binds the inputs over s[first .. first+rows) and calls the function with
  * startIdx 0: what a reader of the written rows can reproduce. A derived input
- * (not a plain price column) is computed from the close, or, under --replay,
- * read from `fromFile`'s column of its name. */
+ * (not a plain price column) is synthesised over the rows, with the formula the
+ * generated examples use, or, under --replay, read from `fromFile`'s column of
+ * its name. */
 static TA_RetCode run_call(Run *r, const Series *s, int first, int rows, const Table *fromFile)
 {
     const TA_FuncInfo *fi = r->fi;
     unsigned i;
     int realIdx = 0, b;
-    double lo, hi, mn, mx;
+    double lo, hi;
+    char kind;
     const double *o = s->o + first, *h = s->h + first, *l = s->l + first, *c = s->c + first, *v = s->v + first;
     r->s = s; r->first = first; r->rows = rows;
     r->inputs[0] = 0;
     r->nExtra = 0;
-    mn = mx = rows ? c[0] : 0.0;
-    for (b = 1; b < rows; b++) { if (c[b] < mn) mn = c[b]; if (c[b] > mx) mx = c[b]; }
     for (i = 0; i < fi->nbInput; i++) {
         const TA_InputParameterInfo *ii;
         char item[128];
@@ -452,15 +453,18 @@ static TA_RetCode run_call(Run *r, const Series *s, int first, int rows, const T
                 derived = r->extra[r->nExtra];
                 for (b = 0; b < rows; b++) derived[b] = (b < rows / 2) ? 5.0 : 20.0;
                 src = derived; desc = "5(first-half)|20(second-half)";
-            } else if (domain_input(fi, ii->paramName, &lo, &hi)) {
+            } else if ((kind = series_input(fi, ii->paramName, &lo, &hi)) != 0) {
                 char lob[32], hib[32];
-                static char descbuf[96];
+                static char descbuf[MAXEXTRA][96];
                 derived = r->extra[r->nExtra];
-                for (b = 0; b < rows; b++)
-                    derived[b] = (mx > mn) ? lo + (c[b] - mn) * (hi - lo) / (mx - mn) : lo;
+                if (kind == 'r')
+                    for (b = 0; b < rows; b++) derived[b] = rows > 1 ? lo + (hi - lo) * b / (rows - 1) : lo;
+                else
+                    for (b = 0; b < rows; b++) derived[b] = (lo + hi) / 2 + (hi - lo) / 2 * sin(0.1 * b);
                 src = derived;
-                snprintf(descbuf, sizeof descbuf, "close->[%s,%s]", fmt_real(lob, sizeof lob, lo), fmt_real(hib, sizeof hib, hi));
-                desc = descbuf;
+                snprintf(descbuf[r->nExtra], sizeof descbuf[0], "%s[%s,%s]", kind == 'r' ? "ramp" : "sine",
+                         fmt_real(lob, sizeof lob, lo), fmt_real(hib, sizeof hib, hi));
+                desc = descbuf[r->nExtra];
             } else if (realIdx == 0 && strcmp(ii->paramName, "inReal0") == 0) {
                 src = h; desc = "high";
             } else if (realIdx == 0) {

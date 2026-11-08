@@ -11,7 +11,15 @@ The angle, in degrees, of the least-squares best-fit line over the last N points
 
 <ta-chart src="/functions/linearreg_angle.svg" ratio="720:416" label="LINEARREG_ANGLE over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/linearreg_angle.csv) · [Chart (SVG)](/functions/linearreg_angle.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line.
+
+Metadata flags used: `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/linearreg_angle.csv) · [Chart (SVG)](/functions/linearreg_angle.svg)
 
 ## Formula
 

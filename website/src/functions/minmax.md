@@ -11,7 +11,15 @@ Returns both the lowest and highest values of the input over a rolling window of
 
 <ta-chart src="/functions/minmax.svg" ratio="720:274" label="MINMAX over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line, with outMin as a solid line and outMax as a solid line."></ta-chart>
 
-Drawn on the price pane over the close as a line, with outMin as a solid line and outMax as a solid line. [Reference data (CSV)](/functions/minmax.csv) · [Chart (SVG)](/functions/minmax.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line, with outMin as a solid line and outMax as a solid line.
+
+Metadata flags used: `overlap` · `outMin: line` · `outMax: line`
+
+:::
+
+[Reference data (CSV)](/functions/minmax.csv) · [Chart (SVG)](/functions/minmax.svg)
 
 ## Formula
 

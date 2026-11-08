@@ -483,8 +483,7 @@ export function tanhOpenAndFillPositional(
  * ```ts
  * import { tanhOpen } from 'ta-lib';
  *
- * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   3 * Math.sin(0.1 * i));
+ * const series = Float64Array.from({ length: 252 }, (_, i) => -3 + 6 * i / 251.0);
  * const stream = tanhOpen(series);
  * const peeked = stream.peek(1.26); // a forming bar: commits nothing
  * const updated = stream.update(1.26); // the bar closes
@@ -517,8 +516,7 @@ export function tanhOpen(real: ArrayLike<number>, options?: TanhOptions): TanhSt
  * ```ts
  * import { tanhOpenAndFill } from 'ta-lib';
  *
- * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   3 * Math.sin(0.1 * i));
+ * const series = Float64Array.from({ length: 252 }, (_, i) => -3 + 6 * i / 251.0);
  * const { stream, begIdx, values } = tanhOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```

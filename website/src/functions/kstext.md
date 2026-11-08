@@ -13,7 +13,15 @@ Know Sure Thing with selectable moving averages: Pring's weighted sum of four sm
 
 <ta-chart src="/functions/kstext.svg" ratio="720:416" label="KSTEXT over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outKST as a solid line and outKSTSignal as a dashed line."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outKST as a solid line and outKSTSignal as a dashed line. [Reference data (CSV)](/functions/kstext.csv) · [Chart (SVG)](/functions/kstext.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outKST as a solid line and outKSTSignal as a dashed line.
+
+Metadata flags used: `outKST: line` · `outKSTSignal: dash_line`
+
+:::
+
+[Reference data (CSV)](/functions/kstext.csv) · [Chart (SVG)](/functions/kstext.svg)
 
 ## Formula
 

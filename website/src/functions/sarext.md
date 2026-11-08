@@ -11,7 +11,15 @@ Extended Parabolic SAR (stop and reverse) giving the caller full control over th
 
 <ta-chart src="/functions/sarext.svg" ratio="720:274" label="SAREXT over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outReal as dots."></ta-chart>
 
-Drawn on the price pane over candles, with outReal as dots. [Reference data (CSV)](/functions/sarext.csv) · [Chart (SVG)](/functions/sarext.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles, with outReal as dots.
+
+Metadata flags used: `overlap` · `inPriceHL: high, low` · `outReal: dot`
+
+:::
+
+[Reference data (CSV)](/functions/sarext.csv) · [Chart (SVG)](/functions/sarext.svg)
 
 ## Formula
 

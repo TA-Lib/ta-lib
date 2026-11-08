@@ -11,7 +11,15 @@ Typical Price: the average of the high, low, and close of each bar. A single rep
 
 <ta-chart src="/functions/typprice.svg" ratio="720:274" label="TYPPRICE over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outReal as a solid line."></ta-chart>
 
-Drawn on the price pane over candles, with outReal as a solid line. [Reference data (CSV)](/functions/typprice.csv) · [Chart (SVG)](/functions/typprice.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles, with outReal as a solid line.
+
+Metadata flags used: `overlap` · `inPriceHLC: high, low, close` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/typprice.csv) · [Chart (SVG)](/functions/typprice.svg)
 
 ## Formula
 

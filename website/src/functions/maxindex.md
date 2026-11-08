@@ -11,7 +11,15 @@ Returns the index of the highest input value within a rolling window of optInTim
 
 <ta-chart src="/functions/maxindex.svg" ratio="720:416" label="MAXINDEX over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer output outInteger."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer output outInteger. [Reference data (CSV)](/functions/maxindex.csv) · [Chart (SVG)](/functions/maxindex.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer output outInteger.
+
+Metadata flags used: `outInteger: line`
+
+:::
+
+[Reference data (CSV)](/functions/maxindex.csv) · [Chart (SVG)](/functions/maxindex.svg)
 
 ## Formula
 

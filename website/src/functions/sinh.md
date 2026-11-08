@@ -9,9 +9,17 @@ Element-wise hyperbolic sine of the input series.
 
 ## Chart
 
-<ta-chart src="/functions/sinh.svg" ratio="720:416" label="SINH over IBM, daily, 1999" alt="Drawn on the price pane over the input, close->[-5,5], as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
+<ta-chart src="/functions/sinh.svg" ratio="720:416" label="SINH over a ramp from -5 to 5" alt="Drawn on the price pane over a ramp from -5 to 5 as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
 
-Drawn on the price pane over the input, close->[-5,5], as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/sinh.csv) · [Chart (SVG)](/functions/sinh.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over a ramp from -5 to 5 as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line.
+
+Metadata flags used: `inReal: series ramp [-5, 5]` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/sinh.csv) · [Chart (SVG)](/functions/sinh.svg)
 
 ## Formula
 

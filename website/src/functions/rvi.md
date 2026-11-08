@@ -13,7 +13,15 @@ Bounded in 0..100. High values mean the recent volatility arrived mostly on up b
 
 <ta-chart src="/functions/rvi.svg" ratio="720:416" label="RVI over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/rvi.csv) · [Chart (SVG)](/functions/rvi.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line.
+
+Metadata flags used: `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/rvi.csv) · [Chart (SVG)](/functions/rvi.svg)
 
 ## Formula
 

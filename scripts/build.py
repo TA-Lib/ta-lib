@@ -416,8 +416,11 @@ def build_refdata(root_dir: str, build_dir: str, jobs: int, build_type: str,
     print(f"=== {' '.join(os.path.relpath(c, root_dir) if c.startswith(root_dir) else c for c in cmd)} ===",
           flush=True)
     rc = subprocess.run(cmd).returncode
-    if rc != 0 or not check:
+    if rc != 0:
         return rc
+    if not check:
+        # The pages and charts are rendered from the CSVs just written.
+        return run_codegen(root_dir, 'run', '--release', '--', 'generate')
     csvs = sorted(os.path.join(out_dir, f) for f in os.listdir(out_dir) if f.endswith('.csv'))
     print(f"=== ta_refdata --replay ({len(csvs)} files) ===", flush=True)
     for i in range(0, len(csvs), 50):
@@ -1063,9 +1066,12 @@ def main():
             # the build and ctest must name the same one.
             cmake_build(build_dir, target=cmake_target, jobs=args.jobs,
                         config=args.build_type)
-            # The function pages' C samples, a CTest entry beside ta_regtest.
-            cmake_build(build_dir, target='ta_examples', jobs=args.jobs,
-                        config=args.build_type)
+            # The function pages' C samples, a CTest entry beside ta_regtest;
+            # a checkout has them, the released tarball does not.
+            if os.path.exists(os.path.join(root_dir, 'src', 'tools', 'ta_examples',
+                                           'ta_examples.c')):
+                cmake_build(build_dir, target='ta_examples', jobs=args.jobs,
+                            config=args.build_type)
             subprocess.run(['ctest', '-C', args.build_type, '--output-on-failure',
                             '--no-tests=error'], check=True, cwd=build_dir)
         else:

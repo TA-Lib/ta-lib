@@ -487,7 +487,7 @@ export function acosOpenAndFillPositional(
  * ```ts
  * import { acosOpen } from 'ta-lib';
  *
- * const series = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
+ * const series = Float64Array.from({ length: 252 }, (_, i) => -1 + 2 * i / 251.0);
  * const stream = acosOpen(series);
  * const peeked = stream.peek(0.42); // a forming bar: commits nothing
  * const updated = stream.update(0.42); // the bar closes
@@ -520,7 +520,7 @@ export function acosOpen(real: ArrayLike<number>, options?: AcosOptions): AcosSt
  * ```ts
  * import { acosOpenAndFill } from 'ta-lib';
  *
- * const series = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
+ * const series = Float64Array.from({ length: 252 }, (_, i) => -1 + 2 * i / 251.0);
  * const { stream, begIdx, values } = acosOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```

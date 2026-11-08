@@ -11,7 +11,15 @@ Bollinger Bands: a moving-average middle band with upper and lower bands offset 
 
 <ta-chart src="/functions/bbands.svg" ratio="720:274" label="BBANDS over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill."></ta-chart>
 
-Drawn on the price pane over the close as a line, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill. [Reference data (CSV)](/functions/bbands.csv) · [Chart (SVG)](/functions/bbands.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill.
+
+Metadata flags used: `overlap` · `outRealUpperBand: upper_limit` · `outRealMiddleBand: line` · `outRealLowerBand: lower_limit`
+
+:::
+
+[Reference data (CSV)](/functions/bbands.csv) · [Chart (SVG)](/functions/bbands.svg)
 
 ## Formula
 

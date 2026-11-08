@@ -15,7 +15,15 @@ The oscillator is the first leg of Williams' Profitunity system, alongside the A
 
 <ta-chart src="/functions/ao.svg" ratio="720:416" label="AO over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a sign-coloured histogram."></ta-chart>
 
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a sign-coloured histogram. [Reference data (CSV)](/functions/ao.csv) · [Chart (SVG)](/functions/ao.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a sign-coloured histogram.
+
+Metadata flags used: `inPriceHL: high, low` · `outReal: histogram`
+
+:::
+
+[Reference data (CSV)](/functions/ao.csv) · [Chart (SVG)](/functions/ao.svg)
 
 ## Formula
 

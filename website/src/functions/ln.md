@@ -9,9 +9,17 @@ Element-wise natural logarithm of the input series.
 
 ## Chart
 
-<ta-chart src="/functions/ln.svg" ratio="720:416" label="LN over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+<ta-chart src="/functions/ln.svg" ratio="720:416" label="LN over a ramp from 0.1 to 10" alt="Drawn on the price pane over a ramp from 0.1 to 10 as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/ln.csv) · [Chart (SVG)](/functions/ln.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over a ramp from 0.1 to 10 as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line.
+
+Metadata flags used: `inReal: series ramp [0.1, 10]` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/ln.csv) · [Chart (SVG)](/functions/ln.svg)
 
 ## Formula
 

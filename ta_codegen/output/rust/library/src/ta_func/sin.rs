@@ -166,7 +166,7 @@ impl Core {
     /// use ta_lib::Core;
     ///
     /// let series = vec![0.0; 252]; // your data, oldest first
-    /// # let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// # let series: Vec<f64> = (0..252).map(|i| -6.3 + 12.6 * i as f64 / 251.0).collect();
     /// let mut out = vec![0.0; 252];
     ///
     /// let core = Core::new();
@@ -320,14 +320,14 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series: Vec<f64> = (0..252).map(|i| -6.3 + 12.6 * i as f64 / 251.0).collect();
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.sin_open(&series).expect("enough history");
     /// let r0 = s.out_range();
-    /// let peeked = s.peek(100.9).expect("a finite bar");
+    /// let peeked = s.peek(2.646).expect("a finite bar");
     /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
-    /// let updated = s.update(100.9).expect("a finite bar");
+    /// let updated = s.update(2.646).expect("a finite bar");
     /// assert_eq!(s.out_range().beg_idx, r0.beg_idx);
     /// assert_eq!(s.out_range().count, r0.count + 1);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
@@ -351,7 +351,7 @@ impl Core {
     ///
     /// ```
     /// use ta_lib::Core;
-    /// let series: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let series: Vec<f64> = (0..252).map(|i| -6.3 + 12.6 * i as f64 / 251.0).collect();
     ///
     /// let core = Core::new();
     /// let mut batch_out = vec![0.0; 252];

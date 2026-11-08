@@ -11,7 +11,15 @@ A two-candle continuation pattern: the second candle opposes the first in color,
 
 <ta-chart src="/functions/cdlseparatinglines.svg" ratio="720:274" label="CDLSEPARATINGLINES over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
 
-Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one. [Reference data (CSV)](/functions/cdlseparatinglines.csv) · [Chart (SVG)](/functions/cdlseparatinglines.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one.
+
+Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `outInteger: line, pattern_bull_bear, zero, positive, negative`
+
+:::
+
+[Reference data (CSV)](/functions/cdlseparatinglines.csv) · [Chart (SVG)](/functions/cdlseparatinglines.svg)
 
 ## Formula
 

@@ -114,7 +114,7 @@ public class ExamplesTest {
 
     static void acos() {
         double[] series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -1 + 2 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -146,7 +146,7 @@ public class ExamplesTest {
         double[] series0 = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.sin(0.1 * i);
         double[] series1 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series1[i] = 100 + 10 * Math.sin(0.1 * i + 0.7);
+        for (int i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -323,7 +323,7 @@ public class ExamplesTest {
 
     static void asin() {
         double[] series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -1 + 2 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -335,7 +335,7 @@ public class ExamplesTest {
 
     static void atan() {
         double[] series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -5 + 10 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -1522,7 +1522,7 @@ public class ExamplesTest {
 
     static void ceil() {
         double[] series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -3 + 6 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -1663,7 +1663,7 @@ public class ExamplesTest {
 
     static void cos() {
         double[] series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -6.3 + 12.6 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -1675,7 +1675,7 @@ public class ExamplesTest {
 
     static void cosh() {
         double[] series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 5 * Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -5 + 10 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -1751,7 +1751,7 @@ public class ExamplesTest {
         double[] series0 = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.sin(0.1 * i);
         double[] series1 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series1[i] = 100 + 10 * Math.sin(0.1 * i + 0.7);
+        for (int i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -1890,7 +1890,7 @@ public class ExamplesTest {
 
     static void exp() {
         double[] series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 5 * Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -5 + 10 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -1917,7 +1917,7 @@ public class ExamplesTest {
 
     static void floor() {
         double[] series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -3 + 6 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -2280,7 +2280,7 @@ public class ExamplesTest {
 
     static void ln() {
         double[] series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = 0.1 + 9.9 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -2292,7 +2292,7 @@ public class ExamplesTest {
 
     static void log10() {
         double[] series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = 0.1 + 9.9 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -2632,7 +2632,7 @@ public class ExamplesTest {
         double[] series0 = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.sin(0.1 * i);
         double[] series1 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series1[i] = 100 + 10 * Math.sin(0.1 * i + 0.7);
+        for (int i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -3023,7 +3023,7 @@ public class ExamplesTest {
 
     static void sin() {
         double[] series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -6.3 + 12.6 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -3035,7 +3035,7 @@ public class ExamplesTest {
 
     static void sinh() {
         double[] series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 5 * Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -5 + 10 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -3100,7 +3100,7 @@ public class ExamplesTest {
 
     static void sqrt() {
         double[] series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = 100 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -3204,7 +3204,7 @@ public class ExamplesTest {
         double[] series0 = new double[252]; // your data, oldest first
         for (int i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.sin(0.1 * i);
         double[] series1 = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series1[i] = 100 + 10 * Math.sin(0.1 * i + 0.7);
+        for (int i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -3317,7 +3317,7 @@ public class ExamplesTest {
 
     static void tan() {
         double[] series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 100 + 10 * Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -1.2 + 2.4 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;
@@ -3329,7 +3329,7 @@ public class ExamplesTest {
 
     static void tanh() {
         double[] series = new double[252]; // your data, oldest first
-        for (int i = 0; i < 252; i++) series[i] = 3 * Math.sin(0.1 * i);
+        for (int i = 0; i < 252; i++) series[i] = -3 + 6 * i / 251.0;
         double[] out = new double[252];
 
         Core core = Core.DEFAULT;

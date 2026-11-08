@@ -481,11 +481,10 @@ export function floorOpenAndFillPositional(
  * ```ts
  * import { floorOpen } from 'ta-lib';
  *
- * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ * const series = Float64Array.from({ length: 252 }, (_, i) => -3 + 6 * i / 251.0);
  * const stream = floorOpen(series);
- * const peeked = stream.peek(100.9); // a forming bar: commits nothing
- * const updated = stream.update(100.9); // the bar closes
+ * const peeked = stream.peek(1.26); // a forming bar: commits nothing
+ * const updated = stream.update(1.26); // the bar closes
  * ```
  */
 export function floorOpen(real: ArrayLike<number>, options?: FloorOptions): FloorStream {
@@ -515,8 +514,7 @@ export function floorOpen(real: ArrayLike<number>, options?: FloorOptions): Floo
  * ```ts
  * import { floorOpenAndFill } from 'ta-lib';
  *
- * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ * const series = Float64Array.from({ length: 252 }, (_, i) => -3 + 6 * i / 251.0);
  * const { stream, begIdx, values } = floorOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```

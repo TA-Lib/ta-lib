@@ -11,7 +11,15 @@ Variable Index Dynamic Average (Tushar Chande): an EMA whose smoothing factor is
 
 <ta-chart src="/functions/vidya.svg" ratio="720:274" label="VIDYA over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line, with outReal as a solid line."></ta-chart>
 
-Drawn on the price pane over the close as a line, with outReal as a solid line. [Reference data (CSV)](/functions/vidya.csv) · [Chart (SVG)](/functions/vidya.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line, with outReal as a solid line.
+
+Metadata flags used: `overlap` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/vidya.csv) · [Chart (SVG)](/functions/vidya.svg)
 
 ## Formula
 

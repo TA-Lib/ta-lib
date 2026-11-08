@@ -5,6 +5,8 @@ flags: [stream, nan_inf_output, positive_input]
 inputs:
   - name: inReal
     type: real
+    series: ramp
+    domain: [0, 100]
 outputs:
   - name: outReal
     type: real

@@ -11,7 +11,15 @@ Midpoint of the price range over a rolling window: the average of the highest hi
 
 <ta-chart src="/functions/midprice.svg" ratio="720:274" label="MIDPRICE over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outReal as a solid line."></ta-chart>
 
-Drawn on the price pane over candles, with outReal as a solid line. [Reference data (CSV)](/functions/midprice.csv) · [Chart (SVG)](/functions/midprice.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles, with outReal as a solid line.
+
+Metadata flags used: `overlap` · `inPriceHL: high, low` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/midprice.csv) · [Chart (SVG)](/functions/midprice.svg)
 
 ## Formula
 

@@ -11,7 +11,15 @@ Wilder's Accumulative Swing Index: the running total of the Swing Index (SI), a 
 
 <ta-chart src="/functions/asi.svg" ratio="720:416" label="ASI over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
 
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/asi.csv) · [Chart (SVG)](/functions/asi.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line.
+
+Metadata flags used: `inPriceOHLC: open, high, low, close` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/asi.csv) · [Chart (SVG)](/functions/asi.svg)
 
 ## Formula
 

@@ -11,7 +11,15 @@ A five-candle reversal pattern: a long first candle, a same-colored second candl
 
 <ta-chart src="/functions/cdlbreakaway.svg" ratio="720:274" label="CDLBREAKAWAY over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data)."></ta-chart>
 
-Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data). [Reference data (CSV)](/functions/cdlbreakaway.csv) · [Chart (SVG)](/functions/cdlbreakaway.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data).
+
+Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `outInteger: line, pattern_bull_bear, zero, positive, negative`
+
+:::
+
+[Reference data (CSV)](/functions/cdlbreakaway.csv) · [Chart (SVG)](/functions/cdlbreakaway.svg)
 
 ## Notes
 

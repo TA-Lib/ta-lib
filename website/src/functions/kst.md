@@ -13,7 +13,15 @@ Each leg smooths a rate of change over a different span, and the longer legs car
 
 <ta-chart src="/functions/kst.svg" ratio="720:416" label="KST over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outKST as a solid line and outKSTSignal as a dashed line."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outKST as a solid line and outKSTSignal as a dashed line. [Reference data (CSV)](/functions/kst.csv) · [Chart (SVG)](/functions/kst.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outKST as a solid line and outKSTSignal as a dashed line.
+
+Metadata flags used: `outKST: line` · `outKSTSignal: dash_line`
+
+:::
+
+[Reference data (CSV)](/functions/kst.csv) · [Chart (SVG)](/functions/kst.svg)
 
 ## Formula
 

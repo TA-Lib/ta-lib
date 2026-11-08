@@ -11,7 +11,15 @@ A single-candle pattern: a long real body with short upper and short lower shado
 
 <ta-chart src="/functions/cdllongline.svg" ratio="720:274" label="CDLLONGLINE over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one."></ta-chart>
 
-Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one. [Reference data (CSV)](/functions/cdllongline.csv) · [Chart (SVG)](/functions/cdllongline.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one.
+
+Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `outInteger: line, pattern_bull_bear, zero, positive, negative`
+
+:::
+
+[Reference data (CSV)](/functions/cdllongline.csv) · [Chart (SVG)](/functions/cdllongline.svg)
 
 ## Inputs
 

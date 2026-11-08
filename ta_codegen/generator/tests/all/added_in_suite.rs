@@ -161,7 +161,8 @@ fn the_pending_row_names_version_without_a_wrapper_release() {
     let pages = render(&[name]);
     let section = implementation_section(&pages[name.as_str()]);
     assert!(section.contains(&format!("\nAdded in {version}.\n")), "{section}");
-    assert!(section.contains(&format!("Python: `talib.{name}` (ta-lib-python {version} or later), see ")), "{section}");
+    assert!(section.contains(&format!("Python: `talib.{name}`, see ")), "{section}");
+    assert!(!section.contains("ta-lib-python {version}"), "{section}");
     assert!(!section.contains(&format!("(ta-lib-python {version}).")), "{section}");
 }
 

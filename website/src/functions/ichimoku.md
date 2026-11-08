@@ -11,7 +11,15 @@ Ichimoku Kinko Hyo, "one glance equilibrium chart": four lines built from highs 
 
 <ta-chart src="/functions/ichimoku.svg" ratio="720:274" label="ICHIMOKU over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outTenkanSen as a solid line, outKijunSen as a solid line, outSenkouSpanA as a solid line moved 26 bars forward and outSenkouSpanB as a solid line moved 26 bars forward."></ta-chart>
 
-Drawn on the price pane over candles, with outTenkanSen as a solid line, outKijunSen as a solid line, outSenkouSpanA as a solid line moved 26 bars forward and outSenkouSpanB as a solid line moved 26 bars forward. [Reference data (CSV)](/functions/ichimoku.csv) · [Chart (SVG)](/functions/ichimoku.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles, with outTenkanSen as a solid line, outKijunSen as a solid line, outSenkouSpanA as a solid line moved 26 bars forward and outSenkouSpanB as a solid line moved 26 bars forward.
+
+Metadata flags used: `overlap` · `inPriceHL: high, low` · `outTenkanSen: line` · `outKijunSen: line` · `outSenkouSpanA: line, display_shift (+26)` · `outSenkouSpanB: line, display_shift (+26)`
+
+:::
+
+[Reference data (CSV)](/functions/ichimoku.csv) · [Chart (SVG)](/functions/ichimoku.svg)
 
 ## Formula
 

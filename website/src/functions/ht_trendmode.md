@@ -11,7 +11,15 @@ Hilbert Transform classifier that labels each bar 1 (trending — favor trend-fo
 
 <ta-chart src="/functions/ht_trendmode.svg" ratio="720:416" label="HT_TRENDMODE over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer output outInteger."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer output outInteger. [Reference data (CSV)](/functions/ht_trendmode.csv) · [Chart (SVG)](/functions/ht_trendmode.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a step pane of its own for the integer output outInteger.
+
+Metadata flags used: `outInteger: line`
+
+:::
+
+[Reference data (CSV)](/functions/ht_trendmode.csv) · [Chart (SVG)](/functions/ht_trendmode.svg)
 
 ## Interpretation
 

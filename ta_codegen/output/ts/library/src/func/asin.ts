@@ -490,7 +490,7 @@ export function asinOpenAndFillPositional(
  * ```ts
  * import { asinOpen } from 'ta-lib';
  *
- * const series = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
+ * const series = Float64Array.from({ length: 252 }, (_, i) => -1 + 2 * i / 251.0);
  * const stream = asinOpen(series);
  * const peeked = stream.peek(0.42); // a forming bar: commits nothing
  * const updated = stream.update(0.42); // the bar closes
@@ -523,7 +523,7 @@ export function asinOpen(real: ArrayLike<number>, options?: AsinOptions): AsinSt
  * ```ts
  * import { asinOpenAndFill } from 'ta-lib';
  *
- * const series = Float64Array.from({ length: 252 }, (_, i) => Math.sin(0.1 * i));
+ * const series = Float64Array.from({ length: 252 }, (_, i) => -1 + 2 * i / 251.0);
  * const { stream, begIdx, values } = asinOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```

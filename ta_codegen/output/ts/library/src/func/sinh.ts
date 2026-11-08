@@ -487,7 +487,7 @@ export function sinhOpenAndFillPositional(
  * import { sinhOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   5 * Math.sin(0.1 * i));
+ *   -5 + 10 * i / 251.0);
  * const stream = sinhOpen(series);
  * const peeked = stream.peek(2.1); // a forming bar: commits nothing
  * const updated = stream.update(2.1); // the bar closes
@@ -521,7 +521,7 @@ export function sinhOpen(real: ArrayLike<number>, options?: SinhOptions): SinhSt
  * import { sinhOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   5 * Math.sin(0.1 * i));
+ *   -5 + 10 * i / 251.0);
  * const { stream, begIdx, values } = sinhOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```

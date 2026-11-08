@@ -13,7 +13,15 @@ VWAP is a running mean, not a moving average: it has no window and no decay, so 
 
 <ta-chart src="/functions/vwap.svg" ratio="720:342" label="VWAP over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outReal as a solid line; below it, a volume pane."></ta-chart>
 
-Drawn on the price pane over candles, with outReal as a solid line; below it, a volume pane. [Reference data (CSV)](/functions/vwap.csv) · [Chart (SVG)](/functions/vwap.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles, with outReal as a solid line; below it, a volume pane.
+
+Metadata flags used: `overlap` · `inPriceHLCV: high, low, close, volume` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/vwap.csv) · [Chart (SVG)](/functions/vwap.svg)
 
 ## Formula
 

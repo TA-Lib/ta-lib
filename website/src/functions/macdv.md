@@ -11,7 +11,15 @@ MACD-V, Alex Spiroglou's volatility-normalised MACD: the spread of a fast and a 
 
 <ta-chart src="/functions/macdv.svg" ratio="720:416" label="MACDV over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outMACDV as a solid line, outMACDVSignal as a dashed line and outMACDVHist as a sign-coloured histogram."></ta-chart>
 
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outMACDV as a solid line, outMACDVSignal as a dashed line and outMACDVHist as a sign-coloured histogram. [Reference data (CSV)](/functions/macdv.csv) · [Chart (SVG)](/functions/macdv.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outMACDV as a solid line, outMACDVSignal as a dashed line and outMACDVHist as a sign-coloured histogram.
+
+Metadata flags used: `inPriceHLC: high, low, close` · `outMACDV: line` · `outMACDVSignal: dash_line` · `outMACDVHist: histogram`
+
+:::
+
+[Reference data (CSV)](/functions/macdv.csv) · [Chart (SVG)](/functions/macdv.svg)
 
 ## Formula
 
@@ -183,7 +191,7 @@ TA-Lib Definition: [`macdv.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_cod
 | C# | [`Core_MACDV.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_MACDV.cs) |
 | TypeScript | [`macdv.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/macdv.ts) |
 
-Python: `talib.MACDV` (ta-lib-python 0.8.4 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
+Python: `talib.MACDV`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/momentum_indicators.html).
 
 TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 

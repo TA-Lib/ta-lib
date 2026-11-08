@@ -11,7 +11,15 @@ Slow Stochastic oscillator: locates the close within the high-low range over a l
 
 <ta-chart src="/functions/stoch.svg" ratio="720:416" label="STOCH over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSlowK as a dashed line and outSlowD as a dashed line."></ta-chart>
 
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSlowK as a dashed line and outSlowD as a dashed line. [Reference data (CSV)](/functions/stoch.csv) · [Chart (SVG)](/functions/stoch.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outSlowK as a dashed line and outSlowD as a dashed line.
+
+Metadata flags used: `inPriceHLC: high, low, close` · `outSlowK: dash_line` · `outSlowD: dash_line`
+
+:::
+
+[Reference data (CSV)](/functions/stoch.csv) · [Chart (SVG)](/functions/stoch.svg)
 
 ## Formula
 

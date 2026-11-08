@@ -11,7 +11,15 @@ WaveTrend Oscillator: how far the typical price sits from its own exponential av
 
 <ta-chart src="/functions/wavetrend.svg" ratio="720:416" label="WAVETREND over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outWT1 as a solid line and outWT2 as a dashed line."></ta-chart>
 
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outWT1 as a solid line and outWT2 as a dashed line. [Reference data (CSV)](/functions/wavetrend.csv) · [Chart (SVG)](/functions/wavetrend.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outWT1 as a solid line and outWT2 as a dashed line.
+
+Metadata flags used: `inPriceHLC: high, low, close` · `outWT1: line` · `outWT2: dash_line`
+
+:::
+
+[Reference data (CSV)](/functions/wavetrend.csv) · [Chart (SVG)](/functions/wavetrend.svg)
 
 ## Formula
 

@@ -11,7 +11,15 @@ Keltner Channels: three overlap lines around price. The centre line is an expone
 
 <ta-chart src="/functions/kc.svg" ratio="720:274" label="KC over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill."></ta-chart>
 
-Drawn on the price pane over candles, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill. [Reference data (CSV)](/functions/kc.csv) · [Chart (SVG)](/functions/kc.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles, with outRealMiddleBand as a solid line and a band between outRealUpperBand and outRealLowerBand with a soft fill.
+
+Metadata flags used: `overlap` · `inPriceHLC: high, low, close` · `outRealUpperBand: upper_limit` · `outRealMiddleBand: line` · `outRealLowerBand: lower_limit`
+
+:::
+
+[Reference data (CSV)](/functions/kc.csv) · [Chart (SVG)](/functions/kc.svg)
 
 ## Formula
 

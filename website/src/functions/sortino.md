@@ -11,7 +11,15 @@ The rolling Sortino ratio: the mean return in excess of a minimum acceptable ret
 
 <ta-chart src="/functions/sortino.svg" ratio="720:416" label="SORTINO over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/sortino.csv) · [Chart (SVG)](/functions/sortino.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line.
+
+Metadata flags used: `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/sortino.csv) · [Chart (SVG)](/functions/sortino.svg)
 
 ## Formula
 
@@ -157,7 +165,7 @@ TA-Lib Definition: [`sortino.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_c
 | C# | [`Core_SORTINO.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SORTINO.cs) |
 | TypeScript | [`sortino.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/sortino.ts) |
 
-Python: `talib.SORTINO` (ta-lib-python 0.8.4 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
+Python: `talib.SORTINO`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
 
 TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 

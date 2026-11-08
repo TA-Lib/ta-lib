@@ -487,10 +487,10 @@ export function log10OpenAndFillPositional(
  * import { log10Open } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   0.1 + 9.9 * i / 251.0);
  * const stream = log10Open(series);
- * const peeked = stream.peek(100.9); // a forming bar: commits nothing
- * const updated = stream.update(100.9); // the bar closes
+ * const peeked = stream.peek(7.129); // a forming bar: commits nothing
+ * const updated = stream.update(7.129); // the bar closes
  * ```
  */
 export function log10Open(real: ArrayLike<number>, options?: Log10Options): Log10Stream {
@@ -521,7 +521,7 @@ export function log10Open(real: ArrayLike<number>, options?: Log10Options): Log1
  * import { log10OpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   0.1 + 9.9 * i / 251.0);
  * const { stream, begIdx, values } = log10OpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```

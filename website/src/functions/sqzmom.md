@@ -13,7 +13,15 @@ John Carter's TTM Squeeze, in the form LazyBear published on TradingView in 2014
 
 <ta-chart src="/functions/sqzmom.svg" ratio="720:498" label="SQZMOM over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outMomentum as a sign-coloured histogram, then a step pane of its own for the integer output outSqueeze."></ta-chart>
 
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outMomentum as a sign-coloured histogram, then a step pane of its own for the integer output outSqueeze. [Reference data (CSV)](/functions/sqzmom.csv) · [Chart (SVG)](/functions/sqzmom.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outMomentum as a sign-coloured histogram, then a step pane of its own for the integer output outSqueeze.
+
+Metadata flags used: `inPriceHLC: high, low, close` · `outMomentum: histogram` · `outSqueeze: line`
+
+:::
+
+[Reference data (CSV)](/functions/sqzmom.csv) · [Chart (SVG)](/functions/sqzmom.svg)
 
 ## Formula
 

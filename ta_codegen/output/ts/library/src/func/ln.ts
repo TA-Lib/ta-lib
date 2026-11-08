@@ -488,10 +488,10 @@ export function lnOpenAndFillPositional(
  * import { lnOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   0.1 + 9.9 * i / 251.0);
  * const stream = lnOpen(series);
- * const peeked = stream.peek(100.9); // a forming bar: commits nothing
- * const updated = stream.update(100.9); // the bar closes
+ * const peeked = stream.peek(7.129); // a forming bar: commits nothing
+ * const updated = stream.update(7.129); // the bar closes
  * ```
  */
 export function lnOpen(real: ArrayLike<number>, options?: LnOptions): LnStream {
@@ -522,7 +522,7 @@ export function lnOpen(real: ArrayLike<number>, options?: LnOptions): LnStream {
  * import { lnOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   0.1 + 9.9 * i / 251.0);
  * const { stream, begIdx, values } = lnOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```

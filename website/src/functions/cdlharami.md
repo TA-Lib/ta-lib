@@ -11,7 +11,15 @@ Two-candle pattern: a long real body followed by a short real body contained wit
 
 <ta-chart src="/functions/cdlharami.svg" ratio="720:274" label="CDLHARAMI over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one, a weak call (80) hollow."></ta-chart>
 
-Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one, a weak call (80) hollow. [Reference data (CSV)](/functions/cdlharami.csv) · [Chart (SVG)](/functions/cdlharami.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one, a weak call (80) hollow.
+
+Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `outInteger: line, pattern_bull_bear, zero, positive, negative, pattern_weak`
+
+:::
+
+[Reference data (CSV)](/functions/cdlharami.csv) · [Chart (SVG)](/functions/cdlharami.svg)
 
 ## Notes
 

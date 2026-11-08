@@ -11,7 +11,15 @@ Momentum: current price minus the price optInTimePeriod bars ago. The absolute (
 
 <ta-chart src="/functions/mom.svg" ratio="720:416" label="MOM over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/mom.csv) · [Chart (SVG)](/functions/mom.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line.
+
+Metadata flags used: `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/mom.csv) · [Chart (SVG)](/functions/mom.svg)
 
 ## Formula
 

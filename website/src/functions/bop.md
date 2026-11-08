@@ -11,7 +11,15 @@ Balance Of Power compares where the close sits relative to the open, normalized 
 
 <ta-chart src="/functions/bop.svg" ratio="720:416" label="BOP over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
 
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/bop.csv) · [Chart (SVG)](/functions/bop.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line.
+
+Metadata flags used: `inPriceOHLC: open, high, low, close` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/bop.csv) · [Chart (SVG)](/functions/bop.svg)
 
 ## Formula
 

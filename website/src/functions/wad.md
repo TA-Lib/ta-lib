@@ -13,7 +13,15 @@ Williams' Accumulation/Distribution: a cumulative line meant to expose whether a
 
 <ta-chart src="/functions/wad.svg" ratio="720:416" label="WAD over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
 
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/wad.csv) · [Chart (SVG)](/functions/wad.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line.
+
+Metadata flags used: `inPriceHLC: high, low, close` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/wad.csv) · [Chart (SVG)](/functions/wad.svg)
 
 ## Formula
 

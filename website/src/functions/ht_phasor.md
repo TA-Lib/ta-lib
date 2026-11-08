@@ -13,7 +13,15 @@ This function is meant for building your own cycle analysis on top of the raw ph
 
 <ta-chart src="/functions/ht_phasor.svg" ratio="720:416" label="HT_PHASOR over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outInPhase as a solid line and outQuadrature as a dashed line."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outInPhase as a solid line and outQuadrature as a dashed line. [Reference data (CSV)](/functions/ht_phasor.csv) · [Chart (SVG)](/functions/ht_phasor.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outInPhase as a solid line and outQuadrature as a dashed line.
+
+Metadata flags used: `outInPhase: line` · `outQuadrature: dash_line`
+
+:::
+
+[Reference data (CSV)](/functions/ht_phasor.csv) · [Chart (SVG)](/functions/ht_phasor.svg)
 
 ## Formula
 

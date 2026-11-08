@@ -11,7 +11,15 @@ The rolling Sharpe ratio: the mean return in excess of a risk-free rate, divided
 
 <ta-chart src="/functions/sharpe.svg" ratio="720:416" label="SHARPE over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/sharpe.csv) · [Chart (SVG)](/functions/sharpe.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line.
+
+Metadata flags used: `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/sharpe.csv) · [Chart (SVG)](/functions/sharpe.svg)
 
 ## Formula
 
@@ -156,7 +164,7 @@ TA-Lib Definition: [`sharpe.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_co
 | C# | [`Core_SHARPE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_SHARPE.cs) |
 | TypeScript | [`sharpe.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/sharpe.ts) |
 
-Python: `talib.SHARPE` (ta-lib-python 0.8.4 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
+Python: `talib.SHARPE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/statistic_functions.html).
 
 TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 

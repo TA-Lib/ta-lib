@@ -5,6 +5,8 @@ flags: [stream]
 inputs:
   - name: inReal
     type: real
+    series: ramp
+    domain: [-3, 3]
 outputs:
   - name: outReal
     type: real

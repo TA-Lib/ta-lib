@@ -11,7 +11,15 @@ The stochastic oscillator as it is drawn on Chinese-market platforms: the Slow-%
 
 <ta-chart src="/functions/kdj.svg" ratio="720:416" label="KDJ over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outK as a solid line, outD as a solid line and outJ as a solid line."></ta-chart>
 
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outK as a solid line, outD as a solid line and outJ as a solid line. [Reference data (CSV)](/functions/kdj.csv) · [Chart (SVG)](/functions/kdj.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outK as a solid line, outD as a solid line and outJ as a solid line.
+
+Metadata flags used: `inPriceHLC: high, low, close` · `outK: line` · `outD: line` · `outJ: line`
+
+:::
+
+[Reference data (CSV)](/functions/kdj.csv) · [Chart (SVG)](/functions/kdj.svg)
 
 ## Formula
 

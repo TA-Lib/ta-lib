@@ -11,7 +11,15 @@ Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from *Trading fo
 
 <ta-chart src="/functions/eri.svg" ratio="720:416" label="ERI over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outBullPower as a solid line and outBearPower as a solid line."></ta-chart>
 
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outBullPower as a solid line and outBearPower as a solid line. [Reference data (CSV)](/functions/eri.csv) · [Chart (SVG)](/functions/eri.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outBullPower as a solid line and outBearPower as a solid line.
+
+Metadata flags used: `inPriceHLC: high, low, close` · `outBullPower: line` · `outBearPower: line`
+
+:::
+
+[Reference data (CSV)](/functions/eri.csv) · [Chart (SVG)](/functions/eri.svg)
 
 ## Formula
 

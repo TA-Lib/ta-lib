@@ -486,10 +486,10 @@ export function atanOpenAndFillPositional(
  * import { atanOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   -5 + 10 * i / 251.0);
  * const stream = atanOpen(series);
- * const peeked = stream.peek(100.9); // a forming bar: commits nothing
- * const updated = stream.update(100.9); // the bar closes
+ * const peeked = stream.peek(2.1); // a forming bar: commits nothing
+ * const updated = stream.update(2.1); // the bar closes
  * ```
  */
 export function atanOpen(real: ArrayLike<number>, options?: AtanOptions): AtanStream {
@@ -520,7 +520,7 @@ export function atanOpen(real: ArrayLike<number>, options?: AtanOptions): AtanSt
  * import { atanOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   -5 + 10 * i / 251.0);
  * const { stream, begIdx, values } = atanOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```

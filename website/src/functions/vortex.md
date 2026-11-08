@@ -13,7 +13,15 @@ A +VI line crossing above −VI is the bullish signal the authors describe; the 
 
 <ta-chart src="/functions/vortex.svg" ratio="720:416" label="VORTEX over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outPlusVI as a solid line and outMinusVI as a solid line."></ta-chart>
 
-Drawn on the price pane over candles; below it, a separate indicator pane showing outPlusVI as a solid line and outMinusVI as a solid line. [Reference data (CSV)](/functions/vortex.csv) · [Chart (SVG)](/functions/vortex.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outPlusVI as a solid line and outMinusVI as a solid line.
+
+Metadata flags used: `inPriceHLC: high, low, close` · `outPlusVI: line` · `outMinusVI: line`
+
+:::
+
+[Reference data (CSV)](/functions/vortex.csv) · [Chart (SVG)](/functions/vortex.svg)
 
 ## Formula
 

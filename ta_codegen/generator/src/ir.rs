@@ -630,11 +630,43 @@ pub struct Input {
     /// `parser::yaml` expands it into one `Input` per component, tagging each with the
     /// bundle it came from; `backends::price_bundle` folds them back for `ta_abstract`.
     pub price: Option<PriceRef>,
-    /// `[lo, hi]`: the range over which the function is defined or meaningful,
-    /// on an example scale (`[-1, 1]` for ACOS). Every example series, doctest
-    /// and reference-data input maps the default price series affinely into it;
-    /// `None` feeds the price series as is.
+    /// What every example series, doctest and reference-data run feeds this input.
+    pub series: Series,
+    /// `[lo, hi]`: the range a `Ramp` or `Sine` series spans (`[-1, 1]` for ACOS).
+    /// `Some` exactly when `series` is not `Price`.
     pub domain: Option<(f64, f64)>,
+}
+
+/// The data an example feeds a `real` input: the reference price column, or a
+/// synthetic series spanning the input's `domain` for a function the price scale
+/// would take out of its domain.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Series {
+    #[default]
+    Price,
+    /// A straight line from `lo` on the first bar to `hi` on the last.
+    Ramp,
+    /// `mid + half * sin(0.1 * i)`, the examples' default sine mapped into the domain.
+    Sine,
+}
+
+impl Series {
+    pub fn from_token(s: &str) -> Option<Self> {
+        match s {
+            "price" => Some(Series::Price),
+            "ramp" => Some(Series::Ramp),
+            "sine" => Some(Series::Sine),
+            _ => None,
+        }
+    }
+
+    pub fn token(self) -> &'static str {
+        match self {
+            Series::Price => "price",
+            Series::Ramp => "ramp",
+            Series::Sine => "sine",
+        }
+    }
 }
 
 impl Input {
@@ -645,6 +677,7 @@ impl Input {
             name: name.into(),
             param_type,
             price: None,
+            series: Series::Price,
             domain: None,
         }
     }

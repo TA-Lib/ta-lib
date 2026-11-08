@@ -2,7 +2,7 @@ use std::path::Path;
 
 use serde::Deserialize;
 
-use crate::ir::{FuncDef, Input, OptInput, Output, ParamType, PriceComponent, PriceRef};
+use crate::ir::{FuncDef, Input, OptInput, Output, ParamType, PriceComponent, PriceRef, Series};
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -46,7 +46,8 @@ struct YamlInput {
     param_type: String,
     /// For price inputs: which OHLCV components are used.
     price_components: Option<Vec<String>>,
-    /// For `real` inputs: `[lo, hi]`, see `ir::Input::domain`.
+    /// For `real` inputs: see `ir::Input::series` and `ir::Input::domain`.
+    series: Option<String>,
     domain: Option<Vec<f64>>,
 }
 
@@ -97,10 +98,16 @@ fn yaml_val_to_f64(v: &serde_yaml::Value) -> f64 {
     }
 }
 
-/// An input's type and, checked against it, its `domain: [lo, hi]` (a `real`
-/// input's only).
-fn parse_input_type(p: &mut YamlInput, path: &Path) -> (ParamType, Option<(f64, f64)>) {
+/// An input's type and, checked against it, its `series` and `domain: [lo, hi]`
+/// (a `real` input's only; a synthetic series and a domain come together).
+fn parse_input_type(p: &mut YamlInput, path: &Path) -> (ParamType, Series, Option<(f64, f64)>) {
     let pt = parse_param_type(&p.param_type, p.price_components.take());
+    let series = p.series.take().map_or(Series::Price, |s| {
+        assert!(pt == ParamType::Real, "{}: input `{}`: `series` needs a `real` input", path.display(), p.name);
+        Series::from_token(&s).unwrap_or_else(|| {
+            panic!("{}: input `{}`: `series` is `price`, `ramp` or `sine`, not {s:?}", path.display(), p.name)
+        })
+    });
     let domain = p.domain.take().map(|d| {
         assert!(
             pt == ParamType::Real,
@@ -116,7 +123,13 @@ fn parse_input_type(p: &mut YamlInput, path: &Path) -> (ParamType, Option<(f64, 
         );
         (d[0], d[1])
     });
-    (pt, domain)
+    assert!(
+        (series == Series::Price) == domain.is_none(),
+        "{}: input `{}`: `series: ramp` or `series: sine` and `domain: [lo, hi]` go together",
+        path.display(),
+        p.name
+    );
+    (pt, series, domain)
 }
 
 fn parse_param_type(s: &str, price_components: Option<Vec<String>>) -> ParamType {
@@ -255,7 +268,7 @@ pub fn parse_yaml_str(content: &str, path: &Path) -> FuncDef {
         .inputs
         .into_iter()
         .flat_map(|mut p| {
-            let (pt, domain) = parse_input_type(&mut p, path);
+            let (pt, series, domain) = parse_input_type(&mut p, path);
             match pt {
                 ParamType::Price(components) => {
                     let group = next_price_group;
@@ -272,15 +285,13 @@ pub fn parse_yaml_str(content: &str, path: &Path) -> FuncDef {
                                     )
                                 });
                             Input {
-                                name: component.input_name().to_string(),
-                                param_type: ParamType::Real,
                                 price: Some(PriceRef { group, component }),
-                                domain: None,
+                                ..Input::new(component.input_name(), ParamType::Real)
                             }
                         })
                         .collect::<Vec<_>>()
                 }
-                other => vec![Input { name: p.name.clone(), param_type: other, price: None, domain }],
+                other => vec![Input { name: p.name.clone(), param_type: other, price: None, series, domain }],
             }
         })
         .collect();

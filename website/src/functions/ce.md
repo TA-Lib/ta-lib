@@ -11,7 +11,15 @@ Le Beau's Chandelier Exit, a two-line volatility stop. The highest high of the w
 
 <ta-chart src="/functions/ce.svg" ratio="720:274" label="CE over IBM, daily, 1999" alt="Drawn on the price pane over candles, with a band between outRealShort and outRealLong with a soft fill."></ta-chart>
 
-Drawn on the price pane over candles, with a band between outRealShort and outRealLong with a soft fill. [Reference data (CSV)](/functions/ce.csv) · [Chart (SVG)](/functions/ce.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles, with a band between outRealShort and outRealLong with a soft fill.
+
+Metadata flags used: `overlap` · `inPriceHLC: high, low, close` · `outRealLong: lower_limit` · `outRealShort: upper_limit`
+
+:::
+
+[Reference data (CSV)](/functions/ce.csv) · [Chart (SVG)](/functions/ce.svg)
 
 ## Formula
 
@@ -169,7 +177,7 @@ TA-Lib Definition: [`ce.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codege
 | C# | [`Core_CE.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_CE.cs) |
 | TypeScript | [`ce.ts`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/ts/library/src/func/ce.ts) |
 
-Python: `talib.CE` (ta-lib-python 0.8.4 or later), see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
+Python: `talib.CE`, see [ta-lib-python](https://ta-lib.github.io/ta-lib-python/func_groups/overlap_studies.html).
 
 TA-Lib is also available for R and more using a [wrapper](/install/#wrappers).
 

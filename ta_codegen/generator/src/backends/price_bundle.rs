@@ -171,6 +171,7 @@ mod tests {
             name: c.input_name().to_string(),
             param_type: ParamType::Real,
             price: Some(PriceRef { group, component: c }),
+            series: crate::ir::Series::Price,
             domain: None,
         }
     }

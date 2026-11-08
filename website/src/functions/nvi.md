@@ -14,7 +14,15 @@ The premise is that quiet, low-volume days reflect the actions of well-informed
 
 <ta-chart src="/functions/nvi.svg" ratio="720:484" label="NVI over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line, then a volume pane."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line, then a volume pane. [Reference data (CSV)](/functions/nvi.csv) · [Chart (SVG)](/functions/nvi.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line, then a volume pane.
+
+Metadata flags used: `inPriceCV: close, volume` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/nvi.csv) · [Chart (SVG)](/functions/nvi.svg)
 
 ## Formula
 

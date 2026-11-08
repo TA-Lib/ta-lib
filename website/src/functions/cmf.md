@@ -17,7 +17,15 @@ Created by Marc Chaikin, who also authored the [`AD`](/functions/ad.md) line thi
 
 <ta-chart src="/functions/cmf.svg" ratio="720:484" label="CMF over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane."></ta-chart>
 
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane. [Reference data (CSV)](/functions/cmf.csv) · [Chart (SVG)](/functions/cmf.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane.
+
+Metadata flags used: `inPriceHLCV: high, low, close, volume` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/cmf.csv) · [Chart (SVG)](/functions/cmf.svg)
 
 ## Formula
 

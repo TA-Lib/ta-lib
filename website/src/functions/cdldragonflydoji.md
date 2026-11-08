@@ -11,7 +11,15 @@ Single-candle pattern: a doji (open and close nearly equal) sitting at the top o
 
 <ta-chart src="/functions/cdldragonflydoji.svg" ratio="720:274" label="CDLDRAGONFLYDOJI over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags."></ta-chart>
 
-Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags. [Reference data (CSV)](/functions/cdldragonflydoji.csv) · [Chart (SVG)](/functions/cdldragonflydoji.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles, with outInteger as a diamond above the high of every bar it flags.
+
+Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `outInteger: line, pattern_bool, zero, positive`
+
+:::
+
+[Reference data (CSV)](/functions/cdldragonflydoji.csv) · [Chart (SVG)](/functions/cdldragonflydoji.svg)
 
 ## Formula
 

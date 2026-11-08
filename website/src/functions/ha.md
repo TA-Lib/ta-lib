@@ -15,7 +15,15 @@ Read the result as a trend filter rather than as price: consecutive candles of o
 
 <ta-chart src="/functions/ha.svg" ratio="720:274" label="HA over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outHAOpen as a solid line, outHAClose as a solid line and a band between outHAHigh and outHALow with a soft fill."></ta-chart>
 
-Drawn on the price pane over candles, with outHAOpen as a solid line, outHAClose as a solid line and a band between outHAHigh and outHALow with a soft fill. [Reference data (CSV)](/functions/ha.csv) · [Chart (SVG)](/functions/ha.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles, with outHAOpen as a solid line, outHAClose as a solid line and a band between outHAHigh and outHALow with a soft fill.
+
+Metadata flags used: `overlap` · `inPriceOHLC: open, high, low, close` · `outHAOpen: line` · `outHAHigh: line, upper_limit` · `outHALow: line, lower_limit` · `outHAClose: line`
+
+:::
+
+[Reference data (CSV)](/functions/ha.csv) · [Chart (SVG)](/functions/ha.svg)
 
 ## Formula
 

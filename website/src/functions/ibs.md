@@ -13,7 +13,15 @@ It is the closing half of a stochastic oscillator taken over a single bar, which
 
 <ta-chart src="/functions/ibs.svg" ratio="720:416" label="IBS over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line."></ta-chart>
 
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line. [Reference data (CSV)](/functions/ibs.csv) · [Chart (SVG)](/functions/ibs.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line.
+
+Metadata flags used: `inPriceHLC: high, low, close` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/ibs.csv) · [Chart (SVG)](/functions/ibs.svg)
 
 ## Formula
 

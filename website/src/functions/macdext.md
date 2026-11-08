@@ -11,7 +11,15 @@ MACD variant where the fast, slow, and signal moving averages each use a user-se
 
 <ta-chart src="/functions/macdext.svg" ratio="720:416" label="MACDEXT over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram. [Reference data (CSV)](/functions/macdext.csv) · [Chart (SVG)](/functions/macdext.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram.
+
+Metadata flags used: `outMACD: line` · `outMACDSignal: dash_line` · `outMACDHist: histogram`
+
+:::
+
+[Reference data (CSV)](/functions/macdext.csv) · [Chart (SVG)](/functions/macdext.svg)
 
 ## Formula
 

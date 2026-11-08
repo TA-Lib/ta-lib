@@ -521,10 +521,10 @@ export function subOpenAndFillPositional(
  * const series0 = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
  * const series1 = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i + 0.7));
+ *   95 + 10 * i / 251.0);
  * const stream = subOpen(series0, series1);
- * const peeked = stream.peek(100.9, 101.3); // a forming bar: commits nothing
- * const updated = stream.update(100.9, 101.3); // the bar closes
+ * const peeked = stream.peek(104.2, 102.1); // a forming bar: commits nothing
+ * const updated = stream.update(104.2, 102.1); // the bar closes
  * ```
  */
 export function subOpen(real0: ArrayLike<number>, real1: ArrayLike<number>, options?: SubOptions): SubStream {
@@ -559,7 +559,7 @@ export function subOpen(real0: ArrayLike<number>, real1: ArrayLike<number>, opti
  * const series0 = Float64Array.from({ length: 252 }, (_, i) =>
  *   100 + 10 * Math.sin(0.1 * i));
  * const series1 = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i + 0.7));
+ *   95 + 10 * i / 251.0);
  * const { stream, begIdx, values } = subOpenAndFill(series0, series1);
  * // values[k] is the value at bar begIdx + k
  * ```

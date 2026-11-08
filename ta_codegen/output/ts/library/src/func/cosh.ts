@@ -488,7 +488,7 @@ export function coshOpenAndFillPositional(
  * import { coshOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   5 * Math.sin(0.1 * i));
+ *   -5 + 10 * i / 251.0);
  * const stream = coshOpen(series);
  * const peeked = stream.peek(2.1); // a forming bar: commits nothing
  * const updated = stream.update(2.1); // the bar closes
@@ -522,7 +522,7 @@ export function coshOpen(real: ArrayLike<number>, options?: CoshOptions): CoshSt
  * import { coshOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   5 * Math.sin(0.1 * i));
+ *   -5 + 10 * i / 251.0);
  * const { stream, begIdx, values } = coshOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```

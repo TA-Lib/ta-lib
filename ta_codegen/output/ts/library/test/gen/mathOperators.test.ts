@@ -49,7 +49,7 @@ test('ADD: add example', () => {
   const series0 = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.sin(0.1 * i);
   const series1 = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series1[i] = 100 + 10 * Math.sin(0.1 * i + 0.7);
+  for (let i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
 
   const { begIdx, values } = add(series0, series1);
   console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
@@ -64,10 +64,10 @@ test('ADD: addOpen example', () => {
   const series0 = Float64Array.from({ length: 252 }, (_, i) =>
     100 + 10 * Math.sin(0.1 * i));
   const series1 = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i + 0.7));
+    95 + 10 * i / 251.0);
   const stream = addOpen(series0, series1);
-  const peeked = stream.peek(100.9, 101.3); // a forming bar: commits nothing
-  const updated = stream.update(100.9, 101.3); // the bar closes
+  const peeked = stream.peek(104.2, 102.1); // a forming bar: commits nothing
+  const updated = stream.update(104.2, 102.1); // the bar closes
 
   assert.ok(Object.is(peeked, updated));
   assert.ok(Object.is(stream.value(), updated));
@@ -79,7 +79,7 @@ test('ADD: addOpenAndFill example', () => {
   const series0 = Float64Array.from({ length: 252 }, (_, i) =>
     100 + 10 * Math.sin(0.1 * i));
   const series1 = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i + 0.7));
+    95 + 10 * i / 251.0);
   const { stream, begIdx, values } = addOpenAndFill(series0, series1);
   // values[k] is the value at bar begIdx + k
 
@@ -139,7 +139,7 @@ test('DIV: div example', () => {
   const series0 = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.sin(0.1 * i);
   const series1 = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series1[i] = 100 + 10 * Math.sin(0.1 * i + 0.7);
+  for (let i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
 
   const { begIdx, values } = div(series0, series1);
   console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
@@ -154,10 +154,10 @@ test('DIV: divOpen example', () => {
   const series0 = Float64Array.from({ length: 252 }, (_, i) =>
     100 + 10 * Math.sin(0.1 * i));
   const series1 = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i + 0.7));
+    95 + 10 * i / 251.0);
   const stream = divOpen(series0, series1);
-  const peeked = stream.peek(100.9, 101.3); // a forming bar: commits nothing
-  const updated = stream.update(100.9, 101.3); // the bar closes
+  const peeked = stream.peek(104.2, 102.1); // a forming bar: commits nothing
+  const updated = stream.update(104.2, 102.1); // the bar closes
 
   assert.ok(Object.is(peeked, updated));
   assert.ok(Object.is(stream.value(), updated));
@@ -169,7 +169,7 @@ test('DIV: divOpenAndFill example', () => {
   const series0 = Float64Array.from({ length: 252 }, (_, i) =>
     100 + 10 * Math.sin(0.1 * i));
   const series1 = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i + 0.7));
+    95 + 10 * i / 251.0);
   const { stream, begIdx, values } = divOpenAndFill(series0, series1);
   // values[k] is the value at bar begIdx + k
 
@@ -477,7 +477,7 @@ test('MULT: mult example', () => {
   const series0 = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.sin(0.1 * i);
   const series1 = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series1[i] = 100 + 10 * Math.sin(0.1 * i + 0.7);
+  for (let i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
 
   const { begIdx, values } = mult(series0, series1);
   console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
@@ -492,10 +492,10 @@ test('MULT: multOpen example', () => {
   const series0 = Float64Array.from({ length: 252 }, (_, i) =>
     100 + 10 * Math.sin(0.1 * i));
   const series1 = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i + 0.7));
+    95 + 10 * i / 251.0);
   const stream = multOpen(series0, series1);
-  const peeked = stream.peek(100.9, 101.3); // a forming bar: commits nothing
-  const updated = stream.update(100.9, 101.3); // the bar closes
+  const peeked = stream.peek(104.2, 102.1); // a forming bar: commits nothing
+  const updated = stream.update(104.2, 102.1); // the bar closes
 
   assert.ok(Object.is(peeked, updated));
   assert.ok(Object.is(stream.value(), updated));
@@ -507,7 +507,7 @@ test('MULT: multOpenAndFill example', () => {
   const series0 = Float64Array.from({ length: 252 }, (_, i) =>
     100 + 10 * Math.sin(0.1 * i));
   const series1 = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i + 0.7));
+    95 + 10 * i / 251.0);
   const { stream, begIdx, values } = multOpenAndFill(series0, series1);
   // values[k] is the value at bar begIdx + k
 
@@ -525,7 +525,7 @@ test('SUB: sub example', () => {
   const series0 = new Float64Array(252); // your data, oldest first
   for (let i = 0; i < 252; i++) series0[i] = 100 + 10 * Math.sin(0.1 * i);
   const series1 = new Float64Array(252); // your data, oldest first
-  for (let i = 0; i < 252; i++) series1[i] = 100 + 10 * Math.sin(0.1 * i + 0.7);
+  for (let i = 0; i < 252; i++) series1[i] = 95 + 10 * i / 251.0;
 
   const { begIdx, values } = sub(series0, series1);
   console.log(values.length + ' values from bar ' + begIdx + '; last values = ' + values[values.length - 1]);
@@ -540,10 +540,10 @@ test('SUB: subOpen example', () => {
   const series0 = Float64Array.from({ length: 252 }, (_, i) =>
     100 + 10 * Math.sin(0.1 * i));
   const series1 = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i + 0.7));
+    95 + 10 * i / 251.0);
   const stream = subOpen(series0, series1);
-  const peeked = stream.peek(100.9, 101.3); // a forming bar: commits nothing
-  const updated = stream.update(100.9, 101.3); // the bar closes
+  const peeked = stream.peek(104.2, 102.1); // a forming bar: commits nothing
+  const updated = stream.update(104.2, 102.1); // the bar closes
 
   assert.ok(Object.is(peeked, updated));
   assert.ok(Object.is(stream.value(), updated));
@@ -555,7 +555,7 @@ test('SUB: subOpenAndFill example', () => {
   const series0 = Float64Array.from({ length: 252 }, (_, i) =>
     100 + 10 * Math.sin(0.1 * i));
   const series1 = Float64Array.from({ length: 252 }, (_, i) =>
-    100 + 10 * Math.sin(0.1 * i + 0.7));
+    95 + 10 * i / 251.0);
   const { stream, begIdx, values } = subOpenAndFill(series0, series1);
   // values[k] is the value at bar begIdx + k
 

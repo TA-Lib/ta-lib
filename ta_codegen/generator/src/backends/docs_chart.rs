@@ -45,7 +45,7 @@ pub const STYLE: &str = ".ta-chart{font-family:ui-sans-serif,system-ui,sans-seri
 /// a header row `date,open,high,low,close,volume,<inputs>,<outputs>` and one row
 /// per bar where an output cell is empty before its first value. The input
 /// columns are the real inputs not fed a plain price column, named after the
-/// argument (`inReal` for a domain-mapped close, `inPeriods`), and a column
+/// argument (`inReal` for a synthetic series, `inPeriods`), and a column
 /// between `volume` and the outputs is one when `# inputs:` names it.
 #[derive(Debug, Clone, Default)]
 pub struct RefData {
@@ -59,7 +59,7 @@ pub struct RefData {
     pub outputs: Vec<(String, Vec<Option<f64>>)>,
     pub shifts: HashMap<String, i32>,
     /// `# inputs:` items, `(argument, source)`: `("inReal", "close")`,
-    /// `("inPriceHLC", "HLC")`, `("inReal", "unit(close)")`.
+    /// `("inPriceHLC", "HLC")`, `("inReal", "ramp[-1,1]")`.
     pub input_desc: Vec<(String, String)>,
     /// `# parameters:` items, `(name, value)`.
     pub parameters: Vec<(String, String)>,
@@ -217,6 +217,21 @@ impl RefData {
         self.series.as_deref().unwrap_or(SERIES_CAPTION)
     }
 
+    /// Every input the function read was synthesised: the price columns are in
+    /// the file but the chart shows none of them, so it must not claim the series.
+    fn all_inputs_synthetic(&self) -> bool {
+        !self.input_desc.is_empty() && self.input_desc.iter().all(|(_, v)| synthetic_source(v).is_some())
+    }
+
+    /// The caption's lead: the series, or the bar count when no price was read.
+    fn caption_lead(&self) -> String {
+        if self.all_inputs_synthetic() {
+            plural(u32::try_from(self.dates.len()).unwrap_or(u32::MAX), "bar")
+        } else {
+            self.series_caption().to_string()
+        }
+    }
+
     /// Component letters the header names (`inPriceHLC=HLC`), lower-cased tokens.
     fn header_components(&self) -> Vec<&'static str> {
         let mut comps = Vec::new();
@@ -239,13 +254,41 @@ impl RefData {
         comps
     }
 
-    /// `inReal=close->[lo,hi]`: the function read the close mapped into `[lo, hi]`,
-    /// and the chart plots that column as its input; `(argument, source)`.
-    fn mapped_input(&self) -> Option<(&str, &str)> {
+    /// `inReal=ramp[lo,hi]` or `sine[lo,hi]`: the inputs the reference run synthesised,
+    /// whose columns the top pane plots in place of the close; `(argument, source)`.
+    fn synthetic_inputs(&self) -> Vec<(&str, &str)> {
         self.input_desc
             .iter()
-            .find(|(_, v)| v.starts_with("close->["))
+            .filter(|(_, v)| synthetic_source(v).is_some())
             .map(|(k, v)| (k.as_str(), v.as_str()))
+            .collect()
+    }
+}
+
+/// `ramp[lo,hi]` or `sine[lo,hi]` as `(kind, lo, hi)`; `None` for any other source.
+fn synthetic_source(src: &str) -> Option<(&str, &str, &str)> {
+    let (kind, rest) = src.split_once('[')?;
+    if !matches!(kind, "ramp" | "sine") {
+        return None;
+    }
+    let (lo, hi) = rest.strip_suffix(']')?.split_once(',')?;
+    Some((kind, lo, hi))
+}
+
+/// A synthetic source in words, for prose: "a ramp from -1 to 1", "a sine between 90 and 110".
+fn synthetic_words(src: &str) -> String {
+    match synthetic_source(src) {
+        Some(("ramp", lo, hi)) => format!("a ramp from {lo} to {hi}"),
+        Some((_, lo, hi)) => format!("a sine between {lo} and {hi}"),
+        None => src.to_string(),
+    }
+}
+
+/// A synthetic source for the caption: `ramp [-1, 1]`.
+fn synthetic_caption(src: &str) -> String {
+    match synthetic_source(src) {
+        Some((kind, lo, hi)) => format!("{kind} [{lo}, {hi}]"),
+        None => src.to_string(),
     }
 }
 
@@ -256,6 +299,9 @@ pub struct Chart {
     pub label: String,
     /// One plain-English sentence stating how the chart is drawn.
     pub sentence: String,
+    /// The metadata that decided the drawing, as the site lists it: the function
+    /// flags, then the inputs that shaped the panes, then each output with its flags.
+    pub flags_used: Vec<String>,
     pub width: u32,
     pub height: u32,
 }
@@ -821,13 +867,63 @@ fn layout(plan: &Plan<'_>) -> Layout {
     }
 }
 
-/// The series the top pane shows as the input: the close, or the input column
-/// when the reference run fed the function a transformed close.
-fn base_series(data: &RefData, mapped: Option<(&str, &str)>) -> Vec<Option<f64>> {
-    match mapped {
-        Some((arg, _)) => data.input(arg).expect("parse requires the column").to_vec(),
-        None => data.close.iter().map(|v| Some(*v)).collect(),
+/// The lines the top pane shows as the input, `(legend name, values)`: the close,
+/// or every synthetic input column the reference run fed the function.
+fn base_series<'d>(data: &'d RefData, synthetic: &[(&'d str, &str)]) -> Vec<(&'d str, Vec<Option<f64>>)> {
+    if synthetic.is_empty() {
+        return vec![("close", data.close.iter().map(|v| Some(*v)).collect())];
     }
+    synthetic
+        .iter()
+        .map(|(arg, _)| (*arg, data.input(arg).expect("parse requires the column").to_vec()))
+        .collect()
+}
+
+/// The k-th input line's `(path class, legend slot)`: the close's neutral stroke,
+/// then the slot the overlap outputs reach last.
+fn input_line_class(k: usize) -> (&'static str, &'static str) {
+    if k == 0 { ("close", "close") } else { ("line s5", "s5") }
+}
+
+/// What decided the drawing, in the site's order: the function's `overlap` or
+/// `candlestick` flag, the price bundles and synthetic inputs, then every output's
+/// flags with its display shift when it has one.
+fn flags_used(func: &FuncDef, data: &RefData) -> Vec<String> {
+    let mut used: Vec<String> = Vec::new();
+    for flag in ["overlap", "candlestick"] {
+        if has(&func.flags, flag) {
+            used.push(flag.to_string());
+        }
+    }
+    let mut groups_seen: Vec<usize> = Vec::new();
+    for input in &func.inputs {
+        if let Some(p) = input.price {
+            if groups_seen.contains(&p.group) {
+                continue;
+            }
+            groups_seen.push(p.group);
+            let comps: Vec<PriceComponent> = func
+                .inputs
+                .iter()
+                .filter_map(|i| i.price.filter(|q| q.group == p.group).map(|q| q.component))
+                .collect();
+            let comps = super::price_bundle::canonical(&comps);
+            let names: Vec<&str> = comps.iter().map(|c| c.token()).collect();
+            used.push(format!("{}: {}", super::price_bundle::canonical_name(&comps), names.join(", ")));
+        } else if let Some((lo, hi)) = input.domain {
+            used.push(format!("{}: series {} [{}, {}]", input.name, input.series.token(), fmt(lo), fmt(hi)));
+        }
+    }
+    for o in &func.outputs {
+        let shift = data.shift(&o.name);
+        let flags: Vec<String> = o
+            .flags
+            .iter()
+            .map(|f| if f == "display_shift" && shift != 0 { format!("{f} ({shift:+})") } else { f.clone() })
+            .collect();
+        used.push(if flags.is_empty() { o.name.clone() } else { format!("{}: {}", o.name, flags.join(", ")) });
+    }
+    used
 }
 
 /// The overlap outputs: strokes, the band fill, and each one's legend row.
@@ -979,10 +1075,21 @@ fn draw_pattern_markers<'p>(
         let mut ph = if is_bool {
             format!("{} as a diamond above the high of every bar it flags", o.name)
         } else {
-            format!(
-                "{} as markers on the candles, \u{25B2} below the low for a bullish call and \u{25BC} above the high for a bearish one",
-                o.name
-            )
+            let mut calls: Vec<String> = Vec::new();
+            if has(&o.flags, "positive") {
+                calls.push("\u{25B2} below the low for a bullish call".to_string());
+            }
+            if has(&o.flags, "negative") {
+                calls.push(format!(
+                    "\u{25BC} above the high for a bearish {}",
+                    if calls.is_empty() { "call" } else { "one" }
+                ));
+            }
+            let mut ph = format!("{} as markers on the candles", o.name);
+            if !calls.is_empty() {
+                let _ = write!(ph, ", {}", join_and(&calls));
+            }
+            ph
         };
         if !is_bool {
             let mut grades = Vec::new();
@@ -1226,9 +1333,9 @@ fn draw_caption(cv: &mut Canvas<'_>, total_h: f64) {
         .data
         .input_desc
         .iter()
-        .map(|(k, v)| component_names(v).unwrap_or_else(|| format!("{k} = {v}")))
+        .map(|(k, v)| component_names(v).unwrap_or_else(|| format!("{k} = {}", synthetic_caption(v))))
         .collect();
-    let mut cap = format!("{} \u{B7} input: {}", cv.data.series_caption(), ins.join(" \u{B7} "));
+    let mut cap = format!("{} \u{B7} input: {}", cv.data.caption_lead(), ins.join(" \u{B7} "));
     if !cv.data.parameters.is_empty() {
         cap.push_str(" \u{B7} default parameters");
     }
@@ -1246,6 +1353,17 @@ fn px(v: f64) -> u32 {
     v.round().max(0.0) as u32
 }
 
+/// The SVG's accessible name: `<N> over <series>`, or over the synthetic inputs in
+/// words when the function read no price.
+fn chart_label(func: &FuncDef, data: &RefData, synthetic: &[(&str, &str)]) -> String {
+    if data.all_inputs_synthetic() {
+        let words: Vec<String> = synthetic.iter().map(|(_, src)| synthetic_words(src)).collect();
+        format!("{} over {}", func.name, join_and(&words))
+    } else {
+        format!("{} over {}", func.name, data.series_caption())
+    }
+}
+
 pub fn render(func: &FuncDef, data: &RefData) -> Chart {
     let plan = plan(func, data);
     let bars = data.dates.len();
@@ -1258,13 +1376,15 @@ pub fn render(func: &FuncDef, data: &RefData) -> Chart {
         .max(0);
     let Layout { mut price, mut ind, mut steps, mut vol, total_h } = layout(&plan);
 
-    let mapped = if plan.candles { None } else { data.mapped_input() };
-    let base = base_series(data, mapped);
+    let synthetic = if plan.candles { Vec::new() } else { data.synthetic_inputs() };
+    let base = base_series(data, &synthetic);
     if plan.candles {
         price.extend_plain(&data.high);
         price.extend_plain(&data.low);
     } else {
-        price.extend(&base);
+        for (_, vals) in &base {
+            price.extend(vals);
+        }
     }
     for o in &plan.price_outs {
         price.extend(data.output(&o.name));
@@ -1272,7 +1392,7 @@ pub fn render(func: &FuncDef, data: &RefData) -> Chart {
     price.finish(0.05, false);
 
     let mut cv = Canvas::new(data, bars, max_shift);
-    let label = format!("{} over {}", func.name, data.series_caption());
+    let label = chart_label(func, data, &synthetic);
     let _ = writeln!(
         cv.out,
         "<svg class=\"ta-chart\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 {} {}\" role=\"img\" aria-label=\"{}\">",
@@ -1283,17 +1403,32 @@ pub fn render(func: &FuncDef, data: &RefData) -> Chart {
     cv.out.push_str(&format!("<style>{STYLE}</style>"));
 
     cv.grid(&price, false);
+    let mut legend: Vec<LegendItem<'_>> = Vec::new();
     let mut sentence = if plan.candles {
         cv.candles(&price);
         "Drawn on the price pane over candles".to_string()
     } else {
-        cv.polyline(&price, &base, "close", 0);
-        match mapped {
-            Some((_, src)) => format!("Drawn on the price pane over the input, {src}, as a line"),
-            None => "Drawn on the price pane over the close as a line".to_string(),
+        for (k, (name, vals)) in base.iter().enumerate() {
+            let (path_cls, cls) = input_line_class(k);
+            cv.polyline(&price, vals, path_cls, 0);
+            if !synthetic.is_empty() {
+                legend.push(LegendItem { mark: LegendMark::Line { cls, dashed: false }, text: (*name).to_string() });
+            }
+        }
+        match synthetic.as_slice() {
+            [] => "Drawn on the price pane over the close as a line".to_string(),
+            [(_, src)] => format!("Drawn on the price pane over {} as a line", synthetic_words(src)),
+            many => {
+                let names: Vec<String> = many.iter().map(|(arg, _)| (*arg).to_string()).collect();
+                let words: Vec<String> = many.iter().map(|(_, src)| synthetic_words(src)).collect();
+                format!(
+                    "Drawn on the price pane over the inputs {}, {} as lines",
+                    join_and(&names),
+                    join_and(&words)
+                )
+            }
         }
     };
-    let mut legend: Vec<LegendItem<'_>> = Vec::new();
     let price_phrases = draw_price_outputs(&mut cv, &plan, &price, &mut legend);
     let mut pattern_phrases = draw_pattern_markers(&mut cv, &plan, &price, &mut legend);
     pattern_phrases.extend(draw_sign_markers(&mut cv, &plan, &price, &mut legend));
@@ -1328,6 +1463,7 @@ pub fn render(func: &FuncDef, data: &RefData) -> Chart {
         svg: cv.out,
         label,
         sentence,
+        flags_used: flags_used(func, data),
         width: px(W),
         height: px(total_h),
     }
@@ -1549,6 +1685,24 @@ mod tests {
         assert!(first_path(&chart.svg, "<path class=\"up\" d=\"M").is_none(), "{}", chart.svg);
     }
 
+    /// The call markers a pattern sentence promises are the ones its sign flags
+    /// declare: a bearish-only pattern never mentions a bullish marker.
+    #[test]
+    fn the_pattern_sentence_follows_the_outputs_sign_flags() {
+        let both = out("outInteger", ParamType::Integer, &["line", "pattern_bull_bear", "zero", "positive", "negative"]);
+        let bear = out("outInteger", ParamType::Integer, &["line", "pattern_bull_bear", "zero", "negative"]);
+        let bull = out("outInteger", ParamType::Integer, &["line", "pattern_bull_bear", "zero", "positive"]);
+        let d = candle_csv("; flagged bars: 1", "outInteger (shift 0)", &["0", "0", "-100", "0", "0"]);
+        let s = render(&func("CDLX", &["candlestick"], vec![], vec![both]), &d).sentence;
+        assert!(s.contains("outInteger as markers on the candles, \u{25B2} below the low for a bullish call and \u{25BC} above the high for a bearish one"), "{s}");
+        let s = render(&func("CDL3BLACKCROWS", &["candlestick"], vec![], vec![bear]), &d).sentence;
+        assert!(s.contains("outInteger as markers on the candles, \u{25BC} above the high for a bearish call"), "{s}");
+        assert!(!s.contains('\u{25B2}') && !s.contains("bullish"), "{s}");
+        let s = render(&func("CDLX", &["candlestick"], vec![], vec![bull]), &d).sentence;
+        assert!(s.contains("outInteger as markers on the candles, \u{25B2} below the low for a bullish call"), "{s}");
+        assert!(!s.contains('\u{25BC}') && !s.contains("bearish"), "{s}");
+    }
+
     /// A candlestick function's plain integer output is a slot-coloured marker by
     /// sign, above the high for + and below the low for -, never a step pane.
     #[test]
@@ -1628,37 +1782,92 @@ mod tests {
     #[test]
     fn an_input_column_is_plotted_as_the_input() {
         let f = func("ACOS", &[], vec![Input::new("inReal", ParamType::Real)], vec![out("outReal", ParamType::Real, &["line"])]);
-        let csv = "# input: test.csv; window 1999-01-04..1999-01-06 (3 bars)\n# parameters: (defaults)\n# inputs: inReal=close->[-1,1]\n# outputs: outReal (shift 0)\ndate,open,high,low,close,volume,inReal,outReal\n1999-01-04,1,2,0.5,1,100,-0.5,2\n1999-01-05,1,2,0.5,1.5,100,0.25,1\n1999-01-06,1,2,0.5,2,100,0.5,0\n";
+        let csv = "# input: test.csv; window 1999-01-04..1999-01-06 (3 bars)\n# parameters: (defaults)\n# inputs: inReal=ramp[-1,1]\n# outputs: outReal (shift 0)\ndate,open,high,low,close,volume,inReal,outReal\n1999-01-04,1,2,0.5,1,100,-0.5,2\n1999-01-05,1,2,0.5,1.5,100,0.25,1\n1999-01-06,1,2,0.5,2,100,0.5,0\n";
         let d = RefData::parse(csv).unwrap();
         assert_eq!(d.inputs.len(), 1);
         assert_eq!(d.input("inReal"), Some(&[Some(-0.5), Some(0.25), Some(0.5)][..]));
         assert_eq!(d.output("outReal"), &[Some(2.0), Some(1.0), Some(0.0)]);
-        assert_eq!(base_series(&d, d.mapped_input()), vec![Some(-0.5), Some(0.25), Some(0.5)]);
+        assert_eq!(d.synthetic_inputs(), vec![("inReal", "ramp[-1,1]")]);
+        assert_eq!(base_series(&d, &d.synthetic_inputs()), vec![("inReal", vec![Some(-0.5), Some(0.25), Some(0.5)])]);
         let chart = render(&f, &d);
-        assert!(chart.sentence.starts_with("Drawn on the price pane over the input, close->[-1,1], as a line"), "{}", chart.sentence);
-        assert!(chart.svg.contains("input: inReal = close-&gt;[-1,1]"), "{}", chart.svg);
-        assert_eq!(chart.label, "ACOS over test.csv");
+        assert!(chart.sentence.starts_with("Drawn on the price pane over a ramp from -1 to 1 as a line;"), "{}", chart.sentence);
+        assert!(!chart.sentence.contains('['), "{}", chart.sentence);
+        assert!(chart.svg.contains("input: inReal = ramp [-1, 1]"), "{}", chart.svg);
+        assert!(chart.svg.contains(">inReal</text>"), "{}", chart.svg);
+        assert_eq!(chart.svg.matches("<polyline class=\"close\"").count(), 1, "{}", chart.svg);
+        assert_eq!(chart.label, "ACOS over a ramp from -1 to 1");
+        assert!(chart.svg.contains(">3 bars \u{B7} input: inReal = ramp [-1, 1]<"), "{}", chart.svg);
+        assert!(!chart.svg.contains("test.csv"), "{}", chart.svg);
+        assert!(chart.svg.contains("aria-label=\"ACOS over a ramp from -1 to 1\""), "{}", chart.svg);
         let without = csv.replace(",inReal,", ",").replace(",-0.5,2", ",2").replace(",0.25,1", ",1").replace(",0.5,0", ",0");
-        assert_eq!(RefData::parse(&without).unwrap_err(), "input inReal=close->[-1,1] has no `inReal` column");
-        assert!(RefData::parse(&without.replace("close->[-1,1]", "close")).is_ok());
-        assert!(RefData::parse(&without.replace("inReal=close->[-1,1]", "inPeriods=5(first-half)|20(second-half)")).is_err());
+        assert_eq!(RefData::parse(&without).unwrap_err(), "input inReal=ramp[-1,1] has no `inReal` column");
+        assert!(RefData::parse(&without.replace("ramp[-1,1]", "close")).is_ok());
+        assert!(RefData::parse(&without.replace("inReal=ramp[-1,1]", "inPeriods=5(first-half)|20(second-half)")).is_err());
+        let sine = RefData::parse(&csv.replace("ramp[-1,1]", "sine[90,110]")).unwrap();
+        assert_eq!(sine.synthetic_inputs(), vec![("inReal", "sine[90,110]")]);
+        assert!(render(&f, &sine).sentence.starts_with("Drawn on the price pane over a sine between 90 and 110 as a line;"));
+        assert_eq!(synthetic_source("close"), None);
+        assert_eq!(synthetic_source("5(first-half)|20(second-half)"), None);
+        assert_eq!(synthetic_source("ramp[0.1,10]"), Some(("ramp", "0.1", "10")));
+    }
+
+    /// Two synthetic inputs share the top pane: one line each, named in the legend,
+    /// and the sentence names both.
+    #[test]
+    fn two_synthetic_inputs_are_both_plotted_on_the_top_pane() {
+        let mut in0 = Input::new("inReal0", ParamType::Real);
+        in0.series = crate::ir::Series::Sine;
+        in0.domain = Some((90.0, 110.0));
+        let mut in1 = Input::new("inReal1", ParamType::Real);
+        in1.series = crate::ir::Series::Ramp;
+        in1.domain = Some((95.0, 105.0));
+        let f = func("ADD", &[], vec![in0, in1], vec![out("outReal", ParamType::Real, &["line"])]);
+        let csv = "# input: test.csv; window 1999-01-04..1999-01-06 (3 bars)\n# parameters: (defaults)\n# inputs: inReal0=sine[90,110] inReal1=ramp[95,105]\n# outputs: outReal (shift 0)\ndate,open,high,low,close,volume,inReal0,inReal1,outReal\n1999-01-04,1,2,0.5,1,100,100,95,195\n1999-01-05,1,2,0.5,1.5,100,101,100,201\n1999-01-06,1,2,0.5,2,100,102,105,207\n";
+        let d = RefData::parse(csv).unwrap();
+        assert_eq!(d.inputs.len(), 2);
+        assert_eq!(d.synthetic_inputs(), vec![("inReal0", "sine[90,110]"), ("inReal1", "ramp[95,105]")]);
+        let chart = render(&f, &d);
+        assert!(
+            chart.sentence.starts_with("Drawn on the price pane over the inputs inReal0 and inReal1, a sine between 90 and 110 and a ramp from 95 to 105 as lines;"),
+            "{}",
+            chart.sentence
+        );
+        assert_eq!(chart.svg.matches("<polyline class=\"close\"").count(), 1, "{}", chart.svg);
+        assert_eq!(chart.svg.matches("<polyline class=\"line s5\"").count(), 1, "{}", chart.svg);
+        let legend_in0 = chart.svg.find(">inReal0</text>").expect("inReal0 in the legend");
+        let legend_in1 = chart.svg.find(">inReal1</text>").expect("inReal1 in the legend");
+        assert!(legend_in0 < legend_in1);
+        assert!(chart.svg.contains(">3 bars \u{B7} input: inReal0 = sine [90, 110] \u{B7} inReal1 = ramp [95, 105]<"), "{}", chart.svg);
+        assert_eq!(chart.label, "ADD over a sine between 90 and 110 and a ramp from 95 to 105");
+        // The top pane's range spans both lines, not the close.
+        assert!(!chart.svg.contains(">1.5<"), "{}", chart.svg);
+        assert_eq!(
+            chart.flags_used,
+            vec!["inReal0: series sine [90, 110]", "inReal1: series ramp [95, 105]", "outReal: line"]
+        );
     }
 
     #[test]
     fn ref_data_header_is_parsed_once() {
-        let text = "# TA-Lib reference data: X\n# series: IBM, daily, 1999\n# input: ibm_1999.csv; window 1999-01-04..1999-01-05 (2 bars); flagged bars: 1\n# parameters: (defaults)\n# inputs: inReal=close->[-1,1] inPriceV=V\n# outputs: outA (shift 8) outB (shift 0)\n# lookback: 0\ndate,open,high,low,close,volume,inReal,outA,outB\n1999-01-04,1,2,0.5,1.5,100,-1,,\n1999-01-05,1,2,0.5,1.6,100,1,nan,3\n";
+        let text = "# TA-Lib reference data: X\n# series: IBM, daily, 1999\n# input: ibm_1999.csv; window 1999-01-04..1999-01-05 (2 bars); flagged bars: 1\n# parameters: (defaults)\n# inputs: inReal=ramp[-1,1] inPriceV=V\n# outputs: outA (shift 8) outB (shift 0)\n# lookback: 0\ndate,open,high,low,close,volume,inReal,outA,outB\n1999-01-04,1,2,0.5,1.5,100,-1,,\n1999-01-05,1,2,0.5,1.6,100,1,nan,3\n";
         let d = RefData::parse(text).unwrap();
         assert_eq!(d.shift("outA"), 8);
         assert_eq!(d.shift("outB"), 0);
-        assert_eq!(d.input_desc, vec![("inReal".to_string(), "close->[-1,1]".to_string()), ("inPriceV".to_string(), "V".to_string())]);
+        assert_eq!(d.input_desc, vec![("inReal".to_string(), "ramp[-1,1]".to_string()), ("inPriceV".to_string(), "V".to_string())]);
         assert!(d.parameters.is_empty());
         assert_eq!(d.series.as_deref(), Some("IBM, daily, 1999"));
         assert_eq!(d.flagged, Some(1));
         assert_eq!(d.output("outA"), &[None, None]);
         assert_eq!(d.output("outB"), &[None, Some(3.0)]);
         assert_eq!(d.header_components(), vec!["volume"]);
-        assert_eq!(d.mapped_input(), Some(("inReal", "close->[-1,1]")));
-        assert_eq!(base_series(&d, d.mapped_input()), vec![Some(-1.0), Some(1.0)]);
+        assert_eq!(d.synthetic_inputs(), vec![("inReal", "ramp[-1,1]")]);
+        assert_eq!(base_series(&d, &d.synthetic_inputs()), vec![("inReal", vec![Some(-1.0), Some(1.0)])]);
+        assert!(!d.all_inputs_synthetic(), "a price input keeps the series");
+        assert_eq!(d.caption_lead(), "IBM, daily, 1999");
+        let f = func("X", &[], vec![Input::new("inReal", ParamType::Real)], vec![out("outA", ParamType::Real, &["line"]), out("outB", ParamType::Real, &["line"])]);
+        let chart = render(&f, &d);
+        assert_eq!(chart.label, "X over IBM, daily, 1999");
+        assert!(chart.svg.contains(">IBM, daily, 1999 \u{B7} input: inReal = ramp [-1, 1] \u{B7} volume<"), "{}", chart.svg);
         assert!(RefData::parse("# outputs: outA (shift x)\ndate,open,high,low,close,volume,outA\n").is_err());
         assert!(RefData::parse("# outputs: outA\ndate,open,high,low,close,volume,outA\n").is_err());
         assert!(RefData::parse("date,x\n").is_err());
@@ -1683,8 +1892,23 @@ mod tests {
                 let needle = format!(">{}", o.name);
                 assert!(chart.svg.contains(&needle), "{}: {} not in legend", f.name, o.name);
                 assert!(chart.sentence.contains(&o.name), "{}: sentence lacks {}: {}", f.name, o.name, chart.sentence);
+                let row = chart.flags_used.iter().filter(|r| *r == &o.name || r.starts_with(&format!("{}: ", o.name))).count();
+                assert_eq!(row, 1, "{}: flags_used names {} once: {:?}", f.name, o.name, chart.flags_used);
+            }
+            assert!(!chart.flags_used.is_empty(), "{}", f.name);
+            assert!(chart.flags_used.iter().all(|r| !r.contains("independent")), "{}: {:?}", f.name, chart.flags_used);
+            for (k, (name, _)) in f.inputs.iter().filter_map(|i| i.domain.map(|d| (i.name.as_str(), d))).enumerate() {
+                assert!(chart.flags_used.iter().any(|r| r.starts_with(&format!("{name}: series "))), "{}: {:?}", f.name, chart.flags_used);
+                assert!(chart.svg.contains(&format!(">{name}</text>")), "{}: input {k} not in the legend", f.name);
             }
             assert!(chart.sentence.ends_with('.') && chart.sentence.matches(". ").count() == 0, "{}: {}", f.name, chart.sentence);
+            assert!(!chart.sentence.contains('[') && !chart.sentence.contains("->"), "{}: {}", f.name, chart.sentence);
+            for o in &f.outputs {
+                if o.flags.iter().any(|fl| fl == "pattern_bull_bear") {
+                    assert_eq!(chart.sentence.contains('\u{25B2}'), has(&o.flags, "positive"), "{}: {}", f.name, chart.sentence);
+                    assert_eq!(chart.sentence.contains('\u{25BC}'), has(&o.flags, "negative"), "{}: {}", f.name, chart.sentence);
+                }
+            }
         }
     }
 

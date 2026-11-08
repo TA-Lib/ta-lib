@@ -11,7 +11,15 @@ Average True Range expressed as a percentage of the current close, making volati
 
 <ta-chart src="/functions/natr.svg" ratio="720:416" label="NATR over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
 
-Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/natr.csv) · [Chart (SVG)](/functions/natr.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane showing outReal as a solid line.
+
+Metadata flags used: `inPriceHLC: high, low, close` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/natr.csv) · [Chart (SVG)](/functions/natr.svg)
 
 ## Formula
 

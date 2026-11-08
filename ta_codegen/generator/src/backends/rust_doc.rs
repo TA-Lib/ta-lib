@@ -489,17 +489,6 @@ pub(crate) const RUST_SYNTAX: examples::Syntax<'static> = examples::Syntax {
     modulo: |m| format!("(i % {m}) as f64"),
 };
 
-/// The default series mapped affinely onto the input's `domain`, with `sine`
-/// spelling `sin(0.1 * i)` in the target language and `lit` its real literals.
-/// Symmetric unit domains come out as the bare sine, so `[-1, 1]` reads as
-/// `sin(0.1 * i)` rather than `0.0 + 1.0 * sin(0.1 * i)`.
-#[allow(clippy::float_cmp)] // the half-width and midpoint are exact for the shipped domains
-pub fn domain_series(domain: (f64, f64), sine: &str, lit: impl Fn(f64) -> String) -> String {
-    let (mid, half) = domain_mid_half(domain);
-    let scaled = if half == 1.0 { sine.to_string() } else { format!("{} * {sine}", lit(half)) };
-    if mid == 0.0 { scaled } else { format!("{} + {scaled}", lit(mid)) }
-}
-
 /// One further bar of a domain-mapped series: `x` in `[-1, 1]` mapped onto it.
 pub fn domain_bar(domain: (f64, f64), x: f64) -> f64 {
     let (mid, half) = domain_mid_half(domain);

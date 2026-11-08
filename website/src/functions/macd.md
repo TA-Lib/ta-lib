@@ -11,7 +11,15 @@ Moving Average Convergence/Divergence: the difference between a fast and a slow 
 
 <ta-chart src="/functions/macd.svg" ratio="720:416" label="MACD over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram. [Reference data (CSV)](/functions/macd.csv) · [Chart (SVG)](/functions/macd.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outMACD as a solid line, outMACDSignal as a dashed line and outMACDHist as a sign-coloured histogram.
+
+Metadata flags used: `outMACD: line` · `outMACDSignal: dash_line` · `outMACDHist: histogram`
+
+:::
+
+[Reference data (CSV)](/functions/macd.csv) · [Chart (SVG)](/functions/macd.svg)
 
 ## Formula
 

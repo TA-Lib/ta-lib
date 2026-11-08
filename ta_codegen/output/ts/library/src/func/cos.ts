@@ -484,10 +484,10 @@ export function cosOpenAndFillPositional(
  * import { cosOpen } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   -6.3 + 12.6 * i / 251.0);
  * const stream = cosOpen(series);
- * const peeked = stream.peek(100.9); // a forming bar: commits nothing
- * const updated = stream.update(100.9); // the bar closes
+ * const peeked = stream.peek(2.646); // a forming bar: commits nothing
+ * const updated = stream.update(2.646); // the bar closes
  * ```
  */
 export function cosOpen(real: ArrayLike<number>, options?: CosOptions): CosStream {
@@ -518,7 +518,7 @@ export function cosOpen(real: ArrayLike<number>, options?: CosOptions): CosStrea
  * import { cosOpenAndFill } from 'ta-lib';
  *
  * const series = Float64Array.from({ length: 252 }, (_, i) =>
- *   100 + 10 * Math.sin(0.1 * i));
+ *   -6.3 + 12.6 * i / 251.0);
  * const { stream, begIdx, values } = cosOpenAndFill(series);
  * // values[k] is the value at bar begIdx + k
  * ```

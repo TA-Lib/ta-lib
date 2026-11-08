@@ -123,7 +123,7 @@ static int example_ACOS( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = -1 + 2 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -167,7 +167,7 @@ static int example_ADD( void )
    double out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) series0[i] = 100 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) series1[i] = 100 + 10 * sin(0.1 * i + 0.7); }
+   { int i; for( i = 0; i < n; i++ ) series1[i] = 95 + 10 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -413,7 +413,7 @@ static int example_ASIN( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = -1 + 2 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -431,7 +431,7 @@ static int example_ATAN( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = -5 + 10 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -2041,7 +2041,7 @@ static int example_CEIL( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = -3 + 6 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -2241,7 +2241,7 @@ static int example_COS( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = -6.3 + 12.6 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -2259,7 +2259,7 @@ static int example_COSH( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 5 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = -5 + 10 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -2371,7 +2371,7 @@ static int example_DIV( void )
    double out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) series0[i] = 100 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) series1[i] = 100 + 10 * sin(0.1 * i + 0.7); }
+   { int i; for( i = 0; i < n; i++ ) series1[i] = 95 + 10 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -2567,7 +2567,7 @@ static int example_EXP( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 5 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = -5 + 10 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -2605,7 +2605,7 @@ static int example_FLOOR( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = -3 + 6 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -3109,7 +3109,7 @@ static int example_LN( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 0.1 + 9.9 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -3127,7 +3127,7 @@ static int example_LOG10( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 0.1 + 9.9 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -3606,7 +3606,7 @@ static int example_MULT( void )
    double out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) series0[i] = 100 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) series1[i] = 100 + 10 * sin(0.1 * i + 0.7); }
+   { int i; for( i = 0; i < n; i++ ) series1[i] = 95 + 10 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -4171,7 +4171,7 @@ static int example_SIN( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = -6.3 + 12.6 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -4189,7 +4189,7 @@ static int example_SINH( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 5 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = -5 + 10 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -4283,7 +4283,7 @@ static int example_SQRT( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = 100 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -4427,7 +4427,7 @@ static int example_SUB( void )
    double out[252];
    int outBegIdx, outNBElement;
    { int i; for( i = 0; i < n; i++ ) series0[i] = 100 + 10 * sin(0.1 * i); }
-   { int i; for( i = 0; i < n; i++ ) series1[i] = 100 + 10 * sin(0.1 * i + 0.7); }
+   { int i; for( i = 0; i < n; i++ ) series1[i] = 95 + 10 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -4594,7 +4594,7 @@ static int example_TAN( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 100 + 10 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = -1.2 + 2.4 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();
@@ -4612,7 +4612,7 @@ static int example_TANH( void )
    double series[252]; /* your data, oldest first */
    double out[252];
    int outBegIdx, outNBElement;
-   { int i; for( i = 0; i < n; i++ ) series[i] = 3 * sin(0.1 * i); }
+   { int i; for( i = 0; i < n; i++ ) series[i] = -3 + 6 * i / 251.0; }
    outBegIdx = -1; outNBElement = 0;
 
    TA_Initialize();

@@ -13,7 +13,15 @@ The output is unbounded and centred on zero. A peak or trough marks a likely tur
 
 <ta-chart src="/functions/fisher.svg" ratio="720:416" label="FISHER over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outFisher as a solid line and outTrigger as a dashed line."></ta-chart>
 
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outFisher as a solid line and outTrigger as a dashed line. [Reference data (CSV)](/functions/fisher.csv) · [Chart (SVG)](/functions/fisher.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outFisher as a solid line and outTrigger as a dashed line.
+
+Metadata flags used: `inPriceHL: high, low` · `outFisher: line` · `outTrigger: dash_line`
+
+:::
+
+[Reference data (CSV)](/functions/fisher.csv) · [Chart (SVG)](/functions/fisher.svg)
 
 ## Formula
 

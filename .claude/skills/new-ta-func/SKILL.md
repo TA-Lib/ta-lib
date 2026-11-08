@@ -251,6 +251,7 @@ formatted `  - NAME: Human name, short clause (#NNN)`.
 ```bash
 scripts/build.py format          # regen-check runs `format --check` first and hard-fails
 scripts/build.py generate        # FULL, unfiltered — writes what --func= skipped
+scripts/build.py refdata         # the page's reference CSV + chart (then regenerates); --check is the gate
 scripts/build.py servers         # note: this runs generate-servers only, not generate
 scripts/build.py libraries       # the jar asserts your function is on the packaged Core
 cd bin && ./ta_regtest --function=<NAME>              # your hand-written legs

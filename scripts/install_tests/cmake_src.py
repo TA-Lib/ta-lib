@@ -91,6 +91,12 @@ def test_cmake_src_linux(package_file_path: str, temp_dir: str, version: str):
     build_dir = os.path.join(temp_dir, "cmake_build")
     prefix_dir = os.path.join(temp_dir, "cmake_prefix")
 
+    # A plain configure, every option at its default, is what a packager runs
+    # first: a tool CMake builds under BUILD_TESTING must either ship in the
+    # tarball or exist only where its source does.
+    run_or_die(["cmake", "-S", source_dir, "-B", os.path.join(temp_dir, "cmake_defaults"),
+                "-DCMAKE_BUILD_TYPE=Release"], "cmake configure (default options)")
+
     # -DBUILD_DEV_TOOLS=OFF is the port's own option. The dev tools are covered
     # by the autotools leg, which builds and runs ta_regtest from this tarball.
     _configure_build_install(source_dir, build_dir, prefix_dir, [], "both")

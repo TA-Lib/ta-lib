@@ -13,7 +13,15 @@ It crosses zero as price crosses its own average, so peaks and troughs mark the 
 
 <ta-chart src="/functions/dpo.svg" ratio="720:416" label="DPO over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line moved 11 bars back."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line moved 11 bars back. [Reference data (CSV)](/functions/dpo.csv) · [Chart (SVG)](/functions/dpo.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the close as a line; below it, a separate indicator pane with a zero line showing outReal as a solid line moved 11 bars back.
+
+Metadata flags used: `outReal: line, display_shift (-11)`
+
+:::
+
+[Reference data (CSV)](/functions/dpo.csv) · [Chart (SVG)](/functions/dpo.svg)
 
 ## Formula
 

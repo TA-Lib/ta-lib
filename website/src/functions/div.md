@@ -9,9 +9,17 @@ Element-wise division of two input series.
 
 ## Chart
 
-<ta-chart src="/functions/div.svg" ratio="720:416" label="DIV over IBM, daily, 1999" alt="Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
+<ta-chart src="/functions/div.svg" ratio="720:416" label="DIV over a sine between 90 and 110 and a ramp from 95 to 105" alt="Drawn on the price pane over the inputs inReal0 and inReal1, a sine between 90 and 110 and a ramp from 95 to 105 as lines; below it, a separate indicator pane showing outReal as a solid line."></ta-chart>
 
-Drawn on the price pane over the close as a line; below it, a separate indicator pane showing outReal as a solid line. [Reference data (CSV)](/functions/div.csv) · [Chart (SVG)](/functions/div.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over the inputs inReal0 and inReal1, a sine between 90 and 110 and a ramp from 95 to 105 as lines; below it, a separate indicator pane showing outReal as a solid line.
+
+Metadata flags used: `inReal0: series sine [90, 110]` · `inReal1: series ramp [95, 105]` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/div.csv) · [Chart (SVG)](/functions/div.svg)
 
 ## Formula
 

@@ -9,9 +9,17 @@ Single-candle pattern: a small real body with a long upper shadow and little-to-
 
 ## Chart
 
-<ta-chart src="/functions/cdlshootingstar.svg" ratio="720:274" label="CDLSHOOTINGSTAR over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data)."></ta-chart>
+<ta-chart src="/functions/cdlshootingstar.svg" ratio="720:274" label="CDLSHOOTINGSTAR over IBM, daily, 1999" alt="Drawn on the price pane over candles, with outInteger as markers on the candles, ▼ above the high for a bearish call (no occurrence in the reference data)."></ta-chart>
 
-Drawn on the price pane over candles, with outInteger as markers on the candles, ▲ below the low for a bullish call and ▼ above the high for a bearish one (no occurrence in the reference data). [Reference data (CSV)](/functions/cdlshootingstar.csv) · [Chart (SVG)](/functions/cdlshootingstar.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles, with outInteger as markers on the candles, ▼ above the high for a bearish call (no occurrence in the reference data).
+
+Metadata flags used: `candlestick` · `inPriceOHLC: open, high, low, close` · `outInteger: line, pattern_bull_bear, zero, negative`
+
+:::
+
+[Reference data (CSV)](/functions/cdlshootingstar.csv) · [Chart (SVG)](/functions/cdlshootingstar.svg)
 
 ## Notes
 

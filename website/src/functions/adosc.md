@@ -11,7 +11,15 @@ Chaikin A/D Oscillator: the difference between a fast and a slow EMA of the Accu
 
 <ta-chart src="/functions/adosc.svg" ratio="720:484" label="ADOSC over IBM, daily, 1999" alt="Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane."></ta-chart>
 
-Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane. [Reference data (CSV)](/functions/adosc.csv) · [Chart (SVG)](/functions/adosc.svg)
+::: details Chart metadata <span class="flag-tip" tabindex="0" role="note" aria-label="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output." data-tip="The chart is drawn from the function's metadata alone: the flags the abstract API reports for it and for each output.">i</span>
+
+Drawn on the price pane over candles; below it, a separate indicator pane with a zero line showing outReal as a solid line, then a volume pane.
+
+Metadata flags used: `inPriceHLCV: high, low, close, volume` · `outReal: line`
+
+:::
+
+[Reference data (CSV)](/functions/adosc.csv) · [Chart (SVG)](/functions/adosc.svg)
 
 ## Formula
 
