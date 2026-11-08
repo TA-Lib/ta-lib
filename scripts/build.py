@@ -205,8 +205,8 @@ def show_help():
                         functions/<name>.csv) from src/tools/ta_refdata/corpus.
                         A file is rewritten only when missing or out of
                         tolerance; a CSV naming no function is removed.
-                        --check writes nothing there and fails on any
-                        difference, missing or stale file, then writes a
+                        --check writes nothing there and fails on a value
+                        out of tolerance, a missing or stale file, then writes a
                         fresh set under the build dir and replays each from
                         its own rows (ta_refdata --replay), failing on a cell
                         that does not reproduce bit for bit.

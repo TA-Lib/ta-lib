@@ -106,7 +106,7 @@ A key of the function sits at the top level. A key of an input, an optional para
 
 | Key | Of | Value | Meaning |
 |---|---|---|---|
-| `levels` | output | numbers, strictly ascending | Reference levels, as the indicator's author published them or as common practice reads it, drawn as horizontal rules on the output's pane. Not bounds: the output can cross them. |
+| `levels` | output | numbers, strictly ascending | Reference levels, as the indicator's author published them or as common practice reads them, drawn as horizontal rules on the output's pane. Not bounds: the output can cross them. |
 
 RSI's: `{"outputs":{"outReal":{"levels":[30,70]}}}`.
 

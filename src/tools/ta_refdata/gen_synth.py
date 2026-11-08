@@ -10,9 +10,8 @@ Two layers:
     shadow habits); each bar draws its open, body and shadows from it.
   * episodes: short market behaviours with random sizes that a bar-by-bar
     mixture almost never strings together (a pullback inside a trend bar, a
-    gap that reverses, a run of trend days, a retest of a close). They were
-    shaped while reading the TA-Lib pattern definitions, so the multi-bar
-    patterns occur, but no bar is checked against a pattern.
+    gap that reverses, a run of trend days, a retest of a close), so the
+    multi-bar patterns occur. No bar is checked against a pattern.
 
 Usage: gen_synth.py [out.csv] [nbars] [seed]
 (the committed file: gen_synth.py src/tools/ta_refdata/corpus/synthetic.csv)
